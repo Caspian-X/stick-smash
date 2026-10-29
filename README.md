@@ -57,15 +57,28 @@ Pick **Mode → Training** in the menu.
 | `G` | Dummy behavior: stand / shield / jump / CPU / P2 controls |
 | `[` `]` | Dummy damage −10 / +10 |
 | `H` | Debug view on/off (works in every mode) |
+| `E` | Open the hitbox editor on your fighter's last move (dev server only) |
 
 The panel shows your current move's frame and its startup/active/end lag, plus the **frame advantage** of the last hit, on hit or on shield. Positive means the attacker can act first. It also shows true-combo counts and combo damage.
 
-The debug view draws hurtboxes (yellow; cyan = invulnerable; orange = hitstun), active hitboxes (red; purple = grab), and each hitbox's launch angle (line length grows with base knockback). It also shows ledge-grab zones and per-fighter state/frame/hitlag/hitstun labels.
+The debug view draws hurtboxes (yellow; cyan = invulnerable; orange = hitstun), active hitboxes (red; purple = grab), and each hitbox's launch angle (line length grows with base knockback). It also shows the half-circle ledge-grab zones (a fighter grabs when their hand point, the cyan dot, enters one) and per-fighter state/frame/hitlag/hitstun labels.
+
+### Hitbox editor (dev)
+
+Pick **Mode → Hitbox Editor** in the menu, or press `E` in Training. It shows a posed fighter at any frame of a move with every hitbox drawn on top.
+
+- Drag a circle to move it, drag its edge to resize, and drag the arrow tip to set the launch angle (hold Shift to snap to 15°).
+- Use the side panel for exact values, start/end frames, direction, grab, the optional multipliers, end lag and landing lag. You can also add, duplicate, delete and reorder boxes there (first listed wins).
+- The timeline shows startup/active/end lag, with one row per hitbox. Click it to scrub.
+- Keys: `←/→` frame, `↑/↓` move, `F` fighter, `Tab` next box, `N` add, `Del` delete, `Space` play, `M` speed, mouse wheel zoom, `⌘/Ctrl+Z` undo, `⌘/Ctrl+S` save.
+
+Edits apply live, so Training uses them immediately. **Save** writes them into `src/data/fighters/<fighter>.ts` through a dev-server endpoint (`vite.config.ts`). It only rewrites that move's `hitboxes`, `endLag` and `landingLag`, so comments and everything else stay as they are. A move inherited from `common.ts`, like grab, is saved as a new entry in that fighter's own file.
 
 ## Controls
 
-- **P1:** A/D move · W jump · S fall/drop · J attack · K special · I grab · L shield
+- **P1:** A/D move · W or Space jump · S fall/drop · J attack · K special · I grab · L shield. The menu option **P1 W Jump → Off** makes W up-only (tilts/aerials/specials), so only Space jumps.
 - **P2:** arrows · `.` attack · `/` special · `;` grab · `'` shield (Numpad 1/2/3/0 also work)
+- Jumps are a **short hop** (jump released by the end of jumpsquat) or a **full hop** (still held). Height is fixed after takeoff.
 - Tap a direction + attack = smash (hold to charge). Shield + tap direction = roll/spot dodge. Press shield in the air = air dodge, and just before landing = tech.
 
 ## Architecture
@@ -83,6 +96,7 @@ src/sim/       deterministic game logic: no Phaser, no DOM, no Math.random
   ai.ts          CPU
 src/render/    Phaser Graphics drawing (poses, fighters, fx, HUD, debug overlay)
 src/scenes/    MenuScene, FightScene (fixed-timestep loop, pause, training)
+src/editor/    hitbox editor: EditorScene (Phaser), panel.ts (DOM side panel), source.ts (rewrites fighter files)
 src/game/      keyboard, synthesized audio, saved settings
 ```
 

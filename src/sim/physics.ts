@@ -1,6 +1,6 @@
 // Movement integration, stage collision, landing and ledge grabs.
 
-import { GROUND, LEDGE, PLATS, STAGE, UNDER, stageBottom } from '../data/stage';
+import { GROUND, LEDGE, PLATS, STAGE, UNDER, inLedgeZone, stageBottom } from '../data/stage';
 import { type Fighter, type Input, type World, G, MV, ST, clamp, dust, maxJ, ring, setState, sfx, shake } from './core';
 import { quake } from './moves';
 import { roll } from './states';
@@ -97,11 +97,9 @@ export function onLand(w: World, f: Fighter, vy: number) {
 
 export function tryLedge(w: World, f: Fighter, inp: Input, rising = false) {
   if (f.ground || f.ledgeCD > 0 || (f.vy < 0 && !rising) || inp.down) return;
-  if (f.y < STAGE.top + LEDGE.minBelowTop || f.y > STAGE.top + LEDGE.maxBelowTop) return;
   for (const side of [-1, 1]) {
     const ex = side < 0 ? STAGE.L : STAGE.R;
-    const ok = side < 0 ? f.x > ex - LEDGE.reachOut && f.x < ex + LEDGE.reachIn : f.x < ex + LEDGE.reachOut && f.x > ex - LEDGE.reachIn;
-    if (!ok || w.fighters.some(g => g !== f && (g.state === 'ledge' || g.state === 'climb') && g.sd.side === side)) continue;
+    if (!inLedgeZone(side, f.x, f.y - LEDGE.handY) || w.fighters.some(g => g !== f && (g.state === 'ledge' || g.state === 'climb') && g.sd.side === side)) continue;
     setState(f, 'ledge', { side });
     Object.assign(f, { jumps: maxJ(f), upB: false, adUsed: false, ff: false, vx: 0, vy: 0, x: ex + side * LEDGE.hangX, y: STAGE.top + LEDGE.hangY, face: -side });
     f.inv = Math.max(f.inv, G().ledge.invuln);

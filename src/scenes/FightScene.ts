@@ -5,6 +5,7 @@ import { WORLD_H, WORLD_W } from '../data/stage';
 import { playSfx } from '../game/audio';
 import { consumePressed, pp, readHuman, unpress } from '../game/input';
 import { type DummyMode, S, WINS, save } from '../game/settings';
+import type { MoveId } from '../data/types';
 import { type Fighter, type Input, type World, MV, blankInput, createWorld } from '../sim/core';
 import { stepWorld } from '../sim/step';
 import { DebugOverlay } from '../render/debug';
@@ -18,7 +19,7 @@ const STEP = 1000 / 60;
 const SPEEDS = [1, 0.5, 0.25];
 const DUMMIES: DummyMode[] = ['stand', 'shield', 'jump', 'cpu', 'p2'];
 const DUMMY_NAMES: Record<DummyMode, string> = { stand: 'Stand', shield: 'Shield', jump: 'Jump', cpu: 'CPU', p2: 'P2 controls' };
-const TRAINING_KEYS = ['KeyT', 'KeyY', 'KeyM', 'KeyR', 'KeyG', 'BracketLeft', 'BracketRight', 'KeyH', 'Escape'];
+const TRAINING_KEYS = ['KeyT', 'KeyY', 'KeyM', 'KeyR', 'KeyG', 'BracketLeft', 'BracketRight', 'KeyH', 'KeyE', 'Escape'];
 
 export class FightScene extends Phaser.Scene {
   private w!: World;
@@ -43,6 +44,7 @@ export class FightScene extends Phaser.Scene {
   private training = false;
   private dataVersion = 0;
   private toastT = 0;
+  private lastMove: MoveId | undefined;
 
   constructor() { super('fight'); }
 
@@ -119,6 +121,11 @@ export class FightScene extends Phaser.Scene {
       if (pp('KeyY') && this.frozen) stepNow = true;
       if (pp('KeyM')) this.speedI = (this.speedI + 1) % SPEEDS.length;
       if (pp('KeyR')) { this.newMatch(); unpress(...TRAINING_KEYS); return; }
+      if (pp('KeyE') && import.meta.env.DEV) {
+        consumePressed();
+        this.scene.start('editor', { fi: w.fighters[0].ch, move: this.lastMove, from: 'fight' });
+        return;
+      }
       if (pp('KeyG')) {
         S.dummy = DUMMIES[(DUMMIES.indexOf(S.dummy) + 1) % DUMMIES.length]; save();
         w.fighters[1].cpu = S.dummy === 'cpu';
@@ -141,7 +148,8 @@ export class FightScene extends Phaser.Scene {
     stepWorld(w, inputs);
     this.fx.consume(w.fx, viewOf(this));
     this.fx.tick();
-    if (!wasOver && w.over && w.winner && !this.training && S.mode !== 'training') { WINS[S.mode][w.winner.i]++; save(); }
+    if (!wasOver && w.over && w.winner && (S.mode === 'cpu' || S.mode === '2p')) { WINS[S.mode][w.winner.i]++; save(); }
+    if (w.fighters[0].move) this.lastMove = w.fighters[0].move.id;
     consumePressed();
   }
 
@@ -149,7 +157,7 @@ export class FightScene extends Phaser.Scene {
     const inp = blankInput();
     switch (S.dummy) {
       case 'shield': inp.shield = true; break;
-      case 'jump': if (f.state === 'idle' && f.t > 20) { inp.jump = inp.up = true; } break;
+      case 'jump': if (f.state === 'idle' && f.t > 20) { inp.jump = inp.jumpHeld = true; } break;
       case 'p2': return readHuman(1, this.inFrame, DATA.g.movement.tapWindow);
     }
     return inp;
@@ -178,7 +186,7 @@ export class FightScene extends Phaser.Scene {
     if (w.over && w.winner) {
       o.fillStyle(0x000000, 0.4).fillRect(v.x0, v.y0, v.x1 - v.x0, v.y1 - v.y0);
       big = `${w.winner.name} WINS!`; bigCol = COLORS[w.winner.i].css;
-      const rec = S.mode === 'training' ? null : WINS[S.mode];
+      const rec = S.mode === 'cpu' || S.mode === '2p' ? WINS[S.mode] : null;
       sub = (rec ? `Record  ${rec[0]} – ${rec[1]}\n` : '') + (this.overT > 30 ? 'Enter: rematch  ·  Esc: menu' : '');
     }
     if (this.paused) {
@@ -208,7 +216,7 @@ export class FightScene extends Phaser.Scene {
       if (tr.combo > 1) lines.push(`Combo: ${tr.combo} hits  ·  ${Math.round(tr.comboDmg)}%`);
     }
     lines.push(`Dummy: ${DUMMY_NAMES[S.dummy]} (G)  ·  ${Math.floor(w.fighters[1].dmg)}% ([ / ])`);
-    lines.push('T freeze · Y step · M speed · R reset · H hitboxes');
+    lines.push('T freeze · Y step · M speed · R reset · H hitboxes' + (import.meta.env.DEV ? ' · E edit hitboxes' : ''));
     return lines.join('\n');
   }
 }

@@ -13,10 +13,13 @@ const wait = ms => page.waitForTimeout(ms);
 const tap = async (k, ms = 60) => { await page.keyboard.down(k); await wait(ms); await page.keyboard.up(k); await wait(60); };
 
 await page.goto(url);
+await page.evaluate(() => localStorage.setItem('stick-smash.v2', JSON.stringify({ settings: { mode: 'cpu', c1: 0, c2: 1 } })));
+await page.reload();
 await wait(1500);
 await page.screenshot({ path: `${out}/shot-menu.png` });
 
-// 1P vs CPU
+// 1P vs CPU (W wraps the cursor from Mode up to START)
+await tap('KeyW');
 await tap('Enter');
 await wait(3600);
 await page.screenshot({ path: `${out}/shot-fight-start.png` });
@@ -54,6 +57,15 @@ await tap('KeyK'); await wait(300); await tap('KeyS', 30); await tap('KeyW'); aw
 await page.keyboard.down('KeyW'); await tap('KeyK'); await page.keyboard.up('KeyW');
 await wait(700);
 await page.screenshot({ path: `${out}/shot-training-after.png` });
+
+// Hitbox editor (dev): open from training with E, scrub, add a box (not saved), back out with Esc
+await tap('KeyE');
+await wait(600);
+await tap('ArrowDown'); await tap('ArrowRight'); await tap('ArrowRight'); await tap('KeyN');
+await page.screenshot({ path: `${out}/shot-editor.png` });
+await tap('Escape');
+await wait(600);
+if (await page.locator('#hbe').count()) errors.push('editor panel left behind after Esc');
 
 console.log(errors.length ? errors.join('\n') : 'NO ERRORS');
 await browser.close();

@@ -3,6 +3,7 @@ import { DATA, moveTotal } from '../src/data';
 import { type Input, type World, blankInput, createWorld } from '../src/sim/core';
 import { stepWorld } from '../src/sim/step';
 import { activeBoxes } from '../src/sim/combat';
+import { LEDGE, STAGE } from '../src/data/stage';
 
 const cpuMatch = (a: number, b: number, seed: number, level = 2) =>
   createWorld({ fighters: [{ ch: a, cpu: true, name: 'A' }, { ch: b, cpu: true, name: 'B' }], stocks: 3, cpuLevel: level, seed });
@@ -61,5 +62,41 @@ describe('sim', () => {
     let maxDmg = 0;
     for (let i = 0; i < 20; i++) { run(w, 1, [blankInput()]); for (const b of activeBoxes(p1)) maxDmg = Math.max(maxDmg, b.damage); }
     expect(maxDmg).toBeGreaterThan(fs.hitboxes[0].damage);
+  });
+
+  it('jumps are either a short hop or a full hop, decided at takeoff', () => {
+    const apex = (heldFrames: number) => {
+      const w = createWorld({ fighters: [{ ch: 0, cpu: false, name: 'P1' }, { ch: 0, cpu: false, name: 'P2' }], stocks: 3, cpuLevel: 0, training: true });
+      const p1 = w.fighters[0], y0 = p1.y;
+      w.fighters[1].x = 2000;
+      run(w, 1);
+      let top = y0;
+      for (let i = 0; i < 90; i++) {
+        run(w, 1, [{ ...blankInput(), jump: i === 0, jumpHeld: i < heldFrames }]);
+        top = Math.min(top, p1.y);
+      }
+      return y0 - top;
+    };
+    const short = apex(1), full = apex(90);
+    expect(full).toBeGreaterThan(short * 1.5);
+    // Releasing jump after takeoff no longer cuts the hop: any hold past jumpsquat = the same full hop.
+    expect(apex(DATA.g.movement.jumpsquat + 2)).toBeCloseTo(full, 5);
+    expect(apex(DATA.g.movement.jumpsquat - 1)).toBeCloseTo(short, 5);
+  });
+
+  it('grabs the ledge when the hand point enters the half-circle zone', () => {
+    const w = createWorld({ fighters: [{ ch: 0, cpu: false, name: 'P1' }, { ch: 0, cpu: false, name: 'P2' }], stocks: 3, cpuLevel: 0, training: true });
+    const p1 = w.fighters[0];
+    w.fighters[1].x = 2000;
+    Object.assign(p1, { x: STAGE.R + 30, y: STAGE.top - 20, vx: 0, vy: 2, ground: false, surf: null, state: 'air' });
+    for (let i = 0; i < 40 && p1.state !== 'ledge'; i++) run(w, 1, [blankInput()]);
+    expect(p1.state).toBe('ledge');
+    // Far outside the arc: keeps falling.
+    const w2 = createWorld({ fighters: [{ ch: 0, cpu: false, name: 'P1' }, { ch: 0, cpu: false, name: 'P2' }], stocks: 3, cpuLevel: 0, training: true });
+    const q = w2.fighters[0];
+    w2.fighters[1].x = 2000;
+    Object.assign(q, { x: STAGE.R + LEDGE.r + 10, y: STAGE.top - 20, vx: 0, vy: 2, ground: false, surf: null, state: 'air' });
+    for (let i = 0; i < 40; i++) run(w2, 1, [blankInput()]);
+    expect(q.state).not.toBe('ledge');
   });
 });

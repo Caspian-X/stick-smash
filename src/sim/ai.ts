@@ -11,7 +11,7 @@ export function aiInput(w: World, f: Fighter, level = w.cfg.cpuLevel): Input {
   const react = [26, 14, 6][lv], aggr = [0.05, 0.12, 0.25][lv];
   if (ai.chargeT > 0) { ai.chargeT--; inp.atkHeld = true; }
   if (ai.spT > 0) { ai.spT--; inp.spHeld = true; }
-  if (ai.upT > 0) { ai.upT--; inp.up = true; }
+  if (ai.upT > 0) { ai.upT--; inp.jumpHeld = true; }
   if (ai.shieldT > 0) ai.shieldT--;
   const toCenter = () => { const d = f.x < MID ? 1 : -1; inp.right = d > 0; inp.left = d < 0; };
   const C = FD(f), nspec = C.moves.nspec, dspec = C.moves.dspec;

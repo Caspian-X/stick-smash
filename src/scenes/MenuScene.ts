@@ -8,8 +8,8 @@ import { type Mode, S, WINS, save } from '../game/settings';
 import { drawBackground, drawStage, drawStars } from '../render/stage';
 import { setupCamera, txt } from './common';
 
-const MODES: Mode[] = ['cpu', '2p', 'training'];
-const MODE_NAMES: Record<Mode, string> = { cpu: '1P vs CPU', '2p': '2 Players', training: 'Training' };
+const MODES: Mode[] = ['cpu', '2p', 'training', ...(import.meta.env.DEV ? ['editor' as Mode] : [])];
+const MODE_NAMES: Record<Mode, string> = { cpu: '1P vs CPU', '2p': '2 Players', training: 'Training', editor: 'Hitbox Editor (dev)' };
 const DUMMY_NAMES = { stand: 'Stand', shield: 'Shield', jump: 'Jump', cpu: 'CPU', p2: 'P2 controls' };
 const cycle = (v: number, ch: number, n: number) => (v + ch + n) % n;
 type Row = [string, string, ((dir: number) => void) | null];
@@ -24,6 +24,7 @@ export class MenuScene extends Phaser.Scene {
   constructor() { super('menu'); }
 
   create() {
+    if (!MODES.includes(S.mode)) S.mode = 'cpu';
     setupCamera(this);
     drawBackground(this.add.graphics());
     this.stars = this.add.graphics();
@@ -39,7 +40,7 @@ export class MenuScene extends Phaser.Scene {
     }
     this.record = txt(this, cx, 500, '', 16, '#99a', 'center', 600);
     const lines: [string, string][] = [
-      ['P1: A/D move · W jump · S fall/drop · J attack · K special · I grab · L shield', COLORS[0].css],
+      ['P1: A/D move · W or Space jump · S fall/drop · J attack · K special · I grab · L shield', COLORS[0].css],
       ["P2: ←/→ move · ↑ jump · ↓ fall · . attack · / special · ; grab · ' shield   (Num 1/2/3/0 also work)", COLORS[1].css],
       ['Attack: tap a direction + attack together = SMASH (hold attack to charge) · hold a direction = tilt', '#ccd'],
       ['Shield: tap ←/→ roll · tap ↓ dodge · jump/grab out of shield · in air = air dodge · press before landing to tech', '#ccd'],
@@ -55,6 +56,10 @@ export class MenuScene extends Phaser.Scene {
   private rows(): Row[] {
     const nm = (c: number) => (DATA.fighters[c] ?? DATA.fighters[0]).name;
     const r: Row[] = [['Mode', MODE_NAMES[S.mode], d => { S.mode = MODES[cycle(MODES.indexOf(S.mode), d, MODES.length)]; }]];
+    if (S.mode === 'editor') {
+      r.push(['Fighter', nm(S.c1), d => { S.c1 = cycle(S.c1, d, DATA.fighters.length); }], ['START', '', null]);
+      return r;
+    }
     if (S.mode === 'cpu') r.push(['CPU Level', ['Easy', 'Normal', 'Hard'][S.level], d => { S.level = cycle(S.level, d, 3); }]);
     r.push(['P1 Fighter', nm(S.c1), d => { S.c1 = cycle(S.c1, d, DATA.fighters.length); }]);
     const p2 = S.mode === 'cpu' ? 'CPU Fighter' : S.mode === 'training' ? 'Dummy Fighter' : 'P2 Fighter';
@@ -63,6 +68,7 @@ export class MenuScene extends Phaser.Scene {
       const ds = Object.keys(DUMMY_NAMES) as (keyof typeof DUMMY_NAMES)[];
       r.push(['Dummy', DUMMY_NAMES[S.dummy], d => { S.dummy = ds[cycle(ds.indexOf(S.dummy), d, ds.length)]; }]);
     } else r.push(['Stocks', String(S.stocks), d => { S.stocks = cycle(S.stocks - 1, d, 5) + 1; }]);
+    r.push(['P1 W Jump', S.wJump ? 'On' : 'Off (Space only)', () => { S.wJump = !S.wJump; }]);
     r.push(['START', '', null]);
     return r;
   }
@@ -76,11 +82,11 @@ export class MenuScene extends Phaser.Scene {
     if (up || dn) { this.sel = cycle(this.sel, up ? -1 : 1, rows.length); playSfx('menu'); }
     const row = rows[this.sel], ch = rt ? 1 : lf ? -1 : ok && row[2] ? 1 : 0;
     if (ch && row[2]) { row[2](ch); save(); playSfx('menu'); }
-    if (pp('KeyR') && S.mode !== 'training') { WINS[S.mode] = [0, 0]; save(); playSfx('menu'); }
+    if (pp('KeyR') && (S.mode === 'cpu' || S.mode === '2p')) { WINS[S.mode] = [0, 0]; save(); playSfx('menu'); }
     if (pp('KeyH')) { S.debug = !S.debug; save(); playSfx('menu'); }
     const start = ok && !row[2];
     consumePressed();
-    if (start) { playSfx('go'); this.scene.start('fight'); return; }
+    if (start) { playSfx('go'); this.scene.start(S.mode === 'editor' ? 'editor' : 'fight', S.mode === 'editor' ? { fi: S.c1 } : undefined); return; }
 
     rows = this.rows();
     this.sel = Math.min(this.sel, rows.length - 1);
@@ -98,8 +104,9 @@ export class MenuScene extends Phaser.Scene {
         ui.v.setText((sel ? '◀ ' : '') + r[1] + (sel ? ' ▶' : ''));
       }
     });
-    const w = S.mode === 'training' ? null : WINS[S.mode];
+    const w = S.mode === 'cpu' || S.mode === '2p' ? WINS[S.mode] : null;
     this.record.setText(w ? `Record  P1 ${w[0]} – ${w[1]} ${S.mode === 'cpu' ? 'CPU' : 'P2'}   (R to reset)   ·   Debug view: ${S.debug ? 'ON' : 'off'}`
-      : `Training: frame data, hitboxes, frame advantage   ·   Debug view: ${S.debug ? 'ON' : 'off'}`);
+      : S.mode === 'editor' ? 'Drag hitboxes on a posed fighter, then save them into the fighter data files'
+      : `Training: frame data, hitboxes, frame advantage (E: hitbox editor)   ·   Debug view: ${S.debug ? 'ON' : 'off'}`);
   }
 }

@@ -36,16 +36,6 @@ export function updateFighter(w: World, f: Fighter, inp: Input) {
   if (f.ledgeCD > 0) f.ledgeCD--;
   if (f.drop > 0) f.drop--;
   if (f.flipT > 0) f.flipT--;
-  if (f.hopChk > 0) {
-    f.hopChk--;
-    const airborne = f.state === 'air' || (f.state === 'attack' && FD(f).moves[f.move!.id].aerial);
-    if (!airborne) f.hopChk = 0;
-    else if (!inp.up && f.vy < 0) {
-      const hopH = s.shortHopSpeed ** 2 / (2 * s.gravity);
-      f.vy = -Math.sqrt(Math.max(0, 2 * s.gravity * (hopH - (f.hopY0 - f.y))));
-      f.hopChk = 0;
-    }
-  }
   if (f.state !== 'shield') f.sh = Math.min(g.shield.max, f.sh + g.shield.regen);
   f.t++;
   const dir = (inp.right ? 1 : 0) - (inp.left ? 1 : 0);
@@ -75,7 +65,7 @@ export function updateFighter(w: World, f: Fighter, inp: Input) {
       if (inp.grab) { startMove(w, f, 'grab'); break; }
       f.vx *= 0.9;
       if (f.t >= g.movement.jumpsquat) {
-        f.vy = inp.up ? -s.jumpSpeed : -s.shortHopSpeed; f.hopChk = inp.up ? g.movement.shortHopWindow : 0; f.hopY0 = f.y;
+        f.vy = inp.jumpHeld ? -s.jumpSpeed : -s.shortHopSpeed;
         f.ground = false; f.surf = null; f.ff = false;
         setState(f, 'air'); dust(w, f.x, f.y, 4); sfx(w, 'jump'); integrate(w, f, false);
       } else fall(w, f, true);

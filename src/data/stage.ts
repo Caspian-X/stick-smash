@@ -19,8 +19,18 @@ export const UNDER = { depth: 100, inset: 60 };
 export const SPAWNS = [{ x: 470, face: 1 }, { x: 810, face: -1 }];
 export const RESPAWN = { x: 640, startY: -80, endY: 150 };
 
-/** Ledge grab region relative to the stage corner. */
-export const LEDGE = { minBelowTop: 20, maxBelowTop: 110, reachOut: 58, reachIn: 4, hangX: 12, hangY: 80 };
+/**
+ * Ledge grab zone: a half circle on the outside of each stage corner, centered `cy` below the corner.
+ * A falling fighter grabs when their hand point (`handY` above the feet) is inside it. `reachIn` lets the
+ * flat side extend a few pixels over the stage. hangX/hangY = where the feet sit while hanging.
+ */
+export const LEDGE = { r: 60, cy: 20, handY: 50, reachIn: 4, hangX: 12, hangY: 80 };
+
+/** Is the point inside the ledge-grab half circle of the stage corner on `side` (-1 left, 1 right)? */
+export function inLedgeZone(side: number, x: number, y: number): boolean {
+  const ex = side < 0 ? STAGE.L : STAGE.R, dx = x - ex, dy = y - (STAGE.top + LEDGE.cy);
+  return dx * side >= -LEDGE.reachIn && dx * dx + dy * dy <= LEDGE.r * LEDGE.r;
+}
 
 export function stageBottom(x: number): number {
   const k = Math.min(x - STAGE.L, STAGE.R - x) / UNDER.inset;

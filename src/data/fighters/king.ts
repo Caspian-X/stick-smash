@@ -11,7 +11,7 @@ const king: FighterData = {
   look: 'king',
   blurb: 'King: heavy, 3 air jumps · special: throw a Gordo (any attack bats it back) · ↑ super jump · ↓ hold for Jet Hammer',
   aiReach: 100,
-  stats: { ...BASE_STATS, weight: 0.9, runSpeed: 5.8, jumpSpeed: 14, airJumps: 3, airJumpSpeed: 11.5 },
+  stats: { ...BASE_STATS, weight: 0.9, runSpeed: 5, jumpSpeed: 14, airJumps: 3, airJumpSpeed: 11.5 },
   throws: COMMON_THROWS,
   moves: {
     ...COMMON_GRABS,

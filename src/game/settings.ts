@@ -2,7 +2,7 @@
 
 const KEY = 'stick-smash.v2';
 
-export type Mode = 'cpu' | '2p' | 'training';
+export type Mode = 'cpu' | '2p' | 'training' | 'editor';
 export type DummyMode = 'stand' | 'shield' | 'jump' | 'cpu' | 'p2';
 
 export interface Settings {
@@ -13,9 +13,11 @@ export interface Settings {
   c2: number;
   dummy: DummyMode;
   debug: boolean;
+  /** P1: W (up) also jumps. Space always jumps. */
+  wJump: boolean;
 }
 
-const DEFAULTS: Settings = { mode: 'cpu', level: 1, stocks: 3, c1: 0, c2: 1, dummy: 'stand', debug: false };
+const DEFAULTS: Settings = { mode: 'cpu', level: 1, stocks: 3, c1: 0, c2: 1, dummy: 'stand', debug: false, wJump: true };
 
 export const S: Settings = { ...DEFAULTS };
 export const WINS: Record<'cpu' | '2p', [number, number]> = { cpu: [0, 0], '2p': [0, 0] };

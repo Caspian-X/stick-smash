@@ -16,5 +16,8 @@ Stick Smash: Smash-style platform fighter. Phaser 4 + TypeScript + Vite. See REA
 - Phaser 4 docs ship as AI skills in `node_modules/phaser/skills/*/SKILL.md`. Read those before using unfamiliar Phaser APIs, because v4 differs from v3 (e.g. filters replace preFX/postFX).
 - `Graphics.fillPoints` typings want `Vector2[]`; wrap plain `{x, y}` arrays with `vec()` from `render/vec.ts`.
 - Scenes are reused by Phaser on restart (same class instance), so reset per-run state in `create()` and don't touch objects left over from a previous run.
-- Keyboard input is our own `KeyboardEvent.code` tracker (`game/input.ts`), not Phaser's. Call `consumePressed()` once per sim tick.
+- Keyboard input is our own `KeyboardEvent.code` tracker (`game/input.ts`), not Phaser's. Call `consumePressed()` once per sim tick. It ignores keys typed into DOM `input/select/textarea` (editor panel). Jump is its own input (`jump`/`jumpHeld`, Space or W), separate from `up`.
+- Hitbox editor (`src/editor/`) saves through the dev-only `/__editor/save` middleware in `vite.config.ts`, using `source.ts` to patch only `hitboxes`/`endLag`/`landingLag` in fighter files. Keep fighter files in the existing literal style (one `moves: {` object, one hitbox per line in canonical key order, see `HITBOX_KEYS`): `tests/editor.test.ts` checks that re-saving unchanged data is byte-identical.
+- In dev, `window.game` is the Phaser game. Browser scripts can reach scenes with `game.scene.getScene('editor')`.
+- Imports reachable from `vite.config.ts` need explicit `.ts` extensions (Vite's native config loader warns otherwise).
 - Match the existing compact code style. Keep comments sparse and only where behavior isn't obvious.

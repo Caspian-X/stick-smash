@@ -9,8 +9,8 @@ import { COLORS } from '../data/colors';
 
 export interface Input {
   left: boolean; right: boolean; up: boolean; down: boolean;
-  /** Up pressed this frame. */
-  jump: boolean;
+  /** Jump pressed this frame / jump button held (full hop vs short hop). */
+  jump: boolean; jumpHeld: boolean;
   atk: boolean; atkHeld: boolean; sp: boolean; spHeld: boolean; grab: boolean;
   shield: boolean; shieldP: boolean; downP: boolean;
   /** Direction pressed within the smash-input window and still held. */
@@ -19,7 +19,7 @@ export interface Input {
   anyP: boolean;
 }
 export const EMPTY: Readonly<Input> = Object.freeze({
-  left: false, right: false, up: false, down: false, jump: false, atk: false, atkHeld: false, sp: false, spHeld: false,
+  left: false, right: false, up: false, down: false, jump: false, jumpHeld: false, atk: false, atkHeld: false, sp: false, spHeld: false,
   grab: false, shield: false, shieldP: false, downP: false, tapL: false, tapR: false, tapU: false, tapD: false, anyP: false,
 });
 export const blankInput = (): Input => ({ ...EMPTY });
@@ -51,7 +51,7 @@ export interface Fighter {
   lag: number;
   inv: number; blink: number;
   upB: boolean; adUsed: boolean; ff: boolean;
-  drop: number; hopChk: number; hopY0: number; ledgeCD: number;
+  drop: number; ledgeCD: number;
   runPh: number; flipT: number; flash: number; hudShake: number;
   sh: number; lastSP: number; inDir: number;
   ai: AiState;
@@ -152,7 +152,7 @@ export function mkFighter(i: number, ch: number, cpu: boolean, name: string, sto
     x: sp.x, y: STAGE.top, vx: 0, vy: 0, face: sp.face, dmg: 0, stocks,
     ground: true, surf: GROUND, jumps: 0, state: 'idle', t: 0, sd: { hit: new Set() }, move: null,
     hitstun: 0, tumble: false, spin: 0, lag: 0, inv: 0, blink: 0, upB: false, adUsed: false, ff: false,
-    drop: 0, hopChk: 0, hopY0: 0, ledgeCD: 0, runPh: 0, flipT: 0, flash: 0, hudShake: 0,
+    drop: 0, ledgeCD: 0, runPh: 0, flipT: 0, flash: 0, hudShake: 0,
     sh: DATA.g.shield.max, lastSP: -99, inDir: 0,
     ai: { cool: 30, wait: 0, shieldT: 0, chargeT: 0, spT: 0, upT: 0, holdT: 0, pum: 0 },
   };

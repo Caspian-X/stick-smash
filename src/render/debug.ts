@@ -26,11 +26,10 @@ export class DebugOverlay {
     g.clear();
     this.labels.forEach(l => l.setVisible(on));
     if (!on) return;
-    g.lineStyle(1, 0x66ffcc, 0.35);
     for (const side of [-1, 1]) {
-      const ex = side < 0 ? STAGE.L : STAGE.R;
-      const x1 = side < 0 ? ex - LEDGE.reachOut : ex - LEDGE.reachIn, x2 = side < 0 ? ex + LEDGE.reachIn : ex + LEDGE.reachOut;
-      g.strokeRect(x1, STAGE.top + LEDGE.minBelowTop, x2 - x1, LEDGE.maxBelowTop - LEDGE.minBelowTop);
+      const cx = side < 0 ? STAGE.L : STAGE.R, cy = STAGE.top + LEDGE.cy, a0 = side < 0 ? Math.PI / 2 : -Math.PI / 2;
+      g.fillStyle(0x66ffcc, 0.08).lineStyle(1, 0x66ffcc, 0.45);
+      g.beginPath(); g.arc(cx, cy, LEDGE.r, a0, a0 + Math.PI, false); g.closePath(); g.fillPath(); g.strokePath();
     }
     for (const p of w.projs) g.lineStyle(2, 0xff3355, 1).strokeCircle(p.x, p.y, p.r);
     w.fighters.forEach((f, k) => {
@@ -40,6 +39,7 @@ export class DebugOverlay {
       g.fillStyle(hc, 0.12).fillRect(h.x1, h.y1, h.x2 - h.x1, h.y2 - h.y1);
       g.lineStyle(1.5, hc, 0.9).strokeRect(h.x1, h.y1, h.x2 - h.x1, h.y2 - h.y1);
       g.fillStyle(0xffffff, 1).fillCircle(f.x, f.y, 2.5);
+      g.fillStyle(0x66ffcc, 1).fillCircle(f.x, f.y - LEDGE.handY, 2.5);
       for (const b of activeBoxes(f)) {
         const c = b.grab ? 0xc070ff : 0xff3355;
         g.fillStyle(c, 0.3).fillCircle(b.wx, b.wy, b.r);

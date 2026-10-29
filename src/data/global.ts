@@ -7,9 +7,8 @@ import type { PhaseHitbox } from './types';
 export const GLOBAL = {
   /** Shared movement rules. Per-fighter speeds/gravity live in each fighter's `stats`. */
   movement: {
+    /** Frames crouching before takeoff. Jump still held on the last one = full hop, released = short hop (fixed heights). */
     jumpsquat: 4,
-    /** Frames after a full-hop takeoff during which releasing up cuts it to short-hop height. */
-    shortHopWindow: 8,
     /** Air drift when no direction is held (multiplier per frame). */
     airDrag: 0.96,
     /** Air drift multiplier when a direction is held but already at max speed. */
@@ -34,8 +33,8 @@ export const GLOBAL = {
     pushRadius: 26,
     pushStrength: 0.15,
     /** Ground speed needed for attack → dash attack and grab → dash grab. */
-    dashAttackSpeed: 5,
-    dashGrabSpeed: 4.5,
+    dashAttackSpeed: 4.3,
+    dashGrabSpeed: 3.9,
     /** Frames a direction press counts as a "tap" for smash attacks, rolls and spot dodges. */
     tapWindow: 5,
   },
