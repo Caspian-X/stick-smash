@@ -1,2 +1,27 @@
+# Rust (Cargo.lock is committed: this is an application)
 /target
+**/*.rs.bk
+*.pdb
+
+# Node tooling in tools/
+node_modules/
+
+# Profiling
+*.profraw
+*.profdata
+perf.data*
+flamegraph*.svg
+*.trace/
+
+# Editors / OS (shared VS Code settings, e.g. JSON schema mappings, are allowed)
 .DS_Store
+.idea/
+*.swp
+*~
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Local
+.env
+*.log
