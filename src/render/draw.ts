@@ -165,7 +165,7 @@ export function drawFighter(g: G, w: World, f: Fighter, showBoxes: boolean) {
   }
   if (showBoxes) {
     for (const bx of activeBoxes(f)) {
-      if (bx.grab) continue;
+      if (bx.type === 'grab' || bx.type === 'windbox') continue;
       g.fillStyle(pal.c, 0.22); g.fillCircle(bx.wx, bx.wy, bx.r);
       g.lineStyle(2, 0xffffff, 0.55); g.strokeCircle(bx.wx, bx.wy, bx.r);
     }

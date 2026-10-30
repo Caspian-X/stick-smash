@@ -41,7 +41,7 @@ function gordoPhys(w: World, p: World['projs'][number]) {
 export function batGordos(w: World, a: Fighter, bx: ActiveBox[]) {
   for (const p of w.projs) {
     if (!p.gordo || p.hcd > 0 || p.life <= 0) continue;
-    const b = bx.find(b => !b.grab && Math.hypot(b.wx - p.x, b.wy - p.y) < b.r + p.r);
+    const b = bx.find(b => b.type !== 'grab' && b.type !== 'windbox' && Math.hypot(b.wx - p.x, b.wy - p.y) < b.r + p.r);
     if (!b) continue;
     const gp = p.gp!;
     const sgn = b.dir === 'away' ? (Math.sign(p.x - a.x) || a.face) : b.dir === 'back' ? -a.face : a.face;

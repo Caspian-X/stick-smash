@@ -8,6 +8,21 @@ export type MoveId =
   | 'grab' | 'dashgrab'
   | 'nspec' | 'uspec' | 'dspec';
 
+/**
+ * Hitbox behavior, modeled on Smash. Default 'normal'.
+ * - spike: always launches downward (a positive `angle` is mirrored below the horizon).
+ * - trip: grounded victims are knocked prone (knockdown) instead of launched. Airborne victims are hit normally.
+ * - sakurai: the angle is chosen automatically: flat on weak grounded hits, a bit higher on strong ones, 45° in the air (`global.hitTypes.sakurai`).
+ * - autolink: pulls the victim toward the hitbox center, plus the attacker's momentum. Used for multi-hit moves (`rehit`).
+ * - windbox: no damage, hitstun or hitlag. Pushes anything it touches every frame along `angle` (strength = bkb).
+ * - electric: the victim's hitlag is longer (`global.hitTypes.electric`), with spark effects.
+ * - grab: grabs instead of hitting.
+ */
+export type HitboxType = 'normal' | 'spike' | 'trip' | 'sakurai' | 'autolink' | 'windbox' | 'electric' | 'grab';
+
+/** Per-frame geometry override: [frame, x, y, r]. */
+export type HitboxFrame = [number, number, number, number];
+
 export interface Hitbox {
   /** First active frame. */
   start: number;
@@ -29,6 +44,12 @@ export interface Hitbox {
   angle: number;
   /** 'away' launches away from the attacker's center (multi-direction hits); 'back' launches backward. */
   dir?: 'away' | 'back';
+  /** Behavior (default 'normal'). */
+  type?: HitboxType;
+  /** Fixed knockback: ignores the victim's percent (knockback = bkb × weight). */
+  setKb?: boolean;
+  /** Multi-hit: can hit the same victim again every this many frames (default: once per move). */
+  rehit?: number;
   /** Multiplies the hitstun this box causes (default 1). */
   hitstunMult?: number;
   /** Flat frames added to hitstun (default 0). */
@@ -39,8 +60,11 @@ export interface Hitbox {
   shieldDmgMult?: number;
   /** Multiplies shield stun (default 1). */
   shieldStunMult?: number;
-  /** Grab box: grabs instead of hitting. */
-  grab?: boolean;
+  /**
+   * Per-frame position/size: [frame, x, y, r] entries. A frame without an entry uses the closest earlier entry,
+   * or x/y/r before the first entry. Omit for a box that stays put.
+   */
+  frames?: HitboxFrame[];
 }
 
 /** Hitbox for phases that aren't frame-windowed (projectiles, shockwaves, throws). start/end are ignored. */

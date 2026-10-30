@@ -22,11 +22,11 @@ export const BASE_STATS: FighterStats = {
 export const COMMON_GRABS: { grab: MoveData; dashgrab: MoveData } = {
   grab: {
     name: 'Grab', endLag: 22,
-    hitboxes: [{ start: 6, end: 8, x: 34, y: 46, r: 20, damage: 0, bkb: 0, kbg: 0, angle: 0, grab: true }],
+    hitboxes: [{ start: 6, end: 8, x: 34, y: 46, r: 20, damage: 0, bkb: 0, kbg: 0, angle: 0, type: 'grab' }],
   },
   dashgrab: {
     name: 'Dash Grab', endLag: 28, slide: 8,
-    hitboxes: [{ start: 8, end: 10, x: 40, y: 46, r: 22, damage: 0, bkb: 0, kbg: 0, angle: 0, grab: true }],
+    hitboxes: [{ start: 8, end: 10, x: 40, y: 46, r: 22, damage: 0, bkb: 0, kbg: 0, angle: 0, type: 'grab' }],
   },
 };
 

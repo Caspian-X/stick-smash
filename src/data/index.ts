@@ -4,7 +4,7 @@ import { GLOBAL } from './global';
 import brawler from './fighters/brawler';
 import swordfighter from './fighters/swordfighter';
 import king from './fighters/king';
-import type { FighterData, MoveData } from './types';
+import type { FighterData, Hitbox, HitboxFrame, MoveData } from './types';
 
 export const DATA = {
   g: GLOBAL,
@@ -12,6 +12,15 @@ export const DATA = {
   /** Bumped on every hot reload. */
   version: 0,
 };
+
+/** A hitbox's geometry on move frame `t`, applying its per-frame `frames` entries (closest entry at or before t). */
+export function boxAt<T extends Pick<Hitbox, 'x' | 'y' | 'r' | 'frames'>>(b: T, t: number): T {
+  const fr = b.frames;
+  if (!fr?.length) return b;
+  let k: HitboxFrame | undefined;
+  for (const e of fr) if (e[0] <= t && (!k || e[0] >= k[0])) k = e;
+  return k ? { ...b, x: k[1], y: k[2], r: k[3] } : b;
+}
 
 /** Frame the move ends (actionable after this). Undefined for phase-driven moves. */
 export function moveTotal(d: MoveData): number {

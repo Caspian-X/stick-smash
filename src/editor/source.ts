@@ -6,8 +6,8 @@ import type { Hitbox, StandardMove } from '../data/types.ts';
 
 /** Key order used when writing a hitbox. Unknown keys go last. */
 export const HITBOX_KEYS: (keyof Hitbox)[] = [
-  'start', 'end', 'x', 'y', 'r', 'damage', 'bkb', 'kbg', 'angle', 'dir',
-  'hitstunMult', 'hitstunAdd', 'hitlagMult', 'shieldDmgMult', 'shieldStunMult', 'grab',
+  'start', 'end', 'x', 'y', 'r', 'damage', 'bkb', 'kbg', 'angle', 'dir', 'type', 'setKb', 'rehit',
+  'hitstunMult', 'hitstunAdd', 'hitlagMult', 'shieldDmgMult', 'shieldStunMult', 'frames',
 ];
 const EDITED = ['endLag', 'landingLag', 'hitboxes'] as const;
 

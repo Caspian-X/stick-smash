@@ -37,12 +37,28 @@ ftilt: {
 - **Startup** = the first hitbox's `start`. **Active** = `start`–`end` (inclusive).
 - **End lag** = `endLag`: frames after the last active frame before you can act. Total length = last `end` + `endLag`.
 - **Landing lag** (aerials) = `landingLag`.
-- **Knockback** = `(bkb + victim% × kbg × 1.4) × victimWeight`, launched at `angle` (0 forward, 90 up, negative = spike).
+- **Knockback** = `(bkb + victim% × kbg × 1.4) × victimWeight`, launched at `angle` (0 forward, 90 up, negative = spike). `setKb: true` = fixed knockback (`bkb × weight`, ignores %).
 - **Hitstun** = `floor(knockback × 1.7) + 4` (globals in `global.ts → hitstun`), then per-hitbox `hitstunMult` / `hitstunAdd`.
-- Per-hitbox extras: `hitlagMult`, `shieldDmgMult`, `shieldStunMult`, `dir: 'away' | 'back'`.
+- Per-hitbox extras: `hitlagMult`, `shieldDmgMult`, `shieldStunMult`, `dir: 'away' | 'back'`, `rehit: N` (multi-hit: can hit the same victim again every N frames).
+- **Per-frame boxes:** `frames: [[frame, x, y, r], …]` gives the box its own position/size on each frame. A frame with no entry uses the closest earlier one.
 - Smash attacks: `charge: { frame, max, button }`. Charge scales damage via `knockback.chargeDamageDivisor`.
 - Special moves use a `kind` (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) with their own documented fields.
 - When hitboxes overlap the victim, the **first listed** hitbox wins (sweetspots go first).
+
+### Hitbox types
+
+Set with `type` on a hitbox (default `normal`). Their tuning is in `global.ts → hitTypes`.
+
+| Type | Effect |
+|---|---|
+| `normal` | Launches at `angle`. |
+| `spike` | Meteor: always launches downward (a positive angle is mirrored). Grounded victims bounce up. |
+| `trip` | Grounded victims are knocked prone (knockdown with getup options). Airborne victims are hit normally. |
+| `sakurai` | Automatic angle: flat on weak grounded hits, higher on strong ones, 45° in the air. |
+| `autolink` | Pulls the victim toward the box center, plus the attacker's momentum. Pair it with `rehit` for multi-hit moves. |
+| `windbox` | No damage, hitstun or hitlag. Pushes anything it touches every frame along `angle`, with strength `bkb`. |
+| `electric` | Longer hitlag for the victim, with sparks. |
+| `grab` | Grabs instead of hitting. |
 
 ### Training mode
 
@@ -61,16 +77,20 @@ Pick **Mode → Training** in the menu.
 
 The panel shows your current move's frame and its startup/active/end lag, plus the **frame advantage** of the last hit, on hit or on shield. Positive means the attacker can act first. It also shows true-combo counts and combo damage.
 
-The debug view draws hurtboxes (yellow; cyan = invulnerable; orange = hitstun), active hitboxes (red; purple = grab), and each hitbox's launch angle (line length grows with base knockback). It also shows the half-circle ledge-grab zones (a fighter grabs when their hand point, the cyan dot, enters one) and per-fighter state/frame/hitlag/hitstun labels.
+The debug view draws hurtboxes (yellow; cyan = invulnerable; orange = hitstun), active hitboxes colored by type, and each hitbox's launch angle (line length grows with base knockback). It also shows the half-circle ledge-grab zones (a fighter grabs when their hand point, the cyan dot, enters one) and per-fighter state/frame/hitlag/hitstun labels.
 
 ### Hitbox editor (dev)
 
-Pick **Mode → Hitbox Editor** in the menu, or press `E` in Training. It shows a posed fighter at any frame of a move with every hitbox drawn on top.
+Pick **Mode → Hitbox Editor** in the menu, or press `E` in Training. Press `?` inside it for every shortcut.
 
-- Drag a circle to move it, drag its edge to resize, and drag the arrow tip to set the launch angle (hold Shift to snap to 15°).
-- Use the side panel for exact values, start/end frames, direction, grab, the optional multipliers, end lag and landing lag. You can also add, duplicate, delete and reorder boxes there (first listed wins).
-- The timeline shows startup/active/end lag, with one row per hitbox. Click it to scrub.
-- Keys: `←/→` frame, `↑/↓` move, `F` fighter, `Tab` next box, `N` add, `Del` delete, `Space` play, `M` speed, mouse wheel zoom, `⌘/Ctrl+Z` undo, `⌘/Ctrl+S` save.
+- **Layout:** fighter tabs and Save on top, the move list on the left, the posed fighter in the middle, the inspector on the right, and the timeline at the bottom.
+- **In the view:** click a box to select it, drag it to move it, drag its edge to resize it, and drag the arrow tip to aim (Shift snaps). Double-click empty space to add a box there. Drag empty space to pan, and use the wheel to zoom. `Alt+arrows` nudges a box.
+- **Per-frame positions:** in the inspector's *Position & size*, choose **Per frame**. Every active frame starts at the current position. Scrub to any frame and drag the box: only that frame changes. **Apply to all frames** copies the current frame to every frame. **Copy → next frame** (`C`) copies it forward and steps there. Onion skin (`O`) shows the box's path and neighbouring frames.
+- **Types:** pick Regular, Spike, Trip, Sakurai angle, Autolink, Windbox, Electric or Grab. Each one sets sensible defaults when you choose it.
+- **Inspector:** number fields can be scrubbed by dragging their label (Shift = ×10). There's an angle dial, multi-hit, fixed knockback and advanced multipliers. A preview shows knockback, hitstun and tumble at 0/50/100/150%, plus the move's frame advantage on shield.
+- **Timeline:** drag a bar to move its active frames, drag its edges to resize it, and drag the end of the blue band to change end lag. Diamonds mark per-frame keys; amber ones differ from the frame before.
+- **Reference dummy** (`G`): a hurtbox you can drag around. It turns red when a box would hit it.
+- `⌘/Ctrl+Z` undoes, `⌘/Ctrl+Shift+Z` redoes, and `⌘/Ctrl+S` saves.
 
 Edits apply live, so Training uses them immediately. **Save** writes them into `src/data/fighters/<fighter>.ts` through a dev-server endpoint (`vite.config.ts`). It only rewrites that move's `hitboxes`, `endLag` and `landingLag`, so comments and everything else stay as they are. A move inherited from `common.ts`, like grab, is saved as a new entry in that fighter's own file.
 
@@ -96,7 +116,7 @@ src/sim/       deterministic game logic: no Phaser, no DOM, no Math.random
   ai.ts          CPU
 src/render/    Phaser Graphics drawing (poses, fighters, fx, HUD, debug overlay)
 src/scenes/    MenuScene, FightScene (fixed-timestep loop, pause, training)
-src/editor/    hitbox editor: EditorScene (Phaser), panel.ts (DOM side panel), source.ts (rewrites fighter files)
+src/editor/    hitbox editor: EditorScene (viewport), model.ts (state + edit ops + undo), ui.ts / inspector.ts / timeline.ts / dom.ts (DOM panels), source.ts (rewrites fighter files)
 src/game/      keyboard, synthesized audio, saved settings
 ```
 

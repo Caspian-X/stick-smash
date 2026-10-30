@@ -35,6 +35,8 @@ export interface StateData {
   id?: MoveId; t?: number; ph?: number; t2?: number; charge?: number; cd?: number;
   n?: number; kind?: string; side?: number; dir?: number; dirl?: boolean; dx?: number; dy?: number;
   v?: Fighter | null; by?: Fighter | null; timer?: number; pt?: number; stun?: number; tech?: boolean; getup?: boolean;
+  /** Move frame each victim (by index) was last hit, for multi-hit boxes. */
+  hitAt?: number[];
 }
 export interface MoveState extends StateData { id: MoveId; t: number; ph: number; t2: number; charge: number }
 

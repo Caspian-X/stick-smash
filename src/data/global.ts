@@ -72,6 +72,20 @@ export const GLOBAL = {
     max: 16,
   },
 
+  /** Rules for each hitbox `type` (see HitboxType in types.ts). */
+  hitTypes: {
+    /** Grounded victim knocked prone: slide speed away from the attacker. */
+    trip: { slide: 2.5 },
+    /** Auto angle: grounded hits below tumble knockback use groundLow, stronger grounded hits groundHigh, airborne hits air. */
+    sakurai: { groundLow: 0, groundHigh: 40, air: 45 },
+    /** Victim velocity = (hitbox center − victim center) × pull + attacker velocity × momentum. */
+    autolink: { pull: 0.22, momentum: 1 },
+    /** Push per frame = bkb × push × victim weight, capped at maxSpeed. */
+    windbox: { push: 0.6, maxSpeed: 9 },
+    /** Victim hitlag multiplier. */
+    electric: { victimHitlagMult: 1.6 },
+  },
+
   shield: {
     max: 50,
     /** Shield HP lost per frame while held. */

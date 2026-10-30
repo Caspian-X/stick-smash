@@ -6,6 +6,7 @@ import { LEDGE, STAGE } from '../data/stage';
 import { type Fighter, type World, MV } from '../sim/core';
 import { activeBoxes, hurt } from '../sim/combat';
 import { txt } from '../scenes/common';
+import { HIT_TYPES, typeOf } from './hitTypes';
 
 export class DebugOverlay {
   g: Phaser.GameObjects.Graphics;
@@ -41,11 +42,12 @@ export class DebugOverlay {
       g.fillStyle(0xffffff, 1).fillCircle(f.x, f.y, 2.5);
       g.fillStyle(0x66ffcc, 1).fillCircle(f.x, f.y - LEDGE.handY, 2.5);
       for (const b of activeBoxes(f)) {
-        const c = b.grab ? 0xc070ff : 0xff3355;
+        const ty = typeOf(b), c = HIT_TYPES[ty].color;
         g.fillStyle(c, 0.3).fillCircle(b.wx, b.wy, b.r);
         g.lineStyle(2, c, 1).strokeCircle(b.wx, b.wy, b.r);
-        if (b.grab) continue;
-        const sgn = b.dir === 'back' ? -f.face : f.face, a = b.angle * Math.PI / 180, len = 16 + b.bkb * 3;
+        if (ty === 'grab' || ty === 'autolink') continue;
+        if (ty === 'sakurai') { g.lineStyle(2, 0xffffff, 0.9).strokeCircle(b.wx, b.wy, 4); continue; }
+        const sgn = b.dir === 'back' ? -f.face : f.face, a = (ty === 'spike' ? -Math.abs(b.angle) : b.angle) * Math.PI / 180, len = 16 + b.bkb * 3;
         if (b.dir === 'away') { g.lineStyle(2, 0xffffff, 0.9).strokeCircle(b.wx, b.wy, 4); continue; }
         const ex = b.wx + Math.cos(a) * len * sgn, ey = b.wy - Math.sin(a) * len;
         g.lineStyle(2.5, 0xffffff, 0.95).lineBetween(b.wx, b.wy, ex, ey);

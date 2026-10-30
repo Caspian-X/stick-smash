@@ -17,7 +17,7 @@ const swordfighter: FighterData = {
     ...COMMON_GRABS,
     jab: {
       name: 'Jab', endLag: 12, anim: { body: 'stand', swing: [[0, 40], [3, -15], [6, 10]] },
-      hitboxes: [{ start: 3, end: 6, x: 58, y: 50, r: 22, damage: 4, bkb: 4, kbg: 0.05, angle: 30 }],
+      hitboxes: [{ start: 3, end: 6, x: 58, y: 50, r: 22, damage: 4, bkb: 4, kbg: 0.05, angle: 80 }],
     },
     ftilt: {
       name: 'Forward Tilt', endLag: 19, anim: { body: 'lean', swing: [[0, 30], [4, -60], [7, -60], [11, 40]] },
@@ -26,13 +26,16 @@ const swordfighter: FighterData = {
     utilt: {
       name: 'Up Tilt', endLag: 14, anim: { body: 'stand', swing: [[0, 40], [5, 10], [6, 0], [12, -180]] },
       hitboxes: [
-        { start: 6, end: 12, x: 14, y: 104, r: 34, damage: 8, bkb: 6, kbg: 0.1, angle: 88 },
-        { start: 6, end: 12, x: 60, y: 84, r: 24, damage: 8, bkb: 6, kbg: 0.1, angle: 80 },
+        { start: 7, end: 12, x: 43, y: 65, r: 17, damage: 8, bkb: 6, kbg: 0.1, angle: 117, frames: [[7, 43, 65, 17], [8, 34, 85, 17], [9, 14, 97, 17], [10, -11, 93, 17], [11, -37, 78, 17], [12, -47, 58, 17]] },
+        { start: 7, end: 12, x: 65, y: 74, r: 16, damage: 8, bkb: 6, kbg: 0.1, angle: 108, frames: [[7, 65, 74, 16], [8, 46, 106, 16], [9, 12, 118, 16], [10, -26, 117, 16], [11, -56, 93, 16], [12, -74, 65, 16]] },
       ],
     },
     dtilt: {
       name: 'Down Tilt', endLag: 14, anim: { body: 'crouch', swing: [[0, 60], [4, 40], [5, 15], [8, 10]] },
-      hitboxes: [{ start: 5, end: 8, x: 66, y: 18, r: 22, damage: 7, bkb: 4, kbg: 0.07, angle: 20 }],
+      hitboxes: [
+        { start: 5, end: 14, x: 72, y: 17, r: 15, damage: 7, bkb: 4, kbg: 0.07, angle: -15, type: 'trip', rehit: 4 },
+        { start: 5, end: 14, x: 45, y: 25, r: 14, damage: 6, bkb: 5, kbg: 0.08, angle: -9 },
+      ],
     },
     dashatk: {
       name: 'Dash Attack', endLag: 22, slide: 14, anim: { body: 'lean', swing: [[0, -30], [6, -30], [14, 30]] },
@@ -80,7 +83,7 @@ const swordfighter: FighterData = {
     },
     dair: {
       name: 'Down Air', endLag: 20, aerial: true, landingLag: 14, anim: { body: 'air', swing: [[0, -70], [8, 60], [10, 90]] },
-      hitboxes: [{ start: 10, end: 14, x: 2, y: -18, r: 24, damage: 12, bkb: 4, kbg: 0.1, angle: -80 }],
+      hitboxes: [{ start: 10, end: 14, x: 2, y: -18, r: 24, damage: 12, bkb: 4, kbg: 0.1, angle: -90, type: 'spike' }],
     },
     nspec: {
       name: 'Lunge', endLag: 23, slide: 18, dash: { frame: 9, groundSpeed: 12, airSpeed: 8 },
