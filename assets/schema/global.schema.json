@@ -1,0 +1,1389 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": ["string", "null"], "writeOnly": true },
+    "schemaVersion": { "type": "integer", "format": "uint32", "minimum": 0 },
+    "movement": { "$ref": "#/$defs/Movement" },
+    "input": { "$ref": "#/$defs/InputRules" },
+    "sim": { "$ref": "#/$defs/SimRules" },
+    "ai": { "$ref": "#/$defs/AiRules" },
+    "knockback": { "$ref": "#/$defs/Knockback" },
+    "hitstun": { "$ref": "#/$defs/Hitstun" },
+    "hitlag": { "$ref": "#/$defs/Hitlag" },
+    "hitTypes": { "$ref": "#/$defs/HitTypes" },
+    "shield": { "$ref": "#/$defs/Shield" },
+    "dodge": { "$ref": "#/$defs/Dodge" },
+    "landing": { "$ref": "#/$defs/Landing" },
+    "tech": { "$ref": "#/$defs/Tech" },
+    "knockdown": { "$ref": "#/$defs/Knockdown" },
+    "ledge": { "$ref": "#/$defs/Ledge" },
+    "grab": { "$ref": "#/$defs/Grab" },
+    "respawn": { "$ref": "#/$defs/Respawn" },
+    "match": { "$ref": "#/$defs/Match" },
+    "palette": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/PlayerColors" },
+      "description": "Player colors by slot (8 slots)."
+    },
+    "render": { "$ref": "#/$defs/Render", "description": "Renderer tuning. Cosmetic only." }
+  },
+  "required": [
+    "schemaVersion",
+    "movement",
+    "input",
+    "sim",
+    "ai",
+    "knockback",
+    "hitstun",
+    "hitlag",
+    "hitTypes",
+    "shield",
+    "dodge",
+    "landing",
+    "tech",
+    "knockdown",
+    "ledge",
+    "grab",
+    "respawn",
+    "match",
+    "palette",
+    "render"
+  ],
+  "title": "Global",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Movement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "jumpsquat": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Frames crouching before takeoff. Jump still held on the last one = full hop, released = short hop."
+        },
+        "airDrag": {
+          "type": "number",
+          "format": "double",
+          "description": "Air drift when no direction is held (multiplier per frame)."
+        },
+        "airDragHeld": {
+          "type": "number",
+          "format": "double",
+          "description": "Air drift multiplier when a direction is held but already at max speed."
+        },
+        "fastFallMinVy": {
+          "type": "number",
+          "format": "double",
+          "description": "Fast fall allowed once vertical speed is above this (negative = still slightly rising; y down)."
+        },
+        "fastFallKick": {
+          "type": "number",
+          "format": "double",
+          "description": "Downward speed applied the frame you fast fall."
+        },
+        "attackAirAccel": {
+          "type": "number",
+          "format": "double",
+          "description": "Air accel for moves with `air: \"attack\"`."
+        },
+        "aerialAccel": {
+          "type": "number",
+          "format": "double",
+          "description": "Air accel for moves with `air: \"aerial\"`."
+        },
+        "helplessAccel": { "type": "number", "format": "double" },
+        "upSpecialAccel": {
+          "type": "number",
+          "format": "double",
+          "description": "Air accel for moves with `air: \"upSpecial\"`."
+        },
+        "attackFriction": {
+          "type": "number",
+          "format": "double",
+          "description": "Ground friction multiplier during attacks; `slide` frames use attackSlideFriction."
+        },
+        "attackSlideFriction": { "type": "number", "format": "double" },
+        "attackAirDrag": {
+          "type": "number",
+          "format": "double",
+          "description": "Air drift multiplier during attacks when not accelerating."
+        },
+        "platformDrop": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Frames platforms are ignored after dropping through."
+        },
+        "pushRadius": {
+          "type": "number",
+          "format": "double",
+          "description": "Fighters overlapping closer than this push apart."
+        },
+        "pushStrength": { "type": "number", "format": "double" },
+        "dashAttackSpeed": {
+          "type": "number",
+          "format": "double",
+          "description": "Ground speed needed for attack → dash attack and grab → dash grab."
+        },
+        "dashGrabSpeed": { "type": "number", "format": "double" },
+        "tapWindow": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Frames a direction press counts as a \"tap\" for smash attacks, rolls and spot dodges."
+        },
+        "bReverseWindow": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Frames after a `bReverse` move starts in which pressing the other direction turns it around."
+        }
+      },
+      "required": [
+        "jumpsquat",
+        "airDrag",
+        "airDragHeld",
+        "fastFallMinVy",
+        "fastFallKick",
+        "attackAirAccel",
+        "aerialAccel",
+        "helplessAccel",
+        "upSpecialAccel",
+        "attackFriction",
+        "attackSlideFriction",
+        "attackAirDrag",
+        "platformDrop",
+        "pushRadius",
+        "pushStrength",
+        "dashAttackSpeed",
+        "dashGrabSpeed",
+        "tapWindow",
+        "bReverseWindow"
+      ],
+      "description": "Shared movement rules. Per-fighter speeds and gravity live in each fighter's `stats`."
+    },
+    "InputRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "stickThreshold": { "type": "integer", "format": "int8", "minimum": -128, "maximum": 127 },
+        "bufferFrames": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Human press buffer lifetime in ticks (inclusive); 0 disables re-delivery."
+        }
+      },
+      "required": ["stickThreshold", "bufferFrames"],
+      "description": "Digital stick interpretation; history is part of the rollback snapshot."
+    },
+    "SimRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "jumpsquatFriction": { "type": "number", "format": "double" },
+        "landingFriction": { "type": "number", "format": "double" },
+        "shieldFriction": { "type": "number", "format": "double" },
+        "dodgeFriction": { "type": "number", "format": "double" },
+        "shieldbreakFriction": { "type": "number", "format": "double" },
+        "knockdownFriction": { "type": "number", "format": "double" },
+        "pushHeight": { "type": "number", "format": "double" },
+        "mainPad": { "type": "number", "format": "double" },
+        "platformPad": { "type": "number", "format": "double" },
+        "surfaceTolerance": { "type": "number", "format": "double" },
+        "techMinSpeed": {
+          "type": "number",
+          "format": "double",
+          "description": "Minimum downward landing speed to tech or enter knockdown from tumble."
+        },
+        "hitstunParticleSpeed": {
+          "type": "number",
+          "format": "double",
+          "description": "Speed above which hitstun emits alternate-frame trail particles."
+        },
+        "knockdownDrag": { "type": "number", "format": "double" },
+        "flipFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "ledgeDropSpeed": { "type": "number", "format": "double" },
+        "ledgeDropOffset": { "type": "number", "format": "double" },
+        "ledgePullIn": { "type": "number", "format": "double" },
+        "ledgeJumpOffset": { "type": "number", "format": "double" },
+        "ledgeJumpDrift": { "type": "number", "format": "double" },
+        "ledgeJumpCooldown": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "grabOffset": { "type": "number", "format": "double" },
+        "releaseVx": { "type": "number", "format": "double" },
+        "releaseVy": { "type": "number", "format": "double" },
+        "escapeAttackerVx": { "type": "number", "format": "double" },
+        "escapeVx": { "type": "number", "format": "double" },
+        "escapeVy": { "type": "number", "format": "double" },
+        "throwForward": { "type": "number", "format": "double" },
+        "throwBackHeight": { "type": "number", "format": "double" },
+        "throwUpHeight": { "type": "number", "format": "double" },
+        "throwDownOffset": { "type": "number", "format": "double" },
+        "platformDropOffset": { "type": "number", "format": "double" },
+        "maxDamage": { "type": "number", "format": "double" },
+        "projectilePad": { "type": "number", "format": "double" },
+        "projectileWallTop": { "type": "number", "format": "double" }
+      },
+      "required": [
+        "jumpsquatFriction",
+        "landingFriction",
+        "shieldFriction",
+        "dodgeFriction",
+        "shieldbreakFriction",
+        "knockdownFriction",
+        "pushHeight",
+        "mainPad",
+        "platformPad",
+        "surfaceTolerance",
+        "techMinSpeed",
+        "hitstunParticleSpeed",
+        "knockdownDrag",
+        "flipFrames",
+        "ledgeDropSpeed",
+        "ledgeDropOffset",
+        "ledgePullIn",
+        "ledgeJumpOffset",
+        "ledgeJumpDrift",
+        "ledgeJumpCooldown",
+        "grabOffset",
+        "releaseVx",
+        "releaseVy",
+        "escapeAttackerVx",
+        "escapeVx",
+        "escapeVy",
+        "throwForward",
+        "throwBackHeight",
+        "throwUpHeight",
+        "throwDownOffset",
+        "platformDropOffset",
+        "maxDamage",
+        "projectilePad",
+        "projectileWallTop"
+      ],
+      "description": "Shared simulation constants retained from the reference implementation."
+    },
+    "AiRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "initialCool": { "type": "number", "format": "double" },
+        "react": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "aggression": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "mash": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "tech": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "shieldResponse": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "defend": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "projectileDefend": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "charge": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "thresholds": {
+          "$ref": "#/$defs/AiThresholds",
+          "description": "Named thresholds for the fixed, shared decision tree (not fighter/move identities)."
+        }
+      },
+      "required": [
+        "initialCool",
+        "react",
+        "aggression",
+        "mash",
+        "tech",
+        "shieldResponse",
+        "defend",
+        "projectileDefend",
+        "charge",
+        "thresholds"
+      ],
+      "description": "CPU decision thresholds in reference branch order. Arrays are indexed by difficulty (0..2)."
+    },
+    "AiThresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "recoveryHeight": { "type": "number", "format": "double" },
+        "recoveryEdge": { "type": "number", "format": "double" },
+        "centerChance": { "type": "number", "format": "double" },
+        "knockdownWait": { "type": "number", "format": "double" },
+        "knockdownRandom": { "type": "number", "format": "double" },
+        "knockdownAttack": { "type": "number", "format": "double" },
+        "knockdownCenter": { "type": "number", "format": "double" },
+        "ledgeWaitMin": { "type": "number", "format": "double" },
+        "ledgeWaitMax": { "type": "number", "format": "double" },
+        "ledgeJump": { "type": "number", "format": "double" },
+        "ledgeAttack": { "type": "number", "format": "double" },
+        "ledgeShield": { "type": "number", "format": "double" },
+        "holdMin": { "type": "number", "format": "double" },
+        "holdMax": { "type": "number", "format": "double" },
+        "pummelMax": { "type": "number", "format": "double" },
+        "pummelChance": { "type": "number", "format": "double" },
+        "throwKillPercent": { "type": "number", "format": "double" },
+        "throwDown": { "type": "number", "format": "double" },
+        "throwUp": { "type": "number", "format": "double" },
+        "throwForward": { "type": "number", "format": "double" },
+        "shieldClose": { "type": "number", "format": "double" },
+        "shieldGrab": { "type": "number", "format": "double" },
+        "shieldSpecial": { "type": "number", "format": "double" },
+        "jumpHold": { "type": "number", "format": "double" },
+        "shieldMin": { "type": "number", "format": "double" },
+        "underPad": { "type": "number", "format": "double" },
+        "underBottom": { "type": "number", "format": "double" },
+        "offstagePad": { "type": "number", "format": "double" },
+        "recoverJumpVy": { "type": "number", "format": "double" },
+        "recoverJumpHeight": { "type": "number", "format": "double" },
+        "recoverSpecialVy": { "type": "number", "format": "double" },
+        "recoverSpecialHeight": { "type": "number", "format": "double" },
+        "recoverSpecialDistance": { "type": "number", "format": "double" },
+        "recoverSpecialDepth": { "type": "number", "format": "double" },
+        "centerDeadzone": { "type": "number", "format": "double" },
+        "targetPad": { "type": "number", "format": "double" },
+        "targetDeadzone": { "type": "number", "format": "double" },
+        "defendDistance": { "type": "number", "format": "double" },
+        "defendHeight": { "type": "number", "format": "double" },
+        "shieldHoldMin": { "type": "number", "format": "double" },
+        "shieldHoldMax": { "type": "number", "format": "double" },
+        "projectileDistance": { "type": "number", "format": "double" },
+        "projectileHeight": { "type": "number", "format": "double" },
+        "projectileShieldChance": { "type": "number", "format": "double" },
+        "projectileShieldFrames": { "type": "number", "format": "double" },
+        "jumpTargetHeight": { "type": "number", "format": "double" },
+        "jumpTargetDistance": { "type": "number", "format": "double" },
+        "jumpChance": { "type": "number", "format": "double" },
+        "dropHeight": { "type": "number", "format": "double" },
+        "dropDistance": { "type": "number", "format": "double" },
+        "dropChance": { "type": "number", "format": "double" },
+        "attackHeight": { "type": "number", "format": "double" },
+        "punishDizzyCharge": { "type": "number", "format": "double" },
+        "punishCharge": { "type": "number", "format": "double" },
+        "smashChance": { "type": "number", "format": "double" },
+        "smashForward": { "type": "number", "format": "double" },
+        "smashDown": { "type": "number", "format": "double" },
+        "grabChance": { "type": "number", "format": "double" },
+        "tiltChance": { "type": "number", "format": "double" },
+        "downTiltChance": { "type": "number", "format": "double" },
+        "jabChance": { "type": "number", "format": "double" },
+        "upAttackHeight": { "type": "number", "format": "double" },
+        "upAttackDistance": { "type": "number", "format": "double" },
+        "downAttackHeight": { "type": "number", "format": "double" },
+        "downAttackDistance": { "type": "number", "format": "double" },
+        "projectileTargetHeight": { "type": "number", "format": "double" }
+      },
+      "required": [
+        "recoveryHeight",
+        "recoveryEdge",
+        "centerChance",
+        "knockdownWait",
+        "knockdownRandom",
+        "knockdownAttack",
+        "knockdownCenter",
+        "ledgeWaitMin",
+        "ledgeWaitMax",
+        "ledgeJump",
+        "ledgeAttack",
+        "ledgeShield",
+        "holdMin",
+        "holdMax",
+        "pummelMax",
+        "pummelChance",
+        "throwKillPercent",
+        "throwDown",
+        "throwUp",
+        "throwForward",
+        "shieldClose",
+        "shieldGrab",
+        "shieldSpecial",
+        "jumpHold",
+        "shieldMin",
+        "underPad",
+        "underBottom",
+        "offstagePad",
+        "recoverJumpVy",
+        "recoverJumpHeight",
+        "recoverSpecialVy",
+        "recoverSpecialHeight",
+        "recoverSpecialDistance",
+        "recoverSpecialDepth",
+        "centerDeadzone",
+        "targetPad",
+        "targetDeadzone",
+        "defendDistance",
+        "defendHeight",
+        "shieldHoldMin",
+        "shieldHoldMax",
+        "projectileDistance",
+        "projectileHeight",
+        "projectileShieldChance",
+        "projectileShieldFrames",
+        "jumpTargetHeight",
+        "jumpTargetDistance",
+        "jumpChance",
+        "dropHeight",
+        "dropDistance",
+        "dropChance",
+        "attackHeight",
+        "punishDizzyCharge",
+        "punishCharge",
+        "smashChance",
+        "smashForward",
+        "smashDown",
+        "grabChance",
+        "tiltChance",
+        "downTiltChance",
+        "jabChance",
+        "upAttackHeight",
+        "upAttackDistance",
+        "downAttackHeight",
+        "downAttackDistance",
+        "projectileTargetHeight"
+      ],
+      "description": "Geometry, timing, and probability thresholds for the shared CPU decision tree."
+    },
+    "Knockback": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kbPercentScale": { "type": "number", "format": "double" },
+        "tumbleThreshold": {
+          "type": "number",
+          "format": "double",
+          "description": "Knockback above this sends the victim tumbling (can tech, lands in knockdown)."
+        },
+        "groundBounce": {
+          "type": "number",
+          "format": "double",
+          "description": "Hitting a grounded victim downward bounces them up at this fraction."
+        },
+        "chargeDamageDivisor": {
+          "type": "number",
+          "format": "double",
+          "description": "Charge: damage × (1 + charge / chargeDamageDivisor)."
+        },
+        "chargeKbRatio": {
+          "type": "number",
+          "format": "double",
+          "description": "Fraction of the charge damage bonus that also applies to base knockback."
+        }
+      },
+      "required": ["kbPercentScale", "tumbleThreshold", "groundBounce", "chargeDamageDivisor", "chargeKbRatio"],
+      "description": "Knockback = (bkb + victimPercent × kbg × kbPercentScale) × victimWeight."
+    },
+    "Hitstun": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "perKnockback": { "type": "number", "format": "double" },
+        "base": { "type": "number", "format": "double" },
+        "gravity": { "type": "number", "format": "double" },
+        "maxFall": { "type": "number", "format": "double" },
+        "airDrag": { "type": "number", "format": "double" },
+        "groundDrag": { "type": "number", "format": "double" },
+        "driftAccel": {
+          "type": "number",
+          "format": "double",
+          "description": "Horizontal drift you can add while in hitstun (per frame)."
+        }
+      },
+      "required": ["perKnockback", "base", "gravity", "maxFall", "airDrag", "groundDrag", "driftAccel"],
+      "description": "Hitstun = floor(knockback × perKnockback) + base, then per-hitbox hitstunMult/hitstunAdd."
+    },
+    "Hitlag": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "base": { "type": "number", "format": "double" },
+        "perDamage": { "type": "number", "format": "double" },
+        "perKnockback": { "type": "number", "format": "double" },
+        "max": { "type": "number", "format": "double" }
+      },
+      "required": ["base", "perDamage", "perKnockback", "max"],
+      "description": "Hitlag (freeze frames for both fighters) = min(max, floor(base + damage × perDamage + knockback × perKnockback))."
+    },
+    "HitTypes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "trip": { "$ref": "#/$defs/TripRule" },
+        "sakurai": { "$ref": "#/$defs/SakuraiRule" },
+        "autolink": { "$ref": "#/$defs/AutolinkRule" },
+        "windbox": { "$ref": "#/$defs/WindboxRule" },
+        "electric": { "$ref": "#/$defs/ElectricRule" }
+      },
+      "required": ["trip", "sakurai", "autolink", "windbox", "electric"],
+      "description": "Rules for each hitbox `type`."
+    },
+    "TripRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slide": { "type": "number", "format": "double" }
+      },
+      "required": ["slide"],
+      "description": "Grounded victim knocked prone: slide speed away from the attacker."
+    },
+    "SakuraiRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "groundLow": { "type": "number", "format": "double" },
+        "groundHigh": { "type": "number", "format": "double" },
+        "air": { "type": "number", "format": "double" }
+      },
+      "required": ["groundLow", "groundHigh", "air"],
+      "description": "Auto angle: grounded hits below tumble knockback use groundLow, stronger grounded hits groundHigh, airborne hits air."
+    },
+    "AutolinkRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pull": { "type": "number", "format": "double" },
+        "momentum": { "type": "number", "format": "double" }
+      },
+      "required": ["pull", "momentum"],
+      "description": "Victim velocity = (hitbox center − victim center) × pull + attacker velocity × momentum."
+    },
+    "WindboxRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "push": { "type": "number", "format": "double" },
+        "maxSpeed": { "type": "number", "format": "double" }
+      },
+      "required": ["push", "maxSpeed"],
+      "description": "Push per frame = bkb × push × victim weight, capped at maxSpeed."
+    },
+    "ElectricRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "victimHitlagMult": { "type": "number", "format": "double", "description": "Victim hitlag multiplier." }
+      },
+      "required": ["victimHitlagMult"]
+    },
+    "Shield": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max": { "type": "number", "format": "double" },
+        "decay": { "type": "number", "format": "double", "description": "Shield HP lost per frame while held." },
+        "regen": {
+          "type": "number",
+          "format": "double",
+          "description": "Shield HP regained per frame while not shielding."
+        },
+        "damageMult": {
+          "type": "number",
+          "format": "double",
+          "description": "Shield HP lost = damage × damageMult × hitbox.shieldDmgMult."
+        },
+        "stunPerDamage": {
+          "type": "number",
+          "format": "double",
+          "description": "Shield stun = floor(damage × stunPerDamage + stunBase)."
+        },
+        "stunBase": { "type": "number", "format": "double" },
+        "hitlagBase": {
+          "type": "number",
+          "format": "double",
+          "description": "Shield hitlag = floor(hitlagBase + damage × hitlagPerDamage)."
+        },
+        "hitlagPerDamage": { "type": "number", "format": "double" },
+        "pushPerDamage": {
+          "type": "number",
+          "format": "double",
+          "description": "Defender slide = damage × pushPerDamage + pushBase."
+        },
+        "pushBase": { "type": "number", "format": "double" },
+        "attackerPushback": {
+          "type": "number",
+          "format": "double",
+          "description": "Attacker's own pushback on a shielded grounded hit."
+        },
+        "dropLag": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Frames of lag after releasing shield."
+        },
+        "breakLaunch": { "type": "number", "format": "double" },
+        "breakGravity": { "type": "number", "format": "double" },
+        "breakMaxFall": { "type": "number", "format": "double" },
+        "dizzyBase": {
+          "type": "number",
+          "format": "double",
+          "description": "Dizzy duration = max(dizzyMin, dizzyBase − percent × dizzyPerPercent)."
+        },
+        "dizzyMin": { "type": "number", "format": "double" },
+        "dizzyPerPercent": { "type": "number", "format": "double" },
+        "dizzyMash": {
+          "type": "number",
+          "format": "double",
+          "description": "Frames removed from dizzy per button press."
+        },
+        "dizzyRecoverHP": {
+          "type": "number",
+          "format": "double",
+          "description": "Shield HP after recovering from dizzy."
+        }
+      },
+      "required": [
+        "max",
+        "decay",
+        "regen",
+        "damageMult",
+        "stunPerDamage",
+        "stunBase",
+        "hitlagBase",
+        "hitlagPerDamage",
+        "pushPerDamage",
+        "pushBase",
+        "attackerPushback",
+        "dropLag",
+        "breakLaunch",
+        "breakGravity",
+        "breakMaxFall",
+        "dizzyBase",
+        "dizzyMin",
+        "dizzyPerPercent",
+        "dizzyMash",
+        "dizzyRecoverHP"
+      ]
+    },
+    "Dodge": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rollInvuln": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "rollFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "rollSpeed": { "type": "number", "format": "double" },
+        "rollMoveStart": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "rollMoveEnd": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "spotInvuln": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "spotFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "airDodgeInvuln": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "airDodgeFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "airDodgeLandingLag": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "dirAirDodgeInvuln": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "dirAirDodgeFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "dirAirDodgeSpeed": { "type": "number", "format": "double" },
+        "dirAirDodgeDecay": { "type": "number", "format": "double" },
+        "dirAirDodgeDecayFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "dirAirDodgeLandingLag": { "type": "integer", "format": "uint32", "minimum": 0 }
+      },
+      "required": [
+        "rollInvuln",
+        "rollFrames",
+        "rollSpeed",
+        "rollMoveStart",
+        "rollMoveEnd",
+        "spotInvuln",
+        "spotFrames",
+        "airDodgeInvuln",
+        "airDodgeFrames",
+        "airDodgeLandingLag",
+        "dirAirDodgeInvuln",
+        "dirAirDodgeFrames",
+        "dirAirDodgeSpeed",
+        "dirAirDodgeDecay",
+        "dirAirDodgeDecayFrames",
+        "dirAirDodgeLandingLag"
+      ]
+    },
+    "Landing": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hard": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Landing lag from a normal fall faster than softLandSpeed."
+        },
+        "softLandSpeed": { "type": "number", "format": "double" },
+        "helpless": { "type": "integer", "format": "uint32", "minimum": 0 }
+      },
+      "required": ["hard", "softLandSpeed", "helpless"]
+    },
+    "Tech": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "window": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Press shield within this many frames before landing in tumble to tech."
+        },
+        "invuln": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "frames": { "type": "integer", "format": "uint32", "minimum": 0 }
+      },
+      "required": ["window", "invuln", "frames"]
+    },
+    "Knockdown": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "minFrames": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Frames lying down before you can act."
+        },
+        "autoGetup": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Automatically stand up at this frame."
+        },
+        "getupFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "getupInvuln": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "attackFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "attackInvuln": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "attackActive": {
+          "type": "array",
+          "items": { "type": "integer", "format": "uint32", "minimum": 0 },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Getup attack active frames (inclusive)."
+        },
+        "attack": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Hitbox" }
+        }
+      },
+      "required": [
+        "minFrames",
+        "autoGetup",
+        "getupFrames",
+        "getupInvuln",
+        "attackFrames",
+        "attackInvuln",
+        "attackActive",
+        "attack"
+      ]
+    },
+    "Hitbox": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "start": { "type": "integer", "format": "uint32", "minimum": 0, "description": "First active phase frame." },
+        "end": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Last active phase frame (inclusive). Omit to stay active until the phase ends."
+        },
+        "x": {
+          "type": "number",
+          "format": "double",
+          "description": "Offset forward from the feet. Negative = behind."
+        },
+        "y": { "type": "number", "format": "double", "description": "Offset up from the feet." },
+        "r": { "type": "number", "format": "double", "description": "Radius." },
+        "damage": { "type": "number", "format": "double", "description": "Percent dealt." },
+        "bkb": { "type": "number", "format": "double", "description": "Base knockback." },
+        "kbg": {
+          "type": "number",
+          "format": "double",
+          "description": "Knockback growth: knockback added per victim percent."
+        },
+        "angle": {
+          "type": "number",
+          "format": "double",
+          "description": "Launch angle in degrees. 0 = forward, 90 = straight up, negative = down."
+        },
+        "dir": { "$ref": "#/$defs/LaunchDir" },
+        "type": { "$ref": "#/$defs/HitType" },
+        "setKb": {
+          "type": "boolean",
+          "description": "Fixed knockback: ignores the victim's percent (knockback = bkb × weight)."
+        },
+        "rehit": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Multi-hit: can hit the same victim again every this many frames (default: once per phase)."
+        },
+        "hitstunMult": {
+          "type": "number",
+          "format": "double",
+          "description": "Multiplies the hitstun this box causes."
+        },
+        "hitstunAdd": { "type": "number", "format": "double", "description": "Flat frames added to hitstun." },
+        "hitlagMult": {
+          "type": "number",
+          "format": "double",
+          "description": "Multiplies hitlag (freeze frames) on hit."
+        },
+        "shieldDmgMult": { "type": "number", "format": "double", "description": "Multiplies shield damage." },
+        "shieldStunMult": { "type": "number", "format": "double", "description": "Multiplies shield stun." },
+        "counterDamage": {
+          "type": "boolean",
+          "description": "Counter strike: damage comes from the countered hit (see `Counter`). Inactive if nothing was countered."
+        },
+        "frames": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "number", "format": "double" },
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "description": "Per-frame position/size `[frame, x, y, r]`. A frame without an entry uses the closest earlier entry, or\nx/y/r before the first entry. Omit for a box that stays put."
+        }
+      },
+      "required": ["x", "y", "r", "damage", "bkb", "kbg", "angle"],
+      "description": "A hit circle. In a move phase, `start`/`end` are inclusive phase frames. For throws, projectiles and other\nhits that aren't frame-windowed they are ignored. When two boxes overlap a victim, the first listed wins."
+    },
+    "LaunchDir": {
+      "oneOf": [
+        { "type": "string", "const": "forward", "description": "The way the attacker faces." },
+        { "type": "string", "const": "away", "description": "Away from the attacker's center (multi-direction hits)." },
+        { "type": "string", "const": "back", "description": "Behind the attacker." }
+      ],
+      "description": "Launch direction rule."
+    },
+    "HitType": {
+      "oneOf": [
+        { "type": "string", "enum": ["normal"] },
+        {
+          "type": "string",
+          "const": "spike",
+          "description": "Always launches downward (a positive `angle` is mirrored below the horizon)."
+        },
+        {
+          "type": "string",
+          "const": "trip",
+          "description": "Grounded victims are knocked prone instead of launched. Airborne victims are hit normally."
+        },
+        {
+          "type": "string",
+          "const": "sakurai",
+          "description": "Angle chosen automatically: flat on weak grounded hits, higher on strong ones, 45° in the air (`global.hitTypes.sakurai`)."
+        },
+        {
+          "type": "string",
+          "const": "autolink",
+          "description": "Pulls the victim toward the hitbox center, plus the attacker's momentum. For multi-hit moves (`rehit`)."
+        },
+        {
+          "type": "string",
+          "const": "windbox",
+          "description": "No damage, hitstun or hitlag. Pushes anything it touches every frame along `angle` (strength = bkb)."
+        },
+        {
+          "type": "string",
+          "const": "electric",
+          "description": "Longer victim hitlag (`global.hitTypes.electric`), with spark effects."
+        },
+        { "type": "string", "const": "grab", "description": "Grabs instead of hitting." }
+      ],
+      "description": "Hitbox behavior, modeled on Smash."
+    },
+    "Ledge": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "invuln": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "minHang": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Frames hanging before you can act."
+        },
+        "maxHang": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Auto-drop after hanging this long."
+        },
+        "regrabCooldown": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "jumpSpeed": { "type": "number", "format": "double" },
+        "climb": { "$ref": "#/$defs/LedgeOption" },
+        "attack": { "$ref": "#/$defs/LedgeOption" },
+        "roll": { "$ref": "#/$defs/LedgeOption" },
+        "jump": { "$ref": "#/$defs/LedgeOption" },
+        "attackActive": {
+          "type": "array",
+          "items": { "type": "integer", "format": "uint32", "minimum": 0 },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Ledge attack active frames (inclusive)."
+        },
+        "attackHit": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Hitbox" }
+        }
+      },
+      "required": [
+        "invuln",
+        "minHang",
+        "maxHang",
+        "regrabCooldown",
+        "jumpSpeed",
+        "climb",
+        "attack",
+        "roll",
+        "jump",
+        "attackActive",
+        "attackHit"
+      ]
+    },
+    "LedgeOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "a": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Frames to pull up." },
+        "b": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Frame movement ends." },
+        "end": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Actionable frame." },
+        "dist": { "type": "number", "format": "double", "description": "Slide distance onto the stage." },
+        "inv": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Invulnerability frames." }
+      },
+      "required": ["a", "b", "end", "dist", "inv"],
+      "description": "Ledge getup timing."
+    },
+    "Grab": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "holdBase": {
+          "type": "number",
+          "format": "double",
+          "description": "Hold time = holdBase + victimPercent × holdPerPercent."
+        },
+        "holdPerPercent": { "type": "number", "format": "double" },
+        "mashPerPress": {
+          "type": "number",
+          "format": "double",
+          "description": "Hold frames removed per victim button press."
+        },
+        "minHold": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Frames before the grabber can pummel or throw."
+        },
+        "pummelFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "pummelHitFrame": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "pummelDamage": { "type": "number", "format": "double" },
+        "pummelHitlag": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "heightTolerance": {
+          "type": "number",
+          "format": "double",
+          "description": "Vertical tolerance for grab boxes."
+        },
+        "releaseLag": { "type": "integer", "format": "uint32", "minimum": 0 }
+      },
+      "required": [
+        "holdBase",
+        "holdPerPercent",
+        "mashPerPress",
+        "minHold",
+        "pummelFrames",
+        "pummelHitFrame",
+        "pummelDamage",
+        "pummelHitlag",
+        "heightTolerance",
+        "releaseLag"
+      ]
+    },
+    "Respawn": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "deadFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "descendFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "maxWait": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "invuln": { "type": "integer", "format": "uint32", "minimum": 0 }
+      },
+      "required": ["deadFrames", "descendFrames", "maxWait", "invuln"]
+    },
+    "Match": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "countdown": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "goFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "endFrames": { "type": "integer", "format": "uint32", "minimum": 0 }
+      },
+      "required": ["countdown", "goFrames", "endFrames"]
+    },
+    "PlayerColors": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "main": { "$ref": "#/$defs/Color" },
+        "dark": { "$ref": "#/$defs/Color" },
+        "light": { "$ref": "#/$defs/Color" }
+      },
+      "required": ["main", "dark", "light"]
+    },
+    "Color": {
+      "description": "\"#rrggbb\", or a player palette slot: \"player\", \"playerDark\", \"playerLight\".",
+      "type": "string",
+      "pattern": "^(#[0-9a-fA-F]{6}|player|playerDark|playerLight)$"
+    },
+    "Render": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "alphaGamma": {
+          "type": "number",
+          "format": "double",
+          "description": "Translucent colors' alpha is raised to this power. The GPU blends in linear light, which makes faint\noverlays much stronger than the sRGB (canvas) blending the art was tuned for. 2.2 matches sRGB blending\nover black, 1 is plain linear blending; ~1.6 suits this game's dark-but-not-black scenes."
+        },
+        "camera": { "$ref": "#/$defs/Camera" },
+        "overlays": { "$ref": "#/$defs/Overlays" },
+        "fx": { "$ref": "#/$defs/FxLook" }
+      },
+      "required": ["alphaGamma", "camera", "overlays", "fx"]
+    },
+    "Camera": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "padX": { "type": "number", "format": "double", "description": "Padding beside the fighters' feet." },
+        "padTop": {
+          "type": "number",
+          "format": "double",
+          "description": "Padding above the fighters' feet (include the body height)."
+        },
+        "padBottom": { "type": "number", "format": "double" },
+        "minHeight": {
+          "type": "number",
+          "format": "double",
+          "description": "Zoom limits as visible height in stage pixels: `minHeight` = closest zoom, `maxHeight` = widest."
+        },
+        "maxHeight": { "type": "number", "format": "double" },
+        "stageBias": {
+          "type": "number",
+          "format": "double",
+          "description": "0..1: how far the framing center is pulled toward the stage's center (keeps the stage in view)."
+        },
+        "blastMargin": {
+          "type": "number",
+          "format": "double",
+          "description": "Fighters are framed no further than this outside the blast zone (keeps KO'd fighters from yanking it)."
+        },
+        "follow": {
+          "type": "number",
+          "format": "double",
+          "description": "Fraction of the remaining distance covered per tick, for position and zoom. 1 = no smoothing."
+        },
+        "zoomFollow": { "type": "number", "format": "double" },
+        "shakeDecay": {
+          "type": "number",
+          "format": "double",
+          "description": "Screen shake (stage pixels): multiplied by `shakeDecay` each tick, cut off below `shakeMin`."
+        },
+        "shakeMin": { "type": "number", "format": "double" }
+      },
+      "required": [
+        "padX",
+        "padTop",
+        "padBottom",
+        "minHeight",
+        "maxHeight",
+        "stageBias",
+        "blastMargin",
+        "follow",
+        "zoomFollow",
+        "shakeDecay",
+        "shakeMin"
+      ],
+      "description": "Follow camera. Each tick it frames every fighter that's on screen-worthy (not dead/out), padded, keeps the\nwindow's aspect ratio, and eases toward that framing. It never shows past the stage's `camera` bounds."
+    },
+    "Overlays": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runSpeed": {
+          "type": "number",
+          "format": "double",
+          "description": "Grounded `idle` fighters moving faster than this (px/tick) use the `run` animation."
+        },
+        "glowAlpha": {
+          "type": "number",
+          "format": "double",
+          "description": "Opacity of the soft glow under the figure."
+        },
+        "flash": { "$ref": "#/$defs/Color", "description": "Body color while flashing from a hit." },
+        "helpless": { "$ref": "#/$defs/Color", "description": "Body and back-limb colors while helpless." },
+        "helplessBack": { "$ref": "#/$defs/Color" },
+        "hitJitter": {
+          "type": "number",
+          "format": "double",
+          "description": "Random sideways jitter (px) while in hitlag after being hit."
+        },
+        "charge": { "$ref": "#/$defs/ChargeLook" },
+        "blinkPeriod": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Invincibility blinking after respawn: alpha `alpha` every other `period` ticks."
+        },
+        "blinkAlpha": { "type": "number", "format": "double" },
+        "dodge": { "$ref": "#/$defs/DodgeLook" },
+        "shield": { "$ref": "#/$defs/ShieldLook" },
+        "dizzy": { "$ref": "#/$defs/DizzyLook" },
+        "respawn": { "$ref": "#/$defs/RespawnLook" },
+        "trail": { "$ref": "#/$defs/TrailLook" },
+        "xEyeWidth": {
+          "type": "number",
+          "format": "double",
+          "description": "Line width of the X eyes (knocked down, dizzy)."
+        }
+      },
+      "required": [
+        "runSpeed",
+        "glowAlpha",
+        "flash",
+        "helpless",
+        "helplessBack",
+        "hitJitter",
+        "charge",
+        "blinkPeriod",
+        "blinkAlpha",
+        "dodge",
+        "shield",
+        "dizzy",
+        "respawn",
+        "trail",
+        "xEyeWidth"
+      ]
+    },
+    "ChargeLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "color": { "$ref": "#/$defs/Color" },
+        "blink": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "jitter": { "type": "number", "format": "double" },
+        "glowAlpha": { "type": "number", "format": "double" }
+      },
+      "required": ["color", "blink", "jitter", "glowAlpha"],
+      "description": "Smash charge look: body blinks to `color` every `blink` ticks, jitters, and glows."
+    },
+    "DodgeLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "alpha": { "type": "number", "format": "double" },
+        "glow": { "$ref": "#/$defs/Color" },
+        "glowAlpha": { "type": "number", "format": "double" },
+        "ghosts": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "spacing": {
+          "type": "number",
+          "format": "double",
+          "description": "Ghost k sits `k × spacing` ticks of velocity behind."
+        },
+        "ghostAlpha": {
+          "type": "number",
+          "format": "double",
+          "description": "Nearest ghost's opacity; each further ghost fades by the same step."
+        },
+        "ghostWidth": { "type": "number", "format": "double" }
+      },
+      "required": ["alpha", "glow", "glowAlpha", "ghosts", "spacing", "ghostAlpha", "ghostWidth"],
+      "description": "Dodging (invulnerable roll, spot dodge, air dodge, tech): pale body, ghosts behind along the velocity."
+    },
+    "ShieldLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "y": { "type": "number", "format": "double" },
+        "minR": { "type": "number", "format": "double" },
+        "growR": { "type": "number", "format": "double" },
+        "alpha": { "type": "number", "format": "double" },
+        "stunAlpha": {
+          "type": "number",
+          "format": "double",
+          "description": "Fill opacity during shield stun (the outline turns white too)."
+        },
+        "width": { "type": "number", "format": "double" },
+        "strokeAlpha": { "type": "number", "format": "double" }
+      },
+      "required": ["y", "minR", "growR", "alpha", "stunAlpha", "width", "strokeAlpha"],
+      "description": "Shield bubble: centered `y` above the feet, radius `minR + growR × shield HP / max`."
+    },
+    "DizzyLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "stars": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "y": { "type": "number", "format": "double" },
+        "rx": { "type": "number", "format": "double" },
+        "ry": { "type": "number", "format": "double" },
+        "r": { "type": "number", "format": "double" },
+        "speed": { "type": "number", "format": "double", "description": "Degrees per tick." },
+        "color": { "$ref": "#/$defs/Color" }
+      },
+      "required": ["stars", "y", "rx", "ry", "r", "speed", "color"],
+      "description": "Stars circling the head while dizzy: an ellipse `rx`×`ry` centered `y` above the feet."
+    },
+    "RespawnLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "y": { "type": "number", "format": "double" },
+        "w": { "type": "number", "format": "double" },
+        "h": { "type": "number", "format": "double" },
+        "alpha": { "type": "number", "format": "double" },
+        "pulse": {
+          "type": "number",
+          "format": "double",
+          "description": "Opacity swing and its speed (degrees per tick)."
+        },
+        "speed": { "type": "number", "format": "double" }
+      },
+      "required": ["y", "w", "h", "alpha", "pulse", "speed"],
+      "description": "Glowing platform under a respawning fighter: an ellipse `w`×`h` centered `y` below the feet, pulsing."
+    },
+    "TrailLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "frames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "fade": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "alpha": { "type": "number", "format": "double" },
+        "color": { "$ref": "#/$defs/Color" }
+      },
+      "required": ["frames", "fade", "alpha", "color"],
+      "description": "Attachment swing trail: covers the last `frames` ticks of the swing, fades out over `fade` ticks after the\nhitbox ends."
+    },
+    "FxLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "drag": {
+          "type": "number",
+          "format": "double",
+          "description": "Particle horizontal speed multiplier per tick."
+        },
+        "shrink": {
+          "type": "number",
+          "format": "double",
+          "description": "Particles shrink to this fraction of their size by the end of their life."
+        },
+        "ringWidth": { "type": "number", "format": "double" },
+        "dust": { "$ref": "#/$defs/DustLook" },
+        "beam": { "$ref": "#/$defs/BeamLook" }
+      },
+      "required": ["drag", "shrink", "ringWidth", "dust", "beam"]
+    },
+    "DustLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "color": { "$ref": "#/$defs/Color" },
+        "spread": { "type": "number", "format": "double", "description": "Random horizontal offset, ±." },
+        "vx": { "type": "number", "format": "double", "description": "Random horizontal speed, ±." },
+        "vy": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Random vertical speed range (y down)."
+        },
+        "life": { "type": "number", "format": "double" },
+        "size": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": ["color", "spread", "vx", "vy", "life", "size"]
+    },
+    "BeamLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "life": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "length": { "type": "number", "format": "double" },
+        "width": {
+          "type": "number",
+          "format": "double",
+          "description": "Half-width at the far end, growing by `grow` over the beam's life."
+        },
+        "grow": { "type": "number", "format": "double" },
+        "bands": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Bands from the KO point outward, each fading more. The first band is white."
+        },
+        "alpha": { "type": "number", "format": "double" },
+        "inset": { "type": "number", "format": "double" },
+        "bursts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/BurstLook" }
+        },
+        "ring": { "$ref": "#/$defs/RingLook" }
+      },
+      "required": ["life", "length", "width", "grow", "bands", "alpha", "inset", "bursts", "ring"],
+      "description": "KO blast: a beam from the KO point toward the stage center, sparks and a ring. The point is clamped inside\nthe view by `inset`."
+    },
+    "BurstLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "color": { "$ref": "#/$defs/Color" },
+        "n": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "speed": { "type": "number", "format": "double" },
+        "life": { "type": "number", "format": "double" },
+        "size": { "type": "number", "format": "double" }
+      },
+      "required": ["color", "n", "speed", "life", "size"]
+    },
+    "RingLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "r": { "type": "number", "format": "double" },
+        "grow": { "type": "number", "format": "double" },
+        "life": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "color": { "$ref": "#/$defs/Color" }
+      },
+      "required": ["r", "grow", "life", "color"]
+    }
+  }
+}

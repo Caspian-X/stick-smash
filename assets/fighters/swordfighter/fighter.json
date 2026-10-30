@@ -1,0 +1,783 @@
+{
+  "$schema": "../../schema/fighter.schema.json",
+  "schemaVersion": 1,
+  "extends": "base",
+  "name": "Swordfighter",
+  "blurb": "Swordfighter: longer reach, forward smash tip hits hardest · special: hold for Flare Blade · → lunge stab · ↑ rising slash · ↓ counter",
+  "ai": {
+    "reach": 95,
+    "counterChance": 0.35,
+    "specials": [
+      {
+        "minDistance": 100,
+        "maxDistance": 190,
+        "height": 50,
+        "chance": 0.3,
+        "grounded": true,
+        "noProjectile": false,
+        "down": false,
+        "hold": null
+      }
+    ]
+  },
+  "moves": {
+    "grab": {
+      "phases": [
+        {
+          "name": "main",
+          "frames": 30,
+          "hitboxes": [
+            {
+              "start": 6,
+              "end": 8,
+              "x": 34,
+              "y": 46,
+              "r": 20,
+              "damage": 0,
+              "bkb": 0,
+              "kbg": 0,
+              "angle": 0,
+              "type": "grab"
+            }
+          ],
+          "events": [
+            { "at": 6, "sfx": "slash" }
+          ],
+          "anim": [
+            {
+              "at": 0,
+              "pose": { "elbowF": [6, 44], "handF": [10, 40], "elbowB": [4, 42], "handB": [8, 38] }
+            },
+            {
+              "at": 5,
+              "pose": { "elbowF": [6, 44], "handF": [10, 40], "elbowB": [4, 42], "handB": [8, 38] }
+            },
+            {
+              "at": 6,
+              "pose": { "head": [4, 63], "elbowF": [18, 48], "handF": [36, 46], "elbowB": [16, 46], "handB": [34, 44] }
+            },
+            {
+              "at": 8,
+              "pose": { "head": [4, 63], "elbowF": [18, 48], "handF": [36, 46], "elbowB": [16, 46], "handB": [34, 44] }
+            },
+            {
+              "at": 9,
+              "pose": { "head": [4, 63], "elbowF": [18, 48], "handF": [30, 46], "elbowB": [16, 46], "handB": [28, 44] }
+            }
+          ]
+        }
+      ]
+    },
+    "dashgrab": {
+      "phases": [
+        {
+          "name": "main",
+          "frames": 38,
+          "hitboxes": [
+            {
+              "start": 8,
+              "end": 10,
+              "x": 40,
+              "y": 46,
+              "r": 22,
+              "damage": 0,
+              "bkb": 0,
+              "kbg": 0,
+              "angle": 0,
+              "type": "grab"
+            }
+          ],
+          "events": [
+            { "at": 8, "sfx": "slash" }
+          ],
+          "slide": 8,
+          "anim": [
+            {
+              "at": 0,
+              "pose": { "elbowF": [6, 44], "handF": [10, 40], "elbowB": [4, 42], "handB": [8, 38] }
+            },
+            {
+              "at": 7,
+              "pose": { "elbowF": [6, 44], "handF": [10, 40], "elbowB": [4, 42], "handB": [8, 38] }
+            },
+            {
+              "at": 8,
+              "pose": { "head": [4, 63], "elbowF": [18, 48], "handF": [36, 46], "elbowB": [16, 46], "handB": [34, 44] }
+            },
+            {
+              "at": 10,
+              "pose": { "head": [4, 63], "elbowF": [18, 48], "handF": [36, 46], "elbowB": [16, 46], "handB": [34, 44] }
+            },
+            {
+              "at": 11,
+              "pose": { "head": [4, 63], "elbowF": [18, 48], "handF": [30, 46], "elbowB": [16, 46], "handB": [28, 44] }
+            }
+          ]
+        }
+      ]
+    },
+    "jab": {
+      "name": "Jab",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 18,
+          "hitboxes": [
+            { "start": 3, "end": 6, "x": 58, "y": 50, "r": 22, "damage": 4, "bkb": 4, "kbg": 0.05, "angle": 80 }
+          ],
+          "events": [
+            { "at": 3, "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, -40], [3, 15], [6, -10]] }
+          }
+        }
+      ]
+    },
+    "ftilt": {
+      "name": "Forward Tilt",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 30,
+          "hitboxes": [
+            { "start": 7, "end": 11, "x": 64, "y": 54, "r": 30, "damage": 10, "bkb": 6, "kbg": 0.12, "angle": 38 }
+          ],
+          "events": [
+            { "at": 7, "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "lean" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, -30], [4, 60], [7, 60], [11, -40]] }
+          }
+        }
+      ]
+    },
+    "utilt": {
+      "name": "Up Tilt",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 26,
+          "hitboxes": [
+            {
+              "start": 7,
+              "end": 12,
+              "x": 43,
+              "y": 65,
+              "r": 17,
+              "damage": 8,
+              "bkb": 6,
+              "kbg": 0.1,
+              "angle": 117,
+              "frames": [
+                [7, 43, 65, 17],
+                [8, 34, 85, 17],
+                [9, 14, 97, 17],
+                [10, -11, 93, 17],
+                [11, -37, 78, 17],
+                [12, -47, 58, 17]
+              ]
+            },
+            {
+              "start": 7,
+              "end": 12,
+              "x": 65,
+              "y": 74,
+              "r": 16,
+              "damage": 8,
+              "bkb": 6,
+              "kbg": 0.1,
+              "angle": 108,
+              "frames": [
+                [7, 65, 74, 16],
+                [8, 46, 106, 16],
+                [9, 12, 118, 16],
+                [10, -26, 117, 16],
+                [11, -56, 93, 16],
+                [12, -74, 65, 16]
+              ]
+            }
+          ],
+          "events": [
+            { "at": 7, "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, -40], [5, -10], [6, 0], [12, 180]] }
+          }
+        }
+      ]
+    },
+    "dtilt": {
+      "name": "Down Tilt",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 28,
+          "hitboxes": [
+            {
+              "start": 5,
+              "end": 14,
+              "x": 72,
+              "y": 17,
+              "r": 15,
+              "damage": 7,
+              "bkb": 4,
+              "kbg": 0.07,
+              "angle": -15,
+              "type": "trip",
+              "rehit": 4
+            },
+            { "start": 5, "end": 14, "x": 45, "y": 25, "r": 14, "damage": 6, "bkb": 5, "kbg": 0.08, "angle": -9 }
+          ],
+          "events": [
+            { "at": 5, "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, -60], [4, -40], [5, -15], [8, -10]] }
+          }
+        }
+      ]
+    },
+    "dashatk": {
+      "name": "Dash Attack",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 36,
+          "hitboxes": [
+            { "start": 6, "end": 14, "x": 66, "y": 48, "r": 30, "damage": 10, "bkb": 6, "kbg": 0.09, "angle": 50 }
+          ],
+          "events": [
+            { "at": 6, "sfx": "slash" }
+          ],
+          "slide": 14,
+          "anim": [
+            { "at": 0, "pose": "lean" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, 30], [6, 30], [14, -30]] }
+          }
+        }
+      ]
+    },
+    "fsmash": {
+      "name": "Forward Smash",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 54,
+          "hitboxes": [
+            { "start": 14, "end": 17, "x": 86, "y": 40, "r": 20, "damage": 19, "bkb": 8, "kbg": 0.18, "angle": 36 },
+            { "start": 14, "end": 17, "x": 50, "y": 58, "r": 28, "damage": 13, "bkb": 6, "kbg": 0.14, "angle": 40 }
+          ],
+          "events": [
+            { "at": 14, "sfx": "smash" },
+            { "at": 14, "sfx": "slash" },
+            {
+              "at": 14,
+              "setVel": { "x": 4 }
+            }
+          ],
+          "charge": { "frame": 8 },
+          "anim": [
+            { "at": 0, "pose": "back" },
+            { "at": 14, "pose": "lean" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, 0], [8, 130], [14, 110], [17, -50]] }
+          }
+        }
+      ]
+    },
+    "usmash": {
+      "name": "Up Smash",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 46,
+          "hitboxes": [
+            { "start": 12, "end": 17, "x": 4, "y": 128, "r": 24, "damage": 16, "bkb": 8, "kbg": 0.165, "angle": 88 },
+            { "start": 12, "end": 17, "x": 30, "y": 80, "r": 30, "damage": 13, "bkb": 7, "kbg": 0.15, "angle": 85 }
+          ],
+          "events": [
+            { "at": 12, "sfx": "smash" },
+            { "at": 12, "sfx": "slash" }
+          ],
+          "charge": { "frame": 6 },
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 12, "pose": "stretch" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, -40], [6, -30], [12, -20], [16, 95]] }
+          }
+        }
+      ]
+    },
+    "dsmash": {
+      "name": "Down Smash",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 46,
+          "hitboxes": [
+            {
+              "start": 10,
+              "end": 13,
+              "x": 64,
+              "y": 12,
+              "r": 26,
+              "damage": 12,
+              "bkb": 6,
+              "kbg": 0.14,
+              "angle": 25,
+              "dir": "away"
+            },
+            {
+              "start": 18,
+              "end": 21,
+              "x": -64,
+              "y": 12,
+              "r": 26,
+              "damage": 14,
+              "bkb": 7,
+              "kbg": 0.16,
+              "angle": 25,
+              "dir": "away"
+            }
+          ],
+          "events": [
+            { "at": 10, "sfx": "smash" },
+            { "at": 10, "sfx": "slash" },
+            { "at": 18, "sfx": "slash" }
+          ],
+          "charge": { "frame": 6 },
+          "anim": [
+            { "at": 0, "pose": "crouch" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, -60], [6, 20], [10, 10], [13, -35], [17, -35], [18, 180], [21, 215]] }
+          }
+        }
+      ]
+    },
+    "nair": {
+      "name": "Neutral Air",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 30,
+          "hitboxes": [
+            {
+              "start": 5,
+              "end": 12,
+              "x": 0,
+              "y": 46,
+              "r": 60,
+              "damage": 7,
+              "bkb": 4,
+              "kbg": 0.09,
+              "angle": 45,
+              "dir": "away"
+            }
+          ],
+          "events": [
+            { "at": 5, "sfx": "slash" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 7 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, 40], [5, 40], [12, -320]] }
+          }
+        }
+      ]
+    },
+    "fair": {
+      "name": "Forward Air",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 26,
+          "hitboxes": [
+            { "start": 6, "end": 10, "x": 60, "y": 56, "r": 30, "damage": 9, "bkb": 5, "kbg": 0.11, "angle": 42 }
+          ],
+          "events": [
+            { "at": 6, "sfx": "slash" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 8 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, 0], [6, 110], [10, -60]] }
+          }
+        }
+      ]
+    },
+    "bair": {
+      "name": "Back Air",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 28,
+          "hitboxes": [
+            {
+              "start": 7,
+              "end": 11,
+              "x": -62,
+              "y": 48,
+              "r": 30,
+              "damage": 12,
+              "bkb": 6,
+              "kbg": 0.13,
+              "angle": 40,
+              "dir": "back"
+            }
+          ],
+          "events": [
+            { "at": 7, "sfx": "slash" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 9 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, 30], [7, 150], [11, 220]] }
+          }
+        }
+      ]
+    },
+    "uair": {
+      "name": "Up Air",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 24,
+          "hitboxes": [
+            { "start": 5, "end": 10, "x": 6, "y": 116, "r": 34, "damage": 9, "bkb": 5, "kbg": 0.1, "angle": 85 }
+          ],
+          "events": [
+            { "at": 5, "sfx": "slash" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 6 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, -30], [5, -10], [10, 190]] }
+          }
+        }
+      ]
+    },
+    "dair": {
+      "name": "Down Air",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 34,
+          "hitboxes": [
+            {
+              "start": 10,
+              "end": 14,
+              "x": 2,
+              "y": -18,
+              "r": 24,
+              "damage": 12,
+              "bkb": 4,
+              "kbg": 0.1,
+              "angle": -90,
+              "type": "spike"
+            }
+          ],
+          "events": [
+            { "at": 10, "sfx": "slash" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 14 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, 70], [8, -60], [10, -90]] }
+          }
+        }
+      ]
+    },
+    "nspec": {
+      "name": "Flare Blade",
+      "bReverse": true,
+      "phases": [
+        {
+          "name": "main",
+          "frames": 46,
+          "hitboxes": [
+            { "start": 17, "end": 20, "x": 70, "y": 50, "r": 30, "damage": 13, "bkb": 7, "kbg": 0.15, "angle": 38 },
+            { "start": 17, "end": 20, "x": 32, "y": 58, "r": 24, "damage": 10, "bkb": 6, "kbg": 0.12, "angle": 42 }
+          ],
+          "events": [
+            { "at": 17, "sfx": "smash" },
+            { "at": 17, "sfx": "slash" }
+          ],
+          "charge": { "frame": 10, "button": "special" },
+          "anim": [
+            { "at": 0, "pose": "back" },
+            { "at": 17, "pose": "lean" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, -20], [10, 160], [16, 150], [20, -40]] }
+          }
+        }
+      ]
+    },
+    "sspec": {
+      "name": "Lunge",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 38,
+          "hitboxes": [
+            {
+              "start": 9,
+              "end": 15,
+              "x": 66,
+              "y": 46,
+              "r": 22,
+              "damage": 11,
+              "bkb": 7,
+              "kbg": 0.11,
+              "angle": 30,
+              "shieldDmgMult": 2.5
+            }
+          ],
+          "events": [
+            { "at": 9, "sfx": "slash" },
+            {
+              "at": 9,
+              "if": "grounded",
+              "setVel": { "x": 12 }
+            },
+            {
+              "at": 9,
+              "if": "airborne",
+              "setVel": { "x": 8 }
+            },
+            {
+              "at": 9,
+              "fx": [
+                { "type": "dust", "x": 0, "y": 0, "n": 4 }
+              ]
+            }
+          ],
+          "slide": 18,
+          "anim": [
+            { "at": 0, "pose": "back" },
+            { "at": 9, "pose": "lunge" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, 0], [8, 15], [9, 0]] }
+          }
+        }
+      ]
+    },
+    "uspec": {
+      "name": "Rising Slash",
+      "air": "upSpecial",
+      "phases": [
+        {
+          "name": "startup",
+          "frames": 4,
+          "hover": true,
+          "events": [
+            {
+              "from": 1,
+              "to": 3,
+              "mulVel": { "x": 0.5 }
+            }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "rise" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, -60], [4, -20]] }
+          }
+        },
+        {
+          "name": "rise",
+          "frames": 34,
+          "hitboxes": [
+            { "end": 4, "x": 50, "y": 64, "r": 30, "damage": 11, "bkb": 7, "kbg": 0.1, "angle": 80 },
+            { "start": 5, "end": 14, "x": 6, "y": 104, "r": 28, "damage": 5, "bkb": 5, "kbg": 0.07, "angle": 85 }
+          ],
+          "events": [
+            { "at": 0, "sfx": "slash" },
+            { "at": 5, "sfx": "slash" },
+            {
+              "at": 0,
+              "setVel": { "x": 2.8, "y": 19 },
+              "leaveGround": true,
+              "sfx": "djump"
+            },
+            {
+              "from": 1,
+              "to": 13,
+              "every": 2,
+              "fx": [
+                { "type": "part", "x": 0, "y": 40, "vx": 0, "vy": -1, "life": 16, "color": "player", "size": 6 }
+              ]
+            }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "from": 3, "lag": 10 },
+            { "on": "timeout", "to": "helpless" }
+          ],
+          "ledgeGrab": 3,
+          "anim": [
+            { "at": 0, "pose": "rise" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, -20], [6, 90]] }
+          }
+        }
+      ]
+    },
+    "dspec": {
+      "name": "Counter",
+      "phases": [
+        {
+          "name": "stance",
+          "frames": 44,
+          "counter": {
+            "from": 4,
+            "to": 24,
+            "damageMult": 1.3,
+            "minDamage": 8,
+            "attackerFreeze": 14,
+            "invuln": 14,
+            "reflectSpeed": 1.25,
+            "reflectLife": 75
+          },
+          "transitions": [
+            { "on": "counter", "to": "strike" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "guard" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, 40], [4, 80]] }
+          }
+        },
+        {
+          "name": "strike",
+          "frames": 26,
+          "hitboxes": [
+            {
+              "x": 52,
+              "y": 48,
+              "r": 38,
+              "damage": 0,
+              "bkb": 7,
+              "kbg": 0.14,
+              "angle": 38,
+              "counterDamage": true,
+              "start": 3,
+              "end": 7
+            }
+          ],
+          "events": [
+            {
+              "at": 0,
+              "sfx": "counter",
+              "fx": [
+                { "type": "ring", "x": 0, "y": 40, "r": 14, "grow": 5, "life": 14 },
+                { "type": "burst", "x": 0, "y": 40, "color": "#bbffff", "n": 16, "speed": 6, "life": 20, "size": 3 },
+                { "type": "shake", "k": 4 }
+              ]
+            },
+            { "at": 3, "if": "countered", "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "lean" }
+          ],
+          "attach": {
+            "sword": { "angle": [[0, 120], [3, 120], [7, -40]] }
+          }
+        }
+      ]
+    }
+  },
+  "projectiles": {},
+  "attachments": [
+    {
+      "id": "sword",
+      "joint": "handF",
+      "angle": 45.837,
+      "hold": { "elbow": 15, "hand": 28, "bend": -20.054 },
+      "trail": { "inner": 34, "outer": 84 },
+      "glow": "countering",
+      "shapes": [
+        {
+          "shape": "line",
+          "from": [3, 0],
+          "to": [54, 0],
+          "width": 8,
+          "color": "player",
+          "when": "noGlow",
+          "alpha": 0.25
+        },
+        {
+          "shape": "line",
+          "from": [3, 0],
+          "to": [54, 0],
+          "width": 12,
+          "color": "#bbffff",
+          "when": "glow",
+          "alpha": 0.25
+        },
+        { "shape": "line", "from": [3, 0], "to": [54, 0], "width": 4, "color": "#e6ecff", "when": "noGlow" },
+        { "shape": "line", "from": [3, 0], "to": [54, 0], "width": 4, "color": "#ffffff", "when": "glow" },
+        { "shape": "line", "from": [-7, 0], "to": [3, 0], "width": 4, "color": "#7a5530" },
+        { "shape": "line", "from": [3, -8], "to": [3, 8], "width": 3.5, "color": "#e0b84a" },
+        { "shape": "star", "at": [54, 0], "r": 7, "fill": "#ffffff", "blink": 4, "when": "glow" }
+      ]
+    },
+    {
+      "id": "hairTie",
+      "joint": "head",
+      "shapes": [
+        { "shape": "line", "from": [-9, 4], "to": [-20, 1], "width": 3, "color": "player" }
+      ],
+      "sway": { "deg": 10, "period": 31.416 }
+    }
+  ]
+}

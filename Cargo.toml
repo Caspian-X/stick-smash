@@ -1,0 +1,34 @@
+[workspace]
+resolver = "3"
+members = ["crates/sim", "crates/render", "crates/game"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+publish = false
+
+[workspace.dependencies]
+sim = { path = "crates/sim" }
+render = { path = "crates/render" }
+bevy = "0.20.1"
+bevy_egui = "0.43.1"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.154", features = ["preserve_order"] }
+serde_path_to_error = "0.1.20"
+schemars = "1.2.3"
+libm = "0.2.16"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+# Bevy is unusably slow at opt-level 0; optimize deps fully and our code a little.
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
