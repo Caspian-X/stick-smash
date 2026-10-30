@@ -1,0 +1,23 @@
+[package]
+name = "game"
+description = "Stick Smash Bevy app: rendering, input, audio, menus."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "stick-smash"
+path = "src/main.rs"
+
+[dependencies]
+sim.workspace = true
+bevy.workspace = true
+bevy_egui.workspace = true
+
+[features]
+# Faster incremental builds while developing: `cargo run --features dev`.
+dev = ["bevy/dynamic_linking"]
+
+[lints]
+workspace = true

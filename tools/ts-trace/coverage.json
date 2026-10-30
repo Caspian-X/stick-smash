@@ -1,0 +1,3993 @@
+[
+  {
+    "name": "brawler-ground",
+    "ticks": 513,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "hitstun",
+      "idle",
+      "landing",
+      "shield"
+    ],
+    "moves": [
+      "dashatk",
+      "dsmash",
+      "dtilt",
+      "fsmash",
+      "ftilt",
+      "jab",
+      "usmash",
+      "utilt"
+    ],
+    "details": [
+      "charged",
+      "dashatk:phase0",
+      "dsmash:phase0",
+      "dtilt:phase0",
+      "fsmash:phase0",
+      "ftilt:phase0",
+      "jab:phase0",
+      "usmash:phase0",
+      "utilt:phase0"
+    ],
+    "events": [
+      "charge",
+      "hit",
+      "smash",
+      "swing"
+    ],
+    "bytes": 96267
+  },
+  {
+    "name": "brawler-aerial-movement",
+    "ticks": 756,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 920
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "airdodge",
+      "attack",
+      "idle",
+      "jumpsquat",
+      "landing",
+      "roll",
+      "shield",
+      "spot"
+    ],
+    "moves": [
+      "bair",
+      "dair",
+      "fair",
+      "nair",
+      "uair"
+    ],
+    "details": [
+      "bair:phase0",
+      "dair:phase0",
+      "fair:phase0",
+      "fastFall",
+      "nair:phase0",
+      "platformDrop",
+      "uair:phase0"
+    ],
+    "events": [
+      "jump",
+      "land",
+      "roll",
+      "swing"
+    ],
+    "bytes": 119455
+  },
+  {
+    "name": "brawler-specials",
+    "ticks": 339,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "helpless",
+      "hitstun",
+      "idle",
+      "landing"
+    ],
+    "moves": [
+      "dspec",
+      "nspec",
+      "uspec"
+    ],
+    "details": [
+      "dspec:phase0",
+      "dspec:phase2",
+      "nspec:phase0",
+      "uspec:phase0"
+    ],
+    "events": [
+      "djump",
+      "hit",
+      "land",
+      "quake",
+      "shoot"
+    ],
+    "bytes": 60761
+  },
+  {
+    "name": "brawler-throw-f",
+    "ticks": 147,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "throw"
+    ],
+    "moves": [
+      "grab"
+    ],
+    "details": [
+      "grab:phase0",
+      "throw:f"
+    ],
+    "events": [
+      "grab",
+      "hit",
+      "pummel",
+      "swing",
+      "throw"
+    ],
+    "bytes": 22697
+  },
+  {
+    "name": "brawler-throw-b",
+    "ticks": 147,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "throw"
+    ],
+    "moves": [
+      "grab"
+    ],
+    "details": [
+      "grab:phase0",
+      "throw:b"
+    ],
+    "events": [
+      "grab",
+      "hit",
+      "pummel",
+      "swing",
+      "throw"
+    ],
+    "bytes": 23104
+  },
+  {
+    "name": "brawler-throw-u",
+    "ticks": 147,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "throw"
+    ],
+    "moves": [
+      "grab"
+    ],
+    "details": [
+      "grab:phase0",
+      "throw:u"
+    ],
+    "events": [
+      "grab",
+      "hit",
+      "pummel",
+      "swing",
+      "throw"
+    ],
+    "bytes": 21544
+  },
+  {
+    "name": "brawler-throw-d",
+    "ticks": 147,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "landing",
+      "throw"
+    ],
+    "moves": [
+      "grab"
+    ],
+    "details": [
+      "grab:phase0",
+      "throw:d"
+    ],
+    "events": [
+      "grab",
+      "hit",
+      "pummel",
+      "swing",
+      "throw"
+    ],
+    "bytes": 22735
+  },
+  {
+    "name": "brawler-shield-hit",
+    "ticks": 53,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "idle",
+      "shield"
+    ],
+    "moves": [
+      "jab"
+    ],
+    "details": [
+      "jab:phase0"
+    ],
+    "events": [
+      "shieldHit",
+      "swing"
+    ],
+    "bytes": 9870
+  },
+  {
+    "name": "swordfighter-ground",
+    "ticks": 538,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "swordfighter",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "hitstun",
+      "idle",
+      "landing",
+      "shield"
+    ],
+    "moves": [
+      "dashatk",
+      "dsmash",
+      "dtilt",
+      "fsmash",
+      "ftilt",
+      "jab",
+      "usmash",
+      "utilt"
+    ],
+    "details": [
+      "charged",
+      "dashatk:phase0",
+      "dsmash:phase0",
+      "dtilt:phase0",
+      "fsmash:phase0",
+      "ftilt:phase0",
+      "jab:phase0",
+      "usmash:phase0",
+      "utilt:phase0"
+    ],
+    "events": [
+      "charge",
+      "hit",
+      "slash",
+      "smash"
+    ],
+    "bytes": 101598
+  },
+  {
+    "name": "swordfighter-aerial-movement",
+    "ticks": 756,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "swordfighter",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 920
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "airdodge",
+      "attack",
+      "idle",
+      "jumpsquat",
+      "landing",
+      "roll",
+      "shield",
+      "spot"
+    ],
+    "moves": [
+      "bair",
+      "dair",
+      "fair",
+      "nair",
+      "uair"
+    ],
+    "details": [
+      "bair:phase0",
+      "dair:phase0",
+      "fair:phase0",
+      "fastFall",
+      "nair:phase0",
+      "platformDrop",
+      "uair:phase0"
+    ],
+    "events": [
+      "jump",
+      "land",
+      "roll",
+      "slash"
+    ],
+    "bytes": 119474
+  },
+  {
+    "name": "swordfighter-specials",
+    "ticks": 408,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "swordfighter",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "helpless",
+      "hitstun",
+      "idle",
+      "landing"
+    ],
+    "moves": [
+      "dspec",
+      "nspec",
+      "sspec",
+      "uspec"
+    ],
+    "details": [
+      "dspec:phase0",
+      "nspec:phase0",
+      "sspec:phase0",
+      "uspec:phase0"
+    ],
+    "events": [
+      "djump",
+      "hit",
+      "land",
+      "slash",
+      "smash"
+    ],
+    "bytes": 77678
+  },
+  {
+    "name": "swordfighter-throw-f",
+    "ticks": 147,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "swordfighter",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "throw"
+    ],
+    "moves": [
+      "grab"
+    ],
+    "details": [
+      "grab:phase0",
+      "throw:f"
+    ],
+    "events": [
+      "grab",
+      "hit",
+      "pummel",
+      "slash",
+      "throw"
+    ],
+    "bytes": 22707
+  },
+  {
+    "name": "swordfighter-throw-b",
+    "ticks": 147,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "swordfighter",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "throw"
+    ],
+    "moves": [
+      "grab"
+    ],
+    "details": [
+      "grab:phase0",
+      "throw:b"
+    ],
+    "events": [
+      "grab",
+      "hit",
+      "pummel",
+      "slash",
+      "throw"
+    ],
+    "bytes": 23114
+  },
+  {
+    "name": "swordfighter-throw-u",
+    "ticks": 147,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "swordfighter",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "throw"
+    ],
+    "moves": [
+      "grab"
+    ],
+    "details": [
+      "grab:phase0",
+      "throw:u"
+    ],
+    "events": [
+      "grab",
+      "hit",
+      "pummel",
+      "slash",
+      "throw"
+    ],
+    "bytes": 21554
+  },
+  {
+    "name": "swordfighter-throw-d",
+    "ticks": 147,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "swordfighter",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "landing",
+      "throw"
+    ],
+    "moves": [
+      "grab"
+    ],
+    "details": [
+      "grab:phase0",
+      "throw:d"
+    ],
+    "events": [
+      "grab",
+      "hit",
+      "pummel",
+      "slash",
+      "throw"
+    ],
+    "bytes": 22745
+  },
+  {
+    "name": "swordfighter-shield-hit",
+    "ticks": 53,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "swordfighter",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "idle",
+      "shield"
+    ],
+    "moves": [
+      "jab"
+    ],
+    "details": [
+      "jab:phase0"
+    ],
+    "events": [
+      "shieldHit",
+      "slash"
+    ],
+    "bytes": 9891
+  },
+  {
+    "name": "king-ground",
+    "ticks": 605,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "hitstun",
+      "idle",
+      "landing",
+      "shield"
+    ],
+    "moves": [
+      "dashatk",
+      "dsmash",
+      "dtilt",
+      "fsmash",
+      "ftilt",
+      "jab",
+      "usmash",
+      "utilt"
+    ],
+    "details": [
+      "charged",
+      "dashatk:phase0",
+      "dsmash:phase0",
+      "dtilt:phase0",
+      "fsmash:phase0",
+      "ftilt:phase0",
+      "jab:phase0",
+      "usmash:phase0",
+      "utilt:phase0"
+    ],
+    "events": [
+      "charge",
+      "hit",
+      "quake",
+      "smash",
+      "whack"
+    ],
+    "bytes": 114229
+  },
+  {
+    "name": "king-aerial-movement",
+    "ticks": 752,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 920
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "airdodge",
+      "attack",
+      "idle",
+      "jumpsquat",
+      "landing",
+      "roll",
+      "shield",
+      "spot"
+    ],
+    "moves": [
+      "bair",
+      "dair",
+      "fair",
+      "nair",
+      "uair"
+    ],
+    "details": [
+      "bair:phase0",
+      "dair:phase0",
+      "fair:phase0",
+      "fastFall",
+      "nair:phase0",
+      "platformDrop",
+      "uair:phase0"
+    ],
+    "events": [
+      "jump",
+      "land",
+      "roll",
+      "whack"
+    ],
+    "bytes": 118643
+  },
+  {
+    "name": "king-specials",
+    "ticks": 414,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "hitstun",
+      "idle",
+      "landing"
+    ],
+    "moves": [
+      "dspec",
+      "nspec",
+      "uspec"
+    ],
+    "details": [
+      "charged",
+      "dspec:phase0",
+      "nspec:phase0",
+      "uspec:phase0",
+      "uspec:phase1",
+      "uspec:phase2",
+      "uspec:phase3"
+    ],
+    "events": [
+      "charge",
+      "djump",
+      "hit",
+      "jet",
+      "land",
+      "quake",
+      "smash",
+      "toss",
+      "whack"
+    ],
+    "bytes": 79982
+  },
+  {
+    "name": "king-throw-f",
+    "ticks": 147,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "throw"
+    ],
+    "moves": [
+      "grab"
+    ],
+    "details": [
+      "grab:phase0",
+      "throw:f"
+    ],
+    "events": [
+      "grab",
+      "hit",
+      "pummel",
+      "throw",
+      "whack"
+    ],
+    "bytes": 22691
+  },
+  {
+    "name": "king-throw-b",
+    "ticks": 147,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "throw"
+    ],
+    "moves": [
+      "grab"
+    ],
+    "details": [
+      "grab:phase0",
+      "throw:b"
+    ],
+    "events": [
+      "grab",
+      "hit",
+      "pummel",
+      "throw",
+      "whack"
+    ],
+    "bytes": 23098
+  },
+  {
+    "name": "king-throw-u",
+    "ticks": 147,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "throw"
+    ],
+    "moves": [
+      "grab"
+    ],
+    "details": [
+      "grab:phase0",
+      "throw:u"
+    ],
+    "events": [
+      "grab",
+      "hit",
+      "pummel",
+      "throw",
+      "whack"
+    ],
+    "bytes": 21538
+  },
+  {
+    "name": "king-throw-d",
+    "ticks": 147,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "landing",
+      "throw"
+    ],
+    "moves": [
+      "grab"
+    ],
+    "details": [
+      "grab:phase0",
+      "throw:d"
+    ],
+    "events": [
+      "grab",
+      "hit",
+      "pummel",
+      "throw",
+      "whack"
+    ],
+    "bytes": 22729
+  },
+  {
+    "name": "king-shield-hit",
+    "ticks": 53,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "idle",
+      "shield"
+    ],
+    "moves": [
+      "jab"
+    ],
+    "details": [
+      "jab:phase0"
+    ],
+    "events": [
+      "shieldHit",
+      "whack"
+    ],
+    "bytes": 9833
+  },
+  {
+    "name": "ledge-climb",
+    "ticks": 128,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "x": 1010,
+          "y": 500,
+          "ground": false,
+          "surf": null,
+          "state": "air",
+          "vy": 2
+        },
+        {
+          "player": 1,
+          "x": 920
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "climb",
+      "idle",
+      "ledge"
+    ],
+    "moves": [],
+    "details": [
+      "climb:climb"
+    ],
+    "events": [
+      "land"
+    ],
+    "bytes": 16783
+  },
+  {
+    "name": "ledge-attack",
+    "ticks": 128,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "x": 1010,
+          "y": 500,
+          "ground": false,
+          "surf": null,
+          "state": "air",
+          "vy": 2
+        },
+        {
+          "player": 1,
+          "x": 920
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "climb",
+      "hitstun",
+      "idle",
+      "ledge"
+    ],
+    "moves": [],
+    "details": [
+      "climb:attack"
+    ],
+    "events": [
+      "hit",
+      "land",
+      "swing"
+    ],
+    "bytes": 19963
+  },
+  {
+    "name": "ledge-roll",
+    "ticks": 128,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "x": 1010,
+          "y": 500,
+          "ground": false,
+          "surf": null,
+          "state": "air",
+          "vy": 2
+        },
+        {
+          "player": 1,
+          "x": 920
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "climb",
+      "idle",
+      "ledge"
+    ],
+    "moves": [],
+    "details": [
+      "climb:roll"
+    ],
+    "events": [
+      "land",
+      "roll"
+    ],
+    "bytes": 16666
+  },
+  {
+    "name": "ledge-jump",
+    "ticks": 128,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "x": 1010,
+          "y": 500,
+          "ground": false,
+          "surf": null,
+          "state": "air",
+          "vy": 2
+        },
+        {
+          "player": 1,
+          "x": 920
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "climb",
+      "idle",
+      "landing",
+      "ledge"
+    ],
+    "moves": [],
+    "details": [
+      "climb:jump"
+    ],
+    "events": [
+      "jump",
+      "land"
+    ],
+    "bytes": 20881
+  },
+  {
+    "name": "ledge-drop",
+    "ticks": 128,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "x": 1010,
+          "y": 500,
+          "ground": false,
+          "surf": null,
+          "state": "air",
+          "vy": 2
+        },
+        {
+          "player": 1,
+          "x": 920
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "dead",
+      "idle",
+      "ledge",
+      "respawn"
+    ],
+    "moves": [],
+    "details": [],
+    "events": [
+      "ko",
+      "land"
+    ],
+    "bytes": 16540
+  },
+  {
+    "name": "walk-off-ledge",
+    "ticks": 122,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "x": 950
+        },
+        {
+          "player": 1,
+          "x": 920
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "idle",
+      "ledge"
+    ],
+    "moves": [],
+    "details": [],
+    "events": [
+      "land"
+    ],
+    "bytes": 15905
+  },
+  {
+    "name": "brawler-uspec-ledge",
+    "ticks": 121,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "x": 1010,
+          "y": 650,
+          "ground": false,
+          "surf": null,
+          "state": "air",
+          "face": -1
+        },
+        {
+          "player": 1,
+          "x": 920
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "idle",
+      "ledge"
+    ],
+    "moves": [
+      "uspec"
+    ],
+    "details": [
+      "uspec:phase0"
+    ],
+    "events": [
+      "djump",
+      "land"
+    ],
+    "bytes": 15666
+  },
+  {
+    "name": "brawler-pound-air",
+    "ticks": 141,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 920
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "idle",
+      "jumpsquat"
+    ],
+    "moves": [
+      "dspec"
+    ],
+    "details": [
+      "dspec:phase0",
+      "dspec:phase1",
+      "dspec:phase2"
+    ],
+    "events": [
+      "jump",
+      "land",
+      "quake"
+    ],
+    "bytes": 18502
+  },
+  {
+    "name": "brawler-pound-blast",
+    "ticks": 172,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "x": 1200,
+          "y": -300,
+          "ground": false,
+          "surf": null,
+          "state": "air"
+        },
+        {
+          "player": 1,
+          "x": 920
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "dead",
+      "idle",
+      "respawn"
+    ],
+    "moves": [
+      "dspec"
+    ],
+    "details": [
+      "dspec:phase0",
+      "dspec:phase1",
+      "fastFall"
+    ],
+    "events": [
+      "ko"
+    ],
+    "bytes": 23514
+  },
+  {
+    "name": "king-plunge-cancel",
+    "ticks": 157,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 920
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "helpless",
+      "idle",
+      "landing"
+    ],
+    "moves": [
+      "uspec"
+    ],
+    "details": [
+      "uspec:phase0",
+      "uspec:phase1",
+      "uspec:phase2"
+    ],
+    "events": [
+      "djump",
+      "land",
+      "smash"
+    ],
+    "bytes": 24908
+  },
+  {
+    "name": "king-gordo-bounce",
+    "ticks": 151,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "x": 340
+        },
+        {
+          "player": 1,
+          "x": 950
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "hitstun",
+      "idle"
+    ],
+    "moves": [
+      "nspec"
+    ],
+    "details": [
+      "gordoBounce",
+      "nspec:phase0"
+    ],
+    "events": [
+      "bonk",
+      "hit",
+      "toss"
+    ],
+    "bytes": 26144
+  },
+  {
+    "name": "king-gordo-bat",
+    "ticks": 152,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "swordfighter",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "x": 340
+        },
+        {
+          "player": 1,
+          "x": 620
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "idle"
+    ],
+    "moves": [
+      "fsmash",
+      "nspec"
+    ],
+    "details": [
+      "fsmash:phase0",
+      "gordoBatBack",
+      "nspec:phase0"
+    ],
+    "events": [
+      "bonk",
+      "slash",
+      "smash",
+      "toss",
+      "whack"
+    ],
+    "bytes": 26902
+  },
+  {
+    "name": "sword-counter-melee",
+    "ticks": 106,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "swordfighter",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 510
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "hitstun",
+      "idle"
+    ],
+    "moves": [
+      "dspec",
+      "jab"
+    ],
+    "details": [
+      "dspec:phase0",
+      "dspec:phase1",
+      "jab:phase0"
+    ],
+    "events": [
+      "counter",
+      "hit",
+      "slash",
+      "whack"
+    ],
+    "bytes": 17167
+  },
+  {
+    "name": "sword-counter-reflect",
+    "ticks": 112,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "swordfighter",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 650
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "hitstun",
+      "idle"
+    ],
+    "moves": [
+      "dspec",
+      "nspec"
+    ],
+    "details": [
+      "dspec:phase0",
+      "dspec:phase1",
+      "energyOwner0",
+      "nspec:phase0"
+    ],
+    "events": [
+      "counter",
+      "hit",
+      "shoot"
+    ],
+    "bytes": 17690
+  },
+  {
+    "name": "shield-break-dizzy",
+    "ticks": 640,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 1,
+          "x": 920
+        }
+      ]
+    },
+    "states": [
+      "dizzy",
+      "idle",
+      "shield",
+      "shieldbreak"
+    ],
+    "moves": [],
+    "details": [],
+    "events": [
+      "land",
+      "shieldBreak"
+    ],
+    "bytes": 81889
+  },
+  {
+    "name": "knockdown-tech",
+    "ticks": 144,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "dmg": 120,
+          "x": 640
+        },
+        {
+          "player": 1,
+          "x": 640,
+          "y": 330,
+          "ground": false,
+          "surf": null,
+          "state": "air"
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "hitstun",
+      "idle",
+      "landing",
+      "tech"
+    ],
+    "moves": [
+      "dair"
+    ],
+    "details": [
+      "dair:phase0",
+      "fastFall"
+    ],
+    "events": [
+      "hit",
+      "land",
+      "swing",
+      "tech"
+    ],
+    "bytes": 25959
+  },
+  {
+    "name": "knockdown-tech-roll",
+    "ticks": 144,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "dmg": 120,
+          "x": 640
+        },
+        {
+          "player": 1,
+          "x": 640,
+          "y": 330,
+          "ground": false,
+          "surf": null,
+          "state": "air"
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "hitstun",
+      "idle",
+      "landing",
+      "tech"
+    ],
+    "moves": [
+      "dair"
+    ],
+    "details": [
+      "dair:phase0",
+      "fastFall"
+    ],
+    "events": [
+      "hit",
+      "land",
+      "swing",
+      "tech"
+    ],
+    "bytes": 25949
+  },
+  {
+    "name": "knockdown-stand",
+    "ticks": 165,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "dmg": 120,
+          "x": 640
+        },
+        {
+          "player": 1,
+          "x": 640,
+          "y": 330,
+          "ground": false,
+          "surf": null,
+          "state": "air"
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "getup",
+      "hitstun",
+      "idle",
+      "knockdown",
+      "landing"
+    ],
+    "moves": [
+      "dair"
+    ],
+    "details": [
+      "dair:phase0",
+      "fastFall",
+      "getup:stand"
+    ],
+    "events": [
+      "hit",
+      "land",
+      "swing"
+    ],
+    "bytes": 29663
+  },
+  {
+    "name": "knockdown-attack",
+    "ticks": 165,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "dmg": 120,
+          "x": 640
+        },
+        {
+          "player": 1,
+          "x": 640,
+          "y": 330,
+          "ground": false,
+          "surf": null,
+          "state": "air"
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "getup",
+      "hitstun",
+      "idle",
+      "knockdown",
+      "landing"
+    ],
+    "moves": [
+      "dair"
+    ],
+    "details": [
+      "dair:phase0",
+      "fastFall",
+      "getup:atk"
+    ],
+    "events": [
+      "hit",
+      "land",
+      "swing"
+    ],
+    "bytes": 29672
+  },
+  {
+    "name": "knockdown-roll",
+    "ticks": 165,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "dmg": 120,
+          "x": 640
+        },
+        {
+          "player": 1,
+          "x": 640,
+          "y": 330,
+          "ground": false,
+          "surf": null,
+          "state": "air"
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "hitstun",
+      "idle",
+      "knockdown",
+      "landing",
+      "roll"
+    ],
+    "moves": [
+      "dair"
+    ],
+    "details": [
+      "dair:phase0",
+      "fastFall"
+    ],
+    "events": [
+      "hit",
+      "land",
+      "roll",
+      "swing"
+    ],
+    "bytes": 26299
+  },
+  {
+    "name": "knockdown-auto",
+    "ticks": 165,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": true
+        }
+      ],
+      "setup": [
+        {
+          "player": 0,
+          "dmg": 120,
+          "x": 640
+        },
+        {
+          "player": 1,
+          "x": 640,
+          "y": 330,
+          "ground": false,
+          "surf": null,
+          "state": "air"
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "getup",
+      "hitstun",
+      "idle",
+      "knockdown",
+      "landing"
+    ],
+    "moves": [
+      "dair"
+    ],
+    "details": [
+      "dair:phase0",
+      "fastFall",
+      "getup:stand"
+    ],
+    "events": [
+      "hit",
+      "land",
+      "swing"
+    ],
+    "bytes": 29940
+  },
+  {
+    "name": "ko-respawn-training",
+    "ticks": 1100,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": true,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "dead",
+      "idle",
+      "landing",
+      "respawn"
+    ],
+    "moves": [],
+    "details": [],
+    "events": [
+      "ko",
+      "land"
+    ],
+    "bytes": 162790
+  },
+  {
+    "name": "ko-respawn-stocks",
+    "ticks": 848,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "dead",
+      "idle",
+      "landing",
+      "out",
+      "respawn",
+      "win"
+    ],
+    "moves": [],
+    "details": [],
+    "events": [
+      "beep",
+      "go",
+      "ko",
+      "land"
+    ],
+    "bytes": 121364
+  },
+  {
+    "name": "countdown-held-input",
+    "ticks": 281,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "attack",
+      "idle"
+    ],
+    "moves": [
+      "jab"
+    ],
+    "details": [
+      "jab:phase0"
+    ],
+    "events": [
+      "beep",
+      "go",
+      "swing"
+    ],
+    "bytes": 38693
+  },
+  {
+    "name": "fuzz-1",
+    "ticks": 1500,
+    "config": {
+      "stage": "arena",
+      "seed": 6100,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "airdodge",
+      "attack",
+      "dead",
+      "helpless",
+      "idle",
+      "jumpsquat",
+      "landing",
+      "ledge",
+      "respawn",
+      "roll",
+      "shield",
+      "spot"
+    ],
+    "moves": [
+      "bair",
+      "dair",
+      "dashgrab",
+      "dspec",
+      "fair",
+      "fsmash",
+      "grab",
+      "nair",
+      "nspec",
+      "uair",
+      "uspec"
+    ],
+    "details": [
+      "bair:phase0",
+      "dair:phase0",
+      "dashgrab:phase0",
+      "dspec:phase0",
+      "dspec:phase1",
+      "dspec:phase2",
+      "energyOwner0",
+      "fair:phase0",
+      "fastFall",
+      "fsmash:phase0",
+      "gordoBatBack",
+      "gordoBounce",
+      "grab:phase0",
+      "nair:phase0",
+      "nspec:phase0",
+      "uair:phase0",
+      "uspec:phase0"
+    ],
+    "events": [
+      "beep",
+      "bonk",
+      "djump",
+      "go",
+      "jet",
+      "jump",
+      "ko",
+      "land",
+      "quake",
+      "roll",
+      "shoot",
+      "smash",
+      "swing",
+      "toss",
+      "whack"
+    ],
+    "bytes": 289187
+  },
+  {
+    "name": "fuzz-2",
+    "ticks": 1500,
+    "config": {
+      "stage": "arena",
+      "seed": 6101,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "swordfighter",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "airdodge",
+      "attack",
+      "climb",
+      "dead",
+      "grabbed",
+      "helpless",
+      "hitstun",
+      "hold",
+      "idle",
+      "jumpsquat",
+      "landing",
+      "ledge",
+      "respawn",
+      "roll",
+      "shield",
+      "spot",
+      "throw"
+    ],
+    "moves": [
+      "bair",
+      "dair",
+      "dashgrab",
+      "dtilt",
+      "grab",
+      "nair",
+      "sspec",
+      "usmash",
+      "uspec"
+    ],
+    "details": [
+      "bair:phase0",
+      "climb:climb",
+      "dair:phase0",
+      "dashgrab:phase0",
+      "dtilt:phase0",
+      "fastFall",
+      "grab:phase0",
+      "nair:phase0",
+      "platformDrop",
+      "sspec:phase0",
+      "throw:d",
+      "usmash:phase0",
+      "uspec:phase0",
+      "uspec:phase1",
+      "uspec:phase2",
+      "uspec:phase3"
+    ],
+    "events": [
+      "beep",
+      "djump",
+      "go",
+      "grab",
+      "hit",
+      "jump",
+      "ko",
+      "land",
+      "quake",
+      "roll",
+      "slash",
+      "smash",
+      "throw",
+      "whack"
+    ],
+    "bytes": 282177
+  },
+  {
+    "name": "fuzz-3",
+    "ticks": 1500,
+    "config": {
+      "stage": "arena",
+      "seed": 6102,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": false,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "airdodge",
+      "attack",
+      "dead",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "jumpsquat",
+      "landing",
+      "respawn",
+      "roll",
+      "shield",
+      "spot",
+      "throw"
+    ],
+    "moves": [
+      "dair",
+      "dashgrab",
+      "dsmash",
+      "dspec",
+      "fsmash",
+      "grab",
+      "nspec",
+      "uair",
+      "uspec"
+    ],
+    "details": [
+      "charged",
+      "dair:phase0",
+      "dashgrab:phase0",
+      "dsmash:phase0",
+      "dspec:phase0",
+      "fastFall",
+      "fsmash:phase0",
+      "gordoBatBack",
+      "grab:phase0",
+      "nspec:phase0",
+      "throw:d",
+      "uair:phase0",
+      "uspec:phase0",
+      "uspec:phase1",
+      "uspec:phase2",
+      "uspec:phase3"
+    ],
+    "events": [
+      "beep",
+      "charge",
+      "djump",
+      "go",
+      "grab",
+      "hit",
+      "jump",
+      "ko",
+      "land",
+      "quake",
+      "roll",
+      "smash",
+      "throw",
+      "toss",
+      "whack"
+    ],
+    "bytes": 290127
+  },
+  {
+    "name": "cpu-brawler-brawler-level2",
+    "ticks": 2500,
+    "config": {
+      "stage": "arena",
+      "seed": 7,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": true,
+          "tapJump": false
+        },
+        {
+          "fighter": "brawler",
+          "cpu": true,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "dead",
+      "dizzy",
+      "grabbed",
+      "helpless",
+      "hitstun",
+      "hold",
+      "idle",
+      "jumpsquat",
+      "landing",
+      "respawn",
+      "shield",
+      "shieldbreak",
+      "throw"
+    ],
+    "moves": [
+      "dair",
+      "dspec",
+      "dtilt",
+      "fair",
+      "fsmash",
+      "ftilt",
+      "grab",
+      "jab",
+      "nair",
+      "uair",
+      "usmash",
+      "uspec",
+      "utilt"
+    ],
+    "details": [
+      "dair:phase0",
+      "dspec:phase0",
+      "dspec:phase1",
+      "dspec:phase2",
+      "dtilt:phase0",
+      "fair:phase0",
+      "fsmash:phase0",
+      "ftilt:phase0",
+      "grab:phase0",
+      "jab:phase0",
+      "nair:phase0",
+      "platformDrop",
+      "throw:b",
+      "throw:d",
+      "throw:f",
+      "uair:phase0",
+      "usmash:phase0",
+      "uspec:phase0",
+      "utilt:phase0"
+    ],
+    "events": [
+      "beep",
+      "djump",
+      "go",
+      "grab",
+      "hit",
+      "jump",
+      "ko",
+      "land",
+      "pummel",
+      "quake",
+      "shieldBreak",
+      "shieldHit",
+      "smash",
+      "swing",
+      "throw"
+    ],
+    "bytes": 490499
+  },
+  {
+    "name": "cpu-brawler-swordfighter-level2",
+    "ticks": 2500,
+    "config": {
+      "stage": "arena",
+      "seed": 8,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": true,
+          "tapJump": false
+        },
+        {
+          "fighter": "swordfighter",
+          "cpu": true,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "dead",
+      "grabbed",
+      "helpless",
+      "hitstun",
+      "hold",
+      "idle",
+      "jumpsquat",
+      "knockdown",
+      "landing",
+      "respawn",
+      "roll",
+      "shield",
+      "tech",
+      "throw"
+    ],
+    "moves": [
+      "bair",
+      "dair",
+      "dashatk",
+      "dsmash",
+      "dspec",
+      "dtilt",
+      "fair",
+      "fsmash",
+      "ftilt",
+      "grab",
+      "jab",
+      "sspec",
+      "uair",
+      "usmash",
+      "uspec",
+      "utilt"
+    ],
+    "details": [
+      "bair:phase0",
+      "dair:phase0",
+      "dashatk:phase0",
+      "dsmash:phase0",
+      "dspec:phase0",
+      "dspec:phase2",
+      "dtilt:phase0",
+      "fair:phase0",
+      "fsmash:phase0",
+      "ftilt:phase0",
+      "grab:phase0",
+      "jab:phase0",
+      "platformDrop",
+      "sspec:phase0",
+      "throw:d",
+      "throw:f",
+      "throw:u",
+      "uair:phase0",
+      "usmash:phase0",
+      "uspec:phase0",
+      "utilt:phase0"
+    ],
+    "events": [
+      "beep",
+      "charge",
+      "djump",
+      "go",
+      "grab",
+      "hit",
+      "jump",
+      "ko",
+      "land",
+      "quake",
+      "roll",
+      "shieldHit",
+      "slash",
+      "smash",
+      "swing",
+      "tech",
+      "throw"
+    ],
+    "bytes": 496044
+  },
+  {
+    "name": "cpu-brawler-king-level2",
+    "ticks": 2500,
+    "config": {
+      "stage": "arena",
+      "seed": 9,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": true,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": true,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "jumpsquat",
+      "landing",
+      "shield",
+      "shieldbreak",
+      "throw"
+    ],
+    "moves": [
+      "bair",
+      "dair",
+      "dashatk",
+      "dtilt",
+      "fsmash",
+      "ftilt",
+      "grab",
+      "jab",
+      "nspec",
+      "uair",
+      "usmash",
+      "uspec",
+      "utilt"
+    ],
+    "details": [
+      "bair:phase0",
+      "dair:phase0",
+      "dashatk:phase0",
+      "dtilt:phase0",
+      "energyOwner0",
+      "fsmash:phase0",
+      "ftilt:phase0",
+      "gordoBatBack",
+      "grab:phase0",
+      "jab:phase0",
+      "nspec:phase0",
+      "platformDrop",
+      "throw:b",
+      "throw:d",
+      "throw:u",
+      "uair:phase0",
+      "usmash:phase0",
+      "uspec:phase0",
+      "uspec:phase1",
+      "uspec:phase2",
+      "uspec:phase3",
+      "utilt:phase0"
+    ],
+    "events": [
+      "beep",
+      "djump",
+      "go",
+      "grab",
+      "hit",
+      "jump",
+      "land",
+      "pummel",
+      "quake",
+      "shieldBreak",
+      "shieldHit",
+      "shoot",
+      "smash",
+      "swing",
+      "throw",
+      "toss",
+      "whack"
+    ],
+    "bytes": 507241
+  },
+  {
+    "name": "cpu-swordfighter-brawler-level2",
+    "ticks": 2500,
+    "config": {
+      "stage": "arena",
+      "seed": 10,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "swordfighter",
+          "cpu": true,
+          "tapJump": false
+        },
+        {
+          "fighter": "brawler",
+          "cpu": true,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "dead",
+      "getup",
+      "grabbed",
+      "helpless",
+      "hitstun",
+      "hold",
+      "idle",
+      "jumpsquat",
+      "knockdown",
+      "landing",
+      "respawn",
+      "shield",
+      "throw"
+    ],
+    "moves": [
+      "bair",
+      "dair",
+      "dashgrab",
+      "dsmash",
+      "dspec",
+      "dtilt",
+      "fair",
+      "fsmash",
+      "ftilt",
+      "grab",
+      "nair",
+      "sspec",
+      "uair",
+      "usmash",
+      "uspec",
+      "utilt"
+    ],
+    "details": [
+      "bair:phase0",
+      "dair:phase0",
+      "dashgrab:phase0",
+      "dsmash:phase0",
+      "dspec:phase0",
+      "dtilt:phase0",
+      "fair:phase0",
+      "fsmash:phase0",
+      "ftilt:phase0",
+      "getup:atk",
+      "getup:stand",
+      "grab:phase0",
+      "nair:phase0",
+      "platformDrop",
+      "sspec:phase0",
+      "throw:b",
+      "throw:f",
+      "throw:u",
+      "uair:phase0",
+      "usmash:phase0",
+      "uspec:phase0",
+      "utilt:phase0"
+    ],
+    "events": [
+      "beep",
+      "charge",
+      "djump",
+      "go",
+      "grab",
+      "hit",
+      "jump",
+      "ko",
+      "land",
+      "pummel",
+      "shieldHit",
+      "slash",
+      "smash",
+      "swing",
+      "throw"
+    ],
+    "bytes": 497061
+  },
+  {
+    "name": "cpu-swordfighter-swordfighter-level2",
+    "ticks": 2500,
+    "config": {
+      "stage": "arena",
+      "seed": 11,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "swordfighter",
+          "cpu": true,
+          "tapJump": false
+        },
+        {
+          "fighter": "swordfighter",
+          "cpu": true,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "climb",
+      "dead",
+      "getup",
+      "grabbed",
+      "helpless",
+      "hitstun",
+      "hold",
+      "idle",
+      "jumpsquat",
+      "knockdown",
+      "landing",
+      "ledge",
+      "respawn",
+      "roll",
+      "shield",
+      "throw"
+    ],
+    "moves": [
+      "dair",
+      "dashatk",
+      "dashgrab",
+      "dsmash",
+      "dspec",
+      "dtilt",
+      "fair",
+      "fsmash",
+      "ftilt",
+      "grab",
+      "sspec",
+      "uair",
+      "usmash",
+      "uspec",
+      "utilt"
+    ],
+    "details": [
+      "climb:attack",
+      "dair:phase0",
+      "dashatk:phase0",
+      "dashgrab:phase0",
+      "dsmash:phase0",
+      "dspec:phase0",
+      "dspec:phase1",
+      "dtilt:phase0",
+      "fair:phase0",
+      "fsmash:phase0",
+      "ftilt:phase0",
+      "getup:atk",
+      "grab:phase0",
+      "platformDrop",
+      "sspec:phase0",
+      "throw:b",
+      "throw:d",
+      "throw:f",
+      "uair:phase0",
+      "usmash:phase0",
+      "uspec:phase0",
+      "utilt:phase0"
+    ],
+    "events": [
+      "beep",
+      "charge",
+      "counter",
+      "djump",
+      "go",
+      "grab",
+      "hit",
+      "jump",
+      "ko",
+      "land",
+      "roll",
+      "shieldHit",
+      "slash",
+      "smash",
+      "swing",
+      "tech",
+      "throw"
+    ],
+    "bytes": 516355
+  },
+  {
+    "name": "cpu-swordfighter-king-level2",
+    "ticks": 2500,
+    "config": {
+      "stage": "arena",
+      "seed": 12,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "swordfighter",
+          "cpu": true,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": true,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "dead",
+      "grabbed",
+      "helpless",
+      "hitstun",
+      "hold",
+      "idle",
+      "jumpsquat",
+      "landing",
+      "respawn",
+      "shield",
+      "shieldbreak",
+      "throw"
+    ],
+    "moves": [
+      "bair",
+      "dair",
+      "dspec",
+      "dtilt",
+      "fair",
+      "ftilt",
+      "grab",
+      "jab",
+      "nspec",
+      "sspec",
+      "uair",
+      "usmash",
+      "uspec",
+      "utilt"
+    ],
+    "details": [
+      "bair:phase0",
+      "dair:phase0",
+      "dspec:phase0",
+      "dspec:phase1",
+      "dtilt:phase0",
+      "fair:phase0",
+      "ftilt:phase0",
+      "gordoBatBack",
+      "gordoBounce",
+      "grab:phase0",
+      "jab:phase0",
+      "nspec:phase0",
+      "platformDrop",
+      "sspec:phase0",
+      "throw:b",
+      "throw:d",
+      "throw:f",
+      "throw:u",
+      "uair:phase0",
+      "usmash:phase0",
+      "uspec:phase0",
+      "uspec:phase1",
+      "uspec:phase2",
+      "uspec:phase3",
+      "utilt:phase0"
+    ],
+    "events": [
+      "beep",
+      "bonk",
+      "counter",
+      "djump",
+      "go",
+      "grab",
+      "hit",
+      "jump",
+      "ko",
+      "land",
+      "pummel",
+      "quake",
+      "shieldBreak",
+      "shieldHit",
+      "slash",
+      "smash",
+      "throw",
+      "toss",
+      "whack"
+    ],
+    "bytes": 512497
+  },
+  {
+    "name": "cpu-king-brawler-level2",
+    "ticks": 2500,
+    "config": {
+      "stage": "arena",
+      "seed": 13,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "king",
+          "cpu": true,
+          "tapJump": false
+        },
+        {
+          "fighter": "brawler",
+          "cpu": true,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "dizzy",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "jumpsquat",
+      "landing",
+      "roll",
+      "shield",
+      "shieldbreak",
+      "tech",
+      "throw"
+    ],
+    "moves": [
+      "dair",
+      "dashatk",
+      "dsmash",
+      "dspec",
+      "dtilt",
+      "fair",
+      "fsmash",
+      "ftilt",
+      "grab",
+      "jab",
+      "nspec",
+      "uair",
+      "usmash",
+      "utilt"
+    ],
+    "details": [
+      "dair:phase0",
+      "dashatk:phase0",
+      "dsmash:phase0",
+      "dspec:phase0",
+      "dspec:phase1",
+      "dspec:phase2",
+      "dtilt:phase0",
+      "fair:phase0",
+      "fsmash:phase0",
+      "ftilt:phase0",
+      "grab:phase0",
+      "jab:phase0",
+      "nspec:phase0",
+      "platformDrop",
+      "throw:b",
+      "throw:d",
+      "throw:f",
+      "throw:u",
+      "uair:phase0",
+      "usmash:phase0",
+      "utilt:phase0"
+    ],
+    "events": [
+      "beep",
+      "charge",
+      "go",
+      "grab",
+      "hit",
+      "jet",
+      "jump",
+      "land",
+      "pummel",
+      "quake",
+      "roll",
+      "shieldBreak",
+      "shieldHit",
+      "smash",
+      "swing",
+      "tech",
+      "throw",
+      "toss",
+      "whack"
+    ],
+    "bytes": 499111
+  },
+  {
+    "name": "cpu-king-swordfighter-level2",
+    "ticks": 2500,
+    "config": {
+      "stage": "arena",
+      "seed": 14,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "king",
+          "cpu": true,
+          "tapJump": false
+        },
+        {
+          "fighter": "swordfighter",
+          "cpu": true,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "climb",
+      "grabbed",
+      "helpless",
+      "hitstun",
+      "hold",
+      "idle",
+      "jumpsquat",
+      "knockdown",
+      "landing",
+      "ledge",
+      "roll",
+      "shield",
+      "throw"
+    ],
+    "moves": [
+      "bair",
+      "dair",
+      "dashatk",
+      "dsmash",
+      "dspec",
+      "dtilt",
+      "ftilt",
+      "grab",
+      "jab",
+      "nspec",
+      "sspec",
+      "usmash",
+      "uspec",
+      "utilt"
+    ],
+    "details": [
+      "bair:phase0",
+      "charged",
+      "climb:attack",
+      "dair:phase0",
+      "dashatk:phase0",
+      "dsmash:phase0",
+      "dspec:phase0",
+      "dtilt:phase0",
+      "ftilt:phase0",
+      "gordoBatBack",
+      "gordoBounce",
+      "grab:phase0",
+      "jab:phase0",
+      "nspec:phase0",
+      "platformDrop",
+      "sspec:phase0",
+      "throw:b",
+      "throw:u",
+      "usmash:phase0",
+      "uspec:phase0",
+      "uspec:phase1",
+      "uspec:phase2",
+      "uspec:phase3",
+      "utilt:phase0"
+    ],
+    "events": [
+      "beep",
+      "bonk",
+      "charge",
+      "djump",
+      "go",
+      "grab",
+      "hit",
+      "jet",
+      "jump",
+      "land",
+      "pummel",
+      "quake",
+      "roll",
+      "shieldHit",
+      "slash",
+      "smash",
+      "swing",
+      "tech",
+      "throw",
+      "toss",
+      "whack"
+    ],
+    "bytes": 517686
+  },
+  {
+    "name": "cpu-king-king-level2",
+    "ticks": 2500,
+    "config": {
+      "stage": "arena",
+      "seed": 15,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "king",
+          "cpu": true,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": true,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "dead",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "jumpsquat",
+      "landing",
+      "respawn",
+      "shield",
+      "throw"
+    ],
+    "moves": [
+      "dair",
+      "dashatk",
+      "dspec",
+      "dtilt",
+      "fsmash",
+      "ftilt",
+      "grab",
+      "uair",
+      "usmash",
+      "uspec",
+      "utilt"
+    ],
+    "details": [
+      "dair:phase0",
+      "dashatk:phase0",
+      "dspec:phase0",
+      "dtilt:phase0",
+      "fsmash:phase0",
+      "ftilt:phase0",
+      "grab:phase0",
+      "platformDrop",
+      "throw:d",
+      "throw:f",
+      "uair:phase0",
+      "usmash:phase0",
+      "uspec:phase0",
+      "uspec:phase1",
+      "uspec:phase2",
+      "uspec:phase3",
+      "utilt:phase0"
+    ],
+    "events": [
+      "beep",
+      "charge",
+      "djump",
+      "go",
+      "grab",
+      "hit",
+      "jet",
+      "jump",
+      "ko",
+      "land",
+      "pummel",
+      "quake",
+      "shieldHit",
+      "smash",
+      "throw",
+      "whack"
+    ],
+    "bytes": 506204
+  },
+  {
+    "name": "cpu-brawler-king-level0",
+    "ticks": 2500,
+    "config": {
+      "stage": "arena",
+      "seed": 9,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 0,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": true,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": true,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "jumpsquat",
+      "landing",
+      "roll",
+      "shield",
+      "throw"
+    ],
+    "moves": [
+      "dair",
+      "dashatk",
+      "dsmash",
+      "dspec",
+      "dtilt",
+      "fair",
+      "fsmash",
+      "ftilt",
+      "grab",
+      "jab",
+      "nspec",
+      "uair",
+      "usmash",
+      "utilt"
+    ],
+    "details": [
+      "dair:phase0",
+      "dashatk:phase0",
+      "dsmash:phase0",
+      "dspec:phase0",
+      "dspec:phase2",
+      "dtilt:phase0",
+      "energyOwner0",
+      "fair:phase0",
+      "fsmash:phase0",
+      "ftilt:phase0",
+      "gordoBatBack",
+      "gordoBounce",
+      "grab:phase0",
+      "jab:phase0",
+      "nspec:phase0",
+      "platformDrop",
+      "throw:f",
+      "uair:phase0",
+      "usmash:phase0",
+      "utilt:phase0"
+    ],
+    "events": [
+      "beep",
+      "bonk",
+      "djump",
+      "go",
+      "grab",
+      "hit",
+      "jump",
+      "land",
+      "pummel",
+      "quake",
+      "roll",
+      "shieldHit",
+      "shoot",
+      "smash",
+      "swing",
+      "tech",
+      "throw",
+      "toss",
+      "whack"
+    ],
+    "bytes": 505767
+  },
+  {
+    "name": "cpu-brawler-king-level1",
+    "ticks": 2500,
+    "config": {
+      "stage": "arena",
+      "seed": 9,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 1,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": true,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": true,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "grabbed",
+      "helpless",
+      "hitstun",
+      "hold",
+      "idle",
+      "jumpsquat",
+      "landing",
+      "shield",
+      "tech",
+      "throw"
+    ],
+    "moves": [
+      "bair",
+      "dair",
+      "dashatk",
+      "dashgrab",
+      "dsmash",
+      "dspec",
+      "dtilt",
+      "fair",
+      "ftilt",
+      "grab",
+      "jab",
+      "nspec",
+      "uair",
+      "usmash",
+      "uspec",
+      "utilt"
+    ],
+    "details": [
+      "bair:phase0",
+      "dair:phase0",
+      "dashatk:phase0",
+      "dashgrab:phase0",
+      "dsmash:phase0",
+      "dspec:phase0",
+      "dspec:phase2",
+      "dtilt:phase0",
+      "energyOwner0",
+      "fair:phase0",
+      "ftilt:phase0",
+      "grab:phase0",
+      "jab:phase0",
+      "nspec:phase0",
+      "throw:b",
+      "throw:d",
+      "throw:u",
+      "uair:phase0",
+      "usmash:phase0",
+      "uspec:phase0",
+      "uspec:phase1",
+      "uspec:phase2",
+      "utilt:phase0"
+    ],
+    "events": [
+      "beep",
+      "djump",
+      "go",
+      "grab",
+      "hit",
+      "jump",
+      "land",
+      "pummel",
+      "quake",
+      "shieldHit",
+      "shoot",
+      "smash",
+      "swing",
+      "tech",
+      "throw",
+      "whack"
+    ],
+    "bytes": 521076
+  },
+  {
+    "name": "human-vs-cpu",
+    "ticks": 700,
+    "config": {
+      "stage": "arena",
+      "seed": 12345,
+      "stocks": 3,
+      "training": false,
+      "cpuLevel": 2,
+      "players": [
+        {
+          "fighter": "brawler",
+          "cpu": false,
+          "tapJump": false
+        },
+        {
+          "fighter": "king",
+          "cpu": true,
+          "tapJump": true
+        }
+      ]
+    },
+    "states": [
+      "air",
+      "attack",
+      "grabbed",
+      "hitstun",
+      "hold",
+      "idle",
+      "landing",
+      "shield",
+      "throw"
+    ],
+    "moves": [
+      "dashatk",
+      "dspec",
+      "fair",
+      "ftilt",
+      "grab",
+      "jab",
+      "nspec",
+      "usmash"
+    ],
+    "details": [
+      "dashatk:phase0",
+      "dspec:phase0",
+      "energyOwner0",
+      "fair:phase0",
+      "ftilt:phase0",
+      "grab:phase0",
+      "jab:phase0",
+      "nspec:phase0",
+      "throw:f",
+      "usmash:phase0"
+    ],
+    "events": [
+      "beep",
+      "charge",
+      "go",
+      "grab",
+      "hit",
+      "jet",
+      "land",
+      "shieldHit",
+      "shoot",
+      "smash",
+      "swing",
+      "throw",
+      "whack"
+    ],
+    "bytes": 129354
+  }
+]

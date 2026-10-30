@@ -1,0 +1,1830 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": ["string", "null"], "writeOnly": true },
+    "schemaVersion": { "type": "integer", "format": "uint32", "minimum": 0 },
+    "extends": { "type": ["string", "null"], "description": "Id of the package this one inherits from." },
+    "abstract": {
+      "type": "boolean",
+      "description": "Only for inheriting from: not playable, and not checked as a complete fighter. Not inherited."
+    },
+    "name": { "type": "string" },
+    "blurb": { "type": "string", "description": "Menu help line.", "default": "" },
+    "stats": { "$ref": "#/$defs/StatsPartial" },
+    "body": { "$ref": "#/$defs/BodyPartial", "description": "Collision body for stage geometry." },
+    "hurtboxes": { "$ref": "#/$defs/HurtboxesPartial" },
+    "ai": { "$ref": "#/$defs/AiPartial" },
+    "moves": { "$ref": "#/$defs/MovesPartial" },
+    "throws": { "$ref": "#/$defs/ThrowsPartial" },
+    "projectiles": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/ProjectilePartial" }
+    },
+    "fx": { "$ref": "#/$defs/FighterFxPartial", "description": "Effects for fighter-wide moments." },
+    "style": { "$ref": "#/$defs/StylePartial" },
+    "poses": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/PosePartial" },
+      "description": "Named poses, used by `anims`, move phases and other poses (`from`)."
+    },
+    "anims": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/AnimPartial" },
+      "description": "State animations by name (`idle`, `run`, `air.rise`, `hitstun`…). See `docs/FORMAT.md` for the list."
+    },
+    "attachments": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Attachment" }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "`fighters/<id>/fighter.json`. With `extends`, the parent's data is merged in first (objects key by key,\narrays replaced whole, `null` removes a key), so every field may come from the parent.",
+  "title": "Fighter",
+  "$defs": {
+    "Stats": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "weight": {
+          "type": "number",
+          "format": "double",
+          "description": "Knockback taken multiplier. Lower = heavier."
+        },
+        "runSpeed": { "type": "number", "format": "double" },
+        "runAccel": { "type": "number", "format": "double" },
+        "groundFriction": { "type": "number", "format": "double" },
+        "jumpSpeed": { "type": "number", "format": "double", "description": "Full hop launch speed (upward)." },
+        "shortHopSpeed": { "type": "number", "format": "double" },
+        "airJumpSpeed": { "type": "number", "format": "double" },
+        "airJumpDrift": { "type": "number", "format": "double" },
+        "airJumps": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Mid-air jumps." },
+        "airSpeed": { "type": "number", "format": "double" },
+        "airAccel": { "type": "number", "format": "double" },
+        "gravity": { "type": "number", "format": "double" },
+        "fallSpeed": { "type": "number", "format": "double" },
+        "fastFallSpeed": { "type": "number", "format": "double" }
+      },
+      "required": [
+        "weight",
+        "runSpeed",
+        "runAccel",
+        "groundFriction",
+        "jumpSpeed",
+        "shortHopSpeed",
+        "airJumpSpeed",
+        "airJumpDrift",
+        "airJumps",
+        "airSpeed",
+        "airAccel",
+        "gravity",
+        "fallSpeed",
+        "fastFallSpeed"
+      ]
+    },
+    "Body": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "halfWidth": { "type": "number", "format": "double" },
+        "height": { "type": "number", "format": "double" }
+      },
+      "required": ["halfWidth", "height"]
+    },
+    "Hurtboxes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default": { "$ref": "#/$defs/Rect" },
+        "knockdown": { "$ref": "#/$defs/Rect" },
+        "crouch": {
+          "anyOf": [
+            { "$ref": "#/$defs/Rect" },
+            { "type": "null" }
+          ]
+        },
+        "ledge": {
+          "anyOf": [
+            { "$ref": "#/$defs/Rect" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "required": ["default", "knockdown"],
+      "description": "Hurtboxes by state group. Missing optional groups use `default`."
+    },
+    "Rect": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "x1": { "type": "number", "format": "double" },
+        "x2": { "type": "number", "format": "double" },
+        "y1": { "type": "number", "format": "double" },
+        "y2": { "type": "number", "format": "double" }
+      },
+      "required": ["x1", "x2", "y1", "y2"],
+      "description": "Axis-aligned box in fighter-local space (x forward, y up from the feet)."
+    },
+    "Ai": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "reach": { "type": "number", "format": "double", "description": "How close the CPU wants to be to attack." },
+        "counterChance": {
+          "type": "number",
+          "format": "double",
+          "description": "Chance to counter instead of shielding; zero skips the RNG call."
+        },
+        "recoveryShieldCancel": {
+          "type": ["string", "null"],
+          "description": "Recovery behavior is enabled by move air control, with this optional shield-cancel phase."
+        },
+        "specials": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SpecialTactic" },
+          "description": "Ordered special tactics; chance is sampled only after all geometric conditions pass.",
+          "default": []
+        }
+      },
+      "required": ["reach", "counterChance"]
+    },
+    "SpecialTactic": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "minDistance": {
+          "type": "number",
+          "format": "double",
+          "description": "Strict lower bound on horizontal target distance."
+        },
+        "maxDistance": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Optional strict upper bound on horizontal target distance."
+        },
+        "height": {
+          "type": "number",
+          "format": "double",
+          "description": "Strict upper bound on absolute vertical target separation."
+        },
+        "grounded": { "type": "boolean", "description": "Require the CPU to be grounded." },
+        "noProjectile": { "type": "boolean", "description": "Require no currently owned projectile." },
+        "chance": {
+          "type": "number",
+          "format": "double",
+          "description": "Success probability, sampled after geometry and ownership checks pass."
+        },
+        "down": { "type": "boolean", "description": "Add down to the toward-target special input." },
+        "hold": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Optional special-button hold duration range; sampled then floored."
+        }
+      },
+      "required": ["minDistance", "height", "grounded", "noProjectile", "chance", "down"]
+    },
+    "Moves": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "jab": { "$ref": "#/$defs/Move" },
+        "ftilt": { "$ref": "#/$defs/Move" },
+        "utilt": { "$ref": "#/$defs/Move" },
+        "dtilt": { "$ref": "#/$defs/Move" },
+        "dashatk": { "$ref": "#/$defs/Move" },
+        "fsmash": { "$ref": "#/$defs/Move" },
+        "usmash": { "$ref": "#/$defs/Move" },
+        "dsmash": { "$ref": "#/$defs/Move" },
+        "nair": { "$ref": "#/$defs/Move" },
+        "fair": { "$ref": "#/$defs/Move" },
+        "bair": { "$ref": "#/$defs/Move" },
+        "uair": { "$ref": "#/$defs/Move" },
+        "dair": { "$ref": "#/$defs/Move" },
+        "grab": { "$ref": "#/$defs/Move" },
+        "dashgrab": { "$ref": "#/$defs/Move" },
+        "nspec": { "$ref": "#/$defs/Move" },
+        "sspec": {
+          "anyOf": [
+            { "$ref": "#/$defs/Move" },
+            { "type": "null" }
+          ]
+        },
+        "uspec": { "$ref": "#/$defs/Move" },
+        "dspec": { "$ref": "#/$defs/Move" }
+      },
+      "required": [
+        "jab",
+        "ftilt",
+        "utilt",
+        "dtilt",
+        "dashatk",
+        "fsmash",
+        "usmash",
+        "dsmash",
+        "nair",
+        "fair",
+        "bair",
+        "uair",
+        "dair",
+        "grab",
+        "dashgrab",
+        "nspec",
+        "uspec",
+        "dspec"
+      ],
+      "description": "Move slots. Specials are chosen by input direction; without `sspec`, side + special does `nspec`."
+    },
+    "Move": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "Name shown in the debug overlay and training panel." },
+        "air": { "$ref": "#/$defs/AirControl" },
+        "bReverse": {
+          "type": "boolean",
+          "description": "Pressing the other direction within `global.movement.bReverseWindow` frames turns the fighter around\n(and flips air momentum)."
+        },
+        "phases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Phase" },
+          "description": "Runs from the first phase. A move must have at least one phase."
+        }
+      },
+      "required": ["name", "phases"]
+    },
+    "AirControl": {
+      "oneOf": [
+        { "type": "string", "const": "attack", "description": "`attackAirAccel`." },
+        { "type": "string", "const": "aerial", "description": "`aerialAccel`, and the move can fast-fall." },
+        { "type": "string", "const": "upSpecial", "description": "`upSpecialAccel`." }
+      ],
+      "description": "Which global air acceleration a move uses while airborne (`global.movement`)."
+    },
+    "Phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique within the move. Transitions refer to it. `end`, `helpless` and `landing` are reserved."
+        },
+        "frames": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Phase length (see the frame convention). Omit for a phase that loops until a transition fires."
+        },
+        "hitboxes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Hitbox" }
+        },
+        "events": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Event" }
+        },
+        "transitions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Transition" },
+          "description": "Checked in order; the first that fires wins. A phase with `frames` and no `timeout` transition ends the\nmove when it times out."
+        },
+        "charge": {
+          "anyOf": [
+            { "$ref": "#/$defs/Charge" },
+            { "type": "null" }
+          ],
+          "description": "Hold to charge (smash attacks, chargeable specials)."
+        },
+        "counter": {
+          "anyOf": [
+            { "$ref": "#/$defs/Counter" },
+            { "type": "null" }
+          ],
+          "description": "Counter stance: hits received during the window are countered."
+        },
+        "hover": { "type": "boolean", "description": "Airborne: vertical speed is held at 0 (hovering startup)." },
+        "fallCap": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Airborne: max fall speed during this phase (default: the fighter's fall speed or fast-fall speed)."
+        },
+        "airAccelMult": {
+          "type": "number",
+          "format": "double",
+          "description": "Multiplies the move's air acceleration (0 = no drift control)."
+        },
+        "slide": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Grounded: phase frames below this use `attackSlideFriction` instead of `attackFriction` (dash attacks)."
+        },
+        "ledgeGrab": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Can grab a ledge (even while rising) from this phase frame on."
+        },
+        "anim": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AnimKey" },
+          "description": "Body pose keyframes, in phase frames."
+        },
+        "attach": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/AttachAnim" },
+          "description": "Attachment animation by attachment id (weapon swings, held props)."
+        }
+      },
+      "required": ["name"],
+      "description": "One step of a move.\n\nFrame convention: a phase's frame 0 is the tick it's entered (the move's first phase is entered on the tick\nthe move starts). Each later tick advances the phase frame by 1, runs that frame's `events`, then checks\n`transitions`. With `frames: N`, the phase ends on its frame N: the next phase's frame 0 is that same tick.\nA single-phase move with `frames: N` therefore matches the old \"last active frame + endLag\" total N."
+    },
+    "Hitbox": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "start": { "type": "integer", "format": "uint32", "minimum": 0, "description": "First active phase frame." },
+        "end": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Last active phase frame (inclusive). Omit to stay active until the phase ends."
+        },
+        "x": {
+          "type": "number",
+          "format": "double",
+          "description": "Offset forward from the feet. Negative = behind."
+        },
+        "y": { "type": "number", "format": "double", "description": "Offset up from the feet." },
+        "r": { "type": "number", "format": "double", "description": "Radius." },
+        "damage": { "type": "number", "format": "double", "description": "Percent dealt." },
+        "bkb": { "type": "number", "format": "double", "description": "Base knockback." },
+        "kbg": {
+          "type": "number",
+          "format": "double",
+          "description": "Knockback growth: knockback added per victim percent."
+        },
+        "angle": {
+          "type": "number",
+          "format": "double",
+          "description": "Launch angle in degrees. 0 = forward, 90 = straight up, negative = down."
+        },
+        "dir": { "$ref": "#/$defs/LaunchDir" },
+        "type": { "$ref": "#/$defs/HitType" },
+        "setKb": {
+          "type": "boolean",
+          "description": "Fixed knockback: ignores the victim's percent (knockback = bkb × weight)."
+        },
+        "rehit": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Multi-hit: can hit the same victim again every this many frames (default: once per phase)."
+        },
+        "hitstunMult": {
+          "type": "number",
+          "format": "double",
+          "description": "Multiplies the hitstun this box causes."
+        },
+        "hitstunAdd": { "type": "number", "format": "double", "description": "Flat frames added to hitstun." },
+        "hitlagMult": {
+          "type": "number",
+          "format": "double",
+          "description": "Multiplies hitlag (freeze frames) on hit."
+        },
+        "shieldDmgMult": { "type": "number", "format": "double", "description": "Multiplies shield damage." },
+        "shieldStunMult": { "type": "number", "format": "double", "description": "Multiplies shield stun." },
+        "counterDamage": {
+          "type": "boolean",
+          "description": "Counter strike: damage comes from the countered hit (see `Counter`). Inactive if nothing was countered."
+        },
+        "frames": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "number", "format": "double" },
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "description": "Per-frame position/size `[frame, x, y, r]`. A frame without an entry uses the closest earlier entry, or\nx/y/r before the first entry. Omit for a box that stays put."
+        }
+      },
+      "required": ["x", "y", "r", "damage", "bkb", "kbg", "angle"],
+      "description": "A hit circle. In a move phase, `start`/`end` are inclusive phase frames. For throws, projectiles and other\nhits that aren't frame-windowed they are ignored. When two boxes overlap a victim, the first listed wins."
+    },
+    "LaunchDir": {
+      "oneOf": [
+        { "type": "string", "const": "forward", "description": "The way the attacker faces." },
+        { "type": "string", "const": "away", "description": "Away from the attacker's center (multi-direction hits)." },
+        { "type": "string", "const": "back", "description": "Behind the attacker." }
+      ],
+      "description": "Launch direction rule."
+    },
+    "HitType": {
+      "oneOf": [
+        { "type": "string", "enum": ["normal"] },
+        {
+          "type": "string",
+          "const": "spike",
+          "description": "Always launches downward (a positive `angle` is mirrored below the horizon)."
+        },
+        {
+          "type": "string",
+          "const": "trip",
+          "description": "Grounded victims are knocked prone instead of launched. Airborne victims are hit normally."
+        },
+        {
+          "type": "string",
+          "const": "sakurai",
+          "description": "Angle chosen automatically: flat on weak grounded hits, higher on strong ones, 45° in the air (`global.hitTypes.sakurai`)."
+        },
+        {
+          "type": "string",
+          "const": "autolink",
+          "description": "Pulls the victim toward the hitbox center, plus the attacker's momentum. For multi-hit moves (`rehit`)."
+        },
+        {
+          "type": "string",
+          "const": "windbox",
+          "description": "No damage, hitstun or hitlag. Pushes anything it touches every frame along `angle` (strength = bkb)."
+        },
+        {
+          "type": "string",
+          "const": "electric",
+          "description": "Longer victim hitlag (`global.hitTypes.electric`), with spark effects."
+        },
+        { "type": "string", "const": "grab", "description": "Grabs instead of hitting." }
+      ],
+      "description": "Hitbox behavior, modeled on Smash."
+    },
+    "Event": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "at": { "type": ["integer", "null"], "format": "uint32", "minimum": 0 },
+        "from": { "type": ["integer", "null"], "format": "uint32", "minimum": 0 },
+        "to": { "type": ["integer", "null"], "format": "uint32", "minimum": 0 },
+        "every": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Only on world frames divisible by this (alternate-frame particles)."
+        },
+        "if": {
+          "anyOf": [
+            { "$ref": "#/$defs/Cond" },
+            { "type": "null" }
+          ]
+        },
+        "mulVel": {
+          "anyOf": [
+            { "$ref": "#/$defs/Vel" },
+            { "type": "null" }
+          ],
+          "description": "Multiply velocity."
+        },
+        "setVel": {
+          "anyOf": [
+            { "$ref": "#/$defs/Vel" },
+            { "type": "null" }
+          ],
+          "description": "Set velocity (x forward, y up)."
+        },
+        "addVel": {
+          "anyOf": [
+            { "$ref": "#/$defs/Vel" },
+            { "type": "null" }
+          ]
+        },
+        "capFall": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Cap downward speed at this (before gravity is applied this tick)."
+        },
+        "leaveGround": {
+          "type": "boolean",
+          "description": "Leave the ground (needed for upward launches from the ground)."
+        },
+        "invuln": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Invulnerable for this many frames (keeps the longer of this and any current invulnerability)."
+        },
+        "spawn": {
+          "type": ["string", "null"],
+          "description": "Spawn a projectile by id (from the fighter's `projectiles`)."
+        },
+        "sfx": { "type": ["string", "null"] },
+        "fx": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Fx" }
+        }
+      },
+      "description": "Frame-scoped actions. Use `at` for one frame, or `from`/`to` (inclusive) for a range. `from` alone means\nfrom there on; neither means every frame from 1. Actions in one event run in field order (velocity, then\n`leaveGround`, `invuln`, `spawn`, `sfx`, `fx`); events on the same frame run in list order."
+    },
+    "Cond": {
+      "oneOf": [
+        { "type": "string", "enum": ["grounded", "airborne"] },
+        {
+          "type": "string",
+          "const": "countered",
+          "description": "The phase was entered by a counter that caught a hit with damage (not a reflected projectile)."
+        }
+      ]
+    },
+    "Vel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": ["number", "null"], "format": "double" },
+        "y": { "type": ["number", "null"], "format": "double" }
+      },
+      "description": "Velocity components; a missing component is left alone."
+    },
+    "Fx": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": { "type": "string", "const": "dust" },
+            "x": { "$ref": "#/$defs/Num", "default": 0.0 },
+            "y": { "$ref": "#/$defs/Num", "default": 0.0 },
+            "n": { "type": "integer", "format": "uint32", "minimum": 0 }
+          },
+          "required": ["type", "n"]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": { "type": "string", "const": "ring" },
+            "x": { "$ref": "#/$defs/Num", "default": 0.0 },
+            "y": { "$ref": "#/$defs/Num", "default": 0.0 },
+            "r": { "type": "number", "format": "double" },
+            "grow": { "type": "number", "format": "double", "description": "Radius growth per frame." },
+            "life": { "type": "integer", "format": "uint32", "minimum": 0 },
+            "color": { "$ref": "#/$defs/Color" }
+          },
+          "required": ["type", "r", "grow", "life"]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": { "type": "string", "const": "part" },
+            "x": { "$ref": "#/$defs/Num", "default": 0.0 },
+            "y": { "$ref": "#/$defs/Num", "default": 0.0 },
+            "vx": { "$ref": "#/$defs/Num", "default": 0.0 },
+            "vy": { "$ref": "#/$defs/Num", "default": 0.0 },
+            "life": { "$ref": "#/$defs/Num" },
+            "size": { "$ref": "#/$defs/Num" },
+            "color": { "$ref": "#/$defs/Color" },
+            "gravity": { "type": "number", "format": "double" },
+            "inheritVel": { "type": "number", "format": "double" }
+          },
+          "required": ["type", "life", "size", "color"],
+          "description": "One particle. `inheritVel` adds the emitter's velocity times this."
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": { "type": "string", "const": "burst" },
+            "x": { "$ref": "#/$defs/Num", "default": 0.0 },
+            "y": { "$ref": "#/$defs/Num", "default": 0.0 },
+            "color": { "$ref": "#/$defs/Color" },
+            "n": { "type": "integer", "format": "uint32", "minimum": 0 },
+            "speed": { "type": "number", "format": "double" },
+            "life": { "type": "integer", "format": "uint32", "minimum": 0 },
+            "size": { "type": "number", "format": "double" },
+            "gravity": { "type": "number", "format": "double" }
+          },
+          "required": ["type", "color", "n", "speed", "life", "size"]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": { "type": "string", "const": "shake" },
+            "k": { "type": "number", "format": "double" }
+          },
+          "required": ["type", "k"]
+        }
+      ],
+      "description": "Visual effect, positioned in fighter-local space (or projectile-local for projectile trails)."
+    },
+    "Num": {
+      "anyOf": [
+        { "type": "number", "format": "double" },
+        {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      ],
+      "description": "A number, or `[min, max]` for a random value from the world RNG.\nRanges are drawn in field order (x, y, vx, vy, life, size), which matters for determinism."
+    },
+    "Color": {
+      "description": "\"#rrggbb\", or a player palette slot: \"player\", \"playerDark\", \"playerLight\".",
+      "type": "string",
+      "pattern": "^(#[0-9a-fA-F]{6}|player|playerDark|playerLight)$"
+    },
+    "Transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "on": { "$ref": "#/$defs/Trigger" },
+        "if": {
+          "anyOf": [
+            { "$ref": "#/$defs/Cond" },
+            { "type": "null" }
+          ]
+        },
+        "from": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Only from this phase frame on."
+        },
+        "to": { "type": "string" },
+        "lag": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Landing lag frames for `to: \"landing\"`."
+        }
+      },
+      "required": ["on", "to"],
+      "description": "Where a transition goes: another phase by name, or one of the move endings `end` (idle on the ground, air\nin the air), `helpless` (idle on the ground, helpless in the air), `landing` (landing lag of `lag` frames)."
+    },
+    "Trigger": {
+      "oneOf": [
+        {
+          "type": "string",
+          "const": "timeout",
+          "description": "The phase reached `frames` (checked after the frame's events)."
+        },
+        {
+          "type": "string",
+          "const": "land",
+          "description": "The fighter landed this tick (fires during movement, after the step)."
+        },
+        { "type": "string", "const": "grounded", "description": "On the ground when checked in the step." },
+        { "type": "string", "const": "airborne", "description": "In the air when checked in the step." },
+        { "type": "string", "const": "falling", "description": "Vertical speed is zero or downward." },
+        {
+          "type": "string",
+          "const": "release",
+          "description": "The charge button (or attack, without `charge`) isn't held."
+        },
+        { "type": "string", "const": "shieldPress", "description": "Shield was pressed this tick." },
+        { "type": "string", "const": "counter", "description": "A hit was countered in the phase's `counter` window." },
+        { "type": "string", "const": "hit", "description": "A hitbox of this phase connected (hit or shield)." }
+      ]
+    },
+    "Charge": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "frame": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Phase frame that freezes while held."
+        },
+        "max": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Max frames of charge." },
+        "button": { "$ref": "#/$defs/Button" },
+        "jet": {
+          "type": "boolean",
+          "description": "Jet-engine charge effects (flames behind, jet sound, glowing attachments)."
+        }
+      },
+      "required": ["frame"],
+      "description": "While the button is held on `frame`, the phase stays on that frame and charge builds.\nCharge multiplies the move's damage: × (1 + charge / `global.knockback.chargeDamageDivisor`)."
+    },
+    "Button": { "type": "string", "enum": ["attack", "special"] },
+    "Counter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Inclusive phase frames." },
+        "to": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "damageMult": {
+          "type": "number",
+          "format": "double",
+          "description": "Counter damage (used by `counterDamage` hitboxes) = max(minDamage, incoming × damageMult)."
+        },
+        "minDamage": { "type": "number", "format": "double" },
+        "attackerFreeze": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Freeze frames for the countered attacker."
+        },
+        "invuln": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Invulnerability frames granted on trigger."
+        },
+        "reflectSpeed": {
+          "type": "number",
+          "format": "double",
+          "description": "Reflected projectile: speed multiplier and new lifetime."
+        },
+        "reflectLife": { "type": "integer", "format": "uint32", "minimum": 0 }
+      },
+      "required": ["from", "to", "damageMult", "minDamage", "attackerFreeze", "invuln", "reflectSpeed", "reflectLife"],
+      "description": "Counter window. A hit received in it fires the phase's `counter` transition: the attacker freezes, and\nprojectiles are reflected."
+    },
+    "AnimKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "at": { "type": "number", "format": "double" },
+        "pose": { "$ref": "#/$defs/PoseRef" },
+        "lerp": { "type": "boolean" }
+      },
+      "required": ["at", "pose"],
+      "description": "Pose keyframe. Holds until the next key; with `lerp`, the figure blends from the previous key to this one."
+    },
+    "PoseRef": {
+      "anyOf": [
+        { "type": "string" },
+        { "$ref": "#/$defs/Pose" }
+      ],
+      "description": "A named pose, or an inline (partial) pose."
+    },
+    "Pose": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": ["string", "null"] },
+        "head": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "shoulder": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "hip": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "elbowF": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Front arm (drawn over the body)."
+        },
+        "handF": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "elbowB": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Back arm (drawn behind, darker)."
+        },
+        "handB": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "kneeF": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "footF": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "kneeB": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "footB": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "rot": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Whole-body rotation in degrees, positive = pitching forward, around `(0, pivot)`."
+        },
+        "pivot": { "type": ["number", "null"], "format": "double" },
+        "offsetY": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Vertical offset of the whole figure (up)."
+        }
+      },
+      "description": "Joint positions in fighter-local space (x forward, y up, feet at the origin). A pose may be partial: missing\njoints come from `from` (another named pose), or from the `stand` pose."
+    },
+    "AttachAnim": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "angle": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "number", "format": "double" },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "description": "`[frame, degrees]`."
+        },
+        "offset": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "number", "format": "double" },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "description": "`[frame, x, y]` offset from the joint."
+        },
+        "scale": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "number", "format": "double" },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "description": "`[frame, scale]`."
+        },
+        "show": {
+          "type": ["array", "null"],
+          "items": { "type": "integer", "format": "uint32", "minimum": 0 },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Inclusive phase frames a `hidden` attachment is shown."
+        }
+      },
+      "description": "Attachment animation within a move phase (phase frames). Angle, offset and scale keys interpolate linearly."
+    },
+    "Throws": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "f": { "$ref": "#/$defs/Throw" },
+        "b": { "$ref": "#/$defs/Throw" },
+        "u": { "$ref": "#/$defs/Throw" },
+        "d": { "$ref": "#/$defs/Throw" }
+      },
+      "required": ["f", "b", "u", "d"],
+      "description": "Grab throws by direction."
+    },
+    "Throw": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "release": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Frame the victim is released and hit."
+        },
+        "total": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "hit": { "$ref": "#/$defs/Hitbox", "description": "Geometry and window fields are ignored." }
+      },
+      "required": ["release", "total", "hit"]
+    },
+    "Projectile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "Training hit label." },
+        "spawn": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Spawn offset from the feet (x forward, y up)."
+        },
+        "vel": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Launch velocity (x forward, y up)."
+        },
+        "r": { "type": "number", "format": "double", "description": "Collision radius." },
+        "life": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Frames alive." },
+        "max": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Max alive per owner. Spawning past it does nothing (plays `fullSfx` if set)."
+        },
+        "gravity": { "type": "number", "format": "double" },
+        "maxFall": { "type": ["number", "null"], "format": "double", "description": "Max fall speed (with gravity)." },
+        "bounce": {
+          "anyOf": [
+            { "$ref": "#/$defs/Bounce" },
+            { "type": "null" }
+          ],
+          "description": "Collides with the stage and bounces. Without it the projectile flies through."
+        },
+        "bat": {
+          "anyOf": [
+            { "$ref": "#/$defs/Bat" },
+            { "type": "null" }
+          ],
+          "description": "Any attack can knock it back, making the attacker its owner."
+        },
+        "reflectVy": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Vertical speed (up) given when reflected by a counter. Omit to keep it."
+        },
+        "hit": {
+          "$ref": "#/$defs/Hitbox",
+          "description": "Geometry and window fields are ignored; the hit comes from the projectile's position."
+        },
+        "spawnSfx": { "type": ["string", "null"] },
+        "fullSfx": { "type": ["string", "null"] },
+        "trail": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Event" },
+          "description": "Effects emitted while flying (in projectile-local space, x along its travel direction)."
+        },
+        "shapes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Shape" },
+          "description": "Drawing: `shapes` rotate by `spin` degrees per pixel traveled, `overlay` doesn't rotate."
+        },
+        "overlay": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Shape" }
+        },
+        "spin": { "type": "number", "format": "double" }
+      },
+      "required": ["name", "spawn", "vel", "r", "life", "max", "hit"],
+      "description": "A projectile spawned by a move's `spawn` event."
+    },
+    "Bounce": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "restitution": {
+          "type": "number",
+          "format": "double",
+          "description": "Fraction of fall speed kept on a floor bounce."
+        },
+        "minSpeed": { "type": "number", "format": "double", "description": "Minimum bounce speed (up)." },
+        "friction": {
+          "type": "number",
+          "format": "double",
+          "description": "Horizontal speed multiplier per floor bounce."
+        },
+        "maxBounces": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "After this many bounces, life drops to `fizzleLife`."
+        },
+        "fizzleLife": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "wallRestitution": {
+          "type": "number",
+          "format": "double",
+          "description": "Horizontal speed kept when hitting the stage's side walls."
+        },
+        "sfx": { "type": ["string", "null"] }
+      },
+      "required": ["restitution", "minSpeed", "friction", "maxBounces", "fizzleLife", "wallRestitution"]
+    },
+    "Bat": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "speed": {
+          "type": "number",
+          "format": "double",
+          "description": "New horizontal speed (in the hit's launch direction) and vertical speed (up)."
+        },
+        "vy": { "type": "number", "format": "double" },
+        "life": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "cooldown": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Frames before it can be batted again."
+        },
+        "hitlag": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Hitlag for the batter." }
+      },
+      "required": ["speed", "vy", "life", "cooldown", "hitlag"]
+    },
+    "Shape": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "shape": { "type": "string", "const": "line" },
+            "from": {
+              "type": "array",
+              "items": { "type": "number", "format": "double" },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "to": {
+              "type": "array",
+              "items": { "type": "number", "format": "double" },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "width": { "type": "number", "format": "double" },
+            "color": { "$ref": "#/$defs/Color" },
+            "alpha": { "type": "number", "format": "double" },
+            "when": { "$ref": "#/$defs/ShapeWhen" }
+          },
+          "required": ["shape", "from", "to", "width", "color"]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "shape": { "type": "string", "const": "circle" },
+            "at": {
+              "type": "array",
+              "items": { "type": "number", "format": "double" },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "r": { "type": "number", "format": "double" },
+            "fill": {
+              "anyOf": [
+                { "$ref": "#/$defs/Color" },
+                { "type": "null" }
+              ]
+            },
+            "stroke": {
+              "anyOf": [
+                { "$ref": "#/$defs/Color" },
+                { "type": "null" }
+              ]
+            },
+            "width": { "type": "number", "format": "double" },
+            "alpha": { "type": "number", "format": "double" },
+            "when": { "$ref": "#/$defs/ShapeWhen" }
+          },
+          "required": ["shape", "at", "r"]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "shape": { "type": "string", "const": "poly" },
+            "points": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": { "type": "number", "format": "double" },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            },
+            "fill": {
+              "anyOf": [
+                { "$ref": "#/$defs/Color" },
+                { "type": "null" }
+              ]
+            },
+            "stroke": {
+              "anyOf": [
+                { "$ref": "#/$defs/Color" },
+                { "type": "null" }
+              ]
+            },
+            "width": { "type": "number", "format": "double" },
+            "alpha": { "type": "number", "format": "double" },
+            "when": { "$ref": "#/$defs/ShapeWhen" }
+          },
+          "required": ["shape", "points"]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "shape": { "type": "string", "const": "rect" },
+            "x": { "type": "number", "format": "double" },
+            "y": { "type": "number", "format": "double" },
+            "w": { "type": "number", "format": "double" },
+            "h": { "type": "number", "format": "double" },
+            "radius": { "type": "number", "format": "double" },
+            "fill": {
+              "anyOf": [
+                { "$ref": "#/$defs/Color" },
+                { "type": "null" }
+              ]
+            },
+            "stroke": {
+              "anyOf": [
+                { "$ref": "#/$defs/Color" },
+                { "type": "null" }
+              ]
+            },
+            "width": { "type": "number", "format": "double" },
+            "alpha": { "type": "number", "format": "double" },
+            "when": { "$ref": "#/$defs/ShapeWhen" }
+          },
+          "required": ["shape", "x", "y", "w", "h"],
+          "description": "Rectangle from corner `(x, y)` (the bottom-left in y-up space), with optional rounded corners."
+        }
+      ],
+      "description": "Vector shape. Coordinates are in the owner's local space."
+    },
+    "ShapeWhen": { "type": "string", "enum": ["always", "glow", "noGlow"] },
+    "FighterFx": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "airJump": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Fx" },
+          "description": "On every mid-air jump."
+        }
+      }
+    },
+    "Style": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "headRadius": { "type": "number", "format": "double" },
+        "torsoWidth": { "type": "number", "format": "double" },
+        "frontLimbWidth": { "type": "number", "format": "double" },
+        "backLimbWidth": { "type": "number", "format": "double" },
+        "glowWidth": { "type": "number", "format": "double", "description": "Soft glow drawn under the figure." }
+      },
+      "required": ["headRadius", "torsoWidth", "frontLimbWidth", "backLimbWidth", "glowWidth"],
+      "description": "Drawing style of the stick figure."
+    },
+    "Anim": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "clock": { "$ref": "#/$defs/Clock" },
+        "loop": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Repeat every this many clock units."
+        },
+        "keys": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AnimKey" }
+        }
+      },
+      "required": ["keys"]
+    },
+    "Clock": {
+      "oneOf": [
+        { "type": "string", "const": "state", "description": "Frames since the fighter entered the state." },
+        { "type": "string", "const": "world", "description": "World frame (idle breathing, wobbles)." },
+        { "type": "string", "const": "run", "description": "Run cycle phase in degrees, advanced by ground speed." }
+      ],
+      "description": "Time source for a state animation."
+    },
+    "Attachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "joint": { "$ref": "#/$defs/Joint" },
+        "angle": {
+          "type": "number",
+          "format": "double",
+          "description": "Resting angle in degrees (0 forward, 90 up). On a hand, it's added to the forearm's direction; otherwise\nabsolute. A phase's `attach` angle keys override it."
+        },
+        "hidden": { "type": "boolean", "description": "Not drawn unless a phase's `attach.show` window says so." },
+        "behind": { "type": "boolean", "description": "Drawn behind the body." },
+        "hold": {
+          "anyOf": [
+            { "$ref": "#/$defs/Hold" },
+            { "type": "null" }
+          ],
+          "description": "While a phase animates the angle, the front arm is posed to hold it: elbow at `elbow` px along the angle\nturned by `bend` degrees, hand at `hand` px, both from the shoulder."
+        },
+        "trail": {
+          "anyOf": [
+            { "$ref": "#/$defs/Trail" },
+            { "type": "null" }
+          ],
+          "description": "Swing trail (ring sector around the shoulder) while a hitbox is active."
+        },
+        "glow": {
+          "anyOf": [
+            { "$ref": "#/$defs/GlowWhen" },
+            { "type": "null" }
+          ]
+        },
+        "shapes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Shape" },
+          "description": "Shapes in attachment space: x along the angle, y to its left (up when the angle is 0)."
+        }
+      },
+      "required": ["id", "joint", "shapes"],
+      "description": "A vector part attached to a joint: weapons, hats, held props."
+    },
+    "Joint": {
+      "type": "string",
+      "enum": ["root", "head", "shoulder", "hip", "elbowF", "handF", "elbowB", "handB", "footF", "footB"],
+      "description": "Fighter joint (or `root` = the feet) an attachment hangs from."
+    },
+    "Hold": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "elbow": { "type": "number", "format": "double" },
+        "hand": { "type": "number", "format": "double" },
+        "bend": { "type": "number", "format": "double" }
+      },
+      "required": ["elbow", "hand", "bend"]
+    },
+    "Trail": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inner": { "type": "number", "format": "double" },
+        "outer": { "type": "number", "format": "double" }
+      },
+      "required": ["inner", "outer"]
+    },
+    "GlowWhen": {
+      "oneOf": [
+        { "type": "string", "const": "countering", "description": "During a counter window." },
+        { "type": "string", "const": "jetCharging", "description": "While charging a `jet` charge." },
+        { "type": "string", "const": "active", "description": "While a hitbox is active." }
+      ],
+      "description": "When an attachment glows (shapes with `when: \"glow\"` replace `when: \"noGlow\"` ones)."
+    },
+    "StatsPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "weight": {
+          "type": "number",
+          "format": "double",
+          "description": "Knockback taken multiplier. Lower = heavier."
+        },
+        "runSpeed": { "type": "number", "format": "double" },
+        "runAccel": { "type": "number", "format": "double" },
+        "groundFriction": { "type": "number", "format": "double" },
+        "jumpSpeed": { "type": "number", "format": "double", "description": "Full hop launch speed (upward)." },
+        "shortHopSpeed": { "type": "number", "format": "double" },
+        "airJumpSpeed": { "type": "number", "format": "double" },
+        "airJumpDrift": { "type": "number", "format": "double" },
+        "airJumps": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Mid-air jumps." },
+        "airSpeed": { "type": "number", "format": "double" },
+        "airAccel": { "type": "number", "format": "double" },
+        "gravity": { "type": "number", "format": "double" },
+        "fallSpeed": { "type": "number", "format": "double" },
+        "fastFallSpeed": { "type": "number", "format": "double" }
+      }
+    },
+    "BodyPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "halfWidth": { "type": "number", "format": "double" },
+        "height": { "type": "number", "format": "double" }
+      }
+    },
+    "HurtboxesPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default": { "$ref": "#/$defs/RectPartial" },
+        "knockdown": { "$ref": "#/$defs/RectPartial" },
+        "crouch": {
+          "anyOf": [
+            { "$ref": "#/$defs/RectPartial" },
+            { "type": "null" }
+          ]
+        },
+        "ledge": {
+          "anyOf": [
+            { "$ref": "#/$defs/RectPartial" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "description": "Hurtboxes by state group. Missing optional groups use `default`."
+    },
+    "RectPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "x1": { "type": "number", "format": "double" },
+        "x2": { "type": "number", "format": "double" },
+        "y1": { "type": "number", "format": "double" },
+        "y2": { "type": "number", "format": "double" }
+      },
+      "description": "Axis-aligned box in fighter-local space (x forward, y up from the feet)."
+    },
+    "AiPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "reach": { "type": "number", "format": "double", "description": "How close the CPU wants to be to attack." },
+        "counterChance": {
+          "type": "number",
+          "format": "double",
+          "description": "Chance to counter instead of shielding; zero skips the RNG call."
+        },
+        "recoveryShieldCancel": {
+          "type": ["string", "null"],
+          "description": "Recovery behavior is enabled by move air control, with this optional shield-cancel phase."
+        },
+        "specials": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SpecialTactic" },
+          "description": "Ordered special tactics; chance is sampled only after all geometric conditions pass.",
+          "default": []
+        }
+      }
+    },
+    "MovesPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "jab": { "$ref": "#/$defs/MovePartial" },
+        "ftilt": { "$ref": "#/$defs/MovePartial" },
+        "utilt": { "$ref": "#/$defs/MovePartial" },
+        "dtilt": { "$ref": "#/$defs/MovePartial" },
+        "dashatk": { "$ref": "#/$defs/MovePartial" },
+        "fsmash": { "$ref": "#/$defs/MovePartial" },
+        "usmash": { "$ref": "#/$defs/MovePartial" },
+        "dsmash": { "$ref": "#/$defs/MovePartial" },
+        "nair": { "$ref": "#/$defs/MovePartial" },
+        "fair": { "$ref": "#/$defs/MovePartial" },
+        "bair": { "$ref": "#/$defs/MovePartial" },
+        "uair": { "$ref": "#/$defs/MovePartial" },
+        "dair": { "$ref": "#/$defs/MovePartial" },
+        "grab": { "$ref": "#/$defs/MovePartial" },
+        "dashgrab": { "$ref": "#/$defs/MovePartial" },
+        "nspec": { "$ref": "#/$defs/MovePartial" },
+        "sspec": {
+          "anyOf": [
+            { "$ref": "#/$defs/MovePartial" },
+            { "type": "null" }
+          ]
+        },
+        "uspec": { "$ref": "#/$defs/MovePartial" },
+        "dspec": { "$ref": "#/$defs/MovePartial" }
+      },
+      "description": "Move slots. Specials are chosen by input direction; without `sspec`, side + special does `nspec`."
+    },
+    "MovePartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "Name shown in the debug overlay and training panel." },
+        "air": { "$ref": "#/$defs/AirControlPartial" },
+        "bReverse": {
+          "type": "boolean",
+          "description": "Pressing the other direction within `global.movement.bReverseWindow` frames turns the fighter around\n(and flips air momentum)."
+        },
+        "phases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Phase" },
+          "description": "Runs from the first phase. A move must have at least one phase."
+        }
+      }
+    },
+    "AirControlPartial": {
+      "oneOf": [
+        { "type": "string", "const": "attack", "description": "`attackAirAccel`." },
+        { "type": "string", "const": "aerial", "description": "`aerialAccel`, and the move can fast-fall." },
+        { "type": "string", "const": "upSpecial", "description": "`upSpecialAccel`." }
+      ],
+      "description": "Which global air acceleration a move uses while airborne (`global.movement`)."
+    },
+    "ThrowsPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "f": { "$ref": "#/$defs/ThrowPartial" },
+        "b": { "$ref": "#/$defs/ThrowPartial" },
+        "u": { "$ref": "#/$defs/ThrowPartial" },
+        "d": { "$ref": "#/$defs/ThrowPartial" }
+      },
+      "description": "Grab throws by direction."
+    },
+    "ThrowPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "release": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Frame the victim is released and hit."
+        },
+        "total": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "hit": { "$ref": "#/$defs/HitboxPartial", "description": "Geometry and window fields are ignored." }
+      }
+    },
+    "HitboxPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "start": { "type": "integer", "format": "uint32", "minimum": 0, "description": "First active phase frame." },
+        "end": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Last active phase frame (inclusive). Omit to stay active until the phase ends."
+        },
+        "x": {
+          "type": "number",
+          "format": "double",
+          "description": "Offset forward from the feet. Negative = behind."
+        },
+        "y": { "type": "number", "format": "double", "description": "Offset up from the feet." },
+        "r": { "type": "number", "format": "double", "description": "Radius." },
+        "damage": { "type": "number", "format": "double", "description": "Percent dealt." },
+        "bkb": { "type": "number", "format": "double", "description": "Base knockback." },
+        "kbg": {
+          "type": "number",
+          "format": "double",
+          "description": "Knockback growth: knockback added per victim percent."
+        },
+        "angle": {
+          "type": "number",
+          "format": "double",
+          "description": "Launch angle in degrees. 0 = forward, 90 = straight up, negative = down."
+        },
+        "dir": { "$ref": "#/$defs/LaunchDirPartial" },
+        "type": { "$ref": "#/$defs/HitTypePartial" },
+        "setKb": {
+          "type": "boolean",
+          "description": "Fixed knockback: ignores the victim's percent (knockback = bkb × weight)."
+        },
+        "rehit": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Multi-hit: can hit the same victim again every this many frames (default: once per phase)."
+        },
+        "hitstunMult": {
+          "type": "number",
+          "format": "double",
+          "description": "Multiplies the hitstun this box causes."
+        },
+        "hitstunAdd": { "type": "number", "format": "double", "description": "Flat frames added to hitstun." },
+        "hitlagMult": {
+          "type": "number",
+          "format": "double",
+          "description": "Multiplies hitlag (freeze frames) on hit."
+        },
+        "shieldDmgMult": { "type": "number", "format": "double", "description": "Multiplies shield damage." },
+        "shieldStunMult": { "type": "number", "format": "double", "description": "Multiplies shield stun." },
+        "counterDamage": {
+          "type": "boolean",
+          "description": "Counter strike: damage comes from the countered hit (see `Counter`). Inactive if nothing was countered."
+        },
+        "frames": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "number", "format": "double" },
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "description": "Per-frame position/size `[frame, x, y, r]`. A frame without an entry uses the closest earlier entry, or\nx/y/r before the first entry. Omit for a box that stays put."
+        }
+      },
+      "description": "A hit circle. In a move phase, `start`/`end` are inclusive phase frames. For throws, projectiles and other\nhits that aren't frame-windowed they are ignored. When two boxes overlap a victim, the first listed wins."
+    },
+    "LaunchDirPartial": {
+      "oneOf": [
+        { "type": "string", "const": "forward", "description": "The way the attacker faces." },
+        { "type": "string", "const": "away", "description": "Away from the attacker's center (multi-direction hits)." },
+        { "type": "string", "const": "back", "description": "Behind the attacker." }
+      ],
+      "description": "Launch direction rule."
+    },
+    "HitTypePartial": {
+      "oneOf": [
+        { "type": "string", "enum": ["normal"] },
+        {
+          "type": "string",
+          "const": "spike",
+          "description": "Always launches downward (a positive `angle` is mirrored below the horizon)."
+        },
+        {
+          "type": "string",
+          "const": "trip",
+          "description": "Grounded victims are knocked prone instead of launched. Airborne victims are hit normally."
+        },
+        {
+          "type": "string",
+          "const": "sakurai",
+          "description": "Angle chosen automatically: flat on weak grounded hits, higher on strong ones, 45° in the air (`global.hitTypes.sakurai`)."
+        },
+        {
+          "type": "string",
+          "const": "autolink",
+          "description": "Pulls the victim toward the hitbox center, plus the attacker's momentum. For multi-hit moves (`rehit`)."
+        },
+        {
+          "type": "string",
+          "const": "windbox",
+          "description": "No damage, hitstun or hitlag. Pushes anything it touches every frame along `angle` (strength = bkb)."
+        },
+        {
+          "type": "string",
+          "const": "electric",
+          "description": "Longer victim hitlag (`global.hitTypes.electric`), with spark effects."
+        },
+        { "type": "string", "const": "grab", "description": "Grabs instead of hitting." }
+      ],
+      "description": "Hitbox behavior, modeled on Smash."
+    },
+    "ProjectilePartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "Training hit label." },
+        "spawn": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Spawn offset from the feet (x forward, y up)."
+        },
+        "vel": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Launch velocity (x forward, y up)."
+        },
+        "r": { "type": "number", "format": "double", "description": "Collision radius." },
+        "life": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Frames alive." },
+        "max": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Max alive per owner. Spawning past it does nothing (plays `fullSfx` if set)."
+        },
+        "gravity": { "type": "number", "format": "double" },
+        "maxFall": { "type": ["number", "null"], "format": "double", "description": "Max fall speed (with gravity)." },
+        "bounce": {
+          "anyOf": [
+            { "$ref": "#/$defs/BouncePartial" },
+            { "type": "null" }
+          ],
+          "description": "Collides with the stage and bounces. Without it the projectile flies through."
+        },
+        "bat": {
+          "anyOf": [
+            { "$ref": "#/$defs/BatPartial" },
+            { "type": "null" }
+          ],
+          "description": "Any attack can knock it back, making the attacker its owner."
+        },
+        "reflectVy": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Vertical speed (up) given when reflected by a counter. Omit to keep it."
+        },
+        "hit": {
+          "$ref": "#/$defs/HitboxPartial",
+          "description": "Geometry and window fields are ignored; the hit comes from the projectile's position."
+        },
+        "spawnSfx": { "type": ["string", "null"] },
+        "fullSfx": { "type": ["string", "null"] },
+        "trail": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Event" },
+          "description": "Effects emitted while flying (in projectile-local space, x along its travel direction)."
+        },
+        "shapes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Shape" },
+          "description": "Drawing: `shapes` rotate by `spin` degrees per pixel traveled, `overlay` doesn't rotate."
+        },
+        "overlay": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Shape" }
+        },
+        "spin": { "type": "number", "format": "double" }
+      },
+      "description": "A projectile spawned by a move's `spawn` event."
+    },
+    "BouncePartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "restitution": {
+          "type": "number",
+          "format": "double",
+          "description": "Fraction of fall speed kept on a floor bounce."
+        },
+        "minSpeed": { "type": "number", "format": "double", "description": "Minimum bounce speed (up)." },
+        "friction": {
+          "type": "number",
+          "format": "double",
+          "description": "Horizontal speed multiplier per floor bounce."
+        },
+        "maxBounces": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "After this many bounces, life drops to `fizzleLife`."
+        },
+        "fizzleLife": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "wallRestitution": {
+          "type": "number",
+          "format": "double",
+          "description": "Horizontal speed kept when hitting the stage's side walls."
+        },
+        "sfx": { "type": ["string", "null"] }
+      }
+    },
+    "BatPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "speed": {
+          "type": "number",
+          "format": "double",
+          "description": "New horizontal speed (in the hit's launch direction) and vertical speed (up)."
+        },
+        "vy": { "type": "number", "format": "double" },
+        "life": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "cooldown": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Frames before it can be batted again."
+        },
+        "hitlag": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Hitlag for the batter." }
+      }
+    },
+    "FighterFxPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "airJump": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Fx" },
+          "description": "On every mid-air jump."
+        }
+      }
+    },
+    "StylePartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "headRadius": { "type": "number", "format": "double" },
+        "torsoWidth": { "type": "number", "format": "double" },
+        "frontLimbWidth": { "type": "number", "format": "double" },
+        "backLimbWidth": { "type": "number", "format": "double" },
+        "glowWidth": { "type": "number", "format": "double", "description": "Soft glow drawn under the figure." }
+      },
+      "description": "Drawing style of the stick figure."
+    },
+    "PosePartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": ["string", "null"] },
+        "head": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "shoulder": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "hip": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "elbowF": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Front arm (drawn over the body)."
+        },
+        "handF": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "elbowB": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Back arm (drawn behind, darker)."
+        },
+        "handB": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "kneeF": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "footF": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "kneeB": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "footB": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "rot": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Whole-body rotation in degrees, positive = pitching forward, around `(0, pivot)`."
+        },
+        "pivot": { "type": ["number", "null"], "format": "double" },
+        "offsetY": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Vertical offset of the whole figure (up)."
+        }
+      },
+      "description": "Joint positions in fighter-local space (x forward, y up, feet at the origin). A pose may be partial: missing\njoints come from `from` (another named pose), or from the `stand` pose."
+    },
+    "AnimPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "clock": { "$ref": "#/$defs/ClockPartial" },
+        "loop": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Repeat every this many clock units."
+        },
+        "keys": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AnimKey" }
+        }
+      }
+    },
+    "ClockPartial": {
+      "oneOf": [
+        { "type": "string", "const": "state", "description": "Frames since the fighter entered the state." },
+        { "type": "string", "const": "world", "description": "World frame (idle breathing, wobbles)." },
+        { "type": "string", "const": "run", "description": "Run cycle phase in degrees, advanced by ground speed." }
+      ],
+      "description": "Time source for a state animation."
+    }
+  }
+}

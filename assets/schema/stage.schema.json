@@ -1,0 +1,155 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": ["string", "null"], "writeOnly": true },
+    "schemaVersion": { "type": "integer", "format": "uint32", "minimum": 0 },
+    "name": { "type": "string" },
+    "width": {
+      "type": "number",
+      "format": "double",
+      "description": "Default view size; the camera starts framing `[0, width] × [0, height]`."
+    },
+    "height": { "type": "number", "format": "double" },
+    "ground": { "$ref": "#/$defs/Ground" },
+    "platforms": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Platform" },
+      "description": "Pass-through platforms.",
+      "default": []
+    },
+    "ledge": { "$ref": "#/$defs/LedgeZone" },
+    "blast": { "$ref": "#/$defs/Bounds", "description": "Fighters past these lines are KO'd." },
+    "camera": { "$ref": "#/$defs/Bounds", "description": "The camera never shows past these." },
+    "spawns": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Spawn" },
+      "description": "Start positions by player slot. Needs one per player (8 for a full match)."
+    },
+    "respawns": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/RespawnPoint" },
+      "description": "Respawn points by player slot."
+    },
+    "art": { "$ref": "#/$defs/StageArt" }
+  },
+  "required": [
+    "schemaVersion",
+    "name",
+    "width",
+    "height",
+    "ground",
+    "ledge",
+    "blast",
+    "camera",
+    "spawns",
+    "respawns",
+    "art"
+  ],
+  "title": "Stage",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Ground": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "left": { "type": "number", "format": "double" },
+        "right": { "type": "number", "format": "double" },
+        "top": { "type": "number", "format": "double" },
+        "bottom": { "type": "number", "format": "double", "description": "Bottom of the vertical walls." },
+        "underDepth": {
+          "type": "number",
+          "format": "double",
+          "description": "Underside below `bottom`: slopes `depth` down while moving `inset` inward, so rising fighters slide out to\nthe wall."
+        },
+        "underInset": { "type": "number", "format": "double" }
+      },
+      "required": ["left", "right", "top", "bottom", "underDepth", "underInset"],
+      "description": "The main solid block. Its top corners are the grabbable ledges."
+    },
+    "Platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "x1": { "type": "number", "format": "double" },
+        "x2": { "type": "number", "format": "double" },
+        "y": { "type": "number", "format": "double" }
+      },
+      "required": ["x1", "x2", "y"]
+    },
+    "LedgeZone": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "r": { "type": "number", "format": "double" },
+        "cy": { "type": "number", "format": "double" },
+        "handY": { "type": "number", "format": "double" },
+        "reachIn": { "type": "number", "format": "double" },
+        "hangX": { "type": "number", "format": "double" },
+        "hangY": { "type": "number", "format": "double" }
+      },
+      "required": ["r", "cy", "handY", "reachIn", "hangX", "hangY"],
+      "description": "Ledge grab zone: a half circle on the outside of each ground corner, centered `cy` below it. A falling\nfighter grabs when their hand point (`handY` above the feet) is inside. `reachIn` lets the flat side extend a\nfew pixels over the stage. `hangX`/`hangY` = where the feet sit while hanging."
+    },
+    "Bounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "left": { "type": "number", "format": "double" },
+        "right": { "type": "number", "format": "double" },
+        "top": { "type": "number", "format": "double" },
+        "bottom": { "type": "number", "format": "double" }
+      },
+      "required": ["left", "right", "top", "bottom"]
+    },
+    "Spawn": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "number", "format": "double" },
+        "y": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Feet height; omit to stand on the ground."
+        },
+        "face": {
+          "type": "integer",
+          "format": "int8",
+          "minimum": -128,
+          "maximum": 127,
+          "description": "1 = facing right, -1 = left."
+        }
+      },
+      "required": ["x", "face"]
+    },
+    "RespawnPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "number", "format": "double" },
+        "startY": { "type": "number", "format": "double" },
+        "endY": { "type": "number", "format": "double" }
+      },
+      "required": ["x", "startY", "endY"],
+      "description": "Respawn: descend from `startY` to `endY` above `x`, then wait on the respawn platform."
+    },
+    "StageArt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "groundTop": { "$ref": "#/$defs/Color", "description": "Ground face gradient, top to bottom." },
+        "groundBottom": { "$ref": "#/$defs/Color" },
+        "underside": { "$ref": "#/$defs/Color" },
+        "edge": { "$ref": "#/$defs/Color", "description": "Bright strip along the ground's top edge." },
+        "platform": { "$ref": "#/$defs/Color" },
+        "platformShadow": { "$ref": "#/$defs/Color", "description": "Soft band under each platform." }
+      },
+      "required": ["groundTop", "groundBottom", "underside", "edge", "platform", "platformShadow"]
+    },
+    "Color": {
+      "description": "\"#rrggbb\", or a player palette slot: \"player\", \"playerDark\", \"playerLight\".",
+      "type": "string",
+      "pattern": "^(#[0-9a-fA-F]{6}|player|playerDark|playerLight)$"
+    }
+  }
+}
