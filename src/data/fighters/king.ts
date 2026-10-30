@@ -84,7 +84,7 @@ const king: FighterData = {
       },
     },
     dspec: {
-      name: 'Jet Hammer', endLag: 25, charge: { frame: 10, max: 90, button: 'special' },
+      name: 'Jet Hammer', endLag: 25, charge: { frame: 10, max: 90, button: 'special', jet: true },
       anim: { windup: 'back', body: 'lean', swing: [[0, -20], [10, -170], [16, -160], [20, 30]] },
       hitboxes: [{ start: 17, end: 21, x: 70, y: 44, r: 36, damage: 16, bkb: 8, kbg: 0.15, angle: 38, shieldDmgMult: 1.5 }],
     },

@@ -37,6 +37,12 @@ export const GLOBAL = {
     dashGrabSpeed: 3.9,
     /** Frames a direction press counts as a "tap" for smash attacks, rolls and spot dodges. */
     tapWindow: 5,
+    /**
+     * B-reverse: a special input while holding the other direction turns the fighter around (in the air it also
+     * flips horizontal momentum). A neutral special can also be turned around by pressing the other direction
+     * within this many frames after it starts.
+     */
+    bReverseWindow: 4,
   },
 
   /** Knockback = (bkb + victimPercent × kbg × kbPercentScale) × victimWeight. */

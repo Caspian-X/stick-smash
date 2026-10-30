@@ -42,6 +42,7 @@ ftilt: {
 - Per-hitbox extras: `hitlagMult`, `shieldDmgMult`, `shieldStunMult`, `dir: 'away' | 'back'`, `rehit: N` (multi-hit: can hit the same victim again every N frames).
 - **Per-frame boxes:** `frames: [[frame, x, y, r], …]` gives the box its own position/size on each frame. A frame with no entry uses the closest earlier one.
 - Smash attacks: `charge: { frame, max, button }`. Charge scales damage via `knockback.chargeDamageDivisor`.
+- Specials: `nspec` (neutral), `sspec` (side, optional: without it, side + special does the neutral special), `uspec` (up), `dspec` (down).
 - Special moves use a `kind` (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) with their own documented fields.
 - When hitboxes overlap the victim, the **first listed** hitbox wins (sweetspots go first).
 
@@ -83,7 +84,7 @@ The debug view draws hurtboxes (yellow; cyan = invulnerable; orange = hitstun), 
 
 Pick **Mode → Hitbox Editor** in the menu, or press `E` in Training. Press `?` inside it for every shortcut.
 
-- **Layout:** fighter tabs and Save on top, the move list on the left, the posed fighter in the middle, the inspector on the right, and the timeline at the bottom. Drag a panel's edge to resize it (double-click the edge to reset). Sizes are remembered.
+- **Layout:** fighter tabs and Save on top, the move list on the left (specials are tagged Neutral/Side/Up/Down; you can switch moves while it plays), the posed fighter in the middle, the inspector on the right, and the timeline at the bottom. Drag a panel's edge to resize it (double-click the edge to reset). Sizes are remembered.
 - **In the view:** click a box to select it, drag it to move it, drag its edge to resize it, and drag the arrow tip to aim (Shift snaps). Double-click empty space to add a box there. Drag empty space to pan, and use the wheel to zoom. `Alt+arrows` nudges a box.
 - **Per-frame positions:** in the inspector's *Position & size*, choose **Per frame**. Every active frame starts at the current position. Scrub to any frame and drag the box: only that frame changes. **Apply to all frames** copies the current frame to every frame. **Copy → next frame** (`C`) copies it forward and steps there. Onion skin (`O`) shows the box's path and neighbouring frames.
 - **Types:** pick Regular, Spike, Trip, Sakurai angle, Autolink, Windbox, Electric or Grab. Each one sets sensible defaults when you choose it.
@@ -98,6 +99,7 @@ Edits apply live, so Training uses them immediately. **Save** writes them into `
 
 - **P1:** A/D move · W or Space jump · S fall/drop · J attack · K special · I grab · L shield. The menu option **P1 W Jump → Off** makes W up-only (tilts/aerials/specials), so only Space jumps.
 - **P2:** arrows · `.` attack · `/` special · `;` grab · `'` shield (Numpad 1/2/3/0 also work)
+- **B-reverse:** do a special while holding the other direction to turn around and do it that way (in the air this also flips your momentum). This works for side and up specials. A neutral special can also be turned around by pressing the other direction within `movement.bReverseWindow` frames after it starts.
 - Jumps are a **short hop** (jump released by the end of jumpsquat) or a **full hop** (still held). Height is fixed after takeoff.
 - Tap a direction + attack = smash (hold to charge). Shield + tap direction = roll/spot dodge. Press shield in the air = air dodge, and just before landing = tech.
 

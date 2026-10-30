@@ -15,7 +15,7 @@ describe('hitbox editor source patching', () => {
   it('re-saving unchanged moves leaves every fighter file byte-identical', () => {
     for (const f of DATA.fighters) {
       const src = SOURCES[f.id];
-      const own = movesOf(src).map(e => e.key).filter(k => k && f.moves[k as keyof typeof f.moves].kind === undefined) as string[];
+      const own = movesOf(src).map(e => e.key).filter(k => k && f.moves[k as keyof typeof f.moves]?.kind === undefined) as string[];
       expect(own.length).toBeGreaterThan(5);
       const moves = Object.fromEntries(own.map(k => [k, f.moves[k as keyof typeof f.moves] as StandardMove]));
       expect(patchFighterSource(src, moves)).toBe(src);

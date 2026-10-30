@@ -2,6 +2,7 @@
 // inspector + timeline. Renders from the model at most once per animation frame.
 
 import { DATA, moveTotal } from '../data';
+import { type MoveId, SPECIAL_DIR } from '../data/types';
 import { CSS, dragFrom, h } from './dom';
 import { Inspector } from './inspector';
 import { type EditorModel, MOVE_GROUPS } from './model';
@@ -36,6 +37,9 @@ export class EditorUI {
   private toastId = 0;
   private toastTimer = 0;
   private queued = false;
+  private tabKey = '';
+  private leftKey = '';
+  private toolKey = '';
   private off: () => void;
   private onKey = (e: KeyboardEvent) => this.key(e);
   private onUnload = (e: BeforeUnloadEvent) => { if (this.m.dirty.size) { e.preventDefault(); e.returnValue = ''; } };
@@ -128,10 +132,14 @@ export class EditorUI {
   }
 
   private renderTop() {
-    const m = this.m;
-    this.tabs.replaceChildren(...DATA.fighters.map((f, i) => h('button', {
-      className: i === m.fi ? 'sel' : '', onclick: () => m.selectFighter(i),
-    }, f.name, [...m.dirty].some(k => k.startsWith(`${i}:`)) ? h('span', { className: 'dot' }) : null)));
+    const m = this.m, tabKey = `${m.fi}|${[...m.dirty]}`;
+    // Rebuild only on change: during playback this runs every frame, and replacing a button mid-click eats the click.
+    if (tabKey !== this.tabKey) {
+      this.tabKey = tabKey;
+      this.tabs.replaceChildren(...DATA.fighters.map((f, i) => h('button', {
+        className: i === m.fi ? 'sel' : '', onclick: () => m.selectFighter(i),
+      }, f.name, [...m.dirty].some(k => k.startsWith(`${i}:`)) ? h('span', { className: 'dot' }) : null)));
+    }
     const n = m.dirty.size;
     const names = [...m.dirty].map(k => { const [fi, id] = k.split(':'); return `${DATA.fighters[+fi].name} ${id}`; });
     this.status.className = n ? 'badge' : 'clean';
@@ -144,35 +152,38 @@ export class EditorUI {
   }
 
   private renderLeft() {
-    const m = this.m, fd = m.fighter(), keep = this.left.scrollTop;
-    const kids: Node[] = [];
+    const m = this.m, fd = m.fighter();
+    const rows: { id: MoveId; name: string; meta: string; ok: boolean; title: string; dir?: string }[] = [];
+    for (const [, ids] of MOVE_GROUPS) for (const id of ids) {
+      const d = fd.moves[id], dir = SPECIAL_DIR[id];
+      if (!d) {
+        if (dir) rows.push({ id, name: '(uses neutral)', meta: '', ok: false, dir, title: `${fd.name} has no side special: side + special does the neutral special` });
+        continue;
+      }
+      const ok = d.kind === undefined;
+      const meta = ok && d.hitboxes.length ? `${Math.min(...d.hitboxes.map(b => b.start))}f · ${moveTotal(d)}` : ok ? '—' : d.kind;
+      const title = (dir ? `${dir} special · ` : '') + (ok ? `${d.name ?? id}: startup · total frames` : `${d.name ?? id} uses '${d.kind}' special logic (edit its numbers in the fighter file)`);
+      rows.push({ id, name: d.name ?? id, meta, ok, title, dir });
+    }
+    const key = JSON.stringify([m.fi, m.id, [...m.dirty], rows]);
+    if (key === this.leftKey) return;
+    this.leftKey = key;
+    const keep = this.left.scrollTop, kids: Node[] = [];
     for (const [grp, ids] of MOVE_GROUPS) {
       kids.push(h('div', { className: 'grp', textContent: grp }));
-      for (const id of ids) {
-        const d = fd.moves[id];
-        if (!d) continue;
-        const ok = d.kind === undefined, sel = id === m.id;
-        const meta = ok && d.hitboxes.length ? `${Math.min(...d.hitboxes.map(b => b.start))}f · ${moveTotal(d)}` : ok ? '—' : d.kind;
+      for (const r of rows.filter(x => ids.includes(x.id))) {
         kids.push(h('div', {
-          className: `mv${sel ? ' sel' : ''}${ok ? '' : ' off'}`, onclick: () => m.selectMove(id),
-          title: ok ? `${d.name ?? id}: startup · total frames` : `${d.name ?? id} uses '${d.kind}' special logic (edit its numbers in the fighter file)`,
-        }, h('span', { className: 'nm', textContent: d.name ?? id }), m.isDirty(m.fi, id) ? h('span', { className: 'dot', title: 'Unsaved' }) : null, h('span', { className: 'meta', textContent: meta })));
+          className: `mv${r.id === m.id ? ' sel' : ''}${r.ok ? '' : ' off'}`, onclick: () => m.selectMove(r.id), title: r.title,
+        }, r.dir ? h('span', { className: 'sdir', textContent: r.dir }) : null, h('span', { className: 'nm', textContent: r.name }),
+        m.isDirty(m.fi, r.id) ? h('span', { className: 'dot', title: 'Unsaved' }) : null, h('span', { className: 'meta', textContent: r.meta })));
       }
     }
     this.left.replaceChildren(...kids);
     this.left.scrollTop = keep;
   }
 
-  private renderView() {
-    const m = this.m, ph = m.phase(), b = m.box(), mv = m.mv();
-    this.hud.replaceChildren(...[
-      h('span', { className: 'chip', textContent: `${mv.name ?? m.id}` }),
-      h('span', { className: `chip ph-${ph}`, textContent: `Frame ${m.frame} / ${m.total()} · ${PHASE_NAME[ph]}` }),
-      b && m.perFrame(b) ? h('span', { className: 'chip', style: { color: 'var(--accent)' }, textContent: `◆ Per-frame box ${m.sel + 1}: editing frame ${m.editFrame(b)}` }) : null,
-    ].filter(x => x !== null));
-    this.hint.textContent = b
-      ? 'Drag: move · Edge: resize · Arrow tip: aim · Double-click: add · ? shortcuts'
-      : mv.hitboxes.length ? 'Click a hitbox to select · double-click to add · drag empty space to pan' : 'Double-click anywhere to add a hitbox there';
+  private renderTools() {
+    const m = this.m;
     const t = (label: string, key: keyof EditorModel['view'], title: string) => h('button', {
       className: `icon${m.view[key] ? ' on' : ''}`, textContent: label, title, onclick: () => { (m.view[key] as boolean) = !m.view[key]; m.emit(); },
     });
@@ -185,6 +196,23 @@ export class EditorUI {
       h('button', { className: 'icon', textContent: '⤢', title: 'Fit (F)', onclick: () => this.act.fit() }),
       h('button', { className: 'icon', textContent: '+', title: 'Zoom in (wheel)', onclick: () => this.act.zoom(1.2) }),
     );
+  }
+
+  private renderView() {
+    const m = this.m, ph = m.phase(), b = m.box(), mv = m.mv();
+    this.hud.replaceChildren(...[
+      h('span', { className: 'chip', textContent: `${mv.name ?? m.id}` }),
+      h('span', { className: `chip ph-${ph}`, textContent: `Frame ${m.frame} / ${m.total()} · ${PHASE_NAME[ph]}` }),
+      b && m.perFrame(b) ? h('span', { className: 'chip', style: { color: 'var(--accent)' }, textContent: `◆ Per-frame box ${m.sel + 1}: editing frame ${m.editFrame(b)}` }) : null,
+    ].filter(x => x !== null));
+    this.hint.textContent = b
+      ? 'Drag: move · Edge: resize · Arrow tip: aim · Double-click: add · ? shortcuts'
+      : mv.hitboxes.length ? 'Click a hitbox to select · double-click to add · drag empty space to pan' : 'Double-click anywhere to add a hitbox there';
+    const v = m.view, toolKey = `${v.onion}${v.inactive}${v.hurtbox}${v.dummy}`;
+    if (toolKey !== this.toolKey) {
+      this.toolKey = toolKey;
+      this.renderTools();
+    }
     if (m.toast && m.toast.id !== this.toastId) {
       this.toastId = m.toast.id;
       this.toastEl.className = `toast ${m.toast.kind}`;

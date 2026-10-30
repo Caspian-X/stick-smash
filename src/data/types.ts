@@ -6,7 +6,10 @@ export type MoveId =
   | 'fsmash' | 'usmash' | 'dsmash'
   | 'nair' | 'fair' | 'bair' | 'uair' | 'dair'
   | 'grab' | 'dashgrab'
-  | 'nspec' | 'uspec' | 'dspec';
+  | 'nspec' | 'sspec' | 'uspec' | 'dspec';
+
+/** Specials by input direction. `sspec` (side) is optional: without it, side + special does the neutral special. */
+export const SPECIAL_DIR: Partial<Record<MoveId, string>> = { nspec: 'Neutral', sspec: 'Side', uspec: 'Up', dspec: 'Down' };
 
 /**
  * Hitbox behavior, modeled on Smash. Default 'normal'.
@@ -77,6 +80,8 @@ export interface ChargeData {
   max?: number;
   /** Which button charges it. */
   button?: 'attack' | 'special';
+  /** Jet-engine charge effects (flames behind, jet sound). */
+  jet?: boolean;
 }
 
 /** Weapon animation: angle keyframes [frame, degrees] (0 forward, -90 up, 90 down) and body poses. */
@@ -243,7 +248,7 @@ export interface FighterData {
   /** Cosmetic: sword hair-tie, king crown. */
   look?: 'sword' | 'king';
   stats: FighterStats;
-  moves: Record<MoveId, MoveData>;
+  moves: Record<Exclude<MoveId, 'sspec'>, MoveData> & { sspec?: MoveData };
   throws: Record<'f' | 'b' | 'u' | 'd', ThrowData>;
   /** How close the CPU wants to be to attack. */
   aiReach: number;

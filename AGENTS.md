@@ -11,7 +11,7 @@ Stick Smash: Smash-style platform fighter. Phaser 4 + TypeScript + Vite. See REA
 - **All tunable numbers live in `src/data/`** (`global.ts` for shared rules and formulas, `fighters/*.ts` for stats and moves). Don't hard-code new balance constants in sim code; add a documented field instead.
 - **Read tuning through accessors** (`G()`, `FD(f)`, `ST(f)`, `MV(f)` in `sim/core.ts`, or `DATA.*`), never by importing `GLOBAL` or a fighter file directly from sim/render code. That's what makes hot reload work (`data/index.ts` accepts HMR for the data modules).
 - New data files must be added to the HMR `accept` list in `src/data/index.ts`.
-- Move slots are fixed ids (`MoveId` in `data/types.ts`). Special behavior is chosen by `kind`, never by fighter or move id. Each fighter maps its own specials into `nspec`/`uspec`/`dspec`.
+- Move slots are fixed ids (`MoveId` in `data/types.ts`). Special behavior is chosen by `kind`, never by fighter or move id. Each fighter maps its own specials into `nspec`/`uspec`/`dspec`, plus an optional `sspec` (side). Without `sspec`, side + special does `nspec`, so code that indexes `moves` by `MoveId` must handle a missing `sspec`.
 - Frame data convention: hitbox `start`/`end` are inclusive active frames; move total = last `end` + `endLag`. First listed hitbox has priority.
 - Phaser 4 docs ship as AI skills in `node_modules/phaser/skills/*/SKILL.md`. Read those before using unfamiliar Phaser APIs, because v4 differs from v3 (e.g. filters replace preFX/postFX).
 - `Graphics.fillPoints` typings want `Vector2[]`; wrap plain `{x, y}` arrays with `vec()` from `render/vec.ts`.

@@ -86,7 +86,7 @@ export class Timeline {
     // hitbox tracks
     bx.forEach((b, i) => {
       const info = HIT_TYPES[typeOf(b)], sel = i === m.sel;
-      const lbl = h('div', { className: `lbl${sel ? ' sel' : ''}`, onclick: () => m.select(i), onmouseenter: () => m.setHover(i), onmouseleave: () => m.setHover(-1) },
+      const lbl = h('div', { className: `lbl${sel ? ' sel' : ''}`, onmousedown: (e: MouseEvent) => { if (e.button === 0) m.select(i); }, onmouseenter: () => m.setHover(i), onmouseleave: () => m.setHover(-1) },
         h('span', { className: 'sw', style: { width: '9px', height: '9px', borderRadius: '50%', background: info.css, flex: 'none' } }),
         `${i + 1} · ${info.label}`);
       const trk = h('div', { className: `trk${sel ? ' sel' : ''}`, onmouseenter: () => m.setHover(i), onmouseleave: () => m.setHover(-1) });

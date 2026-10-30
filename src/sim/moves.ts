@@ -30,7 +30,7 @@ function stepMove(w: World, f: Fighter, inp: Input) {
     m.charge++;
     if (m.charge % 10 === 0) sfx(w, 'charge');
     if (m.charge % 3 === 0) part(w, f.x + rnd(w, -20, 20), f.y - rnd(w, 10, 80), 0, -1, 14, 0xffe680, 3);
-    if (c.button === 'special') {
+    if (c.jet) {
       part(w, f.x - f.face * rnd(w, 56, 66), f.y - rnd(w, 56, 70), -f.face * rnd(w, 2, 4), rnd(w, -0.5, 0.5), 12, m.charge % 2 ? 0xff9a3c : 0xffe680, rnd(w, 3, 6));
       if (m.charge % 6 === 0) sfx(w, 'jet');
     }
@@ -107,6 +107,7 @@ function stepMove(w: World, f: Fighter, inp: Input) {
 
 export function stAttack(w: World, f: Fighter, inp: Input, dir: number) {
   const m = f.move!, d = MV(f), mv = G().movement;
+  if (m.id === 'nspec' && !m.rev && m.t < mv.bReverseWindow && dir === -f.face) { m.rev = true; bReverse(f, dir); }
   stepMove(w, f, inp);
   if (f.ground) {
     f.vx *= d.slide && m.t < d.slide ? mv.attackSlideFriction : mv.attackFriction;
@@ -126,10 +127,21 @@ export function stAttack(w: World, f: Fighter, inp: Input, dir: number) {
   if (f.state === 'attack' && m.id === 'uspec' && m.t > 6) tryLedge(w, f, inp, true);
 }
 
+/** Turn to face `dir` for a special. In the air, horizontal momentum flips too (B-reverse). */
+function bReverse(f: Fighter, dir: number) {
+  if (!dir || dir === f.face) return;
+  f.face = dir;
+  if (!f.ground) f.vx = -f.vx;
+}
+
+export function upSpecial(w: World, f: Fighter, dir: number) {
+  f.upB = true; bReverse(f, dir); startMove(w, f, 'uspec');
+}
+
 export function special(w: World, f: Fighter, inp: Input, dir: number) {
-  if (inp.up && !f.upB) { f.upB = true; startMove(w, f, 'uspec'); return; }
-  if (dir) f.face = dir;
-  startMove(w, f, inp.down ? 'dspec' : 'nspec');
+  if (inp.up && !f.upB) { upSpecial(w, f, dir); return; }
+  bReverse(f, dir);
+  startMove(w, f, inp.down ? 'dspec' : dir && FD(f).moves.sspec ? 'sspec' : 'nspec');
 }
 
 export function groundActions(w: World, f: Fighter, inp: Input, dir: number): boolean {

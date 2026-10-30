@@ -9,7 +9,7 @@ const swordfighter: FighterData = {
   name: 'Swordfighter',
   weapon: 'sword',
   look: 'sword',
-  blurb: 'Swordfighter: longer reach, forward smash tip hits hardest · special: lunge stab · ↑ rising slash · ↓ counter',
+  blurb: 'Swordfighter: longer reach, forward smash tip hits hardest · special: hold for Flare Blade · → lunge stab · ↑ rising slash · ↓ counter',
   aiReach: 95,
   stats: { ...BASE_STATS },
   throws: COMMON_THROWS,
@@ -86,6 +86,14 @@ const swordfighter: FighterData = {
       hitboxes: [{ start: 10, end: 14, x: 2, y: -18, r: 24, damage: 12, bkb: 4, kbg: 0.1, angle: -90, type: 'spike' }],
     },
     nspec: {
+      name: 'Flare Blade', endLag: 26, charge: { frame: 10, max: 60, button: 'special' },
+      anim: { windup: 'back', body: 'lean', swing: [[0, 20], [10, -160], [16, -150], [20, 40]] },
+      hitboxes: [
+        { start: 17, end: 20, x: 70, y: 50, r: 30, damage: 13, bkb: 7, kbg: 0.15, angle: 38 },
+        { start: 17, end: 20, x: 32, y: 58, r: 24, damage: 10, bkb: 6, kbg: 0.12, angle: 42 },
+      ],
+    },
+    sspec: {
       name: 'Lunge', endLag: 23, slide: 18, dash: { frame: 9, groundSpeed: 12, airSpeed: 8 },
       anim: { windup: 'back', body: 'lunge', swing: [[0, 0], [8, -15], [9, 0]] },
       hitboxes: [{ start: 9, end: 15, x: 66, y: 46, r: 22, damage: 11, bkb: 7, kbg: 0.11, angle: 30, shieldDmgMult: 2.5 }],

@@ -9,7 +9,7 @@ export const MOVE_GROUPS: [string, MoveId[]][] = [
   ['Smash', ['fsmash', 'usmash', 'dsmash']],
   ['Aerial', ['nair', 'fair', 'bair', 'uair', 'dair']],
   ['Grab', ['grab', 'dashgrab']],
-  ['Special', ['nspec', 'uspec', 'dspec']],
+  ['Special', ['nspec', 'sspec', 'uspec', 'dspec']],
 ];
 export const ALL_MOVES = MOVE_GROUPS.flatMap(([, ids]) => ids);
 export const SPEEDS = [0.1, 0.25, 0.5, 1];
@@ -44,13 +44,13 @@ export class EditorModel {
 
   // ---------- reading ----------
   fighter() { return DATA.fighters[this.fi]; }
-  editable(id: MoveId) { return this.fighter().moves[id]?.kind === undefined; }
+  editable(id: MoveId) { const d = this.fighter().moves[id]; return !!d && d.kind === undefined; }
   ids(): MoveId[] { return ALL_MOVES.filter(id => this.editable(id)); }
 
   /** Current move. Cloned once so edits never leak into shared objects (e.g. COMMON_GRABS). */
   mv(fi = this.fi, id = this.id): StandardMove {
     const fd = DATA.fighters[fi];
-    let m = fd.moves[id];
+    let m = fd.moves[id]!;
     if (!this.owned.has(m)) { m = structuredClone(m); fd.moves[id] = m; this.owned.add(m); }
     return m as StandardMove;
   }
@@ -150,7 +150,8 @@ export class EditorModel {
   selectMove(id: MoveId) {
     if (!this.editable(id)) return;
     this.id = id; this.sel = this.mv().hitboxes.length ? 0 : -1; this.hover = -1;
-    this.frame = this.firstActive();
+    // while playing, restart from frame 1 so the whole animation shows
+    this.frame = this.playing ? 1 : this.firstActive();
     this.emit();
   }
   stepMove(d: number) {

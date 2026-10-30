@@ -143,7 +143,7 @@ export function drawFighter(g: G, w: World, f: Fighter, showBoxes: boolean) {
   }
   if (C.weapon === 'sword') drawSword(g, f, P, countering(f), T);
   if (C.look === 'king') drawCrown(g, P);
-  if (C.weapon === 'hammer') drawHammer(g, f, P, charging && d?.charge?.button === 'special');
+  if (C.weapon === 'hammer') drawHammer(g, f, P, charging && !!d?.charge?.jet);
   if (m && d?.kind === 'gordo' && m.t < d.spawnFrame) {
     const k = m.t / d.spawnFrame;
     drawGordo(g, 20 + k * 36, -50 - Math.sin(Math.PI * k) * 34, 12, pal.c, m.t * 0.3);

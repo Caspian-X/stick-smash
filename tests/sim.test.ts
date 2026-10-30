@@ -100,3 +100,52 @@ describe('sim', () => {
     expect(q.state).not.toBe('ledge');
   });
 });
+
+describe('specials', () => {
+  const SWORD = DATA.fighters.findIndex(f => f.id === 'swordfighter'), BRAWLER = DATA.fighters.findIndex(f => f.id === 'brawler');
+  const solo = (ch: number) => {
+    const w = createWorld({ fighters: [{ ch, cpu: false, name: 'P1' }, { ch, cpu: false, name: 'P2' }], stocks: 3, cpuLevel: 0, training: true });
+    w.fighters[1].x = 3000;
+    run(w, 1);
+    return { w, f: w.fighters[0] };
+  };
+  const press = (w: World, i: Partial<Input>) => run(w, 1, [{ ...blankInput(), ...i }]);
+
+  it('side + special does the side special; without one it falls back to neutral', () => {
+    const s = solo(SWORD);
+    press(s.w, { sp: true, right: true });
+    expect(s.f.move?.id).toBe('sspec');
+    const n = solo(SWORD);
+    press(n.w, { sp: true });
+    expect(n.f.move?.id).toBe('nspec');
+    const b = solo(BRAWLER);
+    press(b.w, { sp: true, left: true });
+    expect([b.f.move?.id, b.f.face]).toEqual(['nspec', -1]);
+  });
+
+  it('B-reverse: up/side special toward the back turns around, and flips air momentum', () => {
+    const s = solo(SWORD);
+    s.f.face = 1; s.f.ground = false; s.f.y -= 200; s.f.vx = 3; s.f.state = 'air';
+    press(s.w, { sp: true, left: true });
+    expect([s.f.move?.id, s.f.face]).toEqual(['sspec', -1]);
+    expect(s.f.vx).toBeLessThan(0);
+    const u = solo(SWORD);
+    u.f.face = 1;
+    press(u.w, { sp: true, up: true, left: true });
+    expect([u.f.move?.id, u.f.face]).toEqual(['uspec', -1]);
+  });
+
+  it('neutral special turns around if the other direction is pressed right after, but not later', () => {
+    const s = solo(SWORD);
+    s.f.face = 1;
+    press(s.w, { sp: true });
+    press(s.w, { left: true });
+    expect([s.f.move?.id, s.f.face]).toEqual(['nspec', -1]);
+    const late = solo(SWORD);
+    late.f.face = 1;
+    press(late.w, { sp: true });
+    run(late.w, DATA.g.movement.bReverseWindow + 1);
+    press(late.w, { left: true });
+    expect(late.f.face).toBe(1);
+  });
+});

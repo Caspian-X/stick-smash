@@ -3,7 +3,7 @@
 // typing into a field or scrubbing a label is never interrupted.
 
 import { frameSummary } from '../data';
-import type { Hitbox } from '../data/types';
+import { type Hitbox, SPECIAL_DIR } from '../data/types';
 import { G } from '../sim/core';
 import { hitlagOf, hitstunOf, knockback, launchAngle, shieldStunOf } from '../sim/combat';
 import { HIT_TYPES, HIT_TYPE_ORDER, typeOf } from '../render/hitTypes';
@@ -64,7 +64,7 @@ export class Inspector {
     const summary = h('div', { className: 'note' });
     this.live(() => { summary.textContent = frameSummary(m.mv()) + (m.mv().charge ? ` · charges on frame ${m.mv().charge!.frame}` : ''); });
     return h('div', {},
-      h('h2', {}, mv.name ?? m.id, h('small', { textContent: `${m.fighter().name} · ${m.id}` })),
+      h('h2', {}, mv.name ?? m.id, h('small', { textContent: `${m.fighter().name} · ${SPECIAL_DIR[m.id] ? `${SPECIAL_DIR[m.id]} special` : m.id}` })),
       h('div', { className: 'stats' },
         stat('Startup', () => String(startup() || '–')),
         stat('Active', () => (startup() ? `${startup()}–${lastEnd()}` : '–')),
@@ -80,8 +80,11 @@ export class Inspector {
   // ---------- hitbox list ----------
   private list() {
     const m = this.m, wrap = h('div', { className: 'boxes', onmouseleave: () => m.setHover(-1) });
+    let key = '';
     this.live(() => {
-      const bx = m.mv().hitboxes;
+      const bx = m.mv().hitboxes, k = JSON.stringify([m.sel, m.hover, bx]);
+      if (k === key) return; // unchanged: keep the rows so clicks during playback aren't lost
+      key = k;
       wrap.replaceChildren(...bx.map((b, i) => {
         const ty = HIT_TYPES[typeOf(b)];
         const ord = h('span', { className: 'ord' },

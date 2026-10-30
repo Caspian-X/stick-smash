@@ -37,6 +37,8 @@ export interface StateData {
   v?: Fighter | null; by?: Fighter | null; timer?: number; pt?: number; stun?: number; tech?: boolean; getup?: boolean;
   /** Move frame each victim (by index) was last hit, for multi-hit boxes. */
   hitAt?: number[];
+  /** Neutral special already B-reversed. */
+  rev?: boolean;
 }
 export interface MoveState extends StateData { id: MoveId; t: number; ph: number; t2: number; charge: number }
 
@@ -112,7 +114,7 @@ export interface World {
 export const G = () => DATA.g;
 export const FD = (f: Fighter): FighterData => DATA.fighters[f.ch] ?? DATA.fighters[0];
 export const ST = (f: Fighter): FighterStats => FD(f).stats;
-export const MV = (f: Fighter, id: MoveId = f.move!.id): MoveData => FD(f).moves[id];
+export const MV = (f: Fighter, id: MoveId = f.move!.id): MoveData => FD(f).moves[id] ?? FD(f).moves.nspec;
 export const maxJ = (f: Fighter) => ST(f).airJumps;
 export const other = (w: World, f: Fighter) => w.fighters.find(g => g !== f) ?? null;
 export const col = (f: Fighter) => COLORS[f.i % COLORS.length].c;

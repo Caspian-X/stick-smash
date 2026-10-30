@@ -34,7 +34,7 @@ export const CSS = `
 :root { --bg: #0b0e22; --panel: #11152e; --panel2: #171c3b; --line: #262c55; --text: #e6e9ff; --dim: #8d94c4; --faint: #5d6491;
   --accent: #ffd35a; --ok: #43d17a; --err: #ff5470; --startup: #4b5276; --active: #ff3355; --endlag: #3f6fd1; }
 #hbe { position: fixed; inset: 0; display: grid; z-index: 10; pointer-events: none; color: var(--text);
-  grid-template: "top top top" 50px "left view right" 1fr "left time right" var(--th, auto) / var(--lw, 200px) 1fr var(--rw, 372px);
+  grid-template: "top top top" 50px "left view right" 1fr "left time right" var(--th, auto) / var(--lw, 224px) 1fr var(--rw, 372px);
   font: 12px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
 #hbe * { box-sizing: border-box; }
 #hbe .pane { pointer-events: auto; background: var(--panel); }
@@ -74,6 +74,7 @@ export const CSS = `
 #hbe .mv:hover { background: var(--panel2); color: var(--text); }
 #hbe .mv.sel { background: #272d5c; color: #fff; box-shadow: inset 2px 0 0 var(--accent); }
 #hbe .mv.off { opacity: .4; cursor: default; }
+#hbe .mv .sdir { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #ffb35a; background: #ffb35a1c; border-radius: 4px; padding: 1px 4px; flex: none; min-width: 46px; text-align: center; }
 #hbe .mv .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #hbe .mv .meta { font: 10px ui-monospace, monospace; color: var(--faint); }
 #hbe .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: none; }

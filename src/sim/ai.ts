@@ -14,8 +14,8 @@ export function aiInput(w: World, f: Fighter, level = w.cfg.cpuLevel): Input {
   if (ai.upT > 0) { ai.upT--; inp.jumpHeld = true; }
   if (ai.shieldT > 0) ai.shieldT--;
   const toCenter = () => { const d = f.x < MID ? 1 : -1; inp.right = d > 0; inp.left = d < 0; };
-  const C = FD(f), nspec = C.moves.nspec, dspec = C.moves.dspec;
-  const isSword = nspec.kind === undefined && !!nspec.dash, isKing = nspec.kind === 'gordo';
+  const C = FD(f), nspec = C.moves.nspec, dspec = C.moves.dspec, sspec = C.moves.sspec ?? nspec;
+  const isSword = sspec.kind === undefined && !!sspec.dash, isKing = nspec.kind === 'gordo';
   if (st === 'attack' && f.move!.id === 'uspec' && f.y > STAGE.top - 200) {
     toCenter();
     if (MV(f).kind === 'superJump' && f.move!.ph === 2 && (f.x < STAGE.L - 20 || f.x > STAGE.R + 20)) inp.shieldP = true;

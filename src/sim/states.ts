@@ -7,7 +7,7 @@ import {
 } from './core';
 import { applyHit, grabRelease, releaseGrab, shieldBreak } from './combat';
 import { airPhys, fall, integrate, tryLedge } from './physics';
-import { groundActions, special, stAttack, startMove } from './moves';
+import { groundActions, special, stAttack, startMove, upSpecial } from './moves';
 
 export function roll(w: World, f: Fighter, dir: number, extra: Partial<StateData> = {}) {
   setState(f, 'roll', { dir, ...extra }); f.face = dir; f.inv = G().dodge.rollInvuln; sfx(w, 'roll');
@@ -61,7 +61,7 @@ export function updateFighter(w: World, f: Fighter, inp: Input) {
       break;
     case 'jumpsquat':
       if (inp.atk) { startMove(w, f, 'usmash'); break; }
-      if (inp.sp && inp.up && !f.upB) { f.upB = true; startMove(w, f, 'uspec'); break; }
+      if (inp.sp && inp.up && !f.upB) { upSpecial(w, f, dir); break; }
       if (inp.grab) { startMove(w, f, 'grab'); break; }
       f.vx *= 0.9;
       if (f.t >= g.movement.jumpsquat) {
@@ -102,7 +102,7 @@ export function updateFighter(w: World, f: Fighter, inp: Input) {
       if (sd.stun! > 0) { sd.stun!--; break; }
       if (inp.jump) { setState(f, 'jumpsquat'); break; }
       if (inp.grab || inp.atk) { startMove(w, f, 'grab'); break; }
-      if (inp.sp && inp.up && !f.upB) { f.upB = true; startMove(w, f, 'uspec'); break; }
+      if (inp.sp && inp.up && !f.upB) { upSpecial(w, f, dir); break; }
       if (inp.tapR || inp.tapL) { roll(w, f, inp.tapR ? 1 : -1); break; }
       if (inp.tapD) { setState(f, 'spot'); f.inv = g.dodge.spotInvuln; sfx(w, 'roll'); break; }
       if (!inp.shield) setState(f, 'landing', { n: g.shield.dropLag, kind: 'shield' });
