@@ -39,6 +39,40 @@
     "underside": "#2c3048",
     "edge": "#b8c4ff",
     "platform": "#c9d4ff",
-    "platformShadow": "#8fa2ff"
+    "platformShadow": "#8fa2ff",
+    "edgeWidth": 6,
+    "platformThickness": 7,
+    "platformRadius": 3,
+    "platformShadowBand": [6, 10, 0.2],
+    "stripes": { "x": 40, "y": 16, "w": 40, "h": 3, "every": 80, "color": "#ffffff", "alpha": 0.13 },
+    "background": {
+      "sky": [[0, "#0b0d2a"], [432, "#2a2150"], [732, "#4a2a4a"]],
+      "moon": {
+        "x": 1030,
+        "y": 140,
+        "r": 56,
+        "color": "#ffe9c4",
+        "glow": "#ffd38a",
+        "rings": 6,
+        "step": 7,
+        "alpha": 0.035
+      },
+      "ridges": [
+        { "base": 560, "amp": 260, "seed": 1, "color": "#221a3e" },
+        { "base": 640, "amp": 200, "seed": 4, "color": "#1a1530" },
+        { "base": 720, "amp": 120, "seed": 9, "color": "#120f22" }
+      ],
+      "stars": {
+        "n": 300,
+        "x": -700,
+        "y": -500,
+        "w": 2680,
+        "h": 970,
+        "size": [0.3, 1.8],
+        "color": "#ffffff",
+        "twinkle": 1.719
+      },
+      "parallax": 0.3
+    }
   }
 }

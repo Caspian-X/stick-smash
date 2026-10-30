@@ -255,5 +255,74 @@
       "downAttackDistance": 40,
       "projectileTargetHeight": 40
     }
+  },
+  "render": {
+    "alphaGamma": 1.6,
+    "camera": {
+      "padX": 110,
+      "padTop": 150,
+      "padBottom": 70,
+      "minHeight": 560,
+      "maxHeight": 1100,
+      "stageBias": 0.25,
+      "blastMargin": 40,
+      "follow": 0.12,
+      "zoomFollow": 0.08,
+      "shakeDecay": 0.85,
+      "shakeMin": 0.3
+    },
+    "overlays": {
+      "runSpeed": 0.8,
+      "glowAlpha": 0.12,
+      "flash": "#ffffff",
+      "helpless": "#888888",
+      "helplessBack": "#555555",
+      "hitJitter": 2,
+      "charge": { "color": "#ffe680", "blink": 4, "jitter": 2, "glowAlpha": 0.22 },
+      "blinkPeriod": 4,
+      "blinkAlpha": 0.45,
+      "dodge": {
+        "alpha": 0.75,
+        "glow": "#ffffff",
+        "glowAlpha": 0.22,
+        "ghosts": 3,
+        "spacing": 2.5,
+        "ghostAlpha": 0.12,
+        "ghostWidth": 5
+      },
+      "shield": {
+        "y": 38,
+        "minR": 12,
+        "growR": 36,
+        "alpha": 0.28,
+        "stunAlpha": 0.5,
+        "width": 2.5,
+        "strokeAlpha": 0.85
+      },
+      "dizzy": { "stars": 3, "y": 84, "rx": 18, "ry": 5, "r": 7, "speed": 6.875, "color": "#ffe680" },
+      "respawn": { "y": 4, "w": 68, "h": 14, "alpha": 0.5, "pulse": 0.2, "speed": 11.459 },
+      "trail": { "frames": 5, "fade": 4, "alpha": 0.45, "color": "playerLight" },
+      "xEyeWidth": 1.8
+    },
+    "fx": {
+      "drag": 0.95,
+      "shrink": 0.4,
+      "ringWidth": 3,
+      "dust": { "color": "#aaaabb", "spread": 10, "vx": 2.5, "vy": [-1.6, -0.3], "life": 22, "size": [3, 6] },
+      "beam": {
+        "life": 45,
+        "length": 900,
+        "width": 30,
+        "grow": 90,
+        "bands": 6,
+        "alpha": 0.9,
+        "inset": 10,
+        "bursts": [
+          { "color": "player", "n": 50, "speed": 14, "life": 40, "size": 6 },
+          { "color": "#ffffff", "n": 30, "speed": 10, "life": 30, "size": 4 }
+        ],
+        "ring": { "r": 20, "grow": 10, "life": 20, "color": "#ffffff" }
+      }
+    }
   }
 }

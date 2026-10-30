@@ -1328,7 +1328,8 @@
                 "footB": [-10, 6],
                 "rot": 45.837
               },
-              "lerp": true
+              "lerp": true,
+              "if": "airborne"
             },
             {
               "at": 8,
@@ -1343,7 +1344,8 @@
                 "footB": [-10, 6],
                 "rot": 366.693
               },
-              "lerp": true
+              "lerp": true,
+              "if": "airborne"
             }
           ]
         },

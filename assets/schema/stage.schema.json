@@ -142,14 +142,158 @@
         "underside": { "$ref": "#/$defs/Color" },
         "edge": { "$ref": "#/$defs/Color", "description": "Bright strip along the ground's top edge." },
         "platform": { "$ref": "#/$defs/Color" },
-        "platformShadow": { "$ref": "#/$defs/Color", "description": "Soft band under each platform." }
+        "platformShadow": { "$ref": "#/$defs/Color", "description": "Soft band under each platform." },
+        "edgeWidth": { "type": "number", "format": "double", "description": "Height of the `edge` strip." },
+        "platformThickness": { "type": "number", "format": "double" },
+        "platformRadius": { "type": "number", "format": "double" },
+        "platformShadowBand": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "Shadow band: starts `[offset]` below the platform top, `[height]` tall, at `[alpha]` opacity."
+        },
+        "stripes": {
+          "anyOf": [
+            { "$ref": "#/$defs/Stripes" },
+            { "type": "null" }
+          ],
+          "description": "Dashes along the ground face."
+        },
+        "background": {
+          "anyOf": [
+            { "$ref": "#/$defs/Background" },
+            { "type": "null" }
+          ],
+          "description": "Procedural backdrop, filling the `camera` bounds."
+        }
       },
-      "required": ["groundTop", "groundBottom", "underside", "edge", "platform", "platformShadow"]
+      "required": [
+        "groundTop",
+        "groundBottom",
+        "underside",
+        "edge",
+        "platform",
+        "platformShadow",
+        "edgeWidth",
+        "platformThickness",
+        "platformRadius",
+        "platformShadowBand"
+      ]
     },
     "Color": {
       "description": "\"#rrggbb\", or a player palette slot: \"player\", \"playerDark\", \"playerLight\".",
       "type": "string",
       "pattern": "^(#[0-9a-fA-F]{6}|player|playerDark|playerLight)$"
+    },
+    "Stripes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "number", "format": "double" },
+        "y": { "type": "number", "format": "double" },
+        "w": { "type": "number", "format": "double" },
+        "h": { "type": "number", "format": "double" },
+        "every": { "type": "number", "format": "double" },
+        "color": { "$ref": "#/$defs/Color" },
+        "alpha": { "type": "number", "format": "double" }
+      },
+      "required": ["x", "y", "w", "h", "every", "color", "alpha"],
+      "description": "Dashes `w`×`h` every `every` px, `y` below the ground top, starting `x` from the left edge."
+    },
+    "Background": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sky": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "format": "double" },
+              { "$ref": "#/$defs/Color" }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "description": "Vertical gradient `[y, color]` stops, top to bottom. Solid above the first and below the last."
+        },
+        "moon": {
+          "anyOf": [
+            { "$ref": "#/$defs/Moon" },
+            { "type": "null" }
+          ]
+        },
+        "ridges": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Ridge" },
+          "description": "Hill silhouettes, back to front."
+        },
+        "stars": {
+          "anyOf": [
+            { "$ref": "#/$defs/Starfield" },
+            { "type": "null" }
+          ]
+        },
+        "parallax": {
+          "type": "number",
+          "format": "double",
+          "description": "0..1: how much the backdrop stays put on screen while the camera moves (0 = moves with the stage).",
+          "default": 0.0
+        }
+      },
+      "required": ["sky"]
+    },
+    "Moon": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "number", "format": "double" },
+        "y": { "type": "number", "format": "double" },
+        "r": { "type": "number", "format": "double" },
+        "color": { "$ref": "#/$defs/Color" },
+        "glow": {
+          "$ref": "#/$defs/Color",
+          "description": "Halo: `rings` circles growing by `step` px, each at `alpha`."
+        },
+        "rings": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "step": { "type": "number", "format": "double" },
+        "alpha": { "type": "number", "format": "double" }
+      },
+      "required": ["x", "y", "r", "color", "glow", "rings", "step", "alpha"]
+    },
+    "Ridge": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "base": { "type": "number", "format": "double" },
+        "amp": { "type": "number", "format": "double" },
+        "seed": { "type": "number", "format": "double" },
+        "color": { "$ref": "#/$defs/Color" }
+      },
+      "required": ["base", "amp", "seed", "color"],
+      "description": "`y = base − amp × (0.5 + 0.3 sin(x × 0.006 + seed) + 0.2 sin(x × 0.017 + 3 seed))`, filled down to the bottom."
+    },
+    "Starfield": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "n": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "x": { "type": "number", "format": "double" },
+        "y": { "type": "number", "format": "double" },
+        "w": { "type": "number", "format": "double" },
+        "h": { "type": "number", "format": "double" },
+        "size": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "color": { "$ref": "#/$defs/Color" },
+        "twinkle": { "type": "number", "format": "double", "description": "Twinkle speed (degrees per tick)." }
+      },
+      "required": ["n", "x", "y", "w", "h", "size", "color", "twinkle"],
+      "description": "Twinkling stars scattered (fixed pseudo-random layout) over the rectangle `x, y, w, h`."
     }
   }
 }

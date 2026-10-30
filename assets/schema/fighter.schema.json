@@ -747,7 +747,14 @@
       "properties": {
         "at": { "type": "number", "format": "double" },
         "pose": { "$ref": "#/$defs/PoseRef" },
-        "lerp": { "type": "boolean" }
+        "lerp": { "type": "boolean" },
+        "if": {
+          "anyOf": [
+            { "$ref": "#/$defs/Cond" },
+            { "type": "null" }
+          ],
+          "description": "Only used while this holds (`grounded` / `airborne` / `countered`); otherwise the key is skipped."
+        }
       },
       "required": ["at", "pose"],
       "description": "Pose keyframe. Holds until the next key; with `lerp`, the figure blends from the previous key to this one."
@@ -1134,6 +1141,26 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
+            "shape": { "type": "string", "const": "star" },
+            "at": {
+              "type": "array",
+              "items": { "type": "number", "format": "double" },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "r": { "type": "number", "format": "double" },
+            "fill": { "$ref": "#/$defs/Color" },
+            "alpha": { "type": "number", "format": "double" },
+            "blink": { "type": "integer", "format": "uint32", "minimum": 0 },
+            "when": { "$ref": "#/$defs/ShapeWhen" }
+          },
+          "required": ["shape", "at", "r", "fill"],
+          "description": "Four-pointed sparkle. With `blink`, it shows only every other `blink` ticks (world clock)."
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
             "shape": { "type": "string", "const": "rect" },
             "x": { "type": "number", "format": "double" },
             "y": { "type": "number", "format": "double" },
@@ -1182,9 +1209,31 @@
         "torsoWidth": { "type": "number", "format": "double" },
         "frontLimbWidth": { "type": "number", "format": "double" },
         "backLimbWidth": { "type": "number", "format": "double" },
-        "glowWidth": { "type": "number", "format": "double", "description": "Soft glow drawn under the figure." }
+        "glowWidth": { "type": "number", "format": "double", "description": "Soft glow drawn under the limbs." },
+        "torsoGlowWidth": { "type": "number", "format": "double" },
+        "headGlowRadius": { "type": "number", "format": "double" },
+        "headRing": { "type": "number", "format": "double", "description": "Head outline width and fill." },
+        "headFill": { "$ref": "#/$defs/Color" },
+        "eye": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 4,
+          "maxItems": 4,
+          "description": "Eye rectangle `[x, y, w, h]` from the head center (x forward, y up, `(x, y)` = bottom-left corner)."
+        }
       },
-      "required": ["headRadius", "torsoWidth", "frontLimbWidth", "backLimbWidth", "glowWidth"],
+      "required": [
+        "headRadius",
+        "torsoWidth",
+        "frontLimbWidth",
+        "backLimbWidth",
+        "glowWidth",
+        "torsoGlowWidth",
+        "headGlowRadius",
+        "headRing",
+        "headFill",
+        "eye"
+      ],
       "description": "Drawing style of the stick figure."
     },
     "Anim": {
@@ -1208,7 +1257,12 @@
       "oneOf": [
         { "type": "string", "const": "state", "description": "Frames since the fighter entered the state." },
         { "type": "string", "const": "world", "description": "World frame (idle breathing, wobbles)." },
-        { "type": "string", "const": "run", "description": "Run cycle phase in degrees, advanced by ground speed." }
+        { "type": "string", "const": "run", "description": "Run cycle phase in degrees, advanced by ground speed." },
+        {
+          "type": "string",
+          "const": "spin",
+          "description": "Tumble spin in degrees (signed: follows the launch direction)."
+        }
       ],
       "description": "Time source for a state animation."
     },
@@ -1244,6 +1298,13 @@
             { "$ref": "#/$defs/GlowWhen" },
             { "type": "null" }
           ]
+        },
+        "sway": {
+          "anyOf": [
+            { "$ref": "#/$defs/Sway" },
+            { "type": "null" }
+          ],
+          "description": "Idle sway: the angle swings ± `deg` with a period of `period` ticks (world clock)."
         },
         "shapes": {
           "type": "array",
@@ -1285,6 +1346,15 @@
         { "type": "string", "const": "active", "description": "While a hitbox is active." }
       ],
       "description": "When an attachment glows (shapes with `when: \"glow\"` replace `when: \"noGlow\"` ones)."
+    },
+    "Sway": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "deg": { "type": "number", "format": "double" },
+        "period": { "type": "number", "format": "double" }
+      },
+      "required": ["deg", "period"]
     },
     "StatsPartial": {
       "type": "object",
@@ -1711,9 +1781,25 @@
         "torsoWidth": { "type": "number", "format": "double" },
         "frontLimbWidth": { "type": "number", "format": "double" },
         "backLimbWidth": { "type": "number", "format": "double" },
-        "glowWidth": { "type": "number", "format": "double", "description": "Soft glow drawn under the figure." }
+        "glowWidth": { "type": "number", "format": "double", "description": "Soft glow drawn under the limbs." },
+        "torsoGlowWidth": { "type": "number", "format": "double" },
+        "headGlowRadius": { "type": "number", "format": "double" },
+        "headRing": { "type": "number", "format": "double", "description": "Head outline width and fill." },
+        "headFill": { "$ref": "#/$defs/ColorPartial" },
+        "eye": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 4,
+          "maxItems": 4,
+          "description": "Eye rectangle `[x, y, w, h]` from the head center (x forward, y up, `(x, y)` = bottom-left corner)."
+        }
       },
       "description": "Drawing style of the stick figure."
+    },
+    "ColorPartial": {
+      "description": "\"#rrggbb\", or a player palette slot: \"player\", \"playerDark\", \"playerLight\".",
+      "type": "string",
+      "pattern": "^(#[0-9a-fA-F]{6}|player|playerDark|playerLight)$"
     },
     "PosePartial": {
       "type": "object",
@@ -1822,7 +1908,12 @@
       "oneOf": [
         { "type": "string", "const": "state", "description": "Frames since the fighter entered the state." },
         { "type": "string", "const": "world", "description": "World frame (idle breathing, wobbles)." },
-        { "type": "string", "const": "run", "description": "Run cycle phase in degrees, advanced by ground speed." }
+        { "type": "string", "const": "run", "description": "Run cycle phase in degrees, advanced by ground speed." },
+        {
+          "type": "string",
+          "const": "spin",
+          "description": "Tumble spin in degrees (signed: follows the launch direction)."
+        }
       ],
       "description": "Time source for a state animation."
     }

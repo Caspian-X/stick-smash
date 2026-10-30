@@ -33,6 +33,8 @@ pub struct Global {
     pub match_: Match,
     /// Player colors by slot (8 slots).
     pub palette: Vec<PlayerColors>,
+    /// Renderer tuning. Cosmetic only.
+    pub render: super::render::Render,
 }
 
 /// Shared movement rules. Per-fighter speeds and gravity live in each fighter's `stats`.

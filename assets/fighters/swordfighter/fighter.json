@@ -767,7 +767,8 @@
         { "shape": "line", "from": [3, 0], "to": [54, 0], "width": 4, "color": "#e6ecff", "when": "noGlow" },
         { "shape": "line", "from": [3, 0], "to": [54, 0], "width": 4, "color": "#ffffff", "when": "glow" },
         { "shape": "line", "from": [-7, 0], "to": [3, 0], "width": 4, "color": "#7a5530" },
-        { "shape": "line", "from": [3, -8], "to": [3, 8], "width": 3.5, "color": "#e0b84a" }
+        { "shape": "line", "from": [3, -8], "to": [3, 8], "width": 3.5, "color": "#e0b84a" },
+        { "shape": "star", "at": [54, 0], "r": 7, "fill": "#ffffff", "blink": 4, "when": "glow" }
       ]
     },
     {
@@ -775,7 +776,8 @@
       "joint": "head",
       "shapes": [
         { "shape": "line", "from": [-9, 4], "to": [-20, 1], "width": 3, "color": "player" }
-      ]
+      ],
+      "sway": { "deg": 10, "period": 31.416 }
     }
   ]
 }

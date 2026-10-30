@@ -54,6 +54,29 @@ The 5 TS kinds (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) ar
 ### Crates
 `sim` (logic + data types/loading) · `render` (fighter/stage/fx drawing, shared by gameplay and editor) · `game` (bin: app, input, menus, modes) · later `editor` (lib, used by `game`) and `net`.
 
+### Rendering (milestone 3)
+- **Vector drawing** is our own small tessellator (`render::canvas`): polylines, circles, sectors, rounded rects
+  and ear-clipped polygons into one vertex-colored triangle mesh per layer (backdrop, stars, stage, world,
+  debug), rebuilt each frame, MSAA ×4. No gizmos (they can't fill), no lyon dependency.
+- **Interpolation.** The game pushes a `World` snapshot to `render::Scene` every tick and sets `alpha` (fraction
+  of a tick since then) every frame. Fighter positions and skeletons, projectiles, particles and the camera
+  interpolate between the last two ticks. Fighters snap when their state, facing or position jumps.
+- **Effects** are render-side: `Fx` events become particles/rings/beams with a non-sim RNG, advanced per tick.
+- **Blending.** The GPU blends in linear light; the art was tuned for sRGB canvas blending, so translucent alpha
+  is raised to `render.alphaGamma` (1.6) on output. Faint glows/shadows then look like the TS version.
+- **Cosmetic tuning** lives in `global.render` (camera, overlays, effect looks) and stage `art`. It is part of
+  the content hash; harmless, since it's loaded content either way.
+
+### Camera (decided)
+Tuning is in `global.json` → `render.camera` (one rule set for all stages; per-stage overrides can come with
+bigger stages). Each tick: frame every fighter that isn't dead/out (feet positions, clamped to the blast zone ±
+`blastMargin`), pad by `padX`/`padTop`/`padBottom`, pull the center `stageBias` toward the stage's center, fit the
+window's aspect ratio, clamp the visible height to `minHeight..maxHeight` (zoom limits), and clamp the view inside
+the stage's `camera` bounds. The camera eases toward that target by `follow` (position) and `zoomFollow` (zoom)
+per tick, so it's deterministic for a given world history (screenshots reproduce). Shake comes from `Fx::Shake`,
+decays by `shakeDecay` per tick and offsets the view randomly. The backdrop gets a little parallax
+(`art.background.parallax`).
+
 ## Milestones
 
 1. **Data:** Rust content types + schemas; Node script converts TS fighters/stage into the new format (including the 5 kinds as phases); tests load and validate all assets.
@@ -63,5 +86,4 @@ The 5 TS kinds (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) ar
 5. **Editor** (fast-follow).
 
 ## Open
-- Camera specifics (zoom limits, framing rules).
 - Audio: port the synthesizer (`fundsp`) or use sample files.

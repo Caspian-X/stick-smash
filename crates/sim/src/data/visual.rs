@@ -5,6 +5,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::common::{Color, Pt, is_default, is_one, one};
+use super::moves::Cond;
 
 /// Joint positions in fighter-local space (x forward, y up, feet at the origin). A pose may be partial: missing
 /// joints come from `from` (another named pose), or from the `stand` pose.
@@ -63,6 +64,9 @@ pub struct AnimKey {
     pub pose: PoseRef,
     #[serde(default, skip_serializing_if = "is_default")]
     pub lerp: bool,
+    /// Only used while this holds (`grounded` / `airborne` / `countered`); otherwise the key is skipped.
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "if")]
+    pub cond: Option<Cond>,
 }
 
 /// Time source for a state animation.
@@ -76,6 +80,8 @@ pub enum Clock {
     World,
     /// Run cycle phase in degrees, advanced by ground speed.
     Run,
+    /// Tumble spin in degrees (signed: follows the launch direction).
+    Spin,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -97,8 +103,15 @@ pub struct Style {
     pub torso_width: f64,
     pub front_limb_width: f64,
     pub back_limb_width: f64,
-    /// Soft glow drawn under the figure.
+    /// Soft glow drawn under the limbs.
     pub glow_width: f64,
+    pub torso_glow_width: f64,
+    pub head_glow_radius: f64,
+    /// Head outline width and fill.
+    pub head_ring: f64,
+    pub head_fill: Color,
+    /// Eye rectangle `[x, y, w, h]` from the head center (x forward, y up, `(x, y)` = bottom-left corner).
+    pub eye: [f64; 4],
 }
 
 /// Fighter joint (or `root` = the feet) an attachment hangs from.
@@ -154,6 +167,9 @@ pub struct Attachment {
     pub trail: Option<Trail>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub glow: Option<GlowWhen>,
+    /// Idle sway: the angle swings ± `deg` with a period of `period` ticks (world clock).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sway: Option<Sway>,
     /// Shapes in attachment space: x along the angle, y to its left (up when the angle is 0).
     pub shapes: Vec<Shape>,
 }
@@ -164,6 +180,13 @@ pub struct Hold {
     pub elbow: f64,
     pub hand: f64,
     pub bend: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Sway {
+    pub deg: f64,
+    pub period: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -238,6 +261,18 @@ pub enum Shape {
         width: f64,
         #[serde(default = "one", skip_serializing_if = "is_one")]
         alpha: f64,
+        #[serde(default, skip_serializing_if = "is_default")]
+        when: ShapeWhen,
+    },
+    /// Four-pointed sparkle. With `blink`, it shows only every other `blink` ticks (world clock).
+    Star {
+        at: Pt,
+        r: f64,
+        fill: Color,
+        #[serde(default = "one", skip_serializing_if = "is_one")]
+        alpha: f64,
+        #[serde(default, skip_serializing_if = "is_default")]
+        blink: u32,
         #[serde(default, skip_serializing_if = "is_default")]
         when: ShapeWhen,
     },

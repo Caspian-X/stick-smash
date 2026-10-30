@@ -112,4 +112,85 @@ pub struct StageArt {
     pub platform: Color,
     /// Soft band under each platform.
     pub platform_shadow: Color,
+    /// Height of the `edge` strip.
+    pub edge_width: f64,
+    pub platform_thickness: f64,
+    pub platform_radius: f64,
+    /// Shadow band: starts `[offset]` below the platform top, `[height]` tall, at `[alpha]` opacity.
+    pub platform_shadow_band: [f64; 3],
+    /// Dashes along the ground face.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stripes: Option<Stripes>,
+    /// Procedural backdrop, filling the `camera` bounds.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub background: Option<Background>,
+}
+
+/// Dashes `w`×`h` every `every` px, `y` below the ground top, starting `x` from the left edge.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Stripes {
+    pub x: f64,
+    pub y: f64,
+    pub w: f64,
+    pub h: f64,
+    pub every: f64,
+    pub color: Color,
+    pub alpha: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Background {
+    /// Vertical gradient `[y, color]` stops, top to bottom. Solid above the first and below the last.
+    pub sky: Vec<(f64, Color)>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub moon: Option<Moon>,
+    /// Hill silhouettes, back to front.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub ridges: Vec<Ridge>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stars: Option<Starfield>,
+    /// 0..1: how much the backdrop stays put on screen while the camera moves (0 = moves with the stage).
+    #[serde(default)]
+    pub parallax: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Moon {
+    pub x: f64,
+    pub y: f64,
+    pub r: f64,
+    pub color: Color,
+    /// Halo: `rings` circles growing by `step` px, each at `alpha`.
+    pub glow: Color,
+    pub rings: u32,
+    pub step: f64,
+    pub alpha: f64,
+}
+
+/// `y = base − amp × (0.5 + 0.3 sin(x × 0.006 + seed) + 0.2 sin(x × 0.017 + 3 seed))`, filled down to the bottom.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Ridge {
+    pub base: f64,
+    pub amp: f64,
+    pub seed: f64,
+    pub color: Color,
+}
+
+/// Twinkling stars scattered (fixed pseudo-random layout) over the rectangle `x, y, w, h`.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Starfield {
+    pub n: u32,
+    pub x: f64,
+    pub y: f64,
+    pub w: f64,
+    pub h: f64,
+    pub size: [f64; 2],
+    pub color: Color,
+    /// Twinkle speed (degrees per tick).
+    pub twinkle: f64,
 }

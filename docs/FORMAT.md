@@ -109,18 +109,37 @@ direction).
 
 - **Poses** (`poses.<name>`): joints `head, shoulder, hip, elbowF, handF, elbowB, handB, kneeF, footF, kneeB,
   footB`, plus `rot`, `pivot` (rotation center height) and `offsetY`. Missing joints come from `from` or `stand`.
-- **Animations**: a list of keys `{ "at": t, "pose": <name or inline pose>, "lerp": bool }`. A key holds until
-  the next one. With `lerp` the figure blends from the previous key. Move phases animate in phase frames
-  (`anim`). State animations (`anims.<name>`) pick a `clock`: `state` (frames in state), `world`, or `run` (run
-  cycle degrees), and may `loop`.
+- **Animations**: a list of keys `{ "at": t, "pose": <name or inline pose>, "lerp": bool, "if": cond }`. A key
+  holds until the next one. With `lerp` the figure blends from the previous key. A key with `if` (`grounded`,
+  `airborne`, `countered`) is skipped while the condition is false. Move phases animate in phase frames
+  (`anim`). State animations (`anims.<name>`) pick a `clock`: `state` (frames in state), `world`, `run` (run
+  cycle degrees), or `spin` (tumble spin degrees, signed), and may `loop`. Exceptions: `air.flip` counts frames
+  since the flip started, `pummel` frames since the pummel started. `idle` above `render.overlays.runSpeed`
+  shows `run`.
 - **State animation names**: `idle`, `run`, `jumpsquat`, `landing`, `air.rise`, `air.fall`, `air.flip`, `helpless`,
   `shield`, `shieldDrop`, `roll`, `spot`, `airdodge`, `hold`, `pummel`, `throw.f`, `throw.b`, `throw.u`,
   `throw.d`, `grabbed`, `hitstun`, `tumble`, `shieldbreak`, `knockdown`, `getup`, `getupAttack`, `tech`, `ledge`,
   `climb`, `ledgeAttack`, `ledgeRoll`, `ledgeJump`, `dizzy`, `win`, `respawn`.
 - **Attachments**: vector `shapes` (line, circle, poly, rect) hung on a joint at an angle. On a hand the angle is
   relative to the forearm. A phase's `attach.<id>` can key `angle`, `offset` and `scale`, and `show` a hidden
-  attachment. While a phase keys the angle, `hold` poses the front arm to grip it. `glow` swaps shapes marked
-  `when: "glow"` / `"noGlow"`. Colors are `#rrggbb` or `player` / `playerDark` / `playerLight`.
+  attachment. While a phase keys the angle, the angle is absolute, `hold` poses the front arm to grip it, and a
+  `trail` sweeps a ring sector around the shoulder over the last `render.overlays.trail.frames` ticks of each
+  hitbox window. `glow` swaps shapes marked `when: "glow"` / `"noGlow"`. `sway` swings the angle ±`deg` over
+  `period` world ticks. Shapes: `line`, `circle`, `poly` (any simple polygon), `rect`, `star` (four-pointed,
+  optional `blink` period). Colors are `#rrggbb` or `player` / `playerDark` / `playerLight`.
+- **Style**: limb/torso/glow widths, head radius, `headRing` width, `headFill`, `eye` rect from the head center.
+  Procedural overlays (hit flash, charge blink/jitter, dodge ghosts, helpless grey, respawn blink, shield bubble,
+  dizzy stars, X eyes, respawn platform) are drawn by the renderer for every fighter, tuned in
+  `global.render.overlays`.
+- **Stage art**: ground gradient, underside, edge strip (`edgeWidth`), `stripes`, platforms (`platformThickness`,
+  `platformRadius`, `platformShadowBand: [offset, height, alpha]`) and an optional procedural `background` (sky
+  gradient stops, moon with halo, ridges, twinkling starfield, `parallax`) filling the stage's `camera` bounds.
+
+## Rendering tuning
+
+`global.render`: `alphaGamma` (translucency correction, see DESIGN.md), `camera` (follow camera framing, zoom
+limits, smoothing, shake decay; see DESIGN.md "Camera"), `overlays` (procedural fighter overlays), `fx` (particle
+drag/shrink, ring width, dust and KO-beam looks). Cosmetic only: the sim never reads it.
 
 ## Simulation tuning and CPU data
 

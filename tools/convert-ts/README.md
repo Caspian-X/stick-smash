@@ -49,6 +49,11 @@ Rust-vs-TS full simulation replay: the Rust gameplay sim is still a stub.
 
 ## Approximations and format limits
 
+Fixed after conversion (milestone 3): hair-tie sway (`sway`), the blinking sword tip star (`star` shape), grounded
+ground-pound startup no longer spins (keys gated `if: airborne`), tumble spins with the sim's signed `spin`
+(`clock: "spin"`), and the procedural overlays plus stage backdrop are drawn by the renderer from
+`global.render` / stage `art`. Still baked: climb/ledge-roll poses use the default stage's hang geometry.
+
 - All floats are rounded to three decimals, including animation periods, radians-to-degrees conversion, and
   vector shapes. Sinusoidal world/run animations use eight interpolated intervals. Short nonlinear throw and
   climb arcs retain more keys; constant holds and linear interior samples are compressed.

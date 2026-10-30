@@ -25,7 +25,8 @@
       "type": "array",
       "items": { "$ref": "#/$defs/PlayerColors" },
       "description": "Player colors by slot (8 slots)."
-    }
+    },
+    "render": { "$ref": "#/$defs/Render", "description": "Renderer tuning. Cosmetic only." }
   },
   "required": [
     "schemaVersion",
@@ -46,7 +47,8 @@
     "grab",
     "respawn",
     "match",
-    "palette"
+    "palette",
+    "render"
   ],
   "title": "Global",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1058,6 +1060,330 @@
       "description": "\"#rrggbb\", or a player palette slot: \"player\", \"playerDark\", \"playerLight\".",
       "type": "string",
       "pattern": "^(#[0-9a-fA-F]{6}|player|playerDark|playerLight)$"
+    },
+    "Render": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "alphaGamma": {
+          "type": "number",
+          "format": "double",
+          "description": "Translucent colors' alpha is raised to this power. The GPU blends in linear light, which makes faint\noverlays much stronger than the sRGB (canvas) blending the art was tuned for. 2.2 matches sRGB blending\nover black, 1 is plain linear blending; ~1.6 suits this game's dark-but-not-black scenes."
+        },
+        "camera": { "$ref": "#/$defs/Camera" },
+        "overlays": { "$ref": "#/$defs/Overlays" },
+        "fx": { "$ref": "#/$defs/FxLook" }
+      },
+      "required": ["alphaGamma", "camera", "overlays", "fx"]
+    },
+    "Camera": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "padX": { "type": "number", "format": "double", "description": "Padding beside the fighters' feet." },
+        "padTop": {
+          "type": "number",
+          "format": "double",
+          "description": "Padding above the fighters' feet (include the body height)."
+        },
+        "padBottom": { "type": "number", "format": "double" },
+        "minHeight": {
+          "type": "number",
+          "format": "double",
+          "description": "Zoom limits as visible height in stage pixels: `minHeight` = closest zoom, `maxHeight` = widest."
+        },
+        "maxHeight": { "type": "number", "format": "double" },
+        "stageBias": {
+          "type": "number",
+          "format": "double",
+          "description": "0..1: how far the framing center is pulled toward the stage's center (keeps the stage in view)."
+        },
+        "blastMargin": {
+          "type": "number",
+          "format": "double",
+          "description": "Fighters are framed no further than this outside the blast zone (keeps KO'd fighters from yanking it)."
+        },
+        "follow": {
+          "type": "number",
+          "format": "double",
+          "description": "Fraction of the remaining distance covered per tick, for position and zoom. 1 = no smoothing."
+        },
+        "zoomFollow": { "type": "number", "format": "double" },
+        "shakeDecay": {
+          "type": "number",
+          "format": "double",
+          "description": "Screen shake (stage pixels): multiplied by `shakeDecay` each tick, cut off below `shakeMin`."
+        },
+        "shakeMin": { "type": "number", "format": "double" }
+      },
+      "required": [
+        "padX",
+        "padTop",
+        "padBottom",
+        "minHeight",
+        "maxHeight",
+        "stageBias",
+        "blastMargin",
+        "follow",
+        "zoomFollow",
+        "shakeDecay",
+        "shakeMin"
+      ],
+      "description": "Follow camera. Each tick it frames every fighter that's on screen-worthy (not dead/out), padded, keeps the\nwindow's aspect ratio, and eases toward that framing. It never shows past the stage's `camera` bounds."
+    },
+    "Overlays": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runSpeed": {
+          "type": "number",
+          "format": "double",
+          "description": "Grounded `idle` fighters moving faster than this (px/tick) use the `run` animation."
+        },
+        "glowAlpha": {
+          "type": "number",
+          "format": "double",
+          "description": "Opacity of the soft glow under the figure."
+        },
+        "flash": { "$ref": "#/$defs/Color", "description": "Body color while flashing from a hit." },
+        "helpless": { "$ref": "#/$defs/Color", "description": "Body and back-limb colors while helpless." },
+        "helplessBack": { "$ref": "#/$defs/Color" },
+        "hitJitter": {
+          "type": "number",
+          "format": "double",
+          "description": "Random sideways jitter (px) while in hitlag after being hit."
+        },
+        "charge": { "$ref": "#/$defs/ChargeLook" },
+        "blinkPeriod": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Invincibility blinking after respawn: alpha `alpha` every other `period` ticks."
+        },
+        "blinkAlpha": { "type": "number", "format": "double" },
+        "dodge": { "$ref": "#/$defs/DodgeLook" },
+        "shield": { "$ref": "#/$defs/ShieldLook" },
+        "dizzy": { "$ref": "#/$defs/DizzyLook" },
+        "respawn": { "$ref": "#/$defs/RespawnLook" },
+        "trail": { "$ref": "#/$defs/TrailLook" },
+        "xEyeWidth": {
+          "type": "number",
+          "format": "double",
+          "description": "Line width of the X eyes (knocked down, dizzy)."
+        }
+      },
+      "required": [
+        "runSpeed",
+        "glowAlpha",
+        "flash",
+        "helpless",
+        "helplessBack",
+        "hitJitter",
+        "charge",
+        "blinkPeriod",
+        "blinkAlpha",
+        "dodge",
+        "shield",
+        "dizzy",
+        "respawn",
+        "trail",
+        "xEyeWidth"
+      ]
+    },
+    "ChargeLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "color": { "$ref": "#/$defs/Color" },
+        "blink": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "jitter": { "type": "number", "format": "double" },
+        "glowAlpha": { "type": "number", "format": "double" }
+      },
+      "required": ["color", "blink", "jitter", "glowAlpha"],
+      "description": "Smash charge look: body blinks to `color` every `blink` ticks, jitters, and glows."
+    },
+    "DodgeLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "alpha": { "type": "number", "format": "double" },
+        "glow": { "$ref": "#/$defs/Color" },
+        "glowAlpha": { "type": "number", "format": "double" },
+        "ghosts": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "spacing": {
+          "type": "number",
+          "format": "double",
+          "description": "Ghost k sits `k × spacing` ticks of velocity behind."
+        },
+        "ghostAlpha": {
+          "type": "number",
+          "format": "double",
+          "description": "Nearest ghost's opacity; each further ghost fades by the same step."
+        },
+        "ghostWidth": { "type": "number", "format": "double" }
+      },
+      "required": ["alpha", "glow", "glowAlpha", "ghosts", "spacing", "ghostAlpha", "ghostWidth"],
+      "description": "Dodging (invulnerable roll, spot dodge, air dodge, tech): pale body, ghosts behind along the velocity."
+    },
+    "ShieldLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "y": { "type": "number", "format": "double" },
+        "minR": { "type": "number", "format": "double" },
+        "growR": { "type": "number", "format": "double" },
+        "alpha": { "type": "number", "format": "double" },
+        "stunAlpha": {
+          "type": "number",
+          "format": "double",
+          "description": "Fill opacity during shield stun (the outline turns white too)."
+        },
+        "width": { "type": "number", "format": "double" },
+        "strokeAlpha": { "type": "number", "format": "double" }
+      },
+      "required": ["y", "minR", "growR", "alpha", "stunAlpha", "width", "strokeAlpha"],
+      "description": "Shield bubble: centered `y` above the feet, radius `minR + growR × shield HP / max`."
+    },
+    "DizzyLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "stars": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "y": { "type": "number", "format": "double" },
+        "rx": { "type": "number", "format": "double" },
+        "ry": { "type": "number", "format": "double" },
+        "r": { "type": "number", "format": "double" },
+        "speed": { "type": "number", "format": "double", "description": "Degrees per tick." },
+        "color": { "$ref": "#/$defs/Color" }
+      },
+      "required": ["stars", "y", "rx", "ry", "r", "speed", "color"],
+      "description": "Stars circling the head while dizzy: an ellipse `rx`×`ry` centered `y` above the feet."
+    },
+    "RespawnLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "y": { "type": "number", "format": "double" },
+        "w": { "type": "number", "format": "double" },
+        "h": { "type": "number", "format": "double" },
+        "alpha": { "type": "number", "format": "double" },
+        "pulse": {
+          "type": "number",
+          "format": "double",
+          "description": "Opacity swing and its speed (degrees per tick)."
+        },
+        "speed": { "type": "number", "format": "double" }
+      },
+      "required": ["y", "w", "h", "alpha", "pulse", "speed"],
+      "description": "Glowing platform under a respawning fighter: an ellipse `w`×`h` centered `y` below the feet, pulsing."
+    },
+    "TrailLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "frames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "fade": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "alpha": { "type": "number", "format": "double" },
+        "color": { "$ref": "#/$defs/Color" }
+      },
+      "required": ["frames", "fade", "alpha", "color"],
+      "description": "Attachment swing trail: covers the last `frames` ticks of the swing, fades out over `fade` ticks after the\nhitbox ends."
+    },
+    "FxLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "drag": {
+          "type": "number",
+          "format": "double",
+          "description": "Particle horizontal speed multiplier per tick."
+        },
+        "shrink": {
+          "type": "number",
+          "format": "double",
+          "description": "Particles shrink to this fraction of their size by the end of their life."
+        },
+        "ringWidth": { "type": "number", "format": "double" },
+        "dust": { "$ref": "#/$defs/DustLook" },
+        "beam": { "$ref": "#/$defs/BeamLook" }
+      },
+      "required": ["drag", "shrink", "ringWidth", "dust", "beam"]
+    },
+    "DustLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "color": { "$ref": "#/$defs/Color" },
+        "spread": { "type": "number", "format": "double", "description": "Random horizontal offset, ±." },
+        "vx": { "type": "number", "format": "double", "description": "Random horizontal speed, ±." },
+        "vy": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Random vertical speed range (y down)."
+        },
+        "life": { "type": "number", "format": "double" },
+        "size": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": ["color", "spread", "vx", "vy", "life", "size"]
+    },
+    "BeamLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "life": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "length": { "type": "number", "format": "double" },
+        "width": {
+          "type": "number",
+          "format": "double",
+          "description": "Half-width at the far end, growing by `grow` over the beam's life."
+        },
+        "grow": { "type": "number", "format": "double" },
+        "bands": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Bands from the KO point outward, each fading more. The first band is white."
+        },
+        "alpha": { "type": "number", "format": "double" },
+        "inset": { "type": "number", "format": "double" },
+        "bursts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/BurstLook" }
+        },
+        "ring": { "$ref": "#/$defs/RingLook" }
+      },
+      "required": ["life", "length", "width", "grow", "bands", "alpha", "inset", "bursts", "ring"],
+      "description": "KO blast: a beam from the KO point toward the stage center, sparks and a ring. The point is clamped inside\nthe view by `inset`."
+    },
+    "BurstLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "color": { "$ref": "#/$defs/Color" },
+        "n": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "speed": { "type": "number", "format": "double" },
+        "life": { "type": "number", "format": "double" },
+        "size": { "type": "number", "format": "double" }
+      },
+      "required": ["color", "n", "speed", "life", "size"]
+    },
+    "RingLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "r": { "type": "number", "format": "double" },
+        "grow": { "type": "number", "format": "double" },
+        "life": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "color": { "$ref": "#/$defs/Color" }
+      },
+      "required": ["r", "grow", "life", "color"]
     }
   }
 }

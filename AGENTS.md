@@ -8,7 +8,8 @@ Stick Smash in Rust: a Smash-style platform fighter, ported from the Phaser/Type
 
 ## Layout
 - `crates/sim/`: deterministic game logic. A pure function of `(World, GameData, inputs)`.
-- `crates/game/`: Bevy app (rendering, input, audio, menus, egui UI). Owns the sim `World` as a resource and steps it in `FixedUpdate` at `sim::TICK_HZ`.
+- `crates/render/`: Bevy plugin that draws a sim `World` read-only (figures, attachments, stage, fx, camera, debug overlay). Fed via `render::Scene::push` each tick.
+- `crates/game/`: Bevy app (input, audio, menus, egui UI). `cargo run -p game -- --screenshot <dir>` saves PNGs of a CPU match for visual checks. Owns the sim `World` as a resource and steps it in `FixedUpdate` at `sim::TICK_HZ`.
 - `assets/`: JSON data (global tuning, stage, fighters). Fighters are meant to be user-moddable.
 
 ## Rules
