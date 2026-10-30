@@ -2,13 +2,15 @@
 // inspector + timeline. Renders from the model at most once per animation frame.
 
 import { DATA, moveTotal } from '../data';
-import { CSS, h } from './dom';
+import { CSS, dragFrom, h } from './dom';
 import { Inspector } from './inspector';
 import { type EditorModel, MOVE_GROUPS } from './model';
 import { Timeline } from './timeline';
 
 export interface ViewActions { zoom(f: number): void; fit(): void; exit(): void }
 
+const LAYOUT_KEY = 'stick-smash.editor-layout';
+type Layout = { lw?: number; rw?: number; th?: number };
 const PHASE_NAME = { startup: 'Startup', active: 'Active', endlag: 'End lag' };
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 const MOD = isMac ? '⌘' : 'Ctrl';
@@ -55,7 +57,9 @@ export class EditorUI {
       h('button', { className: 'icon ghost', textContent: '?', title: 'Shortcuts (?)', onclick: () => this.toggleHelp() }),
       h('button', { textContent: 'Exit', title: 'Back (Esc). Unsaved edits stay active in game until you reload.', onclick: () => act.exit() }));
     this.view.append(this.hud, this.hint, this.toastEl, this.tools);
-    this.root.append(top, this.left, this.view, this.insp.el, this.time.el, this.tipEl);
+    this.root.append(top, this.left, this.view, this.insp.el, this.time.el, this.tipEl,
+      this.splitter('l', 'lw'), this.splitter('r', 'rw'), this.splitter('row', 'th'));
+    this.applyLayout();
     document.body.append(this.root);
     this.off = m.on(() => this.schedule());
     addEventListener('keydown', this.onKey, true);
@@ -69,6 +73,33 @@ export class EditorUI {
     removeEventListener('beforeunload', this.onUnload);
     clearTimeout(this.toastTimer);
     this.root.remove(); this.style.remove();
+  }
+
+  private layout(): Layout { try { return JSON.parse(localStorage.getItem(LAYOUT_KEY) ?? '{}') as Layout; } catch { return {}; } }
+
+  private applyLayout(l = this.layout()) {
+    const st = this.root.style, set = (k: string, v?: number) => (v ? st.setProperty(k, `${v}px`) : st.removeProperty(k));
+    set('--lw', l.lw); set('--rw', l.rw); set('--th', l.th);
+    if (l.th) st.setProperty('--thmax', 'none'); else st.removeProperty('--thmax');
+  }
+
+  /** Drag handle on a panel edge. Sizes persist in localStorage; double-click resets to the default. */
+  private splitter(side: 'l' | 'r' | 'row', k: keyof Layout) {
+    const el = h('div', { className: `split ${side === 'row' ? 'row' : 'col ' + side}`, title: 'Drag to resize · double-click to reset' });
+    const pane = { l: this.left, r: this.insp.el, row: this.time.el }[side];
+    const [lo, hi] = { l: [120, 480], r: [260, 720], row: [70, innerHeight - 220] }[side];
+    el.onmousedown = e => {
+      const v0 = side === 'row' ? pane.offsetHeight : pane.offsetWidth;
+      el.classList.add('drag');
+      dragFrom(e, (dx, dy) => {
+        const v = Math.round(Math.max(lo, Math.min(hi, v0 + (side === 'l' ? dx : side === 'r' ? -dx : -dy))));
+        const l = { ...this.layout(), [k]: v };
+        localStorage.setItem(LAYOUT_KEY, JSON.stringify(l));
+        this.applyLayout(l);
+      }, () => el.classList.remove('drag'), side === 'row' ? 'row-resize' : 'col-resize');
+    };
+    el.ondblclick = () => { const l = this.layout(); delete l[k]; localStorage.setItem(LAYOUT_KEY, JSON.stringify(l)); this.applyLayout(l); };
+    return el;
   }
 
   /** Viewport rectangle in CSS pixels (the canvas area not covered by panels). */

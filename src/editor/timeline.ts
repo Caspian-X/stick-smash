@@ -34,6 +34,8 @@ export class Timeline {
         legend('startup', 'Startup'), legend('active', 'Active'), legend('endlag', 'End lag')),
       this.grid,
     );
+    let w = 0;
+    new ResizeObserver(() => { if (this.grid.clientWidth !== w) { w = this.grid.clientWidth; this.render(); } }).observe(this.grid);
   }
 
   render() {
@@ -45,14 +47,23 @@ export class Timeline {
 
     const rows: Node[] = [];
     // ruler
-    const ruler = h('div', { className: 'trk ruler', title: 'Click or drag to scrub' });
-    const every = N > 60 ? 10 : 5;
+    // every frame gets a numbered cell; numbers alternate between two lines when cells get too narrow to fit them
+    const cw = (this.grid.clientWidth - LABEL_W) / N, stag = cw > 0 && cw < 7 * String(N).length + 4;
+    const ruler = h('div', { className: `trk ruler${stag ? ' stag' : ''}`, title: 'Click or drag to scrub (snaps to frames)' });
+    const cells: HTMLElement[] = [];
     for (let f = 1; f <= N; f++) {
-      ruler.append(h('div', { className: 'tick', style: { left: pct(f - 1), borderLeftColor: f % every === 0 || f === 1 ? '#ffffff30' : '#ffffff10' } },
-        f % every === 0 || f === 1 ? h('span', { textContent: String(f) }) : null));
+      const c = h('div', {
+        className: `cell ${f % 2 ? 'odd' : 'even'}${f === m.frame ? ' cur' : ''}${bx.some(b => f >= b.start && f <= b.end) ? ' act' : ''}`,
+        style: { left: pct(f - 1), width: pct(1), borderLeftColor: f % 5 === 0 ? '#ffffff2a' : '#ffffff12' },
+      }, h('span', { textContent: String(f) }));
+      cells.push(c);
     }
+    ruler.append(...cells);
+    const hov = (f: number) => cells.forEach((c, i) => c.classList.toggle('hov', i + 1 === f));
+    ruler.onmousemove = e => hov(this.frameAt(e.clientX, ruler.getBoundingClientRect(), N));
+    ruler.onmouseleave = () => hov(0);
     ruler.onmousedown = e => this.scrub(e, ruler);
-    rows.push(h('div', {}), ruler);
+    rows.push(h('div', { className: 'lbl', textContent: 'Frame' }), ruler);
 
     // phase band
     const s0 = bx.length ? Math.min(...bx.map(b => b.start)) : 1, e0 = bx.length ? Math.max(...bx.map(b => b.end)) : 0, tot = m.total();
@@ -102,9 +113,12 @@ export class Timeline {
     this.grid.style.gridTemplateColumns = `${LABEL_W}px 1fr`;
   }
 
+  private frameAt(x: number, r: DOMRect, N: number) { return Math.max(1, Math.min(N, Math.floor(((x - r.left) / r.width) * N) + 1)); }
+
   private scrub(e: MouseEvent, el: HTMLElement) {
-    const m = this.m, N = m.timelineTotal();
-    const at = (x: number) => { const r = el.getBoundingClientRect(); m.setFrame(Math.floor(((x - r.left) / r.width) * N) + 1); };
+    // Measure once: re-renders replace `el` during the drag, and a detached element has an empty rect.
+    const m = this.m, N = m.timelineTotal(), r = el.getBoundingClientRect();
+    const at = (x: number) => m.setFrame(this.frameAt(x, r, N));
     m.playing = false;
     at(e.clientX);
     dragFrom(e, (_dx, _dy, ev) => at(ev.clientX), undefined, 'ew-resize');
@@ -113,7 +127,7 @@ export class Timeline {
   private dragBar(e: MouseEvent, i: number, trk: HTMLElement, mode: 'l' | 'r' | 'move') {
     e.stopPropagation();
     const m = this.m, b = m.mv().hitboxes[i], N = m.timelineTotal(), fpx = trk.clientWidth / N, s0 = b.start, e0 = b.end;
-    const r = trk.getBoundingClientRect(), clicked = Math.floor(((e.clientX - r.left) / r.width) * N) + 1;
+    const clicked = this.frameAt(e.clientX, trk.getBoundingClientRect(), N);
     m.begin(); m.lockTotal = N;
     if (m.sel !== i) { m.sel = i; m.emit(); }
     dragFrom(e, dx => {

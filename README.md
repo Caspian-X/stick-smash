@@ -83,7 +83,7 @@ The debug view draws hurtboxes (yellow; cyan = invulnerable; orange = hitstun), 
 
 Pick **Mode → Hitbox Editor** in the menu, or press `E` in Training. Press `?` inside it for every shortcut.
 
-- **Layout:** fighter tabs and Save on top, the move list on the left, the posed fighter in the middle, the inspector on the right, and the timeline at the bottom.
+- **Layout:** fighter tabs and Save on top, the move list on the left, the posed fighter in the middle, the inspector on the right, and the timeline at the bottom. Drag a panel's edge to resize it (double-click the edge to reset). Sizes are remembered.
 - **In the view:** click a box to select it, drag it to move it, drag its edge to resize it, and drag the arrow tip to aim (Shift snaps). Double-click empty space to add a box there. Drag empty space to pan, and use the wheel to zoom. `Alt+arrows` nudges a box.
 - **Per-frame positions:** in the inspector's *Position & size*, choose **Per frame**. Every active frame starts at the current position. Scrub to any frame and drag the box: only that frame changes. **Apply to all frames** copies the current frame to every frame. **Copy → next frame** (`C`) copies it forward and steps there. Onion skin (`O`) shows the box's path and neighbouring frames.
 - **Types:** pick Regular, Spike, Trip, Sakurai angle, Autolink, Windbox, Electric or Grab. Each one sets sensible defaults when you choose it.
