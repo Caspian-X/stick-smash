@@ -9,9 +9,10 @@ use bevy::render::view::screenshot::{Capturing, Screenshot, save_to_disk};
 use render::Framing;
 use sim::world::State as FState;
 
-use crate::Screen;
 use crate::input::{Act, Devices};
-use crate::play::Match;
+use crate::play::{self, Match, Mode, Rules, Slot};
+use crate::select::Select;
+use crate::{Data, Screen};
 
 /// Editor tour frame on the swordfighter's forward smash.
 const SHOT_FRAME: usize = 16;
@@ -26,6 +27,10 @@ pub enum Step {
     Shot(&'static str),
     /// Scripted editor command.
     Editor(editor::Cmd),
+    /// Show this stage behind the select cards.
+    Stage(&'static str),
+    /// Start a four-CPU versus match on this stage.
+    Versus(&'static str),
 }
 
 #[derive(Resource)]
@@ -349,6 +354,30 @@ impl Script {
             press(&mut v, 0, Attack);
         }
         shot(&mut v, "15-select-eight");
+        // The other built-in stages: behind the eight select cards, then a CPU match on each.
+        const STAGES: [&str; 3] = ["citadel", "isles", "foundry"];
+        for (i, id) in STAGES.into_iter().enumerate() {
+            v.push(Step::Stage(id));
+            v.push(Step::Wait(20));
+            v.push(Step::Shot(["16a-select-citadel", "16b-select-isles", "16c-select-foundry"][i]));
+        }
+        for (i, id) in STAGES.into_iter().enumerate() {
+            v.push(Step::Versus(id));
+            v.push(Step::Until(|m, _, _| m.world.go_t > 0, 400));
+            v.push(Step::Until(|m, _, _| m.world.fighters.iter().map(|f| f.dmg).sum::<f64>() > 150., 4000));
+            shot(&mut v, ["17a-match-citadel", "17b-match-isles", "17c-match-foundry"][i]);
+            if id == "isles" {
+                // Fighters on opposite islands: the zoomed-out camera still frames both.
+                v.push(Step::Until(
+                    |m, _, _| {
+                        let xs = m.world.fighters.iter().filter(|f| f.state != FState::Dead).map(|f| f.x);
+                        xs.clone().fold(f64::MIN, f64::max) - xs.fold(f64::MAX, f64::min) > 950.
+                    },
+                    8000,
+                ));
+                shot(&mut v, "17b2-match-isles-wide");
+            }
+        }
         Script { dir, steps: v, at: 0, wait: 0, budget: 0, capturing: false }
     }
 }
@@ -364,6 +393,10 @@ pub fn run(
     capturing: Query<(), With<Capturing>>,
     mut exit: MessageWriter<AppExit>,
     mut inbox: ResMut<editor::Inbox>,
+    sel: Option<ResMut<Select>>,
+    data: Res<Data>,
+    mut scene: ResMut<render::Scene>,
+    mut next: ResMut<NextState<Screen>>,
 ) {
     for b in 0..2 {
         devs.bot(b);
@@ -411,6 +444,38 @@ pub fn run(
         }
         Step::Editor(c) => {
             inbox.0.push(c.clone());
+            s.at += 1;
+        }
+        Step::Stage(id) => {
+            if let Some(mut sel) = sel
+                && let Some(i) = data.0.stages.iter().position(|st| st.id == *id)
+            {
+                sel.stage = i;
+            }
+            s.at += 1;
+        }
+        Step::Versus(id) => {
+            let slots = (0..4)
+                .map(|i| Slot {
+                    dev: None,
+                    fighter: i % data.0.fighters.len(),
+                    cpu: Some(2),
+                    team: None,
+                    tap_jump: true,
+                    tag: "CPU".into(),
+                    color: i,
+                })
+                .collect();
+            let rules = Rules { stocks: 3, stage: (*id).into(), friendly_fire: false };
+            match Match::new(&data.0, Mode::Versus, slots, rules, 7) {
+                Ok(m) => {
+                    // Otherwise the select screen would put its showcase back this frame.
+                    commands.remove_resource::<Select>();
+                    play::install(&mut commands, &mut scene, m);
+                    next.set(Screen::Match);
+                }
+                Err(e) => warn!("screenshot match on {id}: {e}"),
+            }
             s.at += 1;
         }
         Step::Shot(name) => {

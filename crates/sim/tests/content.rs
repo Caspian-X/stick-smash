@@ -50,7 +50,9 @@ fn all_assets_load() {
     assert!(errors.is_empty(), "content errors:\n{}", fmt_errors(&errors));
     let ids: Vec<&str> = data.fighters.iter().map(|f| f.id.as_str()).collect();
     assert_eq!(ids, ["brawler", "king", "swordfighter"]);
-    assert!(data.stages.len() == 1 && data.stages[0].spawns.len() >= 8 && data.stages[0].respawns.len() >= 8);
+    let ids: Vec<&str> = data.stages.iter().map(|s| s.id.as_str()).collect();
+    assert_eq!(ids, ["arena", "citadel", "foundry", "isles"]);
+    assert!(data.stages.iter().all(|s| s.max_players() >= 8));
     assert!(data.global.palette.len() >= 8);
 }
 
@@ -316,7 +318,11 @@ fn ledges_cannot_have_arbitrary_positions() {
 #[test]
 fn adjacent_blocks_require_exposed_ledges() {
     let file = "stages/arena/stage.json";
-    let mut src = sources();
+    // Only arena, so its rejection leaves no stages and aborts the load.
+    let only_arena = |src: Vec<Source>| -> Vec<Source> {
+        src.into_iter().filter(|s| !s.path.starts_with("stages/") || s.path == file).collect()
+    };
+    let mut src = only_arena(sources());
     let stage = src.iter_mut().find(|s| s.path == file).unwrap();
     let mut v: serde_json::Value = serde_json::from_str(&stage.text).unwrap();
     let mut left = v["blocks"][0].clone();
@@ -329,9 +335,9 @@ fn adjacent_blocks_require_exposed_ledges() {
     assert_eq!(errors[0].path, "blocks[0].rightLedge");
     v["blocks"][0]["rightLedge"] = false.into();
     v["blocks"][1]["leftLedge"] = false.into();
-    assert!(load(patched(file, v.clone())).unwrap().1.is_empty());
+    assert!(load(only_arena(patched(file, v.clone()))).unwrap().1.is_empty());
     v["blocks"][1]["left"] = 590.into();
-    let Err(errors) = load(patched(file, v)) else { panic!("invalid stage accepted") };
+    let Err(errors) = load(only_arena(patched(file, v))) else { panic!("invalid stage accepted") };
     assert_eq!(errors[0].path, "blocks[1]");
 }
 

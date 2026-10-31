@@ -1,0 +1,109 @@
+{
+  "$schema": "../../schema/stage.schema.json",
+  "schemaVersion": 2,
+  "name": "Citadel",
+  "width": 1280,
+  "height": 720,
+  "blocks": [
+    {
+      "left": 280,
+      "right": 520,
+      "top": 520,
+      "bottom": 580,
+      "underDepth": 80,
+      "underInset": 50,
+      "leftLedge": true,
+      "rightLedge": false
+    },
+    {
+      "left": 520,
+      "right": 760,
+      "top": 470,
+      "bottom": 610,
+      "underDepth": 90,
+      "underInset": 60,
+      "leftLedge": false,
+      "rightLedge": false
+    },
+    {
+      "left": 760,
+      "right": 1000,
+      "top": 520,
+      "bottom": 580,
+      "underDepth": 80,
+      "underInset": 50,
+      "leftLedge": false,
+      "rightLedge": true
+    }
+  ],
+  "platforms": [
+    { "x1": 310, "x2": 460, "y": 410 },
+    { "x1": 820, "x2": 970, "y": 410 },
+    { "x1": 565, "x2": 715, "y": 360 }
+  ],
+  "ledge": { "r": 60, "cy": 20, "handY": 50, "reachIn": 4, "hangX": 12, "hangY": 80 },
+  "blast": { "left": -240, "right": 1520, "top": -400, "bottom": 940 },
+  "camera": { "left": -1420, "right": 2700, "top": -920, "bottom": 1500 },
+  "spawns": [
+    { "x": 420, "face": 1 },
+    { "x": 860, "face": -1 },
+    { "x": 590, "face": 1 },
+    { "x": 690, "face": -1 },
+    { "x": 320, "face": 1 },
+    { "x": 960, "face": -1 },
+    { "x": 470, "face": 1 },
+    { "x": 810, "face": -1 }
+  ],
+  "respawns": [
+    { "x": 640, "startY": -100, "endY": 110 },
+    { "x": 640, "startY": -100, "endY": 110 },
+    { "x": 900, "startY": -80, "endY": 150 },
+    { "x": 380, "startY": -80, "endY": 150 },
+    { "x": 820, "startY": -80, "endY": 150 },
+    { "x": 460, "startY": -80, "endY": 150 },
+    { "x": 720, "startY": -100, "endY": 110 },
+    { "x": 560, "startY": -100, "endY": 110 }
+  ],
+  "art": {
+    "groundTop": "#9a6c50",
+    "groundBottom": "#5e3d33",
+    "underside": "#3e2629",
+    "edge": "#ffd6a0",
+    "platform": "#ffe2b8",
+    "platformShadow": "#ff9a5c",
+    "edgeWidth": 6,
+    "platformThickness": 7,
+    "platformRadius": 2,
+    "platformShadowBand": [6, 10, 0.22],
+    "stripes": { "x": 30, "y": 22, "w": 24, "h": 24, "every": 60, "color": "#2a1418", "alpha": 0.16 },
+    "background": {
+      "sky": [[-200, "#1d1236"], [300, "#6a2f4f"], [560, "#d06a4a"], [740, "#f2b06a"]],
+      "moon": {
+        "x": 280,
+        "y": 470,
+        "r": 92,
+        "color": "#ffd28a",
+        "glow": "#ff9a5c",
+        "rings": 8,
+        "step": 12,
+        "alpha": 0.05
+      },
+      "ridges": [
+        { "base": 600, "amp": 200, "seed": 2, "color": "#7a3448" },
+        { "base": 680, "amp": 160, "seed": 6, "color": "#4d2338" },
+        { "base": 760, "amp": 110, "seed": 11, "color": "#2b1426" }
+      ],
+      "stars": {
+        "n": 70,
+        "x": -700,
+        "y": -500,
+        "w": 2680,
+        "h": 700,
+        "size": [0.3, 1.4],
+        "color": "#ffe8d0",
+        "twinkle": 1.2
+      },
+      "parallax": 0.3
+    }
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "$schema": "../../schema/stage.schema.json",
+  "schemaVersion": 2,
+  "name": "Tidebreak Isles",
+  "width": 1280,
+  "height": 720,
+  "blocks": [
+    {
+      "left": 50,
+      "right": 370,
+      "top": 540,
+      "bottom": 600,
+      "underDepth": 90,
+      "underInset": 50,
+      "leftLedge": true,
+      "rightLedge": true
+    },
+    {
+      "left": 460,
+      "right": 820,
+      "top": 500,
+      "bottom": 580,
+      "underDepth": 110,
+      "underInset": 60,
+      "leftLedge": true,
+      "rightLedge": true
+    },
+    {
+      "left": 910,
+      "right": 1230,
+      "top": 540,
+      "bottom": 600,
+      "underDepth": 90,
+      "underInset": 50,
+      "leftLedge": true,
+      "rightLedge": true
+    }
+  ],
+  "platforms": [
+    { "x1": 330, "x2": 500, "y": 430 },
+    { "x1": 780, "x2": 950, "y": 430 },
+    { "x1": 570, "x2": 710, "y": 390 }
+  ],
+  "ledge": { "r": 60, "cy": 20, "handY": 50, "reachIn": 4, "hangX": 12, "hangY": 80 },
+  "blast": { "left": -240, "right": 1520, "top": -400, "bottom": 960 },
+  "camera": { "left": -1440, "right": 2720, "top": -920, "bottom": 1520 },
+  "spawns": [
+    { "x": 560, "face": 1 },
+    { "x": 720, "face": -1 },
+    { "x": 220, "face": 1 },
+    { "x": 1060, "face": -1 },
+    { "x": 320, "face": 1 },
+    { "x": 960, "face": -1 },
+    { "x": 120, "face": 1 },
+    { "x": 1160, "face": -1 }
+  ],
+  "respawns": [
+    { "x": 640, "startY": -100, "endY": 130 },
+    { "x": 640, "startY": -100, "endY": 130 },
+    { "x": 1060, "startY": -80, "endY": 170 },
+    { "x": 220, "startY": -80, "endY": 170 },
+    { "x": 880, "startY": -80, "endY": 130 },
+    { "x": 400, "startY": -80, "endY": 130 },
+    { "x": 760, "startY": -100, "endY": 130 },
+    { "x": 520, "startY": -100, "endY": 130 }
+  ],
+  "art": {
+    "groundTop": "#4f8a64",
+    "groundBottom": "#2c4e44",
+    "underside": "#1d3436",
+    "edge": "#c4f5b0",
+    "platform": "#e6cf9e",
+    "platformShadow": "#7ad6c8",
+    "edgeWidth": 7,
+    "platformThickness": 8,
+    "platformRadius": 4,
+    "platformShadowBand": [6, 12, 0.2],
+    "stripes": { "x": 20, "y": 30, "w": 52, "h": 4, "every": 90, "color": "#d9ffe0", "alpha": 0.12 },
+    "background": {
+      "sky": [[-300, "#041621"], [300, "#0b3d52"], [600, "#1f7480"], [760, "#5fb8a8"]],
+      "ridges": [
+        { "base": 640, "amp": 90, "seed": 3, "color": "#155a68" },
+        { "base": 700, "amp": 70, "seed": 7, "color": "#0e4352" },
+        { "base": 760, "amp": 50, "seed": 13, "color": "#08303d" }
+      ],
+      "stars": {
+        "n": 220,
+        "x": -700,
+        "y": -500,
+        "w": 2680,
+        "h": 900,
+        "size": [0.3, 1.6],
+        "color": "#c8fff4",
+        "twinkle": 2.2
+      },
+      "parallax": 0.35
+    }
+  }
+}

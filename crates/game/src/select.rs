@@ -1023,6 +1023,7 @@ mod tests {
         assert!(!s.ready());
         s.slots[1].team = 1;
         assert!(s.ready());
+        d.stages.truncate(1);
         let mut small = d.stages[0].clone();
         small.spawns.truncate(2);
         small.respawns.truncate(2);
