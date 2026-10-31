@@ -1,56 +1,218 @@
-//! Layout sanity for every built-in stage: platforms are in full-jump reach and CPU matches play out.
+//! Built-in stage jump routes, ledge recovery and CPU smoke matches.
 //! `cargo test -p sim --test stages -- --nocapture` prints per-stage match stats.
 mod common;
 use sim::{GameData, Input, MatchConfig, PlayerConfig, World, step_world, world::State};
 
-/// Highest the feet rise on a held full jump from flat ground (no air jumps).
-fn full_jump_height(d: &GameData, id: &str) -> f64 {
-    let cfg = MatchConfig { training: true, players: vec![PlayerConfig::human(id)], ..Default::default() };
+fn sandbox(d: &GameData, stage: &str, fighter: &str) -> World {
+    let cfg = MatchConfig {
+        stage: stage.into(),
+        training: true,
+        players: vec![PlayerConfig { tap_jump: false, ..PlayerConfig::human(fighter) }],
+        ..Default::default()
+    };
     let mut w = World::new(cfg, d).unwrap();
     w.count = 0;
-    for _ in 0..30 {
-        step_world(&mut w, d, &[]);
+    w
+}
+
+fn tick(w: &mut World, d: &GameData, input: Input) {
+    step_world(w, d, &[input]);
+    w.fx.clear();
+    w.hits.clear();
+}
+
+// One joint motion cycle covers the relative timing of launch and destination platforms.
+fn motion_cycle(s: &sim::data::Stage) -> u64 {
+    fn gcd(a: u64, b: u64) -> u64 {
+        if b == 0 { a } else { gcd(b, a % b) }
     }
-    let floor = w.fighters[0].y;
-    let mut peak = floor;
-    for t in 0..120 {
-        step_world(&mut w, d, &[Input { stick: (0, 0), buttons: if t < 30 { 1 } else { 0 } }]);
-        peak = peak.min(w.fighters[0].y);
+    s.platforms.iter().filter_map(|p| p.motion.as_ref()).fold(1, |cycle, m| {
+        let n = m.waypoints.len();
+        let duration = match m.mode {
+            sim::data::stage::PathMode::Loop => {
+                m.waypoints.iter().map(|p| u64::from(p.travel_ticks + p.wait_ticks)).sum()
+            }
+            sim::data::stage::PathMode::PingPong => {
+                2 * m.waypoints[..n - 1].iter().map(|p| u64::from(p.travel_ticks)).sum::<u64>()
+                    + u64::from(m.waypoints[0].wait_ticks + m.waypoints[n - 1].wait_ticks)
+                    + 2 * m.waypoints[1..n - 1].iter().map(|p| u64::from(p.wait_ticks)).sum::<u64>()
+            }
+        };
+        cycle / gcd(cycle, duration) * duration
+    })
+}
+
+/// A witness is an actual landing after one held ground jump, with no air jumps or specials.
+fn jump_to(d: &GameData, start: &World, target: usize) -> Option<World> {
+    let mut w = start.clone();
+    let mut airborne = false;
+    for _ in 0..120 {
+        let (l, r, _) = sim::physics::surface(d, &w, target);
+        let f = &w.fighters[0];
+        let dx = (l + r) / 2. - f.x;
+        let stick = if dx.abs() < 4. {
+            0
+        } else if dx > 0. {
+            127
+        } else {
+            -127
+        };
+        tick(&mut w, d, Input { stick: (stick, 0), buttons: 1 });
+        let f = &w.fighters[0];
+        airborne |= !f.ground;
+        if matches!(f.state, State::Dead | State::Respawn | State::Ledge) {
+            return None;
+        }
+        if airborne && f.ground {
+            return (f.surf == Some(target)).then_some(w);
+        }
     }
-    floor - peak
+    None
+}
+
+fn reachable_platforms(d: &GameData, stage: &str, fighter: &str) -> Vec<bool> {
+    let base = sandbox(d, stage, fighter);
+    let s = &d.stages[base.stage];
+    let body = &d.fighters[base.fighters[0].data].body;
+    let mut launches = std::collections::VecDeque::new();
+    for (i, b) in s.blocks.iter().enumerate() {
+        for fraction in [0.05, 0.25, 0.5, 0.75, 0.95] {
+            let mut w = base.clone();
+            let f = &mut w.fighters[0];
+            f.x = b.left + (b.right - b.left) * fraction;
+            f.y = b.top;
+            if s.blocks.iter().any(|b| b.intersects_body(f.x, f.y, body.half_width, body.height)) {
+                continue;
+            }
+            f.set_state(State::Idle);
+            f.ground = true;
+            f.surf = Some(i);
+            launches.push_back(w);
+        }
+    }
+    let mut reached = vec![false; s.platforms.len()];
+    let cycle = motion_cycle(s);
+    while let Some(mut launch) = launches.pop_front() {
+        let source = launch.fighters[0].surf;
+        // Release jump and finish landing lag before searching departure times. Waiting in the real
+        // world preserves platform carry and the timing of routes built on earlier landings.
+        for wait in 0..cycle + 30 {
+            if wait >= 30 && (wait - 30) % 15 == 0 {
+                for (i, reached) in reached.iter_mut().enumerate() {
+                    if !*reached && let Some(w) = jump_to(d, &launch, s.blocks.len() + i) {
+                        *reached = true;
+                        launches.push_back(w);
+                    }
+                }
+                if reached.iter().all(|r| *r) {
+                    return reached;
+                }
+            }
+            tick(&mut launch, d, Input::default());
+            if !launch.fighters[0].ground || launch.fighters[0].surf != source {
+                break;
+            }
+        }
+    }
+    reached
 }
 
 #[test]
 fn platforms_are_in_full_jump_reach() {
     let d = common::data();
-    let reach = d.fighters.iter().map(|f| full_jump_height(&d, &f.id)).fold(f64::INFINITY, f64::min);
     for s in &d.stages {
-        for (i, p) in s.platforms.iter().enumerate() {
-            // Highest point on the path and the solid ground below any of its positions.
-            let offsets =
-                p.motion.as_ref().map_or(vec![(0., 0.)], |m| m.waypoints.iter().map(|w| (w.x, w.y)).collect());
-            let top = offsets.iter().map(|o| p.y + o.1).fold(f64::INFINITY, f64::min);
-            // Nearest static surface (block or stationary platform) under any position of the path.
-            let surfaces = s
-                .blocks
-                .iter()
-                .map(|b| (b.left, b.right, b.top))
-                .chain(s.platforms.iter().filter(|q| q.motion.is_none()).map(|q| (q.x1, q.x2, q.y)));
-            let surfaces: Vec<_> = surfaces.collect();
-            let below = offsets
-                .iter()
-                .flat_map(|&(ox, oy)| {
-                    surfaces.iter().filter(move |&&(l, r, y)| l < p.x2 + ox && r > p.x1 + ox && y > p.y + oy)
-                })
-                .map(|&(_, _, y)| y)
-                .fold(f64::INFINITY, f64::min);
-            if below.is_finite() {
-                assert!(
-                    below - top <= reach - 8.,
-                    "{} platforms[{i}] is {} above ground, jump {reach}",
-                    s.id,
-                    below - top
-                );
+        for f in &d.fighters {
+            for (i, reached) in reachable_platforms(&d, &s.id, &f.id).into_iter().enumerate() {
+                assert!(reached, "{} platforms[{i}]: no full-jump route for {}", s.id, f.id);
+            }
+        }
+    }
+}
+
+#[test]
+fn reachability_rejects_disconnected_platforms() {
+    let mut d = common::data();
+    let s = d.stages.iter_mut().find(|s| s.id == "foundry").unwrap();
+    s.platforms[0].x1 -= 10_000.;
+    s.platforms[0].x2 -= 10_000.;
+    // Two nearby platforms cannot establish each other's reachability without a route from a block.
+    s.platforms[1].motion = None;
+    s.platforms[1].y = -1000.;
+    s.platforms[2].motion = None;
+    s.platforms[2].y = -1100.;
+    assert_eq!(reachable_platforms(&d, "foundry", "brawler"), [false; 3]);
+}
+
+#[test]
+fn reachability_waits_for_a_moving_platform() {
+    let mut d = common::data();
+    let s = d.stages.iter_mut().find(|s| s.id == "foundry").unwrap();
+    s.platforms.truncate(1);
+    let m = s.platforms[0].motion.as_mut().unwrap();
+    m.waypoints[0].x = -1000.;
+    m.waypoints[1].y = 0.;
+    let mut w = sandbox(&d, "foundry", "brawler");
+    let f = &mut w.fighters[0];
+    f.x = 451.;
+    f.y = 520.;
+    f.set_state(State::Idle);
+    f.ground = true;
+    f.surf = Some(0);
+    assert!(jump_to(&d, &w, 1).is_none(), "platform should start out of jump range");
+    assert_eq!(reachable_platforms(&d, "foundry", "brawler"), [true]);
+}
+
+#[test]
+fn every_ledge_is_recoverable() {
+    let d = common::data();
+    for s in &d.stages {
+        for fighter in &d.fighters {
+            for (block, b) in s.blocks.iter().enumerate() {
+                for (side, enabled, edge) in [(-1., b.left_ledge, b.left), (1., b.right_ledge, b.right)] {
+                    if !enabled {
+                        continue;
+                    }
+                    let mut w = sandbox(&d, &s.id, &fighter.id);
+                    let f = &mut w.fighters[0];
+                    f.set_state(State::Air);
+                    f.x = edge + side * 40.;
+                    f.y = b.top + 220.;
+                    f.ground = false;
+                    f.surf = None;
+                    f.vx = 0.;
+                    f.vy = 0.;
+                    let mut special = false;
+                    let mut recovered = false;
+                    for t in 0..240 {
+                        // Start before falling can grab the ledge without using up-special.
+                        let sp = t > 1 && w.fighters[0].vy >= -2. && !special;
+                        special |= sp;
+                        let stick = ((-side * 127.) as i8, if sp { 127 } else { 0 });
+                        tick(
+                            &mut w,
+                            &d,
+                            Input {
+                                stick,
+                                buttons: if t == 0 {
+                                    1
+                                } else if sp {
+                                    4
+                                } else {
+                                    0
+                                },
+                            },
+                        );
+                        let f = &w.fighters[0];
+                        if f.state == State::Ledge && f.sd.ledge_block == block && f.sd.side == side {
+                            recovered = true;
+                            break;
+                        }
+                        if matches!(f.state, State::Dead | State::Respawn) {
+                            break;
+                        }
+                    }
+                    assert!(recovered && special, "{} blocks[{block}] side {side}: {} recovery", s.id, fighter.id);
+                }
             }
         }
     }
@@ -83,7 +245,7 @@ fn cpu_match(d: &GameData, stage: &str, fighters: &[&str], seed: u32, stocks: i3
     while !w.over && st.ticks < 30_000 {
         step_world(&mut w, d, &[]);
         st.ticks += 1;
-        for h in w.hits.drain(..) {
+        for h in w.hits.drain(..).filter(|h| !h.shielded) {
             last_hit[h.victim] = Some(st.ticks);
         }
         w.fx.clear();
@@ -145,7 +307,8 @@ fn cpu_matches_finish_on_every_stage() {
         );
         assert_eq!(finished, 4, "{}: 4-CPU matches should finish", s.id);
         assert!(w8.over, "{}: 8-CPU match should finish", s.id);
-        assert!(total.self_kos * 3 <= total.kos, "{}: too many self-destructs {total:?}", s.id);
+        assert!(total.self_kos * 3 <= total.kos, "{}: too many 4p self-destructs {total:?}", s.id);
+        assert!(big.self_kos * 3 <= big.kos, "{}: too many 8p self-destructs {big:?}", s.id);
         assert!((total.offscreen + big.offscreen) * 100 <= total.ticks + big.ticks, "{}: fighters off camera", s.id);
         assert!(w8.fighters.iter().any(|f| f.state == State::Win));
     }
