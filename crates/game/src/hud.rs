@@ -40,13 +40,13 @@ pub struct HudPanels;
 const MAX_STOCK_ICONS: i32 = 5;
 const BUBBLE: f32 = 54.;
 
-pub fn spawn(mut commands: Commands, m: Res<Match>, fonts: Res<Fonts>) {
+pub fn spawn(mut commands: Commands, m: Res<Match>, fonts: Res<Fonts>, screen: Res<State<Screen>>) {
     let f = &*fonts;
     let d = &m.data;
     let n = m.slots.len();
     let w = (1240. / n as f32 - 10.).min(236.);
     let training = m.mode == Mode::Training;
-    commands.spawn((root(), HudRoot, DespawnOnExit(Screen::Match), GlobalZIndex(2))).with_children(|p| {
+    commands.spawn((root(), HudRoot, DespawnOnExit(*screen.get()), GlobalZIndex(2))).with_children(|p| {
         for (i, s) in m.slots.iter().enumerate() {
             let (main, _, _) = pal(d, i);
             p.spawn((
@@ -539,7 +539,7 @@ pub fn safe_area(
     scale: Res<UiScale>,
     mut scene: ResMut<render::Scene>,
 ) {
-    scene.bottom_safe_area = if *screen.get() == Screen::Match {
+    scene.bottom_safe_area = if matches!(screen.get(), Screen::Match | Screen::Playback) {
         let height = panels.iter().map(|n| n.size().y).fold(0., f32::max);
         win.single().map_or(0., |w| {
             let margin = 28. * scale.0 * w.scale_factor();

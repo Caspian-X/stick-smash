@@ -356,8 +356,12 @@ fn clock_bar(ui: &mut egui::Ui, ed: &mut Editor, stage: &sim::data::Stage) {
         ed.st.clock_play = !ed.st.clock_play;
     }
     let mut t = frame % cycle.max(1);
-    let r =
-        ui.add_enabled(cycle > 0, egui::Slider::new(&mut t, 0..=cycle.saturating_sub(1)).suffix(" f").show_value(true));
+    let r = ui.add_enabled(
+        cycle > 0 && ed.st.sandbox == 0,
+        egui::Slider::new(&mut t, 0..=cycle.saturating_sub(1)).suffix(" f"),
+    );
+    // With CPUs on, the clock belongs to the sim: scrubbing would move platforms out from under riders.
+    let r = r.on_disabled_hover_text("Turn the sandbox off to scrub");
     if r.on_hover_text("Scrub the platforms' cycle (world frame)").changed() {
         ed.st.scrub = Some(frame - frame % cycle.max(1) + t);
     }

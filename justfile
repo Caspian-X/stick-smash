@@ -46,3 +46,7 @@ record-traces:
 convert-ts:
     node tools/convert-ts/convert.mjs
     just bless
+
+# Re-simulate every replay and verify checksums and completion
+verify-replays dir:
+    cargo run -p game -- --verify-replays {{dir}}

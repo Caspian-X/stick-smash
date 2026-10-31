@@ -1,11 +1,13 @@
+use serde::{Deserialize, Serialize};
+
 /// Raw input; positive stick y points up. Bits: jump, attack, special, grab, shield.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Input {
     pub stick: (i8, i8),
     pub buttons: u8,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Intent {
     pub left: bool,
     pub right: bool,
@@ -32,7 +34,7 @@ impl Intent {
         f64::from(self.right as i8 - self.left as i8)
     }
 }
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct History {
     pub held: [bool; 9],
     pub last_press: [i64; 4],
@@ -82,12 +84,12 @@ impl History {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BufferedPress {
     pub tick: u64,
     pub intent: Intent,
 }
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Buffer {
     pub entries: Vec<BufferedPress>,
 }

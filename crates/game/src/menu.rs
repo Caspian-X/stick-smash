@@ -27,6 +27,7 @@ const CONTROLS: u32 = 3;
 const SETTINGS: u32 = 4;
 const QUIT: u32 = 5;
 const EDITOR: u32 = 6;
+const REPLAYS: u32 = 7;
 const KEYBOARD: u32 = 10;
 const HITBOXES: u32 = 11;
 const WINDOW: u32 = 12;
@@ -121,6 +122,7 @@ pub fn update(
                 commands.insert_resource(SelectInit { mode, dev: Some(dev) });
                 next.set(Screen::Select);
             }
+            (Screen::Title, Action::Activate(REPLAYS)) => next.set(Screen::Replays),
             (Screen::Title, Action::Activate(EDITOR)) => next.set(Screen::Editor),
             (Screen::Title, Action::Activate(CONTROLS)) => next.set(Screen::Controls),
             (Screen::Title, Action::Activate(SETTINGS)) => next.set(Screen::Settings),
@@ -243,6 +245,7 @@ pub fn draw(
                         Item::button(EDITOR, "Editor"),
                         Item::button(CONTROLS, "Controls"),
                         Item::button(SETTINGS, "Settings"),
+                        Item::button(REPLAYS, "Replays"),
                         Item::button(QUIT, "Quit"),
                     ];
                     menu_list(p, f, &items, focus, 380., 32.);

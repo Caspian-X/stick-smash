@@ -13,13 +13,28 @@ use crate::{Data, Screen};
 const REMATCH: u32 = 1;
 const SELECT: u32 = 2;
 const MENU: u32 = 3;
+const SAVE: u32 = 4;
+const WATCH: u32 = 5;
 
 #[derive(Resource, Default, Clone, PartialEq, Debug)]
 pub struct ResultsMenu {
     pub cursor: Cursor,
+    pub message: String,
 }
 
-pub fn enter(mut rm: ResMut<ResultsMenu>) {
+pub fn enter(mut rm: ResMut<ResultsMenu>, mut m: ResMut<Match>, shots: Option<Res<crate::shots::Script>>) {
+    if m.recording_done {
+        return;
+    }
+    m.recording_done = true;
+    rm.message = m
+        .recording
+        .as_mut()
+        .filter(|r| shots.is_none() && r.data.global.replay.auto_save_count > 0)
+        .map_or_else(String::new, |r| match r.save(true) {
+            Ok(_) => "Replay auto-saved".into(),
+            Err(e) => format!("Replay save failed: {e}"),
+        });
     rm.cursor = Cursor { key: REMATCH, owner: None };
 }
 
@@ -33,6 +48,7 @@ pub fn update(
     data: Res<Data>,
     mut next: ResMut<NextState<Screen>>,
     mut scene: ResMut<render::Scene>,
+    mut commands: Commands,
 ) {
     let spots = ui::spots(&q);
     let mut c = rm.cursor;
@@ -47,6 +63,19 @@ pub fn update(
             Some(Action::Activate(MENU) | Action::Back) if testing.is_some() => next.set(Screen::Editor),
             Some(Action::Activate(SELECT) | Action::Back) => next.set(Screen::Select),
             Some(Action::Activate(MENU)) => next.set(Screen::Title),
+            Some(Action::Activate(SAVE)) => {
+                if let Some(r) = &mut m.recording {
+                    rm.message = match r.save(false) {
+                        Ok(p) => format!("Saved {}", p.display()),
+                        Err(e) => format!("Replay save failed: {e}"),
+                    };
+                }
+            }
+            Some(Action::Activate(WATCH)) => {
+                if let Err(e) = crate::replay::watch_results(&mut m, &mut commands, &mut scene, &mut next) {
+                    rm.message = e;
+                }
+            }
             _ => {}
         }
     }
@@ -56,7 +85,7 @@ pub fn update(
 }
 
 #[derive(Component)]
-pub struct ResultsRoot(u32);
+pub struct ResultsRoot(u32, String);
 
 pub fn draw(
     testing: Option<Res<crate::editing::Testing>>,
@@ -66,7 +95,7 @@ pub fn draw(
     roots: Query<(Entity, &ResultsRoot)>,
     fonts: Res<Fonts>,
 ) {
-    if roots.iter().any(|(_, r)| r.0 == rm.cursor.key) {
+    if roots.iter().any(|(_, r)| r.0 == rm.cursor.key && r.1 == rm.message) {
         return;
     }
     for (e, _) in &roots {
@@ -91,7 +120,7 @@ pub fn draw(
     commands
         .spawn((
             root(),
-            ResultsRoot(rm.cursor.key),
+            ResultsRoot(rm.cursor.key, rm.message.clone()),
             DespawnOnExit(Screen::Results),
             GlobalZIndex(5),
             BackgroundGradient::from(LinearGradient::to_bottom(vec![
@@ -115,6 +144,7 @@ pub fn draw(
                 if let Some(s) = sub {
                     p.spawn(txt(&f.heavy, 26., DIM, s));
                 }
+                p.spawn(txt(&f.body, 16., DIM, &rm.message));
                 p.spawn(node(|n| n.flex_grow = 1.));
                 p.spawn(node(|n| {
                     n.flex_direction = FlexDirection::Row;
@@ -132,10 +162,17 @@ pub fn draw(
                     n.column_gap = Val::Px(14.);
                 }))
                 .with_children(|p| {
+                    // Editor tests go back to the editor and leave no replay.
                     let items: &[(u32, &str)] = if testing.is_some() {
                         &[(REMATCH, "Rematch"), (MENU, "Back to editor")]
                     } else {
-                        &[(REMATCH, "Rematch"), (SELECT, "Character select"), (MENU, "Main menu")]
+                        &[
+                            (REMATCH, "Rematch"),
+                            (SELECT, "Character select"),
+                            (MENU, "Main menu"),
+                            (SAVE, "Save replay"),
+                            (WATCH, "Watch replay"),
+                        ]
                     };
                     for &(k, label) in items {
                         let on = rm.cursor.key == k;
@@ -149,7 +186,7 @@ pub fn draw(
                             BorderColor::all(if on { GOLD } else { alpha(LINE, 0.8) }),
                             Focusable { key: k, owner: None, spin: false },
                         ))
-                        .with_child(txt(&f.label, 24., if on { GOLD } else { STAR }, label));
+                        .with_child(txt(&f.label, 21., if on { GOLD } else { STAR }, label));
                     }
                 });
             });

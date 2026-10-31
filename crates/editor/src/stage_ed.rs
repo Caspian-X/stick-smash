@@ -208,8 +208,10 @@ pub(crate) fn sync_scene(ed: &mut Editor, scene: &mut render::Scene, dt: f32) {
             let keep = ed.st.world.as_ref().is_some_and(|w| Some(w.stage) == idx && w.cfg.stage == id)
                 && ed.st.built.as_ref().zip(stage).is_some_and(|(a, b)| same_geometry(a, b));
             if !keep {
-                // Keep the clock, so moving platforms don't jump back while editing.
-                let frame = ed.st.world.as_ref().map_or(0, |w| w.frame);
+                // Just the stage keeps its clock, so moving platforms don't jump back while editing. With CPUs the
+                // world restarts at frame 0, where they were placed: a later clock would move their platforms
+                // out from under them.
+                let frame = ed.st.world.as_ref().filter(|_| ed.st.sandbox == 0).map_or(0, |w| w.frame);
                 match sandbox(&data, &id, ed.st.sandbox, ed.st.level) {
                     Ok(mut w) => {
                         w.frame = frame;
@@ -224,7 +226,8 @@ pub(crate) fn sync_scene(ed: &mut Editor, scene: &mut render::Scene, dt: f32) {
         }
     }
     let (Some(w), Some(data)) = (ed.st.world.as_mut(), ed.st.data.clone()) else { return };
-    if let Some(f) = ed.st.scrub.take() {
+    // Scrubbing only moves the clock, so it's for the stage alone; with CPUs it would desync riders.
+    if let Some(f) = ed.st.scrub.take().filter(|_| ed.st.sandbox == 0) {
         w.frame = f;
         ed.st.clock_play = false;
         ed.st.shown = false;
@@ -367,8 +370,18 @@ pub(crate) fn add_waypoint(ed: &mut Editor) {
         ed.say("Select a platform first", true);
         return;
     };
+    let sym = ed.st.symmetry;
     let mut made = None;
-    edit(ed, |s| made = stage_view::add_waypoint(s, i));
+    edit(ed, |s| {
+        // The mirror partner is found before the path changes, then gets the reflected path in the same step.
+        let partner = if sym { stage_view::partner(s, Part::Platform(i)) } else { None };
+        made = stage_view::add_waypoint(s, i);
+        if let Some(q @ Part::Platform(k)) = partner
+            && k != i
+        {
+            stage_view::apply_mirror(s, Part::Platform(i), q, Grip::Move);
+        }
+    });
     ed.st.select(made);
     ed.st.clock_play = true;
 }

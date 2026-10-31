@@ -16,6 +16,7 @@ mod hud;
 mod input;
 mod menu;
 mod play;
+mod replay;
 mod results;
 mod select;
 mod settings;
@@ -32,6 +33,8 @@ pub enum Screen {
     Select,
     Match,
     Results,
+    Replays,
+    Playback,
     Editor,
 }
 
@@ -45,6 +48,17 @@ pub struct ContentErrors(pub Vec<String>);
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
+    if let Some(i) = args.iter().position(|a| a == "--verify-replays") {
+        let result = args
+            .get(i + 1)
+            .ok_or("missing replay directory".to_string())
+            .and_then(|dir| replay::verify_directory(Path::new(dir)));
+        if let Err(e) = result {
+            eprintln!("{e}");
+            std::process::exit(1);
+        }
+        return;
+    }
     let shot_dir = args
         .iter()
         .position(|a| a == "--screenshot")
@@ -89,6 +103,7 @@ fn main() {
     .init_resource::<menu::MenuState>()
     .init_resource::<hud::PauseMenu>()
     .init_resource::<results::ResultsMenu>()
+    .init_resource::<replay::Library>()
     .add_systems(Startup, move |mut commands: Commands, mut fonts: ResMut<Assets<Font>>| {
         commands.insert_resource(ui::Fonts::load(&assets, &mut fonts));
     })
@@ -103,6 +118,8 @@ fn main() {
     .add_systems(OnEnter(Screen::Select), input::clear)
     .add_systems(OnEnter(Screen::Title), input::clear)
     .add_systems(OnEnter(Screen::Results), results::enter)
+    .add_systems(OnEnter(Screen::Replays), replay::enter)
+    .add_systems(OnEnter(Screen::Playback), hud::spawn)
     .add_systems(
         Update,
         (
@@ -112,6 +129,8 @@ fn main() {
             (select::update, select::draw).chain().run_if(in_state(Screen::Select)),
             (play::match_flow, hud::pause, hud::draw_pause, hud::update).chain().run_if(in_state(Screen::Match)),
             (results::update, results::draw).chain().run_if(in_state(Screen::Results)),
+            replay::library.run_if(in_state(Screen::Replays)),
+            (replay::controls, hud::update).chain().run_if(in_state(Screen::Playback)),
             play::interpolate.run_if(resource_exists::<play::Match>),
             ui_scale,
             settings::save,

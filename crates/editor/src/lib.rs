@@ -846,4 +846,38 @@ mod tests {
         let w = ed.st.world.as_ref().unwrap();
         assert!(w.fighters.iter().all(|f| f.surf.is_none_or(|i| i < 1)), "the world was rebuilt on the new geometry");
     }
+
+    #[test]
+    fn mirror_and_the_motion_clock_stay_coherent() {
+        let mut ed = editor();
+        ed.set_mode(Mode::Stages);
+        // Adding a path with Mirror on gives the partner platform the reflected path in one undo step.
+        ed.st.symmetry = true;
+        ed.st.select(Some(Part::Platform(0)));
+        stage_ed::add_waypoint(&mut ed);
+        stage_ed::add_waypoint(&mut ed);
+        let s = &ed.stage_doc().item;
+        let (a, b) = (s.platforms[0].motion.as_ref().unwrap(), s.platforms[1].motion.as_ref().unwrap());
+        assert_eq!(a.waypoints.len(), 3);
+        assert!(a.waypoints.iter().zip(&b.waypoints).all(|(p, q)| p.x == -q.x && p.y == q.y));
+        ed.stage_doc().undo();
+        assert_eq!(ed.stage_doc().item.platforms[1].motion.as_ref().unwrap().waypoints.len(), 2);
+        // Ledge toggles go through the mirror too.
+        stage_ed::toggle_ledge(&mut ed, 0, false);
+        assert!(!ed.stage_doc().item.blocks[0].right_ledge, "the centred block's corners follow each other");
+        // With CPUs on, scrubbing is ignored and rebuilds start the world at frame 0.
+        let mut scene = render::Scene::new(ed.ws.data.clone());
+        ed.st.set_sandbox(1);
+        for _ in 0..30 {
+            stage_ed::sync_scene(&mut ed, &mut scene, 1. / 60.);
+        }
+        let f = ed.st.world.as_ref().unwrap().frame;
+        ed.st.scrub = Some(f + 100);
+        stage_ed::sync_scene(&mut ed, &mut scene, 0.);
+        assert!(ed.st.world.as_ref().unwrap().frame < f + 100);
+        ed.stage_doc().edit(|s| s.platforms[0].y -= 10.);
+        ed.st.stale = true;
+        stage_ed::sync_scene(&mut ed, &mut scene, 0.);
+        assert_eq!(ed.st.world.as_ref().unwrap().frame, 0);
+    }
 }

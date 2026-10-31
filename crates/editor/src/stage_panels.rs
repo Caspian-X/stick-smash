@@ -226,6 +226,7 @@ pub(crate) fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
     let colors = ed.st.data.as_deref().map(stage_ed::colors).unwrap_or_default();
     let mut act: Option<(Part, &'static str)> = None;
     let mut dialog = None;
+    let before = ed.stage_doc().item.clone();
     egui::ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
         ui.add_space(6.);
         let sec = ed.st.section;
@@ -302,6 +303,7 @@ pub(crate) fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
                     let on = sel == Some(part);
                     let title = RichText::new(format!("Block {}", i + 1)).color(if on { GOLD } else { STAR });
                     let g = &mut s.blocks[i];
+                    let mut lact = None;
                     card(
                         ui,
                         on,
@@ -324,8 +326,13 @@ pub(crate) fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
                                 num_cell(ui, &mut g.under_inset, &form::doc("stage.Ground", "underInset"));
                                 ui.add_space(6.);
                                 ui.label(RichText::new("ledges").color(DIM));
-                                ui.toggle_value(&mut g.left_ledge, "◧ L").on_hover_text("Top-left corner can be grabbed");
-                                ui.toggle_value(&mut g.right_ledge, "R ◨").on_hover_text("Top-right corner can be grabbed");
+                                // Through `toggle_ledge`, so Mirror updates the partner's corner too.
+                                if ui.selectable_label(g.left_ledge, "◧ L").on_hover_text("Top-left corner can be grabbed").clicked() {
+                                    lact = Some((part, "ledgeL"));
+                                }
+                                if ui.selectable_label(g.right_ledge, "R ◨").on_hover_text("Top-right corner can be grabbed").clicked() {
+                                    lact = Some((part, "ledgeR"));
+                                }
                             });
                             errs(ui, &errors, &part.path());
                             note_list(ui, &notes, &part.path());
@@ -333,6 +340,7 @@ pub(crate) fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
                         &mut act,
                         part,
                     );
+                    act = lact.or(act);
                 }
                 ui.add_space(4.);
                 ui.label(faint("Drag edges or corners in the viewport; click the teal dots above a selected block's corners to toggle its ledges."));
@@ -585,6 +593,18 @@ pub(crate) fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
     if let Some(d) = dialog {
         ed.dialog = Some(d);
     }
+    // With Mirror on, a path edited here (mode, phase, waypoints) carries over to the partner platform.
+    if ed.st.symmetry {
+        let s = stage_ed::stage_mut(ed);
+        for i in 0..s.platforms.len().min(before.platforms.len()) {
+            if s.platforms[i].motion != before.platforms[i].motion
+                && let Some(q @ Part::Platform(k)) = crate::stage_view::partner(&before, Part::Platform(i))
+                && k != i
+            {
+                crate::stage_view::apply_mirror(s, Part::Platform(i), q, crate::stage_view::Grip::Move);
+            }
+        }
+    }
     match act {
         Some((p, "sel")) => ed.st.select(Some(p)),
         Some((p, "del")) => {
@@ -597,6 +617,8 @@ pub(crate) fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
         }
         Some((Part::Platform(_), "add")) => stage_ed::add_platform(ed),
         Some((Part::Block(_), "add")) => stage_ed::add_block(ed),
+        Some((Part::Block(i), "ledgeL")) => stage_ed::toggle_ledge(ed, i, false),
+        Some((Part::Block(i), "ledgeR")) => stage_ed::toggle_ledge(ed, i, true),
         Some((Part::Platform(i), "path")) => {
             ed.st.select(Some(Part::Platform(i)));
             stage_ed::add_waypoint(ed);

@@ -51,6 +51,7 @@ fn screen_is(s: Screen) -> Pred {
         Screen::Results => |_, _, s| s == Screen::Results,
         Screen::Match => |_, _, s| s == Screen::Match,
         Screen::Select => |_, _, s| s == Screen::Select,
+        Screen::Playback => |_, _, s| s == Screen::Playback,
         Screen::Editor => |_, _, s| s == Screen::Editor,
         _ => |_, _, s| s == Screen::Title,
     }
@@ -288,8 +289,25 @@ impl Script {
         v.push(Step::Until(screen_is(Screen::Results), 600));
         v.push(Step::Wait(30));
         v.push(Step::Shot("12-results"));
+        for _ in 0..4 {
+            press(&mut v, 0, Right);
+        }
+        press(&mut v, 0, Attack);
+        v.push(Step::Until(screen_is(Screen::Playback), 30));
+        v.push(Step::Until(|m, _, _| m.playback.as_ref().is_some_and(|p| p.position >= 600), 2000));
+        press(&mut v, 0, Start);
+        shot(&mut v, "12b-replay-controls");
         press(&mut v, 0, Right);
         press(&mut v, 0, Right);
+        press(&mut v, 0, Left);
+        press(&mut v, 0, Down);
+        press(&mut v, 0, Right);
+        shot(&mut v, "12c-replay-seek");
+        press(&mut v, 0, Special);
+        v.push(Step::Until(screen_is(Screen::Results), 30));
+        shot(&mut v, "12d-results-return");
+        press(&mut v, 0, Left);
+        press(&mut v, 0, Left);
         press(&mut v, 0, Attack);
         // Training.
         v.push(Step::Until(screen_is(Screen::Title), 10));

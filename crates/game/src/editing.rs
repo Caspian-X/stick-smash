@@ -103,6 +103,7 @@ fn requests(
             let rules = Rules { stocks, stage, friendly_fire: false };
             match Match::new(&d, mode, vec![slot(Some(p1), fi, None, "P1", 0), other], rules, play::seed()) {
                 Ok(mut m) => {
+                    m.unrecord();
                     if !versus {
                         m.dummy.mode = t.mode;
                         m.dummy.level = t.level;
