@@ -73,7 +73,7 @@ fn main() {
             }
             args.get(i + 1)
                 .unwrap_or_else(|| {
-                    eprintln!("--shots requires comma-separated section names: {}", shots::SECTIONS.join(", "));
+                    eprintln!("--shots requires comma-separated section names: {}", shots::section_names());
                     std::process::exit(1);
                 })
                 .as_str()

@@ -40,8 +40,23 @@ pub enum Step {
     Versus(&'static str),
 }
 
-pub const SECTIONS: &[&str] =
-    &["menus", "fighter-editor", "stage-editor", "select", "match", "results-replay", "training", "stages"];
+type Entry = (&'static str, fn() -> Vec<Step>);
+
+/// Every section in full-tour order; `--shots` picks a subset in the order given.
+const TOUR: [Entry; 8] = [
+    ("menus", menus),
+    ("fighter-editor", fighter_editor),
+    ("stage-editor", stage_editor),
+    ("select", select),
+    ("match", match_shots),
+    ("results-replay", results_replay),
+    ("training", training),
+    ("stages", stages),
+];
+
+pub fn section_names() -> String {
+    TOUR.map(|(n, _)| n).join(", ")
+}
 
 struct Section {
     name: &'static str,
@@ -420,23 +435,14 @@ fn stages() -> Vec<Step> {
 
 impl Script {
     pub fn tour(dir: PathBuf, filter: Option<&str>) -> Result<Self, String> {
-        let mut sections = vec![
-            Section::new("menus", menus()),
-            Section::new("fighter-editor", fighter_editor()),
-            Section::new("stage-editor", stage_editor()),
-            Section::new("select", select()),
-            Section::new("match", match_shots()),
-            Section::new("results-replay", results_replay()),
-            Section::new("training", training()),
-            Section::new("stages", stages()),
-        ];
-        if let Some(filter) = filter {
-            let names: Vec<_> = filter.split(',').collect();
-            if let Some(name) = names.iter().find(|n| !SECTIONS.contains(n)) {
-                return Err(format!("unknown screenshot section {name:?}; sections: {}", SECTIONS.join(", ")));
-            }
-            sections.retain(|s| names.contains(&s.name));
-        }
+        let names: Vec<_> = filter.map_or_else(|| TOUR.map(|(n, _)| n).to_vec(), |f| f.split(',').collect());
+        let sections = names
+            .into_iter()
+            .map(|name| match TOUR.iter().find(|(n, _)| *n == name) {
+                Some(&(name, steps)) => Ok(Section::new(name, steps())),
+                None => Err(format!("unknown screenshot section {name:?}; sections: {}", section_names())),
+            })
+            .collect::<Result<Vec<_>, _>>()?;
         Ok(Script {
             dir,
             sections,
@@ -682,15 +688,15 @@ mod tests {
     #[test]
     fn filters_sections_and_reports_available_names() {
         let script = Script::tour(PathBuf::new(), Some("stages,stage-editor")).unwrap();
-        assert_eq!(script.sections.iter().map(|s| s.name).collect::<Vec<_>>(), ["stage-editor", "stages"]);
-        for name in SECTIONS {
+        assert_eq!(script.sections.iter().map(|s| s.name).collect::<Vec<_>>(), ["stages", "stage-editor"]);
+        for (name, _) in &TOUR {
             let script = Script::tour(PathBuf::new(), Some(name)).unwrap();
             assert_eq!(script.sections.len(), 1);
             assert_eq!(script.sections[0].name, *name);
         }
         for filter in ["unknown", "menus,unknown", ""] {
             let error = Script::tour(PathBuf::new(), Some(filter)).err().unwrap();
-            for name in SECTIONS {
+            for (name, _) in TOUR {
                 assert!(error.contains(name));
             }
         }
