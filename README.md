@@ -35,6 +35,10 @@ speed, freeze/step and reset. Dummy settings are also in the pause menu.
 | Shield | L | ' or Num 0 | LB, LT, RT |
 | Pause | Esc | Enter | Start |
 
+Settings includes master, SFX and reserved music volume sliders (left/right to adjust). Effects are synthesized
+at startup; no sound files are needed. Hits scale with impact, and hits, shields and blast-zone KOs pan with the
+action. Training speed changes event timing while sounds retain their normal pitch.
+
 Settings → Keyboard switches between two keyboard players (above) and one player using both halves. Controls
 rebinds any device (select an action, press the new control; Esc or the gamepad's B/Back cancels).
 Split keyboard bindings refuse keys used by the other half. Gamepads have per-device session overrides with

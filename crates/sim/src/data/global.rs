@@ -35,6 +35,8 @@ pub struct Global {
     pub palette: Vec<PlayerColors>,
     /// Renderer tuning. Cosmetic only.
     pub render: super::render::Render,
+    /// Procedural sound bank and game-side mixing. The sim never reads it.
+    pub audio: super::audio::Audio,
 }
 
 /// Shared movement rules. Per-fighter speeds and gravity live in each fighter's `stats`.

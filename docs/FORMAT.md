@@ -226,3 +226,26 @@ respawn `descendFrames` must be positive. Projectile lifetimes must fit a positi
 hitbox geometry is ignored; only projectile `r` and active melee hitbox radii must be positive.
 Global validation errors abort loading; invalid fighter/stage packages are skipped with a file and JSON path.
 On stages narrower than twice the AI target padding, that padding is reduced to half the ground width.
+
+## Procedural audio (`global.audio`)
+
+The game synthesizes the `sounds` map at startup. Move events still use `"sfx": "slash"` (or any sound name
+in that map); no file paths are required. The sim only emits events and never reads audio tuning.
+
+Each sound has `volume` (0–1), `priority` (higher wins contention), `cooldown` (real seconds),
+`strengthGain` (weakest impact gain relative to strongest), `strengthDuration` (strongest duration multiplier),
+and `layers`. A layer specifies `wave` (`sine`, `triangle`, `square`, `saw`, `noise`), `from`/`to` frequency in Hz,
+`duration`/`attack` in seconds, `decay` (exponential envelope factor) and `gain`. Noise uses the frequency sweep
+as a low-pass cutoff. Layers mix through soft clipping with a click-free attack/release.
+
+For example, lower `sounds.hit.layers[1].to` for a deeper thump, raise the noise layer's `gain` for more crack,
+or increase `sounds.hit.strengthDuration` for heavier high-knockback hits. `strengthMax` is the knockback
+(shield hits: damage) reaching full strength; `strengthLevels` controls how many variants are cached.
+`pitchVariation` adds small game-side random pitch changes without touching sim RNG. UI names are `menu`,
+`confirm`, `back`, `join`, `ready`; countdown uses `beep` and `go`. Unknown names warn once and remain silent.
+
+`defaults` supplies master/SFX/music volumes until overridden by saved settings. Music is reserved and silent.
+`volumeStep` sets slider increments. `maxVoices`, `maxPerFrame`, and global/per-sound `cooldown` bound polyphony
+and fast-forward repetition. `pan` controls stereo width and `depth` the spatial emitter depth and `earGap` the listener separation; set `pan` to 0
+for centered audio. `sampleRate` controls synthesis quality/memory. See the generated global schema for units
+and supported ranges. Restart after tuning the bank, and run `just bless` when changing Rust data types.

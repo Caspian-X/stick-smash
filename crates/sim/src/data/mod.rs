@@ -1,6 +1,7 @@
 //! Content: global tuning, stages and fighters, loaded from JSON. The sim only parses strings; the game crate
 //! does the file I/O. See `docs/FORMAT.md` for the format and the move phase semantics.
 
+pub mod audio;
 pub mod common;
 pub mod fighter;
 pub mod global;

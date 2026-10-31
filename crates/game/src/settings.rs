@@ -16,6 +16,8 @@ pub struct Saved {
     /// The keyboard is two devices (left and right halves) instead of one.
     pub split_keyboard: bool,
     pub fullscreen: bool,
+    /// None uses the content defaults; old settings files remain compatible.
+    pub volume: Option<sim::data::audio::Volumes>,
     /// Hitbox/debug overlay in versus matches (training always starts with it on).
     pub versus_hitboxes: bool,
     /// Control profile (`keyboard`, `keyboard-left`, `keyboard-right`, `gamepad:<name>`) → action → controls.
@@ -29,6 +31,7 @@ impl Default for Saved {
         Self {
             split_keyboard: true,
             fullscreen: false,
+            volume: None,
             versus_hitboxes: false,
             bindings: BTreeMap::new(),
             versus: VersusPrefs::default(),

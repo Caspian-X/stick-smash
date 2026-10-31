@@ -10,6 +10,7 @@ use render::{RenderPlugin, RenderSystems, Scene};
 use sim::data::{Source, load};
 use sim::{GameData, TICK_HZ};
 
+mod audio;
 mod hud;
 mod input;
 mod menu;
@@ -70,7 +71,7 @@ fn main() {
                 ..default()
             }),
     )
-    .add_plugins((EguiPlugin::default(), RenderPlugin))
+    .add_plugins((EguiPlugin::default(), RenderPlugin, audio::SoundPlugin))
     .init_state::<Screen>()
     .insert_resource(ClearColor(ui::NIGHT))
     .insert_resource(Time::<Fixed>::from_hz(f64::from(TICK_HZ)))

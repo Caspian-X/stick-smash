@@ -197,6 +197,10 @@ fn invalid_fighter_numbers_skip_package_with_path() {
 fn invalid_global_numbers_are_fatal() {
     use serde_json::json;
     for (patch, path) in [
+        (json!({"audio":{"sampleRate":0}}), "audio.sampleRate"),
+        (json!({"audio":{"strengthLevels":0}}), "audio.strengthLevels"),
+        (json!({"audio":{"maxVoices":10000}}), "audio.maxVoices"),
+        (json!({"audio":{"sounds":{"hit":{"layers":[]}}}}), "audio.sounds.hit.layers"),
         (json!({"knockback":{"chargeDamageDivisor":0}}), "knockback.chargeDamageDivisor"),
         (json!({"respawn":{"descendFrames":0}}), "respawn.descendFrames"),
         (json!({"hitTypes":{"windbox":{"maxSpeed":-1}}}), "hitTypes.windbox.maxSpeed"),

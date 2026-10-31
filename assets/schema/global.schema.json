@@ -26,7 +26,11 @@
       "items": { "$ref": "#/$defs/PlayerColors" },
       "description": "Player colors by slot (8 slots)."
     },
-    "render": { "$ref": "#/$defs/Render", "description": "Renderer tuning. Cosmetic only." }
+    "render": { "$ref": "#/$defs/Render", "description": "Renderer tuning. Cosmetic only." },
+    "audio": {
+      "$ref": "#/$defs/Audio",
+      "description": "Procedural sound bank and game-side mixing. The sim never reads it."
+    }
   },
   "required": [
     "schemaVersion",
@@ -48,7 +52,8 @@
     "respawn",
     "match",
     "palette",
-    "render"
+    "render",
+    "audio"
   ],
   "title": "Global",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1436,6 +1441,165 @@
         "ticks": { "type": "integer", "format": "uint32", "minimum": 0 }
       },
       "required": ["speed", "ticks"]
-    }
+    },
+    "Audio": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sampleRate": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Mono PCM sample rate, 8000..96000 Hz."
+        },
+        "defaults": {
+          "$ref": "#/$defs/Volumes",
+          "description": "Starting slider values, each 0..1. Saved settings override these."
+        },
+        "volumeStep": {
+          "type": "number",
+          "format": "double",
+          "description": "Slider increment per left/right press, 0..1."
+        },
+        "maxVoices": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0,
+          "description": "Maximum simultaneous voices, including sounds still waiting for an audio device."
+        },
+        "maxPerFrame": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0,
+          "description": "Maximum new voices per rendered frame."
+        },
+        "cooldown": {
+          "type": "number",
+          "format": "double",
+          "description": "Minimum wall-clock seconds between repeats of the same sound."
+        },
+        "pan": {
+          "type": "number",
+          "format": "double",
+          "description": "Screen-space emitter displacement relative to listener ears; 0 disables panning."
+        },
+        "depth": {
+          "type": "number",
+          "format": "double",
+          "description": "Listener-to-emitter depth in normalized screen units (keeps attenuation mild)."
+        },
+        "earGap": {
+          "type": "number",
+          "format": "double",
+          "description": "Stereo listener ear separation in normalized screen units."
+        },
+        "pitchVariation": {
+          "type": "number",
+          "format": "double",
+          "description": "Local pitch variation as a fraction (0..0.5), independent of sim RNG and training speed."
+        },
+        "strengthLevels": {
+          "type": "integer",
+          "format": "uint",
+          "minimum": 0,
+          "description": "Number of pre-synthesized strength levels per sound, 1..16."
+        },
+        "strengthMax": {
+          "type": "number",
+          "format": "double",
+          "description": "Knockback/damage at which a scaled sound reaches full strength."
+        },
+        "sounds": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/Sound" },
+          "description": "Sound names referenced by sim/content and UI. Unknown names are skipped with a warning."
+        }
+      },
+      "required": [
+        "sampleRate",
+        "defaults",
+        "volumeStep",
+        "maxVoices",
+        "maxPerFrame",
+        "cooldown",
+        "pan",
+        "depth",
+        "earGap",
+        "pitchVariation",
+        "strengthLevels",
+        "strengthMax",
+        "sounds"
+      ]
+    },
+    "Volumes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "master": { "type": "number", "format": "double" },
+        "sfx": { "type": "number", "format": "double" },
+        "music": {
+          "type": "number",
+          "format": "double",
+          "description": "Reserved for future music; currently silent."
+        }
+      },
+      "required": ["master", "sfx", "music"]
+    },
+    "Sound": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "volume": { "type": "number", "format": "double", "description": "Mixer gain, 0..1." },
+        "priority": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Higher priorities win frame and voice limits (KO > hit > movement)."
+        },
+        "cooldown": {
+          "type": "number",
+          "format": "double",
+          "description": "Additional minimum real seconds between repeats."
+        },
+        "strengthDuration": {
+          "type": "number",
+          "format": "double",
+          "description": "Duration multiplier at maximum impact (interpolated from 1)."
+        },
+        "strengthGain": {
+          "type": "number",
+          "format": "double",
+          "description": "Gain multiplier at minimum impact (interpolated to 1)."
+        },
+        "layers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Layer" }
+        }
+      },
+      "required": ["volume", "priority", "cooldown", "strengthDuration", "strengthGain", "layers"]
+    },
+    "Layer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "wave": { "$ref": "#/$defs/Wave" },
+        "from": {
+          "type": "number",
+          "format": "double",
+          "description": "Exponential frequency sweep in Hz. For noise, a swept one-pole low-pass cutoff."
+        },
+        "to": { "type": "number", "format": "double" },
+        "duration": { "type": "number", "format": "double", "description": "Layer length in seconds, 0..3." },
+        "attack": { "type": "number", "format": "double", "description": "Click-free attack length in seconds." },
+        "decay": {
+          "type": "number",
+          "format": "double",
+          "description": "Exponential amplitude decay factor over the layer."
+        },
+        "gain": { "type": "number", "format": "double" }
+      },
+      "required": ["wave", "from", "to", "duration", "attack", "decay", "gain"]
+    },
+    "Wave": { "type": "string", "enum": ["sine", "triangle", "square", "saw", "noise"] }
   }
 }

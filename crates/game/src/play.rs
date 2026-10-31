@@ -86,6 +86,7 @@ pub struct Match {
     pub over_t: u32,
     end_t: u32,
     pub debug: bool,
+    pub sounds: Vec<sim::Fx>,
 }
 
 /// Nonzero: every new match uses this seed (screenshot mode, so shots reproduce).
@@ -144,6 +145,7 @@ impl Match {
             over_t: 0,
             end_t: 0,
             debug: mode == Mode::Training,
+            sounds: Vec::new(),
         })
     }
 
@@ -206,7 +208,7 @@ impl Match {
             .collect()
     }
 
-    fn tick(&mut self, devs: &mut Devices, scene: &mut Scene) {
+    fn tick(&mut self, devs: &mut Devices, scene: &mut Scene, audible: bool) {
         let inputs =
             if self.world.over { vec![Input::default(); self.world.fighters.len()] } else { self.inputs(devs) };
         let before: Vec<(f64, i32)> = self.world.fighters.iter().map(|f| (f.dmg, f.stocks)).collect();
@@ -217,6 +219,9 @@ impl Match {
         }
         if self.world.over {
             self.over_t += 1;
+        }
+        if audible && matches!(self.mode, Mode::Versus | Mode::Training) {
+            self.sounds.extend(self.world.fx.iter().filter(|fx| matches!(fx, sim::Fx::Sfx { .. })).cloned());
         }
         scene.push(&self.world);
         self.world.fx.clear();
@@ -300,21 +305,21 @@ pub fn tick(mut m: ResMut<Match>, mut devs: ResMut<Devices>, mut scene: ResMut<S
     let m = &mut *m;
     let ff = std::mem::take(&mut m.ff);
     for _ in 0..ff {
-        m.tick(&mut devs, &mut scene);
+        m.tick(&mut devs, &mut scene, false);
     }
     if m.paused.is_some() {
         return;
     }
     if m.mode == Mode::Training && m.frozen {
         if std::mem::take(&mut m.step) {
-            m.tick(&mut devs, &mut scene);
+            m.tick(&mut devs, &mut scene, true);
         }
         return;
     }
     m.acc += m.tick_speed();
     while m.acc >= 1. {
         m.acc -= 1.;
-        m.tick(&mut devs, &mut scene);
+        m.tick(&mut devs, &mut scene, true);
     }
 }
 
@@ -383,6 +388,23 @@ pub fn match_flow(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn fast_forward_discards_countdown_sounds_but_live_ticks_keep_them() {
+        let (data, errors) = crate::load_data(&[std::path::PathBuf::from("../../assets")]);
+        assert!(errors.is_empty());
+        let data = Arc::new(data);
+        let mut m = Match::attract(&data, 1).unwrap();
+        m.mode = Mode::Versus;
+        let (mut devs, mut scene) = (Devices::default(), Scene::new(data));
+        while m.world.count > 0 {
+            m.tick(&mut devs, &mut scene, false);
+        }
+        assert!(m.sounds.is_empty());
+        m.world.count = sim::TICK_HZ;
+        m.tick(&mut devs, &mut scene, true);
+        assert!(m.sounds.iter().any(|fx| matches!(fx, sim::Fx::Sfx { name, .. } if name == "beep")));
+    }
 
     #[test]
     fn hit_records_credit_every_victim_and_last_hitter() {
@@ -455,7 +477,7 @@ mod tests {
         let mut m = Match::new(&data, Mode::Versus, (0..3).map(slot).collect(), rules, 7).unwrap();
         let (mut devs, mut scene) = (Devices::default(), Scene::new(data.clone()));
         while !m.world.over && m.world.frame < 60 * 60 * 10 {
-            m.tick(&mut devs, &mut scene);
+            m.tick(&mut devs, &mut scene, true);
         }
         assert!(m.world.over, "match should end");
         let place = m.placements();

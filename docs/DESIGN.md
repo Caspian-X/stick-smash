@@ -12,7 +12,7 @@ Living record of decisions made before/while porting from the TS version (`../st
 - **Input buffer.** Human presses (attack, special, jump, grab, shield press) are buffered for `global.input.bufferFrames` (5 ticks, inclusive age; 0 = TS behavior). Each entry captures press-time directions and smash taps; held buttons always use current raw input. Fresh presses keep every state's existing handling and take priority over replay. On an actionable tick, all fresh entries are consumed immediately; otherwise at most one oldest live entry is replayed and consumed, even if that state cannot use that action. Simultaneous blocked presses queue in attack, special, jump, grab, shield order. Replay states: idle, air, shield without shield stun, ledge when the handler's incremented timer reaches `minHang`, and knockdown when it exceeds `minFrames`. Hitlag blocks replay. Landing and other recovery states wait until the next update starts actionable. Jumpsquat, attacks/charge/cancels, hold/pummel, grabbed/mashing, hitstun/tech, helpless, respawn/death and all other states retain fresh-only handling; their buffered presses can still replay later if unexpired. CPU intents bypass the buffer. Buffer entries live in the rollback snapshot and age during countdown/end freezes (which supply no fresh presses or replay). Sub-tick taps are latched by the game crate's input layer so they last at least one tick.
 - **Units.** Keep TS units: stage pixels, y down, velocities in px/frame, 60 Hz, `f64` + `libm`. Convert to Bevy's y-up world only when rendering.
 - **Multiplayer.** Local multiplayer + CPUs first. Online stays possible: the sim is deterministic, `World: Clone` is the rollback snapshot, and inputs are small plain data. Candidate transport is `ggrs` over iroh datagrams. Nothing net-specific gets built yet.
-- **Deferred, but not designed out.** Audio, drawing library details, online play.
+- **Deferred, but not designed out.** Online play.
 
 ### Content format
 - **Everything moddable is data:** fighters (stats, frame data, special-move behavior, visuals, hurtboxes) and stages. Core content uses the same format as user content, with no fighter- or stage-specific code.
@@ -89,6 +89,23 @@ The 5 TS kinds (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) ar
   `global.render.hud`; the sim never reads it.
 - **Editor** is a mode of the same executable, reached from the main menu. It's a fast-follow after the first playable build and gets its own UI design (not a port of the TS panels).
 
+### Audio
+- **Procedural bank.** The game synthesizes swept sine/triangle/square/saw tones and low-pass noise at startup,
+  encoding mono PCM into in-memory WAV `AudioSource` assets. Bevy's built-in audio handles playback; no direct
+  rodio dependency, binary sound assets or sound licenses. The TS WebAudio sound vocabulary is preserved, with
+  separate confirm/back/join/ready cues. Music is deferred; its volume control is reserved.
+- **Data.** `global.audio` holds synth layers, gains, envelopes, priorities, pitch variation, voice/rate limits,
+  panning and impact scaling. Typed fields generate schema hover docs; the loader rejects invalid or excessive
+  allocations. Master/SFX/music settings persist alongside existing bindings; older settings use data defaults.
+- **Impact.** Hit knockback (shield-hit damage) selects a prebuilt strength variant, changing duration and gain.
+  Hits, shield hits/breaks and blast-zone KOs include an optional world x in `Fx::Sfx`; the game maps it through
+  the renderer's visible rectangle into stereo panning. Other sounds and UI cues are centered. This adds event
+  context without changing gameplay or consuming sim randomness.
+- **Time and availability.** Playback stays at normal pitch/duration in slow motion; events follow simulation
+  timing. Each rendered frame retains the strongest event per name, then prioritizes within wall-clock cooldowns
+  and voice limits. Tour fast-forward discards audio; attract/showcase worlds stay silent. Players also expire
+  by real time, so Bevy's graceful missing-device fallback cannot accumulate queued audio entities.
+
 ### Crates
 `sim` (logic + data types/loading) · `render` (fighter/stage/fx drawing, shared by gameplay and editor) · `game` (bin: app, input, menus, modes) · later `editor` (lib, used by `game`) and `net`.
 
@@ -122,6 +139,3 @@ decays by `shakeDecay` per tick and offsets the view randomly. The backdrop gets
 3. **Render:** stick figures from pose data, attachments, stage, fx, debug overlay, camera that follows the fighters.
 4. **Playable:** join screen with mixed devices, character select, CPU level, stock matches, training mode, HUD.
 5. **Editor** (fast-follow).
-
-## Open
-- Audio: port the synthesizer (`fundsp`) or use sample files.

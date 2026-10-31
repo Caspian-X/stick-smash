@@ -642,5 +642,5 @@ pub fn ko(w: &mut World, d: &GameData, i: usize) {
     } else {
         f.set_state(State::Out);
     }
-    w.sfx("ko");
+    w.fx.push(Fx::Sfx { name: "ko".into(), arg: None, x: Some(f.x) });
 }
