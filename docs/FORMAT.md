@@ -214,7 +214,7 @@ nominal damage), and `shielded: bool`. The game drains it each tick alongside `W
 part of the rollback snapshot. `Fighter::last_hit_by: Option<usize>` remembers the latest damaging attacker
 across state changes. Shield hits do not change it. The single training trace still describes only the latest hit.
 
-Spawn `y` is the feet height (default ground top). A fighter starts grounded on the ground or platform whose
+Spawn `y` is the feet height (default: highest block top below `x`; required outside all blocks). A fighter starts grounded on the block or platform whose
 height matches that spawn and whose horizontal span contains it; otherwise it starts airborne.
 Hurtbox groups are `default` and `knockdown`. Autolink pulls toward the victim's `default` hurtbox center.
 
@@ -225,7 +225,7 @@ ledge options require `0 < a < b <= end` (jump allows `a == b`). Ground `underDe
 respawn `descendFrames` must be positive. Projectile lifetimes must fit a positive `i32`. Throw/projectile
 hitbox geometry is ignored; only projectile `r` and active melee hitbox radii must be positive.
 Global validation errors abort loading; invalid fighter/stage packages are skipped with a file and JSON path.
-On stages narrower than twice the AI target padding, that padding is reduced to half the ground width.
+On blocks narrower than twice the AI target padding, that padding is reduced to half the block width.
 
 ## Procedural audio (`global.audio`)
 
@@ -249,3 +249,58 @@ or increase `sounds.hit.strengthDuration` for heavier high-knockback hits. `stre
 and fast-forward repetition. `pan` controls stereo width and `depth` the spatial emitter depth and `earGap` the listener separation; set `pan` to 0
 for centered audio. `sampleRate` controls synthesis quality/memory. See the generated global schema for units
 and supported ranges. Restart after tuning the bank, and run `just bless` when changing Rust data types.
+
+
+## Stage geometry (schemaVersion 2)
+
+`blocks` replaces the single `ground`. Version 1 stage files migrate automatically, with both corners enabled.
+Each static solid has `left`, `right`, `top`, `bottom`, `underDepth`, `underInset`, `leftLedge`, and `rightLedge`.
+The underside slopes inward below `bottom`, exactly as in version 1. Both underside dimensions must be positive;
+`underInset` cannot exceed half the width. Blocks' bounding rectangles including their undersides must not
+intersect (touching is allowed). Build a raised centre or wall with adjacent blocks of different heights.
+Only exposed top corners can be grabbable; disable flags at seams or corners covered by another block.
+The hanging body must also clear neighbouring solids for every loaded fighter.
+Setting a corner flag false makes that edge a walk-off. Ledge grab-zone
+settings remain shared in `ledge`; occupancy is independent for each block and side. All blocks share `art`.
+
+Pass-through `platforms` keep `x1`, `x2`, and `y`, and optionally add `motion`:
+
+```json
+{
+  "schemaVersion": 2,
+  "blocks": [
+    { "left": 300, "right": 980, "top": 520, "bottom": 580,
+      "underDepth": 100, "underInset": 60, "leftLedge": true, "rightLedge": false }
+  ],
+  "platforms": [
+    { "x1": 390, "x2": 570, "y": 400,
+      "motion": { "mode": "pingPong", "phase": 0, "waypoints": [
+        { "x": 0, "y": 0, "travelTicks": 120, "waitTicks": 30 },
+        { "x": 240, "y": -80, "travelTicks": 120, "waitTicks": 30 }
+      ] } }
+  ]
+}
+```
+
+Waypoint `x`/`y` are **offsets** added to the platform's base coordinates, not absolute stage positions.
+At least two waypoints are required. A waypoint waits `waitTicks` (default 0), then travels linearly to the next waypoint.
+Used `travelTicks` durations must be positive. `loop` travels from the last point back to the first;
+`pingPong` reverses at endpoints. Leg j ↔ j+1 uses waypoint j's `travelTicks` in both directions;
+the last waypoint's `travelTicks` is ignored in this mode and may be zero.
+Endpoint waits occur once per visit. `phase` (default 0) advances the cycle in ticks at world frame zero.
+Motion is a pure function of the world frame, including countdown frames. Standing fighters receive the
+platform's position delta once per tick, including during hitlag. Jumping and dropping detach normally;
+carry changes position without adding launch velocity. Moving platforms remain pass-through and have no ledges.
+Rendering samples the same path at interpolated frames. Solid-block motion and per-piece art overrides are
+not part of version 2.
+
+Platforms require standing-body clearance from every block for every loaded fighter, across the full
+continuous path (including between ticks, the closing loop segment, and `global.sim.platformPad`). Contact is allowed; penetration
+is rejected. This rules out platforms under overhangs with less than the tallest fighter's body height of
+clearance. Motion phase is included when resolving spawn support. Spawn bodies and respawn descent/wait
+bodies must clear solids too. Version 1 off-ground spawns without `y` migrate to the old ground height.
+
+Spawn validation checks the body of every loaded fighter against solid geometry, with paths such as
+`spawns[2]`; motion errors identify paths such as `platforms[0].motion.waypoints[1].travelTicks`.
+Internally, surface ids are block indices followed by platform indices offset by `blocks.len()`.
+`StateData::ledge_block` identifies the block throughout hanging and climbing; it is part of the rollback snapshot.

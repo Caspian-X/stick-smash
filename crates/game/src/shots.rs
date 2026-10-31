@@ -205,6 +205,43 @@ impl Script {
                 ed(&mut v, Cmd::Help(true));
                 shot(&mut v, "03n-stage-help");
                 ed(&mut v, Cmd::Help(false));
+                // Format 2: a raised centre between two blocks (inner ledges off) and a platform on a path.
+                ed(
+                    &mut v,
+                    Cmd::EditStage(|s| {
+                        let mut b = s.blocks[0].clone();
+                        let (l, r) = (b.left, b.right);
+                        let (a, z) = (l + 240., r - 240.);
+                        (b.right, b.right_ledge) = (a, false);
+                        let mut c = b.clone();
+                        (c.left, c.right, c.top, c.left_ledge, c.right_ledge) = (a, z, b.top - 40., false, false);
+                        let mut d = b.clone();
+                        (d.left, d.right, d.left_ledge, d.right_ledge) = (z, r, false, true);
+                        s.blocks = vec![b, c, d];
+                        s.platforms[2].motion = Some(sim::data::stage::Motion {
+                            waypoints: vec![
+                                sim::data::stage::Waypoint { x: -170., y: 0., travel_ticks: 150, wait_ticks: 40 },
+                                sim::data::stage::Waypoint { x: 170., y: 0., travel_ticks: 150, wait_ticks: 40 },
+                            ],
+                            mode: sim::data::stage::PathMode::PingPong,
+                            phase: 0,
+                        });
+                    }),
+                );
+                ed(&mut v, Cmd::Symmetry(true));
+                ed(&mut v, Cmd::Part(Some(Part::Block(1))));
+                ed(&mut v, Cmd::Reframe);
+                shot(&mut v, "03o-stage-blocks");
+                ed(&mut v, Cmd::Symmetry(false));
+                ed(&mut v, Cmd::Part(Some(Part::Waypoint(2, 1))));
+                v.push(Step::Wait(90));
+                shot(&mut v, "03p-stage-moving");
+                ed(&mut v, Cmd::Sandbox(2));
+                v.push(Step::Wait(200));
+                shot(&mut v, "03q-stage-moving-sandbox");
+                ed(&mut v, Cmd::Sandbox(0));
+                ed(&mut v, Cmd::Undo);
+                ed(&mut v, Cmd::Part(None));
                 ed(&mut v, Cmd::Mode(editor::Mode::Fighters));
             }
             ed(&mut v, Cmd::Back);

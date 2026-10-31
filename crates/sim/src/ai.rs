@@ -37,7 +37,23 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
     let cfg = &d.global.ai;
     let v = &cfg.thresholds;
     let s = &d.stages[w.stage];
-    let s = &s.ground;
+    let support = if matches!(st, State::Ledge | State::Climb) { Some(f.sd.ledge_block) } else { f.surf };
+    let support = if !f.ground && matches!(st, State::Air | State::Helpless) {
+        o.as_ref().and_then(|o| o.surf).filter(|&id| id < s.blocks.len()).or(support)
+    } else {
+        support
+    };
+    let s = &s.blocks[support.filter(|&i| i < s.blocks.len()).unwrap_or_else(|| {
+        s.blocks
+            .iter()
+            .enumerate()
+            .min_by(|(_, a), (_, b)| {
+                let distance =
+                    |b: &crate::data::stage::Ground| libm::hypot(f.x - f.x.clamp(b.left, b.right), f.y - b.top);
+                distance(a).total_cmp(&distance(b))
+            })
+            .map_or(0, |(i, _)| i)
+    })];
     let mid = (s.left + s.right) / 2.;
     let c = &d.fighters[f.data];
     let mut inp = Intent::default();
@@ -211,8 +227,15 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
         let dy = o.y - f.y;
         let adx = dx.abs();
         let tdir = if dx == 0. { 1. } else { sign(dx) };
-        let pad = v.target_pad.min((s.right - s.left) / 2.);
-        let tx = o.x.clamp(s.left + pad, s.right - pad);
+        let stage = &d.stages[w.stage];
+        let destination = o.surf.filter(|&id| id < stage.blocks.len()).filter(|&id| Some(id) != f.surf);
+        let chase = destination.map_or(s, |id| &stage.blocks[id]);
+        let pad = v.target_pad.min((chase.right - chase.left) / 2.);
+        let tx = o.x.clamp(chase.left + pad, chase.right - pad);
+        if destination.is_some() && f.ground && (f.x - if dx > 0. { s.right } else { s.left }).abs() <= v.target_pad {
+            inp.jump = true;
+            ai.up_t = v.jump_hold;
+        }
         if (tx - f.x).abs() > v.target_deadzone {
             toward(&mut inp, tx - f.x);
         }
@@ -251,7 +274,7 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
             ai.up_t = v.jump_hold;
         }
         if f.ground
-            && f.surf.is_some_and(|s| s != 0)
+            && f.surf.is_some_and(|s| s >= d.stages[w.stage].blocks.len())
             && dy > v.drop_height
             && adx < v.drop_distance
             && w.rng.next_f64() < v.drop_chance

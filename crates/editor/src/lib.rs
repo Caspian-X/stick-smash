@@ -109,6 +109,8 @@ pub enum Cmd {
     Sandbox(usize),
     Grid(bool),
     Symmetry(bool),
+    /// Frame the stage in the viewport.
+    Reframe,
 }
 
 /// A modal dialog.
@@ -263,6 +265,8 @@ pub(crate) enum Drag {
 pub struct Editor {
     pub ws: Workspace,
     pub mode: Mode,
+    /// Undo or redo moved a document this frame: its change isn't a new edit.
+    moved_history: bool,
     /// The stage editor's state.
     pub st: stage_ed::StageEd,
     /// Problems with other content at load (shown, not fatal).
@@ -312,6 +316,7 @@ impl Editor {
         let mut ed = Editor {
             ws,
             mode: Mode::Fighters,
+            moved_history: false,
             st: stage_ed::StageEd::new(&stage),
             load_errors: errors.iter().map(ToString::to_string).collect(),
             cur: String::new(),
@@ -648,6 +653,7 @@ fn frame(
             Cmd::Sandbox(n) => ed.st.set_sandbox(n),
             Cmd::Grid(on) => ed.st.grid = on,
             Cmd::Symmetry(on) => ed.st.symmetry = on,
+            Cmd::Reframe => ed.st.reframe = true,
         }
     }
     ui::run(ctx, &mut ed, &mut scene, time.delta_secs(), &mut out);
@@ -675,6 +681,7 @@ mod tests {
     use super::*;
     use preview::Section;
     use stage_view::Part;
+    const SANDBOX_MAX_TEST: usize = 1;
 
     /// Drives the whole egui layer headlessly through every kind of subject and dialog, a few frames each.
     #[test]
@@ -751,7 +758,15 @@ mod tests {
             ed.st.section = sec;
             frame(&mut ed);
         }
-        for p in [Part::Ground, Part::Platform(1), Part::Spawn(2), Part::Respawn(0), Part::Ledge, Part::Blast] {
+        for p in [
+            Part::Block(0),
+            Part::Platform(1),
+            Part::Waypoint(1, 1),
+            Part::Spawn(2),
+            Part::Respawn(0),
+            Part::Ledge,
+            Part::Blast,
+        ] {
             ed.st.select(Some(p));
             ed.st.grid = true;
             ed.st.symmetry = true;
@@ -781,5 +796,54 @@ mod tests {
         ed.stage_doc().revert();
         ed.leave(false, &mut leave);
         assert!(matches!(leave.request, Some(Request::Back)));
+    }
+
+    fn editor() -> Editor {
+        let assets = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets");
+        Editor::new(EditorConfig { roots: vec![assets.clone()], assets, user_dir: None, dev: false }).unwrap()
+    }
+
+    #[test]
+    fn toolbar_undo_isnt_recorded_as_an_edit() {
+        let mut ed = editor();
+        ed.set_mode(Mode::Stages);
+        ed.stage_doc().edit(|s| s.blocks[0].top -= 10.);
+        // As in a frame: snapshots, then the toolbar's undo, then recording.
+        let (fid, sid) = (ed.cur.clone(), ed.st.cur.clone());
+        let (before, before_stage) = (ed.doc().item.clone(), ed.stage_doc().item.clone());
+        ui::undo(&mut ed, false);
+        ui::record(&mut ed, (&fid, before), (&sid, before_stage), false);
+        let d = ed.stage_doc();
+        assert!(d.can_redo() && !d.can_undo() && !d.dirty(), "undo stays undone and redo stays available");
+    }
+
+    #[test]
+    fn sandbox_survives_geometry_edits_under_the_cpus() {
+        let mut ed = editor();
+        ed.set_mode(Mode::Stages);
+        ed.st.set_sandbox(SANDBOX_MAX_TEST);
+        let mut scene = render::Scene::new(ed.ws.data.clone());
+        let step = |ed: &mut Editor, scene: &mut render::Scene, n: usize| {
+            for _ in 0..n {
+                stage_ed::sync_scene(ed, scene, 1. / 60.);
+            }
+        };
+        step(&mut ed, &mut scene, 600);
+        // Put a CPU on platform 2, then delete every platform and most respawns while it stands there.
+        {
+            let w = ed.st.world.as_mut().unwrap();
+            let p = &ed.ws.data.stage("arena").unwrap().platforms[2];
+            let f = &mut w.fighters[0];
+            (f.x, f.y, f.vx, f.vy, f.ground) = ((p.x1 + p.x2) / 2., p.y, 0., 0., true);
+            f.surf = Some(ed.ws.data.stage("arena").unwrap().blocks.len() + 2);
+        }
+        ed.stage_doc().edit(|s| {
+            s.platforms.clear();
+            s.respawns.truncate(1);
+        });
+        ed.st.stale = true;
+        step(&mut ed, &mut scene, 120);
+        let w = ed.st.world.as_ref().unwrap();
+        assert!(w.fighters.iter().all(|f| f.surf.is_none_or(|i| i < 1)), "the world was rebuilt on the new geometry");
     }
 }

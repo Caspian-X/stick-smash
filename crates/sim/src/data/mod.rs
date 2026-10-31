@@ -23,7 +23,7 @@ pub use moves::{Event, Move, Moves, Phase, Transition, Trigger};
 pub use stage::Stage;
 
 /// Newest `schemaVersion` this build reads. Older files are migrated on load.
-pub const SCHEMA_VERSION: u32 = 1;
+pub const SCHEMA_VERSION: u32 = 2;
 
 /// Everything a match reads. `hash` identifies the exact content, so online peers can check they match.
 #[derive(Clone, Debug)]

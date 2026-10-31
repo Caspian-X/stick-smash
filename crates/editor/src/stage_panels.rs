@@ -72,10 +72,7 @@ pub(crate) fn browser(ui: &mut egui::Ui, ed: &mut Editor) {
             }
             group_label(ui, "Geometry");
             let geo = [
-                (
-                    Section::Ground,
-                    format!("{:.0} × {:.0}", s.ground.right - s.ground.left, s.ground.bottom - s.ground.top),
-                ),
+                (Section::Blocks, format!("{}", s.blocks.len())),
                 (Section::Platforms, format!("{}", s.platforms.len())),
                 (Section::Ledge, format!("r {:.0}", s.ledge.r)),
                 (Section::Bounds, String::new()),
@@ -88,25 +85,49 @@ pub(crate) fn browser(ui: &mut egui::Ui, ed: &mut Editor) {
                 {
                     pick_section = Some(sec);
                 }
-                if sec == Section::Platforms {
-                    for (i, p) in s.platforms.iter().enumerate() {
-                        let part = Part::Platform(i);
-                        let ch = saved.platforms.get(i) != Some(p);
-                        let bad_p = errors.iter().any(|e| under(&e.path, &part.path()));
-                        ui.indent(("st-pl", i), |ui| {
-                            let r = item(
-                                ui,
-                                ed.st.sel == Some(part),
-                                &format!("{}", i + 1),
-                                &format!("{:.0}–{:.0} · y {:.0}", p.x1, p.x2, p.y),
-                                ch,
-                                bad_p,
-                            );
-                            if r.clicked() {
-                                pick_part = Some(part);
-                            }
-                        });
-                    }
+                let rows: Vec<(Part, String, bool)> = match sec {
+                    Section::Blocks => s
+                        .blocks
+                        .iter()
+                        .enumerate()
+                        .map(|(i, b)| {
+                            let ledges = match (b.left_ledge, b.right_ledge) {
+                                (true, true) => "",
+                                (true, false) => " · ledge L",
+                                (false, true) => " · ledge R",
+                                (false, false) => " · no ledges",
+                            };
+                            let txt = format!("{:.0} × {:.0}{ledges}", b.right - b.left, b.bottom - b.top);
+                            (Part::Block(i), txt, saved.blocks.get(i) != Some(b))
+                        })
+                        .collect(),
+                    Section::Platforms => s
+                        .platforms
+                        .iter()
+                        .enumerate()
+                        .map(|(i, p)| {
+                            let path = if p.motion.is_some() { "  ⟳ moves" } else { "" };
+                            let txt = format!("{:.0}–{:.0} · y {:.0}{path}", p.x1, p.x2, p.y);
+                            (Part::Platform(i), txt, saved.platforms.get(i) != Some(p))
+                        })
+                        .collect(),
+                    _ => vec![],
+                };
+                for (part, txt, ch) in rows {
+                    let bad_p = errors.iter().any(|e| under(&e.path, &part.path()));
+                    let on = ed
+                        .st
+                        .sel
+                        .is_some_and(|q| q == part || q.platform().is_some() && q.platform() == part.platform());
+                    ui.indent(("st-row", part.path()), |ui| {
+                        let n = match part {
+                            Part::Block(i) | Part::Platform(i) => i + 1,
+                            _ => 0,
+                        };
+                        if item(ui, on, &format!("{n}"), &txt, ch, bad_p).clicked() {
+                            pick_part = Some(part);
+                        }
+                    });
                 }
             }
             group_label(ui, "Players");
@@ -260,22 +281,61 @@ pub(crate) fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
                     note_list(ui, &notes, "");
                 }
             }
-            Section::Ground => {
-                ui.label(heading("Ground"));
-                ui.label(faint("The main solid block. Its top corners are the grabbable ledges."));
-                errs(ui, &errors, "ground");
-                note_list(ui, &notes, "ground");
-                let g = &mut s.ground;
-                grid(ui, "st-ground", |ui| {
-                    num(ui, "left", "Left wall x", &mut g.left, 1.);
-                    num(ui, "right", "Right wall x", &mut g.right, 1.);
-                    num(ui, "top", "Floor height (y grows down)", &mut g.top, 1.);
-                    num(ui, "bottom", &form::doc("stage.Ground", "bottom"), &mut g.bottom, 1.);
-                    num(ui, "under depth", &form::doc("stage.Ground", "underDepth"), &mut g.under_depth, 1.);
-                    num(ui, "under inset", &form::doc("stage.Ground", "underInset"), &mut g.under_inset, 1.);
+            Section::Blocks => {
+                ui.horizontal(|ui| {
+                    ui.label(heading("Blocks"));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button("+ Add").on_hover_text("A solid block in the middle of the view  B").clicked() {
+                            act = Some((Part::Block(usize::MAX), "add"));
+                        }
+                    });
                 });
+                ui.label(faint(
+                    "Solid ground. Blocks can't overlap (undersides included); touching ones make walls and raised \
+                     centres. Each top corner can be a grabbable ledge.",
+                ));
+                errs(ui, &errors, "blocks");
+                note_list(ui, &notes, "blocks");
+                let n = s.blocks.len();
+                for i in 0..n {
+                    let part = Part::Block(i);
+                    let on = sel == Some(part);
+                    let title = RichText::new(format!("Block {}", i + 1)).color(if on { GOLD } else { STAR });
+                    let g = &mut s.blocks[i];
+                    card(
+                        ui,
+                        on,
+                        title,
+                        |ui| {
+                            ui.horizontal(|ui| {
+                                for (l, v, t) in [
+                                    ("l", &mut g.left, "Left wall x"),
+                                    ("r", &mut g.right, "Right wall x"),
+                                    ("t", &mut g.top, "Top (floor) height; y grows down"),
+                                    ("b", &mut g.bottom, "Bottom of the vertical walls"),
+                                ] {
+                                    ui.label(RichText::new(l).color(DIM));
+                                    num_cell(ui, v, t);
+                                }
+                            });
+                            ui.horizontal(|ui| {
+                                ui.label(RichText::new("under").color(DIM));
+                                num_cell(ui, &mut g.under_depth, &form::doc("stage.Ground", "underDepth"));
+                                num_cell(ui, &mut g.under_inset, &form::doc("stage.Ground", "underInset"));
+                                ui.add_space(6.);
+                                ui.label(RichText::new("ledges").color(DIM));
+                                ui.toggle_value(&mut g.left_ledge, "◧ L").on_hover_text("Top-left corner can be grabbed");
+                                ui.toggle_value(&mut g.right_ledge, "R ◨").on_hover_text("Top-right corner can be grabbed");
+                            });
+                            errs(ui, &errors, &part.path());
+                            note_list(ui, &notes, &part.path());
+                        },
+                        &mut act,
+                        part,
+                    );
+                }
                 ui.add_space(4.);
-                ui.label(faint("Drag its edges or corners in the viewport; drag inside to move it."));
+                ui.label(faint("Drag edges or corners in the viewport; click the teal dots above a selected block's corners to toggle its ledges."));
             }
             Section::Platforms => {
                 ui.horizontal(|ui| {
@@ -290,11 +350,12 @@ pub(crate) fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
                 errs(ui, &errors, "platforms");
                 for (i, p) in s.platforms.iter_mut().enumerate() {
                     let part = Part::Platform(i);
-                    let title =
-                        RichText::new(format!("Platform {}", i + 1)).color(if sel == Some(part) { GOLD } else { STAR });
+                    let on = sel.and_then(Part::platform) == Some(i);
+                    let title = RichText::new(format!("Platform {}", i + 1)).color(if on { GOLD } else { STAR });
+                    let mut mact = None;
                     card(
                         ui,
-                        sel == Some(part),
+                        on,
                         title,
                         |ui| {
                             ui.horizontal(|ui| {
@@ -307,12 +368,14 @@ pub(crate) fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
                                     num_cell(ui, v, t);
                                 }
                             });
+                            motion(ui, i, p, sel, &mut mact);
                             errs(ui, &errors, &part.path());
                             note_list(ui, &notes, &part.path());
                         },
                         &mut act,
                         part,
                     );
+                    act = mact.or(act);
                 }
                 if s.platforms.is_empty() {
                     ui.label(RichText::new("No platforms").color(FAINT));
@@ -361,9 +424,9 @@ pub(crate) fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
                 ui.label(faint(tip("spawns")));
                 errs(ui, &errors, "spawns");
                 note_list(ui, &notes, "spawns");
-                let top = s.ground.top;
                 let n = s.spawns.len();
-                for i in 0..n {
+                let floor: Vec<f64> = s.spawns.iter().map(|sp| crate::stage_view::spawn_y(s, sp)).collect();
+                for (i, &floor) in floor.iter().enumerate().take(n) {
                     let part = Part::Spawn(i);
                     let col = style::rgb(colors.get(i).copied().unwrap_or(0xffffff));
                     let on = sel == Some(part);
@@ -393,7 +456,7 @@ pub(crate) fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
                                         ui.label(RichText::new("ground").color(FAINT));
                                         if mini(ui, "+ set", GOLD, "Start at a height of its own (e.g. on a platform)")
                                         {
-                                            sp.y = Some(top);
+                                            sp.y = Some(floor);
                                         }
                                     }
                                 }
@@ -533,6 +596,11 @@ pub(crate) fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
             stage_ed::duplicate_selected(ed);
         }
         Some((Part::Platform(_), "add")) => stage_ed::add_platform(ed),
+        Some((Part::Block(_), "add")) => stage_ed::add_block(ed),
+        Some((Part::Platform(i), "path")) => {
+            ed.st.select(Some(Part::Platform(i)));
+            stage_ed::add_waypoint(ed);
+        }
         Some((Part::Spawn(_), "add")) => stage_ed::add_spawn(ed, false),
         Some((Part::Respawn(_), "add")) => stage_ed::add_spawn(ed, true),
         _ => {}
@@ -564,6 +632,80 @@ fn optional_form<T: serde::Serialize + serde::de::DeserializeOwned>(
             });
         }
     }
+}
+
+/// A platform's path: mode, phase and its waypoints (offset, travel, wait), or a button to give it one.
+fn motion(
+    ui: &mut egui::Ui,
+    i: usize,
+    p: &mut sim::data::stage::Platform,
+    sel: Option<Part>,
+    act: &mut Option<(Part, &'static str)>,
+) {
+    use sim::data::stage::PathMode;
+    let Some(m) = &mut p.motion else {
+        if mini(ui, "+ make it move", GOLD, "Give it a waypoint path (moving platform)") {
+            *act = Some((Part::Platform(i), "path"));
+        }
+        return;
+    };
+    ui.horizontal(|ui| {
+        ui.label(RichText::new("path").color(DIM));
+        egui::ComboBox::from_id_salt(("st-mode", i))
+            .selected_text(if m.mode == PathMode::Loop { "loop" } else { "ping-pong" })
+            .width(84.)
+            .show_ui(ui, |ui| {
+                ui.selectable_value(&mut m.mode, PathMode::PingPong, "ping-pong")
+                    .on_hover_text("Back and forth, reversing at the ends");
+                ui.selectable_value(&mut m.mode, PathMode::Loop, "loop")
+                    .on_hover_text("The last waypoint travels back to the first");
+            });
+        ui.label(RichText::new("phase").color(DIM));
+        ui.add(DragValue::new(&mut m.phase).speed(1.).suffix(" f")).on_hover_text(form::doc("stage.Motion", "phase"));
+        ui.label(faint(format!("cycle {} f", crate::stage_view::cycle(m))));
+    });
+    let n = m.waypoints.len();
+    let mut del = None;
+    egui::Grid::new(("st-wps", i)).num_columns(6).spacing([6., 3.]).show(ui, |ui| {
+        for t in ["", "x", "y", "travel", "wait", ""] {
+            ui.label(RichText::new(t).color(FAINT).small());
+        }
+        ui.end_row();
+        for (j, w) in m.waypoints.iter_mut().enumerate() {
+            let on = sel == Some(Part::Waypoint(i, j));
+            if ui
+                .add(
+                    egui::Label::new(RichText::new(format!("{}", j + 1)).color(if on { GOLD } else { DIM }))
+                        .sense(egui::Sense::click()),
+                )
+                .on_hover_text("Select this waypoint")
+                .clicked()
+            {
+                *act = Some((Part::Waypoint(i, j), "sel"));
+            }
+            num_cell(ui, &mut w.x, "Offset from the platform's base x");
+            num_cell(ui, &mut w.y, "Offset from the platform's base y (positive is down)");
+            ui.add_sized([style::NUM_W, 20.], DragValue::new(&mut w.travel_ticks).speed(1.).suffix(" f"))
+                .on_hover_text(form::doc("stage.Waypoint", "travelTicks"));
+            ui.add_sized([style::NUM_W, 20.], DragValue::new(&mut w.wait_ticks).speed(1.).suffix(" f"))
+                .on_hover_text(form::doc("stage.Waypoint", "waitTicks"));
+            if n > 2 && mini(ui, style::ICON_DEL, FAINT, "Remove this waypoint") {
+                del = Some(j);
+            }
+            ui.end_row();
+        }
+    });
+    if let Some(j) = del {
+        m.waypoints.remove(j);
+    }
+    ui.horizontal(|ui| {
+        if mini(ui, "+ waypoint", GOLD, "Another stop, after the last one") {
+            *act = Some((Part::Platform(i), "path"));
+        }
+        if mini(ui, "stop moving", FAINT, "Remove the path (the platform stays at its base)") {
+            p.motion = None;
+        }
+    });
 }
 
 fn tip_text(def: &str) -> String {
@@ -613,8 +755,11 @@ pub(crate) fn goto(ed: &mut Editor, path: &str) {
             .and_then(|n| n.parse::<usize>().ok())
     };
     let part = match path.split(['.', '[']).next().unwrap_or("") {
-        "ground" => Some(Part::Ground),
-        "platforms" => idx("platforms").map(Part::Platform),
+        "blocks" => idx("blocks").map(Part::Block),
+        "platforms" => idx("platforms").map(|i| {
+            let wp = path.split("waypoints[").nth(1).and_then(|r| r.split(']').next()).and_then(|n| n.parse().ok());
+            wp.map_or(Part::Platform(i), |j| Part::Waypoint(i, j))
+        }),
         "spawns" => idx("spawns").map(Part::Spawn),
         "respawns" => idx("respawns").map(Part::Respawn),
         "ledge" => Some(Part::Ledge),
@@ -632,6 +777,7 @@ pub(crate) fn goto(ed: &mut Editor, path: &str) {
                 p if p.starts_with("spawns") => Section::Spawns,
                 p if p.starts_with("respawns") => Section::Respawns,
                 p if p.starts_with("platforms") => Section::Platforms,
+                p if p.starts_with("blocks") => Section::Blocks,
                 _ => Section::Overview,
             };
         }

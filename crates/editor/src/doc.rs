@@ -58,8 +58,12 @@ pub fn stage_path(id: &str) -> String {
 pub trait Content: Clone + PartialEq + Serialize + std::fmt::Debug + Sized {
     const KIND: Kind;
     fn path(id: &str) -> String;
-    /// Cross-reference checks (the loader's), on the typed value.
-    fn check(path: &str, v: &Self) -> Vec<ContentError>;
+    /// Cross-reference checks (the loader's), on the typed value, against the rest of the content (stage
+    /// clearance needs the fighters' bodies).
+    fn check(path: &str, v: &Self, data: &GameData) -> Vec<ContentError>;
+    /// Brings an older raw document to the current format (the loader's migration), so saves patch the
+    /// current shape instead of mixing old keys with new ones.
+    fn upgrade(_raw: &mut Value) {}
     fn find<'a>(d: &'a GameData, id: &str) -> Option<&'a Self>;
     fn name(&self) -> &str;
     fn docs(ws: &Workspace) -> &BTreeMap<String, Doc<Self>>;
@@ -92,7 +96,7 @@ impl Content for Fighter {
     fn path(id: &str) -> String {
         fighter_path(id)
     }
-    fn check(path: &str, v: &Self) -> Vec<ContentError> {
+    fn check(path: &str, v: &Self, _: &GameData) -> Vec<ContentError> {
         sim::data::load::check_fighter(path, v).err().into_iter().collect()
     }
     fn find<'a>(d: &'a GameData, id: &str) -> Option<&'a Self> {
@@ -114,8 +118,13 @@ impl Content for Stage {
     fn path(id: &str) -> String {
         stage_path(id)
     }
-    fn check(path: &str, v: &Self) -> Vec<ContentError> {
-        sim::data::load::check_stage(path, v).err().into_iter().collect()
+    fn check(path: &str, v: &Self, data: &GameData) -> Vec<ContentError> {
+        let pad = data.global.sim.platform_pad;
+        sim::data::load::check_stage(path, v, &data.fighters, pad).err().into_iter().collect()
+    }
+    fn upgrade(raw: &mut Value) {
+        // A broken version is the loader's to report; the document stays as it is.
+        let _ = sim::data::load::migrate(raw);
     }
     fn find<'a>(d: &'a GameData, id: &str) -> Option<&'a Self> {
         d.stage(id)
@@ -251,6 +260,8 @@ pub struct Doc<T: Content = Fighter> {
     pub errors: Vec<ContentError>,
     /// Created in the editor and never written: unsaved until the first save.
     pub fresh: bool,
+    /// The content checks run against (fighters for stage clearance).
+    pub ctx: Arc<GameData>,
     undo: Vec<T>,
     redo: Vec<T>,
     /// The last undo step is still growing (a drag or typing in progress).
@@ -260,9 +271,10 @@ pub struct Doc<T: Content = Fighter> {
 const UNDO_LIMIT: usize = 300;
 
 impl<T: Content> Doc<T> {
-    pub fn open(files: &Files, id: &str, item: &T) -> Self {
+    pub fn open(files: &Files, id: &str, item: &T, ctx: Arc<GameData>) -> Self {
         let path = T::path(id);
-        let raw = files.raw(&path).unwrap_or_else(|| Value::Object(Default::default()));
+        let mut raw = files.raw(&path).unwrap_or_else(|| Value::Object(Default::default()));
+        T::upgrade(&mut raw);
         let parent = raw.get("extends").and_then(Value::as_str).and_then(|p| files.resolved(p));
         Doc {
             id: id.into(),
@@ -273,6 +285,7 @@ impl<T: Content> Doc<T> {
             saved: item.clone(),
             errors: vec![],
             fresh: false,
+            ctx,
             undo: vec![],
             redo: vec![],
             open: false,
@@ -345,7 +358,7 @@ impl<T: Content> Doc<T> {
 
     /// Cheap live validation of the merged value.
     pub fn check(&mut self) {
-        self.errors = T::check(&self.path, &self.item);
+        self.errors = T::check(&self.path, &self.item, &self.ctx);
     }
 
     /// The own document with the edits since the last save patched in.
@@ -460,7 +473,7 @@ impl Workspace {
     pub fn open<T: Content>(&mut self, id: &str) -> Option<&mut Doc<T>> {
         if !T::docs(self).contains_key(id) {
             let item = T::find(&self.data, id)?;
-            let doc = Doc::open(&self.files, id, item);
+            let doc = Doc::open(&self.files, id, item, self.data.clone());
             T::docs_mut(self).insert(id.into(), doc);
         }
         T::docs_mut(self).get_mut(id)
@@ -546,7 +559,7 @@ impl Workspace {
             return Err(e.to_string());
         }
         let item = T::find(&data, id).ok_or(format!("The new {} didn't load", T::KIND.noun()))?;
-        let mut doc = Doc::open(&files, id, item);
+        let mut doc = Doc::open(&files, id, item, self.data.clone());
         doc.fresh = true;
         T::docs_mut(self).insert(id.into(), doc);
         Ok(())
@@ -638,10 +651,14 @@ impl Workspace {
         doc.saved = doc.item.clone();
         doc.fresh = false;
         self.data = Arc::new(*data);
-        // Children of this package see the new parent.
+        // Children of this package see the new parent; checks see the saved content.
         let files = &self.files;
         for d in self.docs.values_mut() {
             d.parent = d.raw.get("extends").and_then(Value::as_str).and_then(|p| files.resolved(p));
+            d.ctx = self.data.clone();
+        }
+        for d in self.stages.values_mut() {
+            d.ctx = self.data.clone();
         }
         self.saves += 1;
     }
@@ -824,14 +841,14 @@ mod tests {
         let before = doc.raw.clone();
         doc.edit(|s| {
             s.platforms[0].y -= 20.;
-            s.ground.left -= 10.;
+            s.blocks[0].left -= 10.;
             s.art.edge = sim::data::Color::Rgb(0x112233);
         });
         assert!(doc.dirty() && doc.errors.is_empty());
         let patched = doc.patched();
         assert_eq!(patched["$schema"], before["$schema"]);
-        assert_eq!(patched["ground"]["left"], 290.);
-        assert_eq!(patched["ground"]["right"], before["ground"]["right"]);
+        assert_eq!(patched["blocks"][0]["left"], 290.);
+        assert_eq!(patched["blocks"][0]["right"], before["blocks"][0]["right"]);
         assert_eq!(patched["art"]["edge"], "#112233");
         for k in ["spawns", "respawns", "blast", "camera", "ledge"] {
             assert_eq!(patched[k], before[k], "{k} changed");
@@ -843,7 +860,7 @@ mod tests {
         assert!(changed <= 3, "{diff:#?}");
         ws.saved::<Stage>("arena", text, data);
         assert!(!ws.stage("arena").unwrap().dirty());
-        assert_eq!(ws.data.stage("arena").unwrap().ground.left, 290.);
+        assert_eq!(ws.data.stage("arena").unwrap().blocks[0].left, 290.);
         // Invalid geometry is caught live and refused.
         let doc = ws.stage("arena").unwrap();
         doc.edit(|s| s.platforms[0].x2 = s.platforms[0].x1 - 1.);
@@ -858,12 +875,12 @@ mod tests {
         assert!(ws.new_stage("arena", "", "arena").is_err());
         assert!(ws.new_stage("x", "", "nowhere").is_err());
         // Duplicating carries unsaved edits along.
-        ws.stage("arena").unwrap().edit(|s| s.ground.top = 500.);
+        ws.stage("arena").unwrap().edit(|s| s.blocks[0].top = 500.);
         ws.new_stage("sky", "Sky", "arena").unwrap();
         assert_eq!(slug("Sky Fortress!"), "sky-fortress");
         let doc = ws.stage("sky").unwrap();
         assert!(doc.fresh && doc.dirty());
-        assert_eq!((doc.item.name.as_str(), doc.item.id.as_str(), doc.item.ground.top), ("Sky", "sky", 500.));
+        assert_eq!((doc.item.name.as_str(), doc.item.id.as_str(), doc.item.blocks[0].top), ("Sky", "sky", 500.));
         assert!(ws.stage_list().iter().any(|(id, name, dirty)| id == "sky" && name == "Sky" && *dirty));
         assert!(ws.live_data().stage("sky").is_some());
         assert_eq!(ws.dirty().len(), 2);
@@ -886,7 +903,7 @@ mod tests {
         assert_eq!(ws.stage("arena").unwrap().item.name, "Arena");
         assert!(ws.rename_stage("arena", "arena2", "Arena").is_err(), "saved stages keep their folder");
         ws.new_stage("draft", "Draft", "arena").unwrap();
-        ws.stage("draft").unwrap().edit(|s| s.ground.top -= 5.);
+        ws.stage("draft").unwrap().edit(|s| s.blocks[0].top -= 5.);
         ws.rename_stage("draft", "final", "Final").unwrap();
         assert!(!ws.stages.contains_key("draft"));
         let doc = ws.stage("final").unwrap();
@@ -896,5 +913,38 @@ mod tests {
         assert_eq!(doc.item.id, "final", "history follows the new id");
         assert!(ws.live_data().stage("final").is_some());
         let Saved::Ok { .. } = ws.prepare_save::<Stage>("final") else { panic!("save refused") };
+    }
+
+    /// A user stage still in format 1 (`ground`): saving writes format 2 without stale keys, and reloads as edited.
+    #[test]
+    fn v1_user_stages_save_as_v2() {
+        let mut files = files();
+        let mut v: Value = serde_json::from_str(&files.0[&stage_path("arena")]).unwrap();
+        let m = v.as_object_mut().unwrap();
+        let blocks = m.shift_remove("blocks").unwrap();
+        let mut ground = blocks[0].clone();
+        ground.as_object_mut().unwrap().retain(|k, _| !k.ends_with("Ledge"));
+        m.insert("schemaVersion".into(), 1.into());
+        m.insert("ground".into(), ground);
+        files.0.insert(stage_path("old"), to_compact_string(&v));
+        let (mut ws, errors) = Workspace::new(files).unwrap();
+        assert!(errors.is_empty(), "{errors:?}");
+        let doc = ws.stage("old").unwrap();
+        assert_eq!(doc.raw["schemaVersion"], 2, "the baseline is migrated");
+        assert!(doc.raw.get("ground").is_none());
+        doc.edit(|s| {
+            s.blocks[0].right_ledge = false;
+            s.blocks[0].top -= 20.;
+        });
+        let Saved::Ok { text, data } = ws.prepare_save::<Stage>("old") else { panic!("save refused") };
+        let saved: Value = serde_json::from_str(&text).unwrap();
+        assert_eq!(saved["schemaVersion"], 2);
+        assert!(saved.get("ground").is_none(), "no stale ground next to blocks");
+        assert_eq!(saved["$schema"], v["$schema"]);
+        assert_eq!(saved["blocks"][0]["rightLedge"], false);
+        assert_eq!(saved["spawns"], v["spawns"], "unrelated fields stay as written");
+        ws.saved::<Stage>("old", text.clone(), data);
+        let (d, _) = load(ws.files.sources()).unwrap();
+        assert_eq!(d.stage("old").unwrap(), &ws.stage("old").unwrap().item);
     }
 }

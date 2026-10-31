@@ -39,7 +39,7 @@ The 5 TS kinds (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) ar
 - **Hurtboxes:** per fighter, with default and knockdown groups. Crouch and ledge groups are future work.
 
 ### Stages
-`stage.json`: solid ground + pass-through platforms, underside shape, ledges (grab zones), blast zones, camera bounds, and spawn/respawn points for up to 8 players. The current stage converts as-is. Bigger stages come later.
+`stage.json` (version 2): multiple static solid blocks with tapered undersides and independent top-corner ledges, pass-through platforms with optional frame-based waypoint motion, shared art and ledge zones, blast/camera bounds, and spawn/respawn points for up to 8 players. Version 1 ground migrates to a block with both ledges enabled. See FORMAT.md for motion timing and geometry constraints.
 
 ### Input
 - Sim input = raw per-player state: quantized stick `(i8, i8)` + button bitflags. The sim derives presses, taps (smash input) and short hops from its own per-fighter input history, which is part of `World` so rollback stays correct.
@@ -152,12 +152,17 @@ feel. Its own design, not a port of the TS panels.
   `Doc<T: Content>` covers both kinds. The viewport is the real renderer on a preview `World` of the edited stage
   (art and backdrop included; render rebuilds its static layers when `Scene::data` changes), optionally with 1–4
   CPUs playing on it through the real sim (training rules; edits apply to the running sandbox). Direct manipulation
-  works on generic shapes (`stage_view::Shape`: rect sides/corners, segment ends, points): ground edges and
-  corners, platforms (move, resize ends; add, duplicate, delete), spawns (slot numbers in player colors, click the
+  works on generic shapes (`stage_view::Shape`: rect sides/corners, segment ends, points): blocks (edges, corners,
+  per-corner ledge toggles above a selected block; add, duplicate, delete), platforms (move, resize ends; add,
+  duplicate, delete) and their motion waypoints (point handles, the path and ghosts drawn; mode, phase, travel and
+  wait in the inspector; a play / scrub clock so motion shows with the sandbox off), spawns (slot numbers in player colors, click the
   facing arrow to flip) and respawns (platform and start height), blast and camera bounds as dashed rects, the
   ledge zones (rim sets the radius). Default snapping is whole pixels, Shift (or the Grid toggle) snaps to the grid,
   Alt is 0.1 px. Symmetry mirrors edits around `width / 2`: a dragged part's mirror partner (found by geometry) gets
-  the mirror image, and a centred part stays centred. The inspector is hand-made for geometry and uses schema forms
+  the mirror image (blocks swap left/right ledges, platform paths mirror), a centred part stays centred and can't be
+  dragged past the axis, and list elements without a reflection are left alone. Deleting a mirrored pair is checked
+  as a whole. The sandbox World is rebuilt on any geometry or slot change (keeping its clock). Format-1 documents
+  are migrated before they become the save baseline, so saves never mix `ground` with `blocks`. The inspector is hand-made for geometry and uses schema forms
   (with colour pickers) for art and the backdrop. Problems are the loader's `check_stage`; notes flag legal but
   likely-wrong setups (fewer than 8 spawns, spawns in the air, geometry past the blast zone, KOs off camera). New
   stages copy a template stage (unsaved edits included) as a whole file; only never-saved stages can change id.

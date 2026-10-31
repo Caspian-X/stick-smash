@@ -317,7 +317,7 @@ function diff(value, base) {
 async function write(path, kind, value) {
   const file = resolve(root, 'assets', path);
   await mkdir(resolve(file, '..'), { recursive: true });
-  await writeFile(file, JSON.stringify(clean({ $schema: path === 'global.json' ? 'schema/global.schema.json' : `../../schema/${kind}.schema.json`, schemaVersion: 1, ...value }), null, 2) + '\n');
+  await writeFile(file, JSON.stringify(clean({ $schema: path === 'global.json' ? 'schema/global.schema.json' : `../../schema/${kind}.schema.json`, schemaVersion: kind === 'stage' ? 2 : 1, ...value }), null, 2) + '\n');
   console.log(`Wrote assets/${path}`);
 }
 const global = structuredClone(g);
@@ -332,7 +332,7 @@ global.palette = [
 await write('global.json', 'global', global);
 await write('stages/arena/stage.json', 'stage', {
   name: 'Arena', width: stage.WORLD_W, height: stage.WORLD_H,
-  ground: { left: stage.STAGE.L, right: stage.STAGE.R, top: stage.STAGE.top, bottom: stage.STAGE.bot, underDepth: stage.UNDER.depth, underInset: stage.UNDER.inset },
+  blocks: [{ left: stage.STAGE.L, right: stage.STAGE.R, top: stage.STAGE.top, bottom: stage.STAGE.bot, underDepth: stage.UNDER.depth, underInset: stage.UNDER.inset, leftLedge: true, rightLedge: true }],
   platforms: stage.PLATS, ledge: stage.LEDGE,
   blast: { left: stage.BLAST.L, right: stage.BLAST.R, top: stage.BLAST.T, bottom: stage.BLAST.B },
   camera: { left: -1400, right: 2700, top: -900, bottom: 1500 },

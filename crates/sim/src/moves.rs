@@ -244,7 +244,7 @@ pub fn ground_actions(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, in
         start_move(w, d, i, f, slot);
     } else if inp.jump {
         f.set_state(State::Jumpsquat);
-    } else if inp.down_p && f.surf.is_some_and(|n| n != 0) {
+    } else if inp.down_p && f.surf.is_some_and(|n| n >= d.stages[w.stage].blocks.len()) {
         f.drop = mv.platform_drop;
         f.ground = false;
         f.surf = None;

@@ -129,24 +129,7 @@ pub(crate) fn run(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::Scen
     dialogs(ctx, ed, out);
     toasts(ctx, ed, dt);
     let ongoing = ctx.input(|i| i.pointer.any_down()) || ctx.egui_wants_keyboard_input();
-    if ed.cur == fid {
-        let doc = ed.doc();
-        if doc.item != before {
-            doc.changed(before, ongoing);
-            ed.stale = true;
-        } else if !ongoing {
-            doc.close_step();
-        }
-    }
-    if ed.st.cur == sid {
-        let doc = ed.stage_doc();
-        if doc.item != before_stage {
-            doc.changed(before_stage, ongoing);
-            ed.st.stale = true;
-        } else if !ongoing {
-            doc.close_step();
-        }
-    }
+    record(ed, (&fid, before), (&sid, before_stage), ongoing);
     if ed.setup != setup {
         ed.stale = true;
     }
@@ -163,6 +146,39 @@ pub(crate) fn run(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::Scen
     }
 }
 
+/// Turns this frame's widget edits of the current documents into undo steps (`ongoing`: a drag or typing that
+/// later frames join). Snapshots of a document that was switched away from mid-frame don't apply.
+pub(crate) fn record(
+    ed: &mut Editor,
+    (fid, before): (&str, sim::data::Fighter),
+    (sid, before_stage): (&str, sim::data::Stage),
+    ongoing: bool,
+) {
+    // Undo / redo from the toolbar ran after the snapshots: their change is history, not a new edit.
+    let history = std::mem::take(&mut ed.moved_history);
+    if history {
+        ed.stale = true;
+        ed.st.stale = true;
+    } else if ed.cur == *fid {
+        let doc = ed.doc();
+        if doc.item != before {
+            doc.changed(before, ongoing);
+            ed.stale = true;
+        } else if !ongoing {
+            doc.close_step();
+        }
+    }
+    if !history && ed.st.cur == *sid {
+        let doc = ed.stage_doc();
+        if doc.item != before_stage {
+            doc.changed(before_stage, ongoing);
+            ed.st.stale = true;
+        } else if !ongoing {
+            doc.close_step();
+        }
+    }
+}
+
 pub(crate) fn toggle_play(ed: &mut Editor) {
     ed.playing = !ed.playing;
     if ed.playing && ed.frame + 1 >= ed.frames() {
@@ -171,6 +187,7 @@ pub(crate) fn toggle_play(ed: &mut Editor) {
 }
 
 pub(crate) fn undo(ed: &mut Editor, redo: bool) {
+    ed.moved_history = true;
     let can = match ed.mode {
         Mode::Fighters => {
             let d = ed.doc();
@@ -437,7 +454,7 @@ fn stage_shortcuts(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
     }
     if k(Key::Tab) {
         let s = &ed.ws.stages[&ed.st.cur].item;
-        let mut parts = vec![stage_view::Part::Ground];
+        let mut parts: Vec<stage_view::Part> = (0..s.blocks.len()).map(stage_view::Part::Block).collect();
         parts.extend((0..s.platforms.len()).map(stage_view::Part::Platform));
         parts.extend((0..s.spawns.len()).map(stage_view::Part::Spawn));
         parts.extend((0..s.respawns.len()).map(stage_view::Part::Respawn));

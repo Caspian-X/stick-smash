@@ -93,18 +93,6 @@ pub fn load(files: impl IntoIterator<Item = Source>) -> Result<(GameData, Vec<Co
     }
     let mut hashed = vec![("global".to_string(), gv)];
 
-    let mut stages = Vec::new();
-    for (id, path, v) in raw_stages {
-        match typed::<Stage>(&path, &v).and_then(|s| check_stage(&path, &s).map(|()| s)) {
-            Ok(mut s) => {
-                s.id = id.clone();
-                hashed.push((format!("stage:{id}"), v));
-                stages.push(s);
-            }
-            Err(e) => errors.push(e),
-        }
-    }
-
     let mut fighters = Vec::new();
     for (id, (path, _)) in &raw_fighters {
         let merged = match resolve(id, &raw_fighters, &mut Vec::new()) {
@@ -122,6 +110,20 @@ pub fn load(files: impl IntoIterator<Item = Source>) -> Result<(GameData, Vec<Co
                 f.id = id.clone();
                 hashed.push((format!("fighter:{id}"), merged));
                 fighters.push(f);
+            }
+            Err(e) => errors.push(e),
+        }
+    }
+
+    let mut stages = Vec::new();
+    for (id, path, v) in raw_stages {
+        match typed::<Stage>(&path, &v)
+            .and_then(|s| check_stage(&path, &s, &fighters, global.sim.platform_pad).map(|()| s))
+        {
+            Ok(mut s) => {
+                s.id = id.clone();
+                hashed.push((format!("stage:{id}"), v));
+                stages.push(s);
             }
             Err(e) => errors.push(e),
         }
@@ -146,10 +148,36 @@ fn parse(path: &str, text: &str) -> Result<Value, ContentError> {
 }
 
 /// Upgrades older files in place. Each future format change adds a step here.
-fn migrate(v: &mut Value) -> Result<(), String> {
+pub fn migrate(v: &mut Value) -> Result<(), String> {
     let ver = v.get("schemaVersion").and_then(Value::as_u64).ok_or("missing or not a number")?;
     if ver == 0 || ver > u64::from(SCHEMA_VERSION) {
         return Err(format!("version {ver} isn't supported (this build reads 1 to {SCHEMA_VERSION})"));
+    }
+    if ver == 1
+        && let Some(obj) = v.as_object_mut()
+        && let Some(mut ground) = obj.shift_remove("ground")
+    {
+        if let Some(g) = ground.as_object_mut() {
+            g.insert("leftLedge".into(), Value::Bool(true));
+            g.insert("rightLedge".into(), Value::Bool(true));
+        }
+        if let (Some(left), Some(right), Some(top), Some(spawns)) = (
+            ground.get("left").and_then(Value::as_f64),
+            ground.get("right").and_then(Value::as_f64),
+            ground.get("top").cloned(),
+            obj.get_mut("spawns").and_then(Value::as_array_mut),
+        ) {
+            for spawn in spawns {
+                if spawn.get("y").is_none()
+                    && spawn.get("x").and_then(Value::as_f64).is_some_and(|x| x < left || x > right)
+                    && let Some(spawn) = spawn.as_object_mut()
+                {
+                    spawn.insert("y".into(), top.clone());
+                }
+            }
+        }
+        obj.insert("blocks".into(), Value::Array(vec![ground]));
+        obj.insert("schemaVersion".into(), Value::from(2));
     }
     Ok(())
 }
@@ -186,12 +214,11 @@ fn resolve(id: &str, raw: &BTreeMap<String, (String, Value)>, chain: &mut Vec<St
     Ok(base)
 }
 
-/// Checks serde can't do on a stage. [`load`] runs these; the editor runs them on every edit.
-pub fn check_stage(file: &str, s: &Stage) -> Result<(), ContentError> {
+/// Checks serde can't do on a stage (clearance needs the fighters' bodies). [`load`] runs these; the editor runs
+/// them on every edit.
+pub fn check_stage(file: &str, s: &Stage, fighters: &[Fighter], platform_pad: f64) -> Result<(), ContentError> {
     positive(file, "width", s.width)?;
     positive(file, "height", s.height)?;
-    positive(file, "ground.underDepth", s.ground.under_depth)?;
-    positive(file, "ground.underInset", s.ground.under_inset)?;
     positive(file, "ledge.r", s.ledge.r)?;
     for (name, b) in [("blast", &s.blast), ("camera", &s.camera)] {
         if b.left >= b.right || b.top >= b.bottom {
@@ -203,9 +230,143 @@ pub fn check_stage(file: &str, s: &Stage) -> Result<(), ContentError> {
             return Err(err(file, format!("spawns[{i}].face"), "must be -1 or 1"));
         }
     }
-    let g = &s.ground;
-    if g.left >= g.right || g.top >= g.bottom {
-        return Err(err(file, "ground", "needs left < right and top < bottom"));
+    if s.blocks.is_empty() {
+        return Err(err(file, "blocks", "needs at least one solid block"));
+    }
+    for (i, g) in s.blocks.iter().enumerate() {
+        let path = format!("blocks[{i}]");
+        if g.left >= g.right || g.top >= g.bottom {
+            return Err(err(file, &path, "needs left < right and top < bottom"));
+        }
+        positive(file, &format!("{path}.underDepth"), g.under_depth)?;
+        positive(file, &format!("{path}.underInset"), g.under_inset)?;
+        if g.under_inset > (g.right - g.left) / 2. {
+            return Err(err(file, format!("{path}.underInset"), "must not exceed half the block width"));
+        }
+        for (j, b) in s.blocks[..i].iter().enumerate() {
+            if g.left < b.right
+                && g.right > b.left
+                && g.top < b.bottom + b.under_depth
+                && g.bottom + g.under_depth > b.top
+            {
+                return Err(err(file, &path, format!("solid bounds overlap blocks[{j}] (including underside)")));
+            }
+        }
+    }
+    for (i, g) in s.blocks.iter().enumerate() {
+        for (field, enabled, x) in [("leftLedge", g.left_ledge, g.left), ("rightLedge", g.right_ledge, g.right)] {
+            if !enabled {
+                continue;
+            }
+            for (j, b) in s.blocks.iter().enumerate() {
+                let bottom = b.bottom + ((x - b.left).min(b.right - x) / b.under_inset).clamp(0., 1.) * b.under_depth;
+                if i != j && x >= b.left && x <= b.right && g.top >= b.top && g.top <= bottom {
+                    return Err(err(
+                        file,
+                        format!("blocks[{i}].{field}"),
+                        format!("corner is covered by blocks[{j}]; disable this ledge"),
+                    ));
+                }
+                if i != j
+                    && fighters.iter().any(|f| {
+                        b.intersects_body(
+                            x + if field == "leftLedge" { -s.ledge.hang_x } else { s.ledge.hang_x },
+                            g.top + s.ledge.hang_y,
+                            f.body.half_width,
+                            f.body.height,
+                        )
+                    })
+                {
+                    return Err(err(
+                        file,
+                        format!("blocks[{i}].{field}"),
+                        format!("hanging body intersects blocks[{j}]"),
+                    ));
+                }
+            }
+        }
+    }
+    for (i, sp) in s.spawns.iter().enumerate() {
+        let y =
+            sp.y.or_else(|| s.spawn_y(sp.x))
+                .ok_or_else(|| err(file, format!("spawns[{i}].y"), "required when x is not over a block"))?;
+        for fighter in fighters {
+            let body = &fighter.body;
+            for (j, b) in s.blocks.iter().enumerate() {
+                if b.intersects_body(sp.x, y, body.half_width, body.height) {
+                    return Err(err(
+                        file,
+                        format!("spawns[{i}]"),
+                        format!("{} body intersects blocks[{j}]", fighter.id),
+                    ));
+                }
+            }
+        }
+    }
+    for (i, p) in s.platforms.iter().enumerate() {
+        if let Some(m) = &p.motion {
+            let path = format!("platforms[{i}].motion.waypoints");
+            if m.waypoints.len() < 2 {
+                return Err(err(file, &path, "needs at least two waypoints"));
+            }
+            for (j, point) in m.waypoints.iter().enumerate() {
+                if point.travel_ticks == 0
+                    && !(m.mode == super::stage::PathMode::PingPong && j + 1 == m.waypoints.len())
+                {
+                    return Err(err(file, format!("{path}[{j}].travelTicks"), "must be positive"));
+                }
+            }
+        }
+    }
+    for (i, p) in s.platforms.iter().enumerate() {
+        let points: Vec<_> =
+            p.motion.as_ref().map_or_else(|| vec![(0., 0.)], |m| m.waypoints.iter().map(|p| (p.x, p.y)).collect());
+        let segments = if p.motion.as_ref().is_some_and(|m| m.mode == super::stage::PathMode::PingPong) {
+            points.len() - 1
+        } else {
+            points.len()
+        };
+        for k in 0..segments {
+            let (a, b) = (points[k], points[(k + 1) % points.len()]);
+            for (j, block) in s.blocks.iter().enumerate() {
+                for f in fighters {
+                    let rect = [
+                        p.x1 + a.0 - f.body.half_width - platform_pad,
+                        p.y + a.1 - f.body.height,
+                        p.x2 + a.0 + f.body.half_width + platform_pad,
+                        p.y + a.1,
+                    ];
+                    if block.intersects_sweep(rect, [b.0 - a.0, b.1 - a.1]) {
+                        return Err(err(
+                            file,
+                            format!("platforms[{i}]"),
+                            format!("path lacks body clearance from blocks[{j}] for {}", f.id),
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    for (i, point) in s.respawns.iter().enumerate() {
+        for (j, block) in s.blocks.iter().enumerate() {
+            for f in fighters {
+                if block.intersects_sweep(
+                    [
+                        point.x - f.body.half_width,
+                        point.start_y - f.body.height,
+                        point.x + f.body.half_width,
+                        point.start_y,
+                    ],
+                    [0., point.end_y - point.start_y],
+                ) {
+                    return Err(err(
+                        file,
+                        format!("respawns[{i}]"),
+                        format!("descending body intersects blocks[{j}] for {}", f.id),
+                    ));
+                }
+            }
+        }
     }
     if s.spawns.is_empty() {
         return Err(err(file, "spawns", "needs at least one spawn"));

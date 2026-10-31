@@ -104,8 +104,9 @@ pub(crate) fn viewport(ui: &mut egui::Ui, ed: &mut Editor) {
                 ed.st.cam.center[1] -= f64::from(d.y) * px;
             }
             Drag::Part { .. } => {
-                if let Some(m) = resp.interact_pointer_pos().map(|p| to_stage(ed, p)) {
-                    stage_ed::drag_to(ed, &drag, m, sn);
+                if let Some(m) = resp.interact_pointer_pos().map(|p| to_stage(ed, p))
+                    && stage_ed::drag_to(ed, &drag, m, sn)
+                {
                     ed.st.stale = true;
                 }
             }
@@ -118,8 +119,10 @@ pub(crate) fn viewport(ui: &mut egui::Ui, ed: &mut Editor) {
         match ed.st.hover {
             Some(h) => {
                 ed.st.select(Some(h.part));
-                if let (Grip::Face, Part::Spawn(i)) = (h.grip, h.part) {
-                    stage_ed::flip(ed, i);
+                match (h.grip, h.part) {
+                    (Grip::Face, Part::Spawn(i)) => stage_ed::flip(ed, i),
+                    (Grip::Ledge(right), Part::Block(i)) => stage_ed::toggle_ledge(ed, i, right),
+                    _ => {}
                 }
             }
             None => ed.st.sel = None,
@@ -138,7 +141,7 @@ pub(crate) fn viewport(ui: &mut egui::Ui, ed: &mut Editor) {
         },
         (_, Some(Grip::End(_))) => egui::CursorIcon::ResizeHorizontal,
         (_, Some(Grip::Start)) => egui::CursorIcon::ResizeVertical,
-        (_, Some(Grip::Face)) => egui::CursorIcon::PointingHand,
+        (_, Some(Grip::Face | Grip::Ledge(_))) => egui::CursorIcon::PointingHand,
         (_, Some(Grip::Rim)) => egui::CursorIcon::ResizeHorizontal,
         (_, Some(Grip::Move)) => egui::CursorIcon::Move,
         _ => egui::CursorIcon::Default,
@@ -225,7 +228,12 @@ fn chrome(ui: &mut egui::Ui, ed: &mut Editor, rect: Rect, stage: &sim::data::Sta
     });
     let sand = Rect::from_min_size(rect.left_bottom() + egui::vec2(10., -68.), egui::vec2(rect.width() - 20., 30.));
     ui.scope_builder(UiBuilder::new().max_rect(sand), |ui| {
-        ui.horizontal(|ui| pill(ui, |ui| sandbox_bar(ui, ed)));
+        ui.horizontal(|ui| {
+            pill(ui, |ui| sandbox_bar(ui, ed));
+            if stage.platforms.iter().any(|p| p.motion.is_some()) {
+                pill(ui, |ui| clock_bar(ui, ed, stage));
+            }
+        });
     });
     let errors = ed.ws.stages.get(&ed.st.cur).map(|d| d.errors.clone()).unwrap_or_default();
     if let Some(e) = errors.first() {
@@ -264,7 +272,11 @@ fn chrome(ui: &mut egui::Ui, ed: &mut Editor, rect: Rect, stage: &sim::data::Sta
         (_, Some(Grip::Rim)) => &[("drag", "grab radius")],
         (_, Some(Grip::Move)) => &[("click", "select"), ("drag", "move")],
         (_, Some(_)) => &[("drag", "resize"), ("⇧", "snap"), ("Alt", "fine")],
-        _ if matches!(ed.st.sel, Some(Part::Platform(_) | Part::Spawn(_) | Part::Respawn(_))) => {
+        _ if matches!(
+            ed.st.sel,
+            Some(Part::Block(_) | Part::Platform(_) | Part::Waypoint(..) | Part::Spawn(_) | Part::Respawn(_))
+        ) =>
+        {
             &[("Alt ←→↑↓", "nudge"), ("⌘D", "duplicate"), ("Del", "delete")]
         }
         _ if ed.st.sel.is_some() => &[("drag", "edges and corners"), ("Alt ←→↑↓", "nudge")],
@@ -303,8 +315,20 @@ fn chrome(ui: &mut egui::Ui, ed: &mut Editor, rect: Rect, stage: &sim::data::Sta
 fn add_pill(ui: &mut egui::Ui, ed: &mut Editor) {
     pill(ui, |ui| {
         ui.label(caps("Add"));
+        if ui.button("Block").on_hover_text("A solid block in the middle of the view  B").clicked() {
+            stage_ed::add_block(ed);
+        }
         if ui.button("Platform").on_hover_text("A platform in the middle of the view  N").clicked() {
             stage_ed::add_platform(ed);
+        }
+        let plat = ed.st.sel.and_then(Part::platform).is_some();
+        if ui
+            .add_enabled(plat, egui::Button::new("Waypoint"))
+            .on_hover_text("Make the selected platform move, or add a stop to its path  W")
+            .on_disabled_hover_text("Select a platform to give it a path")
+            .clicked()
+        {
+            stage_ed::add_waypoint(ed);
         }
         if ui.button("Spawn").on_hover_text("Another start position (one per player)").clicked() {
             stage_ed::add_spawn(ed, false);
@@ -316,6 +340,28 @@ fn add_pill(ui: &mut egui::Ui, ed: &mut Editor) {
 }
 
 const LEVELS: [&str; 3] = ["Easy", "Normal", "Hard"];
+
+/// Play / scrub the moving platforms' clock (shown when the stage has any).
+fn clock_bar(ui: &mut egui::Ui, ed: &mut Editor, stage: &sim::data::Stage) {
+    let cycle = stage.platforms.iter().filter_map(|p| p.motion.as_ref()).map(stage_view::cycle).max().unwrap_or(0);
+    let Some(frame) = ed.st.world.as_ref().map(|w| w.frame) else { return };
+    ui.label(caps("Motion"));
+    let running = ed.st.sandbox > 0 && !ed.st.paused;
+    let icon = if ed.st.clock_play || running { "⏸" } else { "▶" };
+    if ui
+        .add_enabled(ed.st.sandbox == 0, egui::Button::new(icon))
+        .on_hover_text("Play the moving platforms  T")
+        .clicked()
+    {
+        ed.st.clock_play = !ed.st.clock_play;
+    }
+    let mut t = frame % cycle.max(1);
+    let r =
+        ui.add_enabled(cycle > 0, egui::Slider::new(&mut t, 0..=cycle.saturating_sub(1)).suffix(" f").show_value(true));
+    if r.on_hover_text("Scrub the platforms' cycle (world frame)").changed() {
+        ed.st.scrub = Some(frame - frame % cycle.max(1) + t);
+    }
+}
 
 fn sandbox_bar(ui: &mut egui::Ui, ed: &mut Editor) {
     ui.label(caps("Sandbox"));
