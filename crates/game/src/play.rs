@@ -90,6 +90,8 @@ pub struct Match {
     pub sounds: Vec<sim::Fx>,
     pub recording: Option<crate::replay::Replay>,
     pub recording_done: bool,
+    /// Never record (editor test matches, rematches included), so tests don't evict real auto-saves.
+    pub unrecorded: bool,
     pub playback: Option<crate::replay::Playback>,
 }
 
@@ -156,6 +158,7 @@ impl Match {
             sounds: Vec::new(),
             recording,
             recording_done: false,
+            unrecorded: false,
             playback: None,
         })
     }
@@ -166,11 +169,19 @@ impl Match {
         m.dummy = self.dummy.clone();
         m.debug = self.debug;
         m.speed = self.speed;
+        if self.unrecorded {
+            m.unrecord();
+        }
         *self = m;
         self.apply_dummy();
         if self.mode == Mode::Training && self.world.fighters.len() > 1 {
             self.world.fighters[1].dmg = self.dummy.reset_pct;
         }
+    }
+
+    pub fn unrecord(&mut self) {
+        self.unrecorded = true;
+        self.recording = None;
     }
 
     pub fn apply_dummy(&mut self) {

@@ -62,9 +62,7 @@ pub(crate) fn sync_scene(ed: &mut Editor, scene: &mut render::Scene, dt: f32) {
     scene.bottom_safe_area = 0.;
     scene.fixed_view = Some(ed.cam.window_view(&ed.port));
     scene.pose_override = match &ed.subject {
-        Subject::Pose(n) => {
-            ed.ws.docs.get(&ed.cur).and_then(|d| d.fighter.poses.get(n).map(|p| (0, resolve(&d.fighter, p))))
-        }
+        Subject::Pose(n) => ed.ws.docs.get(&ed.cur).and_then(|d| d.item.poses.get(n).map(|p| (0, resolve(&d.item, p)))),
         _ => None,
     };
     if ed.frame != ed.followed {
@@ -82,7 +80,7 @@ pub(crate) fn sync_scene(ed: &mut Editor, scene: &mut render::Scene, dt: f32) {
 pub(crate) fn playhead_boxes(ed: &Editor) -> Option<(Fighter, usize, u32, Vec<Hitbox>)> {
     let Subject::Move(slot) = &ed.subject else { return None };
     let (f, Some((p, t))) = at_playhead(ed)? else { return None };
-    let boxes = move_ref(&ed.ws.docs.get(&ed.cur)?.fighter.moves, slot)?.phases.get(p)?.hitboxes.clone();
+    let boxes = move_ref(&ed.ws.docs.get(&ed.cur)?.item.moves, slot)?.phases.get(p)?.hitboxes.clone();
     Some((f, p, t, boxes))
 }
 
@@ -96,7 +94,7 @@ pub(crate) fn overlay(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::
     if ed.onion && !ed.playing && matches!(ed.subject, Subject::Move(_) | Subject::Throw(_)) {
         onion(ed, &mut scene.overlay, px);
     }
-    let fd = &ed.ws.docs[&ed.cur].fighter;
+    let fd = &ed.ws.docs[&ed.cur].item;
     let hurt = if f.state == State::Knockdown { fd.hurtboxes.knockdown } else { fd.hurtboxes.default };
     let (boxes, shown) = match playhead_boxes(ed) {
         Some((f, _, t, b)) => {

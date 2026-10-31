@@ -142,6 +142,8 @@ struct Drawn {
     fx: FxLayer,
     cam: CameraRig,
     stage: Option<usize>,
+    /// Content the static layers were built from (the editor swaps in edited stages).
+    built: Option<Arc<GameData>>,
     canvas: Canvas,
     rng: Rand,
     shake: (f64, f64),
@@ -278,8 +280,9 @@ fn draw(
     let detail = px_h / c.h;
     let parallax = s.art.background.as_ref().map_or(0., |b| b.parallax);
     let par = Vec2::new(((c.x + sx - s.width / 2.) * parallax) as f32, (-(c.y + sy - s.height / 2.) * parallax) as f32);
-    let rebuild_static = st.stage != Some(cur.stage);
+    let rebuild_static = st.stage != Some(cur.stage) || !st.built.as_ref().is_some_and(|b| Arc::ptr_eq(b, &scene.data));
     st.stage = Some(cur.stage);
+    st.built = Some(scene.data.clone());
     let views = fighter_views(d, st.prev.as_ref(), cur, t, scene.pose_override);
     let asp = win.as_deref().map_or(16. / 9., |w| aspect(w));
     let [x0, y0, x1, y1] = fx::Cam { x: c.x + sx, y: c.y + sy, h: c.h }.view(asp);

@@ -1,5 +1,6 @@
-//! The egui layer's frame: layout, top bar, keyboard shortcuts, dialogs, toasts and the shortcut sheet. Panels
-//! live in `browser`, `viewport`, `timeline` and `inspect`.
+//! The egui layer's frame, shared by the fighter and stage editors: layout, top bar (mode switch, picker, undo,
+//! saving, test, status), keyboard shortcuts, dialogs, toasts and the shortcut sheet. Panels live in `browser`,
+//! `viewport`, `timeline` and `inspect` (fighters) and `stage_panels` and `stage_port` (stages).
 
 use bevy_egui::egui::{self, Align2, Color32, Key, LayerId, RichText, UiBuilder};
 use render::pose::{Skel, resolve};
@@ -7,8 +8,13 @@ use sim::data::visual::{Pose, PoseRef};
 use sim::world::Fighter;
 
 use crate::preview::Subject;
+use crate::stage_ed::{self, SANDBOX_MAX};
+use crate::stage_view;
 use crate::style::{self, DIM, FAINT, GOLD, INK2, NIGHT, RED, STAR, faint, key};
-use crate::{Dialog, Editor, Outbox, Request, browser, doc, inspect, move_mut, move_ref, timeline, viewport};
+use crate::{
+    Dialog, Editor, Mode, Outbox, Request, browser, doc, inspect, move_mut, move_ref, stage_panels, stage_port,
+    timeline, viewport,
+};
 
 /// A pose being edited in the viewport: a named pose, or an inline pose in a move's anim key.
 #[derive(Clone, Debug, PartialEq)]
@@ -30,7 +36,7 @@ pub fn pose_mut<'a>(f: &'a mut sim::data::Fighter, t: &PoseTarget) -> Option<&'a
 }
 
 pub(crate) fn fighter(ed: &mut Editor) -> &mut sim::data::Fighter {
-    &mut ed.ws.docs.get_mut(&ed.cur).expect("current fighter is open").fighter
+    &mut ed.ws.docs.get_mut(&ed.cur).expect("current fighter is open").item
 }
 
 /// The fighter on the playhead frame, and its phase/phase frame if it's in the move.
@@ -42,7 +48,7 @@ pub(crate) fn at_playhead(ed: &Editor) -> Option<(Fighter, Option<(usize, u32)>)
 
 /// The pose shown on the playhead, if it's exactly a key (not mid-blend), and its skeleton.
 pub(crate) fn pose_target(ed: &Editor) -> Option<(PoseTarget, Skel)> {
-    let fd = &ed.ws.docs.get(&ed.cur)?.fighter;
+    let fd = &ed.ws.docs.get(&ed.cur)?.item;
     match &ed.subject {
         Subject::Pose(n) => fd.poses.get(n).map(|p| (PoseTarget::Named(n.clone()), resolve(fd, p))),
         Subject::Move(slot) => {
@@ -70,9 +76,13 @@ pub(crate) fn pose_target(ed: &Editor) -> Option<(PoseTarget, Skel)> {
     }
 }
 
-/// Live problems of the current fighter plus the last refused save.
+/// Live problems of the current fighter or stage plus the last refused save.
 pub(crate) fn problems(ed: &Editor) -> Vec<sim::data::ContentError> {
-    let mut list = ed.ws.docs.get(&ed.cur).map(|d| d.errors.clone()).unwrap_or_default();
+    let mut list = match ed.mode {
+        Mode::Fighters => ed.ws.docs.get(&ed.cur).map(|d| d.errors.clone()),
+        Mode::Stages => ed.ws.stages.get(&ed.st.cur).map(|d| d.errors.clone()),
+    }
+    .unwrap_or_default();
     let extra: Vec<_> = ed.problems.iter().filter(|p| !list.contains(p)).cloned().collect();
     list.extend(extra);
     list
@@ -80,9 +90,15 @@ pub(crate) fn problems(ed: &Editor) -> Vec<sim::data::ContentError> {
 
 pub(crate) fn run(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::Scene, dt: f32, out: &mut Outbox) {
     if ed.dialog.is_none() {
-        shortcuts(ctx, ed, out);
+        match ed.mode {
+            Mode::Fighters => shortcuts(ctx, ed, out),
+            Mode::Stages => stage_shortcuts(ctx, ed, out),
+        }
     }
-    let before = ed.doc().fighter.clone();
+    // Snapshots of both current documents, to turn this frame's widget edits into undo steps.
+    let (fid, sid) = (ed.cur.clone(), ed.st.cur.clone());
+    let before = ed.doc().item.clone();
+    let before_stage = ed.stage_doc().item.clone();
     let setup = ed.setup.clone();
     let mut root = egui::Ui::new(
         ctx.clone(),
@@ -90,35 +106,77 @@ pub(crate) fn run(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::Scen
         UiBuilder::new().layer_id(LayerId::background()).max_rect(ctx.viewport_rect()),
     );
     top_bar(&mut root, ed, out);
-    egui::Panel::left("ed-browser")
+    let browser_panel = egui::Panel::left("ed-browser")
         .default_size(style::BROWSER_W)
-        .size_range(style::BROWSER_MIN..=style::BROWSER_MAX)
-        .show(&mut root, |ui| browser::browser(ui, ed));
-    egui::Panel::right("ed-inspector")
-        .default_size(style::INSPECTOR_W)
-        .size_range(300.0..=560.)
-        .show(&mut root, |ui| inspect::inspector(ui, ed));
-    egui::Panel::bottom("ed-timeline").resizable(false).show(&mut root, |ui| timeline::timeline(ui, ed));
-    egui::CentralPanel::no_frame().show(&mut root, |ui| viewport::viewport(ui, ed));
+        .size_range(style::BROWSER_MIN..=style::BROWSER_MAX);
+    let inspector_panel = egui::Panel::right("ed-inspector").default_size(style::INSPECTOR_W).size_range(300.0..=560.);
+    match ed.mode {
+        Mode::Fighters => {
+            browser_panel.show(&mut root, |ui| browser::browser(ui, ed));
+            inspector_panel.show(&mut root, |ui| inspect::inspector(ui, ed));
+            egui::Panel::bottom("ed-timeline").resizable(false).show(&mut root, |ui| timeline::timeline(ui, ed));
+            egui::CentralPanel::no_frame().show(&mut root, |ui| viewport::viewport(ui, ed));
+        }
+        Mode::Stages => {
+            browser_panel.show(&mut root, |ui| stage_panels::browser(ui, ed));
+            inspector_panel.show(&mut root, |ui| stage_panels::inspector(ui, ed));
+            egui::CentralPanel::no_frame().show(&mut root, |ui| stage_port::viewport(ui, ed));
+        }
+    }
     if ed.help {
         help(ctx, ed);
     }
     dialogs(ctx, ed, out);
     toasts(ctx, ed, dt);
     let ongoing = ctx.input(|i| i.pointer.any_down()) || ctx.egui_wants_keyboard_input();
-    let doc = ed.doc();
-    if doc.fighter != before {
-        doc.changed(before, ongoing);
-        ed.stale = true;
-    } else if !ongoing {
-        doc.close_step();
-    }
+    record(ed, (&fid, before), (&sid, before_stage), ongoing);
     if ed.setup != setup {
         ed.stale = true;
     }
-    ed.refresh();
-    viewport::sync_scene(ed, scene, dt);
-    viewport::overlay(ctx, ed, scene);
+    match ed.mode {
+        Mode::Fighters => {
+            ed.refresh();
+            viewport::sync_scene(ed, scene, dt);
+            viewport::overlay(ctx, ed, scene);
+        }
+        Mode::Stages => {
+            stage_ed::sync_scene(ed, scene, dt);
+            stage_port::overlay(ctx, ed, scene);
+        }
+    }
+}
+
+/// Turns this frame's widget edits of the current documents into undo steps (`ongoing`: a drag or typing that
+/// later frames join). Snapshots of a document that was switched away from mid-frame don't apply.
+pub(crate) fn record(
+    ed: &mut Editor,
+    (fid, before): (&str, sim::data::Fighter),
+    (sid, before_stage): (&str, sim::data::Stage),
+    ongoing: bool,
+) {
+    // Undo / redo from the toolbar ran after the snapshots: their change is history, not a new edit.
+    let history = std::mem::take(&mut ed.moved_history);
+    if history {
+        ed.stale = true;
+        ed.st.stale = true;
+    } else if ed.cur == *fid {
+        let doc = ed.doc();
+        if doc.item != before {
+            doc.changed(before, ongoing);
+            ed.stale = true;
+        } else if !ongoing {
+            doc.close_step();
+        }
+    }
+    if !history && ed.st.cur == *sid {
+        let doc = ed.stage_doc();
+        if doc.item != before_stage {
+            doc.changed(before_stage, ongoing);
+            ed.st.stale = true;
+        } else if !ongoing {
+            doc.close_step();
+        }
+    }
 }
 
 pub(crate) fn toggle_play(ed: &mut Editor) {
@@ -129,25 +187,52 @@ pub(crate) fn toggle_play(ed: &mut Editor) {
 }
 
 pub(crate) fn undo(ed: &mut Editor, redo: bool) {
-    let d = ed.doc();
-    let can = if redo { d.can_redo() } else { d.can_undo() };
-    if redo {
-        d.redo()
-    } else {
-        d.undo()
-    }
-    ed.stale = true;
+    ed.moved_history = true;
+    let can = match ed.mode {
+        Mode::Fighters => {
+            let d = ed.doc();
+            let can = if redo { d.can_redo() } else { d.can_undo() };
+            if redo {
+                d.redo()
+            } else {
+                d.undo()
+            }
+            ed.stale = true;
+            can
+        }
+        Mode::Stages => {
+            let d = ed.stage_doc();
+            let can = if redo { d.can_redo() } else { d.can_undo() };
+            if redo {
+                d.redo()
+            } else {
+                d.undo()
+            }
+            ed.st.stale = true;
+            ed.st.drag = None;
+            can
+        }
+    };
     if can {
         ed.say(if redo { "Redid the edit · ⌘Z undoes it" } else { "Undid the last edit · ⇧⌘Z redoes it" }, false);
     }
 }
 
-pub(crate) fn test(ed: &mut Editor, out: &mut Outbox) {
-    if ed.ws.docs.get(&ed.cur).is_some_and(|d| d.errors.is_empty()) {
-        out.request = Some(Request::Test { data: std::sync::Arc::new(ed.ws.live_data()), fighter: ed.cur.clone() });
-    } else {
+/// Plays the (unsaved) content: training with the current fighter, or training / a match on the current stage.
+pub(crate) fn test(ed: &mut Editor, out: &mut Outbox, versus: bool) {
+    let ok = match ed.mode {
+        Mode::Fighters => ed.ws.docs.get(&ed.cur).is_some_and(|d| d.errors.is_empty()),
+        Mode::Stages => ed.ws.stages.get(&ed.st.cur).is_some_and(|d| d.errors.is_empty()),
+    };
+    if !ok {
         ed.say("Fix the problems before testing", true);
+        return;
     }
+    let data = std::sync::Arc::new(ed.ws.live_data());
+    out.request = Some(match ed.mode {
+        Mode::Fighters => Request::Test { data, fighter: Some(ed.cur.clone()), stage: None, versus: false },
+        Mode::Stages => Request::Test { data, fighter: None, stage: Some(ed.st.cur.clone()), versus },
+    });
 }
 
 /// The next/previous browser entry (moves, throws, the fighter, sections), for ↑ / ↓.
@@ -194,7 +279,11 @@ fn shortcuts(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
         return;
     }
     if cmd && k(Key::Enter) {
-        test(ed, out);
+        test(ed, out, false);
+        return;
+    }
+    if cmd && k(Key::Num2) {
+        ed.set_mode(Mode::Stages);
         return;
     }
     if cmd {
@@ -285,6 +374,146 @@ fn shortcuts(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
     }
 }
 
+fn stage_shortcuts(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
+    let (cmd, shift, alt) = ctx.input(|i| (i.modifiers.command, i.modifiers.shift, i.modifiers.alt));
+    let k = |key: Key| ctx.input(|i| i.key_pressed(key));
+    if cmd && k(Key::S) {
+        if shift {
+            ed.save_all()
+        } else {
+            ed.save()
+        };
+        return;
+    }
+    if ctx.egui_wants_keyboard_input() {
+        return;
+    }
+    if cmd && k(Key::Z) {
+        undo(ed, shift);
+        return;
+    }
+    if cmd && k(Key::Y) {
+        undo(ed, true);
+        return;
+    }
+    if cmd && k(Key::D) {
+        stage_ed::duplicate_selected(ed);
+        return;
+    }
+    if cmd && k(Key::Enter) {
+        test(ed, out, shift);
+        return;
+    }
+    if cmd && k(Key::Num1) {
+        ed.set_mode(Mode::Fighters);
+        return;
+    }
+    if cmd {
+        return;
+    }
+    if alt && ed.st.sel.is_some() {
+        let s = if shift { 10. } else { 1. };
+        for (key, d) in [
+            (Key::ArrowLeft, [-s, 0.]),
+            (Key::ArrowRight, [s, 0.]),
+            (Key::ArrowUp, [0., -s]),
+            (Key::ArrowDown, [0., s]),
+        ] {
+            if k(key) {
+                stage_ed::nudge(ed, d);
+            }
+        }
+        return;
+    }
+    let st = &mut ed.st;
+    if k(Key::G) {
+        st.grid = !st.grid;
+    }
+    if k(Key::M) {
+        st.symmetry = !st.symmetry;
+    }
+    if k(Key::B) {
+        st.show_bounds = !st.show_bounds;
+    }
+    if k(Key::P) {
+        st.show_spawns = !st.show_spawns;
+    }
+    if k(Key::F) {
+        st.reframe = true;
+    }
+    if k(Key::C) {
+        st.set_sandbox((st.sandbox + 1) % (SANDBOX_MAX + 1));
+    }
+    if k(Key::Space) {
+        if st.sandbox == 0 {
+            st.set_sandbox(2);
+            st.paused = false;
+        } else {
+            st.paused = !st.paused;
+        }
+    }
+    if k(Key::Tab) {
+        let s = &ed.ws.stages[&ed.st.cur].item;
+        let mut parts: Vec<stage_view::Part> = (0..s.blocks.len()).map(stage_view::Part::Block).collect();
+        parts.extend((0..s.platforms.len()).map(stage_view::Part::Platform));
+        parts.extend((0..s.spawns.len()).map(stage_view::Part::Spawn));
+        parts.extend((0..s.respawns.len()).map(stage_view::Part::Respawn));
+        parts.extend([stage_view::Part::Ledge, stage_view::Part::Blast, stage_view::Part::Camera]);
+        let n = parts.len();
+        let i = ed
+            .st
+            .sel
+            .and_then(|p| parts.iter().position(|q| *q == p))
+            .map_or(0, |i| (i + if shift { n - 1 } else { 1 }) % n);
+        ed.st.select(Some(parts[i]));
+    }
+    if k(Key::N) {
+        stage_ed::add_platform(ed);
+    }
+    if k(Key::Delete) || k(Key::Backspace) {
+        stage_ed::delete_selected(ed);
+    }
+    if k(Key::Slash) || k(Key::Questionmark) || k(Key::F1) {
+        ed.help = !ed.help;
+    }
+    if k(Key::Escape) {
+        if ed.help {
+            ed.help = false;
+        } else if ed.st.sel.is_some() {
+            ed.st.sel = None;
+        } else {
+            ed.leave(false, out);
+        }
+    }
+}
+
+/// Fighters | Stages.
+fn mode_switch(ui: &mut egui::Ui, ed: &mut Editor) {
+    egui::Frame::new().fill(NIGHT).stroke(egui::Stroke::new(1., style::LINE)).corner_radius(7).inner_margin(2).show(
+        ui,
+        |ui| {
+            ui.spacing_mut().item_spacing.x = 2.;
+            for (m, label, tip) in
+                [(Mode::Fighters, "Fighters", "Edit fighters  ⌘1"), (Mode::Stages, "Stages", "Edit stages  ⌘2")]
+            {
+                let on = ed.mode == m;
+                let dirty = match m {
+                    Mode::Fighters => ed.ws.docs.values().any(|d| d.dirty()),
+                    Mode::Stages => ed.ws.stages.values().any(|d| d.dirty()),
+                };
+                let txt = RichText::new(if dirty { format!("{label} ●") } else { label.to_string() })
+                    .family(style::label())
+                    .size(15.)
+                    .color(if on { NIGHT } else { DIM });
+                let b = egui::Button::new(txt).fill(if on { GOLD } else { Color32::TRANSPARENT }).corner_radius(5);
+                if ui.add(b).on_hover_text(tip).clicked() {
+                    ed.set_mode(m);
+                }
+            }
+        },
+    );
+}
+
 fn top_bar(root: &mut egui::Ui, ed: &mut Editor, out: &mut Outbox) {
     let frame = egui::Frame::new().fill(NIGHT).inner_margin(egui::Margin::symmetric(12, 7));
     egui::Panel::top("ed-top").frame(frame).show(root, |ui| {
@@ -292,12 +521,24 @@ fn top_bar(root: &mut egui::Ui, ed: &mut Editor, out: &mut Outbox) {
             ui.label(RichText::new("STICK SMASH").family(style::display()).size(20.).color(STAR));
             ui.label(RichText::new("EDITOR").family(style::display()).size(20.).color(GOLD));
             ui.add_space(14.);
-            fighter_picker(ui, ed);
+            mode_switch(ui, ed);
+            ui.add_space(4.);
+            match ed.mode {
+                Mode::Fighters => fighter_picker(ui, ed),
+                Mode::Stages => stage_picker(ui, ed),
+            }
             ui.separator();
-            let (can_undo, can_redo, dirty) = {
-                let d = ed.doc();
-                (d.can_undo(), d.can_redo(), d.dirty())
+            let (can_undo, can_redo, dirty) = match ed.mode {
+                Mode::Fighters => {
+                    let d = ed.doc();
+                    (d.can_undo(), d.can_redo(), d.dirty())
+                }
+                Mode::Stages => {
+                    let d = ed.stage_doc();
+                    (d.can_undo(), d.can_redo(), d.dirty())
+                }
             };
+            let (kind, cur) = ed.current();
             if ui.add_enabled(can_undo, egui::Button::new("⟲")).on_hover_text("Undo  ⌘Z").clicked() {
                 undo(ed, false);
             }
@@ -305,8 +546,8 @@ fn top_bar(root: &mut egui::Ui, ed: &mut Editor, out: &mut Outbox) {
                 undo(ed, true);
             }
             ui.separator();
-            let target = if ed.to_assets { Some(ed.config.assets.clone()) } else { ed.config.user_dir.clone() }
-                .map_or("saving disabled".into(), |d| d.join(doc::fighter_path(&ed.cur)).display().to_string());
+            let target =
+                ed.save_dir().map_or("saving disabled".into(), |d| d.join(kind.path(&cur)).display().to_string());
             let save = egui::Button::new(RichText::new(if dirty { "Save ●" } else { "Saved" }).color(if dirty {
                 NIGHT
             } else {
@@ -321,7 +562,7 @@ fn top_bar(root: &mut egui::Ui, ed: &mut Editor, out: &mut Outbox) {
             {
                 ed.save();
             }
-            let others = ed.ws.docs.values().filter(|d| d.dirty() && d.id != ed.cur).count();
+            let others = ed.ws.dirty().iter().filter(|(k, id)| (*k, id) != (kind, &cur)).count();
             if others > 0
                 && ui
                     .button(format!("Save all ({})", others + usize::from(dirty)))
@@ -330,28 +571,52 @@ fn top_bar(root: &mut egui::Ui, ed: &mut Editor, out: &mut Outbox) {
             {
                 ed.save_all();
             }
+            let noun = kind.noun();
             if ui
                 .add_enabled(dirty, egui::Button::new("Revert"))
-                .on_hover_text("Back to the saved fighter (undoable)")
+                .on_hover_text(format!("Back to the saved {noun} (undoable)"))
                 .clicked()
             {
-                ed.doc().revert();
-                ed.stale = true;
-                ed.say("Reverted to the saved fighter · ⌘Z to undo", false);
+                match ed.mode {
+                    Mode::Fighters => {
+                        ed.doc().revert();
+                        ed.stale = true;
+                    }
+                    Mode::Stages => {
+                        ed.stage_doc().revert();
+                        ed.st.stale = true;
+                    }
+                }
+                ed.say(format!("Reverted to the saved {noun} · ⌘Z to undo"), false);
             }
             if ed.config.dev {
                 ui.checkbox(&mut ed.to_assets, "into assets/").on_hover_text("Dev: save into the built-in assets");
             }
             ui.add_space(6.);
             let errors = problems(ed);
-            let test_btn = egui::Button::new(RichText::new("▶ Test").color(STAR)).fill(style::TEST);
+            let test_btn = |t: &str| egui::Button::new(RichText::new(t).color(STAR)).fill(style::TEST);
+            let (label, tip) = match ed.mode {
+                Mode::Fighters => ("▶ Test", "Play training with these (unsaved) edits · ⌘↵\nPause → Back to editor"),
+                Mode::Stages => {
+                    ("▶ Training", "Training on this stage with these (unsaved) edits · ⌘↵\nPause → Back to editor")
+                }
+            };
             if ui
-                .add_enabled(errors.is_empty(), test_btn)
-                .on_hover_text("Play training with these (unsaved) edits · ⌘↵\nPause → Back to editor")
+                .add_enabled(errors.is_empty(), test_btn(label))
+                .on_hover_text(tip)
                 .on_disabled_hover_text("Fix the problems first")
                 .clicked()
             {
-                test(ed, out);
+                test(ed, out, false);
+            }
+            if ed.mode == Mode::Stages
+                && ui
+                    .add_enabled(errors.is_empty(), test_btn("▶ Match"))
+                    .on_hover_text("A 3-stock match against a CPU on this stage · ⇧⌘↵\nPause → Back to editor")
+                    .on_disabled_hover_text("Fix the problems first")
+                    .clicked()
+            {
+                test(ed, out, true);
             }
             ui.add_space(8.);
             match errors.first() {
@@ -359,13 +624,27 @@ fn top_bar(root: &mut egui::Ui, ed: &mut Editor, out: &mut Outbox) {
                     let n = errors.len();
                     let txt = RichText::new(format!("⚠ {n} problem{}", if n == 1 { "" } else { "s" })).color(RED);
                     if ui.link(txt).on_hover_text(format!("{}: {}\nClick to go there", e.path, e.msg)).clicked() {
-                        inspect::goto(ed, &e.path.clone());
+                        match ed.mode {
+                            Mode::Fighters => inspect::goto(ed, &e.path.clone()),
+                            Mode::Stages => stage_panels::goto(ed, &e.path.clone()),
+                        }
                     }
                 }
                 None => drop(
                     ui.label(RichText::new("✔ valid").color(style::GREEN))
                         .on_hover_text("Passes the game's content checks"),
                 ),
+            }
+            if ed.mode == Mode::Stages {
+                let notes = stage_ed::notes(ed);
+                if let Some(e) = notes.first() {
+                    let n = notes.len();
+                    let txt = RichText::new(format!("ℹ {n} note{}", if n == 1 { "" } else { "s" })).color(GOLD);
+                    let all = notes.iter().map(|e| format!("{}: {}", e.path, e.msg)).collect::<Vec<_>>().join("\n");
+                    if ui.link(txt).on_hover_text(format!("Saves fine, but:\n{all}")).clicked() {
+                        stage_panels::goto(ed, &e.path.clone());
+                    }
+                }
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui.button("Back to menu").on_hover_text("Esc").clicked() {
@@ -405,6 +684,46 @@ fn fighter_picker(ui: &mut egui::Ui, ed: &mut Editor) {
     if new {
         let extends = ed.cur.clone();
         ed.dialog = Some(Dialog::NewFighter { id: String::new(), name: String::new(), extends, error: None });
+    }
+}
+
+fn stage_picker(ui: &mut egui::Ui, ed: &mut Editor) {
+    let list = ed.ws.stage_list();
+    let label = |(_, name, dirty): &(String, String, bool)| if *dirty { format!("{name}  ●") } else { name.clone() };
+    let cur = list.iter().find(|x| x.0 == ed.st.cur).map(label).unwrap_or_default();
+    let mut pick = None;
+    let mut dialog = None;
+    let (id, name) = (ed.st.cur.clone(), ed.ws.stages.get(&ed.st.cur).map(|d| d.item.name.clone()).unwrap_or_default());
+    egui::ComboBox::from_id_salt("ed-stage")
+        .selected_text(RichText::new(cur).family(style::label()).size(16.).color(STAR))
+        .width(170.)
+        .show_ui(ui, |ui| {
+            for x in &list {
+                if ui.selectable_label(x.0 == ed.st.cur, label(x)).on_hover_text(doc::stage_path(&x.0)).clicked() {
+                    pick = Some(x.0.clone());
+                }
+            }
+            ui.separator();
+            if ui.selectable_label(false, RichText::new("+ New stage…").color(GOLD)).clicked() {
+                dialog =
+                    Some(Dialog::NewStage { id: String::new(), name: String::new(), from: id.clone(), error: None });
+            }
+            if ui.selectable_label(false, format!("{} Duplicate {name}…", style::ICON_DUP)).clicked() {
+                let n = format!("{name} copy");
+                dialog = Some(Dialog::NewStage { id: doc::slug(&n), name: n, from: id.clone(), error: None });
+            }
+            if ui.selectable_label(false, format!("Rename {name}…")).clicked() {
+                dialog =
+                    Some(Dialog::RenameStage { id: id.clone(), new_id: id.clone(), name: name.clone(), error: None });
+            }
+        })
+        .response
+        .on_hover_text("Stage being edited (● unsaved)");
+    if let Some(id) = pick {
+        ed.open_stage(&id);
+    }
+    if dialog.is_some() {
+        ed.dialog = dialog;
     }
 }
 
@@ -475,12 +794,7 @@ fn dialogs(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
                     ui.label(RichText::new("name").color(DIM));
                     let r = ui.add(egui::TextEdit::singleline(name).hint_text("Ninja"));
                     if r.changed() {
-                        *id = name
-                            .to_lowercase()
-                            .chars()
-                            .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_' || *c == ' ')
-                            .collect::<String>()
-                            .replace(' ', "-");
+                        *id = doc::slug(name);
                     }
                     r.request_focus_once(ui);
                     ui.end_row();
@@ -521,14 +835,14 @@ fn dialogs(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
             }
             Dialog::RenamePose { old, new } => {
                 ui.label(style::heading(format!("Rename pose {old}")));
-                let uses = doc::pose_uses(&ed.ws.docs[&ed.cur].fighter, old);
+                let uses = doc::pose_uses(&ed.ws.docs[&ed.cur].item, old);
                 ui.label(faint(format!(
                     "Updates {uses} reference{} in moves, animations and poses.",
                     if uses == 1 { "" } else { "s" }
                 )));
                 ui.add_space(6.);
                 ui.add(egui::TextEdit::singleline(new)).request_focus_once(ui);
-                let taken = new != old && ed.ws.docs[&ed.cur].fighter.poses.contains_key(new.as_str());
+                let taken = new != old && ed.ws.docs[&ed.cur].item.poses.contains_key(new.as_str());
                 if taken {
                     ui.label(RichText::new("That name is taken").color(RED));
                 }
@@ -560,7 +874,7 @@ fn dialogs(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
                 ui.label(style::heading(format!("Copy {from} to…")));
                 ui.label(faint("Replaces the target move with a copy of this one (undoable)."));
                 ui.add_space(6.);
-                let f = &ed.ws.docs[&ed.cur].fighter;
+                let f = &ed.ws.docs[&ed.cur].item;
                 ui.horizontal_wrapped(|ui| {
                     for slot in crate::SLOTS.iter().filter(|s| **s != from.as_str()) {
                         let exists = move_ref(&f.moves, slot).is_some();
@@ -584,6 +898,104 @@ fn dialogs(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
                         ed.select(Subject::Move(t.clone()));
                         ed.say(format!("Copied {src} → {t} · ⌘Z to undo"), false);
                         close = true;
+                    }
+                    if ui.button("Cancel").clicked() || esc {
+                        close = true;
+                    }
+                });
+            }
+            Dialog::NewStage { id, name, from, error } => {
+                let dup = !name.is_empty() && name.ends_with(" copy");
+                ui.label(style::heading(if dup { "Duplicate stage" } else { "New stage" }));
+                ui.label(faint(
+                    "A copy of the template stage (with its unsaved edits) to reshape. Saved as a new package.",
+                ));
+                ui.add_space(6.);
+                let list = ed.ws.stage_list();
+                egui::Grid::new("ns").num_columns(2).spacing([10., 6.]).show(ui, |ui| {
+                    ui.label(RichText::new("name").color(DIM));
+                    let r = ui.add(egui::TextEdit::singleline(name).hint_text("Sky Fortress"));
+                    if r.changed() {
+                        *id = doc::slug(name);
+                    }
+                    r.request_focus_once(ui);
+                    ui.end_row();
+                    ui.label(RichText::new("id").color(DIM)).on_hover_text("Folder name: stages/<id>/");
+                    ui.add(egui::TextEdit::singleline(id).hint_text("sky-fortress"));
+                    ui.end_row();
+                    ui.label(RichText::new("template").color(DIM)).on_hover_text("The stage it starts as a copy of");
+                    let shown = list.iter().find(|x| x.0 == *from).map_or(from.clone(), |x| x.1.clone());
+                    egui::ComboBox::from_id_salt("ns-from").selected_text(shown).show_ui(ui, |ui| {
+                        for (sid, sname, _) in &list {
+                            ui.selectable_value(from, sid.clone(), sname);
+                        }
+                    });
+                    ui.end_row();
+                });
+                if let Some(e) = error {
+                    ui.label(RichText::new(e.as_str()).color(RED));
+                }
+                ui.add_space(8.);
+                ui.horizontal(|ui| {
+                    let create = egui::Button::new(RichText::new("Create").color(NIGHT)).fill(GOLD);
+                    if ui.add_enabled(!id.is_empty(), create).clicked() || (enter && !id.is_empty()) {
+                        match ed.ws.new_stage(id, name, from) {
+                            Ok(()) => {
+                                let id = id.clone();
+                                ed.open_stage(&id);
+                                ed.st.section = stage_ed::Section::Overview;
+                                ed.say(format!("Created {id} (unsaved) · ⌘S to write it"), false);
+                                close = true;
+                            }
+                            Err(e) => *error = Some(e),
+                        }
+                    }
+                    if ui.button("Cancel").clicked() || esc {
+                        close = true;
+                    }
+                });
+            }
+            Dialog::RenameStage { id, new_id, name, error } => {
+                ui.label(style::heading("Rename stage"));
+                let fresh = ed.ws.stages.get(id.as_str()).is_some_and(|d| d.fresh);
+                ui.label(faint(if fresh {
+                    "Not saved yet, so the id (its folder) can change too."
+                } else {
+                    "The id is its folder and stays; duplicate the stage for a new one."
+                }));
+                ui.add_space(6.);
+                egui::Grid::new("rs").num_columns(2).spacing([10., 6.]).show(ui, |ui| {
+                    ui.label(RichText::new("name").color(DIM));
+                    let r = ui.add(egui::TextEdit::singleline(name));
+                    if r.changed() && fresh {
+                        *new_id = doc::slug(name);
+                    }
+                    r.request_focus_once(ui);
+                    ui.end_row();
+                    ui.label(RichText::new("id").color(DIM));
+                    ui.add_enabled(fresh, egui::TextEdit::singleline(new_id));
+                    ui.end_row();
+                });
+                if let Some(e) = error {
+                    ui.label(RichText::new(e.as_str()).color(RED));
+                }
+                ui.add_space(8.);
+                ui.horizontal(|ui| {
+                    let ok = !name.is_empty() && !new_id.is_empty();
+                    if ui.add_enabled(ok, egui::Button::new(RichText::new("Rename").color(NIGHT)).fill(GOLD)).clicked()
+                        || (enter && ok)
+                    {
+                        match ed.ws.rename_stage(id, new_id, name) {
+                            Ok(()) => {
+                                let nid = new_id.clone();
+                                ed.st.cur = nid.clone();
+                                ed.st.stale = true;
+                                ed.st.world = None;
+                                ed.say(format!("Renamed to {name} · ⌘Z to undo the name"), false);
+                                close = true;
+                            }
+                            Err(e) => *error = Some(e),
+                        }
                     }
                     if ui.button("Cancel").clicked() || esc {
                         close = true;
@@ -687,6 +1099,53 @@ pub(crate) const SHORTCUTS: [(&str, &[(&str, &str)]); 4] = [
             ("⌘S  ⇧⌘S", "save, save all"),
             ("⌘↵", "test in training"),
             ("⌘F", "search the browser"),
+            ("⌘1  ⌘2", "fighters, stages"),
+            ("?", "this sheet"),
+            ("Esc", "deselect, then leave"),
+        ],
+    ),
+];
+
+pub(crate) const STAGE_SHORTCUTS: [(&str, &[(&str, &str)]); 4] = [
+    (
+        "Editing",
+        &[
+            ("Click  Tab", "select a part (⇧Tab back)"),
+            ("drag", "move; edges, corners, ends resize"),
+            ("drag + ⇧", "snap to the grid"),
+            ("drag + Alt", "fine: 0.1 px"),
+            ("Alt ← → ↑ ↓", "nudge 1 px (⇧ ×10)"),
+            ("N", "new platform"),
+            ("⌘D  Del", "duplicate, delete"),
+            ("click arrow", "flip a spawn's facing"),
+        ],
+    ),
+    (
+        "Layout aids",
+        &[
+            ("G", "grid (snaps by default)"),
+            ("M", "mirror edits around the centre"),
+            ("B", "blast zone and camera bounds"),
+            ("P", "spawn and respawn points"),
+        ],
+    ),
+    (
+        "View & sandbox",
+        &[
+            ("Wheel  pinch", "zoom at cursor"),
+            ("Right drag", "pan (or drag empty space)"),
+            ("F", "frame the stage"),
+            ("Space", "CPUs on / pause"),
+            ("C", "cycle the CPU count"),
+        ],
+    ),
+    (
+        "File",
+        &[
+            ("⌘Z  ⇧⌘Z", "undo, redo"),
+            ("⌘S  ⇧⌘S", "save, save all"),
+            ("⌘↵  ⇧⌘↵", "test: training, match"),
+            ("⌘1  ⌘2", "fighters, stages"),
             ("?", "this sheet"),
             ("Esc", "deselect, then leave"),
         ],
@@ -694,6 +1153,7 @@ pub(crate) const SHORTCUTS: [(&str, &[(&str, &str)]); 4] = [
 ];
 
 fn help(ctx: &egui::Context, ed: &mut Editor) {
+    let sheet = if ed.mode == Mode::Stages { STAGE_SHORTCUTS } else { SHORTCUTS };
     let r = modal("ed-help").show(ctx, |ui| {
         // Four columns when they fit, else two (or one): never wider than the screen.
         let col = 250.;
@@ -712,7 +1172,7 @@ fn help(ctx: &egui::Context, ed: &mut Editor) {
         egui::ScrollArea::vertical().max_height(ctx.content_rect().height() - 160.).show(ui, |ui| {
             ui.horizontal_wrapped(|ui| {
                 ui.spacing_mut().item_spacing.x = 22.;
-                for (title, keys) in SHORTCUTS {
+                for (title, keys) in sheet {
                     ui.vertical(|ui| {
                         ui.set_width(col);
                         ui.label(style::caps(title));

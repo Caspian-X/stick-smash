@@ -88,7 +88,7 @@ fn readout(ui: &mut egui::Ui, ed: &Editor, n: usize) {
     let Some(m) = ed.run.as_ref().map(|r| r.marks[ed.frame.min(n - 1)]) else { return };
     match (m.phase, &ed.subject) {
         (Some((p, t)), Subject::Move(slot)) => {
-            let mv = move_ref(&ed.ws.docs[&ed.cur].fighter.moves, slot);
+            let mv = move_ref(&ed.ws.docs[&ed.cur].item.moves, slot);
             let ph = mv.and_then(|mv| mv.phases.get(p));
             let name = ph.map_or(String::new(), |ph| ph.name.clone());
             let len = ph.and_then(|ph| ph.frames).map_or("∞".into(), |f| f.to_string());
@@ -114,7 +114,7 @@ fn track(ui: &mut egui::Ui, ed: &mut Editor) {
     let n = run.marks.len();
     let doc = &ed.ws.docs[&ed.cur];
     let (boxes, events, keys, phase_names) = match &ed.subject {
-        Subject::Move(slot) => match move_ref(&doc.fighter.moves, slot) {
+        Subject::Move(slot) => match move_ref(&doc.item.moves, slot) {
             Some(mv) => {
                 let p = mv.phases.get(ed.phase);
                 (

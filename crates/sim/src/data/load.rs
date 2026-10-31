@@ -148,7 +148,7 @@ fn parse(path: &str, text: &str) -> Result<Value, ContentError> {
 }
 
 /// Upgrades older files in place. Each future format change adds a step here.
-fn migrate(v: &mut Value) -> Result<(), String> {
+pub fn migrate(v: &mut Value) -> Result<(), String> {
     let ver = v.get("schemaVersion").and_then(Value::as_u64).ok_or("missing or not a number")?;
     if ver == 0 || ver > u64::from(SCHEMA_VERSION) {
         return Err(format!("version {ver} isn't supported (this build reads 1 to {SCHEMA_VERSION})"));
@@ -214,7 +214,9 @@ fn resolve(id: &str, raw: &BTreeMap<String, (String, Value)>, chain: &mut Vec<St
     Ok(base)
 }
 
-fn check_stage(file: &str, s: &Stage, fighters: &[Fighter], platform_pad: f64) -> Result<(), ContentError> {
+/// Checks serde can't do on a stage (clearance needs the fighters' bodies). [`load`] runs these; the editor runs
+/// them on every edit.
+pub fn check_stage(file: &str, s: &Stage, fighters: &[Fighter], platform_pad: f64) -> Result<(), ContentError> {
     positive(file, "width", s.width)?;
     positive(file, "height", s.height)?;
     positive(file, "ledge.r", s.ledge.r)?;

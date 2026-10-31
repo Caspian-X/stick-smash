@@ -40,6 +40,7 @@ pub fn enter(mut rm: ResMut<ResultsMenu>, mut m: ResMut<Match>, shots: Option<Re
 
 #[allow(clippy::too_many_arguments)]
 pub fn update(
+    testing: Option<Res<crate::editing::Testing>>,
     mut m: ResMut<Match>,
     mut rm: ResMut<ResultsMenu>,
     devs: Res<Devices>,
@@ -58,6 +59,8 @@ pub fn update(
                 scene.reset(&m.world);
                 next.set(Screen::Match);
             }
+            // A test match from the editor goes back there.
+            Some(Action::Activate(MENU) | Action::Back) if testing.is_some() => next.set(Screen::Editor),
             Some(Action::Activate(SELECT) | Action::Back) => next.set(Screen::Select),
             Some(Action::Activate(MENU)) => next.set(Screen::Title),
             Some(Action::Activate(SAVE)) => {
@@ -85,6 +88,7 @@ pub fn update(
 pub struct ResultsRoot(u32, String);
 
 pub fn draw(
+    testing: Option<Res<crate::editing::Testing>>,
     mut commands: Commands,
     m: Res<Match>,
     rm: Res<ResultsMenu>,
@@ -158,13 +162,19 @@ pub fn draw(
                     n.column_gap = Val::Px(14.);
                 }))
                 .with_children(|p| {
-                    for (k, label) in [
-                        (REMATCH, "Rematch"),
-                        (SELECT, "Character select"),
-                        (MENU, "Main menu"),
-                        (SAVE, "Save replay"),
-                        (WATCH, "Watch replay"),
-                    ] {
+                    // Editor tests go back to the editor and leave no replay.
+                    let items: &[(u32, &str)] = if testing.is_some() {
+                        &[(REMATCH, "Rematch"), (MENU, "Back to editor")]
+                    } else {
+                        &[
+                            (REMATCH, "Rematch"),
+                            (SELECT, "Character select"),
+                            (MENU, "Main menu"),
+                            (SAVE, "Save replay"),
+                            (WATCH, "Watch replay"),
+                        ]
+                    };
+                    for &(k, label) in items {
                         let on = rm.cursor.key == k;
                         p.spawn((
                             node(|n| {
