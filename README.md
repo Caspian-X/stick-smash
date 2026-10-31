@@ -6,7 +6,7 @@ It's meant for local multiplayer on one machine and online play between installe
 ```bash
 cargo run -p game                 # play
 cargo run -p game --features dev  # faster incremental builds (dynamic linking)
-cargo run -p game -- --screenshot shots/  # scripted tour through menus, a 4-player match, results, training; saves PNGs
+cargo run -p game -- --screenshot shots/  # scripted tour through menus, the editor, a 4-player match, results, training; saves PNGs
 cargo test --workspace            # sim (incl. TS traces), render and game tests
 ```
 
@@ -18,6 +18,13 @@ footer and sideways to reach **Add CPU** or a CPU's card (level, fighter, remove
 stage, teams, friendly fire). Only stages that fit the lineup are offered; teams need at least two opposing sides. When everyone's ready, press start. Start/Esc pauses (the device that paused drives
 the menu; ownership moves to a connected device if it disconnects). A disconnected unready player leaves select;
 a ready slot stays available to remove or reclaim with another device. After the match: rematch, character select or main menu. F1 toggles the hitbox/debug overlay.
+
+**Editor** (keyboard and mouse): pick a fighter, then a move, throw, pose or its stats. The viewport plays the
+move in a real-sim sandbox (optionally airborne, against a dummy, holding the button to charge); scrub or play the
+timeline. Drag hitboxes to move them, their rim to resize, the gold dot to aim the launch angle; drag joints on pose
+keys. The inspector edits everything else (phases, transitions, events, pose keys, stats). ⌘/Ctrl Z undoes,
+⌘/Ctrl S saves into your user content dir (only the changed values are written, `extends` is kept), **Test** plays
+your unsaved edits in training (pause → Back to editor). `?` lists the shortcuts.
 
 Training: you against a dummy that stands, shields, jumps, fights as a CPU or is controlled by a second device.
 The panel (top right) shows your move and frame, the last hit's frame advantage and combo, and has dummy damage,
@@ -53,11 +60,12 @@ One-shot TS content import (Node 26, sibling `../stick-smash` checkout): `node t
 ```
 crates/sim/    deterministic game logic, no Bevy (rollback-ready)
 crates/render/ Bevy plugin drawing a sim World: figures, attachments, stage, effects, camera, debug overlay
+crates/editor/ fighter editor (egui): browser, real-sim preview + timeline, direct hitbox/pose editing, undo, save
 crates/game/   Bevy app: input devices, menus (bevy_ui), match flow, HUD, training panel (egui)
 assets/        JSON content: global tuning, stages, fighters (moddable), generated schemas; fonts (OFL)
 docs/          DESIGN.md (decisions), FORMAT.md (content format and move phase semantics)
 tools/         one-shot TS → JSON converter
 ```
 
-Status: milestones 1–4 done (content format, sim verified against TS traces, rendering, playable game with
-menus, join/character select, stock matches, training and HUD). Next: the editor.
+Status: milestones 1–5 done (content format, sim verified against TS traces, rendering, playable game with
+menus, join/character select, stock matches, training and HUD, fighter editor).

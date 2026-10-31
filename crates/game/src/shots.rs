@@ -13,6 +13,9 @@ use crate::Screen;
 use crate::input::{Act, Devices};
 use crate::play::Match;
 
+/// Editor tour frame on the swordfighter's forward smash.
+const SHOT_FRAME: usize = 16;
+
 type Pred = fn(&Match, &Framing, Screen) -> bool;
 
 pub enum Step {
@@ -21,6 +24,8 @@ pub enum Step {
     /// Run the match fast until the condition holds (or `max` ticks pass).
     Until(Pred, u32),
     Shot(&'static str),
+    /// Scripted editor command.
+    Editor(editor::Cmd),
 }
 
 #[derive(Resource)]
@@ -46,6 +51,7 @@ fn screen_is(s: Screen) -> Pred {
         Screen::Results => |_, _, s| s == Screen::Results,
         Screen::Match => |_, _, s| s == Screen::Match,
         Screen::Select => |_, _, s| s == Screen::Select,
+        Screen::Editor => |_, _, s| s == Screen::Editor,
         _ => |_, _, s| s == Screen::Title,
     }
 }
@@ -65,19 +71,43 @@ impl Script {
         use Act::*;
         let mut v = vec![Step::Wait(40)];
         shot(&mut v, "01-title");
-        for _ in 0..3 {
+        for _ in 0..4 {
             press(&mut v, 0, Down);
         }
         press(&mut v, 0, Attack);
         shot(&mut v, "02-settings");
         press(&mut v, 0, Special);
-        press(&mut v, 0, Down);
-        press(&mut v, 0, Down);
+        for _ in 0..3 {
+            press(&mut v, 0, Down);
+        }
         press(&mut v, 0, Attack);
         press(&mut v, 0, Down);
         press(&mut v, 0, Down);
         shot(&mut v, "03-controls");
         press(&mut v, 0, Special);
+        // Editor: a move with a dummy and a selected hitbox, a pose, the stats.
+        press(&mut v, 0, Down);
+        press(&mut v, 0, Down);
+        press(&mut v, 0, Attack);
+        v.push(Step::Wait(20));
+        {
+            use editor::Cmd;
+            use editor::preview::Subject;
+            v.push(Step::Editor(Cmd::Fighter("swordfighter".into())));
+            v.push(Step::Editor(Cmd::Subject(Subject::Move("fsmash".into()))));
+            v.push(Step::Editor(Cmd::Dummy(true)));
+            v.push(Step::Wait(4));
+            v.push(Step::Editor(Cmd::Frame(SHOT_FRAME)));
+            v.push(Step::Editor(Cmd::Hitbox(Some(0))));
+            shot(&mut v, "03b-editor-move");
+            v.push(Step::Editor(Cmd::Fighter("brawler".into())));
+            v.push(Step::Editor(Cmd::Subject(Subject::Pose("stand".into()))));
+            shot(&mut v, "03c-editor-pose");
+            v.push(Step::Editor(Cmd::Subject(Subject::Fighter)));
+            shot(&mut v, "03d-editor-stats");
+            v.push(Step::Editor(Cmd::Back));
+            v.push(Step::Wait(10));
+        }
         // Versus: bot 0 opens it (and joins), bot 1 joins.
         press(&mut v, 0, Attack);
         press(&mut v, 1, Attack);
@@ -176,6 +206,7 @@ pub fn run(
     screen: Res<State<Screen>>,
     capturing: Query<(), With<Capturing>>,
     mut exit: MessageWriter<AppExit>,
+    mut inbox: ResMut<editor::Inbox>,
 ) {
     for b in 0..2 {
         devs.bot(b);
@@ -220,6 +251,10 @@ pub fn run(
             } else {
                 s.budget += 1;
             }
+        }
+        Step::Editor(c) => {
+            inbox.0.push(c.clone());
+            s.at += 1;
         }
         Step::Shot(name) => {
             let path = s.dir.join(format!("{name}.png"));

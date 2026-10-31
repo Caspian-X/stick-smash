@@ -1,6 +1,6 @@
 //! Draws a `sim::World` read-only: stick figures from pose data, attachments, projectiles, stage and backdrop,
-//! effects from `world.fx`, the follow camera with shake, and the F1 debug overlay. Shared by gameplay and (later)
-//! the editor.
+//! effects from `world.fx`, the follow camera with shake, and the F1 debug overlay. Shared by gameplay and the
+//! editor (which sets a fixed view, a pose override and its own overlay geometry).
 //!
 //! Feed it with [`Scene::push`] once per sim tick (before clearing `world.fx`) and set [`Scene::alpha`] each frame
 //! to the fraction of a tick elapsed since the last push; frames between ticks interpolate. Requires `EguiPlugin`
@@ -60,13 +60,29 @@ pub struct Scene {
     pub debug: bool,
     /// Fraction of the window reserved below gameplay (measured by the host UI).
     pub bottom_safe_area: f64,
+    /// Fixed camera for the whole window (the editor's pan/zoom) instead of the follow camera. No shake.
+    pub fixed_view: Option<fx::Cam>,
+    /// Extra geometry in stage pixels drawn above everything (editor handles). The owner clears it.
+    pub overlay: Canvas,
+    /// Draw fighter `i` with this skeleton instead of its animation (editor pose editing).
+    pub pose_override: Option<(usize, pose::Skel)>,
     pending: VecDeque<World>,
     reset: bool,
 }
 
 impl Scene {
     pub fn new(data: Arc<GameData>) -> Self {
-        Scene { data, alpha: 1., debug: false, bottom_safe_area: 0., pending: VecDeque::new(), reset: true }
+        Scene {
+            data,
+            alpha: 1.,
+            debug: false,
+            bottom_safe_area: 0.,
+            fixed_view: None,
+            overlay: Canvas::default(),
+            pose_override: None,
+            pending: VecDeque::new(),
+            reset: true,
+        }
     }
     /// Record the world after a tick. Its pending `fx` become effects.
     pub fn push(&mut self, w: &World) {
@@ -115,6 +131,7 @@ enum Layer {
     Stage,
     World,
     Debug,
+    Overlay,
 }
 
 /// Render-side state advanced per tick: snapshots, effects, camera.
@@ -133,9 +150,14 @@ struct Drawn {
 fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut mats: ResMut<Assets<ColorMaterial>>) {
     commands.spawn((Camera2d, RenderCamera, Msaa::Sample4));
     let mat = mats.add(ColorMaterial::default());
-    for (layer, z) in
-        [(Layer::Backdrop, -40.), (Layer::Stars, -30.), (Layer::Stage, -20.), (Layer::World, 0.), (Layer::Debug, 10.)]
-    {
+    for (layer, z) in [
+        (Layer::Backdrop, -40.),
+        (Layer::Stars, -30.),
+        (Layer::Stage, -20.),
+        (Layer::World, 0.),
+        (Layer::Debug, 10.),
+        (Layer::Overlay, 20.),
+    ] {
         let mesh = meshes.add(Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default()));
         commands.spawn((
             Mesh2d(mesh),
@@ -186,8 +208,15 @@ fn upload(mesh: &mut Mesh, cv: &Canvas) {
 }
 
 /// Interpolated fighter views for this frame.
-fn fighter_views<'a>(d: &GameData, prev: Option<&World>, cur: &'a World, t: f64) -> Vec<FighterView<'a>> {
-    cur.fighters
+fn fighter_views<'a>(
+    d: &GameData,
+    prev: Option<&World>,
+    cur: &'a World,
+    t: f64,
+    over: Option<(usize, pose::Skel)>,
+) -> Vec<FighterView<'a>> {
+    let mut views: Vec<FighterView<'a>> = cur
+        .fighters
         .iter()
         .enumerate()
         .map(|(i, f)| {
@@ -206,7 +235,13 @@ fn fighter_views<'a>(d: &GameData, prev: Option<&World>, cur: &'a World, t: f64)
                 None => FighterView { i, f, x: f.x, y: f.y, skel },
             }
         })
-        .collect()
+        .collect();
+    if let Some((i, skel)) = over
+        && let Some(v) = views.get_mut(i)
+    {
+        v.skel = skel;
+    }
+    views
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -224,13 +259,13 @@ fn draw(
     let d = &*scene.data;
     let t = scene.alpha.clamp(0., 1.);
     let px_h = win.as_deref().map_or(720., |w| f64::from(w.physical_height().max(1)));
-    let Some(mut c) = st.cam.at(t) else { return };
-    let safe = scene.bottom_safe_area.clamp(0., 0.5);
+    let Some(mut c) = scene.fixed_view.or_else(|| st.cam.at(t)) else { return };
+    let safe = if scene.fixed_view.is_some() { 0. } else { scene.bottom_safe_area.clamp(0., 0.5) };
     let full_height = c.h / (1. - safe);
     c.y += (full_height - c.h) / 2.;
     c.h = full_height;
     framing.bottom_safe_area = safe;
-    let (sx, sy) = st.fx.shake_offset();
+    let (sx, sy) = if scene.fixed_view.is_some() { (0., 0.) } else { st.fx.shake_offset() };
     st.shake = (sx, sy);
     let s = &d.stages[cur.stage];
     if let Ok((mut tf, mut proj)) = cam.single_mut() {
@@ -245,7 +280,7 @@ fn draw(
     let par = Vec2::new(((c.x + sx - s.width / 2.) * parallax) as f32, (-(c.y + sy - s.height / 2.) * parallax) as f32);
     let rebuild_static = st.stage != Some(cur.stage);
     st.stage = Some(cur.stage);
-    let views = fighter_views(d, st.prev.as_ref(), cur, t);
+    let views = fighter_views(d, st.prev.as_ref(), cur, t, scene.pose_override);
     let asp = win.as_deref().map_or(16. / 9., |w| aspect(w));
     let [x0, y0, x1, y1] = fx::Cam { x: c.x + sx, y: c.y + sy, h: c.h }.view(asp);
     framing.view = [x0, y0, x1, y1];
@@ -254,6 +289,12 @@ fn draw(
         if matches!(layer, Layer::Backdrop | Layer::Stars) {
             tf.translation.x = par.x;
             tf.translation.y = par.y;
+        }
+        if *layer == Layer::Overlay {
+            if let Some(mut m) = meshes.get_mut(&mesh.0) {
+                upload(&mut m, &scene.overlay);
+            }
+            continue;
         }
         let cv = &mut st.canvas;
         cv.clear(detail, d.global.render.alpha_gamma);
@@ -281,6 +322,7 @@ fn draw(
                 }
                 st.fx.draw(cv, d, t);
             }
+            Layer::Overlay => {}
             Layer::Debug => {
                 if scene.debug {
                     let pos: Vec<_> = views.iter().map(|v| (v.x, v.y)).collect();
@@ -308,7 +350,7 @@ fn debug_labels(
     };
     let ctx = ctx.ctx_mut()?;
     let painter = ctx.layer_painter(egui::LayerId::new(egui::Order::Background, egui::Id::new("render-debug")));
-    let views = fighter_views(&scene.data, st.prev.as_ref(), cur, scene.alpha.clamp(0., 1.));
+    let views = fighter_views(&scene.data, st.prev.as_ref(), cur, scene.alpha.clamp(0., 1.), scene.pose_override);
     let font = egui::FontId::monospace(12.);
     let mut placed: Vec<egui::Rect> = vec![];
     let mut labels: Vec<(egui::Pos2, String)> = views

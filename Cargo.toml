@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/sim", "crates/render", "crates/game"]
+members = ["crates/sim", "crates/render", "crates/editor", "crates/game"]
 
 [workspace.package]
 version = "0.1.0"
@@ -11,6 +11,7 @@ publish = false
 [workspace.dependencies]
 sim = { path = "crates/sim" }
 render = { path = "crates/render" }
+editor = { path = "crates/editor" }
 bevy = "0.20.1"
 bevy_egui = "0.43.1"
 serde = { version = "1.0.229", features = ["derive"] }

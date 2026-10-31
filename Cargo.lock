@@ -2654,6 +2654,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "editor"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_egui",
+ "render",
+ "serde_json",
+ "sim",
+]
+
+[[package]]
 name = "egui"
 version = "0.36.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3024,6 +3035,7 @@ dependencies = [
  "bevy",
  "bevy_egui",
  "dirs",
+ "editor",
  "render",
  "serde",
  "serde_json",

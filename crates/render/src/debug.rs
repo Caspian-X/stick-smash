@@ -70,21 +70,32 @@ pub fn draw_debug(cv: &mut Canvas, d: &GameData, w: &World, pos: &[(f64, f64)]) 
             let c = hit_type_color(hb.kind);
             cv.fill_circle([bx_, by], hb.r, Rgba::hex(c, 0.3));
             cv.stroke_circle([bx_, by], hb.r, 2., Rgba::hex(c, 1.));
-            if matches!(hb.kind, HitType::Grab | HitType::Autolink) {
-                continue;
-            }
-            if hb.kind == HitType::Sakurai || hb.dir == LaunchDir::Away {
-                cv.stroke_circle([bx_, by], 4., 2., Rgba::hex(0xffffff, 0.9));
-                continue;
-            }
-            let sgn = if hb.dir == LaunchDir::Back { -f.face } else { f.face };
-            let a = (if hb.kind == HitType::Spike { -hb.angle.abs() } else { hb.angle }).to_radians();
-            let len = 16. + hb.bkb * 3.;
-            let e = [bx_ + a.cos() * len * sgn, by - a.sin() * len];
-            cv.line([bx_, by], e, 2.5, Rgba::hex(0xffffff, 0.95));
-            cv.fill_circle(e, 3., Rgba::hex(0xffffff, 1.));
+            launch_arrow(cv, [bx_, by], hb, f.face, 1.);
         }
     }
+}
+
+/// Launch direction marker for a hitbox centered at `c` (stage pixels): an arrow along the launch angle sized by
+/// bkb, a ring for `away`/sakurai, nothing for grabs and autolink. `px` scales line widths (1 = stage pixels).
+pub fn launch_arrow(cv: &mut Canvas, c: [f64; 2], hb: &sim::data::Hitbox, face: f64, px: f64) {
+    if matches!(hb.kind, HitType::Grab | HitType::Autolink) {
+        return;
+    }
+    if hb.kind == HitType::Sakurai || hb.dir == LaunchDir::Away {
+        cv.stroke_circle(c, 4. * px, 2. * px, Rgba::hex(0xffffff, 0.9));
+        return;
+    }
+    let e = launch_tip(c, hb, face);
+    cv.line(c, e, 2.5 * px, Rgba::hex(0xffffff, 0.95));
+    cv.fill_circle(e, 3. * px, Rgba::hex(0xffffff, 1.));
+}
+
+/// Where [`launch_arrow`] ends: along the launch angle (spikes point down), 16 + 3 × bkb pixels long.
+pub fn launch_tip(c: [f64; 2], hb: &sim::data::Hitbox, face: f64) -> [f64; 2] {
+    let sgn = if hb.dir == LaunchDir::Back { -face } else { face };
+    let a = (if hb.kind == HitType::Spike { -hb.angle.abs() } else { hb.angle }).to_radians();
+    let len = 16. + hb.bkb * 3.;
+    [c[0] + a.cos() * len * sgn, c[1] - a.sin() * len]
 }
 
 /// State / move / frame lines shown above a fighter.

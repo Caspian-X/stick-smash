@@ -218,8 +218,9 @@ fn check_stage(file: &str, s: &Stage) -> Result<(), ContentError> {
     Ok(())
 }
 
-/// Cross-reference checks serde can't do.
-fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
+/// Cross-reference checks serde can't do, on a fully merged fighter. [`load`] runs these; the editor runs them on
+/// every edit before simulating.
+pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
     let e = |path: String, msg: String| err(file, path, msg);
     let stats = serde_json::to_value(&f.stats).unwrap();
     for (name, value) in stats.as_object().unwrap() {

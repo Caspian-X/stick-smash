@@ -10,7 +10,8 @@ Tasks live in the `justfile` (`just` lists them). Add new scripts as `just` reci
 ## Layout
 - `crates/sim/`: deterministic game logic. A pure function of `(World, GameData, inputs)`.
 - `crates/render/`: Bevy plugin that draws a sim `World` read-only (figures, attachments, stage, fx, camera, debug overlay). Fed via `render::Scene::push` each tick.
-- `crates/game/`: Bevy app (input devices, bevy_ui menus/HUD, match flow, egui training panel). `cargo run -p game -- --screenshot <dir>` runs a scripted tour (bot devices pressing buttons through title, select, a 4-player match, pause, results, training) and saves PNGs for visual checks; the steps live in `shots.rs`. Owns the sim `World` as a resource and steps it in `FixedUpdate` at `sim::TICK_HZ`.
+- `crates/editor/`: fighter editor (lib used by `game`, `Screen::Editor`). Plain-Rust model in `doc.rs` (workspace, per-fighter docs, snapshot undo, saving that patches only changed paths into the package's own JSON so `extends` stays intact), `preview.rs` (sandbox `World` running the real sim from frame 0, every frame kept), `view.rs` (camera, transforms, hit-testing, overlay); egui layer in `ui.rs`/`inspect.rs`. Draws through `render::Scene` (`fixed_view`, `overlay`, `pose_override`). The game hooks it up in `game/src/editing.rs` (menu entry, Test → training → "Back to editor").
+- `crates/game/`: Bevy app (input devices, bevy_ui menus/HUD, match flow, egui training panel). `cargo run -p game -- --screenshot <dir>` runs a scripted tour (bot devices pressing buttons through title, the editor (via `editor::Inbox` commands), select, a 4-player match, pause, results, training) and saves PNGs for visual checks; the steps live in `shots.rs`. Owns the sim `World` as a resource and steps it in `FixedUpdate` at `sim::TICK_HZ`.
 - `assets/`: JSON data (global tuning, stage, fighters). Fighters are meant to be user-moddable.
 
 ## Rules

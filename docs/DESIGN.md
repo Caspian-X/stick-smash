@@ -87,10 +87,51 @@ The 5 TS kinds (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) ar
   stop above the panels.
 - **Presentation tuning** (damage color ramp, hit shake, end-of-match slow motion, results delay) lives in
   `global.render.hud`; the sim never reads it.
-- **Editor** is a mode of the same executable, reached from the main menu. It's a fast-follow after the first playable build and gets its own UI design (not a port of the TS panels).
+- **Editor** is a mode of the same executable, reached from the main menu (see "Editor" below).
 
 ### Crates
-`sim` (logic + data types/loading) · `render` (fighter/stage/fx drawing, shared by gameplay and editor) · `game` (bin: app, input, menus, modes) · later `editor` (lib, used by `game`) and `net`.
+`sim` (logic + data types/loading) · `render` (fighter/stage/fx drawing, shared by gameplay and editor) · `editor` (lib: fighter editor, used by `game`) · `game` (bin: app, input, menus, modes) · later `net`.
+
+### Editor (milestone 5)
+A fighter editor reached from the title menu (**keyboard and mouse only**). Priorities: fast iteration, clarity,
+feel. Its own design, not a port of the TS panels.
+
+- **Layout** (egui, Barlow fonts, the ink-navy/gold palette): a top bar (fighter picker with dirty dots, undo/redo,
+  save, test, validation status, back), a left **browser** (moves grouped ground/smash/air/special/grab, throws,
+  poses, fighter stats), the center **viewport** (the real renderer through `render::Scene` with a fixed view), a
+  right **inspector** for the selection, and a bottom **timeline**.
+- **Truthful preview.** A sandbox `World` (training rules, stage `arena` or the first stage) runs the real sim: the
+  fighter starts the move on frame 0 (grounded, or in the air for aerials / when toggled) and the sandbox steps
+  until the fighter is actionable again (plus a short tail, capped). Every frame is kept, so scrubbing is an index.
+  Any data change re-validates (`sim::data::load::check_fighter`) and re-simulates from frame 0. Optional
+  dummy (distance, percent) shows real knockback; optional held button shows charge. Throws grab the dummy and
+  throw it. Invalid data keeps the last good preview and shows the error with its JSON path.
+- **Timeline** segments come from the simulation (which phase the fighter was in on each frame), so loops,
+  landings and hit transitions show as they really play. Rows below: the playhead phase's hitbox windows, event
+  ticks and pose keys. Click/drag scrubs; space plays (0.25×–1×).
+- **Direct manipulation.** In the viewport: drag a hitbox to move it, its rim to resize, the launch-arrow tip to set
+  the angle (Shift snaps 15°). Hitboxes with per-frame `frames` edit the entry shown on the current frame.
+  When the playhead sits on a pose key, the joints get handles and can be dragged (named poses are shared; the
+  inspector says how many keys use it). Wheel zooms at the cursor, right/middle drag pans, F frames the fighter.
+- **Shortcuts.** Space play · ←/→ (or , .) step · Home/End · [ ] previous/next phase · ⌘/Ctrl Z, Shift Z / Y
+  redo · ⌘/Ctrl S save · ⌘/Ctrl D duplicate hitbox · N new hitbox · Delete removes it · Tab cycles hitboxes ·
+  Esc deselects, then leaves.
+- **Model** (`editor::doc`, plain Rust, unit-tested): per fighter a `Doc` with the typed merged `Fighter` being
+  edited, the snapshot it was loaded/saved as, snapshot undo/redo (continuous drags and typing coalesce into one
+  step), and the package's own raw JSON.
+- **Save and `extends`.** The file written is the package's *own* document, not the merged fighter. On save the
+  editor diffs the typed fighter (serialized) against its last-saved snapshot (serialized the same way) and patches
+  only the changed paths into the raw document: objects recurse key by key, anything else (arrays included, as in
+  the merge rule) is written whole, and removed keys become `null` when the parent still has them. Untouched values,
+  `extends`, `$schema` and inherited data stay as they were, so a child stays a thin override; editing an inherited
+  move writes that move's override into the child. Before writing, the real loader (`sim::data::load`) runs over all
+  content with the new document in place; any error for the package refuses the save and lists file + JSON path.
+  Files go to the user content dir (`<data dir>/stick-smash/content/fighters/<id>/fighter.json`), which overrides
+  the built-in file; `--features dev` adds a toggle to write into `assets/` instead. Output uses
+  `to_compact_string`. Abstract parents (`base`) aren't editable in v1.
+- **Test** starts training with the edited (unsaved) data: P1 on the keyboard, a standing dummy. The pause menu's
+  "Back to editor" returns with all editor state intact. After saves, leaving the editor reloads the game's content.
+
 
 ### Rendering (milestone 3)
 - **Vector drawing** is our own small tessellator (`render::canvas`): polylines, circles, sectors, rounded rects

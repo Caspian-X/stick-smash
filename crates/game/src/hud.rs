@@ -379,6 +379,7 @@ const TO_MENU: u32 = 8;
 
 #[allow(clippy::too_many_arguments)]
 pub fn pause(
+    testing: Option<Res<crate::editing::Testing>>,
     mut m: ResMut<Match>,
     mut pm: ResMut<PauseMenu>,
     mut devs: ResMut<Devices>,
@@ -440,7 +441,9 @@ pub fn pause(
             }
             Some(Action::Spin(HITBOXES, _)) => m.debug = !m.debug,
             Some(Action::Activate(TO_SELECT)) => next.set(Screen::Select),
-            Some(Action::Activate(TO_MENU)) => next.set(Screen::Title),
+            Some(Action::Activate(TO_MENU)) => {
+                next.set(if testing.is_some() { Screen::Editor } else { Screen::Title });
+            }
             _ => {}
         }
     }
@@ -456,6 +459,7 @@ pub fn pause(
 pub struct PauseRoot(String);
 
 pub fn draw_pause(
+    testing: Option<Res<crate::editing::Testing>>,
     mut commands: Commands,
     m: Res<Match>,
     pm: Res<PauseMenu>,
@@ -516,8 +520,12 @@ pub fn draw_pause(
                 } else {
                     items.push(Item::button(RESTART, "Restart"));
                 }
-                items.push(Item::button(TO_SELECT, "Character select"));
-                items.push(Item::button(TO_MENU, "Quit to menu"));
+                if testing.is_some() {
+                    items.push(Item::button(TO_MENU, "Back to editor"));
+                } else {
+                    items.push(Item::button(TO_SELECT, "Character select"));
+                    items.push(Item::button(TO_MENU, "Quit to menu"));
+                }
                 menu_list(p, f, &items, pm.cursor.key, 460., 30.);
             });
         });

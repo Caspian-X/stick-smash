@@ -10,6 +10,7 @@ use render::{RenderPlugin, RenderSystems, Scene};
 use sim::data::{Source, load};
 use sim::{GameData, TICK_HZ};
 
+mod editing;
 mod hud;
 mod input;
 mod menu;
@@ -30,6 +31,7 @@ pub enum Screen {
     Select,
     Match,
     Results,
+    Editor,
 }
 
 /// Loaded content (built-in plus user content).
@@ -47,6 +49,7 @@ fn main() {
         .position(|a| a == "--screenshot")
         .map(|i| PathBuf::from(args.get(i + 1).map_or("screenshots", |s| s.as_str())));
     let assets = PathBuf::from("assets");
+    let assets_root = assets.clone();
     let mut roots = vec![assets.clone()];
     if shot_dir.is_none() {
         roots.extend(settings::user_content_dir());
@@ -113,6 +116,7 @@ fn main() {
             .before(RenderSystems),
     )
     .add_systems(EguiPrimaryContextPass, (training::panel.run_if(in_state(Screen::Match)), toast));
+    editing::setup(&mut app, assets_root, if shot_dir.is_some() { None } else { settings::user_content_dir() });
     if let Some(dir) = shot_dir {
         fs::create_dir_all(&dir).expect("create screenshot dir");
         play::FIXED_SEED.store(7, std::sync::atomic::Ordering::Relaxed);
