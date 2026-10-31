@@ -22,10 +22,14 @@ pub struct ResultsMenu {
     pub message: String,
 }
 
-pub fn enter(mut rm: ResMut<ResultsMenu>, m: Res<Match>, shots: Option<Res<crate::shots::Script>>) {
+pub fn enter(mut rm: ResMut<ResultsMenu>, mut m: ResMut<Match>, shots: Option<Res<crate::shots::Script>>) {
+    if m.recording_done {
+        return;
+    }
+    m.recording_done = true;
     rm.message = m
         .recording
-        .as_ref()
+        .as_mut()
         .filter(|r| shots.is_none() && r.data.global.replay.auto_save_count > 0)
         .map_or_else(String::new, |r| match r.save(true) {
             Ok(_) => "Replay auto-saved".into(),
@@ -57,7 +61,7 @@ pub fn update(
             Some(Action::Activate(SELECT) | Action::Back) => next.set(Screen::Select),
             Some(Action::Activate(MENU)) => next.set(Screen::Title),
             Some(Action::Activate(SAVE)) => {
-                if let Some(r) = &m.recording {
+                if let Some(r) = &mut m.recording {
                     rm.message = match r.save(false) {
                         Ok(p) => format!("Saved {}", p.display()),
                         Err(e) => format!("Replay save failed: {e}"),
@@ -65,9 +69,7 @@ pub fn update(
                 }
             }
             Some(Action::Activate(WATCH)) => {
-                if let Some(r) = m.recording.clone()
-                    && let Err(e) = crate::replay::start(r, &mut commands, &mut scene, &mut next)
-                {
+                if let Err(e) = crate::replay::watch_results(&mut m, &mut commands, &mut scene, &mut next) {
                     rm.message = e;
                 }
             }

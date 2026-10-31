@@ -89,6 +89,7 @@ pub struct Match {
     pub debug: bool,
     pub sounds: Vec<sim::Fx>,
     pub recording: Option<crate::replay::Replay>,
+    pub recording_done: bool,
     pub playback: Option<crate::replay::Playback>,
 }
 
@@ -107,6 +108,9 @@ pub fn seed() -> u32 {
 
 impl Match {
     pub fn new(base: &Arc<GameData>, mode: Mode, slots: Vec<Slot>, rules: Rules, seed: u32) -> Result<Self, String> {
+        if base.global.palette.is_empty() {
+            return Err("content palette must not be empty".into());
+        }
         let mut data = (**base).clone();
         data.global.palette =
             slots.iter().map(|s| base.global.palette[s.color % base.global.palette.len()].clone()).collect();
@@ -151,6 +155,7 @@ impl Match {
             debug: mode == Mode::Training,
             sounds: Vec::new(),
             recording,
+            recording_done: false,
             playback: None,
         })
     }
@@ -216,7 +221,7 @@ impl Match {
 
     fn tick(&mut self, devs: &mut Devices, scene: &mut Scene, audible: bool) {
         let inputs = if let Some(p) = &mut self.playback {
-            let Some(inputs) = p.inputs() else {
+            let Some(inputs) = p.inputs(&mut self.world) else {
                 self.frozen = true;
                 return;
             };
@@ -241,7 +246,9 @@ impl Match {
         scene.push(&self.world);
         self.world.fx.clear();
         self.world.hits.clear();
-        if let Some(r) = &mut self.recording {
+        if !self.recording_done
+            && let Some(r) = &mut self.recording
+        {
             r.record(inputs, &self.world);
         }
         if let Some(p) = &mut self.playback {
@@ -283,13 +290,12 @@ impl Match {
 
     pub fn clear_input(&mut self, devs: &mut Devices) {
         devs.clear();
-        if self.mode == Mode::Versus {
-            return;
+        if !self.recording_done
+            && let Some(r) = &mut self.recording
+        {
+            r.clear_inputs();
         }
-        for f in &mut self.world.fighters {
-            f.history = default();
-            f.buffer = default();
-        }
+        crate::replay::clear_world_inputs(&mut self.world);
     }
 
     /// Placement (1-based) per player: the winner (and teammates) first, then by how long they lasted.
@@ -326,10 +332,13 @@ impl Match {
 
 /// Steps the world at `sim::TICK_HZ` (scaled by slow motion / training speed).
 pub fn tick(mut m: ResMut<Match>, mut devs: ResMut<Devices>, mut scene: ResMut<Scene>, screen: Res<State<Screen>>) {
-    if matches!(screen.get(), Screen::Results | Screen::Replays) {
+    if matches!(screen.get(), Screen::Replays) {
         return;
     }
     let m = &mut *m;
+    if m.playback.as_ref().is_some_and(|p| p.seeking()) {
+        return;
+    }
     let ff = std::mem::take(&mut m.ff);
     for _ in 0..ff {
         m.tick(&mut devs, &mut scene, false);
@@ -530,5 +539,27 @@ mod tests {
         playback.seek(m.world.frame, &mut replayed);
         assert_eq!(playback.warning, None);
         assert_eq!(replayed, m.world);
+        m.recording_done = true;
+        let ticks = m.recording.as_ref().unwrap().ticks;
+        let frame = m.world.frame;
+        let mut app = App::new();
+        app.insert_resource(m)
+            .insert_resource(devs)
+            .insert_resource(scene)
+            .insert_resource(State::new(Screen::Results))
+            .add_systems(Update, tick);
+        app.update();
+        let mut m = app.world_mut().remove_resource::<Match>().unwrap();
+        assert!(m.world.frame > frame);
+        assert_eq!(m.recording.as_ref().unwrap().ticks, ticks);
+        m.world.fighters[0].history.held[0] = true;
+        m.world.fighters[0].history.last_press[0] = m.world.frame as i64;
+        m.world.fighters[0].buffer.entries.push(sim::input::BufferedPress {
+            tick: m.world.frame,
+            intent: sim::input::Intent { atk: true, ..default() },
+        });
+        m.clear_input(&mut Devices::default());
+        assert_eq!(m.world.fighters[0].history, default());
+        assert_eq!(m.world.fighters[0].buffer, default());
     }
 }

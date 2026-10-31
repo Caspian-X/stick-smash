@@ -31,28 +31,9 @@ struct Bank {
     last: BTreeMap<String, f64>,
     unknown: BTreeSet<String>,
     rng: u32,
-    tuning: Option<Audio>,
 }
 
 impl Bank {
-    fn prepare(&mut self, a: &Audio, assets: &mut Assets<AudioSource>) {
-        if self.tuning.as_ref() == Some(a) {
-            return;
-        }
-        self.clips.clear();
-        self.last.clear();
-        self.unknown.clear();
-        for (name, sound) in &a.sounds {
-            let clips = (0..a.strength_levels)
-                .map(|i| {
-                    let strength = i as f64 / a.strength_levels.saturating_sub(1).max(1) as f64;
-                    assets.add(AudioSource { bytes: wav(a, sound, strength).into() })
-                })
-                .collect();
-            self.clips.insert(name.clone(), clips);
-        }
-        self.tuning = Some(a.clone());
-    }
     fn queue(&mut self, name: &str, arg: Option<f64>, x: Option<f64>) {
         let old = self.pending.entry(name.into()).or_insert((arg, x));
         if arg.unwrap_or(0.) > old.0.unwrap_or(0.) {
@@ -76,7 +57,15 @@ fn synthesize(
 ) {
     let a = &data.0.global.audio;
     commands.spawn(SpatialListener::new(a.ear_gap as f32));
-    bank.prepare(a, &mut assets);
+    for (name, sound) in &a.sounds {
+        let clips = (0..a.strength_levels)
+            .map(|i| {
+                let strength = i as f64 / a.strength_levels.saturating_sub(1).max(1) as f64;
+                assets.add(AudioSource { bytes: wav(a, sound, strength).into() })
+            })
+            .collect();
+        bank.clips.insert(name.clone(), clips);
+    }
 }
 
 /// Swept oscillator + low-pass noise layers with a short attack and exponential release.
@@ -191,11 +180,8 @@ fn playback(
     frame: Res<render::Framing>,
     m: Option<ResMut<Match>>,
     mut voices: Query<(Entity, &Voice, Option<&mut AudioSink>, Option<&mut SpatialAudioSink>)>,
-    mut assets: ResMut<Assets<AudioSource>>,
 ) {
-    let match_data = m.as_ref().map(|m| m.data.clone());
-    let a = &match_data.as_ref().unwrap_or(&data.0).global.audio;
-    bank.prepare(a, &mut assets);
+    let a = &data.0.global.audio;
     let volume = saved.volume.as_ref().unwrap_or(&a.defaults);
     let gain = (volume.master.clamp(0., 1.) * volume.sfx.clamp(0., 1.)) as f32;
     let now = time.elapsed_secs_f64();

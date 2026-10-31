@@ -10,10 +10,68 @@ use serde::{Deserialize, Serialize};
 use sim::{GameData, Input, MatchConfig, World, step_world};
 use std::{
     fs,
+    io::{BufRead, BufReader, Read, Write},
     path::{Path, PathBuf},
     sync::Arc,
     time::{SystemTime, UNIX_EPOCH},
 };
+
+const FORMAT_VERSION: u32 = 2;
+// Bump when simulation behavior or the checksum representation changes.
+const SIM_VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), "-sim-1");
+const HEADER_LIMIT: u64 = 16 * 1024;
+fn interval(data: &GameData) -> u64 {
+    data.global.replay.checkpoint_ticks.max(u64::from(sim::TICK_HZ))
+}
+pub fn clear_world_inputs(w: &mut World) {
+    for f in &mut w.fighters {
+        f.history = default();
+        f.buffer = default();
+    }
+}
+#[derive(Serialize, Deserialize)]
+struct Header {
+    version: u32,
+    sim_version: String,
+    created: u64,
+    stage: String,
+    fighters: Vec<String>,
+}
+fn different_version() -> String {
+    "Replay recorded with a different version".into()
+}
+impl Header {
+    fn read(reader: &mut impl BufRead) -> Result<Self, String> {
+        let mut line = String::new();
+        reader.take(HEADER_LIMIT).read_line(&mut line).map_err(|e| e.to_string())?;
+        if !line.ends_with('\n') {
+            return Err(different_version());
+        }
+        let h: Self = serde_json::from_str(&line).map_err(|_| different_version())?;
+        Ok(h)
+    }
+    fn compatible(&self) -> Result<(), String> {
+        if self.version != FORMAT_VERSION || self.sim_version != SIM_VERSION {
+            return Err(different_version());
+        }
+        Ok(())
+    }
+    fn label(&self) -> String {
+        format!(
+            "{} · {} · {}{}",
+            date(self.created),
+            self.stage,
+            self.fighters.join(" / "),
+            if self.version == FORMAT_VERSION && self.sim_version == SIM_VERSION {
+                ""
+            } else {
+                " · recorded with a different version"
+            }
+        )
+    }
+}
+#[derive(Resource)]
+pub struct ReturnTo(pub Match);
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Run {
@@ -24,6 +82,8 @@ pub struct Run {
 pub struct Replay {
     version: u32,
     created: u64,
+    sim_version: String,
+    clears: Vec<u64>,
     #[serde(with = "content")]
     pub data: GameData,
     pub config: MatchConfig,
@@ -31,6 +91,8 @@ pub struct Replay {
     checksums: Vec<(u64, u64)>,
     pub ticks: u64,
     final_hash: u64,
+    #[serde(skip)]
+    saved_path: Option<PathBuf>,
 }
 fn checksum(w: &World) -> u64 {
     serde_json::to_vec(w)
@@ -45,7 +107,10 @@ fn drain(w: &mut World) {
 impl Replay {
     pub fn new(data: &GameData, w: &World) -> Self {
         Self {
-            version: 1,
+            version: FORMAT_VERSION,
+            sim_version: SIM_VERSION.into(),
+            clears: vec![],
+            saved_path: None,
             created: SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_secs()),
             data: data.clone(),
             config: w.cfg.clone(),
@@ -62,7 +127,7 @@ impl Replay {
             self.runs.push(Run { ticks: 1, inputs });
         }
         self.ticks += 1;
-        if self.ticks.is_multiple_of(self.data.global.replay.checkpoint_ticks.max(1)) {
+        if self.ticks.is_multiple_of(interval(&self.data)) {
             self.checksums.push((self.ticks, checksum(w)));
         }
         // Only recompute at checkpoints or the end of the match.
@@ -70,14 +135,41 @@ impl Replay {
             self.final_hash = checksum(w);
         }
     }
+    pub fn clear_inputs(&mut self) {
+        if self.clears.last() != Some(&self.ticks) {
+            self.clears.push(self.ticks);
+        }
+    }
+    fn header(&self) -> Header {
+        Header {
+            version: self.version,
+            sim_version: self.sim_version.clone(),
+            created: self.created,
+            stage: self.config.stage.clone(),
+            fighters: self.config.players.iter().map(|p| p.fighter.clone()).collect(),
+        }
+    }
+    fn write(&self, path: &Path) -> Result<(), String> {
+        let tmp = path.with_extension("tmp");
+        let mut file = fs::File::create(&tmp).map_err(|e| e.to_string())?;
+        serde_json::to_writer(&mut file, &self.header()).map_err(|e| e.to_string())?;
+        file.write_all(b"\n").map_err(|e| e.to_string())?;
+        serde_json::to_writer(&mut file, self).map_err(|e| e.to_string())?;
+        file.flush().map_err(|e| e.to_string())?;
+        fs::rename(tmp, path).map_err(|e| e.to_string())
+    }
     fn read(path: &Path) -> Result<Self, String> {
-        let r: Self = serde_json::from_slice(&fs::read(path).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+        let mut reader = BufReader::new(fs::File::open(path).map_err(|e| e.to_string())?);
+        let header = Header::read(&mut reader)?;
+        header.compatible()?;
+        let mut r: Self = serde_json::from_reader(reader).map_err(|e| e.to_string())?;
         r.validate()?;
+        r.saved_path = Some(path.into());
         Ok(r)
     }
     fn validate(&self) -> Result<(), String> {
-        if self.version != 1 {
-            return Err(format!("unsupported replay version {}", self.version));
+        if self.version != FORMAT_VERSION || self.sim_version != SIM_VERSION {
+            return Err(different_version());
         }
         if self.ticks == 0
             || self.runs.iter().any(|r| r.ticks == 0 || r.inputs.len() != self.config.players.len())
@@ -85,7 +177,13 @@ impl Replay {
         {
             return Err("invalid replay input stream".into());
         }
-        let interval = self.data.global.replay.checkpoint_ticks.max(1);
+        if self.data.global.palette.is_empty() {
+            return Err("content palette must not be empty".into());
+        }
+        if self.clears.iter().any(|t| *t >= self.ticks) || self.clears.windows(2).any(|w| w[0] >= w[1]) {
+            return Err("invalid replay input resets".into());
+        }
+        let interval = interval(&self.data);
         if self.checksums.len() as u64 != self.ticks / interval + 1
             || self.checksums.iter().enumerate().any(|(i, (tick, _))| *tick != i as u64 * interval)
         {
@@ -93,24 +191,28 @@ impl Replay {
         }
         Ok(())
     }
-    pub fn save(&self, automatic: bool) -> Result<PathBuf, String> {
+    pub fn save(&mut self, automatic: bool) -> Result<PathBuf, String> {
         let dir = directory().ok_or("platform data directory unavailable")?;
-        fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+        self.save_in(&dir, automatic)
+    }
+    fn save_in(&mut self, dir: &Path, automatic: bool) -> Result<PathBuf, String> {
+        fs::create_dir_all(dir).map_err(|e| e.to_string())?;
         let name =
             format!("{}-{}-{}.replay.json", if automatic { "auto" } else { "saved" }, self.created, self.config.seed);
         let path = dir.join(name);
-        let tmp = path.with_extension("tmp");
-        fs::write(&tmp, serde_json::to_vec(self).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
-        fs::rename(tmp, &path).map_err(|e| e.to_string())?;
+        self.write(&path)?;
+        self.saved_path = Some(path.clone());
         if automatic {
-            let mut files: Vec<_> = paths(&dir)
+            let mut files: Vec<_> = paths(dir)
                 .into_iter()
                 .filter(|p| p.file_name().is_some_and(|n| n.to_string_lossy().starts_with("auto-")))
                 .collect();
             files.sort();
             let remove = files.len().saturating_sub(self.data.global.replay.auto_save_count);
             for p in files.into_iter().take(remove) {
-                fs::remove_file(p).map_err(|e| e.to_string())?;
+                if let Err(e) = fs::remove_file(&p) {
+                    warn!("replay cleanup {}: {e}", p.display());
+                }
             }
         }
         Ok(path)
@@ -141,10 +243,15 @@ pub struct Playback {
     pub warning: Option<String>,
     pub hide_hud: bool,
     cursor: Cursor,
+    pending_seek: Option<u64>,
+    message: String,
 }
 impl Playback {
-    pub fn new(replay: Replay) -> Result<Self, String> {
+    pub fn new(mut replay: Replay) -> Result<Self, String> {
         replay.validate()?;
+        if replay.saved_path.as_ref().is_some_and(|p| !p.is_file()) {
+            replay.saved_path = None;
+        }
         let w = World::new(replay.config.clone(), &replay.data)?;
         let mut p = Self {
             replay,
@@ -155,6 +262,8 @@ impl Playback {
             warning: None,
             hide_hud: false,
             cursor: Cursor { key: 1, owner: None },
+            pending_seek: None,
+            message: String::new(),
         };
         p.verify(&w);
         Ok(p)
@@ -171,7 +280,10 @@ impl Playback {
             self.warning = Some(format!("Replay desync at tick {}: simulation differs from recording", self.position));
         }
     }
-    pub fn inputs(&mut self) -> Option<Vec<Input>> {
+    pub fn inputs(&mut self, w: &mut World) -> Option<Vec<Input>> {
+        if self.replay.clears.binary_search(&self.position).is_ok() {
+            clear_world_inputs(w);
+        }
         let r = self.replay.runs.get(self.run)?;
         let inputs = r.inputs.clone();
         self.offset += 1;
@@ -184,14 +296,20 @@ impl Playback {
     }
     pub fn after_tick(&mut self, w: &World) {
         self.verify(w);
-        if self.position.is_multiple_of(self.replay.data.global.replay.checkpoint_ticks.max(1))
+        if self.position.is_multiple_of(interval(&self.replay.data))
             && self.snapshots.last().is_none_or(|(t, _)| *t < self.position)
         {
             self.snapshots.push((self.position, w.clone()));
         }
     }
-    pub fn seek(&mut self, target: u64, w: &mut World) {
+    pub fn seeking(&self) -> bool {
+        self.pending_seek.is_some()
+    }
+    pub fn request_seek(&mut self, target: u64, w: &mut World) -> bool {
         let target = target.min(self.replay.ticks);
+        if self.pending_seek == Some(target) || self.pending_seek.is_none() && target == self.position {
+            return false;
+        }
         let (tick, snapshot) = self.snapshots.iter().rev().find(|(t, _)| *t <= target).unwrap();
         *w = snapshot.clone();
         self.position = *tick;
@@ -201,20 +319,33 @@ impl Playback {
             self.offset -= self.replay.runs[self.run].ticks;
             self.run += 1;
         }
-        while self.position < target {
-            let inputs = self.inputs().unwrap();
+        self.pending_seek = Some(target);
+        true
+    }
+    pub fn advance_seek(&mut self, w: &mut World, budget: u32) -> bool {
+        let Some(target) = self.pending_seek else { return false };
+        for _ in 0..budget {
+            if self.position == target {
+                break;
+            }
+            let inputs = self.inputs(w).unwrap();
             step_world(w, &self.replay.data, &inputs);
             drain(w);
             self.after_tick(w);
         }
+        if self.position == target {
+            self.pending_seek = None;
+        }
+        true
+    }
+    pub fn seek(&mut self, target: u64, w: &mut World) {
+        self.request_seek(target, w);
+        while self.seeking() {
+            self.advance_seek(w, sim::TICK_HZ * 4);
+        }
     }
 }
-pub fn start(
-    r: Replay,
-    commands: &mut Commands,
-    scene: &mut render::Scene,
-    next: &mut NextState<Screen>,
-) -> Result<(), String> {
+fn watching(r: Replay) -> Result<Match, String> {
     let p = Playback::new(r)?;
     let data = Arc::new(p.replay.data.clone());
     let cfg = &p.replay.config;
@@ -242,9 +373,42 @@ pub fn start(
     m.data = data;
     m.world = p.snapshots[0].1.clone();
     m.playback = Some(p);
-    play::install(commands, scene, m);
+    Ok(m)
+}
+pub fn start(
+    r: Replay,
+    commands: &mut Commands,
+    scene: &mut render::Scene,
+    next: &mut NextState<Screen>,
+) -> Result<(), String> {
+    play::install(commands, scene, watching(r)?);
     next.set(Screen::Playback);
     Ok(())
+}
+pub fn watch_results(
+    m: &mut Match,
+    commands: &mut Commands,
+    scene: &mut render::Scene,
+    next: &mut NextState<Screen>,
+) -> Result<(), String> {
+    let replay = m.recording.clone().ok_or("No recorded match")?;
+    let watching = watching(replay)?;
+    let old = std::mem::replace(m, watching);
+    commands.insert_resource(ReturnTo(old));
+    scene.data = m.data.clone();
+    scene.reset(&m.world);
+    scene.debug = false;
+    next.set(Screen::Playback);
+    Ok(())
+}
+fn restore_results(m: &mut Match, ret: &mut ReturnTo, scene: &mut render::Scene) {
+    if let Some(r) = &mut ret.0.recording {
+        r.saved_path = m.playback.as_ref().and_then(|p| p.replay.saved_path.clone());
+    }
+    std::mem::swap(m, &mut ret.0);
+    scene.data = m.data.clone();
+    scene.reset(&m.world);
+    scene.debug = m.debug;
 }
 pub fn verify_directory(dir: &Path) -> Result<(), String> {
     let files = paths(dir);
@@ -272,6 +436,7 @@ pub struct Library {
     entries: Vec<(PathBuf, String)>,
     warning: String,
     page: usize,
+    selected: Option<usize>,
 }
 #[derive(Component)]
 pub struct LibraryRoot(String);
@@ -279,18 +444,17 @@ pub fn enter(mut lib: ResMut<Library>) {
     lib.cursor = Cursor { key: 1, owner: None };
     lib.warning.clear();
     lib.page = 0;
+    lib.selected = None;
     lib.entries = directory()
         .map(|d| paths(&d))
         .unwrap_or_default()
         .into_iter()
         .map(|p| {
-            let label = match Replay::read(&p) {
-                Ok(r) => format!(
-                    "{} · {} · {}",
-                    date(r.created),
-                    r.config.stage,
-                    r.config.players.iter().map(|p| p.fighter.as_str()).collect::<Vec<_>>().join(" / ")
-                ),
+            let label = match fs::File::open(&p)
+                .map_err(|e| e.to_string())
+                .and_then(|f| Header::read(&mut BufReader::new(f)))
+            {
+                Ok(h) => h.label(),
                 Err(e) => format!("Unreadable: {e}"),
             };
             (p, label)
@@ -329,7 +493,30 @@ pub fn library(
     for (_, nav) in devs.navs() {
         let spots = ui::spots(&q);
         match lib.cursor.drive(nav, &spots) {
+            Some(Action::Back) if lib.selected.is_some() => lib.selected = None,
             Some(Action::Back | Action::Activate(0)) => next.set(Screen::Title),
+            Some(Action::Activate(k)) if k == u32::MAX - 2 => {
+                if let Some(i) = lib.selected
+                    && let Err(e) =
+                        Replay::read(&lib.entries[i].0).and_then(|r| start(r, &mut commands, &mut scene, &mut next))
+                {
+                    lib.warning = e;
+                }
+            }
+            Some(Action::Activate(k)) if k == u32::MAX - 3 => {
+                if let Some(i) = lib.selected {
+                    match fs::remove_file(&lib.entries[i].0) {
+                        Ok(()) => {
+                            lib.entries.remove(i);
+                            lib.selected = None;
+                            lib.page = lib.page.min(lib.entries.len().saturating_sub(1) / 8);
+                            lib.cursor.key = 0;
+                        }
+                        Err(e) => lib.warning = format!("Delete failed: {e}"),
+                    }
+                }
+            }
+            Some(Action::Activate(k)) if k == u32::MAX - 4 => lib.selected = None,
             Some(Action::Activate(u32::MAX)) => {
                 lib.page = lib.page.saturating_sub(1);
                 lib.cursor.key = 0;
@@ -338,17 +525,14 @@ pub fn library(
                 lib.page += 1;
                 lib.cursor.key = 0;
             }
-            Some(Action::Activate(k)) => {
-                if let Some((path, _)) = lib.entries.get(k as usize - 1)
-                    && let Err(e) = Replay::read(path).and_then(|r| start(r, &mut commands, &mut scene, &mut next))
-                {
-                    lib.warning = e;
-                }
+            Some(Action::Activate(k)) if (k as usize) <= lib.entries.len() => {
+                lib.selected = Some(k as usize - 1);
+                lib.cursor.key = u32::MAX - 2;
             }
             _ => {}
         }
     }
-    let signature = format!("{}:{}:{}", lib.cursor.key, lib.page, lib.warning);
+    let signature = format!("{}:{}:{}:{:?}:{}", lib.cursor.key, lib.page, lib.warning, lib.selected, lib.entries.len());
     if roots.iter().any(|(_, r)| r.0 == signature) {
         return;
     }
@@ -378,6 +562,22 @@ pub fn library(
                     DIM,
                     if lib.entries.is_empty() { "No saved replays" } else { &lib.warning },
                 ));
+                if let Some(i) = lib.selected {
+                    p.spawn(txt(&fonts.body, 22., STAR, &lib.entries[i].1));
+                    menu_list(
+                        p,
+                        &fonts,
+                        &[
+                            Item::button(u32::MAX - 2, "Watch"),
+                            Item::button(u32::MAX - 3, "Delete replay"),
+                            Item::button(u32::MAX - 4, "Cancel"),
+                        ],
+                        lib.cursor.key,
+                        1150.,
+                        24.,
+                    );
+                    return;
+                }
                 let mut items: Vec<_> = lib
                     .entries
                     .iter()
@@ -397,6 +597,10 @@ pub fn library(
             });
         });
 }
+fn seek_tick(x: f32, ticks: u64) -> u64 {
+    (f64::from((x + 0.5).clamp(0., 1.)) * ticks as f64).round() as u64
+}
+
 #[derive(Component)]
 pub struct ControlsRoot(String);
 #[derive(Component)]
@@ -421,8 +625,11 @@ pub fn controls(
     mouse: Res<ButtonInput<MouseButton>>,
     mut fills: Query<&mut Node, (With<SeekFill>, Without<crate::hud::HudRoot>)>,
     mut positions: Query<&mut Text, With<PositionText>>,
+    mut return_to: Option<ResMut<ReturnTo>>,
+    mut pointer_tick: Local<Option<u64>>,
 ) {
     let m = &mut *m;
+    let returning = return_to.is_some();
     let Some(p) = m.playback.as_mut() else { return };
     let mut seek = None;
     let spots = ui::spots(&q);
@@ -439,7 +646,22 @@ pub fn controls(
                 m.speed = speeds[(i as i32 + by).rem_euclid(4) as usize];
             }
             Some(Action::Activate(4)) => p.hide_hud = !p.hide_hud,
-            Some(Action::Back | Action::Activate(5)) => next.set(Screen::Replays),
+            Some(Action::Back | Action::Activate(5)) => {
+                if let Some(ret) = return_to.as_mut() {
+                    restore_results(m, ret, &mut scene);
+                    commands.remove_resource::<ReturnTo>();
+                    next.set(Screen::Results);
+                } else {
+                    next.set(Screen::Replays);
+                }
+                return;
+            }
+            Some(Action::Activate(7)) => {
+                p.message = match p.replay.save(false) {
+                    Ok(_) => "Replay saved".into(),
+                    Err(e) => format!("Save failed: {e}"),
+                };
+            }
             Some(Action::Spin(6, by)) => {
                 seek =
                     Some(p.position.saturating_add_signed(i64::from(by) * i64::from(sim::TICK_HZ)).min(p.replay.ticks))
@@ -452,12 +674,22 @@ pub fn controls(
             && cursor.cursor_over
             && let Some(pos) = cursor.normalized
         {
-            seek = Some((f64::from(pos.x.clamp(0., 1.)) * p.replay.ticks as f64).round() as u64);
+            let target = seek_tick(pos.x, p.replay.ticks);
+            if *pointer_tick != Some(target) {
+                seek = Some(target);
+                *pointer_tick = Some(target);
+            }
         }
     }
-    if let Some(tick) = seek {
-        p.seek(tick, &mut m.world);
+    if !mouse.pressed(MouseButton::Left) {
+        *pointer_tick = None;
+    }
+    if let Some(tick) = seek
+        && p.request_seek(tick, &mut m.world)
+    {
         m.sounds.clear();
+    }
+    if p.advance_seek(&mut m.world, sim::TICK_HZ * 4) {
         scene.reset(&m.world);
     }
     for mut node in &mut hud {
@@ -467,9 +699,23 @@ pub fn controls(
         fill.width = Val::Percent(100. * p.position as f32 / p.replay.ticks.max(1) as f32);
     }
     for mut text in &mut positions {
-        text.0 = format!("Tick {} / {} · seek: left / right or drag bar", p.position, p.replay.ticks);
+        text.0 = format!(
+            "Tick {} / {}{} · seek: left / right or drag bar",
+            p.position,
+            p.replay.ticks,
+            if p.seeking() { " · Seeking…" } else { "" }
+        );
     }
-    let sig = format!("{}:{}:{}:{}:{:?}", p.cursor.key, m.frozen, m.speed, p.hide_hud, p.warning);
+    let sig = format!(
+        "{}:{}:{}:{}:{:?}:{}:{}",
+        p.cursor.key,
+        m.frozen,
+        m.speed,
+        p.hide_hud,
+        p.warning,
+        p.message,
+        p.replay.saved_path.is_some()
+    );
     if roots.iter().any(|(_, r)| r.0 == sig) {
         return;
     }
@@ -499,17 +745,28 @@ pub fn controls(
                     Item::button(2, "Frame step"),
                     Item::spin(3, "Speed", format!("{}×", m.speed)),
                     Item::button(4, if p.hide_hud { "Show HUD" } else { "Hide HUD" }),
-                    Item::button(5, "Replays"),
+                    Item::button(5, if returning { "Results" } else { "Replays" }),
                 ] {
-                    menu_list(row, &fonts, &[item], p.cursor.key, 220., 22.);
+                    menu_list(row, &fonts, &[item], p.cursor.key, 182., 21.);
+                }
+                if p.replay.saved_path.is_none() {
+                    menu_list(row, &fonts, &[Item::button(7, "Save replay")], p.cursor.key, 182., 21.);
                 }
             });
+            if !p.message.is_empty() {
+                parent.spawn(txt(&fonts.body, 16., STAR, &p.message));
+            }
             parent.spawn((
                 txt(
                     &fonts.body,
                     16.,
                     DIM,
-                    format!("Tick {} / {} · seek: left / right or drag bar", p.position, p.replay.ticks),
+                    format!(
+                        "Tick {} / {}{} · seek: left / right or drag bar",
+                        p.position,
+                        p.replay.ticks,
+                        if p.seeking() { " · Seeking…" } else { "" }
+                    ),
                 ),
                 PositionText,
             ));
@@ -599,7 +856,8 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("stick-smash-replay-test-{}", std::process::id()));
         fs::create_dir_all(&dir).unwrap();
         let file = dir.join("cpu.replay.json");
-        fs::write(&file, encoded).unwrap();
+        let round_trip: Replay = serde_json::from_slice(&encoded).unwrap();
+        round_trip.write(&file).unwrap();
         let r = Replay::read(&file).unwrap();
         verify_directory(&dir).unwrap();
         fs::remove_dir_all(&dir).unwrap();
@@ -628,5 +886,128 @@ mod tests {
         assert!(!p.warning.as_ref().unwrap().contains("tick 0:"));
         r.version = 99;
         assert!(Playback::new(r).is_err());
+    }
+    #[test]
+    fn seek_bar_uses_centered_coordinates() {
+        assert_eq!(seek_tick(-0.5, 1000), 0);
+        assert_eq!(seek_tick(0., 1000), 500);
+        assert_eq!(seek_tick(0.5, 1000), 1000);
+        assert_eq!(seek_tick(2., 1000), 1000);
+    }
+    #[test]
+    fn seeks_are_bounded_and_identical_requests_do_nothing() {
+        let (r, expected) = recorded();
+        let mut p = Playback::new(r).unwrap();
+        let mut w = p.snapshots[0].1.clone();
+        assert!(!p.request_seek(0, &mut w));
+        assert!(p.request_seek(p.replay.ticks, &mut w));
+        p.advance_seek(&mut w, 10);
+        assert_eq!(p.position, 10);
+        assert!(p.seeking());
+        assert!(!p.request_seek(p.replay.ticks, &mut w));
+        assert_eq!(p.position, 10);
+        while p.seeking() {
+            p.advance_seek(&mut w, 240);
+        }
+        assert_eq!(w, expected);
+        assert_eq!(p.warning, None);
+    }
+    #[test]
+    fn input_resets_round_trip_and_survive_snapshot_seeks() {
+        let (mut data, errors) = crate::load_data(&[PathBuf::from("../../assets")]);
+        assert!(errors.is_empty());
+        data.global.replay.checkpoint_ticks = 1;
+        assert_eq!(interval(&data), u64::from(sim::TICK_HZ));
+        let cfg = MatchConfig { training: true, ..default() };
+        let mut w = World::new(cfg, &data).unwrap();
+        let mut r = Replay::new(&data, &w);
+        for tick in 0..1200 {
+            if [250, 510, 600].contains(&tick) {
+                r.clear_inputs();
+                r.clear_inputs();
+                clear_world_inputs(&mut w);
+            }
+            let input = Input {
+                stick: (if tick % 20 < 10 { 127 } else { -127 }, 0),
+                buttons: if tick % 9 == 0 { 2 } else { 0 },
+            };
+            let inputs = vec![input, Input::default()];
+            step_world(&mut w, &data, &inputs);
+            drain(&mut w);
+            r.record(inputs, &w);
+        }
+        r.final_hash = checksum(&w);
+        let r: Replay = serde_json::from_slice(&serde_json::to_vec(&r).unwrap()).unwrap();
+        assert_eq!(r.clears, [250, 510, 600]);
+        let mut p = Playback::new(r).unwrap();
+        let mut actual = p.snapshots[0].1.clone();
+        p.seek(1200, &mut actual);
+        assert_eq!(actual, w);
+        assert_eq!(p.warning, None);
+        p.seek(600, &mut actual);
+        p.seek(1200, &mut actual);
+        assert_eq!(actual, w);
+        assert_eq!(p.warning, None);
+    }
+    #[test]
+    fn library_header_does_not_parse_payload_and_versions_are_explicit() {
+        let (mut r, _) = recorded();
+        let mut bytes = serde_json::to_vec(&r.header()).unwrap();
+        bytes.extend_from_slice(b"\nnot a valid replay payload");
+        let mut reader = std::io::Cursor::new(bytes);
+        let h = Header::read(&mut reader).unwrap();
+        h.compatible().unwrap();
+        assert!(h.label().contains("brawler"));
+        let mut remaining = String::new();
+        reader.read_to_string(&mut remaining).unwrap();
+        assert_eq!(remaining, "not a valid replay payload");
+        r.sim_version = "another-sim".into();
+        assert!(Playback::new(r).err().unwrap().contains("recorded with a different version"));
+    }
+    #[test]
+    fn palette_validation_and_cleanup_failures() {
+        let (mut r, _) = recorded();
+        let dir = std::env::temp_dir().join(format!("stick-smash-cleanup-test-{}", std::process::id()));
+        fs::create_dir_all(dir.join("auto-0-broken.replay.json")).unwrap();
+        r.data.global.replay.auto_save_count = 1;
+        let saved = r.save_in(&dir, true).unwrap();
+        assert!(saved.is_file());
+        assert!(Replay::read(&saved).is_ok());
+        fs::remove_dir_all(dir).unwrap();
+        r.data.global.palette.clear();
+        assert!(r.validate().unwrap_err().contains("palette"));
+        let data = Arc::new(r.data.clone());
+        assert!(Match::attract(&data, 1).err().unwrap().contains("palette"));
+    }
+    #[test]
+    fn watching_results_preserves_match_and_allows_saving_without_autosave() {
+        let (mut r, expected) = recorded();
+        r.data.global.replay.auto_save_count = 0;
+        let mut m = watching(r.clone()).unwrap();
+        m.mode = Mode::Versus;
+        m.playback = None;
+        m.world = expected.clone();
+        m.recording = Some(r);
+        m.recording_done = true;
+        m.stats[0].kos = 7;
+        let places = m.placements();
+        let mut scene = render::Scene::new(m.data.clone());
+        let mut world = bevy::prelude::World::new();
+        let mut queue = bevy::ecs::world::CommandQueue::default();
+        let mut next = NextState::default();
+        watch_results(&mut m, &mut Commands::new(&mut queue, &world), &mut scene, &mut next).unwrap();
+        queue.apply(&mut world);
+        assert!(m.playback.as_ref().unwrap().replay.saved_path.is_none());
+        let dir = std::env::temp_dir().join(format!("stick-smash-return-test-{}", std::process::id()));
+        let path = m.playback.as_mut().unwrap().replay.save_in(&dir, false).unwrap();
+        let mut ret = world.remove_resource::<ReturnTo>().unwrap();
+        restore_results(&mut m, &mut ret, &mut scene);
+        assert_eq!(m.world, expected);
+        assert_eq!(m.stats[0].kos, 7);
+        assert_eq!(m.placements(), places);
+        assert_eq!(m.mode, Mode::Versus);
+        assert!(m.recording_done);
+        assert_eq!(m.recording.as_ref().unwrap().saved_path.as_ref(), Some(&path));
+        fs::remove_dir_all(dir).unwrap();
     }
 }
