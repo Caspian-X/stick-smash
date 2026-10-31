@@ -30,6 +30,10 @@
     "audio": {
       "$ref": "#/$defs/Audio",
       "description": "Procedural sound bank and game-side mixing. The sim never reads it."
+    },
+    "replay": {
+      "$ref": "#/$defs/Replay",
+      "default": { "autoSaveCount": 10, "checkpointTicks": 300 }
     }
   },
   "required": [
@@ -1600,6 +1604,14 @@
       },
       "required": ["wave", "from", "to", "duration", "attack", "decay", "gain"]
     },
-    "Wave": { "type": "string", "enum": ["sine", "triangle", "square", "saw", "noise"] }
+    "Wave": { "type": "string", "enum": ["sine", "triangle", "square", "saw", "noise"] },
+    "Replay": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "autoSaveCount": { "type": "integer", "format": "uint", "minimum": 0, "default": 10 },
+        "checkpointTicks": { "type": "integer", "format": "uint64", "minimum": 0, "default": 300 }
+      }
+    }
   }
 }

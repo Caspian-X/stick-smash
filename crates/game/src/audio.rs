@@ -200,7 +200,7 @@ fn playback(
         }
     }
     if let Some(mut m) = m {
-        let audible = m.paused.is_none() && matches!(m.mode, Mode::Versus | Mode::Training);
+        let audible = m.paused.is_none() && matches!(m.mode, Mode::Versus | Mode::Training | Mode::Replay);
         for fx in std::mem::take(&mut m.sounds) {
             if audible && let Fx::Sfx { name, arg, x } = fx {
                 bank.queue(&name, arg, x);

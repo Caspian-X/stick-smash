@@ -16,6 +16,7 @@ use crate::{Data, Screen};
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Mode {
     Versus,
+    Replay,
     Training,
     /// CPUs fighting behind the title menus.
     Attract,
@@ -87,6 +88,9 @@ pub struct Match {
     end_t: u32,
     pub debug: bool,
     pub sounds: Vec<sim::Fx>,
+    pub recording: Option<crate::replay::Replay>,
+    pub recording_done: bool,
+    pub playback: Option<crate::replay::Playback>,
 }
 
 /// Nonzero: every new match uses this seed (screenshot mode, so shots reproduce).
@@ -104,6 +108,9 @@ pub fn seed() -> u32 {
 
 impl Match {
     pub fn new(base: &Arc<GameData>, mode: Mode, slots: Vec<Slot>, rules: Rules, seed: u32) -> Result<Self, String> {
+        if base.global.palette.is_empty() {
+            return Err("content palette must not be empty".into());
+        }
         let mut data = (**base).clone();
         data.global.palette =
             slots.iter().map(|s| base.global.palette[s.color % base.global.palette.len()].clone()).collect();
@@ -128,6 +135,7 @@ impl Match {
         if mode == Mode::Showcase {
             world.count = 0;
         }
+        let recording = (mode == Mode::Versus).then(|| crate::replay::Replay::new(&data, &world));
         Ok(Match {
             mode,
             world,
@@ -146,6 +154,9 @@ impl Match {
             end_t: 0,
             debug: mode == Mode::Training,
             sounds: Vec::new(),
+            recording,
+            recording_done: false,
+            playback: None,
         })
     }
 
@@ -209,8 +220,17 @@ impl Match {
     }
 
     fn tick(&mut self, devs: &mut Devices, scene: &mut Scene, audible: bool) {
-        let inputs =
-            if self.world.over { vec![Input::default(); self.world.fighters.len()] } else { self.inputs(devs) };
+        let inputs = if let Some(p) = &mut self.playback {
+            let Some(inputs) = p.inputs(&mut self.world) else {
+                self.frozen = true;
+                return;
+            };
+            inputs
+        } else if self.world.over {
+            vec![Input::default(); self.world.fighters.len()]
+        } else {
+            self.inputs(devs)
+        };
         let before: Vec<(f64, i32)> = self.world.fighters.iter().map(|f| (f.dmg, f.stocks)).collect();
         step_world(&mut self.world, &self.data, &inputs);
         self.track(&before);
@@ -220,12 +240,20 @@ impl Match {
         if self.world.over {
             self.over_t += 1;
         }
-        if audible && matches!(self.mode, Mode::Versus | Mode::Training) {
+        if audible && matches!(self.mode, Mode::Versus | Mode::Training | Mode::Replay) {
             self.sounds.extend(self.world.fx.iter().filter(|fx| matches!(fx, sim::Fx::Sfx { .. })).cloned());
         }
         scene.push(&self.world);
         self.world.fx.clear();
         self.world.hits.clear();
+        if !self.recording_done
+            && let Some(r) = &mut self.recording
+        {
+            r.record(inputs, &self.world);
+        }
+        if let Some(p) = &mut self.playback {
+            p.after_tick(&self.world);
+        }
     }
 
     /// KOs, falls, self-destructs and damage, credited from damage and stock changes plus the sim's hit trace.
@@ -262,10 +290,12 @@ impl Match {
 
     pub fn clear_input(&mut self, devs: &mut Devices) {
         devs.clear();
-        for f in &mut self.world.fighters {
-            f.history = default();
-            f.buffer = default();
+        if !self.recording_done
+            && let Some(r) = &mut self.recording
+        {
+            r.clear_inputs();
         }
+        crate::replay::clear_world_inputs(&mut self.world);
     }
 
     /// Placement (1-based) per player: the winner (and teammates) first, then by how long they lasted.
@@ -292,8 +322,8 @@ impl Match {
 
     fn tick_speed(&self) -> f64 {
         let slow = &self.data.global.render.hud.end_slowmo;
-        let mut s = if self.mode == Mode::Training { self.speed } else { 1. };
-        if self.world.end_t > 0 && self.end_t < slow.ticks {
+        let mut s = if matches!(self.mode, Mode::Training | Mode::Replay) { self.speed } else { 1. };
+        if self.mode != Mode::Replay && self.world.end_t > 0 && self.end_t < slow.ticks {
             s *= slow.speed;
         }
         s
@@ -301,8 +331,14 @@ impl Match {
 }
 
 /// Steps the world at `sim::TICK_HZ` (scaled by slow motion / training speed).
-pub fn tick(mut m: ResMut<Match>, mut devs: ResMut<Devices>, mut scene: ResMut<Scene>) {
+pub fn tick(mut m: ResMut<Match>, mut devs: ResMut<Devices>, mut scene: ResMut<Scene>, screen: Res<State<Screen>>) {
+    if matches!(screen.get(), Screen::Replays) {
+        return;
+    }
     let m = &mut *m;
+    if m.playback.as_ref().is_some_and(|p| p.seeking()) {
+        return;
+    }
     let ff = std::mem::take(&mut m.ff);
     for _ in 0..ff {
         m.tick(&mut devs, &mut scene, false);
@@ -310,7 +346,7 @@ pub fn tick(mut m: ResMut<Match>, mut devs: ResMut<Devices>, mut scene: ResMut<S
     if m.paused.is_some() {
         return;
     }
-    if m.mode == Mode::Training && m.frozen {
+    if matches!(m.mode, Mode::Training | Mode::Replay) && m.frozen {
         if std::mem::take(&mut m.step) {
             m.tick(&mut devs, &mut scene, true);
         }
@@ -324,7 +360,11 @@ pub fn tick(mut m: ResMut<Match>, mut devs: ResMut<Devices>, mut scene: ResMut<S
 }
 
 pub fn interpolate(time: Res<Time<Fixed>>, m: Res<Match>, mut scene: ResMut<Scene>) {
-    if m.paused.is_none() && !(m.mode == Mode::Training && m.frozen) {
+    if m.mode == Mode::Replay && m.frozen {
+        scene.alpha = 1.;
+        return;
+    }
+    if m.paused.is_none() && !(matches!(m.mode, Mode::Training | Mode::Replay) && m.frozen) {
         scene.alpha = m.alpha(time.overstep_fraction_f64());
     }
 }
@@ -492,5 +532,34 @@ mod tests {
         assert_eq!(kos, falls, "every fall is a KO or a self-destruct");
         assert!(m.stats.iter().map(|s| s.dealt).sum::<f64>() > 0.);
         assert!(m.stats[win].out_at.is_none());
+        let encoded = serde_json::to_vec(m.recording.as_ref().unwrap()).unwrap();
+        let replay = serde_json::from_slice(&encoded).unwrap();
+        let mut playback = crate::replay::Playback::new(replay).unwrap();
+        let mut replayed = m.world.clone();
+        playback.seek(m.world.frame, &mut replayed);
+        assert_eq!(playback.warning, None);
+        assert_eq!(replayed, m.world);
+        m.recording_done = true;
+        let ticks = m.recording.as_ref().unwrap().ticks;
+        let frame = m.world.frame;
+        let mut app = App::new();
+        app.insert_resource(m)
+            .insert_resource(devs)
+            .insert_resource(scene)
+            .insert_resource(State::new(Screen::Results))
+            .add_systems(Update, tick);
+        app.update();
+        let mut m = app.world_mut().remove_resource::<Match>().unwrap();
+        assert!(m.world.frame > frame);
+        assert_eq!(m.recording.as_ref().unwrap().ticks, ticks);
+        m.world.fighters[0].history.held[0] = true;
+        m.world.fighters[0].history.last_press[0] = m.world.frame as i64;
+        m.world.fighters[0].buffer.entries.push(sim::input::BufferedPress {
+            tick: m.world.frame,
+            intent: sim::input::Intent { atk: true, ..default() },
+        });
+        m.clear_input(&mut Devices::default());
+        assert_eq!(m.world.fighters[0].history, default());
+        assert_eq!(m.world.fighters[0].buffer, default());
     }
 }
