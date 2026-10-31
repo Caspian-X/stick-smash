@@ -64,7 +64,10 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
             && f.y > s.top - v.recovery_height
         {
             center(&mut inp, f.x, mid);
-            if c.ai.recovery_shield_cancel.as_ref().is_some_and(|name| crate::moves::phase(d, &w.fighters[i]).name == *name)
+            if c.ai
+                .recovery_shield_cancel
+                .as_ref()
+                .is_some_and(|name| crate::moves::phase(d, &w.fighters[i]).name == *name)
                 && (f.x < s.left - v.recovery_edge || f.x > s.right + v.recovery_edge)
             {
                 inp.shield_p = true;
@@ -164,9 +167,11 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
             }
             return inp;
         }
-        let under =
-            f.x > s.left + s.under_inset - v.under_pad && f.x < s.right - s.under_inset + v.under_pad && f.y > s.bottom - v.under_bottom;
-        let offstage = matches!(st, State::Air | State::Helpless) && (f.x < s.left || f.x > s.right || f.y > s.top + v.offstage_pad);
+        let under = f.x > s.left + s.under_inset - v.under_pad
+            && f.x < s.right - s.under_inset + v.under_pad
+            && f.y > s.bottom - v.under_bottom;
+        let offstage = matches!(st, State::Air | State::Helpless)
+            && (f.x < s.left || f.x > s.right || f.y > s.top + v.offstage_pad);
         if offstage {
             let dir = if under {
                 if f.x < mid { -1. } else { 1. }
@@ -211,7 +216,11 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
             toward(&mut inp, tx - f.x);
         }
         if f.ground && st == State::Idle {
-            if o.state == State::Attack && adx < v.defend_distance && dy.abs() < v.defend_height && w.rng.next_f64() < cfg.defend[lv] {
+            if o.state == State::Attack
+                && adx < v.defend_distance
+                && dy.abs() < v.defend_height
+                && w.rng.next_f64() < cfg.defend[lv]
+            {
                 if c.ai.counter_chance > 0. && w.rng.next_f64() < c.ai.counter_chance {
                     return Intent { down: true, sp: true, ..Default::default() };
                 }
@@ -240,7 +249,12 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
             inp.jump = true;
             ai.up_t = v.jump_hold;
         }
-        if f.ground && f.surf.is_some_and(|s| s != 0) && dy > v.drop_height && adx < v.drop_distance && w.rng.next_f64() < v.drop_chance {
+        if f.ground
+            && f.surf.is_some_and(|s| s != 0)
+            && dy > v.drop_height
+            && adx < v.drop_distance
+            && w.rng.next_f64() < v.drop_chance
+        {
             inp.down_p = true;
         }
         if ai.cool > 0. {

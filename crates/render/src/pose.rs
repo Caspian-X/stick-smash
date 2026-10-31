@@ -45,8 +45,7 @@ impl Skel {
     }
     fn apply(&mut self, p: &Pose) {
         let src = [
-            p.head, p.shoulder, p.hip, p.elbow_f, p.hand_f, p.elbow_b, p.hand_b, p.knee_f,
-            p.foot_f, p.knee_b, p.foot_b,
+            p.head, p.shoulder, p.hip, p.elbow_f, p.hand_f, p.elbow_b, p.hand_b, p.knee_f, p.foot_f, p.knee_b, p.foot_b,
         ];
         for (dst, s) in self.joints_mut().into_iter().zip(src) {
             if let Some(s) = s {
@@ -106,31 +105,18 @@ pub fn resolve(fd: &FighterData, p: &Pose) -> Skel {
 
 fn resolve_ref(fd: &FighterData, r: &PoseRef) -> Skel {
     match r {
-        PoseRef::Named(n) => fd
-            .poses
-            .get(n)
-            .map(|p| resolve(fd, p))
-            .unwrap_or_else(|| resolve(fd, &Pose::default())),
+        PoseRef::Named(n) => fd.poses.get(n).map(|p| resolve(fd, p)).unwrap_or_else(|| resolve(fd, &Pose::default())),
         PoseRef::Inline(p) => resolve(fd, p),
     }
 }
 
 /// Samples keys at time `t`: the last key at or before `t` holds, unless the next key lerps toward itself.
-pub fn sample(
-    fd: &FighterData,
-    keys: &[AnimKey],
-    t: f64,
-    period: Option<f64>,
-    f: &Fighter,
-) -> Skel {
+pub fn sample(fd: &FighterData, keys: &[AnimKey], t: f64, period: Option<f64>, f: &Fighter) -> Skel {
     let t = match period {
         Some(p) if p > 0. => t.rem_euclid(p),
         _ => t,
     };
-    let live: Vec<&AnimKey> = keys
-        .iter()
-        .filter(|k| sim::moves::cond(f, k.cond))
-        .collect();
+    let live: Vec<&AnimKey> = keys.iter().filter(|k| sim::moves::cond(f, k.cond)).collect();
     let Some(first) = live.first() else {
         return resolve(fd, &Pose::default());
     };
@@ -138,10 +124,9 @@ pub fn sample(
     let cur = if t < first.at { first } else { live[i] };
     let a = resolve_ref(fd, &cur.pose);
     match live.get(i + 1) {
-        Some(next) if next.lerp && t >= cur.at && next.at > cur.at => a.lerp(
-            &resolve_ref(fd, &next.pose),
-            ((t - cur.at) / (next.at - cur.at)).clamp(0., 1.),
-        ),
+        Some(next) if next.lerp && t >= cur.at && next.at > cur.at => {
+            a.lerp(&resolve_ref(fd, &next.pose), ((t - cur.at) / (next.at - cur.at)).clamp(0., 1.))
+        }
         _ => a,
     }
 }
@@ -152,10 +137,7 @@ pub fn state_anim(d: &GameData, f: &Fighter) -> (String, Option<f64>) {
     let name: String = match f.state {
         State::Idle if f.vx.abs() > g.render.overlays.run_speed => "run".into(),
         State::Air if f.flip_t > 0 => {
-            return (
-                "air.flip".into(),
-                Some(f64::from(g.sim.flip_frames.saturating_sub(f.flip_t))),
-            );
+            return ("air.flip".into(), Some(f64::from(g.sim.flip_frames.saturating_sub(f.flip_t))));
         }
         State::Air => if f.vy < 0. { "air.rise" } else { "air.fall" }.into(),
         State::Landing if f.sd.kind == "shield" => "shieldDrop".into(),
@@ -169,10 +151,7 @@ pub fn state_anim(d: &GameData, f: &Fighter) -> (String, Option<f64>) {
         }
         .into(),
         State::Hold if f.sd.pt > 0 => {
-            return (
-                "pummel".into(),
-                Some(f64::from(g.grab.pummel_frames.saturating_sub(f.sd.pt))),
-            );
+            return ("pummel".into(), Some(f64::from(g.grab.pummel_frames.saturating_sub(f.sd.pt))));
         }
         State::Throw => format!("throw.{}", f.sd.kind),
         s => s.name().into(),
@@ -199,13 +178,7 @@ pub fn fighter_pose(d: &GameData, f: &Fighter, frame: u64) -> Skel {
     }
     let (name, clock) = state_anim(d, f);
     match fd.anims.get(&name) {
-        Some(a) => sample(
-            fd,
-            &a.keys,
-            clock.unwrap_or_else(|| clock_value(a, f, frame)),
-            a.period,
-            f,
-        ),
+        Some(a) => sample(fd, &a.keys, clock.unwrap_or_else(|| clock_value(a, f, frame)), a.period, f),
         None => resolve(fd, &Pose::default()),
     }
 }

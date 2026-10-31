@@ -27,9 +27,17 @@ pub fn active_boxes(d: &GameData, f: &Fighter) -> Vec<ActiveBox> {
         && let Some(m) = &f.mov
     {
         (&moves::phase(d, f).hitboxes, m.t, m.counter_damage, m.charge)
-    } else if f.state == State::Getup && f.sd.kind == "atk" && f.t >= g.knockdown.attack_active[0] && f.t <= g.knockdown.attack_active[1] {
+    } else if f.state == State::Getup
+        && f.sd.kind == "atk"
+        && f.t >= g.knockdown.attack_active[0]
+        && f.t <= g.knockdown.attack_active[1]
+    {
         (&g.knockdown.attack, f.t, 0., 0)
-    } else if f.state == State::Climb && f.sd.kind == "attack" && f.t >= g.ledge.attack_active[0] && f.t <= g.ledge.attack_active[1] {
+    } else if f.state == State::Climb
+        && f.sd.kind == "attack"
+        && f.t >= g.ledge.attack_active[0]
+        && f.t <= g.ledge.attack_active[1]
+    {
         (&g.ledge.attack_hit, f.t, 0., 0)
     } else {
         return vec![];
@@ -156,7 +164,11 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     vic.dmg = g.sim.max_damage.min(vic.dmg + b.damage);
     let kb = knockback(d, b, vic.dmg, d.fighters[vic.data].stats.weight);
     let hl = hitlag_of(d, b, kb);
-    vic.lag = if b.kind == HitType::Electric { libm::floor(f64::from(hl) * ht.electric.victim_hitlag_mult) as u32 } else { hl };
+    vic.lag = if b.kind == HitType::Electric {
+        libm::floor(f64::from(hl) * ht.electric.victim_hitlag_mult) as u32
+    } else {
+        hl
+    };
     vic.flash = vic.lag + 2;
     vic.hud_shake = 12;
     vic.ff = false;
@@ -177,7 +189,17 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
         vic.hitstun = 0;
         vic.tumble = false;
         let (x, y) = (vic.x, vic.y);
-        w.fx.push(Fx::Burst { x: hx, y: hy, color: Color::Rgb(0xffffff), player: 0, n: 8., speed: 3., life: 14., size: 3., gravity: 0. });
+        w.fx.push(Fx::Burst {
+            x: hx,
+            y: hy,
+            color: Color::Rgb(0xffffff),
+            player: 0,
+            n: 8.,
+            speed: 3.,
+            life: 14.,
+            size: 3.,
+            gravity: 0.,
+        });
         w.dust(x, y, 10);
         w.fx.push(Fx::Shake { k: 3. });
         w.fx.push(Fx::Sfx { name: "hit".into(), arg: Some(kb) });
@@ -236,7 +258,14 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     }
     if b.kind == HitType::Spike {
         for k in 0..8 {
-            w.part((x + (f64::from(k) - 3.5) * 4., y - 40.), (0., f64::from(6 + k % 3)), 18., Color::Rgb(0xffb35a), 4., 0.);
+            w.part(
+                (x + (f64::from(k) - 3.5) * 4., y - 40.),
+                (0., f64::from(6 + k % 3)),
+                18.,
+                Color::Rgb(0xffb35a),
+                4.,
+                0.,
+            );
         }
         w.fx.push(Fx::Ring { x: hx, y: hy, r: 10., grow: 5., life: 16, color: Color::Rgb(0xffb35a), player: 0 });
     }
@@ -253,7 +282,17 @@ pub fn shield_break(w: &mut World, d: &GameData, i: usize) {
     f.ground = false;
     f.surf = None;
     let (x, y) = (f.x, f.y);
-    w.fx.push(Fx::Burst { x, y: y - 40., color: Color::Rgb(0xccddff), player: i, n: 30., speed: 8., life: 30., size: 4., gravity: 0.1 });
+    w.fx.push(Fx::Burst {
+        x,
+        y: y - 40.,
+        color: Color::Rgb(0xccddff),
+        player: i,
+        n: 30.,
+        speed: 8.,
+        life: 30.,
+        size: 4.,
+        gravity: 0.1,
+    });
     w.fx.push(Fx::Ring { x, y: y - 38., r: 30., grow: 6., life: 18, color: Color::Player, player: i });
     w.fx.push(Fx::Shake { k: 10. });
     w.sfx("shieldBreak");
@@ -366,7 +405,10 @@ pub fn hit_pass(w: &mut World, d: &GameData) {
                 }
                 let f = &mut w.fighters[a];
                 if f.sd.hit.contains(&v)
-                    && !b.hit.rehit.is_some_and(|n| f.sd.hit_at.iter().find(|(j, _)| *j == v).is_none_or(|(_, at)| t - *at >= n))
+                    && !b
+                        .hit
+                        .rehit
+                        .is_some_and(|n| f.sd.hit_at.iter().find(|(j, _)| *j == v).is_none_or(|(_, at)| t - *at >= n))
                 {
                     continue;
                 }

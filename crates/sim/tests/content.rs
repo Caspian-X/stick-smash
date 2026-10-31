@@ -85,7 +85,12 @@ fn assets_canonically_formatted() {
         if bless() {
             fs::write(&p, canon).unwrap();
         } else {
-            assert_eq!(text, canon, "{} isn't canonically formatted: run BLESS=1 cargo test -p sim --test content", p.display());
+            assert_eq!(
+                text,
+                canon,
+                "{} isn't canonically formatted: run BLESS=1 cargo test -p sim --test content",
+                p.display()
+            );
         }
     }
 }
@@ -99,7 +104,10 @@ fn hash_ignores_key_order_and_formatting() {
             let v: serde_json::Value = serde_json::from_str(&s.text).unwrap();
             let mut m: Vec<_> = v.as_object().unwrap().clone().into_iter().collect();
             m.reverse();
-            Source { path: s.path, text: serde_json::to_string(&serde_json::Value::Object(m.into_iter().collect())).unwrap() }
+            Source {
+                path: s.path,
+                text: serde_json::to_string(&serde_json::Value::Object(m.into_iter().collect())).unwrap(),
+            }
         })
         .collect();
     assert_eq!(a, load(reordered).unwrap().0.hash);

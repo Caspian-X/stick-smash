@@ -13,11 +13,7 @@ impl Rgba {
     pub fn hex(rgb: u32, a: f64) -> Self {
         let c = |s: u32| {
             let v = f64::from((rgb >> s) & 0xff) / 255.;
-            (if v <= 0.04045 {
-                v / 12.92
-            } else {
-                ((v + 0.055) / 1.055).powf(2.4)
-            }) as f32
+            (if v <= 0.04045 { v / 12.92 } else { ((v + 0.055) / 1.055).powf(2.4) }) as f32
         };
         Rgba([c(16), c(8), c(0), a.clamp(0., 1.) as f32])
     }
@@ -30,9 +26,7 @@ impl Rgba {
     }
     pub fn lerp(self, o: Rgba, t: f64) -> Self {
         let t = t as f32;
-        Rgba(std::array::from_fn(|i| {
-            self.0[i] + (o.0[i] - self.0[i]) * t
-        }))
+        Rgba(std::array::from_fn(|i| self.0[i] + (o.0[i] - self.0[i]) * t))
     }
 }
 
@@ -79,11 +73,7 @@ pub struct Canvas {
 
 impl Canvas {
     pub fn new(detail: f64) -> Self {
-        Canvas {
-            detail,
-            alpha_gamma: 1.,
-            ..Default::default()
-        }
+        Canvas { detail, alpha_gamma: 1., ..Default::default() }
     }
     pub fn clear(&mut self, detail: f64, alpha_gamma: f64) {
         self.alpha_gamma = alpha_gamma;
@@ -132,16 +122,7 @@ impl Canvas {
         let [x, y] = self.cur().apply(p);
         self.pos.push([x as f32, -y as f32, 0.]);
         let [r, g, b, a] = c.0;
-        self.col.push([
-            r,
-            g,
-            b,
-            if a < 1. {
-                a.powf(self.alpha_gamma as f32)
-            } else {
-                a
-            },
-        ]);
+        self.col.push([r, g, b, if a < 1. { a.powf(self.alpha_gamma as f32) } else { a }]);
         (self.pos.len() - 1) as u32
     }
     fn tri(&mut self, a: u32, b: u32, c: u32) {
@@ -169,9 +150,7 @@ impl Canvas {
         if pts.len() < 3 || !Self::visible(c) {
             return;
         }
-        let area: f64 = (0..pts.len())
-            .map(|i| cross(pts[i], pts[(i + 1) % pts.len()]))
-            .sum();
+        let area: f64 = (0..pts.len()).map(|i| cross(pts[i], pts[(i + 1) % pts.len()])).sum();
         let mut ring: Vec<usize> = (0..pts.len()).collect();
         if area < 0. {
             ring.reverse();
@@ -182,26 +161,15 @@ impl Canvas {
             guard += 1;
             let n = ring.len();
             let ear = (0..n).find(|&k| {
-                let (a, b, cc) = (
-                    pts[ring[(k + n - 1) % n]],
-                    pts[ring[k]],
-                    pts[ring[(k + 1) % n]],
-                );
+                let (a, b, cc) = (pts[ring[(k + n - 1) % n]], pts[ring[k]], pts[ring[(k + 1) % n]]);
                 cross(sub(b, a), sub(cc, b)) > 1e-9
                     && !ring.iter().any(|&j| {
                         let p = pts[j];
-                        j != ring[(k + n - 1) % n]
-                            && j != ring[k]
-                            && j != ring[(k + 1) % n]
-                            && in_tri(p, a, b, cc)
+                        j != ring[(k + n - 1) % n] && j != ring[k] && j != ring[(k + 1) % n] && in_tri(p, a, b, cc)
                     })
             });
             let k = ear.unwrap_or(0);
-            self.tri(
-                base[ring[(k + n - 1) % n]],
-                base[ring[k]],
-                base[ring[(k + 1) % n]],
-            );
+            self.tri(base[ring[(k + n - 1) % n]], base[ring[k]], base[ring[(k + 1) % n]]);
             ring.remove(k);
         }
         if ring.len() == 3 {
@@ -222,11 +190,7 @@ impl Canvas {
     }
     /// Quad with a color per corner.
     pub fn fill_quad(&mut self, pts: [P; 4], cols: [Rgba; 4]) {
-        let i: Vec<u32> = pts
-            .iter()
-            .zip(cols)
-            .map(|(p, c)| self.vert(*p, c))
-            .collect();
+        let i: Vec<u32> = pts.iter().zip(cols).map(|(p, c)| self.vert(*p, c)).collect();
         self.tri(i[0], i[1], i[2]);
         self.tri(i[0], i[2], i[3]);
     }
@@ -237,12 +201,9 @@ impl Canvas {
         }
         let n = (self.segs(r) / 4).max(2);
         let mut out = Vec::with_capacity(4 * (n + 1));
-        for (cx, cy, a0) in [
-            (x + w - r, y + h - r, 0.),
-            (x + r, y + h - r, PI / 2.),
-            (x + r, y + r, PI),
-            (x + w - r, y + r, 1.5 * PI),
-        ] {
+        for (cx, cy, a0) in
+            [(x + w - r, y + h - r, 0.), (x + r, y + h - r, PI / 2.), (x + r, y + r, PI), (x + w - r, y + r, 1.5 * PI)]
+        {
             for k in 0..=n {
                 let a = a0 + PI / 2. * k as f64 / n as f64;
                 out.push([cx + r * a.cos(), cy + r * a.sin()]);
@@ -252,10 +213,7 @@ impl Canvas {
     }
     pub fn ellipse_pts(&self, c: P, rx: f64, ry: f64) -> Vec<P> {
         let n = self.segs(rx.max(ry));
-        (0..n)
-            .map(|k| k as f64 * TAU / n as f64)
-            .map(|a| [c[0] + rx * a.cos(), c[1] + ry * a.sin()])
-            .collect()
+        (0..n).map(|k| k as f64 * TAU / n as f64).map(|a| [c[0] + rx * a.cos(), c[1] + ry * a.sin()]).collect()
     }
     pub fn fill_circle(&mut self, c: P, r: f64, col: Rgba) {
         if r > 0. {
@@ -325,12 +283,7 @@ impl Canvas {
             return;
         }
         let n = [-d[1] / l * w / 2., d[0] / l * w / 2.];
-        let i = [
-            self.vert(add(a, n), c),
-            self.vert(add(b, n), c),
-            self.vert(sub(b, n), c),
-            self.vert(sub(a, n), c),
-        ];
+        let i = [self.vert(add(a, n), c), self.vert(add(b, n), c), self.vert(sub(b, n), c), self.vert(sub(a, n), c)];
         self.tri(i[0], i[1], i[2]);
         self.tri(i[0], i[2], i[3]);
     }
@@ -415,35 +368,18 @@ mod tests {
     #[test]
     fn concave_poly_fills_all_area() {
         let mut c = Canvas::new(1.);
-        let crown = [
-            [-9., 7.],
-            [-10., 19.],
-            [-4., 12.],
-            [0., 21.],
-            [4., 12.],
-            [10., 19.],
-            [9., 7.],
-        ];
+        let crown = [[-9., 7.], [-10., 19.], [-4., 12.], [0., 21.], [4., 12.], [10., 19.], [9., 7.]];
         c.fill_poly(&crown, Rgba::hex(0xffffff, 1.));
         assert_eq!(c.idx.len(), 3 * 5);
         let area: f64 = c
             .idx
             .chunks(3)
             .map(|t| {
-                let p = |i: u32| {
-                    [
-                        f64::from(c.pos[i as usize][0]),
-                        f64::from(c.pos[i as usize][1]),
-                    ]
-                };
+                let p = |i: u32| [f64::from(c.pos[i as usize][0]), f64::from(c.pos[i as usize][1])];
                 cross(sub(p(t[1]), p(t[0])), sub(p(t[2]), p(t[0]))).abs() / 2.
             })
             .sum();
-        let poly: f64 = (0..7)
-            .map(|i| cross(crown[i], crown[(i + 1) % 7]))
-            .sum::<f64>()
-            .abs()
-            / 2.;
+        let poly: f64 = (0..7).map(|i| cross(crown[i], crown[(i + 1) % 7])).sum::<f64>().abs() / 2.;
         assert!((area - poly).abs() < 1e-3, "{area} vs {poly}");
     }
 
@@ -454,9 +390,6 @@ mod tests {
         c.scale(-1., -1.);
         c.rotate(PI / 2.);
         let p = c.to_world([1., 0.]);
-        assert!(
-            (p[0] - 10.).abs() < 1e-9 && (p[1] - 19.).abs() < 1e-9,
-            "{p:?}"
-        );
+        assert!((p[0] - 10.).abs() < 1e-9 && (p[1] - 19.).abs() < 1e-9, "{p:?}");
     }
 }

@@ -20,10 +20,7 @@ pub struct ResultsMenu {
 }
 
 pub fn enter(mut rm: ResMut<ResultsMenu>) {
-    rm.cursor = Cursor {
-        key: REMATCH,
-        owner: None,
-    };
+    rm.cursor = Cursor { key: REMATCH, owner: None };
 }
 
 pub fn update(
@@ -83,9 +80,7 @@ pub fn draw(
         },
         None => ("Draw".into(), STAR),
     };
-    let sub = w
-        .winner
-        .map(|i| d.fighters[w.fighters[i].data].name.clone());
+    let sub = w.winner.map(|i| d.fighters[w.fighters[i].data].name.clone());
     let n = order.len();
     let cw = (1180. / n as f32 - 12.).min(230.);
     commands
@@ -109,10 +104,7 @@ pub fn draw(
             .with_children(|p| {
                 p.spawn((
                     txt(&f.display, 110., color, title),
-                    TextShadow {
-                        offset: Vec2::new(0., 5.),
-                        color: alpha(NIGHT, 0.8),
-                    },
+                    TextShadow { offset: Vec2::new(0., 5.), color: alpha(NIGHT, 0.8) },
                     LineHeight::RelativeToFont(0.9),
                 ));
                 if let Some(s) = sub {
@@ -135,11 +127,7 @@ pub fn draw(
                     n.column_gap = Val::Px(14.);
                 }))
                 .with_children(|p| {
-                    for (k, label) in [
-                        (REMATCH, "Rematch"),
-                        (SELECT, "Character select"),
-                        (MENU, "Main menu"),
-                    ] {
+                    for (k, label) in [(REMATCH, "Rematch"), (SELECT, "Character select"), (MENU, "Main menu")] {
                         let on = rm.cursor.key == k;
                         p.spawn((
                             node(|n| {
@@ -149,18 +137,9 @@ pub fn draw(
                             }),
                             BackgroundColor(if on { alpha(GOLD, 0.14) } else { INK_SOFT }),
                             BorderColor::all(if on { GOLD } else { alpha(LINE, 0.8) }),
-                            Focusable {
-                                key: k,
-                                owner: None,
-                                spin: false,
-                            },
+                            Focusable { key: k, owner: None, spin: false },
                         ))
-                        .with_child(txt(
-                            &f.label,
-                            24.,
-                            if on { GOLD } else { STAR },
-                            label,
-                        ));
+                        .with_child(txt(&f.label, 24., if on { GOLD } else { STAR }, label));
                     }
                 });
             });
@@ -182,13 +161,7 @@ fn column(p: &mut ChildSpawnerCommands, f: &Fonts, m: &Match, i: usize, place: u
         }),
         BackgroundColor(INK),
         BorderColor::all(if first { main } else { alpha(main, 0.3) }),
-        BoxShadow::new(
-            alpha(main, if first { 0.45 } else { 0. }),
-            Val::Px(0.),
-            Val::Px(0.),
-            Val::Px(2.),
-            Val::Px(22.),
-        ),
+        BoxShadow::new(alpha(main, if first { 0.45 } else { 0. }), Val::Px(0.), Val::Px(0.), Val::Px(2.), Val::Px(22.)),
     ))
     .with_children(|p| {
         p.spawn((
@@ -199,24 +172,11 @@ fn column(p: &mut ChildSpawnerCommands, f: &Fonts, m: &Match, i: usize, place: u
                 n.padding = UiRect::new(Val::Px(14.), Val::Px(14.), Val::Px(2.), Val::Px(0.));
                 n.min_height = Val::Px(if first { 92. } else { 70. });
             }),
-            BackgroundGradient::from(LinearGradient::to_right(vec![
-                ColorStop::auto(main),
-                ColorStop::auto(dark),
-            ])),
+            BackgroundGradient::from(LinearGradient::to_right(vec![ColorStop::auto(main), ColorStop::auto(dark)])),
         ))
         .with_children(|p| {
-            p.spawn(txt(
-                &f.display,
-                if first { 72. } else { 52. },
-                NIGHT,
-                ordinal(place),
-            ));
-            p.spawn(txt(
-                &f.display,
-                26.,
-                alpha(NIGHT, 0.85),
-                m.slots[i].tag.clone(),
-            ));
+            p.spawn(txt(&f.display, if first { 72. } else { 52. }, NIGHT, ordinal(place)));
+            p.spawn(txt(&f.display, 26., alpha(NIGHT, 0.85), m.slots[i].tag.clone()));
         });
         p.spawn(node(|n| {
             n.flex_direction = FlexDirection::Column;
@@ -225,12 +185,7 @@ fn column(p: &mut ChildSpawnerCommands, f: &Fonts, m: &Match, i: usize, place: u
         }))
         .with_children(|p| {
             p.spawn((
-                txt(
-                    &f.heavy,
-                    26.,
-                    STAR,
-                    d.fighters[m.slots[i].fighter].name.clone(),
-                ),
+                txt(&f.heavy, 26., STAR, d.fighters[m.slots[i].fighter].name.clone()),
                 node(|n| n.margin.bottom = Val::Px(6.)),
             ));
             let mut lines = vec![

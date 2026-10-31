@@ -199,10 +199,14 @@ impl Fighter {
         }
     }
     pub fn hittable(&self) -> bool {
-        !matches!(self.state, State::Dead | State::Respawn | State::Grabbed | State::Out | State::Win) && self.inv == 0 && self.blink == 0
+        !matches!(self.state, State::Dead | State::Respawn | State::Grabbed | State::Out | State::Win)
+            && self.inv == 0
+            && self.blink == 0
     }
     pub fn actionable(&self) -> bool {
-        self.lag == 0 && (matches!(self.state, State::Idle | State::Air | State::Ledge) || self.state == State::Shield && self.sd.stun <= 0)
+        self.lag == 0
+            && (matches!(self.state, State::Idle | State::Air | State::Ledge)
+                || self.state == State::Shield && self.sd.stun <= 0)
     }
 }
 #[derive(Clone, Debug, PartialEq)]
@@ -326,7 +330,10 @@ impl World {
         a != b && (self.cfg.players[a].team.is_none() || self.cfg.players[a].team != self.cfg.players[b].team)
     }
     pub fn opponents(&self, a: usize, b: usize) -> bool {
-        a != b && (self.cfg.friendly_fire || self.cfg.players[a].team.is_none() || self.cfg.players[a].team != self.cfg.players[b].team)
+        a != b
+            && (self.cfg.friendly_fire
+                || self.cfg.players[a].team.is_none()
+                || self.cfg.players[a].team != self.cfg.players[b].team)
     }
     pub fn sfx(&mut self, name: impl Into<String>) {
         self.fx.push(Fx::Sfx { name: name.into(), arg: None });

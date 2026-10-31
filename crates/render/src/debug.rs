@@ -26,22 +26,13 @@ pub fn draw_debug(cv: &mut Canvas, d: &GameData, w: &World, pos: &[(f64, f64)]) 
     let s = &d.stages[w.stage];
     let b = &s.blast;
     cv.stroke_closed(
-        &[
-            [b.left, b.top],
-            [b.right, b.top],
-            [b.right, b.bottom],
-            [b.left, b.bottom],
-        ],
+        &[[b.left, b.top], [b.right, b.top], [b.right, b.bottom], [b.left, b.bottom]],
         3.,
         Rgba::hex(0xff3355, 0.6),
     );
     let l = &s.ledge;
     for side in [-1., 1.] {
-        let cx = if side < 0. {
-            s.ground.left
-        } else {
-            s.ground.right
-        };
+        let cx = if side < 0. { s.ground.left } else { s.ground.right };
         let c = [cx, s.ground.top + l.cy];
         let a0 = if side < 0. { PI / 2. } else { -PI / 2. };
         cv.fill_sector(c, 0., l.r, a0, a0 + PI, Rgba::hex(0x66ffcc, 0.08));
@@ -69,12 +60,7 @@ pub fn draw_debug(cv: &mut Canvas, d: &GameData, w: &World, pos: &[(f64, f64)]) 
         } else {
             0xffee55
         };
-        let r = [
-            [h.x1 + dx, h.y1 + dy],
-            [h.x2 + dx, h.y1 + dy],
-            [h.x2 + dx, h.y2 + dy],
-            [h.x1 + dx, h.y2 + dy],
-        ];
+        let r = [[h.x1 + dx, h.y1 + dy], [h.x2 + dx, h.y1 + dy], [h.x2 + dx, h.y2 + dy], [h.x1 + dx, h.y2 + dy]];
         cv.fill_convex(&r, Rgba::hex(hc, 0.12));
         cv.stroke_closed(&r, 1.5, Rgba::hex(hc, 0.9));
         cv.fill_circle([x, y], 2.5, Rgba::hex(0xffffff, 1.));
@@ -91,17 +77,8 @@ pub fn draw_debug(cv: &mut Canvas, d: &GameData, w: &World, pos: &[(f64, f64)]) 
                 cv.stroke_circle([bx_, by], 4., 2., Rgba::hex(0xffffff, 0.9));
                 continue;
             }
-            let sgn = if hb.dir == LaunchDir::Back {
-                -f.face
-            } else {
-                f.face
-            };
-            let a = (if hb.kind == HitType::Spike {
-                -hb.angle.abs()
-            } else {
-                hb.angle
-            })
-            .to_radians();
+            let sgn = if hb.dir == LaunchDir::Back { -f.face } else { f.face };
+            let a = (if hb.kind == HitType::Spike { -hb.angle.abs() } else { hb.angle }).to_radians();
             let len = 16. + hb.bkb * 3.;
             let e = [bx_ + a.cos() * len * sgn, by - a.sin() * len];
             cv.line([bx_, by], e, 2.5, Rgba::hex(0xffffff, 0.95));
@@ -119,16 +96,8 @@ pub fn info(d: &GameData, f: &Fighter) -> String {
         let def = sim::moves::definition(d, f);
         let ph = &def.phases[m.phase];
         let total = ph.frames.map(|n| format!("/{n}")).unwrap_or_default();
-        let charge = if m.charge > 0 {
-            format!(" +{}ch", m.charge)
-        } else {
-            String::new()
-        };
-        let phase = if def.phases.len() > 1 {
-            format!(" [{}]", ph.name)
-        } else {
-            String::new()
-        };
+        let charge = if m.charge > 0 { format!(" +{}ch", m.charge) } else { String::new() };
+        let phase = if def.phases.len() > 1 { format!(" [{}]", ph.name) } else { String::new() };
         lines.push(format!("{}{phase} {}{total}{charge}", def.name, m.t));
     }
     let mut extra = vec![];

@@ -1,7 +1,14 @@
 mod common;
 use sim::{GameData, Input, MatchConfig, PlayerConfig, World, combat, moves, step_world, world::State};
 fn world(d: &GameData, id: &str) -> World {
-    World::new(MatchConfig { training: true, players: vec![PlayerConfig::human(id), PlayerConfig::human(id)], ..Default::default() }, d)
+    World::new(
+        MatchConfig {
+            training: true,
+            players: vec![PlayerConfig::human(id), PlayerConfig::human(id)],
+            ..Default::default()
+        },
+        d,
+    )
 }
 fn run(w: &mut World, d: &GameData, n: usize, inputs: &[Input]) {
     for _ in 0..n {
@@ -192,9 +199,16 @@ fn four_player_cpu_and_teams_rollback() {
             let players = ["brawler", "king", "swordfighter", "king"]
                 .into_iter()
                 .enumerate()
-                .map(|(i, id)| PlayerConfig { cpu: Some(2), team: teams.then_some((i % 2) as u8), ..PlayerConfig::human(id) })
+                .map(|(i, id)| PlayerConfig {
+                    cpu: Some(2),
+                    team: teams.then_some((i % 2) as u8),
+                    ..PlayerConfig::human(id)
+                })
                 .collect();
-            let mut w = World::new(MatchConfig { seed: 42, training: true, players, friendly_fire: ff, ..Default::default() }, &d);
+            let mut w = World::new(
+                MatchConfig { seed: 42, training: true, players, friendly_fire: ff, ..Default::default() },
+                &d,
+            );
             let mut initial = w.clone();
             run(&mut w, &d, 3000, &[]);
             let mut rollback = w.clone();
@@ -283,7 +297,8 @@ fn ai_target_is_nearest_enemy_and_ties_use_index() {
 fn winner_is_last_team_and_training_never_ends() {
     let d = common::data();
     let mut cfg = MatchConfig { stocks: 1, ..Default::default() };
-    cfg.players = (0..4).map(|i| PlayerConfig { team: Some((i % 2) as u8), ..PlayerConfig::human("brawler") }).collect();
+    cfg.players =
+        (0..4).map(|i| PlayerConfig { team: Some((i % 2) as u8), ..PlayerConfig::human("brawler") }).collect();
     let mut w = World::new(cfg, &d);
     w.count = 0;
     w.fighters[1].x = -1000.;

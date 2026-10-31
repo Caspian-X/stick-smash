@@ -34,12 +34,7 @@ pub struct Script {
 }
 
 fn press(v: &mut Vec<Step>, bot: u8, act: Act) {
-    v.extend([
-        Step::Set(bot, act, true),
-        Step::Wait(3),
-        Step::Set(bot, act, false),
-        Step::Wait(4),
-    ]);
+    v.extend([Step::Set(bot, act, true), Step::Wait(3), Step::Set(bot, act, false), Step::Wait(4)]);
 }
 
 fn shot(v: &mut Vec<Step>, name: &'static str) {
@@ -59,9 +54,9 @@ fn offscreen(m: &Match, fr: &Framing, _: Screen) -> bool {
     let [x0, y0, x1, _] = fr.view;
     let w = &m.world;
     w.frame > 400
-        && w.fighters.iter().any(|f| {
-            f.state == FState::Hitstun && (f.x < x0 - 30. || f.x > x1 + 30. || f.y - 40. < y0 - 30.)
-        })
+        && w.fighters
+            .iter()
+            .any(|f| f.state == FState::Hitstun && (f.x < x0 - 30. || f.x > x1 + 30. || f.y - 40. < y0 - 30.))
         && w.fighters.iter().filter(|f| f.dmg > 20.).count() >= 2
 }
 
@@ -108,17 +103,11 @@ impl Script {
         v.push(Step::Until(screen_is(Screen::Match), 10));
         v.push(Step::Wait(70));
         shot(&mut v, "06-countdown");
-        v.push(Step::Until(
-            |m, _, _| m.world.go_t > 0 && m.world.go_t < 40,
-            400,
-        ));
+        v.push(Step::Until(|m, _, _| m.world.go_t > 0 && m.world.go_t < 40, 400));
         shot(&mut v, "07-go");
         v.push(Step::Until(offscreen, 5000));
         v.push(Step::Shot("08-hud-offscreen"));
-        v.push(Step::Until(
-            |m, _, _| m.world.fighters.iter().map(|f| f.dmg).sum::<f64>() > 200.,
-            4000,
-        ));
+        v.push(Step::Until(|m, _, _| m.world.fighters.iter().map(|f| f.dmg).sum::<f64>() > 200., 4000));
         shot(&mut v, "09-hud");
         press(&mut v, 0, Start);
         press(&mut v, 0, Down);
@@ -142,24 +131,15 @@ impl Script {
         press(&mut v, 0, Start);
         v.push(Step::Until(screen_is(Screen::Match), 10));
         v.push(Step::Set(0, Right, true));
-        v.push(Step::Until(
-            |m, _, _| m.world.fighters[0].x > m.world.fighters[1].x - 60.,
-            200,
-        ));
+        v.push(Step::Until(|m, _, _| m.world.fighters[0].x > m.world.fighters[1].x - 60., 200));
         v.push(Step::Set(0, Right, false));
         press(&mut v, 0, Attack);
-        v.push(Step::Until(
-            |m, _, _| m.world.trace.as_ref().is_some_and(|t| t.done),
-            120,
-        ));
+        v.push(Step::Until(|m, _, _| m.world.trace.as_ref().is_some_and(|t| t.done), 120));
         press(&mut v, 0, Special);
         v.push(Step::Until(
             |m, _, _| {
                 m.world.fighters[0].state == FState::Attack
-                    && m.world.fighters[0]
-                        .mov
-                        .as_ref()
-                        .is_some_and(|mv| mv.elapsed > 6)
+                    && m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.elapsed > 6)
             },
             60,
         ));
@@ -182,14 +162,7 @@ impl Script {
             press(&mut v, 0, Attack);
         }
         shot(&mut v, "15-select-eight");
-        Script {
-            dir,
-            steps: v,
-            at: 0,
-            wait: 0,
-            budget: 0,
-            capturing: false,
-        }
+        Script { dir, steps: v, at: 0, wait: 0, budget: 0, capturing: false }
     }
 }
 
@@ -241,12 +214,7 @@ pub fn run(
                 s.budget = 0;
                 s.at += 1;
             } else if let Some(mut m) = m {
-                let n =
-                    if *screen.get() == Screen::Match && m.paused.is_none() && m.world.end_t == 0 {
-                        3
-                    } else {
-                        0
-                    };
+                let n = if *screen.get() == Screen::Match && m.paused.is_none() && m.world.end_t == 0 { 3 } else { 0 };
                 m.ff += n;
                 s.budget += n.max(1);
             } else {
@@ -256,9 +224,7 @@ pub fn run(
         Step::Shot(name) => {
             let path = s.dir.join(format!("{name}.png"));
             info!("screenshot {}", path.display());
-            commands
-                .spawn(Screenshot::primary_window())
-                .observe(save_to_disk(path));
+            commands.spawn(Screenshot::primary_window()).observe(save_to_disk(path));
             s.capturing = true;
             s.wait = 2;
             s.at += 1;

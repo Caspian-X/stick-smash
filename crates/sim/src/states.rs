@@ -87,7 +87,15 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
             let rt = &g.respawn;
             if f.t <= rt.descend_frames {
                 f.y = rp.start_y + (rp.end_y - rp.start_y) * ease(f64::from(f.t) / f64::from(rt.descend_frames));
-            } else if f.t > rt.max_wait || inp.left || inp.right || inp.down_p || inp.jump || inp.atk || inp.sp || inp.shield_p || inp.grab
+            } else if f.t > rt.max_wait
+                || inp.left
+                || inp.right
+                || inp.down_p
+                || inp.jump
+                || inp.atk
+                || inp.sp
+                || inp.shield_p
+                || inp.grab
             {
                 f.set_state(State::Air);
                 f.blink = rt.invuln;
@@ -218,7 +226,11 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
         }
         State::Roll => {
             let dd = &g.dodge;
-            f.vx = if f.t >= dd.roll_move_start && f.t <= dd.roll_move_end { sd.dir * dd.roll_speed } else { f.vx * r.dodge_friction };
+            f.vx = if f.t >= dd.roll_move_start && f.t <= dd.roll_move_end {
+                sd.dir * dd.roll_speed
+            } else {
+                f.vx * r.dodge_friction
+            };
             fall(w, d, i, &mut f, true, None);
             if !f.ground {
                 f.set_state(State::Air);
@@ -245,7 +257,9 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
             }
             if f.state == State::Airdodge {
                 try_ledge(w, d, i, &mut f, inp, false);
-                if f.state == State::Airdodge && f.t >= if sd.dirl { dd.dir_air_dodge_frames } else { dd.air_dodge_frames } {
+                if f.state == State::Airdodge
+                    && f.t >= if sd.dirl { dd.dir_air_dodge_frames } else { dd.air_dodge_frames }
+                {
                     f.set_state(State::Air);
                 }
             }
@@ -426,7 +440,9 @@ fn st_climb(w: &mut World, d: &GameData, f: &mut Fighter) {
     f.surf = Some(0);
     f.y = s.ground.top;
     if f.t <= c.b {
-        f.x = ex + fx * r.ledge_pull_in + fx * (c.dist - r.ledge_pull_in) * ease(f64::from(f.t - c.a) / f64::from(c.b - c.a));
+        f.x = ex
+            + fx * r.ledge_pull_in
+            + fx * (c.dist - r.ledge_pull_in) * ease(f64::from(f.t - c.a) / f64::from(c.b - c.a));
     }
     if kind == "attack" && f.t == g.attack_active[0] {
         w.sfx("swing");

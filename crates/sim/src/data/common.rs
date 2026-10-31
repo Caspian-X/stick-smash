@@ -56,7 +56,9 @@ impl TryFrom<String> for Color {
                 .filter(|h| h.len() == 6)
                 .and_then(|h| u32::from_str_radix(h, 16).ok())
                 .map(Color::Rgb)
-                .ok_or_else(|| format!("bad color {s:?}: expected \"#rrggbb\", \"player\", \"playerDark\" or \"playerLight\"")),
+                .ok_or_else(|| {
+                    format!("bad color {s:?}: expected \"#rrggbb\", \"player\", \"playerDark\" or \"playerLight\"")
+                }),
         }
     }
 }

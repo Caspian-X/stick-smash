@@ -43,216 +43,172 @@ pub fn spawn(mut commands: Commands, m: Res<Match>, fonts: Res<Fonts>) {
     let n = m.slots.len();
     let w = (1240. / n as f32 - 10.).min(236.);
     let training = m.mode == Mode::Training;
-    commands
-        .spawn((
-            root(),
-            HudRoot,
-            DespawnOnExit(Screen::Match),
-            GlobalZIndex(2),
-        ))
-        .with_children(|p| {
-            for (i, s) in m.slots.iter().enumerate() {
-                let (main, _, _) = pal(d, i);
-                p.spawn((
-                    node(|n| {
-                        n.position_type = PositionType::Absolute;
-                        n.flex_direction = FlexDirection::Column;
-                        n.align_items = AlignItems::Center;
-                    }),
-                    Tag(i),
-                    Visibility::Hidden,
-                ))
-                .with_children(|p| {
-                    p.spawn((
-                        txt(&f.heavy, 17., main, s.tag.clone()),
-                        TextShadow {
-                            offset: Vec2::new(0., 1.5),
-                            color: alpha(NIGHT, 0.9),
-                        },
-                    ));
-                    p.spawn((
-                        node(|n| {
-                            n.width = Val::Px(0.);
-                            n.height = Val::Px(0.);
-                            n.border =
-                                UiRect::new(Val::Px(5.), Val::Px(5.), Val::Px(6.), Val::Px(0.));
-                        }),
-                        BorderColor {
-                            top: main,
-                            left: Color::NONE,
-                            right: Color::NONE,
-                            bottom: Color::NONE,
-                        },
-                    ));
-                });
-                p.spawn((
-                    node(|n| {
-                        n.position_type = PositionType::Absolute;
-                        n.width = Val::Px(BUBBLE);
-                        n.height = Val::Px(BUBBLE);
-                        n.border = UiRect::all(Val::Px(3.));
-                        n.border_radius = BorderRadius::MAX;
-                        n.flex_direction = FlexDirection::Column;
-                        n.align_items = AlignItems::Center;
-                        n.justify_content = JustifyContent::Center;
-                    }),
-                    BackgroundColor(INK),
-                    BorderColor::all(main),
-                    BoxShadow::new(
-                        alpha(main, 0.5),
-                        Val::Px(0.),
-                        Val::Px(0.),
-                        Val::Px(0.),
-                        Val::Px(12.),
-                    ),
-                    Bubble(i),
-                    Visibility::Hidden,
-                ))
-                .with_children(|p| {
-                    p.spawn((
-                        node(|n| {
-                            n.position_type = PositionType::Absolute;
-                            n.width = Val::Px(12.);
-                            n.height = Val::Px(12.);
-                        }),
-                        BackgroundColor(main),
-                        BubbleNub(i),
-                    ));
-                    p.spawn((
-                        txt(&f.heavy, 15., main, s.tag.clone()),
-                        LineHeight::RelativeToFont(0.9),
-                    ));
-                    p.spawn((
-                        txt(&f.display, 15., STAR, "0%"),
-                        LineHeight::RelativeToFont(0.9),
-                        BubblePct(i),
-                    ));
-                });
-            }
-            // Panels.
-            p.spawn(node(|n| {
-                n.position_type = PositionType::Absolute;
-                n.bottom = Val::Px(14.);
-                n.left = Val::Px(0.);
-                n.right = Val::Px(0.);
-                n.flex_direction = FlexDirection::Row;
-                n.justify_content = JustifyContent::Center;
-                n.column_gap = Val::Px(10.);
-            }))
+    commands.spawn((root(), HudRoot, DespawnOnExit(Screen::Match), GlobalZIndex(2))).with_children(|p| {
+        for (i, s) in m.slots.iter().enumerate() {
+            let (main, _, _) = pal(d, i);
+            p.spawn((
+                node(|n| {
+                    n.position_type = PositionType::Absolute;
+                    n.flex_direction = FlexDirection::Column;
+                    n.align_items = AlignItems::Center;
+                }),
+                Tag(i),
+                Visibility::Hidden,
+            ))
             .with_children(|p| {
-                for (i, s) in m.slots.iter().enumerate() {
-                    let (main, dark, _) = pal(d, i);
-                    let fighter = &d.fighters[s.fighter];
-                    let tint = s
-                        .team
-                        .map_or(INK, |_| dark.mix(&NIGHT, 0.55).with_alpha(0.92));
-                    p.spawn((
-                        node(|n| {
-                            n.width = Val::Px(w);
-                            n.flex_direction = FlexDirection::Row;
-                            n.border_radius = BorderRadius::all(Val::Px(10.));
-                            n.overflow = Overflow::clip();
-                        }),
-                        BackgroundGradient::from(LinearGradient::to_right(vec![
-                            ColorStop::auto(tint),
-                            ColorStop::auto(INK),
-                        ])),
-                        Panel(i),
-                    ))
-                    .with_children(|p| {
-                        p.spawn((
-                            node(|n| {
-                                n.width = Val::Px(6.);
-                                n.height = Val::Percent(100.);
-                            }),
-                            BackgroundColor(main),
-                        ));
-                        p.spawn(node(|n| {
-                            n.flex_direction = FlexDirection::Column;
-                            n.flex_grow = 1.;
-                            n.padding =
-                                UiRect::new(Val::Px(10.), Val::Px(12.), Val::Px(6.), Val::Px(8.));
-                        }))
-                        .with_children(|p| {
-                            p.spawn(node(|n| {
-                                n.flex_direction = FlexDirection::Row;
-                                n.justify_content = JustifyContent::SpaceBetween;
-                                n.align_items = AlignItems::Baseline;
-                            }))
-                            .with_children(|p| {
-                                p.spawn(txt(&f.heavy, 22., main, s.tag.clone()));
-                                p.spawn(txt(&f.label, 15., DIM, fighter.name.clone()));
-                            });
-                            p.spawn(node(|n| {
-                                n.flex_direction = FlexDirection::Row;
-                                n.justify_content = JustifyContent::SpaceBetween;
-                                n.align_items = AlignItems::FlexEnd;
-                            }))
-                            .with_children(|p| {
-                                p.spawn(node(|n| {
-                                    n.flex_direction = FlexDirection::Row;
-                                    n.column_gap = Val::Px(5.);
-                                    n.margin.bottom = Val::Px(9.);
-                                    n.align_items = AlignItems::Center;
-                                }))
-                                .with_children(|p| {
-                                    if training {
-                                        p.spawn(txt(
-                                            &f.label,
-                                            15.,
-                                            FAINT,
-                                            if i == 0 { "Training" } else { "Dummy" },
-                                        ));
-                                    } else if m.rules.stocks > MAX_STOCK_ICONS {
-                                        stock_icon(p, main, i, 1);
-                                        p.spawn((txt(&f.heavy, 18., STAR, ""), Stock(i, 0)));
-                                    } else {
-                                        for k in 1..=m.rules.stocks {
-                                            stock_icon(p, main, i, k);
-                                        }
-                                    }
-                                });
-                                p.spawn((
-                                    txt(&f.display, 62., STAR, "0"),
-                                    LineHeight::RelativeToFont(0.95),
-                                    Pct(i),
-                                    UiTransform::default(),
-                                ))
-                                .with_child((
-                                    TextSpan::new("%"),
-                                    TextFont {
-                                        font: f.display.clone().into(),
-                                        font_size: FontSize::Px(30.),
-                                        ..default()
-                                    },
-                                    PctSign(i),
-                                ));
-                            });
-                        });
-                    });
-                }
+                p.spawn((
+                    txt(&f.heavy, 17., main, s.tag.clone()),
+                    TextShadow { offset: Vec2::new(0., 1.5), color: alpha(NIGHT, 0.9) },
+                ));
+                p.spawn((
+                    node(|n| {
+                        n.width = Val::Px(0.);
+                        n.height = Val::Px(0.);
+                        n.border = UiRect::new(Val::Px(5.), Val::Px(5.), Val::Px(6.), Val::Px(0.));
+                    }),
+                    BorderColor { top: main, left: Color::NONE, right: Color::NONE, bottom: Color::NONE },
+                ));
             });
             p.spawn((
                 node(|n| {
                     n.position_type = PositionType::Absolute;
-                    n.width = Val::Percent(100.);
-                    n.top = Val::Percent(30.);
+                    n.width = Val::Px(BUBBLE);
+                    n.height = Val::Px(BUBBLE);
+                    n.border = UiRect::all(Val::Px(3.));
+                    n.border_radius = BorderRadius::MAX;
+                    n.flex_direction = FlexDirection::Column;
+                    n.align_items = AlignItems::Center;
                     n.justify_content = JustifyContent::Center;
                 }),
-                Pickable::IGNORE,
+                BackgroundColor(INK),
+                BorderColor::all(main),
+                BoxShadow::new(alpha(main, 0.5), Val::Px(0.), Val::Px(0.), Val::Px(0.), Val::Px(12.)),
+                Bubble(i),
+                Visibility::Hidden,
             ))
             .with_children(|p| {
                 p.spawn((
-                    txt(&f.display, 180., STAR, ""),
-                    TextShadow {
-                        offset: Vec2::new(0., 6.),
-                        color: alpha(NIGHT, 0.7),
-                    },
-                    Big,
-                    UiTransform::default(),
+                    node(|n| {
+                        n.position_type = PositionType::Absolute;
+                        n.width = Val::Px(12.);
+                        n.height = Val::Px(12.);
+                    }),
+                    BackgroundColor(main),
+                    BubbleNub(i),
                 ));
+                p.spawn((txt(&f.heavy, 15., main, s.tag.clone()), LineHeight::RelativeToFont(0.9)));
+                p.spawn((txt(&f.display, 15., STAR, "0%"), LineHeight::RelativeToFont(0.9), BubblePct(i)));
             });
+        }
+        // Panels.
+        p.spawn(node(|n| {
+            n.position_type = PositionType::Absolute;
+            n.bottom = Val::Px(14.);
+            n.left = Val::Px(0.);
+            n.right = Val::Px(0.);
+            n.flex_direction = FlexDirection::Row;
+            n.justify_content = JustifyContent::Center;
+            n.column_gap = Val::Px(10.);
+        }))
+        .with_children(|p| {
+            for (i, s) in m.slots.iter().enumerate() {
+                let (main, dark, _) = pal(d, i);
+                let fighter = &d.fighters[s.fighter];
+                let tint = s.team.map_or(INK, |_| dark.mix(&NIGHT, 0.55).with_alpha(0.92));
+                p.spawn((
+                    node(|n| {
+                        n.width = Val::Px(w);
+                        n.flex_direction = FlexDirection::Row;
+                        n.border_radius = BorderRadius::all(Val::Px(10.));
+                        n.overflow = Overflow::clip();
+                    }),
+                    BackgroundGradient::from(LinearGradient::to_right(vec![
+                        ColorStop::auto(tint),
+                        ColorStop::auto(INK),
+                    ])),
+                    Panel(i),
+                ))
+                .with_children(|p| {
+                    p.spawn((
+                        node(|n| {
+                            n.width = Val::Px(6.);
+                            n.height = Val::Percent(100.);
+                        }),
+                        BackgroundColor(main),
+                    ));
+                    p.spawn(node(|n| {
+                        n.flex_direction = FlexDirection::Column;
+                        n.flex_grow = 1.;
+                        n.padding = UiRect::new(Val::Px(10.), Val::Px(12.), Val::Px(6.), Val::Px(8.));
+                    }))
+                    .with_children(|p| {
+                        p.spawn(node(|n| {
+                            n.flex_direction = FlexDirection::Row;
+                            n.justify_content = JustifyContent::SpaceBetween;
+                            n.align_items = AlignItems::Baseline;
+                        }))
+                        .with_children(|p| {
+                            p.spawn(txt(&f.heavy, 22., main, s.tag.clone()));
+                            p.spawn(txt(&f.label, 15., DIM, fighter.name.clone()));
+                        });
+                        p.spawn(node(|n| {
+                            n.flex_direction = FlexDirection::Row;
+                            n.justify_content = JustifyContent::SpaceBetween;
+                            n.align_items = AlignItems::FlexEnd;
+                        }))
+                        .with_children(|p| {
+                            p.spawn(node(|n| {
+                                n.flex_direction = FlexDirection::Row;
+                                n.column_gap = Val::Px(5.);
+                                n.margin.bottom = Val::Px(9.);
+                                n.align_items = AlignItems::Center;
+                            }))
+                            .with_children(|p| {
+                                if training {
+                                    p.spawn(txt(&f.label, 15., FAINT, if i == 0 { "Training" } else { "Dummy" }));
+                                } else if m.rules.stocks > MAX_STOCK_ICONS {
+                                    stock_icon(p, main, i, 1);
+                                    p.spawn((txt(&f.heavy, 18., STAR, ""), Stock(i, 0)));
+                                } else {
+                                    for k in 1..=m.rules.stocks {
+                                        stock_icon(p, main, i, k);
+                                    }
+                                }
+                            });
+                            p.spawn((
+                                txt(&f.display, 62., STAR, "0"),
+                                LineHeight::RelativeToFont(0.95),
+                                Pct(i),
+                                UiTransform::default(),
+                            ))
+                            .with_child((
+                                TextSpan::new("%"),
+                                TextFont { font: f.display.clone().into(), font_size: FontSize::Px(30.), ..default() },
+                                PctSign(i),
+                            ));
+                        });
+                    });
+                });
+            }
         });
+        p.spawn((
+            node(|n| {
+                n.position_type = PositionType::Absolute;
+                n.width = Val::Percent(100.);
+                n.top = Val::Percent(30.);
+                n.justify_content = JustifyContent::Center;
+            }),
+            Pickable::IGNORE,
+        ))
+        .with_children(|p| {
+            p.spawn((
+                txt(&f.display, 180., STAR, ""),
+                TextShadow { offset: Vec2::new(0., 6.), color: alpha(NIGHT, 0.7) },
+                Big,
+                UiTransform::default(),
+            ));
+        });
+    });
 }
 
 fn stock_icon(p: &mut ChildSpawnerCommands, c: Color, i: usize, k: i32) {
@@ -272,10 +228,7 @@ fn stock_icon(p: &mut ChildSpawnerCommands, c: Color, i: usize, k: i32) {
 /// Stage pixel (y down) → UI logical pixel.
 fn to_ui(fr: &Framing, size: Vec2, x: f64, y: f64) -> Vec2 {
     let [x0, y0, x1, y1] = fr.view;
-    Vec2::new(
-        ((x - x0) / (x1 - x0)) as f32 * size.x,
-        ((y - y0) / (y1 - y0)) as f32 * size.y,
-    )
+    Vec2::new(((x - x0) / (x1 - x0)) as f32 * size.x, ((y - y0) / (y1 - y0)) as f32 * size.y)
 }
 
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]
@@ -293,14 +246,8 @@ pub fn update(
         Query<(&PctSign, &mut TextSpan)>,
     )>,
     mut panels: Query<(&Panel, &mut BackgroundGradient)>,
-    mut stocks: Query<
-        (&Stock, &mut Visibility),
-        (Without<Text>, Without<Big>, Without<Tag>, Without<Bubble>),
-    >,
-    mut tags: Query<
-        (&Tag, &mut Node, &mut Visibility),
-        (Without<Bubble>, Without<Stock>, Without<Big>),
-    >,
+    mut stocks: Query<(&Stock, &mut Visibility), (Without<Text>, Without<Big>, Without<Tag>, Without<Bubble>)>,
+    mut tags: Query<(&Tag, &mut Node, &mut Visibility), (Without<Bubble>, Without<Stock>, Without<Big>)>,
     mut bubbles: Query<
         (&Bubble, &mut Node, &mut Visibility, &mut UiTransform),
         (Without<Tag>, Without<Stock>, Without<Big>, Without<Pct>),
@@ -310,34 +257,19 @@ pub fn update(
     let w = &m.world;
     let d = &m.data;
     let t = time.elapsed_secs();
-    let size = win
-        .single()
-        .map_or(Vec2::new(1280., 720.), |w| Vec2::new(w.width(), w.height()))
-        / scale.0.max(0.01);
+    let size = win.single().map_or(Vec2::new(1280., 720.), |w| Vec2::new(w.width(), w.height())) / scale.0.max(0.01);
     let gone = |s: FState| matches!(s, FState::Out | FState::Dead);
     for (p, mut text, mut color, mut tf) in &mut texts.p0() {
         let f = &w.fighters[p.0];
         let out = f.state == FState::Out;
-        text.0 = if out {
-            "Out".into()
-        } else {
-            format!("{}", f.dmg.floor() as i64)
-        };
-        color.0 = if out {
-            FAINT
-        } else {
-            ui::damage_color(d, f.dmg)
-        };
+        text.0 = if out { "Out".into() } else { format!("{}", f.dmg.floor() as i64) };
+        color.0 = if out { FAINT } else { ui::damage_color(d, f.dmg) };
         let k = d.global.render.hud.shake as f32 * f.hud_shake.min(12) as f32 / 12.;
         let j = |s: f32| (t * 91. + s + p.0 as f32 * 7.).sin() * k;
         tf.translation = Val2::px(j(0.), j(1.7));
     }
     for (p, mut span) in &mut texts.p4() {
-        span.0 = if w.fighters[p.0].state == FState::Out {
-            String::new()
-        } else {
-            "%".into()
-        };
+        span.0 = if w.fighters[p.0].state == FState::Out { String::new() } else { "%".into() };
     }
     for (p, mut bg) in &mut panels {
         let out = w.fighters[p.0].state == FState::Out;
@@ -349,22 +281,13 @@ pub fn update(
         }
     }
     for (s, mut vis) in &mut stocks {
-        *vis = if w.fighters[s.0].stocks >= s.1 {
-            Visibility::Inherited
-        } else {
-            Visibility::Hidden
-        };
+        *vis = if w.fighters[s.0].stocks >= s.1 { Visibility::Inherited } else { Visibility::Hidden };
     }
     for (s, mut text) in &mut texts.p3() {
         text.0 = format!("×{}", w.fighters[s.0].stocks.max(0));
     }
     let [x0, y0, x1, y1] = fr.view;
-    let pos = |i: usize| {
-        fr.fighters
-            .get(i)
-            .copied()
-            .unwrap_or((w.fighters[i].x, w.fighters[i].y))
-    };
+    let pos = |i: usize| fr.fighters.get(i).copied().unwrap_or((w.fighters[i].x, w.fighters[i].y));
     for (tag, mut node, mut vis) in &mut tags {
         let f = &w.fighters[tag.0];
         let (x, y) = pos(tag.0);
@@ -377,11 +300,7 @@ pub fn update(
             && x < x1
             && y - 40. > y0
             && y - 40. < y1;
-        *vis = if show {
-            Visibility::Inherited
-        } else {
-            Visibility::Hidden
-        };
+        *vis = if show { Visibility::Inherited } else { Visibility::Hidden };
         node.left = Val::Px(p.x - 20.);
         node.width = Val::Px(40.);
         node.top = Val::Px(p.y - 26.);
@@ -395,11 +314,7 @@ pub fn update(
         let c = Vec2::new(p.x.clamp(m_, size.x - m_), p.y.clamp(m_, size.y - m_));
         let off = p - c;
         let show = !gone(f.state) && f.state != FState::Respawn && off.length() > 1.;
-        *vis = if show {
-            Visibility::Inherited
-        } else {
-            Visibility::Hidden
-        };
+        *vis = if show { Visibility::Inherited } else { Visibility::Hidden };
         node.left = Val::Px(c.x - BUBBLE / 2.);
         node.top = Val::Px(c.y - BUBBLE / 2.);
         tf.scale = Vec2::splat((1. - off.length() / 900.).clamp(0.7, 1.));
@@ -418,33 +333,20 @@ pub fn update(
     // Countdown, GO!, GAME!
     let g = &d.global.match_;
     let hz = sim::TICK_HZ;
-    let (s, color, pop): (String, Color, f32) =
-        if m.mode == Mode::Training || m.mode == Mode::Showcase {
-            (String::new(), STAR, 0.)
-        } else if w.count > 0 {
-            let into = 1. - (w.count % hz) as f32 / hz as f32;
-            (
-                w.count.div_ceil(hz).to_string(),
-                STAR,
-                if w.count.is_multiple_of(hz) { 0. } else { into },
-            )
-        } else if w.go_t > 0 {
-            ("GO!".into(), GOLD, 1. - w.go_t as f32 / g.go_frames as f32)
-        } else if w.end_t > 0 && !w.over {
-            (
-                "GAME!".into(),
-                STAR,
-                1. - w.end_t as f32 / g.end_frames as f32,
-            )
-        } else {
-            (String::new(), STAR, 0.)
-        };
+    let (s, color, pop): (String, Color, f32) = if m.mode == Mode::Training || m.mode == Mode::Showcase {
+        (String::new(), STAR, 0.)
+    } else if w.count > 0 {
+        let into = 1. - (w.count % hz) as f32 / hz as f32;
+        (w.count.div_ceil(hz).to_string(), STAR, if w.count.is_multiple_of(hz) { 0. } else { into })
+    } else if w.go_t > 0 {
+        ("GO!".into(), GOLD, 1. - w.go_t as f32 / g.go_frames as f32)
+    } else if w.end_t > 0 && !w.over {
+        ("GAME!".into(), STAR, 1. - w.end_t as f32 / g.end_frames as f32)
+    } else {
+        (String::new(), STAR, 0.)
+    };
     for (mut text, mut tc, mut tf, mut vis) in &mut texts.p1() {
-        *vis = if s.is_empty() {
-            Visibility::Hidden
-        } else {
-            Visibility::Inherited
-        };
+        *vis = if s.is_empty() { Visibility::Hidden } else { Visibility::Inherited };
         text.0.clone_from(&s);
         let fade = if s == "GO!" { (1. - pop) * 2. } else { 1. };
         tc.0 = color.with_alpha(fade.clamp(0., 1.));
@@ -481,10 +383,7 @@ pub fn pause(
     mut scene: ResMut<render::Scene>,
 ) {
     let Some(by) = m.paused else {
-        pm.cursor = Cursor {
-            key: RESUME,
-            owner: None,
-        };
+        pm.cursor = Cursor { key: RESUME, owner: None };
         pm.open = false;
         return;
     };
@@ -567,10 +466,7 @@ pub fn draw_pause(
     let Some(by) = m.paused else { return };
     let f = &*fonts;
     let slot = m.slots.iter().position(|s| s.dev == Some(by));
-    let who = slot.map_or_else(
-        || devs.name(by),
-        |i| format!("{} · {}", m.slots[i].tag, devs.name(by)),
-    );
+    let who = slot.map_or_else(|| devs.name(by), |i| format!("{} · {}", m.slots[i].tag, devs.name(by)));
     commands
         .spawn((
             root(),
@@ -590,28 +486,15 @@ pub fn draw_pause(
             .with_children(|p| {
                 p.spawn(txt(&f.display, 96., STAR, "Paused"));
                 p.spawn((
-                    txt(
-                        &f.body,
-                        16.,
-                        DIM,
-                        format!("Paused by {who}. Only this device controls the menu."),
-                    ),
+                    txt(&f.body, 16., DIM, format!("Paused by {who}. Only this device controls the menu.")),
                     node(|n| n.margin.bottom = Val::Px(26.)),
                 ));
                 let mut items = vec![Item::button(RESUME, "Resume")];
                 if training {
                     items.push(Item::spin(DUMMY, "Dummy", m.dummy.mode.label()));
-                    items.push(Item::spin(
-                        DUMMY_PCT,
-                        "Dummy damage",
-                        format!("{}%", m.world.fighters[1].dmg.floor()),
-                    ));
+                    items.push(Item::spin(DUMMY_PCT, "Dummy damage", format!("{}%", m.world.fighters[1].dmg.floor())));
                     items.push(Item::button(RESET, "Reset positions"));
-                    items.push(Item::spin(
-                        HITBOXES,
-                        "Hitboxes",
-                        if m.debug { "On" } else { "Off" },
-                    ));
+                    items.push(Item::spin(HITBOXES, "Hitboxes", if m.debug { "On" } else { "Off" }));
                 } else {
                     items.push(Item::button(RESTART, "Restart"));
                 }

@@ -9,7 +9,11 @@ use super::{Fighter, Global, Stage};
 pub fn schemas() -> Vec<(&'static str, Value)> {
     let mut fighter = gen_schema::<Fighter>();
     partial_root(&mut fighter);
-    vec![("global.schema.json", gen_schema::<Global>()), ("stage.schema.json", gen_schema::<Stage>()), ("fighter.schema.json", fighter)]
+    vec![
+        ("global.schema.json", gen_schema::<Global>()),
+        ("stage.schema.json", gen_schema::<Stage>()),
+        ("fighter.schema.json", fighter),
+    ]
 }
 
 fn gen_schema<T: JsonSchema>() -> Value {

@@ -64,13 +64,7 @@ pub struct Scene {
 
 impl Scene {
     pub fn new(data: Arc<GameData>) -> Self {
-        Scene {
-            data,
-            alpha: 1.,
-            debug: false,
-            pending: VecDeque::new(),
-            reset: true,
-        }
+        Scene { data, alpha: 1., debug: false, pending: VecDeque::new(), reset: true }
     }
     /// Record the world after a tick. Its pending `fx` become effects.
     pub fn push(&mut self, w: &World) {
@@ -133,24 +127,13 @@ struct Drawn {
     shake: (f64, f64),
 }
 
-fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut mats: ResMut<Assets<ColorMaterial>>,
-) {
+fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut mats: ResMut<Assets<ColorMaterial>>) {
     commands.spawn((Camera2d, RenderCamera, Msaa::Sample4));
     let mat = mats.add(ColorMaterial::default());
-    for (layer, z) in [
-        (Layer::Backdrop, -40.),
-        (Layer::Stars, -30.),
-        (Layer::Stage, -20.),
-        (Layer::World, 0.),
-        (Layer::Debug, 10.),
-    ] {
-        let mesh = meshes.add(Mesh::new(
-            PrimitiveTopology::TriangleList,
-            RenderAssetUsages::default(),
-        ));
+    for (layer, z) in
+        [(Layer::Backdrop, -40.), (Layer::Stars, -30.), (Layer::Stage, -20.), (Layer::World, 0.), (Layer::Debug, 10.)]
+    {
+        let mesh = meshes.add(Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default()));
         commands.spawn((
             Mesh2d(mesh),
             MeshMaterial2d(mat.clone()),
@@ -166,11 +149,7 @@ fn aspect(win: &Window) -> f64 {
 }
 
 /// Consume pushed ticks: effects, camera, snapshots.
-fn advance(
-    mut scene: ResMut<Scene>,
-    mut st: ResMut<Drawn>,
-    win: Option<Single<&Window, With<PrimaryWindow>>>,
-) {
+fn advance(mut scene: ResMut<Scene>, mut st: ResMut<Drawn>, win: Option<Single<&Window, With<PrimaryWindow>>>) {
     let asp = win.as_deref().map_or(16. / 9., |w| aspect(w));
     let scene = &mut *scene;
     let d = scene.data.clone();
@@ -181,10 +160,7 @@ fn advance(
         st.cam = CameraRig::default();
     }
     while let Some(mut w) = scene.pending.pop_front() {
-        let view = st.cam.cur.map_or(
-            [0., 0., d.stages[w.stage].width, d.stages[w.stage].height],
-            |c| c.view(asp),
-        );
+        let view = st.cam.cur.map_or([0., 0., d.stages[w.stage].width, d.stages[w.stage].height], |c| c.view(asp));
         let fx = std::mem::take(&mut w.fx);
         st.fx.consume(&d, &w, &fx, view);
         st.fx.tick(&d);
@@ -207,22 +183,14 @@ fn upload(mesh: &mut Mesh, cv: &Canvas) {
 }
 
 /// Interpolated fighter views for this frame.
-fn fighter_views<'a>(
-    d: &GameData,
-    prev: Option<&World>,
-    cur: &'a World,
-    t: f64,
-) -> Vec<FighterView<'a>> {
+fn fighter_views<'a>(d: &GameData, prev: Option<&World>, cur: &'a World, t: f64) -> Vec<FighterView<'a>> {
     cur.fighters
         .iter()
         .enumerate()
         .map(|(i, f)| {
             let skel = pose::fighter_pose(d, f, cur.frame);
             let p = prev.and_then(|w| w.fighters.get(i)).filter(|p| {
-                p.data == f.data
-                    && p.face == f.face
-                    && p.state == f.state
-                    && (p.x - f.x).hypot(p.y - f.y) < 150.
+                p.data == f.data && p.face == f.face && p.state == f.state && (p.x - f.x).hypot(p.y - f.y) < 150.
             });
             match p {
                 Some(p) => FighterView {
@@ -230,16 +198,9 @@ fn fighter_views<'a>(
                     f,
                     x: p.x + (f.x - p.x) * t,
                     y: p.y + (f.y - p.y) * t,
-                    skel: pose::fighter_pose(d, p, prev.map_or(cur.frame, |w| w.frame))
-                        .blend(&skel, t),
+                    skel: pose::fighter_pose(d, p, prev.map_or(cur.frame, |w| w.frame)).blend(&skel, t),
                 },
-                None => FighterView {
-                    i,
-                    f,
-                    x: f.x,
-                    y: f.y,
-                    skel,
-                },
+                None => FighterView { i, f, x: f.x, y: f.y, skel },
             }
         })
         .collect()
@@ -259,9 +220,7 @@ fn draw(
     let Some(cur) = st.cur.as_ref() else { return };
     let d = &*scene.data;
     let t = scene.alpha.clamp(0., 1.);
-    let px_h = win
-        .as_deref()
-        .map_or(720., |w| f64::from(w.physical_height().max(1)));
+    let px_h = win.as_deref().map_or(720., |w| f64::from(w.physical_height().max(1)));
     let Some(c) = st.cam.at(t) else { return };
     let (sx, sy) = st.fx.shake_offset();
     st.shake = (sx, sy);
@@ -270,27 +229,17 @@ fn draw(
         tf.translation.x = (c.x + sx) as f32;
         tf.translation.y = -(c.y + sy) as f32;
         if let Projection::Orthographic(o) = &mut *proj {
-            o.scaling_mode = ScalingMode::FixedVertical {
-                viewport_height: c.h as f32,
-            };
+            o.scaling_mode = ScalingMode::FixedVertical { viewport_height: c.h as f32 };
         }
     }
     let detail = px_h / c.h;
     let parallax = s.art.background.as_ref().map_or(0., |b| b.parallax);
-    let par = Vec2::new(
-        ((c.x + sx - s.width / 2.) * parallax) as f32,
-        (-(c.y + sy - s.height / 2.) * parallax) as f32,
-    );
+    let par = Vec2::new(((c.x + sx - s.width / 2.) * parallax) as f32, (-(c.y + sy - s.height / 2.) * parallax) as f32);
     let rebuild_static = st.stage != Some(cur.stage);
     st.stage = Some(cur.stage);
     let views = fighter_views(d, st.prev.as_ref(), cur, t);
     let asp = win.as_deref().map_or(16. / 9., |w| aspect(w));
-    let [x0, y0, x1, y1] = fx::Cam {
-        x: c.x + sx,
-        y: c.y + sy,
-        h: c.h,
-    }
-    .view(asp);
+    let [x0, y0, x1, y1] = fx::Cam { x: c.x + sx, y: c.y + sy, h: c.h }.view(asp);
     framing.view = [x0, y0, x1, y1];
     framing.fighters = views.iter().map(|v| (v.x, v.y)).collect();
     for (mesh, layer, mut tf) in layers {
@@ -311,12 +260,12 @@ fn draw(
             }
             Layer::World => {
                 for (k, p) in cur.projs.iter().enumerate() {
-                    let pp = st.prev.as_ref().and_then(|w| w.projs.get(k)).filter(|q| {
-                        q.owner == p.owner && q.id == p.id && (q.x - p.x).hypot(q.y - p.y) < 80.
-                    });
-                    let (x, y) = pp.map_or((p.x, p.y), |q| {
-                        (q.x + (p.x - q.x) * t, q.y + (p.y - q.y) * t)
-                    });
+                    let pp = st
+                        .prev
+                        .as_ref()
+                        .and_then(|w| w.projs.get(k))
+                        .filter(|q| q.owner == p.owner && q.id == p.id && (q.x - p.x).hypot(q.y - p.y) < 80.);
+                    let (x, y) = pp.map_or((p.x, p.y), |q| (q.x + (p.x - q.x) * t, q.y + (p.y - q.y) * t));
                     draw::draw_projectile(cv, d, p, x, y, cur.frame);
                 }
                 for v in &views {
@@ -350,25 +299,15 @@ fn debug_labels(
         return Ok(());
     };
     let ctx = ctx.ctx_mut()?;
-    let painter = ctx.layer_painter(egui::LayerId::new(
-        egui::Order::Background,
-        egui::Id::new("render-debug"),
-    ));
-    let views = fighter_views(
-        &scene.data,
-        st.prev.as_ref(),
-        cur,
-        scene.alpha.clamp(0., 1.),
-    );
+    let painter = ctx.layer_painter(egui::LayerId::new(egui::Order::Background, egui::Id::new("render-debug")));
+    let views = fighter_views(&scene.data, st.prev.as_ref(), cur, scene.alpha.clamp(0., 1.));
     let font = egui::FontId::monospace(12.);
     let mut placed: Vec<egui::Rect> = vec![];
     let mut labels: Vec<(egui::Pos2, String)> = views
         .iter()
         .filter(|v| !matches!(v.f.state, State::Out | State::Dead))
         .filter_map(|v| {
-            let p = camera
-                .world_to_viewport(gt, Vec3::new(v.x as f32, -(v.y - 120.) as f32, 0.))
-                .ok()?;
+            let p = camera.world_to_viewport(gt, Vec3::new(v.x as f32, -(v.y - 120.) as f32, 0.)).ok()?;
             Some((egui::pos2(p.x, p.y), debug::info(&scene.data, v.f)))
         })
         .collect();
@@ -377,8 +316,7 @@ fn debug_labels(
         let galley = painter.layout_no_wrap(text.clone(), font.clone(), egui::Color32::WHITE);
         let size = galley.size();
         // Stack labels that would overlap instead of drawing them on top of each other.
-        let rect =
-            |p: egui::Pos2| egui::Rect::from_min_size(p - egui::vec2(size.x / 2., size.y), size);
+        let rect = |p: egui::Pos2| egui::Rect::from_min_size(p - egui::vec2(size.x / 2., size.y), size);
         while let Some(r) = placed.iter().find(|r| r.intersects(rect(pos))) {
             pos.y = r.top() - 2.;
         }
@@ -392,13 +330,7 @@ fn debug_labels(
                 egui::Color32::from_black_alpha(200),
             );
         }
-        painter.text(
-            pos,
-            egui::Align2::CENTER_BOTTOM,
-            text,
-            font.clone(),
-            egui::Color32::from_rgb(0xe8, 0xff, 0xe8),
-        );
+        painter.text(pos, egui::Align2::CENTER_BOTTOM, text, font.clone(), egui::Color32::from_rgb(0xe8, 0xff, 0xe8));
     }
     Ok(())
 }

@@ -13,9 +13,7 @@ use crate::pose::Skel;
 
 pub fn color(d: &GameData, c: Color, player: usize, a: f64) -> Rgba {
     let pal = &d.global.palette;
-    let slot = |pick: fn(&sim::data::global::PlayerColors) -> Color| match pal
-        .get(player % pal.len().max(1))
-        .map(pick)
+    let slot = |pick: fn(&sim::data::global::PlayerColors) -> Color| match pal.get(player % pal.len().max(1)).map(pick)
     {
         Some(Color::Rgb(v)) => v,
         _ => 0xffffff,
@@ -41,11 +39,7 @@ fn keyed(keys: &[[f64; 2]], t: f64) -> f64 {
             continue;
         }
         let ([t0, a0], [t1, a1]) = (keys[k - 1], keys[k]);
-        return if t1 > t0 {
-            a0 + (a1 - a0) * ((t - t0) / (t1 - t0)).max(0.)
-        } else {
-            a1
-        };
+        return if t1 > t0 { a0 + (a1 - a0) * ((t - t0) / (t1 - t0)).max(0.) } else { a1 };
     }
     keys.last().map_or(0., |k| k[1])
 }
@@ -82,10 +76,7 @@ fn move_ctx<'a>(d: &'a GameData, f: &Fighter) -> MoveCtx<'a> {
     match (&f.mov, f.state) {
         (Some(m), State::Attack) => {
             let ph = sim::moves::phase(d, f);
-            let charging = ph
-                .charge
-                .as_ref()
-                .is_some_and(|c| m.t == c.frame && m.charge > 0);
+            let charging = ph.charge.as_ref().is_some_and(|c| m.t == c.frame && m.charge > 0);
             MoveCtx {
                 phase: Some(ph),
                 t: f64::from(m.t),
@@ -93,21 +84,12 @@ fn move_ctx<'a>(d: &'a GameData, f: &Fighter) -> MoveCtx<'a> {
                 jet: charging && ph.charge.as_ref().is_some_and(|c| c.jet),
             }
         }
-        _ => MoveCtx {
-            phase: None,
-            t: 0.,
-            charging: false,
-            jet: false,
-        },
+        _ => MoveCtx { phase: None, t: 0., charging: false, jet: false },
     }
 }
 
 pub fn dodging(f: &Fighter) -> bool {
-    f.inv > 0
-        && matches!(
-            f.state,
-            State::Roll | State::Spot | State::Airdodge | State::Tech
-        )
+    f.inv > 0 && matches!(f.state, State::Roll | State::Spot | State::Airdodge | State::Tech)
 }
 
 /// Resolved attachment for this tick.
@@ -148,15 +130,11 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
     let mut trails = Vec::new();
     for a in &fd.attachments {
         let anim = mc.phase.and_then(|ph| ph.attach.get(&a.id));
-        let show = anim
-            .and_then(|an| an.show)
-            .is_some_and(|[s, e]| mc.t >= f64::from(s) && mc.t <= f64::from(e));
+        let show = anim.and_then(|an| an.show).is_some_and(|[s, e]| mc.t >= f64::from(s) && mc.t <= f64::from(e));
         if a.hidden && !show {
             continue;
         }
-        let keyed_angle = anim
-            .filter(|an| !an.angle.is_empty())
-            .map(|an| keyed(&an.angle, mc.t));
+        let keyed_angle = anim.filter(|an| !an.angle.is_empty()).map(|an| keyed(&an.angle, mc.t));
         if let (Some(ang), Some(h)) = (keyed_angle, &a.hold) {
             p.elbow_f = add(p.shoulder, dir(ang + h.bend).map(|c| c * h.elbow));
             p.hand_f = add(p.shoulder, dir(ang).map(|c| c * h.hand));
@@ -175,11 +153,7 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
             if let Some((s, e)) = win {
                 let a1 = keyed(&an.angle, mc.t.min(e));
                 let a0 = keyed(&an.angle, s.max(mc.t - f64::from(o.trail.frames)));
-                let fade = if mc.t > e {
-                    1. - (mc.t - e) / (f64::from(o.trail.fade) + 1.)
-                } else {
-                    1.
-                };
+                let fade = if mc.t > e { 1. - (mc.t - e) / (f64::from(o.trail.fade) + 1.) } else { 1. };
                 if (a1 - a0).abs() > 3. {
                     trails.push((tr.inner, tr.outer, a0, a1, fade));
                 }
@@ -196,29 +170,16 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
                 Joint::HandB => vec_angle(p.elbow_b, p.hand_b) + a.angle,
                 _ => a.angle,
             };
-            let sway = a
-                .sway
-                .as_ref()
-                .map_or(0., |s| s.deg * (TAU * fr / s.period.max(1.)).sin());
-            let off = anim
-                .filter(|an| !an.offset.is_empty())
-                .map_or([0., 0.], |an| keyed_xy(&an.offset, mc.t));
-            let scale = anim
-                .filter(|an| !an.scale.is_empty())
-                .map_or(1., |an| keyed(&an.scale, mc.t));
+            let sway = a.sway.as_ref().map_or(0., |s| s.deg * (TAU * fr / s.period.max(1.)).sin());
+            let off = anim.filter(|an| !an.offset.is_empty()).map_or([0., 0.], |an| keyed_xy(&an.offset, mc.t));
+            let scale = anim.filter(|an| !an.scale.is_empty()).map_or(1., |an| keyed(&an.scale, mc.t));
             let glow = match a.glow {
                 Some(GlowWhen::Countering) => countering,
                 Some(GlowWhen::JetCharging) => mc.jet,
                 Some(GlowWhen::Active) => active,
                 None => false,
             };
-            Placed {
-                a,
-                at: add(base, off),
-                angle: keyed_angle.unwrap_or(rest) + sway,
-                scale,
-                glow,
-            }
+            Placed { a, at: add(base, off), angle: keyed_angle.unwrap_or(rest) + sway, scale, glow }
         })
         .collect();
 
@@ -229,18 +190,8 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
         for k in (1..=n).rev() {
             let s = f64::from(k) * o.dodge.spacing;
             let gy = if f.ground { 0. } else { f.vy * s };
-            let c = pal(
-                Color::PlayerLight,
-                o.dodge.ghost_alpha * f64::from(n + 1 - k),
-            );
-            ghost(
-                cv,
-                f,
-                &p,
-                [v.x - f.vx * s, v.y - gy],
-                c,
-                (o.dodge.ghost_width, st.head_radius),
-            );
+            let c = pal(Color::PlayerLight, o.dodge.ghost_alpha * f64::from(n + 1 - k));
+            ghost(cv, f, &p, [v.x - f.vx * s, v.y - gy], c, (o.dodge.ghost_width, st.head_radius));
         }
     }
     let jitter = if f.lag > 0 && f.flash > 0 {
@@ -250,11 +201,7 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
     } else {
         0.
     };
-    let jx = if jitter > 0. {
-        rng.range(-jitter, jitter)
-    } else {
-        0.
-    };
+    let jx = if jitter > 0. { rng.range(-jitter, jitter) } else { 0. };
     cv.save();
     cv.translate(v.x + jx, v.y);
     if f.state == State::Respawn {
@@ -315,10 +262,7 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
             color(d, o.trail.color, i, o.trail.alpha * fade * alpha),
         );
     }
-    let neck = [
-        p.head[0] * 0.5 + p.shoulder[0] * 0.5,
-        p.head[1] - st.head_radius,
-    ];
+    let neck = [p.head[0] * 0.5 + p.shoulder[0] * 0.5, p.head[1] - st.head_radius];
     let torso = [neck, p.shoulder, p.hip];
     let limbs = [
         [p.hip, p.knee_b, p.foot_b],
@@ -361,27 +305,15 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
         let stun = f.sd.stun > 0;
         let r = s.min_r + s.grow_r * f.sh.max(0.) / d.global.shield.max;
         let c = [v.x, v.y - s.y];
-        cv.fill_circle(
-            c,
-            r,
-            pal(Color::Player, if stun { s.stun_alpha } else { s.alpha }),
-        );
-        let stroke = if stun {
-            Rgba::hex(0xffffff, s.stroke_alpha)
-        } else {
-            pal(Color::Player, s.stroke_alpha)
-        };
+        cv.fill_circle(c, r, pal(Color::Player, if stun { s.stun_alpha } else { s.alpha }));
+        let stroke = if stun { Rgba::hex(0xffffff, s.stroke_alpha) } else { pal(Color::Player, s.stroke_alpha) };
         cv.stroke_circle(c, r, s.width, stroke);
     }
     if f.state == State::Dizzy {
         let z = &o.dizzy;
         for k in 0..z.stars {
             let a = (fr * z.speed).to_radians() + TAU * f64::from(k) / f64::from(z.stars.max(1));
-            cv.star(
-                [v.x + a.cos() * z.rx, v.y - z.y + a.sin() * z.ry],
-                z.r,
-                color(d, z.color, i, 1.),
-            );
+            cv.star([v.x + a.cos() * z.rx, v.y - z.y + a.sin() * z.ry], z.r, color(d, z.color, i, 1.));
         }
     }
 }
@@ -412,14 +344,7 @@ fn ghost(cv: &mut Canvas, f: &Fighter, p: &Skel, [x, y]: P, c: Rgba, (w, head): 
     cv.restore();
 }
 
-fn draw_attachment(
-    cv: &mut Canvas,
-    d: &GameData,
-    player: usize,
-    pl: &Placed,
-    alpha: f64,
-    frame: u64,
-) {
+fn draw_attachment(cv: &mut Canvas, d: &GameData, player: usize, pl: &Placed, alpha: f64, frame: u64) {
     cv.save();
     cv.translate(pl.at[0], pl.at[1]);
     cv.rotate(pl.angle.to_radians());
@@ -431,15 +356,7 @@ fn draw_attachment(
 }
 
 /// One vector shape in the current (y-up) space.
-pub fn draw_shape(
-    cv: &mut Canvas,
-    d: &GameData,
-    player: usize,
-    s: &Shape,
-    alpha: f64,
-    glow: bool,
-    frame: u64,
-) {
+pub fn draw_shape(cv: &mut Canvas, d: &GameData, player: usize, s: &Shape, alpha: f64, glow: bool, frame: u64) {
     let on = |w: ShapeWhen| match w {
         ShapeWhen::Always => true,
         ShapeWhen::Glow => glow,
@@ -447,23 +364,10 @@ pub fn draw_shape(
     };
     let col = |c: Color, a: f64| color(d, c, player, a * alpha);
     match s {
-        Shape::Line {
-            from,
-            to,
-            width,
-            color: c,
-            alpha: a,
-            when,
-        } if on(*when) => cv.line(*from, *to, *width, col(*c, *a)),
-        Shape::Circle {
-            at,
-            r,
-            fill,
-            stroke,
-            width,
-            alpha: a,
-            when,
-        } if on(*when) => {
+        Shape::Line { from, to, width, color: c, alpha: a, when } if on(*when) => {
+            cv.line(*from, *to, *width, col(*c, *a))
+        }
+        Shape::Circle { at, r, fill, stroke, width, alpha: a, when } if on(*when) => {
             if let Some(c) = fill {
                 cv.fill_circle(*at, *r, col(*c, *a));
             }
@@ -471,14 +375,7 @@ pub fn draw_shape(
                 cv.stroke_circle(*at, *r, *width, col(*c, *a));
             }
         }
-        Shape::Poly {
-            points,
-            fill,
-            stroke,
-            width,
-            alpha: a,
-            when,
-        } if on(*when) => {
+        Shape::Poly { points, fill, stroke, width, alpha: a, when } if on(*when) => {
             if let Some(c) = fill {
                 cv.fill_poly(points, col(*c, *a));
             }
@@ -486,18 +383,7 @@ pub fn draw_shape(
                 cv.stroke_closed(points, *width, col(*c, *a));
             }
         }
-        Shape::Rect {
-            x,
-            y,
-            w,
-            h,
-            radius,
-            fill,
-            stroke,
-            width,
-            alpha: a,
-            when,
-        } if on(*when) => {
+        Shape::Rect { x, y, w, h, radius, fill, stroke, width, alpha: a, when } if on(*when) => {
             let pts = cv.round_rect_pts(*x, *y, *w, *h, *radius);
             if let Some(c) = fill {
                 cv.fill_convex(&pts, col(*c, *a));
@@ -506,14 +392,9 @@ pub fn draw_shape(
                 cv.stroke_closed(&pts, *width, col(*c, *a));
             }
         }
-        Shape::Star {
-            at,
-            r,
-            fill,
-            alpha: a,
-            blink,
-            when,
-        } if on(*when) && (*blink == 0 || (frame / u64::from(*blink)) % 2 == 1) => {
+        Shape::Star { at, r, fill, alpha: a, blink, when }
+            if on(*when) && (*blink == 0 || (frame / u64::from(*blink)) % 2 == 1) =>
+        {
             cv.star(*at, *r, col(*fill, *a))
         }
         _ => {}

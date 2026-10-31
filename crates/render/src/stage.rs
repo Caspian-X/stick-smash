@@ -22,30 +22,18 @@ pub fn draw_backdrop(cv: &mut Canvas, d: &GameData, s: &Stage) {
     }
     if let Some(m) = &bg.moon {
         for k in (1..=m.rings).rev() {
-            cv.fill_circle(
-                [m.x, m.y],
-                m.r + f64::from(k) * m.step,
-                color(d, m.glow, 0, m.alpha),
-            );
+            cv.fill_circle([m.x, m.y], m.r + f64::from(k) * m.step, color(d, m.glow, 0, m.alpha));
         }
         cv.fill_circle([m.x, m.y], m.r, c(m.color));
     }
     for r in &bg.ridges {
-        let y = |x: f64| {
-            r.base
-                - r.amp
-                    * (0.5
-                        + 0.3 * (x * 0.006 + r.seed).sin()
-                        + 0.2 * (x * 0.017 + r.seed * 3.).sin())
-        };
+        let y =
+            |x: f64| r.base - r.amp * (0.5 + 0.3 * (x * 0.006 + r.seed).sin() + 0.2 * (x * 0.017 + r.seed * 3.).sin());
         let col = c(r.color);
         let mut x = b.left;
         while x < b.right {
             let x1 = (x + 20.).min(b.right);
-            cv.fill_convex(
-                &[[x, y(x)], [x1, y(x1)], [x1, b.bottom], [x, b.bottom]],
-                col,
-            );
+            cv.fill_convex(&[[x, y(x)], [x1, y(x1)], [x1, b.bottom], [x, b.bottom]], col);
             x = x1;
         }
     }
@@ -59,27 +47,14 @@ pub fn draw_stars(cv: &mut Canvas, d: &GameData, bg: &Background, frame: u64) {
         let size = rng.range(s.size[0], s.size[1]);
         let ph = rng.range(0., 6.);
         let a = 0.5 + 0.5 * ((frame as f64 * s.twinkle).to_radians() + ph).sin();
-        cv.fill_rect(
-            s.x + u * s.w,
-            s.y + v * s.h,
-            size,
-            size,
-            color(d, s.color, 0, a),
-        );
+        cv.fill_rect(s.x + u * s.w, s.y + v * s.h, size, size, color(d, s.color, 0, a));
     }
 }
 
 pub fn draw_stage(cv: &mut Canvas, d: &GameData, s: &Stage) {
     let (g, a) = (&s.ground, &s.art);
     let c = |col, al| color(d, col, 0, al);
-    cv.fill_rect_v(
-        g.left,
-        g.top,
-        g.right - g.left,
-        g.bottom - g.top,
-        c(a.ground_top, 1.),
-        c(a.ground_bottom, 1.),
-    );
+    cv.fill_rect_v(g.left, g.top, g.right - g.left, g.bottom - g.top, c(a.ground_top, 1.), c(a.ground_bottom, 1.));
     cv.fill_convex(
         &[
             [g.left, g.bottom],
@@ -93,26 +68,14 @@ pub fn draw_stage(cv: &mut Canvas, d: &GameData, s: &Stage) {
     if let Some(st) = &a.stripes {
         let mut x = g.left + st.x;
         while x < g.right {
-            cv.fill_rect(
-                x,
-                g.top + st.y,
-                st.w.min(g.right - x),
-                st.h,
-                c(st.color, st.alpha),
-            );
+            cv.fill_rect(x, g.top + st.y, st.w.min(g.right - x), st.h, c(st.color, st.alpha));
             x += st.every.max(1.);
         }
     }
     let [off, h, alpha] = a.platform_shadow_band;
     for p in &s.platforms {
         cv.fill_rect(p.x1, p.y + off, p.x2 - p.x1, h, c(a.platform_shadow, alpha));
-        let pts = cv.round_rect_pts(
-            p.x1,
-            p.y,
-            p.x2 - p.x1,
-            a.platform_thickness,
-            a.platform_radius,
-        );
+        let pts = cv.round_rect_pts(p.x1, p.y, p.x2 - p.x1, a.platform_thickness, a.platform_radius);
         cv.fill_convex(&pts, c(a.platform, 1.));
     }
 }

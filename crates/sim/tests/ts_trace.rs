@@ -9,8 +9,14 @@ fn mismatch(a: &Value, b: &Value, path: &str) -> Option<String> {
     match (a, b) {
         (Value::Number(a), Value::Number(b)) => {
             let (a, b) = (a.as_f64().unwrap(), b.as_f64().unwrap());
-            let exact = [".stocks", ".lag", ".hitstun", ".face", ".charge", ".owner", ".life"].iter().any(|field| path.ends_with(field));
-            if if exact { a != b } else { (a - b).abs() > 1e-6 } { Some(format!("{path}: Rust {a}, TS {b}")) } else { None }
+            let exact = [".stocks", ".lag", ".hitstun", ".face", ".charge", ".owner", ".life"]
+                .iter()
+                .any(|field| path.ends_with(field));
+            if if exact { a != b } else { (a - b).abs() > 1e-6 } {
+                Some(format!("{path}: Rust {a}, TS {b}"))
+            } else {
+                None
+            }
         }
         (Value::Array(a), Value::Array(b)) => {
             if a.len() != b.len() {

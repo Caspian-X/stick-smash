@@ -23,7 +23,9 @@ pub fn merge(parent: &mut Value, child: &Value) {
 
 fn strip_nulls(v: &Value) -> Value {
     match v {
-        Value::Object(m) => Value::Object(m.iter().filter(|(_, v)| !v.is_null()).map(|(k, v)| (k.clone(), strip_nulls(v))).collect()),
+        Value::Object(m) => {
+            Value::Object(m.iter().filter(|(_, v)| !v.is_null()).map(|(k, v)| (k.clone(), strip_nulls(v))).collect())
+        }
         v => v.clone(),
     }
 }
@@ -106,7 +108,8 @@ fn inline(v: &Value) -> String {
     match v {
         Value::Object(m) if m.is_empty() => "{}".into(),
         Value::Object(m) => {
-            let items: Vec<String> = m.iter().map(|(k, v)| format!("{}: {}", Value::String(k.clone()), inline(v))).collect();
+            let items: Vec<String> =
+                m.iter().map(|(k, v)| format!("{}: {}", Value::String(k.clone()), inline(v))).collect();
             format!("{{ {} }}", items.join(", "))
         }
         Value::Array(a) => format!("[{}]", a.iter().map(inline).collect::<Vec<_>>().join(", ")),

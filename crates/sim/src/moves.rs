@@ -28,7 +28,14 @@ fn num(w: &mut World, n: Num) -> f64 {
         Num::Range([a, b]) => w.rng.range(a, b),
     }
 }
-pub fn effects(w: &mut World, fx: &[data::moves::Fx], (x, y): (f64, f64), face: f64, (vx, vy): (f64, f64), player: usize) {
+pub fn effects(
+    w: &mut World,
+    fx: &[data::moves::Fx],
+    (x, y): (f64, f64),
+    face: f64,
+    (vx, vy): (f64, f64),
+    player: usize,
+) {
     use data::moves::Fx as F;
     for e in fx {
         match *e {
@@ -54,7 +61,17 @@ pub fn effects(w: &mut World, fx: &[data::moves::Fx], (x, y): (f64, f64), face: 
             F::Burst { x: dx, y: dy, color, n, speed, life, size, gravity } => {
                 let x = x + num(w, dx) * face;
                 let y = y - num(w, dy);
-                w.fx.push(crate::Fx::Burst { x, y, color, player, n: f64::from(n), speed, life: f64::from(life), size, gravity });
+                w.fx.push(crate::Fx::Burst {
+                    x,
+                    y,
+                    color,
+                    player,
+                    n: f64::from(n),
+                    speed,
+                    life: f64::from(life),
+                    size,
+                    gravity,
+                });
             }
             F::Shake { k } => w.fx.push(crate::Fx::Shake { k }),
         }
@@ -112,7 +129,15 @@ fn events(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) {
 }
 pub fn start_move(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, slot: &str) {
     f.set_state(State::Attack);
-    f.mov = Some(MoveState { slot: slot.into(), phase: 0, t: 0, elapsed: 0, charge: 0, counter_damage: 0., reversed: false });
+    f.mov = Some(MoveState {
+        slot: slot.into(),
+        phase: 0,
+        t: 0,
+        elapsed: 0,
+        charge: 0,
+        counter_damage: 0.,
+        reversed: false,
+    });
     events(w, d, i, f);
 }
 fn transition(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, tr: &Transition) {
@@ -136,7 +161,9 @@ pub fn trigger(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, on: Trigg
         return false;
     }
     let t = f.mov.as_ref().unwrap().t;
-    if let Some(tr) = phase(d, f).transitions.iter().find(|tr| tr.on == on && tr.from.is_none_or(|n| t >= n) && cond(f, tr.cond)) {
+    if let Some(tr) =
+        phase(d, f).transitions.iter().find(|tr| tr.on == on && tr.from.is_none_or(|n| t >= n) && cond(f, tr.cond))
+    {
         transition(w, d, i, f, tr);
         true
     } else {
@@ -270,7 +297,8 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
         events(w, d, i, f);
         let p = phase(d, f);
         let t = f.mov.as_ref().unwrap().t;
-        let held = if p.charge.as_ref().is_some_and(|c| c.button == Button::Special) { inp.sp_held } else { inp.atk_held };
+        let held =
+            if p.charge.as_ref().is_some_and(|c| c.button == Button::Special) { inp.sp_held } else { inp.atk_held };
         let tr = p.transitions.iter().find(|tr| {
             tr.from.is_none_or(|n| t >= n)
                 && cond(f, tr.cond)

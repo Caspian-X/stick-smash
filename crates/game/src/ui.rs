@@ -55,22 +55,11 @@ impl Fonts {
 
 /// The font, falling back to a system sans-serif for glyphs it lacks (arrows in fighter blurbs).
 pub fn font_list(font: &Handle<Font>) -> FontSource {
-    FontSource::List(vec![
-        font.clone().into(),
-        FontSource::Generic(GenericFontFamily::SansSerif),
-    ])
+    FontSource::List(vec![font.clone().into(), FontSource::Generic(GenericFontFamily::SansSerif)])
 }
 
 pub fn txt(font: &Handle<Font>, size: f32, color: Color, s: impl Into<String>) -> impl Bundle {
-    (
-        Text::new(s),
-        TextFont {
-            font: font_list(font),
-            font_size: FontSize::Px(size),
-            ..default()
-        },
-        TextColor(color),
-    )
+    (Text::new(s), TextFont { font: font_list(font), font_size: FontSize::Px(size), ..default() }, TextColor(color))
 }
 
 pub fn rgb(c: DataColor) -> Color {
@@ -145,24 +134,13 @@ pub struct Spot {
     pub center: Vec2,
 }
 
-pub type FocusQuery<'w, 's> = Query<
-    'w,
-    's,
-    (
-        &'static Focusable,
-        &'static ComputedNode,
-        &'static UiGlobalTransform,
-    ),
->;
+pub type FocusQuery<'w, 's> = Query<'w, 's, (&'static Focusable, &'static ComputedNode, &'static UiGlobalTransform)>;
 
 pub fn spots(q: &FocusQuery) -> Vec<Spot> {
     let mut v: Vec<Spot> = q
         .iter()
         .filter(|(_, n, _)| n.size().x > 0.)
-        .map(|(f, _, t)| Spot {
-            f: *f,
-            center: t.affine().translation,
-        })
+        .map(|(f, _, t)| Spot { f: *f, center: t.affine().translation })
         .collect();
     v.sort_by_key(|s| s.f.key);
     v
@@ -174,18 +152,14 @@ impl Cursor {
     }
     /// Keep focus on something that exists (first allowed node in reading order otherwise).
     pub fn settle(&mut self, spots: &[Spot]) {
-        if spots.is_empty()
-            || spots
-                .iter()
-                .any(|s| s.f.key == self.key && self.allowed(&s.f))
-        {
+        if spots.is_empty() || spots.iter().any(|s| s.f.key == self.key && self.allowed(&s.f)) {
             return;
         }
-        if let Some(s) = spots.iter().filter(|s| self.allowed(&s.f)).min_by(|a, b| {
-            (a.center.y, a.center.x)
-                .partial_cmp(&(b.center.y, b.center.x))
-                .unwrap()
-        }) {
+        if let Some(s) = spots
+            .iter()
+            .filter(|s| self.allowed(&s.f))
+            .min_by(|a, b| (a.center.y, a.center.x).partial_cmp(&(b.center.y, b.center.x)).unwrap())
+        {
             self.key = s.f.key;
         }
     }
@@ -194,11 +168,7 @@ impl Cursor {
         let cur = spots.iter().find(|s| s.f.key == self.key)?;
         let dir = match nav {
             Nav::Confirm => {
-                return Some(if cur.f.spin {
-                    Action::Spin(self.key, 1)
-                } else {
-                    Action::Activate(self.key)
-                });
+                return Some(if cur.f.spin { Action::Spin(self.key, 1) } else { Action::Activate(self.key) });
             }
             Nav::Back => return Some(Action::Back),
             Nav::Start => return Some(Action::Start),
@@ -209,13 +179,10 @@ impl Cursor {
             Nav::Up => Vec2::NEG_Y,
             Nav::Down => Vec2::Y,
         };
-        let cand = spots
-            .iter()
-            .filter(|s| s.f.key != self.key && self.allowed(&s.f))
-            .map(|s| {
-                let d = s.center - cur.center;
-                (s, d.dot(dir), (d - dir * d.dot(dir)).length())
-            });
+        let cand = spots.iter().filter(|s| s.f.key != self.key && self.allowed(&s.f)).map(|s| {
+            let d = s.center - cur.center;
+            (s, d.dot(dir), (d - dir * d.dot(dir)).length())
+        });
         let best = cand
             .clone()
             // Sideways moves stay within 45° so they don't jump to a different row of the screen.
@@ -225,8 +192,7 @@ impl Cursor {
             .or_else(|| {
                 (dir.y != 0.)
                     .then(|| {
-                        cand.filter(|(_, p, _)| *p < -2.)
-                            .min_by(|a, b| (a.2 * 3. + a.1).total_cmp(&(b.2 * 3. + b.1)))
+                        cand.filter(|(_, p, _)| *p < -2.).min_by(|a, b| (a.2 * 3. + a.1).total_cmp(&(b.2 * 3. + b.1)))
                     })
                     .flatten()
             });
@@ -246,30 +212,15 @@ pub struct Item {
 
 impl Item {
     pub fn button(key: u32, label: impl Into<String>) -> Self {
-        Item {
-            key,
-            label: label.into(),
-            value: None,
-        }
+        Item { key, label: label.into(), value: None }
     }
     pub fn spin(key: u32, label: impl Into<String>, value: impl Into<String>) -> Self {
-        Item {
-            key,
-            label: label.into(),
-            value: Some(value.into()),
-        }
+        Item { key, label: label.into(), value: Some(value.into()) }
     }
 }
 
 /// Vertical menu list. The focused row gets a gold slash marker and gold text.
-pub fn menu_list(
-    p: &mut ChildSpawnerCommands,
-    fonts: &Fonts,
-    items: &[Item],
-    focus: u32,
-    width: f32,
-    size: f32,
-) {
+pub fn menu_list(p: &mut ChildSpawnerCommands, fonts: &Fonts, items: &[Item], focus: u32, width: f32, size: f32) {
     p.spawn(node(|n| {
         n.flex_direction = FlexDirection::Column;
         n.width = Val::Px(width);
@@ -286,16 +237,8 @@ pub fn menu_list(
                     n.padding = UiRect::horizontal(Val::Px(14.));
                     n.column_gap = Val::Px(12.);
                 }),
-                BackgroundColor(if on {
-                    Color::srgba(1., 0.83, 0.35, 0.08)
-                } else {
-                    Color::NONE
-                }),
-                Focusable {
-                    key: it.key,
-                    owner: None,
-                    spin: it.value.is_some(),
-                },
+                BackgroundColor(if on { Color::srgba(1., 0.83, 0.35, 0.08) } else { Color::NONE }),
+                Focusable { key: it.key, owner: None, spin: it.value.is_some() },
             ))
             .with_children(|p| {
                 p.spawn((
@@ -307,26 +250,12 @@ pub fn menu_list(
                     UiTransform::from_rotation(Rot2::degrees(14.)),
                 ));
                 p.spawn((
-                    txt(
-                        &fonts.label,
-                        size,
-                        if on { GOLD } else { STAR },
-                        it.label.clone(),
-                    ),
+                    txt(&fonts.label, size, if on { GOLD } else { STAR }, it.label.clone()),
                     node(|n| n.flex_grow = 1.),
                 ));
                 if let Some(v) = &it.value {
-                    let s = if on {
-                        format!("‹  {v}  ›")
-                    } else {
-                        v.clone()
-                    };
-                    p.spawn(txt(
-                        &fonts.label,
-                        size * 0.92,
-                        if on { STAR } else { DIM },
-                        s,
-                    ));
+                    let s = if on { format!("‹  {v}  ›") } else { v.clone() };
+                    p.spawn(txt(&fonts.label, size * 0.92, if on { STAR } else { DIM }, s));
                 }
             });
         }
@@ -408,23 +337,13 @@ mod tests {
     use super::*;
 
     fn spot(key: u32, x: f32, y: f32, spin: bool, owner: Option<usize>) -> Spot {
-        Spot {
-            f: Focusable { key, owner, spin },
-            center: Vec2::new(x, y),
-        }
+        Spot { f: Focusable { key, owner, spin }, center: Vec2::new(x, y) }
     }
 
     #[test]
     fn vertical_lists_move_and_wrap() {
-        let s = [
-            spot(1, 0., 0., false, None),
-            spot(2, 0., 40., false, None),
-            spot(3, 0., 80., false, None),
-        ];
-        let mut c = Cursor {
-            key: 1,
-            owner: None,
-        };
+        let s = [spot(1, 0., 0., false, None), spot(2, 0., 40., false, None), spot(3, 0., 80., false, None)];
+        let mut c = Cursor { key: 1, owner: None };
         c.drive(Nav::Down, &s);
         assert_eq!(c.key, 2);
         c.drive(Nav::Down, &s);
@@ -437,10 +356,7 @@ mod tests {
     #[test]
     fn spinners_take_left_right_and_confirm() {
         let s = [spot(1, 0., 0., true, None), spot(2, 100., 0., false, None)];
-        let mut c = Cursor {
-            key: 1,
-            owner: None,
-        };
+        let mut c = Cursor { key: 1, owner: None };
         assert_eq!(c.drive(Nav::Right, &s), Some(Action::Spin(1, 1)));
         assert_eq!(c.drive(Nav::Left, &s), Some(Action::Spin(1, -1)));
         assert_eq!(c.drive(Nav::Confirm, &s), Some(Action::Spin(1, 1)));
@@ -455,39 +371,24 @@ mod tests {
             spot(3, 400., 110., false, None),
             spot(4, 250., -300., false, None),
         ];
-        let mut c = Cursor {
-            key: 1,
-            owner: Some(0),
-        };
+        let mut c = Cursor { key: 1, owner: Some(0) };
         c.drive(Nav::Right, &s);
-        assert_eq!(
-            c.key, 3,
-            "skips another player's node, ignores the far-up one"
-        );
+        assert_eq!(c.key, 3, "skips another player's node, ignores the far-up one");
         c.drive(Nav::Right, &s);
         assert_eq!(c.key, 3, "nothing further right");
     }
 
     #[test]
     fn lost_focus_settles_on_the_first_allowed_node() {
-        let s = [
-            spot(5, 0., 50., false, Some(1)),
-            spot(6, 0., 60., false, None),
-        ];
-        let mut c = Cursor {
-            key: 99,
-            owner: Some(0),
-        };
+        let s = [spot(5, 0., 50., false, Some(1)), spot(6, 0., 60., false, None)];
+        let mut c = Cursor { key: 99, owner: Some(0) };
         c.settle(&s);
         assert_eq!(c.key, 6);
     }
 
     #[test]
     fn ordinals() {
-        let v: Vec<String> = [1, 2, 3, 4, 11, 12, 21]
-            .iter()
-            .map(|n| ordinal(*n))
-            .collect();
+        let v: Vec<String> = [1, 2, 3, 4, 11, 12, 21].iter().map(|n| ordinal(*n)).collect();
         assert_eq!(v, ["1st", "2nd", "3rd", "4th", "11th", "12th", "21st"]);
     }
 }

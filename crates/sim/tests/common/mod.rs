@@ -12,7 +12,10 @@ pub fn data() -> GameData {
                     collect(root, &p, out);
                 }
             } else if p.extension().is_some_and(|e| e == "json") {
-                out.push(Source { path: p.strip_prefix(root).unwrap().to_string_lossy().into(), text: fs::read_to_string(p).unwrap() });
+                out.push(Source {
+                    path: p.strip_prefix(root).unwrap().to_string_lossy().into(),
+                    text: fs::read_to_string(p).unwrap(),
+                });
             }
         }
     }

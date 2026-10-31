@@ -48,14 +48,10 @@ pub const ACTS: [Act; 10] = [
 
 impl Act {
     pub fn id(self) -> &'static str {
-        [
-            "left", "right", "up", "down", "jump", "attack", "special", "grab", "shield", "start",
-        ][self as usize]
+        ["left", "right", "up", "down", "jump", "attack", "special", "grab", "shield", "start"][self as usize]
     }
     pub fn label(self) -> &'static str {
-        [
-            "Left", "Right", "Up", "Down", "Jump", "Attack", "Special", "Grab", "Shield", "Pause",
-        ][self as usize]
+        ["Left", "Right", "Up", "Down", "Jump", "Attack", "Special", "Grab", "Shield", "Pause"][self as usize]
     }
 }
 
@@ -99,11 +95,7 @@ impl DevState {
         }
     }
     pub fn any_press(&self) -> bool {
-        self.pressed[4..].iter().any(|p| *p)
-            || self
-                .nav
-                .iter()
-                .any(|n| matches!(n, Nav::Confirm | Nav::Start))
+        self.pressed[4..].iter().any(|p| *p) || self.nav.iter().any(|n| matches!(n, Nav::Confirm | Nav::Start))
     }
 }
 
@@ -117,9 +109,7 @@ pub struct Devices {
 
 impl Devices {
     pub fn navs(&self) -> impl Iterator<Item = (Dev, Nav)> + '_ {
-        self.map
-            .iter()
-            .flat_map(|(d, s)| s.nav.iter().map(move |n| (*d, *n)))
+        self.map.iter().flat_map(|(d, s)| s.nav.iter().map(move |n| (*d, *n)))
     }
     pub fn name(&self, d: Dev) -> String {
         self.names.get(&d).cloned().unwrap_or_else(|| label(d))
@@ -215,11 +205,8 @@ pub fn default_binds(profile: &str) -> [Vec<&'static str>; 10] {
 
 /// The controls bound to each action for a profile (saved overrides, else defaults).
 pub fn binds(saved: &Saved, profile: &str) -> [Vec<String>; 10] {
-    let key = if profile.starts_with("gamepad:") && !saved.bindings.contains_key(profile) {
-        "gamepad"
-    } else {
-        profile
-    };
+    let key =
+        if profile.starts_with("gamepad:") && !saved.bindings.contains_key(profile) { "gamepad" } else { profile };
     let custom = saved.bindings.get(key);
     let def = default_binds(profile);
     std::array::from_fn(|i| {
@@ -395,12 +382,8 @@ pub fn control_label(name: &str) -> String {
     if !s.is_empty() {
         return s.into();
     }
-    let s = name
-        .strip_prefix("Key")
-        .or(name.strip_prefix("Digit"))
-        .unwrap_or(name);
-    s.strip_prefix("Numpad")
-        .map_or(s.to_string(), |n| format!("Num {n}"))
+    let s = name.strip_prefix("Key").or(name.strip_prefix("Digit")).unwrap_or(name);
+    s.strip_prefix("Numpad").map_or(s.to_string(), |n| format!("Num {n}"))
 }
 
 const REPEAT_DELAY: f32 = 0.38;
@@ -416,25 +399,15 @@ pub fn poll(
     mut devs: ResMut<Devices>,
 ) {
     let devs = &mut *devs;
-    let mut live: Vec<Dev> = if saved.split_keyboard {
-        vec![Dev::KeysL, Dev::KeysR]
-    } else {
-        vec![Dev::Keys]
-    };
+    let mut live: Vec<Dev> = if saved.split_keyboard { vec![Dev::KeysL, Dev::KeysR] } else { vec![Dev::Keys] };
     for (n, (e, _, name)) in pads.iter().enumerate() {
-        let label = name.map_or_else(
-            || format!("Gamepad {}", n + 1),
-            |nm| nm.as_str().to_string(),
-        );
+        let label = name.map_or_else(|| format!("Gamepad {}", n + 1), |nm| nm.as_str().to_string());
         devs.names.insert(Dev::Pad(e), label);
         live.push(Dev::Pad(e));
     }
     live.extend(devs.bots.keys().map(|b| Dev::Bot(*b)));
     devs.map.retain(|d, _| live.contains(d));
-    let raw_key = KEYS
-        .iter()
-        .find(|(k, _)| keys.just_pressed(*k))
-        .map(|(_, n)| n.to_string());
+    let raw_key = KEYS.iter().find(|(k, _)| keys.just_pressed(*k)).map(|(_, n)| n.to_string());
     for d in live {
         let mut held = [false; 10];
         let mut stick = Vec2::ZERO;
@@ -445,9 +418,7 @@ pub fn poll(
             Dev::Keys | Dev::KeysL | Dev::KeysR => {
                 let b = binds(&saved, &prof);
                 for (i, ctl) in b.iter().enumerate() {
-                    held[i] = ctl
-                        .iter()
-                        .any(|c| KEYS.iter().any(|(k, n)| n == c && keys.pressed(*k)));
+                    held[i] = ctl.iter().any(|c| KEYS.iter().any(|(k, n)| n == c && keys.pressed(*k)));
                 }
                 raw.clone_from(&raw_key);
                 let jp = |ks: &[KeyCode]| ks.iter().any(|k| keys.just_pressed(*k));
@@ -455,9 +426,7 @@ pub fn poll(
                 if enter && d != Dev::KeysL {
                     extra.push(Nav::Confirm);
                 }
-                if jp(&[KeyCode::Escape]) && d != Dev::KeysR
-                    || jp(&[KeyCode::Backspace]) && d != Dev::KeysL
-                {
+                if jp(&[KeyCode::Escape]) && d != Dev::KeysR || jp(&[KeyCode::Backspace]) && d != Dev::KeysL {
                     extra.push(Nav::Back);
                 }
             }
@@ -467,15 +436,10 @@ pub fn poll(
                 };
                 let b = binds(&saved, &prof);
                 for (i, ctl) in b.iter().enumerate() {
-                    held[i] = ctl
-                        .iter()
-                        .any(|c| BUTTONS.iter().any(|(k, n)| n == c && pad.pressed(*k)));
+                    held[i] = ctl.iter().any(|c| BUTTONS.iter().any(|(k, n)| n == c && pad.pressed(*k)));
                 }
                 stick = pad.left_stick();
-                raw = BUTTONS
-                    .iter()
-                    .find(|(k, _)| pad.just_pressed(*k))
-                    .map(|(_, n)| n.to_string());
+                raw = BUTTONS.iter().find(|(k, _)| pad.just_pressed(*k)).map(|(_, n)| n.to_string());
             }
             Dev::Bot(n) => held = devs.bots[&n],
         }

@@ -34,44 +34,20 @@ const ACT0: u32 = 30;
 const RESET: u32 = 50;
 
 pub fn enter_title(mut st: ResMut<MenuState>) {
-    *st = MenuState {
-        cursor: Cursor {
-            key: VERSUS,
-            owner: None,
-        },
-        ..default()
-    };
+    *st = MenuState { cursor: Cursor { key: VERSUS, owner: None }, ..default() };
 }
 pub fn enter_settings(mut st: ResMut<MenuState>) {
-    *st = MenuState {
-        cursor: Cursor {
-            key: KEYBOARD,
-            owner: None,
-        },
-        ..default()
-    };
+    *st = MenuState { cursor: Cursor { key: KEYBOARD, owner: None }, ..default() };
 }
 pub fn enter_controls(mut st: ResMut<MenuState>) {
-    *st = MenuState {
-        cursor: Cursor {
-            key: PROFILE,
-            owner: None,
-        },
-        ..default()
-    };
+    *st = MenuState { cursor: Cursor { key: PROFILE, owner: None }, ..default() };
 }
 
 /// Control profiles that can be edited right now: the keyboard (or its halves) and each connected gamepad.
 fn profiles(saved: &Saved, devs: &Devices) -> Vec<(Dev, String)> {
-    let mut v: Vec<Dev> = if saved.split_keyboard {
-        vec![Dev::KeysL, Dev::KeysR]
-    } else {
-        vec![Dev::Keys]
-    };
+    let mut v: Vec<Dev> = if saved.split_keyboard { vec![Dev::KeysL, Dev::KeysR] } else { vec![Dev::Keys] };
     v.extend(devs.map.keys().filter(|d| matches!(d, Dev::Pad(_))));
-    v.into_iter()
-        .map(|d| (d, input::profile(d, &devs.names)))
-        .collect()
+    v.into_iter().map(|d| (d, input::profile(d, &devs.names))).collect()
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -96,26 +72,16 @@ pub fn update(
         let raw = devs
             .map
             .iter()
-            .filter(|(d, _)| {
-                if kb {
-                    matches!(d, Dev::Keys | Dev::KeysL | Dev::KeysR)
-                } else {
-                    *d == pd
-                }
-            })
+            .filter(|(d, _)| if kb { matches!(d, Dev::Keys | Dev::KeysL | Dev::KeysR) } else { *d == pd })
             .find_map(|(_, s)| s.raw.clone());
         match raw {
             Some(r) if kb && r == "Escape" => s.capture = None,
             Some(r) => {
                 let mut b = input::binds(&saved, prof);
                 b[a] = vec![r];
-                saved.bindings.insert(
-                    prof.clone(),
-                    ACTS.iter()
-                        .zip(b)
-                        .map(|(act, v)| (act.id().to_string(), v))
-                        .collect(),
-                );
+                saved
+                    .bindings
+                    .insert(prof.clone(), ACTS.iter().zip(b).map(|(act, v)| (act.id().to_string(), v)).collect());
                 s.capture = None;
             }
             None => {}
@@ -131,15 +97,8 @@ pub fn update(
         };
         match (screen.get(), a) {
             (Screen::Title, Action::Activate(VERSUS | TRAINING)) => {
-                let mode = if s.cursor.key == VERSUS {
-                    Mode::Versus
-                } else {
-                    Mode::Training
-                };
-                commands.insert_resource(SelectInit {
-                    mode,
-                    dev: Some(dev),
-                });
+                let mode = if s.cursor.key == VERSUS { Mode::Versus } else { Mode::Training };
+                commands.insert_resource(SelectInit { mode, dev: Some(dev) });
                 next.set(Screen::Select);
             }
             (Screen::Title, Action::Activate(CONTROLS)) => next.set(Screen::Controls),
@@ -149,12 +108,8 @@ pub fn update(
             }
             (Screen::Title, _) => {}
             (_, Action::Back | Action::Activate(BACK)) => next.set(Screen::Title),
-            (Screen::Settings, Action::Spin(KEYBOARD, _)) => {
-                saved.split_keyboard = !saved.split_keyboard
-            }
-            (Screen::Settings, Action::Spin(HITBOXES, _)) => {
-                saved.versus_hitboxes = !saved.versus_hitboxes
-            }
+            (Screen::Settings, Action::Spin(KEYBOARD, _)) => saved.split_keyboard = !saved.split_keyboard,
+            (Screen::Settings, Action::Spin(HITBOXES, _)) => saved.versus_hitboxes = !saved.versus_hitboxes,
             (Screen::Settings, Action::Spin(WINDOW, _)) => {
                 saved.fullscreen = !saved.fullscreen;
                 if let Ok(mut w) = win.single_mut() {
@@ -181,11 +136,7 @@ pub fn update(
 }
 
 pub fn window_mode(full: bool) -> WindowMode {
-    if full {
-        WindowMode::BorderlessFullscreen(MonitorSelection::Current)
-    } else {
-        WindowMode::Windowed
-    }
+    if full { WindowMode::BorderlessFullscreen(MonitorSelection::Current) } else { WindowMode::Windowed }
 }
 
 #[derive(Component)]
@@ -205,18 +156,8 @@ pub fn draw(
 ) {
     let scr = *screen.get();
     let profs = profiles(&saved, &devs);
-    let names: Vec<String> = devs
-        .map
-        .keys()
-        .filter(|d| !matches!(d, Dev::Bot(_)))
-        .map(|d| devs.name(*d))
-        .collect();
-    let sig = format!(
-        "{scr:?}{:?}{:?}{names:?}{profs:?}{}",
-        *st,
-        *saved,
-        errors.0.len()
-    );
+    let names: Vec<String> = devs.map.keys().filter(|d| !matches!(d, Dev::Bot(_))).map(|d| devs.name(*d)).collect();
+    let sig = format!("{scr:?}{:?}{:?}{names:?}{profs:?}{}", *st, *saved, errors.0.len());
     if roots.iter().any(|(_, r)| r.0 == sig) {
         return;
     }
@@ -248,10 +189,17 @@ pub fn draw(
             }))
             .with_children(|p| match scr {
                 Screen::Title => {
-                    p.spawn((txt(&f.display, 132., STAR, "Stick\nSmash"), TextLayout::new(Justify::Left, LineBreak::NoWrap), LineHeight::RelativeToFont(0.82)));
+                    p.spawn((
+                        txt(&f.display, 132., STAR, "Stick\nSmash"),
+                        TextLayout::new(Justify::Left, LineBreak::NoWrap),
+                        LineHeight::RelativeToFont(0.82),
+                    ));
                     p.spawn(node(|n| n.margin = UiRect::new(Val::Px(6.), Val::Px(0.), Val::Px(10.), Val::Px(6.))))
                         .with_children(|p| palette_strip(p, d, 36., 6.));
-                    p.spawn((txt(&f.body, 18., DIM, "A tiny platform fighter for up to eight friends."), node(|n| n.margin.bottom = Val::Px(28.))));
+                    p.spawn((
+                        txt(&f.body, 18., DIM, "A tiny platform fighter for up to eight friends."),
+                        node(|n| n.margin.bottom = Val::Px(28.)),
+                    ));
                     let items = [
                         Item::button(VERSUS, "Versus"),
                         Item::button(TRAINING, "Training"),
@@ -265,7 +213,11 @@ pub fn draw(
                     heading(p, f, d, "Settings");
                     let onoff = |b: bool| if b { "On" } else { "Off" };
                     let items = [
-                        Item::spin(KEYBOARD, "Keyboard", if saved.split_keyboard { "Two players (split)" } else { "One player" }),
+                        Item::spin(
+                            KEYBOARD,
+                            "Keyboard",
+                            if saved.split_keyboard { "Two players (split)" } else { "One player" },
+                        ),
                         Item::spin(HITBOXES, "Hitboxes in versus", onoff(saved.versus_hitboxes)),
                         Item::spin(WINDOW, "Window", if saved.fullscreen { "Fullscreen" } else { "Windowed" }),
                         Item::button(BACK, "Back"),
@@ -278,13 +230,19 @@ pub fn draw(
                         n.max_width = Val::Px(620.);
                     }))
                     .with_children(|p| {
-                        let path = |o: Option<std::path::PathBuf>| o.map_or("unavailable".into(), |p| p.display().to_string());
+                        let path =
+                            |o: Option<std::path::PathBuf>| o.map_or("unavailable".into(), |p| p.display().to_string());
                         p.spawn(txt(&f.body_bold, 14., DIM, "Settings are saved to"));
                         p.spawn(txt(&f.body, 14., FAINT, path(settings::config_file())));
                         p.spawn(txt(&f.body_bold, 14., DIM, "Your fighters and stages go in (same layout as assets/)"));
                         p.spawn(txt(&f.body, 14., FAINT, path(settings::user_content_dir())));
                         if !errors.0.is_empty() {
-                            p.spawn(txt(&f.body_bold, 14., Color::srgb(1., 0.55, 0.5), format!("{} content problem(s) at startup; see the log", errors.0.len())));
+                            p.spawn(txt(
+                                &f.body_bold,
+                                14.,
+                                Color::srgb(1., 0.55, 0.5),
+                                format!("{} content problem(s) at startup; see the log", errors.0.len()),
+                            ));
                         }
                     });
                 }
@@ -366,20 +324,12 @@ pub fn draw(
 
 fn heading(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &str) {
     p.spawn(txt(&f.display, 64., STAR, s));
-    p.spawn(node(|n| {
-        n.margin = UiRect::new(Val::Px(4.), Val::Px(0.), Val::Px(4.), Val::Px(22.))
-    }))
-    .with_children(|p| palette_strip(p, d, 22., 4.));
+    p.spawn(node(|n| n.margin = UiRect::new(Val::Px(4.), Val::Px(0.), Val::Px(4.), Val::Px(22.))))
+        .with_children(|p| palette_strip(p, d, 22., 4.));
 }
 
 /// Two-column list for bindings: action, then its controls.
-fn controls_list(
-    p: &mut ChildSpawnerCommands,
-    f: &Fonts,
-    items: &[Item],
-    focus: u32,
-    capture: Option<u32>,
-) {
+fn controls_list(p: &mut ChildSpawnerCommands, f: &Fonts, items: &[Item], focus: u32, capture: Option<u32>) {
     p.spawn(node(|n| {
         n.flex_direction = FlexDirection::Column;
         n.width = Val::Px(560.);
@@ -396,16 +346,8 @@ fn controls_list(
                     n.padding = UiRect::horizontal(Val::Px(14.));
                     n.column_gap = Val::Px(12.);
                 }),
-                BackgroundColor(if on {
-                    Color::srgba(1., 0.83, 0.35, 0.08)
-                } else {
-                    Color::NONE
-                }),
-                Focusable {
-                    key: it.key,
-                    owner: None,
-                    spin: it.key == PROFILE,
-                },
+                BackgroundColor(if on { Color::srgba(1., 0.83, 0.35, 0.08) } else { Color::NONE }),
+                Focusable { key: it.key, owner: None, spin: it.key == PROFILE },
             ))
             .with_children(|p| {
                 p.spawn((
@@ -417,20 +359,11 @@ fn controls_list(
                     UiTransform::from_rotation(Rot2::degrees(14.)),
                 ));
                 p.spawn((
-                    txt(
-                        &f.label,
-                        21.,
-                        if on { GOLD } else { STAR },
-                        it.label.clone(),
-                    ),
+                    txt(&f.label, 21., if on { GOLD } else { STAR }, it.label.clone()),
                     node(|n| n.width = Val::Px(170.)),
                 ));
                 if let Some(v) = &it.value {
-                    let v = if on && it.key == PROFILE {
-                        format!("‹  {v}  ›")
-                    } else {
-                        v.clone()
-                    };
+                    let v = if on && it.key == PROFILE { format!("‹  {v}  ›") } else { v.clone() };
                     p.spawn(txt(
                         &f.label,
                         20.,

@@ -102,18 +102,10 @@ pub fn seed() -> u32 {
 }
 
 impl Match {
-    pub fn new(
-        base: &Arc<GameData>,
-        mode: Mode,
-        slots: Vec<Slot>,
-        rules: Rules,
-        seed: u32,
-    ) -> Self {
+    pub fn new(base: &Arc<GameData>, mode: Mode, slots: Vec<Slot>, rules: Rules, seed: u32) -> Self {
         let mut data = (**base).clone();
-        data.global.palette = slots
-            .iter()
-            .map(|s| base.global.palette[s.color % base.global.palette.len()].clone())
-            .collect();
+        data.global.palette =
+            slots.iter().map(|s| base.global.palette[s.color % base.global.palette.len()].clone()).collect();
         let data = Arc::new(data);
         let cfg = MatchConfig {
             seed,
@@ -146,12 +138,7 @@ impl Match {
             speed: 1.,
             frozen: false,
             step: false,
-            dummy: Dummy {
-                mode: DummyMode::Stand,
-                level: 1,
-                dev: None,
-                reset_pct: 0.,
-            },
+            dummy: Dummy { mode: DummyMode::Stand, level: 1, dev: None, reset_pct: 0. },
             ff: 0,
             acc: 0.,
             over_t: 0,
@@ -162,13 +149,7 @@ impl Match {
 
     /// Same players and rules, fresh world.
     pub fn restart(&mut self, base: &Arc<GameData>, seed: u32) {
-        let mut m = Match::new(
-            base,
-            self.mode,
-            self.slots.clone(),
-            self.rules.clone(),
-            seed,
-        );
+        let mut m = Match::new(base, self.mode, self.slots.clone(), self.rules.clone(), seed);
         m.dummy = self.dummy.clone();
         m.debug = self.debug;
         m.speed = self.speed;
@@ -181,8 +162,7 @@ impl Match {
 
     pub fn apply_dummy(&mut self) {
         if self.mode == Mode::Training && self.world.cfg.players.len() > 1 {
-            self.world.cfg.players[1].cpu =
-                (self.dummy.mode == DummyMode::Cpu).then_some(self.dummy.level);
+            self.world.cfg.players[1].cpu = (self.dummy.mode == DummyMode::Cpu).then_some(self.dummy.level);
         }
     }
 
@@ -200,11 +180,8 @@ impl Match {
                 color: i,
             })
             .collect();
-        let rules = Rules {
-            stocks: 2,
-            stage: base.stages[seed as usize % base.stages.len()].id.clone(),
-            friendly_fire: false,
-        };
+        let rules =
+            Rules { stocks: 2, stage: base.stages[seed as usize % base.stages.len()].id.clone(), friendly_fire: false };
         Match::new(base, Mode::Attract, slots, rules, seed)
     }
 
@@ -215,17 +192,9 @@ impl Match {
                 if self.mode == Mode::Training && i == 1 {
                     let f = &w.fighters[1];
                     return match self.dummy.mode {
-                        DummyMode::Shield => Input {
-                            stick: (0, 0),
-                            buttons: 16,
-                        },
-                        DummyMode::Jump if f.state == FState::Idle && f.t > 20 => Input {
-                            stick: (0, 0),
-                            buttons: 1,
-                        },
-                        DummyMode::Human => {
-                            self.dummy.dev.map_or_else(Input::default, |d| devs.take(d))
-                        }
+                        DummyMode::Shield => Input { stick: (0, 0), buttons: 16 },
+                        DummyMode::Jump if f.state == FState::Idle && f.t > 20 => Input { stick: (0, 0), buttons: 1 },
+                        DummyMode::Human => self.dummy.dev.map_or_else(Input::default, |d| devs.take(d)),
                         _ => Input::default(),
                     };
                 }
@@ -238,17 +207,9 @@ impl Match {
     }
 
     fn tick(&mut self, devs: &mut Devices, scene: &mut Scene) {
-        let inputs = if self.world.over {
-            vec![Input::default(); self.world.fighters.len()]
-        } else {
-            self.inputs(devs)
-        };
-        let before: Vec<(f64, i32)> = self
-            .world
-            .fighters
-            .iter()
-            .map(|f| (f.dmg, f.stocks))
-            .collect();
+        let inputs =
+            if self.world.over { vec![Input::default(); self.world.fighters.len()] } else { self.inputs(devs) };
+        let before: Vec<(f64, i32)> = self.world.fighters.iter().map(|f| (f.dmg, f.stocks)).collect();
         step_world(&mut self.world, &self.data, &inputs);
         self.track(&before);
         if self.world.end_t > 0 {
@@ -298,26 +259,13 @@ impl Match {
     pub fn placements(&self) -> Vec<usize> {
         let w = &self.world;
         let team_of = |i: usize| w.cfg.players[i].team;
-        let won = |i: usize| {
-            w.winner
-                .is_some_and(|win| win == i || team_of(win).is_some() && team_of(win) == team_of(i))
-        };
+        let won =
+            |i: usize| w.winner.is_some_and(|win| win == i || team_of(win).is_some() && team_of(win) == team_of(i));
         let score = |i: usize| -> (bool, u64, i32, i64) {
             let f = &w.fighters[i];
-            (
-                won(i),
-                self.stats[i].out_at.unwrap_or(u64::MAX),
-                f.stocks,
-                -(f.dmg as i64),
-            )
+            (won(i), self.stats[i].out_at.unwrap_or(u64::MAX), f.stocks, -(f.dmg as i64))
         };
-        (0..w.fighters.len())
-            .map(|i| {
-                1 + (0..w.fighters.len())
-                    .filter(|&j| score(j) > score(i))
-                    .count()
-            })
-            .collect()
+        (0..w.fighters.len()).map(|i| 1 + (0..w.fighters.len()).filter(|&j| score(j) > score(i)).count()).collect()
     }
 
     pub fn alpha(&self, overstep: f64) -> f64 {
@@ -326,11 +274,7 @@ impl Match {
 
     fn tick_speed(&self) -> f64 {
         let slow = &self.data.global.render.hud.end_slowmo;
-        let mut s = if self.mode == Mode::Training {
-            self.speed
-        } else {
-            1.
-        };
+        let mut s = if self.mode == Mode::Training { self.speed } else { 1. };
         if self.world.end_t > 0 && self.end_t < slow.ticks {
             s *= slow.speed;
         }
@@ -376,19 +320,10 @@ pub fn install(commands: &mut Commands, scene: &mut Scene, m: Match) {
 }
 
 /// Attract match behind the title menus; restarts when it ends.
-pub fn attract(
-    mut commands: Commands,
-    m: Option<Res<Match>>,
-    data: Res<Data>,
-    mut scene: ResMut<Scene>,
-) {
-    let restart = m
-        .as_ref()
-        .is_none_or(|m| m.mode != Mode::Attract || m.over_t > 90);
+pub fn attract(mut commands: Commands, m: Option<Res<Match>>, data: Res<Data>, mut scene: ResMut<Scene>) {
+    let restart = m.as_ref().is_none_or(|m| m.mode != Mode::Attract || m.over_t > 90);
     if restart {
-        let seed = m.as_ref().map_or_else(seed, |m| {
-            m.world.cfg.seed.wrapping_mul(747_796_405).wrapping_add(1)
-        });
+        let seed = m.as_ref().map_or_else(seed, |m| m.world.cfg.seed.wrapping_mul(747_796_405).wrapping_add(1));
         install(&mut commands, &mut scene, Match::attract(&data.0, seed));
     }
 }
@@ -408,26 +343,17 @@ pub fn match_flow(
     scene.debug = m.debug;
     if m.mode == Mode::Training && m.dummy.mode == DummyMode::Human && m.dummy.dev.is_none() {
         let p1 = m.slots[0].dev;
-        if let Some((d, _)) = devs
-            .map
-            .iter()
-            .find(|(d, s)| Some(**d) != p1 && s.any_press())
-        {
+        if let Some((d, _)) = devs.map.iter().find(|(d, s)| Some(**d) != p1 && s.any_press()) {
             m.dummy.dev = Some(*d);
         }
     }
     if m.paused.is_none() && m.world.end_t == 0 && !m.world.over {
         let human = |d: Dev| m.slots.iter().any(|s| s.dev == Some(d)) || m.dummy.dev == Some(d);
-        if let Some((d, _)) = devs
-            .map
-            .iter()
-            .find(|(d, s)| s.pressed[Act::Start as usize] && human(**d))
-        {
+        if let Some((d, _)) = devs.map.iter().find(|(d, s)| s.pressed[Act::Start as usize] && human(**d)) {
             m.paused = Some(*d);
         }
     }
-    if m.mode == Mode::Versus && m.world.over && m.over_t >= m.data.global.render.hud.results_delay
-    {
+    if m.mode == Mode::Versus && m.world.over && m.over_t >= m.data.global.render.hud.results_delay {
         next.set(Screen::Results);
     }
 }
@@ -450,11 +376,7 @@ mod tests {
             tag: "CPU".into(),
             color: i,
         };
-        let rules = Rules {
-            stocks: 1,
-            stage: "arena".into(),
-            friendly_fire: false,
-        };
+        let rules = Rules { stocks: 1, stage: "arena".into(), friendly_fire: false };
         let mut m = Match::new(&data, Mode::Versus, (0..3).map(slot).collect(), rules, 7);
         let (mut devs, mut scene) = (Devices::default(), Scene::new(data.clone()));
         while !m.world.over && m.world.frame < 60 * 60 * 10 {

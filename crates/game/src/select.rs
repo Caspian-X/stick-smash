@@ -67,34 +67,18 @@ pub struct SelectInit {
 
 impl Select {
     fn humans(&self) -> impl Iterator<Item = (usize, &Pick)> {
-        self.slots
-            .iter()
-            .enumerate()
-            .filter(|(_, p)| p.dev.is_some())
+        self.slots.iter().enumerate().filter(|(_, p)| p.dev.is_some())
     }
     fn max(&self, d: &sim::GameData) -> usize {
-        let spawns = d
-            .stages
-            .iter()
-            .map(|s| s.spawns.len().min(s.respawns.len()))
-            .min()
-            .unwrap_or(2);
-        if self.mode == Mode::Training {
-            2
-        } else {
-            8.min(spawns).min(d.global.palette.len())
-        }
+        let spawns = d.stages.iter().map(|s| s.spawns.len().min(s.respawns.len())).min().unwrap_or(2);
+        if self.mode == Mode::Training { 2 } else { 8.min(spawns).min(d.global.palette.len()) }
     }
     pub fn ready(&self) -> bool {
         let mut h = self.humans().peekable();
         h.peek().is_some() && h.all(|(_, p)| p.ready) && self.slots.len() >= 2
     }
     fn color(&self, i: usize) -> usize {
-        if self.teams {
-            self.slots[i].team as usize
-        } else {
-            i
-        }
+        if self.teams { self.slots[i].team as usize } else { i }
     }
     fn tag(&self, i: usize) -> String {
         match (self.slots[i].dev, self.mode) {
@@ -104,47 +88,27 @@ impl Select {
         }
     }
     fn join(&mut self, dev: Dev, saved: &Saved, d: &sim::GameData) -> bool {
-        if self.slots.len() >= self.max(d)
-            || self.mode == Mode::Training && self.humans().count() > 0
-        {
+        if self.slots.len() >= self.max(d) || self.mode == Mode::Training && self.humans().count() > 0 {
             return false;
         }
         let n = self.humans().count();
-        let at = self
-            .slots
-            .iter()
-            .position(|p| p.dev.is_none())
-            .unwrap_or(self.slots.len());
+        let at = self.slots.iter().position(|p| p.dev.is_none()).unwrap_or(self.slots.len());
         let pref = if self.mode == Mode::Training {
-            PlayerPref {
-                fighter: saved.training.fighter.clone(),
-                ..default()
-            }
+            PlayerPref { fighter: saved.training.fighter.clone(), ..default() }
         } else {
             saved.versus.humans.get(n).cloned().unwrap_or_default()
         };
-        let fighter = d
-            .fighters
-            .iter()
-            .position(|f| f.id == pref.fighter)
-            .unwrap_or(n % d.fighters.len());
+        let fighter = d.fighters.iter().position(|f| f.id == pref.fighter).unwrap_or(n % d.fighters.len());
         self.slots.insert(
             at,
             Pick {
                 dev: Some(dev),
                 fighter,
                 level: 1,
-                team: if self.teams {
-                    (at % 2) as u8
-                } else {
-                    pref.team
-                },
+                team: if self.teams { (at % 2) as u8 } else { pref.team },
                 tap_jump: pref.tap_jump,
                 ready: false,
-                cursor: Cursor {
-                    key: key(FIGHTER, at),
-                    owner: Some(at),
-                },
+                cursor: Cursor { key: key(FIGHTER, at), owner: Some(at) },
             },
         );
         true
@@ -158,11 +122,7 @@ impl Select {
         let i = self.slots.len();
         self.slots.push(Pick {
             dev: None,
-            fighter: d
-                .fighters
-                .iter()
-                .position(|f| f.id == pref.fighter)
-                .unwrap_or((i + 1) % d.fighters.len()),
+            fighter: d.fighters.iter().position(|f| f.id == pref.fighter).unwrap_or((i + 1) % d.fighters.len()),
             level: pref.level.min(2),
             team: (i % 2) as u8,
             tap_jump: true,
@@ -174,14 +134,9 @@ impl Select {
         let (kd, s) = kind(k);
         let cyc = |v: i32, n: i32| (v + by).rem_euclid(n);
         match kd {
-            FIGHTER => {
-                self.slots[s].fighter =
-                    cyc(self.slots[s].fighter as i32, d.fighters.len() as i32) as usize
-            }
+            FIGHTER => self.slots[s].fighter = cyc(self.slots[s].fighter as i32, d.fighters.len() as i32) as usize,
             LEVEL => self.slots[s].level = cyc(i32::from(self.slots[s].level), 3) as u8,
-            TEAM => {
-                self.slots[s].team = cyc(i32::from(self.slots[s].team), i32::from(N_TEAMS)) as u8
-            }
+            TEAM => self.slots[s].team = cyc(i32::from(self.slots[s].team), i32::from(N_TEAMS)) as u8,
             TAP => self.slots[s].tap_jump = !self.slots[s].tap_jump,
             STOCKS => self.stocks = cyc(self.stocks - 1, 9) + 1,
             STAGE => self.stage = cyc(self.stage as i32, d.stages.len() as i32) as usize,
@@ -245,11 +200,7 @@ pub fn enter(
     let Some(init) = init else { return };
     commands.remove_resource::<SelectInit>();
     let v = &saved.versus;
-    let stage_id = if init.mode == Mode::Training {
-        &saved.training.stage
-    } else {
-        &v.stage
-    };
+    let stage_id = if init.mode == Mode::Training { &saved.training.stage } else { &v.stage };
     let mut sel = Select {
         mode: init.mode,
         slots: vec![],
@@ -263,11 +214,7 @@ pub fn enter(
         let t = &saved.training;
         sel.slots.push(Pick {
             dev: None,
-            fighter: d
-                .fighters
-                .iter()
-                .position(|f| f.id == t.dummy_fighter)
-                .unwrap_or(1 % d.fighters.len()),
+            fighter: d.fighters.iter().position(|f| f.id == t.dummy_fighter).unwrap_or(1 % d.fighters.len()),
             level: t.level,
             team: 1,
             tap_jump: true,
@@ -279,11 +226,7 @@ pub fn enter(
             sel.add_cpu(&saved, d);
         }
         for (i, p) in sel.slots.iter_mut().enumerate() {
-            p.team = if sel.teams {
-                v.cpus.get(i).map_or((i % 2) as u8, |c| c.team)
-            } else {
-                0
-            };
+            p.team = if sel.teams { v.cpus.get(i).map_or((i % 2) as u8, |c| c.team) } else { 0 };
         }
     }
     if let Some(dev) = init.dev {
@@ -381,11 +324,7 @@ pub fn update(
         *sel = s;
     }
     let mslots = sel.match_slots();
-    let rules = Rules {
-        stocks: sel.stocks,
-        stage: d.stages[sel.stage].id.clone(),
-        friendly_fire: sel.ff,
-    };
+    let rules = Rules { stocks: sel.stocks, stage: d.stages[sel.stage].id.clone(), friendly_fire: sel.ff };
     if start {
         remember(&sel, &mut saved, d);
         let mut m = Match::new(&data.0, sel.mode, mslots, rules, play::seed());
@@ -407,10 +346,7 @@ pub fn update(
     // Showcase: rebuild when the lineup changes; ready fighters strike their win pose.
     let showcase = m.as_ref().is_some_and(|m| {
         m.mode == Mode::Showcase
-            && m.slots
-                .iter()
-                .map(|s| (s.fighter, s.color))
-                .eq(mslots.iter().map(|s| (s.fighter, s.color)))
+            && m.slots.iter().map(|s| (s.fighter, s.color)).eq(mslots.iter().map(|s| (s.fighter, s.color)))
             && m.rules.stage == rules.stage
     });
     if !showcase {
@@ -419,11 +355,7 @@ pub fn update(
             s.cpu = None;
             s.dev = None;
         }
-        play::install(
-            &mut commands,
-            &mut scene,
-            Match::new(&data.0, Mode::Showcase, slots, rules, 1),
-        );
+        play::install(&mut commands, &mut scene, Match::new(&data.0, Mode::Showcase, slots, rules, 1));
     } else if let Some(mut m) = m {
         for (i, f) in m.world.fighters.iter_mut().enumerate() {
             let ready = sel.slots.get(i).is_some_and(|p| p.ready && p.dev.is_some());
@@ -460,18 +392,8 @@ fn remember(sel: &Select, saved: &mut Saved, d: &sim::GameData) {
     v.stage = d.stages[sel.stage].id.clone();
     v.teams = sel.teams;
     v.friendly_fire = sel.ff;
-    v.humans = sel
-        .slots
-        .iter()
-        .filter(|p| p.dev.is_some())
-        .map(pref)
-        .collect();
-    v.cpus = sel
-        .slots
-        .iter()
-        .filter(|p| p.dev.is_none())
-        .map(pref)
-        .collect();
+    v.humans = sel.slots.iter().filter(|p| p.dev.is_some()).map(pref).collect();
+    v.cpus = sel.slots.iter().filter(|p| p.dev.is_none()).map(pref).collect();
 }
 
 #[derive(Component)]
@@ -495,14 +417,8 @@ pub fn draw(
     let d = &data.0;
     let f = &*fonts;
     let s = &*sel;
-    commands
-        .spawn((
-            root(),
-            SelectRoot(s.clone()),
-            DespawnOnExit(Screen::Select),
-            GlobalZIndex(5),
-        ))
-        .with_children(|p| {
+    commands.spawn((root(), SelectRoot(s.clone()), DespawnOnExit(Screen::Select), GlobalZIndex(5))).with_children(
+        |p| {
             // Top: title and rules.
             p.spawn((
                 node(|n| {
@@ -522,11 +438,7 @@ pub fn draw(
             ))
             .with_children(|p| {
                 p.spawn(col()).with_children(|p| {
-                    let title = if s.mode == Mode::Training {
-                        "Training"
-                    } else {
-                        "Versus"
-                    };
+                    let title = if s.mode == Mode::Training { "Training" } else { "Versus" };
                     p.spawn(txt(&f.display, 58., STAR, title));
                     palette_strip(p, d, 22., 4.);
                 });
@@ -568,8 +480,7 @@ pub fn draw(
                 if s.ready() {
                     ready_banner(p, f);
                 }
-                let free = s.slots.len() < s.max(d)
-                    && !(s.mode == Mode::Training && s.humans().count() > 0);
+                let free = s.slots.len() < s.max(d) && !(s.mode == Mode::Training && s.humans().count() > 0);
                 let n = s.slots.len() + usize::from(free);
                 let w = (1240. / n as f32 - 12.).min(272.);
                 p.spawn(node(|n| {
@@ -595,7 +506,8 @@ pub fn draw(
                     hint(p, f, "Start", "fight when everyone's ready");
                 });
             });
-        });
+        },
+    );
 }
 
 /// Chips of the cursors (other than the owner's own card focus) sitting on `k`.
@@ -615,9 +527,7 @@ fn cursor_chips(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &
 }
 
 fn focused_by(s: &Select, k: u32) -> Option<usize> {
-    s.humans()
-        .find(|(_, p)| p.cursor.key == k && !p.ready)
-        .map(|(i, _)| i)
+    s.humans().find(|(_, p)| p.cursor.key == k && !p.ready).map(|(i, _)| i)
 }
 
 fn ready_banner(p: &mut ChildSpawnerCommands, f: &Fonts) {
@@ -642,15 +552,7 @@ fn ready_banner(p: &mut ChildSpawnerCommands, f: &Fonts) {
     });
 }
 
-fn card(
-    p: &mut ChildSpawnerCommands,
-    f: &Fonts,
-    d: &sim::GameData,
-    s: &Select,
-    i: usize,
-    w: f32,
-    devs: &Devices,
-) {
+fn card(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, i: usize, w: f32, devs: &Devices) {
     let pk = &s.slots[i];
     let (main, dark, _) = pal(d, s.color(i));
     let human = pk.dev.is_some();
@@ -665,11 +567,7 @@ fn card(
             n.overflow = Overflow::clip();
         }),
         BackgroundColor(INK),
-        BorderColor::all(if pk.ready && human {
-            main
-        } else {
-            alpha(main, 0.35)
-        }),
+        BorderColor::all(if pk.ready && human { main } else { alpha(main, 0.35) }),
         BoxShadow::new(
             alpha(main, if pk.ready && human { 0.45 } else { 0. }),
             Val::Px(0.),
@@ -687,10 +585,7 @@ fn card(
                 n.justify_content = JustifyContent::SpaceBetween;
                 n.padding = UiRect::axes(Val::Px(12.), Val::Px(2.));
             }),
-            BackgroundGradient::from(LinearGradient::to_right(vec![
-                ColorStop::auto(main),
-                ColorStop::auto(dark),
-            ])),
+            BackgroundGradient::from(LinearGradient::to_right(vec![ColorStop::auto(main), ColorStop::auto(dark)])),
         ))
         .with_children(|p| {
             p.spawn(txt(&f.display, 26., NIGHT, s.tag(i)));
@@ -717,23 +612,14 @@ fn card(
                     n.column_gap = Val::Px(6.);
                     n.min_height = Val::Px(44.);
                 }),
-                Focusable {
-                    key: k,
-                    owner: human.then_some(i),
-                    spin: true,
-                },
+                Focusable { key: k, owner: human.then_some(i), spin: true },
             ))
             .with_children(|p| {
                 let arrows = on.is_some();
                 if arrows {
                     p.spawn(txt(&f.display, 30., GOLD, "‹"));
                 }
-                p.spawn(txt(
-                    &f.display,
-                    if narrow { 25. } else { 38. },
-                    STAR,
-                    fighter.name.clone(),
-                ));
+                p.spawn(txt(&f.display, if narrow { 25. } else { 38. }, STAR, fighter.name.clone()));
                 if arrows {
                     p.spawn(txt(&f.display, 30., GOLD, "›"));
                 }
@@ -760,40 +646,13 @@ fn card(
                 rows.push((TEAM, "Team", team_name(pk.team).into(), Some(tc)));
             }
             if human {
-                rows.push((
-                    TAP,
-                    "Up to jump",
-                    if pk.tap_jump { "On" } else { "Off" }.into(),
-                    None,
-                ));
+                rows.push((TAP, "Up to jump", if pk.tap_jump { "On" } else { "Off" }.into(), None));
             }
             for (kd, label, value, color) in rows {
-                spin_row(
-                    p,
-                    f,
-                    d,
-                    s,
-                    key(kd, i),
-                    human.then_some(i),
-                    label,
-                    value,
-                    color,
-                    17.,
-                );
+                spin_row(p, f, d, s, key(kd, i), human.then_some(i), label, value, color, 17.);
             }
             if s.mode == Mode::Training && !human {
-                spin_row(
-                    p,
-                    f,
-                    d,
-                    s,
-                    key(BEHAVIOR, i),
-                    None,
-                    "Behavior",
-                    s.dummy.label().into(),
-                    None,
-                    17.,
-                );
+                spin_row(p, f, d, s, key(BEHAVIOR, i), None, "Behavior", s.dummy.label().into(), None, 17.);
             }
             if !human && s.mode == Mode::Versus {
                 let k = key(REMOVE, i);
@@ -806,24 +665,11 @@ fn card(
                         n.padding = UiRect::axes(Val::Px(8.), Val::Px(3.));
                         n.border_radius = BorderRadius::all(Val::Px(5.));
                     }),
-                    BackgroundColor(if on.is_some() {
-                        alpha(main, 0.16)
-                    } else {
-                        Color::NONE
-                    }),
-                    Focusable {
-                        key: k,
-                        owner: None,
-                        spin: false,
-                    },
+                    BackgroundColor(if on.is_some() { alpha(main, 0.16) } else { Color::NONE }),
+                    Focusable { key: k, owner: None, spin: false },
                 ))
                 .with_children(|p| {
-                    p.spawn(txt(
-                        &f.label,
-                        17.,
-                        if on.is_some() { STAR } else { FAINT },
-                        "Remove CPU",
-                    ));
+                    p.spawn(txt(&f.label, 17., if on.is_some() { STAR } else { FAINT }, "Remove CPU"));
                     cursor_chips(p, f, d, s, k);
                 });
             }
@@ -845,17 +691,9 @@ fn card(
                         n.border = UiRect::all(Val::Px(1.5));
                         n.border_radius = BorderRadius::all(Val::Px(6.));
                     }),
-                    BackgroundColor(if pk.ready {
-                        alpha(main, 0.2)
-                    } else {
-                        Color::NONE
-                    }),
+                    BackgroundColor(if pk.ready { alpha(main, 0.2) } else { Color::NONE }),
                     BorderColor::all(if on && !pk.ready { GOLD } else { Color::NONE }),
-                    Focusable {
-                        key: k,
-                        owner: Some(i),
-                        spin: false,
-                    },
+                    Focusable { key: k, owner: Some(i), spin: false },
                 ))
                 .with_child(txt(&f.display, 24., color, label));
             }
@@ -887,27 +725,16 @@ fn spin_row(
             n.border_radius = BorderRadius::all(Val::Px(5.));
         }),
         BackgroundColor(tint),
-        Focusable {
-            key: k,
-            owner,
-            spin: true,
-        },
+        Focusable { key: k, owner, spin: true },
     ))
     .with_children(|p| {
         p.spawn(row()).with_children(|p| {
-            p.spawn((
-                txt(&f.label, size, DIM, label),
-                node(|n| n.margin.right = Val::Px(6.)),
-            ));
+            p.spawn((txt(&f.label, size, DIM, label), node(|n| n.margin.right = Val::Px(6.))));
             if owner.is_none() {
                 cursor_chips(p, f, d, s, k);
             }
         });
-        let v = if on.is_some() {
-            format!("‹ {value} ›")
-        } else {
-            value
-        };
+        let v = if on.is_some() { format!("‹ {value} ›") } else { value };
         p.spawn(txt(&f.label, size + 1., color.unwrap_or(STAR), v));
     });
 }
@@ -945,11 +772,7 @@ fn join_card(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Sel
                     n.border_radius = BorderRadius::all(Val::Px(6.));
                 }),
                 BorderColor::all(if on { GOLD } else { FAINT }),
-                Focusable {
-                    key: k,
-                    owner: None,
-                    spin: false,
-                },
+                Focusable { key: k, owner: None, spin: false },
             ))
             .with_children(|p| {
                 p.spawn(txt(&f.label, 18., if on { GOLD } else { DIM }, "+ Add CPU"));

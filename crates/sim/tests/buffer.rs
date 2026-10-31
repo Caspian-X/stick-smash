@@ -7,7 +7,10 @@ use sim::{
 };
 
 fn landing(d: &GameData, frames: u32) -> World {
-    let mut w = World::new(MatchConfig { training: true, players: vec![PlayerConfig::human("brawler")], ..Default::default() }, d);
+    let mut w = World::new(
+        MatchConfig { training: true, players: vec![PlayerConfig::human("brawler")], ..Default::default() },
+        d,
+    );
     w.fighters[0].set_state(State::Landing);
     w.fighters[0].sd.n = f64::from(frames);
     w
@@ -199,7 +202,10 @@ fn replay_matches_ledge_knockdown_and_shield_stun_boundaries() {
 #[test]
 fn buffered_special_and_back_air_keep_press_time_direction() {
     let d = common::data();
-    let mut w = World::new(MatchConfig { training: true, players: vec![PlayerConfig::human("swordfighter")], ..Default::default() }, &d);
+    let mut w = World::new(
+        MatchConfig { training: true, players: vec![PlayerConfig::human("swordfighter")], ..Default::default() },
+        &d,
+    );
     w.fighters[0].set_state(State::Landing);
     w.fighters[0].sd.n = 3.;
     tick(&mut w, &d, Input { stick: (-127, 0), buttons: 4 });

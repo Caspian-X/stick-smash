@@ -171,14 +171,17 @@ fn resolve(id: &str, raw: &BTreeMap<String, (String, Value)>, chain: &mut Vec<St
     if chain.iter().any(|c| c == id) {
         return Err(err(path, "extends", format!("inheritance cycle: {} → {id}", chain.join(" → "))));
     }
-    let Some(parent) = v.get("extends").map(|p| p.as_str().ok_or_else(|| err(path, "extends", "must be a string"))).transpose()? else {
+    let Some(parent) =
+        v.get("extends").map(|p| p.as_str().ok_or_else(|| err(path, "extends", "must be a string"))).transpose()?
+    else {
         return Ok(v.clone());
     };
     if !raw.contains_key(parent) {
         return Err(err(path, "extends", format!("no fighter package {parent:?}")));
     }
     chain.push(id.to_string());
-    let mut base = resolve(parent, raw, chain).map_err(|e| err(path, "extends", format!("parent {parent:?} failed: {e}")))?;
+    let mut base =
+        resolve(parent, raw, chain).map_err(|e| err(path, "extends", format!("parent {parent:?} failed: {e}")))?;
     chain.pop();
     if let Some(m) = base.as_object_mut() {
         m.shift_remove("abstract");

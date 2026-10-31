@@ -51,14 +51,7 @@ pub struct VersusPrefs {
 
 impl Default for VersusPrefs {
     fn default() -> Self {
-        Self {
-            stocks: 3,
-            stage: "arena".into(),
-            teams: false,
-            friendly_fire: false,
-            humans: vec![],
-            cpus: vec![],
-        }
+        Self { stocks: 3, stage: "arena".into(), teams: false, friendly_fire: false, humans: vec![], cpus: vec![] }
     }
 }
 
@@ -73,12 +66,7 @@ pub struct PlayerPref {
 
 impl Default for PlayerPref {
     fn default() -> Self {
-        Self {
-            fighter: String::new(),
-            level: 1,
-            team: 0,
-            tap_jump: true,
-        }
+        Self { fighter: String::new(), level: 1, team: 0, tap_jump: true }
     }
 }
 
@@ -94,13 +82,7 @@ pub enum DummyMode {
 }
 
 impl DummyMode {
-    pub const ALL: [DummyMode; 5] = [
-        Self::Stand,
-        Self::Shield,
-        Self::Jump,
-        Self::Cpu,
-        Self::Human,
-    ];
+    pub const ALL: [DummyMode; 5] = [Self::Stand, Self::Shield, Self::Jump, Self::Cpu, Self::Human];
     pub fn label(self) -> &'static str {
         match self {
             Self::Stand => "Stand",

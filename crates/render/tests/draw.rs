@@ -21,15 +21,8 @@ fn data() -> GameData {
             if p.is_dir() && p.file_name().is_some_and(|n| n != "schema") {
                 dirs.push(p);
             } else if p.extension().is_some_and(|x| x == "json") {
-                let path = p
-                    .strip_prefix(&root)
-                    .unwrap()
-                    .to_string_lossy()
-                    .replace('\\', "/");
-                files.push(Source {
-                    path,
-                    text: fs::read_to_string(&p).unwrap(),
-                });
+                let path = p.strip_prefix(&root).unwrap().to_string_lossy().replace('\\', "/");
+                files.push(Source { path, text: fs::read_to_string(&p).unwrap() });
             }
         }
     }
@@ -41,29 +34,10 @@ fn cpu_matches_draw_cleanly() {
     let d = data();
     let anims: Vec<String> = d.fighters[0].anims.keys().cloned().collect();
     for seed in [1, 2] {
-        let players = d
-            .fighters
-            .iter()
-            .map(|f| PlayerConfig {
-                cpu: Some(2),
-                ..PlayerConfig::human(&f.id)
-            })
-            .collect();
-        let mut w = World::new(
-            MatchConfig {
-                seed,
-                stocks: 2,
-                players,
-                ..Default::default()
-            },
-            &d,
-        );
-        let (mut fx, mut cam, mut rng, mut cv) = (
-            FxLayer::default(),
-            CameraRig::default(),
-            Rand::default(),
-            Canvas::new(1.),
-        );
+        let players = d.fighters.iter().map(|f| PlayerConfig { cpu: Some(2), ..PlayerConfig::human(&f.id) }).collect();
+        let mut w = World::new(MatchConfig { seed, stocks: 2, players, ..Default::default() }, &d);
+        let (mut fx, mut cam, mut rng, mut cv) =
+            (FxLayer::default(), CameraRig::default(), Rand::default(), Canvas::new(1.));
         let s = &d.stages[w.stage];
         let inputs = vec![Input::default(); w.fighters.len()];
         for _ in 0..60 * 90 {
@@ -88,25 +62,12 @@ fn cpu_matches_draw_cleanly() {
                 if !matches!(f.state, sim::world::State::Attack) {
                     let (name, _) = pose::state_anim(&d, f);
                     assert!(
-                        anims.contains(&name)
-                            || matches!(f.state, sim::world::State::Dead | sim::world::State::Out),
+                        anims.contains(&name) || matches!(f.state, sim::world::State::Dead | sim::world::State::Out),
                         "no anim {name}"
                     );
                 }
                 let skel = pose::fighter_pose(&d, f, w.frame);
-                draw_fighter(
-                    &mut cv,
-                    &d,
-                    w.frame,
-                    &FighterView {
-                        i,
-                        f,
-                        x: f.x,
-                        y: f.y,
-                        skel,
-                    },
-                    &mut rng,
-                );
+                draw_fighter(&mut cv, &d, w.frame, &FighterView { i, f, x: f.x, y: f.y, skel }, &mut rng);
                 let _ = debug::info(&d, f);
             }
             fx.draw(&mut cv, &d, 1.);

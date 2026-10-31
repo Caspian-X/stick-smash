@@ -39,10 +39,9 @@ pub fn bat(w: &mut World, d: &GameData, a: usize, bx: &[ActiveBox]) {
         if p.cooldown > 0 || p.life <= 0 || p.owner != a && !w.opponents(a, p.owner) {
             continue;
         }
-        let Some(b) = bx
-            .iter()
-            .find(|b| !matches!(b.hit.kind, HitType::Grab | HitType::Windbox) && libm::hypot(b.x - p.x, b.y - p.y) < b.hit.r + p.r)
-        else {
+        let Some(b) = bx.iter().find(|b| {
+            !matches!(b.hit.kind, HitType::Grab | HitType::Windbox) && libm::hypot(b.x - p.x, b.y - p.y) < b.hit.r + p.r
+        }) else {
             continue;
         };
         let sgn = combat::direction(&w.fighters[a], p.x, b.hit.dir);
@@ -86,7 +85,11 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
             if p.vy > 0. {
                 for si in 0..=s.platforms.len() {
                     let (x1, x2, y) = crate::physics::surface(d, w, si);
-                    if py + p.r > y + g.surface_tolerance || p.y + p.r < y || p.x < x1 - g.projectile_pad || p.x > x2 + g.projectile_pad {
+                    if py + p.r > y + g.surface_tolerance
+                        || p.y + p.r < y
+                        || p.x < x1 - g.projectile_pad
+                        || p.x > x2 + g.projectile_pad
+                    {
                         continue;
                     }
                     p.y = y - p.r;
@@ -104,7 +107,11 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                 }
             }
             let s = &s.ground;
-            if p.y + p.r > s.top + g.projectile_wall_top && p.y - p.r < s.bottom && p.x > s.left - p.r && p.x < s.right + p.r {
+            if p.y + p.r > s.top + g.projectile_wall_top
+                && p.y - p.r < s.bottom
+                && p.x > s.left - p.r
+                && p.x < s.right + p.r
+            {
                 p.vx = -p.vx * b.wall_restitution;
                 p.x = if p.x < (s.left + s.right) / 2. { s.left - p.r } else { s.right + p.r };
             }
@@ -142,7 +149,13 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                     d,
                     v,
                     &p.hit,
-                    combat::HitSource { attacker: p.owner, direction: sign(p.vx), point: (p.x, p.y), projectile: true, label },
+                    combat::HitSource {
+                        attacker: p.owner,
+                        direction: sign(p.vx),
+                        point: (p.x, p.y),
+                        projectile: true,
+                        label,
+                    },
                 );
             } else {
                 combat::apply_hit(
@@ -150,14 +163,25 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                     d,
                     v,
                     &p.hit,
-                    combat::HitSource { attacker: p.owner, direction: sign(p.vx), point: (p.x, p.y), projectile: true, label },
+                    combat::HitSource {
+                        attacker: p.owner,
+                        direction: sign(p.vx),
+                        point: (p.x, p.y),
+                        projectile: true,
+                        label,
+                    },
                 );
             }
             p.life = 0;
         }
         for qi in 0..w.projs.len() {
             let q = &w.projs[qi];
-            if qi != pi && w.opponents(p.owner, q.owner) && q.life > 0 && p.life > 0 && libm::hypot(q.x - p.x, q.y - p.y) < p.r + q.r {
+            if qi != pi
+                && w.opponents(p.owner, q.owner)
+                && q.life > 0
+                && p.life > 0
+                && libm::hypot(q.x - p.x, q.y - p.y) < p.r + q.r
+            {
                 let x = (p.x + q.x) / 2.;
                 w.fx.push(Fx::Burst {
                     x,

@@ -87,9 +87,10 @@ pub fn step_world(w: &mut World, d: &GameData, inputs: &[Input]) {
         let living: Vec<_> = w.fighters.iter().enumerate().filter(|(_, f)| f.stocks > 0).map(|(i, _)| i).collect();
         if living.len() < w.fighters.len()
             && (living.is_empty()
-                || living
-                    .iter()
-                    .all(|&i| i == living[0] || w.cfg.players[i].team.is_some() && w.cfg.players[i].team == w.cfg.players[living[0]].team))
+                || living.iter().all(|&i| {
+                    i == living[0]
+                        || w.cfg.players[i].team.is_some() && w.cfg.players[i].team == w.cfg.players[living[0]].team
+                }))
         {
             w.winner = living.first().copied();
             w.end_t = g.match_.end_frames;

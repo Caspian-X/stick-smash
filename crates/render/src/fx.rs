@@ -64,32 +64,10 @@ impl FxLayer {
     }
     #[allow(clippy::too_many_arguments)]
     fn part(&mut self, x: f64, y: f64, vx: f64, vy: f64, life: f64, col: Rgba, size: f64, g: f64) {
-        self.parts.push(Particle {
-            x,
-            y,
-            px: x,
-            py: y,
-            vx,
-            vy,
-            life,
-            max: life.max(1.),
-            col,
-            size,
-            g,
-        });
+        self.parts.push(Particle { x, y, px: x, py: y, vx, vy, life, max: life.max(1.), col, size, g });
     }
     #[allow(clippy::too_many_arguments)]
-    fn burst(
-        &mut self,
-        x: f64,
-        y: f64,
-        col: Rgba,
-        n: f64,
-        speed: f64,
-        life: f64,
-        size: f64,
-        g: f64,
-    ) {
+    fn burst(&mut self, x: f64, y: f64, col: Rgba, n: f64, speed: f64, life: f64, size: f64, g: f64) {
         for _ in 0..n as u32 {
             let a = self.rng.unit() * TAU;
             let s = self.rng.unit() * speed;
@@ -98,16 +76,7 @@ impl FxLayer {
         }
     }
     fn ring(&mut self, x: f64, y: f64, r: f64, vr: f64, life: u32, col: Rgba) {
-        self.rings.push(Ring {
-            x,
-            y,
-            r,
-            pr: r,
-            vr,
-            life,
-            max: life.max(1),
-            col,
-        });
+        self.rings.push(Ring { x, y, r, pr: r, vr, life, max: life.max(1), col });
     }
 
     pub fn consume(&mut self, d: &GameData, w: &World, fx: &[Fx], view: View) {
@@ -115,17 +84,9 @@ impl FxLayer {
         for e in fx {
             match *e {
                 Fx::Sfx { .. } => {}
-                Fx::Burst {
-                    x,
-                    y,
-                    color: c,
-                    player,
-                    n,
-                    speed,
-                    life,
-                    size,
-                    gravity,
-                } => self.burst(x, y, color(d, c, player, 1.), n, speed, life, size, gravity),
+                Fx::Burst { x, y, color: c, player, n, speed, life, size, gravity } => {
+                    self.burst(x, y, color(d, c, player, 1.), n, speed, life, size, gravity)
+                }
                 Fx::Dust { x, y, n } => {
                     let u = &look.dust;
                     for _ in 0..n {
@@ -139,42 +100,19 @@ impl FxLayer {
                         self.part(x + dx, y, vx, vy, u.life, color(d, u.color, 0, 1.), sz, 0.);
                     }
                 }
-                Fx::Ring {
-                    x,
-                    y,
-                    r,
-                    grow,
-                    life,
-                    color: c,
-                    player,
-                } => self.ring(x, y, r, grow, life, color(d, c, player, 1.)),
-                Fx::Part {
-                    x,
-                    y,
-                    vx,
-                    vy,
-                    life,
-                    color: c,
-                    player,
-                    size,
-                    gravity,
-                } => self.part(x, y, vx, vy, life, color(d, c, player, 1.), size, gravity),
+                Fx::Ring { x, y, r, grow, life, color: c, player } => {
+                    self.ring(x, y, r, grow, life, color(d, c, player, 1.))
+                }
+                Fx::Part { x, y, vx, vy, life, color: c, player, size, gravity } => {
+                    self.part(x, y, vx, vy, life, color(d, c, player, 1.), size, gravity)
+                }
                 Fx::Shake { k } => self.shake = self.shake.max(k),
                 Fx::Beam { x, y, player } => {
                     let b = &look.beam;
                     let x = x.clamp(view[0] + b.inset, view[2] - b.inset);
                     let y = y.clamp(view[1] + b.inset, view[3] - b.inset);
                     for s in &b.bursts {
-                        self.burst(
-                            x,
-                            y,
-                            color(d, s.color, player, 1.),
-                            f64::from(s.n),
-                            s.speed,
-                            s.life,
-                            s.size,
-                            0.,
-                        );
+                        self.burst(x, y, color(d, s.color, player, 1.), f64::from(s.n), s.speed, s.life, s.size, 0.);
                     }
                     let st = &d.stages[w.stage];
                     let ang = (st.height / 2. - y).atan2(st.width / 2. - x);
@@ -186,14 +124,7 @@ impl FxLayer {
                         max: b.life.max(1),
                         col: color(d, Color::Player, player, 1.),
                     });
-                    self.ring(
-                        x,
-                        y,
-                        b.ring.r,
-                        b.ring.grow,
-                        b.ring.life,
-                        color(d, b.ring.color, player, 1.),
-                    );
+                    self.ring(x, y, b.ring.r, b.ring.grow, b.ring.life, color(d, b.ring.color, player, 1.));
                 }
             }
         }
@@ -247,25 +178,13 @@ impl FxLayer {
             cv.rotate(b.ang);
             // Smooth gradient: white at the KO point, the player's color fading out along the beam.
             let edge = |k: u32| {
-                let col = if k == 0 {
-                    Rgba::hex(0xffffff, 1.)
-                } else {
-                    b.col
-                };
-                (
-                    len * f64::from(k) / f64::from(n),
-                    col.alpha(a * look.beam.alpha * (1. - f64::from(k) / f64::from(n))),
-                )
+                let col = if k == 0 { Rgba::hex(0xffffff, 1.) } else { b.col };
+                (len * f64::from(k) / f64::from(n), col.alpha(a * look.beam.alpha * (1. - f64::from(k) / f64::from(n))))
             };
             for k in 0..n {
                 let ((x0, c0), (x1, c1)) = (edge(k), edge(k + 1));
                 cv.fill_quad(
-                    [
-                        [x0, -w * x0 / len],
-                        [x1, -w * x1 / len],
-                        [x1, w * x1 / len],
-                        [x0, w * x0 / len],
-                    ],
+                    [[x0, -w * x0 / len], [x1, -w * x1 / len], [x1, w * x1 / len], [x0, w * x0 / len]],
                     [c0, c1, c1, c0],
                 );
             }
@@ -274,11 +193,7 @@ impl FxLayer {
         for p in &self.parts {
             let k = p.life / p.max;
             let (x, y) = (p.px + (p.x - p.px) * t, p.py + (p.y - p.py) * t);
-            cv.fill_circle(
-                [x, y],
-                p.size * (look.shrink + (1. - look.shrink) * k),
-                p.col.alpha(k),
-            );
+            cv.fill_circle([x, y], p.size * (look.shrink + (1. - look.shrink) * k), p.col.alpha(k));
         }
         for r in &self.rings {
             let rad = r.pr + (r.r - r.pr) * t;
@@ -302,11 +217,7 @@ pub struct Cam {
 
 impl Cam {
     pub fn lerp(self, o: Cam, t: f64) -> Cam {
-        Cam {
-            x: self.x + (o.x - self.x) * t,
-            y: self.y + (o.y - self.y) * t,
-            h: self.h + (o.h - self.h) * t,
-        }
+        Cam { x: self.x + (o.x - self.x) * t, y: self.y + (o.y - self.y) * t, h: self.h + (o.h - self.h) * t }
     }
     pub fn view(self, aspect: f64) -> View {
         let (hw, hh) = (self.h * aspect / 2., self.h / 2.);
@@ -324,19 +235,10 @@ pub fn camera_target(d: &GameData, w: &World, aspect: f64) -> Cam {
         .fighters
         .iter()
         .filter(|f| !matches!(f.state, State::Dead | State::Out))
-        .map(|f| {
-            (
-                f.x.clamp(s.blast.left - m, s.blast.right + m),
-                f.y.clamp(s.blast.top - m, s.blast.bottom + m),
-            )
-        })
+        .map(|f| (f.x.clamp(s.blast.left - m, s.blast.right + m), f.y.clamp(s.blast.top - m, s.blast.bottom + m)))
         .collect();
     let mut cam = if pts.is_empty() {
-        Cam {
-            x: sx,
-            y: sy,
-            h: s.height,
-        }
+        Cam { x: sx, y: sy, h: s.height }
     } else {
         let x0 = pts.iter().map(|p| p.0).fold(f64::MAX, f64::min) - c.pad_x;
         let x1 = pts.iter().map(|p| p.0).fold(f64::MIN, f64::max) + c.pad_x;
@@ -346,11 +248,7 @@ pub fn camera_target(d: &GameData, w: &World, aspect: f64) -> Cam {
         let cy = (y0 + y1) / 2. + (sy - (y0 + y1) / 2.) * c.stage_bias;
         let hw = (cx - x0).max(x1 - cx);
         let hh = (cy - y0).max(y1 - cy);
-        Cam {
-            x: cx,
-            y: cy,
-            h: (2. * hh).max(2. * hw / aspect),
-        }
+        Cam { x: cx, y: cy, h: (2. * hh).max(2. * hw / aspect) }
     };
     cam.h = cam.h.clamp(c.min_height, c.max_height);
     clamp_to(cam, &s.camera, aspect)

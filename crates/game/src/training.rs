@@ -39,8 +39,7 @@ pub fn panel(
         .frame(frame)
         .default_width(270.)
         .show(ctx, |ui| {
-            ui.style_mut().visuals.override_text_color =
-                Some(egui::Color32::from_rgb(232, 236, 255));
+            ui.style_mut().visuals.override_text_color = Some(egui::Color32::from_rgb(232, 236, 255));
             let w = &m.world;
             let d = &m.data;
             let p1 = &w.fighters[0];
@@ -48,10 +47,7 @@ pub fn panel(
             match (&p1.mov, p1.state) {
                 (Some(mv), FState::Attack) => {
                     let def = sim::moves::definition(d, p1);
-                    ui.label(mono(format!(
-                        "P1 {}  ·  phase {}  frame {}",
-                        def.name, mv.phase, mv.elapsed
-                    )));
+                    ui.label(mono(format!("P1 {}  ·  phase {}  frame {}", def.name, mv.phase, mv.elapsed)));
                 }
                 _ => {
                     ui.label(mono(format!("P1 {}", p1.state.name())));
@@ -61,11 +57,7 @@ pub fn panel(
             match &w.trace {
                 Some(tr) => {
                     let adv = if tr.done { tr.d_free - tr.a_free } else { 0 };
-                    let a = if tr.done {
-                        format!("{adv:+}")
-                    } else {
-                        "…".into()
-                    };
+                    let a = if tr.done { format!("{adv:+}") } else { "…".into() };
                     let col = if !tr.done {
                         dim
                     } else if adv >= 0 {
@@ -73,36 +65,21 @@ pub fn panel(
                     } else {
                         egui::Color32::from_rgb(255, 120, 110)
                     };
-                    ui.label(mono(format!(
-                        "Last: {} {}",
-                        tr.label,
-                        if tr.on_shield { "on shield" } else { "on hit" }
-                    )));
+                    ui.label(mono(format!("Last: {} {}", tr.label, if tr.on_shield { "on shield" } else { "on hit" })));
                     ui.horizontal(|ui| {
                         ui.label(mono("Frame advantage".into()));
-                        ui.label(
-                            egui::RichText::new(a)
-                                .monospace()
-                                .size(18.)
-                                .strong()
-                                .color(col),
-                        );
+                        ui.label(egui::RichText::new(a).monospace().size(18.).strong().color(col));
                     });
                     if tr.combo > 1 {
                         ui.label(
-                            egui::RichText::new(format!(
-                                "Combo  {} hits  {:.0}%",
-                                tr.combo, tr.combo_dmg
-                            ))
-                            .color(gold)
-                            .strong(),
+                            egui::RichText::new(format!("Combo  {} hits  {:.0}%", tr.combo, tr.combo_dmg))
+                                .color(gold)
+                                .strong(),
                         );
                     }
                 }
                 None => {
-                    ui.label(
-                        egui::RichText::new("Hit the dummy to see frame advantage.").color(dim),
-                    );
+                    ui.label(egui::RichText::new("Hit the dummy to see frame advantage.").color(dim));
                 }
             }
             ui.separator();
@@ -136,19 +113,13 @@ pub fn panel(
                 let who = m
                     .dummy
                     .dev
-                    .map_or("Press a button on another device".into(), |d| {
-                        format!("Controlled by {}", devs.name(d))
-                    });
+                    .map_or("Press a button on another device".into(), |d| format!("Controlled by {}", devs.name(d)));
                 ui.label(egui::RichText::new(who).color(dim));
             }
             let mut pct = m.world.fighters[1].dmg;
             ui.horizontal(|ui| {
                 ui.label("Damage");
-                ui.add(
-                    egui::Slider::new(&mut pct, 0.0..=300.0)
-                        .step_by(1.)
-                        .suffix("%"),
-                );
+                ui.add(egui::Slider::new(&mut pct, 0.0..=300.0).step_by(1.).suffix("%"));
             });
             if pct != m.world.fighters[1].dmg {
                 m.world.fighters[1].dmg = pct;
@@ -169,10 +140,7 @@ pub fn panel(
                 if ui.button(label).clicked() {
                     m.frozen = !m.frozen;
                 }
-                if ui
-                    .add_enabled(m.frozen, egui::Button::new("Step"))
-                    .clicked()
-                {
+                if ui.add_enabled(m.frozen, egui::Button::new("Step")).clicked() {
                     m.step = true;
                 }
                 let mut dbg = m.debug;
@@ -183,11 +151,7 @@ pub fn panel(
             if ui.button("Reset positions").clicked() {
                 restart = true;
             }
-            ui.label(
-                egui::RichText::new("F1 hitboxes · Start / Esc pause")
-                    .color(dim)
-                    .size(11.),
-            );
+            ui.label(egui::RichText::new("F1 hitboxes · Start / Esc pause").color(dim).size(11.));
         });
     if restart {
         m.restart(&data.0, play::seed());

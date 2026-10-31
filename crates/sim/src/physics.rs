@@ -46,7 +46,11 @@ pub fn integrate(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, edge_st
     f.surf = None;
     if vy >= 0. && f.drop == 0 {
         for (n, p) in s.platforms.iter().enumerate() {
-            if py <= p.y + g.surface_tolerance && f.y >= p.y && f.x >= p.x1 - g.platform_pad && f.x <= p.x2 + g.platform_pad {
+            if py <= p.y + g.surface_tolerance
+                && f.y >= p.y
+                && f.x >= p.x1 - g.platform_pad
+                && f.x <= p.x2 + g.platform_pad
+            {
                 f.y = p.y;
                 f.vy = 0.;
                 f.ground = true;
@@ -143,7 +147,9 @@ pub fn on_land(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, vy: f64) 
             }
         }
         State::Helpless => landing(f, g.landing.helpless),
-        State::Airdodge => landing(f, if f.sd.dirl { g.dodge.dir_air_dodge_landing_lag } else { g.dodge.air_dodge_landing_lag }),
+        State::Airdodge => {
+            landing(f, if f.sd.dirl { g.dodge.dir_air_dodge_landing_lag } else { g.dodge.air_dodge_landing_lag })
+        }
         State::Attack => {
             crate::moves::trigger(w, d, i, f, Trigger::Land);
         }
@@ -191,7 +197,10 @@ pub fn try_ledge(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
         let dy = f.y - l.hand_y - (s.ground.top + l.cy);
         if dx * side < -l.reach_in
             || dx * dx + dy * dy > l.r * l.r
-            || w.fighters.iter().enumerate().any(|(j, g)| j != i && matches!(g.state, State::Ledge | State::Climb) && g.sd.side == side)
+            || w.fighters
+                .iter()
+                .enumerate()
+                .any(|(j, g)| j != i && matches!(g.state, State::Ledge | State::Climb) && g.sd.side == side)
         {
             continue;
         }
