@@ -26,7 +26,7 @@ pub use stage::Stage;
 pub const SCHEMA_VERSION: u32 = 1;
 
 /// Everything a match reads. `hash` identifies the exact content, so online peers can check they match.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct GameData {
     pub global: Global,
     pub stages: Vec<Stage>,

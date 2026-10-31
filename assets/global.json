@@ -722,5 +722,6 @@
       }
     },
     "earGap": 1.4
-  }
+  },
+  "replay": { "autoSaveCount": 10, "checkpointTicks": 300 }
 }

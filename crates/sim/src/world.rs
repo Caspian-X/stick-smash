@@ -6,7 +6,7 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PlayerConfig {
     pub fighter: String,
     pub cpu: Option<u8>,
@@ -18,7 +18,7 @@ impl PlayerConfig {
         Self { fighter: fighter.into(), cpu: None, team: None, tap_jump: true }
     }
 }
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MatchConfig {
     pub seed: u32,
     pub stage: String,
@@ -46,7 +46,7 @@ impl Default for MatchConfig {
         }
     }
 }
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Fx {
     Sfx { name: String, arg: Option<f64>, x: Option<f64> },
     Burst { x: f64, y: f64, color: Color, player: usize, n: f64, speed: f64, life: f64, size: f64, gravity: f64 },
@@ -117,7 +117,7 @@ impl State {
         }
     }
 }
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct StateData {
     pub hit: Vec<usize>,
     pub hit_at: Vec<(usize, u32)>,
@@ -136,7 +136,7 @@ pub struct StateData {
     pub tech: bool,
     pub getup: bool,
 }
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MoveState {
     pub slot: String,
     pub phase: usize,
@@ -146,7 +146,7 @@ pub struct MoveState {
     pub counter_damage: f64,
     pub reversed: bool,
 }
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct AiState {
     pub cool: f64,
     pub wait: f64,
@@ -157,7 +157,7 @@ pub struct AiState {
     pub hold_t: f64,
     pub pum: f64,
 }
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Fighter {
     pub data: usize,
     pub x: f64,
@@ -217,7 +217,7 @@ impl Fighter {
                 || self.state == State::Shield && self.sd.stun <= 0)
     }
 }
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Projectile {
     pub owner: usize,
     pub fighter_data: usize,
@@ -232,7 +232,7 @@ pub struct Projectile {
     pub bounces: u32,
     pub cooldown: u32,
 }
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Trace {
     pub attacker: usize,
     pub defender: usize,
@@ -245,7 +245,7 @@ pub struct Trace {
     pub combo: u32,
     pub combo_dmg: f64,
 }
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct HitRecord {
     pub attacker: Option<usize>,
     pub victim: usize,
@@ -253,7 +253,7 @@ pub struct HitRecord {
     pub shielded: bool,
 }
 /// Entire rollback snapshot; all content and fighter relationships are indices.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct World {
     pub frame: u64,
     pub rng: Rng,

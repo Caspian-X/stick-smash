@@ -37,6 +37,8 @@ pub struct Global {
     pub render: super::render::Render,
     /// Procedural sound bank and game-side mixing. The sim never reads it.
     pub audio: super::audio::Audio,
+    #[serde(default)]
+    pub replay: Replay,
 }
 
 /// Shared movement rules. Per-fighter speeds and gravity live in each fighter's `stats`.
@@ -475,4 +477,16 @@ pub struct AiThresholds {
     pub down_attack_height: f64,
     pub down_attack_distance: f64,
     pub projectile_target_height: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+pub struct Replay {
+    pub auto_save_count: usize,
+    pub checkpoint_ticks: u64,
+}
+impl Default for Replay {
+    fn default() -> Self {
+        Self { auto_save_count: 10, checkpoint_ticks: 300 }
+    }
 }

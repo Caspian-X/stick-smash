@@ -1,5 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 /// Deterministic RNG (mulberry32), same algorithm and output as the TypeScript version.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Rng(pub u32);
 
 impl Rng {

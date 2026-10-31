@@ -5,6 +5,7 @@ Stick Smash in Rust: a Smash-style platform fighter, ported from the Phaser/Type
 ## Commands
 Tasks live in the `justfile` (`just` lists them). Add new scripts as `just` recipes, not shell files.
 - `just run` (`just dev` for dynamic linking / faster rebuilds), `just test`, `just lint`, `just check`.
+- `just verify-replays <dir>` re-simulates all `.replay.json` files headlessly and fails on desync or unfinished matches.
 - `just bless` after changing content data types (regenerates schemas, reformats assets). `just shots [dir]` for screenshots.
 
 ## Layout
@@ -12,6 +13,7 @@ Tasks live in the `justfile` (`just` lists them). Add new scripts as `just` reci
 - `crates/render/`: Bevy plugin that draws a sim `World` read-only (figures, attachments, stage, fx, camera, debug overlay). Fed via `render::Scene::push` each tick.
 - `crates/editor/`: fighter editor (lib used by `game`, `Screen::Editor`). Plain-Rust model in `doc.rs` (workspace, per-fighter docs, snapshot undo, new fighters, pose rename / move copy, saving that patches only changed paths into the package's own JSON so `extends` stays intact), `preview.rs` (sandbox `World` running the real sim from frame 0, every frame kept), `view.rs` (camera, transforms, hit-testing, overlay); egui layer: `ui.rs` (frame, top bar, shortcuts, dialogs, toasts, shortcut sheet), `browser.rs`, `viewport.rs` (direct manipulation, onion skin), `timeline.rs`, `inspect.rs`, `form.rs` (forms driven by `assets/schema/fighter.schema.json` for data without a hand-made inspector), `style.rs` (theme and editor-only UI constants). Draws through `render::Scene` (`fixed_view`, `overlay`, `pose_override`). The game hooks it up in `game/src/editing.rs` (menu entry, Test → training → "Back to editor", the unsaved-changes prompt on quit / window close).
 - `crates/game/`: Bevy app (input devices, bevy_ui menus/HUD, match flow, egui training panel). `cargo run -p game -- --screenshot <dir>` runs a scripted tour (bot devices pressing buttons through title, the editor (via `editor::Inbox` commands), select, a 4-player match, pause, results, training) and saves PNGs for visual checks; the steps live in `shots.rs`. Owns the sim `World` as a resource and steps it in `FixedUpdate` at `sim::TICK_HZ`.
+- `crates/game/src/replay.rs`: version-1 JSON replays embed resolved GameData plus package ids and MatchConfig, RLE raw inputs (CPU AI remains inside the deterministic sim), and periodic FNV-1a checksums of the drained World. Versus records in memory; results auto-save the last `global.replay.autoSaveCount` files and offer permanent save / watch. Files live in the platform data dir under `stick-smash/replays`. Playback caches World snapshots every `global.replay.checkpointTicks`, seeks silently, and sends live FX/audio through the match drain path. Preserve versus input history across pauses so recording stays a pure sequence of sim ticks.
 - `assets/`: JSON data (global tuning, stage, fighters). Fighters are meant to be user-moddable.
 
 ## Rules
