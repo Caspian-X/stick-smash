@@ -48,7 +48,7 @@ impl Default for MatchConfig {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub enum Fx {
-    Sfx { name: String, arg: Option<f64> },
+    Sfx { name: String, arg: Option<f64>, x: Option<f64> },
     Burst { x: f64, y: f64, color: Color, player: usize, n: f64, speed: f64, life: f64, size: f64, gravity: f64 },
     Dust { x: f64, y: f64, n: u32 },
     Ring { x: f64, y: f64, r: f64, grow: f64, life: u32, color: Color, player: usize },
@@ -379,7 +379,7 @@ impl World {
                 || self.cfg.players[a].team != self.cfg.players[b].team)
     }
     pub fn sfx(&mut self, name: impl Into<String>) {
-        self.fx.push(Fx::Sfx { name: name.into(), arg: None });
+        self.fx.push(Fx::Sfx { name: name.into(), arg: None, x: None });
     }
     pub fn dust(&mut self, x: f64, y: f64, n: u32) {
         self.fx.push(Fx::Dust { x, y, n });

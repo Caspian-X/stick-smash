@@ -204,7 +204,7 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
         });
         w.dust(x, y, 10);
         w.fx.push(Fx::Shake { k: 3. });
-        w.fx.push(Fx::Sfx { name: "hit".into(), arg: Some(kb) });
+        w.fx.push(Fx::Sfx { name: "hit".into(), arg: Some(kb), x: Some(hx) });
         return;
     }
     if b.kind == HitType::Autolink {
@@ -276,7 +276,7 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     }
     w.ring(hx, hy, 6., 3. + kb * 0.15, 14);
     w.fx.push(Fx::Shake { k: kb * 0.45 });
-    w.fx.push(Fx::Sfx { name: "hit".into(), arg: Some(kb) });
+    w.fx.push(Fx::Sfx { name: "hit".into(), arg: Some(kb), x: Some(hx) });
 }
 pub fn shield_break(w: &mut World, d: &GameData, i: usize) {
     let f = &mut w.fighters[i];
@@ -300,7 +300,7 @@ pub fn shield_break(w: &mut World, d: &GameData, i: usize) {
     });
     w.fx.push(Fx::Ring { x, y: y - 38., r: 30., grow: 6., life: 18, color: Color::Player, player: i });
     w.fx.push(Fx::Shake { k: 10. });
-    w.sfx("shieldBreak");
+    w.fx.push(Fx::Sfx { name: "shieldBreak".into(), arg: None, x: Some(x) });
 }
 pub fn shield_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitSource) {
     let HitSource { attacker: a, direction: sgn, projectile: proj, label, .. } = source;
@@ -322,7 +322,7 @@ pub fn shield_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: Hit
     trace(w, a, v, label, true, b.damage);
     let f = &w.fighters[v];
     w.ring(f.x, f.y - 38., 20., 2.5, 10);
-    w.sfx("shieldHit");
+    w.fx.push(Fx::Sfx { name: "shieldHit".into(), arg: Some(b.damage), x: Some(w.fighters[v].x) });
     if w.fighters[v].sh <= 0. {
         shield_break(w, d, v);
     }

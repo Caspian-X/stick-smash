@@ -12,7 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 sim.workspace = true
-bevy = { workspace = true, features = ["system_font_discovery"] }
+bevy = { workspace = true, features = ["system_font_discovery", "wav"] }
 bevy_egui.workspace = true
 render.workspace = true
 editor.workspace = true

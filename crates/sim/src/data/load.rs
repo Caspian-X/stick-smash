@@ -495,6 +495,7 @@ fn check_event(file: &str, path: &str, ev: &super::Event) -> Result<(), ContentE
     Ok(())
 }
 fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
+    check_audio(file, &g.audio)?;
     if g.input.stick_threshold <= 0 {
         return Err(err(file, "input.stickThreshold", "must be between 1 and 127"));
     }
@@ -581,5 +582,51 @@ fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
         }
     }
     nonnegative(file, "ai.thresholds.targetPad", v.target_pad)?;
+    Ok(())
+}
+
+fn check_audio(file: &str, a: &super::audio::Audio) -> Result<(), ContentError> {
+    let range = |path: &str, n: f64, lo: f64, hi: f64| {
+        if n.is_finite() && (lo..=hi).contains(&n) {
+            Ok(())
+        } else {
+            Err(err(file, path, format!("must be between {lo} and {hi}")))
+        }
+    };
+    range("audio.sampleRate", f64::from(a.sample_rate), 8000., 96000.)?;
+    range("audio.strengthLevels", a.strength_levels as f64, 1., 16.)?;
+    range("audio.maxVoices", a.max_voices as f64, 1., 128.)?;
+    range("audio.maxPerFrame", a.max_per_frame as f64, 1., 32.)?;
+    range("audio.pan", a.pan, 0., 4.)?;
+    range("audio.depth", a.depth, 0.1, 4.)?;
+    range("audio.earGap", a.ear_gap, 0.1, 4.)?;
+    range("audio.pitchVariation", a.pitch_variation, 0., 0.5)?;
+    range("audio.volumeStep", a.volume_step, 0.001, 1.)?;
+    range("audio.cooldown", a.cooldown, 0., 10.)?;
+    positive(file, "audio.strengthMax", a.strength_max)?;
+    for (n, v) in [("master", a.defaults.master), ("sfx", a.defaults.sfx), ("music", a.defaults.music)] {
+        range(&format!("audio.defaults.{n}"), v, 0., 1.)?;
+    }
+    if a.sounds.len() > 128 {
+        return Err(err(file, "audio.sounds", "at most 128 sounds"));
+    }
+    for (name, s) in &a.sounds {
+        let p = format!("audio.sounds.{name}");
+        range(&format!("{p}.volume"), s.volume, 0., 1.)?;
+        range(&format!("{p}.cooldown"), s.cooldown, 0., 10.)?;
+        range(&format!("{p}.strengthGain"), s.strength_gain, 0., 1.)?;
+        range(&format!("{p}.strengthDuration"), s.strength_duration, 0.1, 4.)?;
+        range(&format!("{p}.layers"), s.layers.len() as f64, 1., 8.)?;
+        for (i, l) in s.layers.iter().enumerate() {
+            let p = format!("{p}.layers[{i}]");
+            for (n, v) in [("from", l.from), ("to", l.to)] {
+                range(&format!("{p}.{n}"), v, 1., f64::from(a.sample_rate) / 2.)?;
+            }
+            range(&format!("{p}.duration"), l.duration, 0.001, 3.)?;
+            range(&format!("{p}.attack"), l.attack, 0., l.duration)?;
+            range(&format!("{p}.decay"), l.decay, 0., 30.)?;
+            range(&format!("{p}.gain"), l.gain, 0., 1.)?;
+        }
+    }
     Ok(())
 }

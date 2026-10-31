@@ -30,6 +30,9 @@ const EDITOR: u32 = 6;
 const KEYBOARD: u32 = 10;
 const HITBOXES: u32 = 11;
 const WINDOW: u32 = 12;
+const MASTER: u32 = 13;
+const SFX: u32 = 14;
+const MUSIC: u32 = 15;
 const BACK: u32 = 19;
 const PROFILE: u32 = 20;
 const ACT0: u32 = 30;
@@ -55,6 +58,7 @@ fn profiles(saved: &Saved, devs: &Devices) -> Vec<(Dev, String)> {
 #[allow(clippy::too_many_arguments)]
 pub fn update(
     screen: Res<State<Screen>>,
+    data: Res<Data>,
     mut st: ResMut<MenuState>,
     mut devs: ResMut<Devices>,
     q: FocusQuery,
@@ -127,6 +131,16 @@ pub fn update(
             (Screen::Settings, Action::Spin(KEYBOARD, _)) => {
                 saved.split_keyboard = !saved.split_keyboard;
                 devs.clear();
+            }
+            (Screen::Settings, Action::Spin(k @ (MASTER | SFX | MUSIC), by)) => {
+                let a = &data.0.global.audio;
+                let v = saved.volume.get_or_insert_with(|| a.defaults.clone());
+                let value = match k {
+                    MASTER => &mut v.master,
+                    SFX => &mut v.sfx,
+                    _ => &mut v.music,
+                };
+                *value = (*value + f64::from(by) * a.volume_step).clamp(0., 1.);
             }
             (Screen::Settings, Action::Spin(HITBOXES, _)) => saved.versus_hitboxes = !saved.versus_hitboxes,
             (Screen::Settings, Action::Spin(WINDOW, _)) => {
@@ -233,7 +247,15 @@ pub fn draw(
                 Screen::Settings => {
                     heading(p, f, d, "Settings");
                     let onoff = |b: bool| if b { "On" } else { "Off" };
+                    let volume = saved.volume.as_ref().unwrap_or(&d.global.audio.defaults);
+                    let meter = |v: f64| {
+                        let filled = (v.clamp(0., 1.) * 10.).round() as usize;
+                        format!("{}{} {:3.0}%", "━".repeat(filled), "─".repeat(10 - filled), v * 100.)
+                    };
                     let items = [
+                        Item::spin(MASTER, "Master volume", meter(volume.master)),
+                        Item::spin(SFX, "SFX volume", meter(volume.sfx)),
+                        Item::spin(MUSIC, "Music (reserved)", meter(volume.music)),
                         Item::spin(
                             KEYBOARD,
                             "Keyboard",
