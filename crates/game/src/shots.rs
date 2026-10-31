@@ -466,6 +466,7 @@ pub fn run(
     data: Res<Data>,
     mut scene: ResMut<render::Scene>,
     mut next: ResMut<NextState<Screen>>,
+    mut egui: Query<&mut bevy_egui::EguiContext>,
 ) {
     for b in 0..2 {
         devs.bot(b);
@@ -543,6 +544,13 @@ pub fn run(
             commands.insert_resource(crate::results::ResultsMenu::default());
             *devs = Devices::default();
             *scene = render::Scene::new(data.0.clone());
+            // Panel widths, scroll offsets and open headers would otherwise carry over from earlier sections.
+            for mut ctx in &mut egui {
+                ctx.get_mut().memory_mut(|m| {
+                    m.data = default();
+                    m.reset_areas();
+                });
+            }
             info!("screenshot section {name}: starting");
             s.at += 1;
         }
