@@ -25,7 +25,7 @@ fn matches(q: &str, texts: &[&str]) -> bool {
 pub fn visible(ed: &Editor) -> Vec<Subject> {
     let q = ed.search.trim().to_lowercase();
     let Some(d) = ed.ws.docs.get(&ed.cur) else { return vec![] };
-    let f = &d.fighter;
+    let f = &d.item;
     let mut v = vec![];
     for (_, slots) in GROUPS {
         for &slot in slots {
@@ -52,7 +52,7 @@ pub fn visible(ed: &Editor) -> Vec<Subject> {
 
 /// A list row: key in the label face, name dimmer, markers after. Truncated to the panel width (full text on hover)
 /// so long names never widen the panel.
-fn item(ui: &mut egui::Ui, on: bool, key: &str, name: &str, dirty: bool, bad: bool) -> egui::Response {
+pub(crate) fn item(ui: &mut egui::Ui, on: bool, key: &str, name: &str, dirty: bool, bad: bool) -> egui::Response {
     let w = ui.available_width() - 2. * ui.spacing().button_padding.x;
     let mut t = egui::text::LayoutJob { wrap: egui::text::TextWrapping::truncate_at_width(w), ..Default::default() };
     let c = if on { GOLD } else { STAR };
@@ -72,7 +72,7 @@ fn item(ui: &mut egui::Ui, on: bool, key: &str, name: &str, dirty: bool, bad: bo
     r
 }
 
-fn group_label(ui: &mut egui::Ui, text: &str) {
+pub(crate) fn group_label(ui: &mut egui::Ui, text: &str) {
     ui.add_space(6.);
     ui.label(caps(text));
 }
@@ -121,7 +121,7 @@ pub fn browser(ui: &mut egui::Ui, ed: &mut Editor) {
     egui::ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             let doc = ed.ws.docs.get(&ed.cur).expect("open");
-            let (f, saved) = (&doc.fighter, &doc.saved);
+            let (f, saved) = (&doc.item, &doc.saved);
             let searching = !ed.search.trim().is_empty();
             for (group, slots) in GROUPS {
                 let any = slots.iter().any(|s| shown.contains(&Subject::Move(s.to_string())));

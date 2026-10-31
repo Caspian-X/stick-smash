@@ -1,0 +1,415 @@
+//! The stage editor's state and actions: selection, view options, the live preview World (optionally with CPUs
+//! playing on the edited stage through the real sim), and the edits shortcuts and buttons make.
+
+use std::sync::Arc;
+
+use sim::data::stage::Stage;
+use sim::world::State;
+use sim::{GameData, Input, MatchConfig, PlayerConfig, World, step_world};
+
+use crate::Editor;
+use crate::stage_view::{self, Grip, Handle, Part, Shape, Snap};
+use crate::view::Cam;
+
+/// Inspector / browser sections.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Section {
+    Overview,
+    Ground,
+    Platforms,
+    Ledge,
+    Bounds,
+    Spawns,
+    Respawns,
+    Art,
+    Background,
+}
+
+impl Section {
+    pub const ALL: [Section; 9] = [
+        Section::Overview,
+        Section::Ground,
+        Section::Platforms,
+        Section::Ledge,
+        Section::Bounds,
+        Section::Spawns,
+        Section::Respawns,
+        Section::Art,
+        Section::Background,
+    ];
+    pub fn name(self) -> &'static str {
+        match self {
+            Section::Overview => "Overview",
+            Section::Ground => "Ground",
+            Section::Platforms => "Platforms",
+            Section::Ledge => "Ledge zone",
+            Section::Bounds => "Blast & camera",
+            Section::Spawns => "Spawns",
+            Section::Respawns => "Respawns",
+            Section::Art => "Art",
+            Section::Background => "Background",
+        }
+    }
+    /// JSON keys it covers (for dirty and problem markers).
+    pub fn keys(self) -> &'static [&'static str] {
+        match self {
+            Section::Overview => &["name", "width", "height"],
+            Section::Ground => &["ground"],
+            Section::Platforms => &["platforms"],
+            Section::Ledge => &["ledge"],
+            Section::Bounds => &["blast", "camera"],
+            Section::Spawns => &["spawns"],
+            Section::Respawns => &["respawns"],
+            Section::Art => &["art"],
+            Section::Background => &["art.background"],
+        }
+    }
+    pub fn of(p: Part) -> Section {
+        match p {
+            Part::Ground => Section::Ground,
+            Part::Platform(_) => Section::Platforms,
+            Part::Spawn(_) => Section::Spawns,
+            Part::Respawn(_) => Section::Respawns,
+            Part::Ledge => Section::Ledge,
+            Part::Blast | Part::Camera => Section::Bounds,
+        }
+    }
+}
+
+/// An in-progress viewport drag.
+#[derive(Clone, Debug)]
+pub(crate) enum Drag {
+    Pan,
+    /// A handle, from the stage as it was when grabbed.
+    Part {
+        h: Handle,
+        orig: Box<Stage>,
+        grab: [f64; 2],
+        partner: Option<Part>,
+    },
+}
+
+pub struct StageEd {
+    pub cur: String,
+    pub section: Section,
+    pub sel: Option<Part>,
+    pub hover: Option<Handle>,
+    pub(crate) drag: Option<Drag>,
+    pub cam: Cam,
+    pub reframe: bool,
+    /// Draw the grid and snap to it.
+    pub grid: bool,
+    pub grid_size: f64,
+    /// Mirror edits around the stage's centre x.
+    pub symmetry: bool,
+    pub show_bounds: bool,
+    pub show_spawns: bool,
+    /// CPUs playing in the preview (0 = just the stage).
+    pub sandbox: usize,
+    pub level: u8,
+    pub paused: bool,
+    /// The preview World and the content it runs on (the last valid edit).
+    pub(crate) world: Option<World>,
+    pub(crate) data: Option<Arc<GameData>>,
+    pub stale: bool,
+    /// Selection the viewport last saw (selecting a bound frames it).
+    pub(crate) seen_sel: Option<Part>,
+    /// The scene shows the current world.
+    pub shown: bool,
+    acc: f64,
+}
+
+impl StageEd {
+    pub fn new(cur: &str) -> Self {
+        StageEd {
+            cur: cur.into(),
+            section: Section::Overview,
+            sel: None,
+            hover: None,
+            drag: None,
+            cam: Cam { center: [640., 360.], zoom: 0.5 },
+            reframe: true,
+            grid: false,
+            grid_size: 10.,
+            symmetry: false,
+            show_bounds: true,
+            show_spawns: true,
+            sandbox: 0,
+            level: 2,
+            paused: false,
+            world: None,
+            data: None,
+            stale: true,
+            seen_sel: None,
+            shown: false,
+            acc: 0.,
+        }
+    }
+
+    pub fn select(&mut self, p: Option<Part>) {
+        self.sel = p;
+        if let Some(p) = p {
+            self.section = Section::of(p);
+        }
+    }
+
+    pub fn set_sandbox(&mut self, n: usize) {
+        if n != self.sandbox {
+            self.sandbox = n;
+            self.world = None;
+            self.stale = true;
+        }
+    }
+
+    pub fn snap(&self, coarse: bool, fine: bool) -> Snap {
+        Snap { grid: (self.grid || coarse).then_some(self.grid_size), fine }
+    }
+}
+
+/// A preview World on stage `id`: `cpus` CPUs (cycling through the fighters), or one hidden player for just the
+/// stage. Training rules, so nobody runs out of stocks.
+pub fn sandbox(data: &GameData, id: &str, cpus: usize, level: u8) -> Result<World, String> {
+    let st = data.stage(id).ok_or("stage didn't load")?;
+    let n = cpus.clamp(1, st.max_players().max(1));
+    let players = (0..n)
+        .map(|i| {
+            let f = &data.fighters[i % data.fighters.len()].id;
+            PlayerConfig { cpu: (cpus > 0).then_some(level), ..PlayerConfig::human(f) }
+        })
+        .collect();
+    let cfg = MatchConfig { seed: 7, stage: id.into(), stocks: 1, training: true, players, ..Default::default() };
+    let mut w = World::new(cfg, data)?;
+    if cpus == 0 {
+        w.fighters[0].state = State::Out;
+    }
+    Ok(w)
+}
+
+/// Brings the preview up to date with the edits and steps the sandbox; feeds the render scene.
+pub(crate) fn sync_scene(ed: &mut Editor, scene: &mut render::Scene, dt: f32) {
+    let id = ed.st.cur.clone();
+    if ed.st.stale {
+        ed.st.stale = false;
+        let valid = ed.ws.stages.get(&id).is_some_and(|d| d.errors.is_empty());
+        if valid || ed.st.data.is_none() {
+            let data = Arc::new(ed.ws.live_data());
+            let idx = data.stages.iter().position(|s| s.id == id);
+            let keep = ed.st.world.as_ref().is_some_and(|w| Some(w.stage) == idx && w.cfg.stage == id);
+            if !keep {
+                match sandbox(&data, &id, ed.st.sandbox, ed.st.level) {
+                    Ok(w) => ed.st.world = Some(w),
+                    Err(e) => ed.say(e, true),
+                }
+            }
+            ed.st.data = Some(data);
+            ed.st.shown = false;
+        }
+    }
+    let (Some(w), Some(data)) = (ed.st.world.as_mut(), ed.st.data.clone()) else { return };
+    if !ed.st.shown {
+        scene.data = data.clone();
+        scene.reset(w);
+        ed.st.shown = true;
+    }
+    if ed.st.sandbox > 0 && !ed.st.paused {
+        ed.st.acc += f64::from(dt) * f64::from(sim::TICK_HZ);
+        let mut steps = 0;
+        while ed.st.acc >= 1. && steps < 4 {
+            ed.st.acc -= 1.;
+            steps += 1;
+            let inputs = vec![Input::default(); w.fighters.len()];
+            step_world(w, &data, &inputs);
+            scene.push(w);
+            w.fx.clear();
+            w.hits.clear();
+        }
+        ed.st.acc = ed.st.acc.min(1.);
+        scene.alpha = ed.st.acc;
+    } else {
+        ed.st.acc = 0.;
+        scene.alpha = 1.;
+    }
+    scene.debug = false;
+    scene.bottom_safe_area = 0.;
+    scene.pose_override = None;
+    scene.fixed_view = Some(ed.st.cam.window_view(&ed.port));
+}
+
+/// Frames the stage: the ground, platforms and respawn points with room around them (the blast zone is a wheel
+/// away).
+pub(crate) fn frame_stage(ed: &mut Editor) {
+    let Some(s) = ed.ws.stages.get(&ed.st.cur).map(|d| d.item.clone()) else { return };
+    let [l, t, r, b] = ed.port.rect;
+    let (w, h) = ((r - l).max(1.), (b - t).max(1.));
+    let g = &s.ground;
+    let mut bb = [g.left, g.top, g.right, g.bottom + g.under_depth];
+    let pts = s.platforms.iter().flat_map(|p| [[p.x1, p.y], [p.x2, p.y]]);
+    for [x, y] in pts.chain(s.respawns.iter().map(|r| [r.x, r.start_y])) {
+        bb = [bb[0].min(x), bb[1].min(y), bb[2].max(x), bb[3].max(y)];
+    }
+    let pad = 140.;
+    let (bw, bh) = (bb[2] - bb[0] + 2. * pad, bb[3] - bb[1] + 2. * pad);
+    // Leave room for the toolbars on top.
+    ed.st.cam.zoom = (w / bw).min((h - 90.) / bh).clamp(0.1, 12.);
+    ed.st.cam.center = [(bb[0] + bb[2]) / 2., (bb[1] + bb[3]) / 2. - 45. / ed.st.cam.zoom];
+}
+
+/// Fits stage rect `[l, t, r, b]` in the viewport (below the toolbars).
+pub(crate) fn frame_rect(ed: &mut Editor, [l, t, r, b]: [f64; 4]) {
+    let [pl, pt, pr, pb] = ed.port.rect;
+    let (w, h) = ((pr - pl).max(1.), (pb - pt - 90.).max(1.));
+    ed.st.cam.zoom = (w / ((r - l) * 1.08)).min(h / ((b - t) * 1.08)).clamp(0.1, 12.);
+    ed.st.cam.center = [(l + r) / 2., (t + b) / 2. - 45. / ed.st.cam.zoom];
+}
+
+pub(crate) fn stage_mut(ed: &mut Editor) -> &mut Stage {
+    &mut ed.stage_doc().item
+}
+
+/// One undoable edit of the current stage.
+pub(crate) fn edit(ed: &mut Editor, f: impl FnOnce(&mut Stage)) {
+    ed.stage_doc().edit(f);
+    ed.st.stale = true;
+}
+
+pub(crate) fn add_platform(ed: &mut Editor) {
+    let at = ed.st.cam.center;
+    let (sym, sn) = (ed.st.symmetry, ed.st.snap(false, false));
+    let mut made = None;
+    edit(ed, |s| made = Some(stage_view::add_platform(s, at, sym, sn)));
+    ed.st.select(made);
+    ed.say("Added a platform · drag it into place", false);
+}
+
+pub(crate) fn add_spawn(ed: &mut Editor, respawn: bool) {
+    let x = ed.st.cam.center[0].round();
+    let mut made = None;
+    edit(ed, |s| made = Some(if respawn { stage_view::add_respawn(s, x) } else { stage_view::add_spawn(s, x) }));
+    ed.st.select(made);
+}
+
+pub(crate) fn delete_selected(ed: &mut Editor) {
+    let Some(p) = ed.st.sel else { return };
+    if !matches!(p, Part::Platform(_) | Part::Spawn(_) | Part::Respawn(_)) {
+        return;
+    }
+    let partner = if ed.st.symmetry { stage_view::partner(&ed.stage_doc().item, p) } else { None };
+    let mut ok = false;
+    edit(ed, |s| ok = stage_view::delete(s, p, partner));
+    if ok {
+        ed.st.sel = None;
+        let both = partner.is_some_and(|q| q != p);
+        ed.say(format!("Deleted {}{} · ⌘Z to undo", p.label(), if both { " and its mirror" } else { "" }), false);
+    } else {
+        ed.say("A stage needs at least one spawn and one respawn point", true);
+    }
+}
+
+pub(crate) fn duplicate_selected(ed: &mut Editor) {
+    let Some(p) = ed.st.sel else { return };
+    let mut made = None;
+    edit(ed, |s| made = stage_view::duplicate(s, p));
+    if made.is_some() {
+        ed.st.select(made);
+    }
+}
+
+/// Moves the selection by `d` stage pixels (mirrored with symmetry on).
+pub(crate) fn nudge(ed: &mut Editor, d: [f64; 2]) {
+    let Some(p) = ed.st.sel else { return };
+    let sym = ed.st.symmetry;
+    edit(ed, |s| {
+        let Some(sh) = stage_view::shape(s, p) else { return };
+        let partner = if sym { stage_view::partner(s, p) } else { None };
+        let fine = Snap { grid: None, fine: true };
+        stage_view::set_shape(s, p, stage_view::drag_shape(sh, Grip::Move, d, fine));
+        if let Some(q) = partner {
+            stage_view::apply_mirror(s, p, q, Grip::Move);
+        }
+    });
+}
+
+pub(crate) fn flip(ed: &mut Editor, i: usize) {
+    let sym = ed.st.symmetry;
+    edit(ed, |s| {
+        let partner = if sym { stage_view::partner(s, Part::Spawn(i)) } else { None };
+        if let Some(sp) = s.spawns.get_mut(i) {
+            sp.face = -sp.face;
+        }
+        if let Some(j) = partner.and_then(|q| match q {
+            Part::Spawn(j) if j != i => Some(j),
+            _ => None,
+        }) {
+            s.spawns[j].face = -s.spawns[i].face;
+        }
+    });
+}
+
+/// Applies a viewport drag at stage point `m`.
+pub(crate) fn drag_to(ed: &mut Editor, drag: &Drag, m: [f64; 2], sn: Snap) {
+    let Drag::Part { h, orig, grab, partner } = drag else { return };
+    let s = stage_mut(ed);
+    match h.grip {
+        Grip::Rim => {
+            s.ledge.r = sn
+                .v(stage_view::ledges(orig)
+                    .iter()
+                    .map(|(c, _)| (m[0] - c[0]).hypot(m[1] - c[1]))
+                    .fold(f64::INFINITY, f64::min))
+                .max(1.)
+        }
+        Grip::Start => {
+            if let Part::Respawn(i) = h.part
+                && let Some(r) = s.respawns.get_mut(i)
+            {
+                r.start_y = sn.v(m[1]);
+            }
+        }
+        Grip::Face => {}
+        grip => {
+            let Some(sh) = stage_view::shape(orig, h.part) else { return };
+            let d = [m[0] - grab[0], m[1] - grab[1]];
+            // With symmetry, a self-mirrored part only moves vertically.
+            let d = if *partner == Some(h.part) && grip == Grip::Move { [0., d[1]] } else { d };
+            stage_view::set_shape(s, h.part, stage_view::drag_shape(sh, grip, d, sn));
+        }
+    }
+    if let Some(q) = *partner
+        && h.grip != Grip::Face
+    {
+        stage_view::apply_mirror(s, h.part, q, h.grip);
+    }
+}
+
+/// Live problems (the loader's checks) and notes for the current stage.
+pub(crate) fn notes(ed: &Editor) -> Vec<sim::data::ContentError> {
+    ed.ws.stages.get(&ed.st.cur).map(|d| stage_view::notes(&d.item, &d.path)).unwrap_or_default()
+}
+
+/// Player colors (hex) for spawn markers.
+pub(crate) fn colors(d: &GameData) -> Vec<u32> {
+    d.global
+        .palette
+        .iter()
+        .map(|p| match p.main {
+            sim::data::Color::Rgb(v) => v,
+            _ => 0xffffff,
+        })
+        .collect()
+}
+
+/// The shape's readout for the hint line: `x 390 → 570 · y 400`.
+pub(crate) fn readout(s: &Stage, p: Part) -> String {
+    match stage_view::shape(s, p) {
+        Some(Shape::Rect([l, t, r, b])) => format!("{l:.0}, {t:.0} → {r:.0}, {b:.0}  ({:.0} × {:.0})", r - l, b - t),
+        Some(Shape::Seg([x1, x2, y])) => format!("x {x1:.0} → {x2:.0} · y {y:.0}  ({:.0} wide)", x2 - x1),
+        Some(Shape::Point([x, y])) => format!("{x:.0}, {y:.0}"),
+        None => format!("r {:.0}", s.ledge.r),
+    }
+}
+
+/// Grid sizes offered.
+pub const GRIDS: [f64; 5] = [5., 10., 20., 40., 80.];
+
+/// Most CPUs the sandbox runs.
+pub(crate) const SANDBOX_MAX: usize = 4;

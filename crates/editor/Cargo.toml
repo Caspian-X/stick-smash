@@ -1,6 +1,6 @@
 [package]
 name = "editor"
-description = "Stick Smash fighter editor: browser, viewport, timeline, inspector, undo and saving (egui)."
+description = "Stick Smash content editor: fighters and stages; browser, viewport, inspector, undo and saving (egui)."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

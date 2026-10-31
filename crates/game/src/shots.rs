@@ -152,6 +152,61 @@ impl Script {
             shot(&mut v, "03d-editor-new-fighter");
             ed(&mut v, Cmd::Dismiss);
             shot(&mut v, "03e-editor-stats");
+            // Stage editor: overview, a selected platform with grid and mirror, spawns with a note, art, backdrop,
+            // the CPU sandbox, a new stage, the shortcut sheet.
+            {
+                use editor::stage_ed::Section as S;
+                use editor::stage_view::Part;
+                ed(&mut v, Cmd::Mode(editor::Mode::Stages));
+                ed(&mut v, Cmd::Stage("arena".into()));
+                shot(&mut v, "03f-stage-overview");
+                ed(&mut v, Cmd::Grid(true));
+                ed(&mut v, Cmd::Symmetry(true));
+                ed(&mut v, Cmd::Part(Some(Part::Platform(0))));
+                ed(
+                    &mut v,
+                    Cmd::EditStage(|s| {
+                        s.platforms[0].y -= 30.;
+                        s.platforms[1].y -= 30.;
+                    }),
+                );
+                shot(&mut v, "03g-stage-platform");
+                ed(&mut v, Cmd::Undo);
+                ed(&mut v, Cmd::Grid(false));
+                ed(&mut v, Cmd::Symmetry(false));
+                ed(&mut v, Cmd::EditStage(|s| s.spawns.truncate(6)));
+                ed(&mut v, Cmd::Part(Some(Part::Spawn(1))));
+                shot(&mut v, "03h-stage-spawns");
+                ed(&mut v, Cmd::Undo);
+                v.push(Step::Wait(800));
+                ed(&mut v, Cmd::Part(Some(Part::Blast)));
+                shot(&mut v, "03i-stage-bounds");
+                ed(&mut v, Cmd::Part(None));
+                ed(&mut v, Cmd::Section(S::Art));
+                shot(&mut v, "03j-stage-art");
+                ed(&mut v, Cmd::Section(S::Background));
+                shot(&mut v, "03k-stage-background");
+                ed(&mut v, Cmd::Section(S::Overview));
+                ed(&mut v, Cmd::Sandbox(3));
+                v.push(Step::Wait(150));
+                shot(&mut v, "03l-stage-sandbox");
+                ed(&mut v, Cmd::Sandbox(0));
+                ed(
+                    &mut v,
+                    Cmd::Dialog(Dialog::NewStage {
+                        id: "sky-fortress".into(),
+                        name: "Sky Fortress".into(),
+                        from: "arena".into(),
+                        error: None,
+                    }),
+                );
+                shot(&mut v, "03m-stage-new");
+                ed(&mut v, Cmd::Dismiss);
+                ed(&mut v, Cmd::Help(true));
+                shot(&mut v, "03n-stage-help");
+                ed(&mut v, Cmd::Help(false));
+                ed(&mut v, Cmd::Mode(editor::Mode::Fighters));
+            }
             ed(&mut v, Cmd::Back);
             v.push(Step::Wait(10));
         }

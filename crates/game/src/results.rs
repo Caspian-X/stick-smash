@@ -23,7 +23,9 @@ pub fn enter(mut rm: ResMut<ResultsMenu>) {
     rm.cursor = Cursor { key: REMATCH, owner: None };
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn update(
+    testing: Option<Res<crate::editing::Testing>>,
     mut m: ResMut<Match>,
     mut rm: ResMut<ResultsMenu>,
     devs: Res<Devices>,
@@ -41,6 +43,8 @@ pub fn update(
                 scene.reset(&m.world);
                 next.set(Screen::Match);
             }
+            // A test match from the editor goes back there.
+            Some(Action::Activate(MENU) | Action::Back) if testing.is_some() => next.set(Screen::Editor),
             Some(Action::Activate(SELECT) | Action::Back) => next.set(Screen::Select),
             Some(Action::Activate(MENU)) => next.set(Screen::Title),
             _ => {}
@@ -55,6 +59,7 @@ pub fn update(
 pub struct ResultsRoot(u32);
 
 pub fn draw(
+    testing: Option<Res<crate::editing::Testing>>,
     mut commands: Commands,
     m: Res<Match>,
     rm: Res<ResultsMenu>,
@@ -127,7 +132,12 @@ pub fn draw(
                     n.column_gap = Val::Px(14.);
                 }))
                 .with_children(|p| {
-                    for (k, label) in [(REMATCH, "Rematch"), (SELECT, "Character select"), (MENU, "Main menu")] {
+                    let items: &[(u32, &str)] = if testing.is_some() {
+                        &[(REMATCH, "Rematch"), (MENU, "Back to editor")]
+                    } else {
+                        &[(REMATCH, "Rematch"), (SELECT, "Character select"), (MENU, "Main menu")]
+                    };
+                    for &(k, label) in items {
                         let on = rm.cursor.key == k;
                         p.spawn((
                             node(|n| {

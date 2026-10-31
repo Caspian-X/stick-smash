@@ -364,7 +364,7 @@ pub fn draw(
             }))
             .with_children(|p| {
                 if scr == Screen::Title && focus == EDITOR {
-                    hint(p, f, "Keyboard + mouse", "fighter editor");
+                    hint(p, f, "Keyboard + mouse", "fighter & stage editor");
                 }
                 hint(p, f, "Attack / Enter", "select");
                 if scr != Screen::Title {

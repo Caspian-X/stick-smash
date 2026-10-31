@@ -1,5 +1,5 @@
-//! Hooks the fighter editor (`editor` crate) into the game: its screen, leaving it, and the "Test" round trip
-//! through training with the edited, unsaved content.
+//! Hooks the editor (`editor` crate) into the game: its screen, leaving it, and the "Test" round trip through
+//! training (or a match, for stages) with the edited, unsaved content.
 
 use std::path::PathBuf;
 
@@ -76,33 +76,38 @@ fn requests(
         Some(Request::Quit) => {
             exit.write(AppExit::Success);
         }
-        Some(Request::Test { data: d, fighter }) => {
-            let Some(fi) = d.fighters.iter().position(|f| f.id == fighter) else { return };
+        Some(Request::Test { data: d, fighter, stage, versus }) => {
             let t = &saved.training;
+            let fighter = fighter.unwrap_or_else(|| t.fighter.clone());
+            let fi = d.fighters.iter().position(|f| f.id == fighter).unwrap_or(0);
             let dummy = d.fighters.iter().position(|f| f.id == t.dummy_fighter).unwrap_or(fi);
-            let slot = |dev, fighter, tag: &str, color| Slot {
+            let slot = |dev, fighter, cpu, tag: &str, color| Slot {
                 dev,
                 fighter,
-                cpu: None,
+                cpu,
                 team: None,
                 tap_jump: true,
                 tag: tag.into(),
                 color,
             };
             let p1 = if saved.split_keyboard { Dev::KeysL } else { Dev::Keys };
-            let stage = d.stage(&t.stage).map_or_else(|| d.stages[0].id.clone(), |s| s.id.clone());
-            let rules = Rules { stocks: 1, stage, friendly_fire: false };
-            match Match::new(
-                &d,
-                Mode::Training,
-                vec![slot(Some(p1), fi, "P1", 0), slot(None, dummy, "Dummy", 1)],
-                rules,
-                play::seed(),
-            ) {
+            let stage = stage
+                .or_else(|| Some(t.stage.clone()))
+                .and_then(|s| d.stage(&s))
+                .map_or_else(|| d.stages[0].id.clone(), |s| s.id.clone());
+            let (mode, stocks, other) = if versus {
+                (Mode::Versus, 3, slot(None, dummy, Some(t.level), "CPU", 1))
+            } else {
+                (Mode::Training, 1, slot(None, dummy, None, "Dummy", 1))
+            };
+            let rules = Rules { stocks, stage, friendly_fire: false };
+            match Match::new(&d, mode, vec![slot(Some(p1), fi, None, "P1", 0), other], rules, play::seed()) {
                 Ok(mut m) => {
-                    m.dummy.mode = t.mode;
-                    m.dummy.level = t.level;
-                    m.apply_dummy();
+                    if !versus {
+                        m.dummy.mode = t.mode;
+                        m.dummy.level = t.level;
+                        m.apply_dummy();
+                    }
                     commands.insert_resource(Testing(data.0.clone()));
                     data.0 = d;
                     play::install(&mut commands, &mut scene, m);

@@ -110,7 +110,7 @@ The 5 TS kinds (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) ar
 `sim` (logic + data types/loading) · `render` (fighter/stage/fx drawing, shared by gameplay and editor) · `editor` (lib: fighter editor, used by `game`) · `game` (bin: app, input, menus, modes) · later `net`.
 
 ### Editor (milestone 5)
-A fighter editor reached from the title menu (**keyboard and mouse only**). Priorities: fast iteration, clarity,
+A fighter and stage editor reached from the title menu (**keyboard and mouse only**). Priorities: fast iteration, clarity,
 feel. Its own design, not a port of the TS panels.
 
 - **Layout** (egui, Barlow fonts, the ink-navy/gold palette): a top bar (fighter picker with dirty dots, undo/redo,
@@ -148,6 +148,20 @@ feel. Its own design, not a port of the TS panels.
   `to_compact_string`. Abstract parents (`base`) aren't editable in v1.
 - **Test** starts training with the edited (unsaved) data: P1 on the keyboard, a standing dummy. The pause menu's
   "Back to editor" returns with all editor state intact. After saves, leaving the editor reloads the game's content.
+- **Stage editor** (the top bar's Fighters | Stages switch). Same frame, undo, saving, dialogs and shortcut sheet;
+  `Doc<T: Content>` covers both kinds. The viewport is the real renderer on a preview `World` of the edited stage
+  (art and backdrop included; render rebuilds its static layers when `Scene::data` changes), optionally with 1–4
+  CPUs playing on it through the real sim (training rules; edits apply to the running sandbox). Direct manipulation
+  works on generic shapes (`stage_view::Shape`: rect sides/corners, segment ends, points): ground edges and
+  corners, platforms (move, resize ends; add, duplicate, delete), spawns (slot numbers in player colors, click the
+  facing arrow to flip) and respawns (platform and start height), blast and camera bounds as dashed rects, the
+  ledge zones (rim sets the radius). Default snapping is whole pixels, Shift (or the Grid toggle) snaps to the grid,
+  Alt is 0.1 px. Symmetry mirrors edits around `width / 2`: a dragged part's mirror partner (found by geometry) gets
+  the mirror image, and a centred part stays centred. The inspector is hand-made for geometry and uses schema forms
+  (with colour pickers) for art and the backdrop. Problems are the loader's `check_stage`; notes flag legal but
+  likely-wrong setups (fewer than 8 spawns, spawns in the air, geometry past the blast zone, KOs off camera). New
+  stages copy a template stage (unsaved edits included) as a whole file; only never-saved stages can change id.
+  Test plays training or a 3-stock match vs a CPU on the stage; results and pause return to the editor.
 
 
 ### Rendering (milestone 3)

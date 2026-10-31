@@ -186,7 +186,8 @@ fn resolve(id: &str, raw: &BTreeMap<String, (String, Value)>, chain: &mut Vec<St
     Ok(base)
 }
 
-fn check_stage(file: &str, s: &Stage) -> Result<(), ContentError> {
+/// Checks serde can't do on a stage. [`load`] runs these; the editor runs them on every edit.
+pub fn check_stage(file: &str, s: &Stage) -> Result<(), ContentError> {
     positive(file, "width", s.width)?;
     positive(file, "height", s.height)?;
     positive(file, "ground.underDepth", s.ground.under_depth)?;

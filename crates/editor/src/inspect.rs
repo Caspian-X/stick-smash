@@ -51,7 +51,7 @@ const DIRS: [(LaunchDir, &str); 3] =
 const AIRS: [(AirControl, &str); 3] =
     [(AirControl::Attack, "attack"), (AirControl::Aerial, "aerial"), (AirControl::UpSpecial, "upSpecial")];
 
-fn combo<T: PartialEq + Clone>(
+pub(crate) fn combo<T: PartialEq + Clone>(
     ui: &mut egui::Ui,
     id: impl std::hash::Hash + std::fmt::Debug,
     v: &mut T,
@@ -64,7 +64,7 @@ fn combo<T: PartialEq + Clone>(
         }
     });
 }
-fn row(ui: &mut egui::Ui, label: &str, tip: &str, add: impl FnOnce(&mut egui::Ui)) {
+pub(crate) fn row(ui: &mut egui::Ui, label: &str, tip: &str, add: impl FnOnce(&mut egui::Ui)) {
     let r = ui.add(egui::Label::new(RichText::new(label).color(DIM)).truncate());
     if !tip.is_empty() {
         r.on_hover_text(tip);
@@ -73,21 +73,21 @@ fn row(ui: &mut egui::Ui, label: &str, tip: &str, add: impl FnOnce(&mut egui::Ui
     ui.end_row();
 }
 /// A numeric field at the inspector's standard width.
-fn drag(ui: &mut egui::Ui, v: DragValue) -> egui::Response {
+pub(crate) fn drag(ui: &mut egui::Ui, v: DragValue) -> egui::Response {
     ui.add_sized([style::NUM_W, ui.spacing().interact_size.y], v)
 }
-fn num(ui: &mut egui::Ui, label: &str, tip: &str, v: &mut f64, speed: f64) {
+pub(crate) fn num(ui: &mut egui::Ui, label: &str, tip: &str, v: &mut f64, speed: f64) {
     row(ui, label, tip, |ui| drop(drag(ui, DragValue::new(v).speed(speed).max_decimals(3))));
 }
-fn int(ui: &mut egui::Ui, label: &str, tip: &str, v: &mut u32) {
+pub(crate) fn int(ui: &mut egui::Ui, label: &str, tip: &str, v: &mut u32) {
     row(ui, label, tip, |ui| drop(drag(ui, DragValue::new(v).speed(0.2))));
 }
 /// A small frameless icon or text button, always with a tooltip.
-fn mini(ui: &mut egui::Ui, text: &str, color: egui::Color32, tip: &str) -> bool {
+pub(crate) fn mini(ui: &mut egui::Ui, text: &str, color: egui::Color32, tip: &str) -> bool {
     ui.add(egui::Button::new(RichText::new(text).color(color).size(12.)).frame(false)).on_hover_text(tip).clicked()
 }
 /// An optional value: when set, its editor and a ✖ to clear it; when unset, a dim "— `unset`" and "+ set".
-fn optional<T>(
+pub(crate) fn optional<T>(
     ui: &mut egui::Ui,
     v: &mut Option<T>,
     unset: &str,
@@ -109,7 +109,7 @@ fn optional<T>(
         }
     });
 }
-fn opt_num(ui: &mut egui::Ui, label: &str, tip: &str, v: &mut Option<f64>, default: f64, unset: &str) {
+pub(crate) fn opt_num(ui: &mut egui::Ui, label: &str, tip: &str, v: &mut Option<f64>, default: f64, unset: &str) {
     row(ui, label, tip, |ui| {
         optional(ui, v, unset, || default, |ui, x| drop(drag(ui, DragValue::new(x).speed(0.1).max_decimals(3))));
     });
@@ -117,13 +117,13 @@ fn opt_num(ui: &mut egui::Ui, label: &str, tip: &str, v: &mut Option<f64>, defau
 fn opt_int(ui: &mut egui::Ui, label: &str, tip: &str, v: &mut Option<u32>, default: u32, unset: &str) {
     row(ui, label, tip, |ui| optional(ui, v, unset, || default, |ui, x| drop(drag(ui, DragValue::new(x).speed(0.2)))));
 }
-fn check(ui: &mut egui::Ui, label: &str, tip: &str, v: &mut bool) {
+pub(crate) fn check(ui: &mut egui::Ui, label: &str, tip: &str, v: &mut bool) {
     row(ui, label, tip, |ui| drop(ui.checkbox(v, "")));
 }
-fn grid(ui: &mut egui::Ui, id: impl std::hash::Hash + std::fmt::Debug, add: impl FnOnce(&mut egui::Ui)) {
+pub(crate) fn grid(ui: &mut egui::Ui, id: impl std::hash::Hash + std::fmt::Debug, add: impl FnOnce(&mut egui::Ui)) {
     egui::Grid::new(id).num_columns(2).spacing([10., 5.]).min_col_width(style::LABEL_W).show(ui, add);
 }
-fn section(ui: &mut egui::Ui, title: &str, open: bool, add: impl FnOnce(&mut egui::Ui)) {
+pub(crate) fn section(ui: &mut egui::Ui, title: &str, open: bool, add: impl FnOnce(&mut egui::Ui)) {
     ui.add_space(2.);
     egui::CollapsingHeader::new(RichText::new(title).family(style::label()).size(16.).color(STAR))
         .default_open(open)
@@ -131,7 +131,7 @@ fn section(ui: &mut egui::Ui, title: &str, open: bool, add: impl FnOnce(&mut egu
 }
 
 /// Problems whose path is `prefix` or inside it, shown in place.
-fn errs(ui: &mut egui::Ui, errors: &[ContentError], prefix: &str) {
+pub(crate) fn errs(ui: &mut egui::Ui, errors: &[ContentError], prefix: &str) {
     for e in errors.iter().filter(|e| under(&e.path, prefix)) {
         let rest = e.path.strip_prefix(prefix).unwrap_or("").trim_start_matches('.');
         let at = if rest.is_empty() { String::new() } else { format!("{rest}: ") };
@@ -143,10 +143,10 @@ fn errs(ui: &mut egui::Ui, errors: &[ContentError], prefix: &str) {
         );
     }
 }
-fn under(path: &str, prefix: &str) -> bool {
+pub(crate) fn under(path: &str, prefix: &str) -> bool {
     path == prefix || path.strip_prefix(prefix).is_some_and(|r| r.starts_with('.') || r.starts_with('['))
 }
-fn has_err(errors: &[ContentError], prefix: &str) -> bool {
+pub(crate) fn has_err(errors: &[ContentError], prefix: &str) -> bool {
     errors.iter().any(|e| under(&e.path, prefix))
 }
 fn d(def: &str, key: &str) -> String {

@@ -1,7 +1,7 @@
 //! Schema-driven forms for data without a hand-made inspector (projectiles, attachments, effects, style, AI,
-//! animations, a phase's remaining fields). Field help, enum choices, optional fields and new-item templates come
-//! from the fighter JSON schema; values round-trip through serde, so an edit that doesn't parse stays a draft
-//! (shown in red) instead of reaching the fighter.
+//! animations, a phase's remaining fields; stage art and background). Field help, enum choices, optional fields and
+//! new-item templates come from the JSON schemas; values round-trip through serde, so an edit that doesn't parse
+//! stays a draft (shown in red) instead of reaching the content.
 
 use std::sync::LazyLock;
 
@@ -12,8 +12,35 @@ use serde_json::{Map, Value};
 
 use crate::style::{self, DIM, FAINT, GOLD, RED, STAR};
 
+/// The fighter schema, with the stage schema's definitions added as `stage.<Name>` (and the stage root as
+/// `stage.Stage`), so one root resolves every `$ref`.
 static SCHEMA: LazyLock<Value> = LazyLock::new(|| {
-    serde_json::from_str(include_str!("../../../assets/schema/fighter.schema.json")).expect("fighter schema parses")
+    fn rewrite(v: &mut Value) {
+        match v {
+            Value::Object(m) => {
+                if let Some(Value::String(r)) = m.get_mut("$ref")
+                    && let Some(n) = r.strip_prefix("#/$defs/")
+                {
+                    *r = format!("#/$defs/stage.{n}");
+                }
+                m.values_mut().for_each(rewrite);
+            }
+            Value::Array(a) => a.iter_mut().for_each(rewrite),
+            _ => {}
+        }
+    }
+    let mut f: Value = serde_json::from_str(include_str!("../../../assets/schema/fighter.schema.json"))
+        .expect("fighter schema parses");
+    let mut st: Value =
+        serde_json::from_str(include_str!("../../../assets/schema/stage.schema.json")).expect("stage schema parses");
+    rewrite(&mut st);
+    let st_defs = st.as_object_mut().and_then(|m| m.shift_remove("$defs")).unwrap_or_default();
+    let defs = f.get_mut("$defs").and_then(Value::as_object_mut).expect("fighter schema has $defs");
+    for (k, v) in st_defs.as_object().into_iter().flatten() {
+        defs.insert(format!("stage.{k}"), v.clone());
+    }
+    defs.insert("stage.Stage".into(), st);
+    f
 });
 static NULL: Value = Value::Null;
 
@@ -255,11 +282,12 @@ fn hex(t: &str) -> Option<[u8; 3]> {
 fn array(ui: &mut egui::Ui, id: Id, s: &Value, a: &mut Vec<Value>, depth: usize) {
     let items = s.get("items").unwrap_or(&NULL);
     let fixed = s.get("minItems").is_some() && s.get("minItems") == s.get("maxItems");
-    // Short numeric tuples (points, ranges, `[frame, value]` keys) edit inline.
-    if fixed && a.len() <= NUMERIC_TUPLE && a.iter().all(Value::is_number) {
+    // Short tuples (points, ranges, `[frame, value]` keys, `[y, color]` stops) edit inline.
+    if fixed && a.len() <= NUMERIC_TUPLE && a.iter().all(|x| x.is_number() || x.is_string()) {
+        let prefix = s.get("prefixItems").and_then(Value::as_array);
         ui.horizontal(|ui| {
             for (i, x) in a.iter_mut().enumerate() {
-                value(ui, id.with(i), items, x, depth + 1);
+                value(ui, id.with(i), prefix.and_then(|p| p.get(i)).unwrap_or(items), x, depth + 1);
             }
         });
         return;
@@ -366,7 +394,7 @@ fn object(ui: &mut egui::Ui, id: Id, s: &Value, m: &mut Map<String, Value>, dept
             ui.horizontal(|ui| {
                 let x = m.get_mut(&k).expect("key");
                 let nested = matches!(x, Value::Object(_))
-                    || matches!(x, Value::Array(a) if !a.iter().all(Value::is_number) || a.len() > NUMERIC_TUPLE);
+                    || matches!(x, Value::Array(a) if !a.iter().all(|x| x.is_number() || x.is_string()) || a.len() > NUMERIC_TUPLE);
                 if nested && depth > 0 {
                     egui::CollapsingHeader::new(RichText::new(summary(x, resolve(ps, x))).color(FAINT))
                         .id_salt(id.with(&k))

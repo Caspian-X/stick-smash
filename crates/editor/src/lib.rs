@@ -1,15 +1,25 @@
-//! Fighter editor: a mode of the game, reached from the main menu (keyboard and mouse). Browse a fighter's moves,
-//! throws and poses; scrub a real-sim preview; edit hitboxes, phases, poses and stats directly; undo; validate with
-//! the real loader; save into the user content dir with `extends` kept intact; test in training.
+//! Content editor: a mode of the game, reached from the main menu (keyboard and mouse), with two halves sharing one
+//! frame (top bar, undo, saving, dialogs, toasts, shortcut sheet):
+//! - **Fighters**: browse a fighter's moves, throws and poses; scrub a real-sim preview; edit hitboxes, phases,
+//!   poses and stats directly; test in training.
+//! - **Stages**: drag the ground, platforms, spawns and bounds over the real rendered stage (snapping, symmetry), a
+//!   sandbox of CPUs playing on it, art through schema forms; test in training or a match.
 //!
-//! The model (`doc`, `preview`, `view`) is plain Rust; the egui layer is `ui` (frame, top bar, shortcuts, dialogs),
-//! `browser`, `viewport`, `timeline`, `inspect` and `form` (schema-driven forms). See docs/DESIGN.md "Editor".
+//! Both undo, validate with the real loader and save into the user content dir, patching only what changed.
+//! The model (`doc`, `preview`, `view`, `stage_view`) is plain Rust; the egui layer is `ui` (frame, top bar,
+//! shortcuts, dialogs), `browser`, `viewport`, `timeline`, `inspect`, `form` (schema-driven forms) and the stage
+//! editor's `stage_ed` (state, sandbox, actions), `stage_port` (viewport) and `stage_panels` (browser, inspector).
+//! See docs/DESIGN.md "Editor".
 
 mod browser;
 pub mod doc;
 mod form;
 mod inspect;
 pub mod preview;
+pub mod stage_ed;
+mod stage_panels;
+mod stage_port;
+pub mod stage_view;
 mod style;
 mod timeline;
 mod ui;
@@ -23,8 +33,9 @@ use bevy::prelude::*;
 use bevy_egui::{EguiContexts, EguiPrimaryContextPass, egui};
 use sim::GameData;
 use sim::data::moves::{Move, Moves, Throw, Throws};
+use sim::data::stage::Stage;
 
-use doc::{Files, Workspace};
+use doc::{Content, Files, Kind, Workspace};
 use preview::{Run, Setup, Subject};
 use view::{Cam, Hit, Port};
 
@@ -48,8 +59,17 @@ pub enum Request {
     Back,
     /// Quit the game (after the unsaved-changes prompt).
     Quit,
-    /// Play training with this (unsaved) content and fighter, then come back.
-    Test { data: Arc<GameData>, fighter: String },
+    /// Play with this (unsaved) content, then come back: training, or a match against a CPU (`versus`). `None`
+    /// fighter or stage: the player's usual pick.
+    Test { data: Arc<GameData>, fighter: Option<String>, stage: Option<String>, versus: bool },
+}
+
+/// Which half of the editor is showing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum Mode {
+    #[default]
+    Fighters,
+    Stages,
 }
 
 #[derive(Resource, Default)]
@@ -78,6 +98,17 @@ pub enum Cmd {
     /// Close any dialog.
     Dismiss,
     Undo,
+    Mode(Mode),
+    Stage(String),
+    /// Select a stage part (and show its section).
+    Part(Option<stage_view::Part>),
+    Section(stage_ed::Section),
+    /// An undoable edit of the current stage.
+    EditStage(fn(&mut Stage)),
+    /// CPUs in the stage sandbox (0 = off).
+    Sandbox(usize),
+    Grid(bool),
+    Symmetry(bool),
 }
 
 /// A modal dialog.
@@ -101,6 +132,19 @@ pub enum Dialog {
     CopyMove {
         from: String,
         to: Option<String>,
+    },
+    /// A new stage copied from `from` (also duplicate).
+    NewStage {
+        id: String,
+        name: String,
+        from: String,
+        error: Option<String>,
+    },
+    RenameStage {
+        id: String,
+        new_id: String,
+        name: String,
+        error: Option<String>,
     },
 }
 
@@ -218,6 +262,9 @@ pub(crate) enum Drag {
 #[derive(Resource)]
 pub struct Editor {
     pub ws: Workspace,
+    pub mode: Mode,
+    /// The stage editor's state.
+    pub st: stage_ed::StageEd,
     /// Problems with other content at load (shown, not fatal).
     pub load_errors: Vec<String>,
     pub cur: String,
@@ -261,8 +308,11 @@ impl Editor {
         let (ws, errors) =
             Workspace::new(files).map_err(|e| e.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n"))?;
         let cur = ws.data.fighters.first().ok_or("no playable fighters")?.id.clone();
+        let stage = ws.data.stages.first().ok_or("no stages")?.id.clone();
         let mut ed = Editor {
             ws,
+            mode: Mode::Fighters,
+            st: stage_ed::StageEd::new(&stage),
             load_errors: errors.iter().map(ToString::to_string).collect(),
             cur: String::new(),
             subject: Subject::Move("jab".into()),
@@ -297,7 +347,48 @@ impl Editor {
             config,
         };
         ed.open(&cur);
+        ed.open_stage(&stage);
         Ok(ed)
+    }
+
+    pub fn stage_doc(&mut self) -> &mut doc::Doc<Stage> {
+        let id = self.st.cur.clone();
+        self.ws.stage(&id).expect("current stage is loaded")
+    }
+
+    pub fn open_stage(&mut self, id: &str) {
+        if self.ws.stage(id).is_none() {
+            return;
+        }
+        if self.st.cur != id {
+            self.toasts.retain(|t| t.error);
+            self.st.sel = None;
+            self.st.reframe = true;
+            self.problems.clear();
+        }
+        self.st.cur = id.into();
+        self.st.stale = true;
+    }
+
+    /// The kind and id of the document being edited.
+    pub fn current(&self) -> (Kind, String) {
+        match self.mode {
+            Mode::Fighters => (Kind::Fighter, self.cur.clone()),
+            Mode::Stages => (Kind::Stage, self.st.cur.clone()),
+        }
+    }
+
+    pub fn set_mode(&mut self, m: Mode) {
+        if m != self.mode {
+            self.mode = m;
+            self.problems.clear();
+            self.toasts.retain(|t| t.error);
+            self.dialog = None;
+            self.stale = true;
+            self.st.stale = true;
+            self.shown = None;
+            self.st.shown = false;
+        }
     }
 
     pub fn doc(&mut self) -> &mut doc::Doc {
@@ -387,43 +478,53 @@ impl Editor {
     }
 
     pub fn save(&mut self) -> bool {
-        let id = self.cur.clone();
-        self.save_id(&id)
+        let (kind, id) = self.current();
+        self.save_id(kind, &id)
     }
 
-    /// Saves every fighter with unsaved changes; false if any was refused.
+    /// Saves every fighter and stage with unsaved changes; false if any was refused.
     pub fn save_all(&mut self) -> bool {
-        let ids: Vec<String> = self.ws.docs.values().filter(|d| d.dirty()).map(|d| d.id.clone()).collect();
         let mut ok = true;
-        for id in ids {
-            ok &= self.save_id(&id);
+        for (kind, id) in self.ws.dirty() {
+            ok &= self.save_id(kind, &id);
         }
         ok
     }
 
-    fn save_id(&mut self, id: &str) -> bool {
+    /// Where saves go.
+    pub fn save_dir(&self) -> Option<PathBuf> {
+        if self.to_assets { Some(self.config.assets.clone()) } else { self.config.user_dir.clone() }
+    }
+
+    fn save_id(&mut self, kind: Kind, id: &str) -> bool {
+        match kind {
+            Kind::Fighter => self.save_as::<sim::data::Fighter>(id),
+            Kind::Stage => self.save_as::<Stage>(id),
+        }
+    }
+
+    fn save_as<T: Content>(&mut self, id: &str) -> bool {
         let id = id.to_string();
-        let dir = if self.to_assets { Some(self.config.assets.clone()) } else { self.config.user_dir.clone() };
-        let Some(dir) = dir else {
+        let Some(dir) = self.save_dir() else {
             self.say("Saving is disabled (no user content dir)", true);
             return false;
         };
-        match self.ws.prepare_save(&id) {
+        match self.ws.prepare_save::<T>(&id) {
             doc::Saved::Refused(errors) => {
                 let n = errors.len().max(1);
                 self.say(format!("{id} not saved: {n} problem{}", if n == 1 { "" } else { "s" }), true);
-                if id == self.cur {
+                if self.current() == (T::KIND, id.clone()) {
                     self.problems = errors;
                 }
                 false
             }
             doc::Saved::Ok { text, data } => {
-                let path = dir.join(doc::fighter_path(&id));
+                let path = dir.join(T::path(&id));
                 let res =
                     path.parent().map_or(Ok(()), std::fs::create_dir_all).and_then(|()| std::fs::write(&path, &text));
                 match res {
                     Ok(()) => {
-                        self.ws.saved(&id, text, data);
+                        self.ws.saved::<T>(&id, text, data);
                         self.problems.clear();
                         self.say(format!("✔ Saved {}", path.display()), false);
                         true
@@ -450,6 +551,8 @@ fn enter(mut commands: Commands, ed: Option<ResMut<Editor>>, config: Option<Res<
         Some(mut ed) => {
             ed.stale = true;
             ed.shown = None;
+            ed.st.stale = true;
+            ed.st.shown = false;
         }
         None => match Editor::new(config.clone()) {
             Ok(ed) => commands.insert_resource(ed),
@@ -467,6 +570,7 @@ fn exit(mut scene: ResMut<render::Scene>, mut ctx: EguiContexts, ed: Option<ResM
     }
     if let Some(mut ed) = ed {
         ed.shown = None;
+        ed.st.shown = false;
         ed.playing = false;
         ed.dialog = None;
     }
@@ -533,6 +637,17 @@ fn frame(
             Cmd::Dialog(d) => ed.dialog = Some(d),
             Cmd::Dismiss => ed.dialog = None,
             Cmd::Undo => ui::undo(&mut ed, false),
+            Cmd::Mode(m) => ed.set_mode(m),
+            Cmd::Stage(id) => ed.open_stage(&id),
+            Cmd::Part(p) => ed.st.select(p),
+            Cmd::Section(s) => ed.st.section = s,
+            Cmd::EditStage(f) => {
+                ed.stage_doc().edit(f);
+                ed.st.stale = true;
+            }
+            Cmd::Sandbox(n) => ed.st.set_sandbox(n),
+            Cmd::Grid(on) => ed.st.grid = on,
+            Cmd::Symmetry(on) => ed.st.symmetry = on,
         }
     }
     ui::run(ctx, &mut ed, &mut scene, time.delta_secs(), &mut out);
@@ -559,6 +674,7 @@ pub(crate) fn tests_fighter() -> sim::world::Fighter {
 mod tests {
     use super::*;
     use preview::Section;
+    use stage_view::Part;
 
     /// Drives the whole egui layer headlessly through every kind of subject and dialog, a few frames each.
     #[test]
@@ -568,6 +684,7 @@ mod tests {
         let mut ed = Editor::new(config).unwrap();
         let mut scene = render::Scene::new(ed.ws.data.clone());
         let mut out = Outbox::default();
+        let mut leave = Outbox::default();
         let ctx = egui::Context::default();
         ctx.run_ui(Default::default(), |_| {}).textures_delta.clear();
         style::install_fonts(&ctx, &assets);
@@ -591,7 +708,7 @@ mod tests {
             subjects.extend(["f", "b", "u", "d"].map(|k| Subject::Throw(k.into())));
             subjects.push(Subject::Fighter);
             subjects.extend(Section::ALL.map(Subject::Data));
-            subjects.extend(ed.ws.docs[id].fighter.poses.keys().take(2).map(|n| Subject::Pose(n.clone())));
+            subjects.extend(ed.ws.docs[id].item.poses.keys().take(2).map(|n| Subject::Pose(n.clone())));
             for s in subjects {
                 ed.select(s);
                 ed.hitbox = Some(0);
@@ -623,11 +740,46 @@ mod tests {
             ed.dialog = Some(d);
             frame(&mut ed);
         }
-        ed.leave(false, &mut out);
+        ed.leave(false, &mut leave);
         assert!(matches!(ed.dialog, Some(Dialog::Leave { quit: false })), "unsaved edits ask before leaving");
         ed.dialog = None;
         ed.doc().revert();
-        ed.leave(false, &mut out);
-        assert!(matches!(out.request, Some(Request::Back)));
+        // The stage editor: every section, selections, the sandbox, aids, dialogs.
+        ed.set_mode(Mode::Stages);
+        let id = ed.st.cur.clone();
+        for sec in stage_ed::Section::ALL {
+            ed.st.section = sec;
+            frame(&mut ed);
+        }
+        for p in [Part::Ground, Part::Platform(1), Part::Spawn(2), Part::Respawn(0), Part::Ledge, Part::Blast] {
+            ed.st.select(Some(p));
+            ed.st.grid = true;
+            ed.st.symmetry = true;
+            frame(&mut ed);
+        }
+        ed.st.set_sandbox(2);
+        frame(&mut ed);
+        assert!(ed.st.world.as_ref().is_some_and(|w| w.fighters.len() == 2));
+        stage_ed::add_platform(&mut ed);
+        ed.stage_doc().edit(|s| s.spawns.truncate(3));
+        frame(&mut ed);
+        assert!(ed.ws.unsaved().iter().any(|n| n.contains("stage")));
+        for d in [
+            Dialog::Leave { quit: false },
+            Dialog::NewStage { id: "x".into(), name: "X".into(), from: id.clone(), error: Some("e".into()) },
+            Dialog::RenameStage { id: id.clone(), new_id: id.clone(), name: "Y".into(), error: None },
+        ] {
+            ed.dialog = Some(d);
+            frame(&mut ed);
+        }
+        ed.dialog = None;
+        ed.help = true;
+        frame(&mut ed);
+        ed.leave(false, &mut leave);
+        assert!(matches!(ed.dialog, Some(Dialog::Leave { quit: false })), "unsaved stages ask too");
+        ed.dialog = None;
+        ed.stage_doc().revert();
+        ed.leave(false, &mut leave);
+        assert!(matches!(leave.request, Some(Request::Back)));
     }
 }
