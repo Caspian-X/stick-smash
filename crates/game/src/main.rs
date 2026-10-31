@@ -63,6 +63,28 @@ fn main() {
         .iter()
         .position(|a| a == "--screenshot")
         .map(|i| PathBuf::from(args.get(i + 1).map_or("screenshots", |s| s.as_str())));
+    let filter = args
+        .iter()
+        .position(|a| a == "--shots")
+        .map(|i| {
+            if shot_dir.is_none() {
+                eprintln!("--shots requires --screenshot <dir>");
+                std::process::exit(1);
+            }
+            args.get(i + 1)
+                .unwrap_or_else(|| {
+                    eprintln!("--shots requires comma-separated section names: {}", shots::SECTIONS.join(", "));
+                    std::process::exit(1);
+                })
+                .as_str()
+        })
+        .filter(|s| !s.is_empty());
+    let script = shot_dir.as_ref().map(|dir| {
+        shots::Script::tour(dir.clone(), filter).unwrap_or_else(|e| {
+            eprintln!("{e}");
+            std::process::exit(1);
+        })
+    });
     let assets = PathBuf::from("assets");
     let assets_root = assets.clone();
     let mut roots = vec![assets.clone()];
@@ -142,10 +164,14 @@ fn main() {
     if let Some(dir) = shot_dir {
         fs::create_dir_all(&dir).expect("create screenshot dir");
         play::FIXED_SEED.store(7, std::sync::atomic::Ordering::Relaxed);
-        app.insert_resource(shots::Script::tour(dir))
-            .add_systems(Update, shots::run.before(menu::update).before(select::update).before(hud::pause));
+        app.insert_resource(script.expect("screenshot script")).add_systems(
+            Update,
+            shots::run.after(play::attract).before(menu::update).before(select::update).before(hud::pause),
+        );
     }
-    app.run();
+    if !app.run().is_success() {
+        std::process::exit(1);
+    }
 }
 
 /// UI is laid out for a 720-pixel-high window and scaled to the real one.

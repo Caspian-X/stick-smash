@@ -30,9 +30,9 @@ check: lint test
 bless:
     BLESS=1 cargo test -p sim --test content
 
-# Save screenshots of a CPU match for visual checks
-shots dir="/tmp/stick-smash-shots":
-    cargo run -p game -- --screenshot {{dir}}
+# Save all screenshot sections, or a comma-separated subset
+shots dir="/tmp/stick-smash-shots" sections="":
+    cargo run -p game -- --screenshot "{{dir}}" --shots "{{sections}}"
 
 # Only the TS trace comparison (optionally filtered by fixture name)
 traces filter="":

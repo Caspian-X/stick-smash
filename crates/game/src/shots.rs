@@ -1,18 +1,18 @@
-//! `--screenshot <dir>`: a scripted tour through the real flow, driven by bot devices pressing buttons like
-//! players would (title, settings, controls, a 4-player versus match with CPUs, pause, results, training).
-//! Matches fast-forward between shots. Saves PNGs, then exits.
+//! Independent screenshot sections: `--screenshot <dir> [--shots menus,match]`.
+//! Each section resets through title before injecting its setup. Navigation still uses real bot input.
 
-use std::path::PathBuf;
+use std::{path::PathBuf, time::Instant};
 
 use bevy::prelude::*;
 use bevy::render::view::screenshot::{Capturing, Screenshot, save_to_disk};
 use render::Framing;
 use sim::world::State as FState;
 
-use crate::input::{Act, Devices};
+use crate::input::{Act, Act::*, Dev, Devices};
 use crate::play::{self, Match, Mode, Rules, Slot};
 use crate::select::Select;
 use crate::{Data, Screen};
+use editor::{Cmd, Dialog};
 
 /// Editor tour frame on the swordfighter's forward smash.
 const SHOT_FRAME: usize = 16;
@@ -20,6 +20,13 @@ const SHOT_FRAME: usize = 16;
 type Pred = fn(&Match, &Framing, Screen) -> bool;
 
 pub enum Step {
+    Home,
+    Reset,
+    OpenEditor,
+    Select(Mode, usize),
+    Match(i32),
+    /// Simulate recorded game ticks in bounded batches, stopping at the exact predicate.
+    Fast(Pred, u32),
     Set(u8, Act, bool),
     Wait(u32),
     /// Run the match fast until the condition holds (or `max` ticks pass).
@@ -33,14 +40,37 @@ pub enum Step {
     Versus(&'static str),
 }
 
+pub const SECTIONS: &[&str] =
+    &["menus", "fighter-editor", "stage-editor", "select", "match", "results-replay", "training", "stages"];
+
+struct Section {
+    name: &'static str,
+    steps: Vec<Step>,
+}
+
 #[derive(Resource)]
 pub struct Script {
     dir: PathBuf,
-    steps: Vec<Step>,
+    sections: Vec<Section>,
+    section: usize,
     at: usize,
     wait: u32,
     budget: u32,
     capturing: bool,
+    started: Instant,
+    failures: Vec<&'static str>,
+}
+
+impl Section {
+    fn new(name: &'static str, mut steps: Vec<Step>) -> Self {
+        let mut setup = vec![Step::Home, Step::Wait(4), Step::Reset, Step::Wait(4)];
+        setup.append(&mut steps);
+        Self { name, steps: setup }
+    }
+}
+
+fn ed(v: &mut Vec<Step>, c: editor::Cmd) {
+    v.push(Step::Editor(c));
 }
 
 fn press(v: &mut Vec<Step>, bot: u8, act: Act) {
@@ -72,313 +102,352 @@ fn offscreen(m: &Match, fr: &Framing, _: Screen) -> bool {
         && w.fighters.iter().filter(|f| f.dmg > 20.).count() >= 2
 }
 
+fn menus() -> Vec<Step> {
+    let mut v = vec![Step::Wait(40)];
+    shot(&mut v, "01-title");
+    for _ in 0..4 {
+        press(&mut v, 0, Down);
+    }
+    press(&mut v, 0, Attack);
+    shot(&mut v, "02-settings");
+    press(&mut v, 0, Special);
+    for _ in 0..3 {
+        press(&mut v, 0, Down);
+    }
+    press(&mut v, 0, Attack);
+    press(&mut v, 0, Down);
+    press(&mut v, 0, Down);
+    shot(&mut v, "03-controls");
+    press(&mut v, 0, Special);
+    v
+}
+
+fn fighter_editor() -> Vec<Step> {
+    let mut v = Vec::new();
+    v.extend([Step::OpenEditor, Step::Wait(20)]);
+    {
+        use editor::preview::{Section, Subject};
+        ed(&mut v, Cmd::Fighter("swordfighter".into()));
+        ed(&mut v, Cmd::Subject(Subject::Move("fsmash".into())));
+        ed(&mut v, Cmd::Dummy(true));
+        v.push(Step::Wait(4));
+        ed(&mut v, Cmd::Frame(SHOT_FRAME));
+        ed(&mut v, Cmd::Hitbox(Some(0)));
+        shot(&mut v, "03b-editor-move");
+        ed(&mut v, Cmd::Onion(true));
+        ed(&mut v, Cmd::Frame(SHOT_FRAME - 8));
+        ed(&mut v, Cmd::Hitbox(None));
+        shot(&mut v, "03b2-editor-onion");
+        ed(&mut v, Cmd::Onion(false));
+        // A broken transition: inline problem, dirty markers, then the leave prompt.
+        ed(
+            &mut v,
+            Cmd::Edit(|f| {
+                f.moves.fsmash.phases[0].transitions.push(sim::data::Transition {
+                    on: sim::data::Trigger::Timeout,
+                    cond: None,
+                    from: None,
+                    to: "nowhere".into(),
+                    lag: None,
+                })
+            }),
+        );
+        shot(&mut v, "03b3-editor-problem");
+        ed(&mut v, Cmd::Back);
+        shot(&mut v, "03b4-editor-leave");
+        ed(&mut v, Cmd::Dismiss);
+        ed(&mut v, Cmd::Undo);
+        shot(&mut v, "03b4b-editor-toast");
+        // Let the toast expire (it lives a few seconds) so the next shots show only what they're about.
+        v.push(Step::Wait(800));
+        ed(&mut v, Cmd::Help(true));
+        shot(&mut v, "03b5-editor-help");
+        ed(&mut v, Cmd::Help(false));
+        ed(&mut v, Cmd::Subject(Subject::Data(Section::Attachments)));
+        ed(&mut v, Cmd::Search("a".into()));
+        shot(&mut v, "03b6-editor-attachments");
+        ed(&mut v, Cmd::Search(String::new()));
+        ed(&mut v, Cmd::Fighter("brawler".into()));
+        ed(&mut v, Cmd::Subject(Subject::Data(Section::Projectiles)));
+        shot(&mut v, "03b7-editor-projectiles");
+        ed(&mut v, Cmd::Subject(Subject::Pose("stand".into())));
+        shot(&mut v, "03c-editor-pose");
+        ed(&mut v, Cmd::Subject(Subject::Fighter));
+        ed(
+            &mut v,
+            Cmd::Dialog(Dialog::NewFighter {
+                id: "ninja".into(),
+                name: "Ninja".into(),
+                extends: "brawler".into(),
+                error: None,
+            }),
+        );
+        shot(&mut v, "03d-editor-new-fighter");
+        ed(&mut v, Cmd::Dismiss);
+        shot(&mut v, "03e-editor-stats");
+    }
+    v
+}
+
+fn stage_editor() -> Vec<Step> {
+    let mut v = Vec::new();
+    v.extend([Step::OpenEditor, Step::Wait(20)]);
+    {
+        use editor::stage_ed::Section as S;
+        use editor::stage_view::Part;
+        ed(&mut v, Cmd::Mode(editor::Mode::Stages));
+        ed(&mut v, Cmd::Stage("arena".into()));
+        shot(&mut v, "03f-stage-overview");
+        ed(&mut v, Cmd::Grid(true));
+        ed(&mut v, Cmd::Symmetry(true));
+        ed(&mut v, Cmd::Part(Some(Part::Platform(0))));
+        ed(
+            &mut v,
+            Cmd::EditStage(|s| {
+                s.platforms[0].y -= 30.;
+                s.platforms[1].y -= 30.;
+            }),
+        );
+        shot(&mut v, "03g-stage-platform");
+        ed(&mut v, Cmd::Undo);
+        ed(&mut v, Cmd::Grid(false));
+        ed(&mut v, Cmd::Symmetry(false));
+        ed(&mut v, Cmd::EditStage(|s| s.spawns.truncate(6)));
+        ed(&mut v, Cmd::Part(Some(Part::Spawn(1))));
+        shot(&mut v, "03h-stage-spawns");
+        ed(&mut v, Cmd::Undo);
+        v.push(Step::Wait(800));
+        ed(&mut v, Cmd::Part(Some(Part::Blast)));
+        shot(&mut v, "03i-stage-bounds");
+        ed(&mut v, Cmd::Part(None));
+        ed(&mut v, Cmd::Section(S::Art));
+        shot(&mut v, "03j-stage-art");
+        ed(&mut v, Cmd::Section(S::Background));
+        shot(&mut v, "03k-stage-background");
+        ed(&mut v, Cmd::Section(S::Overview));
+        ed(&mut v, Cmd::Sandbox(3));
+        v.push(Step::Wait(150));
+        shot(&mut v, "03l-stage-sandbox");
+        ed(&mut v, Cmd::Sandbox(0));
+        ed(
+            &mut v,
+            Cmd::Dialog(Dialog::NewStage {
+                id: "sky-fortress".into(),
+                name: "Sky Fortress".into(),
+                from: "arena".into(),
+                error: None,
+            }),
+        );
+        shot(&mut v, "03m-stage-new");
+        ed(&mut v, Cmd::Dismiss);
+        ed(&mut v, Cmd::Help(true));
+        shot(&mut v, "03n-stage-help");
+        ed(&mut v, Cmd::Help(false));
+        // Format 2: a raised centre between two blocks (inner ledges off) and a platform on a path.
+        ed(
+            &mut v,
+            Cmd::EditStage(|s| {
+                let mut b = s.blocks[0].clone();
+                let (l, r) = (b.left, b.right);
+                let (a, z) = (l + 240., r - 240.);
+                (b.right, b.right_ledge) = (a, false);
+                let mut c = b.clone();
+                (c.left, c.right, c.top, c.left_ledge, c.right_ledge) = (a, z, b.top - 40., false, false);
+                let mut d = b.clone();
+                (d.left, d.right, d.left_ledge, d.right_ledge) = (z, r, false, true);
+                s.blocks = vec![b, c, d];
+                s.platforms[2].motion = Some(sim::data::stage::Motion {
+                    waypoints: vec![
+                        sim::data::stage::Waypoint { x: -170., y: 0., travel_ticks: 150, wait_ticks: 40 },
+                        sim::data::stage::Waypoint { x: 170., y: 0., travel_ticks: 150, wait_ticks: 40 },
+                    ],
+                    mode: sim::data::stage::PathMode::PingPong,
+                    phase: 0,
+                });
+            }),
+        );
+        ed(&mut v, Cmd::Symmetry(true));
+        ed(&mut v, Cmd::Part(Some(Part::Block(1))));
+        ed(&mut v, Cmd::Reframe);
+        shot(&mut v, "03o-stage-blocks");
+        ed(&mut v, Cmd::Symmetry(false));
+        ed(&mut v, Cmd::Part(Some(Part::Waypoint(2, 1))));
+        v.push(Step::Wait(90));
+        shot(&mut v, "03p-stage-moving");
+        ed(&mut v, Cmd::Sandbox(2));
+        v.push(Step::Wait(200));
+        shot(&mut v, "03q-stage-moving-sandbox");
+        ed(&mut v, Cmd::Sandbox(0));
+        ed(&mut v, Cmd::Undo);
+        ed(&mut v, Cmd::Part(None));
+        ed(&mut v, Cmd::Mode(editor::Mode::Fighters));
+    }
+    v
+}
+
+fn select() -> Vec<Step> {
+    let mut v = Vec::new();
+    // Versus: bot 0 opens it (and joins), bot 1 joins.
+    press(&mut v, 0, Attack);
+    press(&mut v, 1, Attack);
+    press(&mut v, 0, Right);
+    press(&mut v, 1, Right);
+    press(&mut v, 1, Right);
+    // Bot 0: down to its footer, over to "Add CPU", add two.
+    press(&mut v, 0, Down);
+    press(&mut v, 0, Down);
+    press(&mut v, 0, Right);
+    press(&mut v, 0, Attack);
+    press(&mut v, 0, Attack);
+    // Left lands on the newest CPU's level: make it hard.
+    press(&mut v, 0, Left);
+    press(&mut v, 0, Right);
+    shot(&mut v, "04-select-choosing");
+    // Back to its own card, then stocks: up into the rules.
+    press(&mut v, 0, Special);
+    press(&mut v, 1, Attack);
+    press(&mut v, 0, Attack);
+    shot(&mut v, "05-select-ready");
+    press(&mut v, 0, Start);
+    v.push(Step::Until(screen_is(Screen::Match), 10));
+    // Keep title → select → match navigation covered by real button presses.
+    v.extend([Step::Select(Mode::Versus, 8), Step::Wait(20)]);
+    shot(&mut v, "15-select-eight");
+    v
+}
+
+fn match_shots() -> Vec<Step> {
+    let mut v = Vec::new();
+    v.extend([Step::Match(3), Step::Wait(70)]);
+    shot(&mut v, "06-countdown");
+    v.push(Step::Until(|m, _, _| m.world.go_t > 0 && m.world.go_t < 40, 400));
+    shot(&mut v, "07-go");
+    v.push(Step::Until(offscreen, 5000));
+    v.push(Step::Shot("08-hud-offscreen"));
+    v.push(Step::Until(|m, _, _| m.world.fighters.iter().map(|f| f.dmg).sum::<f64>() > 200., 4000));
+    shot(&mut v, "09-hud");
+    press(&mut v, 0, Start);
+    press(&mut v, 0, Down);
+    shot(&mut v, "10-pause");
+    press(&mut v, 0, Start);
+    v.push(Step::Fast(|m, _, _| m.world.end_t > 0, 60 * 60 * 6));
+    v.push(Step::Wait(20));
+    v.push(Step::Shot("11-game"));
+    v
+}
+
+fn results_replay() -> Vec<Step> {
+    let mut v = vec![
+        Step::Match(1),
+        Step::Fast(|m, _, _| m.world.over && m.over_t >= m.data.global.render.hud.results_delay, 60 * 60 * 6),
+        Step::Until(screen_is(Screen::Results), 30),
+        Step::Wait(30),
+        Step::Shot("12-results"),
+    ];
+    for _ in 0..4 {
+        press(&mut v, 0, Right);
+    }
+    press(&mut v, 0, Attack);
+    v.push(Step::Until(screen_is(Screen::Playback), 30));
+    v.push(Step::Fast(|m, _, _| m.playback.as_ref().is_some_and(|p| p.position >= 600), 2000));
+    press(&mut v, 0, Start);
+    shot(&mut v, "12b-replay-controls");
+    press(&mut v, 0, Right);
+    press(&mut v, 0, Right);
+    press(&mut v, 0, Left);
+    press(&mut v, 0, Down);
+    press(&mut v, 0, Right);
+    shot(&mut v, "12c-replay-seek");
+    press(&mut v, 0, Special);
+    v.push(Step::Until(screen_is(Screen::Results), 30));
+    shot(&mut v, "12d-results-return");
+    v
+}
+
+fn training() -> Vec<Step> {
+    let mut v = Vec::new();
+    v.extend([Step::Select(Mode::Training, 2), Step::Wait(20)]);
+    press(&mut v, 0, Attack);
+    shot(&mut v, "13-training-select");
+    press(&mut v, 0, Start);
+    v.push(Step::Until(screen_is(Screen::Match), 10));
+    v.push(Step::Set(0, Right, true));
+    v.push(Step::Until(|m, _, _| m.world.fighters[0].x > m.world.fighters[1].x - 60., 200));
+    v.push(Step::Set(0, Right, false));
+    press(&mut v, 0, Attack);
+    v.push(Step::Until(|m, _, _| m.world.trace.as_ref().is_some_and(|t| t.done), 120));
+    press(&mut v, 0, Special);
+    v.push(Step::Until(
+        |m, _, _| {
+            m.world.fighters[0].state == FState::Attack
+                && m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.elapsed > 6)
+        },
+        60,
+    ));
+    shot(&mut v, "14-training");
+    v
+}
+
+fn stages() -> Vec<Step> {
+    let mut v = Vec::new();
+    v.extend([Step::Select(Mode::Versus, 8), Step::Wait(20)]);
+    // The other built-in stages: behind the eight select cards, then a CPU match on each.
+    const STAGES: [&str; 3] = ["citadel", "isles", "foundry"];
+    for (i, id) in STAGES.into_iter().enumerate() {
+        v.push(Step::Stage(id));
+        v.push(Step::Wait(20));
+        v.push(Step::Shot(["16a-select-citadel", "16b-select-isles", "16c-select-foundry"][i]));
+    }
+    for (i, id) in STAGES.into_iter().enumerate() {
+        v.push(Step::Versus(id));
+        v.push(Step::Until(|m, _, _| m.world.go_t > 0, 400));
+        v.push(Step::Until(|m, _, _| m.world.fighters.iter().map(|f| f.dmg).sum::<f64>() > 150., 4000));
+        shot(&mut v, ["17a-match-citadel", "17b-match-isles", "17c-match-foundry"][i]);
+        if id == "isles" {
+            // Fighters on opposite islands: the zoomed-out camera still frames both.
+            v.push(Step::Until(
+                |m, _, _| {
+                    let xs = m.world.fighters.iter().filter(|f| f.state != FState::Dead).map(|f| f.x);
+                    xs.clone().fold(f64::MIN, f64::max) - xs.fold(f64::MAX, f64::min) > 950.
+                },
+                8000,
+            ));
+            shot(&mut v, "17b2-match-isles-wide");
+        }
+    }
+    v
+}
+
 impl Script {
-    pub fn tour(dir: PathBuf) -> Self {
-        use Act::*;
-        let mut v = vec![Step::Wait(40)];
-        shot(&mut v, "01-title");
-        for _ in 0..4 {
-            press(&mut v, 0, Down);
-        }
-        press(&mut v, 0, Attack);
-        shot(&mut v, "02-settings");
-        press(&mut v, 0, Special);
-        for _ in 0..3 {
-            press(&mut v, 0, Down);
-        }
-        press(&mut v, 0, Attack);
-        press(&mut v, 0, Down);
-        press(&mut v, 0, Down);
-        shot(&mut v, "03-controls");
-        press(&mut v, 0, Special);
-        // Editor: a move with a dummy and a selected hitbox, a pose, the stats.
-        press(&mut v, 0, Down);
-        press(&mut v, 0, Down);
-        press(&mut v, 0, Attack);
-        v.push(Step::Wait(20));
-        {
-            use editor::preview::{Section, Subject};
-            use editor::{Cmd, Dialog};
-            let ed = |v: &mut Vec<Step>, c: Cmd| v.push(Step::Editor(c));
-            ed(&mut v, Cmd::Fighter("swordfighter".into()));
-            ed(&mut v, Cmd::Subject(Subject::Move("fsmash".into())));
-            ed(&mut v, Cmd::Dummy(true));
-            v.push(Step::Wait(4));
-            ed(&mut v, Cmd::Frame(SHOT_FRAME));
-            ed(&mut v, Cmd::Hitbox(Some(0)));
-            shot(&mut v, "03b-editor-move");
-            ed(&mut v, Cmd::Onion(true));
-            ed(&mut v, Cmd::Frame(SHOT_FRAME - 8));
-            ed(&mut v, Cmd::Hitbox(None));
-            shot(&mut v, "03b2-editor-onion");
-            ed(&mut v, Cmd::Onion(false));
-            // A broken transition: inline problem, dirty markers, then the leave prompt.
-            ed(
-                &mut v,
-                Cmd::Edit(|f| {
-                    f.moves.fsmash.phases[0].transitions.push(sim::data::Transition {
-                        on: sim::data::Trigger::Timeout,
-                        cond: None,
-                        from: None,
-                        to: "nowhere".into(),
-                        lag: None,
-                    })
-                }),
-            );
-            shot(&mut v, "03b3-editor-problem");
-            ed(&mut v, Cmd::Back);
-            shot(&mut v, "03b4-editor-leave");
-            ed(&mut v, Cmd::Dismiss);
-            ed(&mut v, Cmd::Undo);
-            shot(&mut v, "03b4b-editor-toast");
-            // Let the toast expire (it lives a few seconds) so the next shots show only what they're about.
-            v.push(Step::Wait(800));
-            ed(&mut v, Cmd::Help(true));
-            shot(&mut v, "03b5-editor-help");
-            ed(&mut v, Cmd::Help(false));
-            ed(&mut v, Cmd::Subject(Subject::Data(Section::Attachments)));
-            ed(&mut v, Cmd::Search("a".into()));
-            shot(&mut v, "03b6-editor-attachments");
-            ed(&mut v, Cmd::Search(String::new()));
-            ed(&mut v, Cmd::Fighter("brawler".into()));
-            ed(&mut v, Cmd::Subject(Subject::Data(Section::Projectiles)));
-            shot(&mut v, "03b7-editor-projectiles");
-            ed(&mut v, Cmd::Subject(Subject::Pose("stand".into())));
-            shot(&mut v, "03c-editor-pose");
-            ed(&mut v, Cmd::Subject(Subject::Fighter));
-            ed(
-                &mut v,
-                Cmd::Dialog(Dialog::NewFighter {
-                    id: "ninja".into(),
-                    name: "Ninja".into(),
-                    extends: "brawler".into(),
-                    error: None,
-                }),
-            );
-            shot(&mut v, "03d-editor-new-fighter");
-            ed(&mut v, Cmd::Dismiss);
-            shot(&mut v, "03e-editor-stats");
-            // Stage editor: overview, a selected platform with grid and mirror, spawns with a note, art, backdrop,
-            // the CPU sandbox, a new stage, the shortcut sheet.
-            {
-                use editor::stage_ed::Section as S;
-                use editor::stage_view::Part;
-                ed(&mut v, Cmd::Mode(editor::Mode::Stages));
-                ed(&mut v, Cmd::Stage("arena".into()));
-                shot(&mut v, "03f-stage-overview");
-                ed(&mut v, Cmd::Grid(true));
-                ed(&mut v, Cmd::Symmetry(true));
-                ed(&mut v, Cmd::Part(Some(Part::Platform(0))));
-                ed(
-                    &mut v,
-                    Cmd::EditStage(|s| {
-                        s.platforms[0].y -= 30.;
-                        s.platforms[1].y -= 30.;
-                    }),
-                );
-                shot(&mut v, "03g-stage-platform");
-                ed(&mut v, Cmd::Undo);
-                ed(&mut v, Cmd::Grid(false));
-                ed(&mut v, Cmd::Symmetry(false));
-                ed(&mut v, Cmd::EditStage(|s| s.spawns.truncate(6)));
-                ed(&mut v, Cmd::Part(Some(Part::Spawn(1))));
-                shot(&mut v, "03h-stage-spawns");
-                ed(&mut v, Cmd::Undo);
-                v.push(Step::Wait(800));
-                ed(&mut v, Cmd::Part(Some(Part::Blast)));
-                shot(&mut v, "03i-stage-bounds");
-                ed(&mut v, Cmd::Part(None));
-                ed(&mut v, Cmd::Section(S::Art));
-                shot(&mut v, "03j-stage-art");
-                ed(&mut v, Cmd::Section(S::Background));
-                shot(&mut v, "03k-stage-background");
-                ed(&mut v, Cmd::Section(S::Overview));
-                ed(&mut v, Cmd::Sandbox(3));
-                v.push(Step::Wait(150));
-                shot(&mut v, "03l-stage-sandbox");
-                ed(&mut v, Cmd::Sandbox(0));
-                ed(
-                    &mut v,
-                    Cmd::Dialog(Dialog::NewStage {
-                        id: "sky-fortress".into(),
-                        name: "Sky Fortress".into(),
-                        from: "arena".into(),
-                        error: None,
-                    }),
-                );
-                shot(&mut v, "03m-stage-new");
-                ed(&mut v, Cmd::Dismiss);
-                ed(&mut v, Cmd::Help(true));
-                shot(&mut v, "03n-stage-help");
-                ed(&mut v, Cmd::Help(false));
-                // Format 2: a raised centre between two blocks (inner ledges off) and a platform on a path.
-                ed(
-                    &mut v,
-                    Cmd::EditStage(|s| {
-                        let mut b = s.blocks[0].clone();
-                        let (l, r) = (b.left, b.right);
-                        let (a, z) = (l + 240., r - 240.);
-                        (b.right, b.right_ledge) = (a, false);
-                        let mut c = b.clone();
-                        (c.left, c.right, c.top, c.left_ledge, c.right_ledge) = (a, z, b.top - 40., false, false);
-                        let mut d = b.clone();
-                        (d.left, d.right, d.left_ledge, d.right_ledge) = (z, r, false, true);
-                        s.blocks = vec![b, c, d];
-                        s.platforms[2].motion = Some(sim::data::stage::Motion {
-                            waypoints: vec![
-                                sim::data::stage::Waypoint { x: -170., y: 0., travel_ticks: 150, wait_ticks: 40 },
-                                sim::data::stage::Waypoint { x: 170., y: 0., travel_ticks: 150, wait_ticks: 40 },
-                            ],
-                            mode: sim::data::stage::PathMode::PingPong,
-                            phase: 0,
-                        });
-                    }),
-                );
-                ed(&mut v, Cmd::Symmetry(true));
-                ed(&mut v, Cmd::Part(Some(Part::Block(1))));
-                ed(&mut v, Cmd::Reframe);
-                shot(&mut v, "03o-stage-blocks");
-                ed(&mut v, Cmd::Symmetry(false));
-                ed(&mut v, Cmd::Part(Some(Part::Waypoint(2, 1))));
-                v.push(Step::Wait(90));
-                shot(&mut v, "03p-stage-moving");
-                ed(&mut v, Cmd::Sandbox(2));
-                v.push(Step::Wait(200));
-                shot(&mut v, "03q-stage-moving-sandbox");
-                ed(&mut v, Cmd::Sandbox(0));
-                ed(&mut v, Cmd::Undo);
-                ed(&mut v, Cmd::Part(None));
-                ed(&mut v, Cmd::Mode(editor::Mode::Fighters));
+    pub fn tour(dir: PathBuf, filter: Option<&str>) -> Result<Self, String> {
+        let mut sections = vec![
+            Section::new("menus", menus()),
+            Section::new("fighter-editor", fighter_editor()),
+            Section::new("stage-editor", stage_editor()),
+            Section::new("select", select()),
+            Section::new("match", match_shots()),
+            Section::new("results-replay", results_replay()),
+            Section::new("training", training()),
+            Section::new("stages", stages()),
+        ];
+        if let Some(filter) = filter {
+            let names: Vec<_> = filter.split(',').collect();
+            if let Some(name) = names.iter().find(|n| !SECTIONS.contains(n)) {
+                return Err(format!("unknown screenshot section {name:?}; sections: {}", SECTIONS.join(", ")));
             }
-            ed(&mut v, Cmd::Back);
-            v.push(Step::Wait(10));
+            sections.retain(|s| names.contains(&s.name));
         }
-        // Versus: bot 0 opens it (and joins), bot 1 joins.
-        press(&mut v, 0, Attack);
-        press(&mut v, 1, Attack);
-        press(&mut v, 0, Right);
-        press(&mut v, 1, Right);
-        press(&mut v, 1, Right);
-        // Bot 0: down to its footer, over to "Add CPU", add two.
-        press(&mut v, 0, Down);
-        press(&mut v, 0, Down);
-        press(&mut v, 0, Right);
-        press(&mut v, 0, Attack);
-        press(&mut v, 0, Attack);
-        // Left lands on the newest CPU's level: make it hard.
-        press(&mut v, 0, Left);
-        press(&mut v, 0, Right);
-        shot(&mut v, "04-select-choosing");
-        // Back to its own card, then stocks: up into the rules.
-        press(&mut v, 0, Special);
-        press(&mut v, 1, Attack);
-        press(&mut v, 0, Attack);
-        shot(&mut v, "05-select-ready");
-        press(&mut v, 0, Start);
-        v.push(Step::Until(screen_is(Screen::Match), 10));
-        v.push(Step::Wait(70));
-        shot(&mut v, "06-countdown");
-        v.push(Step::Until(|m, _, _| m.world.go_t > 0 && m.world.go_t < 40, 400));
-        shot(&mut v, "07-go");
-        v.push(Step::Until(offscreen, 5000));
-        v.push(Step::Shot("08-hud-offscreen"));
-        v.push(Step::Until(|m, _, _| m.world.fighters.iter().map(|f| f.dmg).sum::<f64>() > 200., 4000));
-        shot(&mut v, "09-hud");
-        press(&mut v, 0, Start);
-        press(&mut v, 0, Down);
-        shot(&mut v, "10-pause");
-        press(&mut v, 0, Start);
-        v.push(Step::Until(|m, _, _| m.world.end_t > 0, 60 * 60 * 6));
-        v.push(Step::Wait(20));
-        v.push(Step::Shot("11-game"));
-        v.push(Step::Until(screen_is(Screen::Results), 600));
-        v.push(Step::Wait(30));
-        v.push(Step::Shot("12-results"));
-        for _ in 0..4 {
-            press(&mut v, 0, Right);
-        }
-        press(&mut v, 0, Attack);
-        v.push(Step::Until(screen_is(Screen::Playback), 30));
-        v.push(Step::Until(|m, _, _| m.playback.as_ref().is_some_and(|p| p.position >= 600), 2000));
-        press(&mut v, 0, Start);
-        shot(&mut v, "12b-replay-controls");
-        press(&mut v, 0, Right);
-        press(&mut v, 0, Right);
-        press(&mut v, 0, Left);
-        press(&mut v, 0, Down);
-        press(&mut v, 0, Right);
-        shot(&mut v, "12c-replay-seek");
-        press(&mut v, 0, Special);
-        v.push(Step::Until(screen_is(Screen::Results), 30));
-        shot(&mut v, "12d-results-return");
-        press(&mut v, 0, Left);
-        press(&mut v, 0, Left);
-        press(&mut v, 0, Attack);
-        // Training.
-        v.push(Step::Until(screen_is(Screen::Title), 10));
-        press(&mut v, 0, Down);
-        press(&mut v, 0, Attack);
-        press(&mut v, 0, Attack);
-        shot(&mut v, "13-training-select");
-        press(&mut v, 0, Start);
-        v.push(Step::Until(screen_is(Screen::Match), 10));
-        v.push(Step::Set(0, Right, true));
-        v.push(Step::Until(|m, _, _| m.world.fighters[0].x > m.world.fighters[1].x - 60., 200));
-        v.push(Step::Set(0, Right, false));
-        press(&mut v, 0, Attack);
-        v.push(Step::Until(|m, _, _| m.world.trace.as_ref().is_some_and(|t| t.done), 120));
-        press(&mut v, 0, Special);
-        v.push(Step::Until(
-            |m, _, _| {
-                m.world.fighters[0].state == FState::Attack
-                    && m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.elapsed > 6)
-            },
-            60,
-        ));
-        shot(&mut v, "14-training");
-        // Quit from the pause menu, then fill all eight slots.
-        press(&mut v, 0, Start);
-        for _ in 0..6 {
-            press(&mut v, 0, Down);
-        }
-        press(&mut v, 0, Attack);
-        v.push(Step::Until(screen_is(Screen::Title), 10));
-        press(&mut v, 0, Attack);
-        // Footer, then right past the two remembered CPUs' "Remove CPU" to "Add CPU".
-        press(&mut v, 0, Down);
-        press(&mut v, 0, Down);
-        for _ in 0..3 {
-            press(&mut v, 0, Right);
-        }
-        for _ in 0..5 {
-            press(&mut v, 0, Attack);
-        }
-        shot(&mut v, "15-select-eight");
-        // The other built-in stages: behind the eight select cards, then a CPU match on each.
-        const STAGES: [&str; 3] = ["citadel", "isles", "foundry"];
-        for (i, id) in STAGES.into_iter().enumerate() {
-            v.push(Step::Stage(id));
-            v.push(Step::Wait(20));
-            v.push(Step::Shot(["16a-select-citadel", "16b-select-isles", "16c-select-foundry"][i]));
-        }
-        for (i, id) in STAGES.into_iter().enumerate() {
-            v.push(Step::Versus(id));
-            v.push(Step::Until(|m, _, _| m.world.go_t > 0, 400));
-            v.push(Step::Until(|m, _, _| m.world.fighters.iter().map(|f| f.dmg).sum::<f64>() > 150., 4000));
-            shot(&mut v, ["17a-match-citadel", "17b-match-isles", "17c-match-foundry"][i]);
-            if id == "isles" {
-                // Fighters on opposite islands: the zoomed-out camera still frames both.
-                v.push(Step::Until(
-                    |m, _, _| {
-                        let xs = m.world.fighters.iter().filter(|f| f.state != FState::Dead).map(|f| f.x);
-                        xs.clone().fold(f64::MIN, f64::max) - xs.fold(f64::MAX, f64::min) > 950.
-                    },
-                    8000,
-                ));
-                shot(&mut v, "17b2-match-isles-wide");
-            }
-        }
-        Script { dir, steps: v, at: 0, wait: 0, budget: 0, capturing: false }
+        Ok(Script {
+            dir,
+            sections,
+            section: 0,
+            at: 0,
+            wait: 0,
+            budget: 0,
+            capturing: false,
+            started: Instant::now(),
+            failures: vec![],
+        })
     }
 }
 
@@ -387,7 +456,7 @@ pub fn run(
     mut commands: Commands,
     mut s: ResMut<Script>,
     mut devs: ResMut<Devices>,
-    m: Option<ResMut<Match>>,
+    mut m: Option<ResMut<Match>>,
     fr: Res<Framing>,
     screen: Res<State<Screen>>,
     capturing: Query<(), With<Capturing>>,
@@ -401,6 +470,24 @@ pub fn run(
     for b in 0..2 {
         devs.bot(b);
     }
+    let Some(current) = s.sections.get(s.section) else {
+        if s.failures.is_empty() {
+            info!("screenshot tour passed");
+            exit.write(AppExit::Success);
+        } else {
+            error!("screenshot sections failed: {}", s.failures.join(", "));
+            exit.write(AppExit::error());
+        }
+        return;
+    };
+    let name = current.name;
+    if s.started.elapsed().as_secs() >= 120 {
+        error!("screenshot section {name}: timed out at step {}", s.at);
+        s.failures.push(name);
+        s.at = s.sections[s.section].steps.len();
+        s.capturing = false;
+        s.wait = 0;
+    }
     if s.capturing {
         if capturing.is_empty() {
             s.capturing = false;
@@ -412,11 +499,67 @@ pub fn run(
         s.wait -= 1;
         return;
     }
-    let Some(step) = s.steps.get(s.at) else {
-        exit.write(AppExit::Success);
+    let Some(step) = s.sections[s.section].steps.get(s.at) else {
+        let missing = s.sections[s.section].steps.iter().find_map(|step| {
+            let Step::Shot(shot) = step else { return None };
+            let path = s.dir.join(format!("{shot}.png"));
+            (!path.metadata().is_ok_and(|m| m.len() > 0)).then_some(path)
+        });
+        if let Some(path) = missing {
+            error!("screenshot section {name}: missing {}", path.display());
+            if !s.failures.contains(&name) {
+                s.failures.push(name);
+            }
+        }
+        info!("screenshot section {name}: finished in {:.2}s", s.started.elapsed().as_secs_f64());
+        s.section += 1;
+        s.at = 0;
+        s.budget = 0;
+        s.started = Instant::now();
         return;
     };
     match step {
+        Step::Home => {
+            devs.bots.clear();
+            devs.clear();
+            next.set(Screen::Title);
+            s.at += 1;
+        }
+        Step::Reset => {
+            commands.remove_resource::<Match>();
+            commands.remove_resource::<Select>();
+            commands.remove_resource::<crate::select::SelectInit>();
+            commands.remove_resource::<crate::replay::ReturnTo>();
+            commands.remove_resource::<crate::editing::Testing>();
+            commands.remove_resource::<editor::Editor>();
+            commands.insert_resource(editor::Inbox::default());
+            commands.insert_resource(editor::Outbox::default());
+            commands.insert_resource(crate::settings::Saved::default());
+            commands.insert_resource(crate::menu::MenuState {
+                cursor: crate::ui::Cursor { key: 1, owner: None },
+                ..default()
+            });
+            commands.insert_resource(crate::hud::PauseMenu::default());
+            commands.insert_resource(crate::results::ResultsMenu::default());
+            *devs = Devices::default();
+            *scene = render::Scene::new(data.0.clone());
+            info!("screenshot section {name}: starting");
+            s.at += 1;
+        }
+        Step::OpenEditor => {
+            next.set(Screen::Editor);
+            s.at += 1;
+        }
+        Step::Select(mode, count) => {
+            let (mode, count) = (*mode, *count);
+            // Select::enter builds the normal cards and showcase from preferences.
+            let mut saved = crate::settings::Saved::default();
+            saved.versus.cpus = vec![crate::settings::PlayerPref::default(); count.saturating_sub(1)];
+            commands.insert_resource(saved);
+            commands.insert_resource(crate::select::SelectInit { mode, dev: Some(Dev::Bot(0)) });
+            next.set(Screen::Select);
+            s.at += 1;
+        }
         Step::Set(b, act, on) => {
             devs.bot(*b)[*act as usize] = *on;
             s.at += 1;
@@ -425,20 +568,45 @@ pub fn run(
             s.wait = *n;
             s.at += 1;
         }
-        Step::Until(pred, max) => {
-            let (pred, max) = (*pred, *max);
-            let done = m.as_ref().is_some_and(|m| pred(m, &fr, *screen.get()));
-            if done || s.budget >= max {
-                if !done {
-                    warn!("screenshot step {} gave up waiting", s.at);
+        Step::Until(pred, max) | Step::Fast(pred, max) => {
+            let (pred, max, fast) = (*pred, *max, matches!(step, Step::Fast(..)));
+            let mut done = m.as_ref().is_some_and(|m| pred(m, &fr, *screen.get()));
+            if fast
+                && !done
+                && let Some(m) = m.as_deref_mut()
+            {
+                for _ in 0..1000.min(max.saturating_sub(s.budget)) {
+                    m.tick(&mut devs, &mut scene, false);
+                    s.budget += 1;
+                    if pred(m, &fr, *screen.get()) {
+                        done = true;
+                        break;
+                    }
                 }
+            }
+            if fast && let Some(m) = m.as_deref() {
+                scene.reset(&m.world);
+            }
+            if done {
                 s.budget = 0;
                 s.at += 1;
-            } else if let Some(mut m) = m {
-                let n = if *screen.get() == Screen::Match && m.paused.is_none() && m.world.end_t == 0 { 3 } else { 0 };
-                m.ff += n;
+            } else if s.budget >= max {
+                error!("screenshot section {name}: step {} gave up after {max} ticks", s.at);
+                s.failures.push(name);
+                s.at = s.sections[s.section].steps.len();
+            } else if !fast {
+                let n = if *screen.get() == Screen::Match
+                    && m.as_ref().is_some_and(|m| m.paused.is_none() && m.world.end_t == 0)
+                {
+                    3
+                } else {
+                    0
+                };
+                if let Some(m) = m.as_deref_mut() {
+                    m.ff += n;
+                }
                 s.budget += n.max(1);
-            } else {
+            } else if m.is_none() {
                 s.budget += 1;
             }
         }
@@ -454,10 +622,15 @@ pub fn run(
             }
             s.at += 1;
         }
-        Step::Versus(id) => {
+        Step::Versus(_) | Step::Match(_) => {
+            let (id, stocks) = match step {
+                Step::Versus(id) => (*id, 3),
+                Step::Match(stocks) => ("arena", *stocks),
+                _ => unreachable!(),
+            };
             let slots = (0..4)
                 .map(|i| Slot {
-                    dev: None,
+                    dev: (i < 2).then_some(Dev::Bot(i as u8)),
                     fighter: i % data.0.fighters.len(),
                     cpu: Some(2),
                     team: None,
@@ -466,7 +639,7 @@ pub fn run(
                     color: i,
                 })
                 .collect();
-            let rules = Rules { stocks: 3, stage: (*id).into(), friendly_fire: false };
+            let rules = Rules { stocks, stage: id.into(), friendly_fire: false };
             match Match::new(&data.0, Mode::Versus, slots, rules, 7) {
                 Ok(m) => {
                     // Otherwise the select screen would put its showcase back this frame.
@@ -474,7 +647,12 @@ pub fn run(
                     play::install(&mut commands, &mut scene, m);
                     next.set(Screen::Match);
                 }
-                Err(e) => warn!("screenshot match on {id}: {e}"),
+                Err(e) => {
+                    error!("screenshot section {name}: match on {id}: {e}");
+                    s.failures.push(name);
+                    s.at = s.sections[s.section].steps.len();
+                    return;
+                }
             }
             s.at += 1;
         }
@@ -486,5 +664,117 @@ pub fn run(
             s.wait = 2;
             s.at += 1;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn filters_sections_and_reports_available_names() {
+        let script = Script::tour(PathBuf::new(), Some("stages,stage-editor")).unwrap();
+        assert_eq!(script.sections.iter().map(|s| s.name).collect::<Vec<_>>(), ["stage-editor", "stages"]);
+        for name in SECTIONS {
+            let script = Script::tour(PathBuf::new(), Some(name)).unwrap();
+            assert_eq!(script.sections.len(), 1);
+            assert_eq!(script.sections[0].name, *name);
+        }
+        for filter in ["unknown", "menus,unknown", ""] {
+            let error = Script::tour(PathBuf::new(), Some(filter)).err().unwrap();
+            for name in SECTIONS {
+                assert!(error.contains(name));
+            }
+        }
+    }
+
+    #[test]
+    fn failed_section_continues_and_exits_with_error() {
+        let (data, errors) = crate::load_data(&[PathBuf::from("../../assets")]);
+        assert!(errors.is_empty());
+        let data = std::sync::Arc::new(data);
+        let mut script = Script::tour(PathBuf::new(), Some("menus")).unwrap();
+        script.sections = vec![
+            Section::new("fails", vec![Step::Until(|_, _, _| false, 1)]),
+            Section::new("continues", vec![Step::Wait(0)]),
+        ];
+        let mut app = App::new();
+        app.insert_resource(script)
+            .insert_resource(Data(data.clone()))
+            .insert_resource(render::Scene::new(data))
+            .insert_resource(State::new(Screen::Title))
+            .insert_resource(NextState::<Screen>::default())
+            .init_resource::<Devices>()
+            .init_resource::<Framing>()
+            .init_resource::<editor::Inbox>()
+            .add_systems(Update, run);
+        for _ in 0..100 {
+            app.update();
+        }
+        let script = app.world().resource::<Script>();
+        assert_eq!(script.section, 2);
+        assert_eq!(script.failures, ["fails"]);
+        assert!(app.world_mut().resource_mut::<Messages<AppExit>>().drain().any(|exit| !exit.is_success()));
+    }
+
+    #[test]
+    fn preserves_screenshot_names() {
+        let script = Script::tour(PathBuf::new(), None).unwrap();
+        let mut names: Vec<_> = script
+            .sections
+            .iter()
+            .flat_map(|s| &s.steps)
+            .filter_map(|s| if let Step::Shot(name) = s { Some(*name) } else { None })
+            .collect();
+        names.sort_unstable();
+        let expected = "01-title
+02-settings
+03-controls
+03b-editor-move
+03b2-editor-onion
+03b3-editor-problem
+03b4-editor-leave
+03b4b-editor-toast
+03b5-editor-help
+03b6-editor-attachments
+03b7-editor-projectiles
+03c-editor-pose
+03d-editor-new-fighter
+03e-editor-stats
+03f-stage-overview
+03g-stage-platform
+03h-stage-spawns
+03i-stage-bounds
+03j-stage-art
+03k-stage-background
+03l-stage-sandbox
+03m-stage-new
+03n-stage-help
+03o-stage-blocks
+03p-stage-moving
+03q-stage-moving-sandbox
+04-select-choosing
+05-select-ready
+06-countdown
+07-go
+08-hud-offscreen
+09-hud
+10-pause
+11-game
+12-results
+12b-replay-controls
+12c-replay-seek
+12d-results-return
+13-training-select
+14-training
+15-select-eight
+16a-select-citadel
+16b-select-isles
+16c-select-foundry
+17a-match-citadel
+17b-match-isles
+17b2-match-isles-wide
+17c-match-foundry";
+        assert_eq!(names, expected.lines().collect::<Vec<_>>());
     }
 }

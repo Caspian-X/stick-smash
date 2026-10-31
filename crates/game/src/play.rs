@@ -230,7 +230,7 @@ impl Match {
             .collect()
     }
 
-    fn tick(&mut self, devs: &mut Devices, scene: &mut Scene, audible: bool) {
+    pub(crate) fn tick(&mut self, devs: &mut Devices, scene: &mut Scene, audible: bool) {
         let inputs = if let Some(p) = &mut self.playback {
             let Some(inputs) = p.inputs(&mut self.world) else {
                 self.frozen = true;
