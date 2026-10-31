@@ -93,18 +93,6 @@ pub fn load(files: impl IntoIterator<Item = Source>) -> Result<(GameData, Vec<Co
     }
     let mut hashed = vec![("global".to_string(), gv)];
 
-    let mut stages = Vec::new();
-    for (id, path, v) in raw_stages {
-        match typed::<Stage>(&path, &v).and_then(|s| check_stage(&path, &s).map(|()| s)) {
-            Ok(mut s) => {
-                s.id = id.clone();
-                hashed.push((format!("stage:{id}"), v));
-                stages.push(s);
-            }
-            Err(e) => errors.push(e),
-        }
-    }
-
     let mut fighters = Vec::new();
     for (id, (path, _)) in &raw_fighters {
         let merged = match resolve(id, &raw_fighters, &mut Vec::new()) {
@@ -122,6 +110,18 @@ pub fn load(files: impl IntoIterator<Item = Source>) -> Result<(GameData, Vec<Co
                 f.id = id.clone();
                 hashed.push((format!("fighter:{id}"), merged));
                 fighters.push(f);
+            }
+            Err(e) => errors.push(e),
+        }
+    }
+
+    let mut stages = Vec::new();
+    for (id, path, v) in raw_stages {
+        match typed::<Stage>(&path, &v).and_then(|s| check_stage(&path, &s, &fighters).map(|()| s)) {
+            Ok(mut s) => {
+                s.id = id.clone();
+                hashed.push((format!("stage:{id}"), v));
+                stages.push(s);
             }
             Err(e) => errors.push(e),
         }
@@ -150,6 +150,17 @@ fn migrate(v: &mut Value) -> Result<(), String> {
     let ver = v.get("schemaVersion").and_then(Value::as_u64).ok_or("missing or not a number")?;
     if ver == 0 || ver > u64::from(SCHEMA_VERSION) {
         return Err(format!("version {ver} isn't supported (this build reads 1 to {SCHEMA_VERSION})"));
+    }
+    if ver == 1
+        && let Some(obj) = v.as_object_mut()
+        && let Some(mut ground) = obj.shift_remove("ground")
+    {
+        if let Some(g) = ground.as_object_mut() {
+            g.insert("leftLedge".into(), Value::Bool(true));
+            g.insert("rightLedge".into(), Value::Bool(true));
+        }
+        obj.insert("blocks".into(), Value::Array(vec![ground]));
+        obj.insert("schemaVersion".into(), Value::from(2));
     }
     Ok(())
 }
@@ -186,11 +197,9 @@ fn resolve(id: &str, raw: &BTreeMap<String, (String, Value)>, chain: &mut Vec<St
     Ok(base)
 }
 
-fn check_stage(file: &str, s: &Stage) -> Result<(), ContentError> {
+fn check_stage(file: &str, s: &Stage, fighters: &[Fighter]) -> Result<(), ContentError> {
     positive(file, "width", s.width)?;
     positive(file, "height", s.height)?;
-    positive(file, "ground.underDepth", s.ground.under_depth)?;
-    positive(file, "ground.underInset", s.ground.under_inset)?;
     positive(file, "ledge.r", s.ledge.r)?;
     for (name, b) in [("blast", &s.blast), ("camera", &s.camera)] {
         if b.left >= b.right || b.top >= b.bottom {
@@ -202,9 +211,78 @@ fn check_stage(file: &str, s: &Stage) -> Result<(), ContentError> {
             return Err(err(file, format!("spawns[{i}].face"), "must be -1 or 1"));
         }
     }
-    let g = &s.ground;
-    if g.left >= g.right || g.top >= g.bottom {
-        return Err(err(file, "ground", "needs left < right and top < bottom"));
+    if s.blocks.is_empty() {
+        return Err(err(file, "blocks", "needs at least one solid block"));
+    }
+    for (i, g) in s.blocks.iter().enumerate() {
+        let path = format!("blocks[{i}]");
+        if g.left >= g.right || g.top >= g.bottom {
+            return Err(err(file, &path, "needs left < right and top < bottom"));
+        }
+        positive(file, &format!("{path}.underDepth"), g.under_depth)?;
+        positive(file, &format!("{path}.underInset"), g.under_inset)?;
+        if g.under_inset > (g.right - g.left) / 2. {
+            return Err(err(file, format!("{path}.underInset"), "must not exceed half the block width"));
+        }
+        for (j, b) in s.blocks[..i].iter().enumerate() {
+            if g.left < b.right
+                && g.right > b.left
+                && g.top < b.bottom + b.under_depth
+                && g.bottom + g.under_depth > b.top
+            {
+                return Err(err(file, &path, format!("solid bounds overlap blocks[{j}] (including underside)")));
+            }
+        }
+    }
+    for (i, g) in s.blocks.iter().enumerate() {
+        for (field, enabled, x) in [("leftLedge", g.left_ledge, g.left), ("rightLedge", g.right_ledge, g.right)] {
+            if !enabled {
+                continue;
+            }
+            for (j, b) in s.blocks.iter().enumerate() {
+                let bottom = b.bottom + ((x - b.left).min(b.right - x) / b.under_inset).clamp(0., 1.) * b.under_depth;
+                if i != j && x >= b.left && x <= b.right && g.top >= b.top && g.top <= bottom {
+                    return Err(err(
+                        file,
+                        format!("blocks[{i}].{field}"),
+                        format!("corner is covered by blocks[{j}]; disable this ledge"),
+                    ));
+                }
+            }
+        }
+    }
+    for (i, sp) in s.spawns.iter().enumerate() {
+        let y =
+            sp.y.or_else(|| s.spawn_y(sp.x))
+                .ok_or_else(|| err(file, format!("spawns[{i}].y"), "required when x is not over a block"))?;
+        for fighter in fighters {
+            let body = &fighter.body;
+            for (j, b) in s.blocks.iter().enumerate() {
+                let (x1, x2) = (sp.x - body.half_width, sp.x + body.half_width);
+                let xs = (if sp.x < (b.left + b.right) / 2. { x2 } else { x1 }).clamp(b.left, b.right);
+                let bottom = b.bottom + ((xs - b.left).min(b.right - xs) / b.under_inset).min(1.) * b.under_depth;
+                if x2 > b.left && x1 < b.right && y > b.top && y - body.height < bottom {
+                    return Err(err(
+                        file,
+                        format!("spawns[{i}]"),
+                        format!("{} body intersects blocks[{j}]", fighter.id),
+                    ));
+                }
+            }
+        }
+    }
+    for (i, p) in s.platforms.iter().enumerate() {
+        if let Some(m) = &p.motion {
+            let path = format!("platforms[{i}].motion.waypoints");
+            if m.waypoints.len() < 2 {
+                return Err(err(file, &path, "needs at least two waypoints"));
+            }
+            for (j, point) in m.waypoints.iter().enumerate() {
+                if point.travel_ticks == 0 {
+                    return Err(err(file, format!("{path}[{j}].travelTicks"), "must be positive"));
+                }
+            }
+        }
     }
     if s.spawns.is_empty() {
         return Err(err(file, "spawns", "needs at least one spawn"));

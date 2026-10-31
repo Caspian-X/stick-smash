@@ -101,8 +101,8 @@ fn ledge_half_circle_and_occupancy() {
         let mut w = world(&d, "brawler");
         w.fighters[1].x = 2000.;
         let f = &mut w.fighters[0];
-        f.x = s.ground.right + offset;
-        f.y = s.ground.top - 20.;
+        f.x = s.blocks[0].right + offset;
+        f.y = s.blocks[0].top - 20.;
         f.vy = 2.;
         f.ground = false;
         f.surf = None;
@@ -126,8 +126,8 @@ fn ledge_half_circle_and_occupancy() {
     w.fighters[3].set_state(State::Ledge);
     w.fighters[3].sd.side = 1.;
     let mut f = w.fighters[0].clone();
-    f.x = s.ground.right + 30.;
-    f.y = s.ground.top + s.ledge.hand_y + s.ledge.cy;
+    f.x = s.blocks[0].right + 30.;
+    f.y = s.blocks[0].top + s.ledge.hand_y + s.ledge.cy;
     f.ground = false;
     f.vy = 1.;
     sim::physics::try_ledge(&mut w, &d, 0, &mut f, Default::default(), false);
@@ -423,7 +423,7 @@ fn spawn_support_resolves_ground_platform_and_air() {
     let p = &s.platforms[0];
     s.spawns[0].x = (p.x1 + p.x2) / 2.;
     s.spawns[0].y = Some(p.y);
-    s.spawns[1].y = Some(s.ground.top - 100.);
+    s.spawns[1].y = Some(s.blocks[0].top - 100.);
     let mut w = World::new(
         MatchConfig { training: true, players: vec![PlayerConfig::human("brawler"); 3], ..Default::default() },
         &d,
@@ -643,7 +643,7 @@ fn autolink_uses_default_hurtbox_center() {
 #[test]
 fn narrow_stage_ai_target_padding_is_safe() {
     let mut d = common::data();
-    d.stages[0].ground.right = d.stages[0].ground.left + 10.;
+    d.stages[0].blocks[0].right = d.stages[0].blocks[0].left + 10.;
     let cfg = MatchConfig {
         training: true,
         players: vec![PlayerConfig { cpu: Some(2), ..PlayerConfig::human("brawler") }; 2],
@@ -651,7 +651,7 @@ fn narrow_stage_ai_target_padding_is_safe() {
     };
     let mut w = World::new(cfg, &d).unwrap();
     for f in &mut w.fighters {
-        f.x = d.stages[0].ground.left + 5.;
+        f.x = d.stages[0].blocks[0].left + 5.;
     }
     run(&mut w, &d, 300, &[]);
     assert!(w.fighters.iter().all(|f| f.x.is_finite() && f.y.is_finite()));

@@ -285,6 +285,8 @@ fn draw(
     let [x0, y0, x1, y1] = fx::Cam { x: c.x + sx, y: c.y + sy, h: c.h }.view(asp);
     framing.view = [x0, y0, x1, y1];
     framing.fighters = views.iter().map(|v| (v.x, v.y)).collect();
+    let stage_frame =
+        st.prev.as_ref().map_or(cur.frame as f64, |p| p.frame as f64 + (cur.frame as f64 - p.frame as f64) * t);
     for (mesh, layer, mut tf) in layers {
         if matches!(layer, Layer::Backdrop | Layer::Stars) {
             tf.translation.x = par.x;
@@ -299,9 +301,10 @@ fn draw(
         let cv = &mut st.canvas;
         cv.clear(detail, d.global.render.alpha_gamma);
         match layer {
-            Layer::Backdrop | Layer::Stage if !rebuild_static => continue,
+            Layer::Backdrop if !rebuild_static => continue,
+            Layer::Stage if !rebuild_static && s.platforms.iter().all(|p| p.motion.is_none()) => continue,
             Layer::Backdrop => stage::draw_backdrop(cv, d, s),
-            Layer::Stage => stage::draw_stage(cv, d, s),
+            Layer::Stage => stage::draw_stage(cv, d, s, stage_frame),
             Layer::Stars => {
                 if let Some(bg) = &s.art.background {
                     stage::draw_stars(cv, d, bg, cur.frame);

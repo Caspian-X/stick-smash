@@ -51,31 +51,34 @@ pub fn draw_stars(cv: &mut Canvas, d: &GameData, bg: &Background, frame: u64) {
     }
 }
 
-pub fn draw_stage(cv: &mut Canvas, d: &GameData, s: &Stage) {
-    let (g, a) = (&s.ground, &s.art);
+pub fn draw_stage(cv: &mut Canvas, d: &GameData, s: &Stage, frame: f64) {
+    let a = &s.art;
     let c = |col, al| color(d, col, 0, al);
-    cv.fill_rect_v(g.left, g.top, g.right - g.left, g.bottom - g.top, c(a.ground_top, 1.), c(a.ground_bottom, 1.));
-    cv.fill_convex(
-        &[
-            [g.left, g.bottom],
-            [g.right, g.bottom],
-            [g.right - g.under_inset, g.bottom + g.under_depth],
-            [g.left + g.under_inset, g.bottom + g.under_depth],
-        ],
-        c(a.underside, 1.),
-    );
-    cv.fill_rect(g.left, g.top, g.right - g.left, a.edge_width, c(a.edge, 1.));
-    if let Some(st) = &a.stripes {
-        let mut x = g.left + st.x;
-        while x < g.right {
-            cv.fill_rect(x, g.top + st.y, st.w.min(g.right - x), st.h, c(st.color, st.alpha));
-            x += st.every.max(1.);
+    for g in &s.blocks {
+        cv.fill_rect_v(g.left, g.top, g.right - g.left, g.bottom - g.top, c(a.ground_top, 1.), c(a.ground_bottom, 1.));
+        cv.fill_convex(
+            &[
+                [g.left, g.bottom],
+                [g.right, g.bottom],
+                [g.right - g.under_inset, g.bottom + g.under_depth],
+                [g.left + g.under_inset, g.bottom + g.under_depth],
+            ],
+            c(a.underside, 1.),
+        );
+        cv.fill_rect(g.left, g.top, g.right - g.left, a.edge_width, c(a.edge, 1.));
+        if let Some(st) = &a.stripes {
+            let mut x = g.left + st.x;
+            while x < g.right {
+                cv.fill_rect(x, g.top + st.y, st.w.min(g.right - x), st.h, c(st.color, st.alpha));
+                x += st.every.max(1.);
+            }
         }
     }
     let [off, h, alpha] = a.platform_shadow_band;
     for p in &s.platforms {
-        cv.fill_rect(p.x1, p.y + off, p.x2 - p.x1, h, c(a.platform_shadow, alpha));
-        let pts = cv.round_rect_pts(p.x1, p.y, p.x2 - p.x1, a.platform_thickness, a.platform_radius);
+        let (x1, x2, y) = p.position(frame);
+        cv.fill_rect(x1, y + off, x2 - x1, h, c(a.platform_shadow, alpha));
+        let pts = cv.round_rect_pts(x1, y, x2 - x1, a.platform_thickness, a.platform_radius);
         cv.fill_convex(&pts, c(a.platform, 1.));
     }
 }

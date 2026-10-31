@@ -18,7 +18,9 @@ pub struct Stage {
     /// Default view size; the camera starts framing `[0, width] × [0, height]`.
     pub width: f64,
     pub height: f64,
-    pub ground: Ground,
+    /// Static solids in collision tie-break order. At least one is required. Bounds including
+    /// undersides must not overlap; touching blocks can form walls or a raised centre.
+    pub blocks: Vec<Ground>,
     /// Pass-through platforms.
     #[serde(default)]
     pub platforms: Vec<Platform>,
@@ -34,7 +36,7 @@ pub struct Stage {
     pub art: StageArt,
 }
 
-/// The main solid block. Its top corners are the grabbable ledges.
+/// Solid rectangle with a tapered underside. Only the two top corners can be ledges.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Ground {
@@ -46,7 +48,12 @@ pub struct Ground {
     /// Underside below `bottom`: slopes `depth` down while moving `inset` inward, so rising fighters slide out to
     /// the wall.
     pub under_depth: f64,
+    /// Positive taper width on each side; cannot exceed half the block width.
     pub under_inset: f64,
+    /// Whether the top-left corner can be grabbed.
+    pub left_ledge: bool,
+    /// Whether the top-right corner can be grabbed.
+    pub right_ledge: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -55,9 +62,91 @@ pub struct Platform {
     pub x1: f64,
     pub x2: f64,
     pub y: f64,
+    /// Translation relative to x1/x2/y; absent means stationary.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub motion: Option<Motion>,
 }
 
-/// Ledge grab zone: a half circle on the outside of each ground corner, centered `cy` below it. A falling
+/// Deterministic translation sampled at the world frame. Travel is linear; no velocity state is stored.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Motion {
+    /// At least two offsets. Each waypoint's travelTicks controls travel to the next waypoint
+    /// (or previous waypoint on the return leg); waitTicks is spent here before departing.
+    pub waypoints: Vec<Waypoint>,
+    pub mode: PathMode,
+    /// Advance this many ticks into the repeating cycle at world frame zero.
+    #[serde(default)]
+    pub phase: u64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum PathMode {
+    /// Last waypoint travels back to the first.
+    Loop,
+    /// Reverse at each endpoint, without duplicating endpoint waits.
+    PingPong,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Waypoint {
+    /// Horizontal translation from the platform's base coordinates.
+    pub x: f64,
+    /// Vertical translation from the platform's base height (positive is down).
+    pub y: f64,
+    /// Positive travel duration departing this waypoint, in simulation ticks.
+    pub travel_ticks: u32,
+    #[serde(default)]
+    /// Ticks spent at this waypoint before departing; defaults to zero.
+    pub wait_ticks: u32,
+}
+
+impl Motion {
+    /// Fractional frames are supported for rendering; simulation uses integer world frames.
+    pub fn offset(&self, frame: f64) -> (f64, f64) {
+        let n = self.waypoints.len();
+        if n < 2 {
+            return (0., 0.);
+        }
+        let count = if self.mode == PathMode::Loop { n } else { 2 * (n - 1) };
+        let index = |k: usize| if k < n { k } else { 2 * (n - 1) - k };
+        let duration: u64 = (0..count)
+            .map(|k| {
+                let p = &self.waypoints[index(k)];
+                u64::from(p.wait_ticks) + u64::from(p.travel_ticks)
+            })
+            .sum();
+        if duration == 0 {
+            return (0., 0.);
+        }
+        let mut t = (frame % duration as f64 + (self.phase % duration) as f64) % duration as f64;
+        for k in 0..count {
+            let a = &self.waypoints[index(k)];
+            let b = &self.waypoints[index((k + 1) % count)];
+            if t < f64::from(a.wait_ticks) {
+                return (a.x, a.y);
+            }
+            t -= f64::from(a.wait_ticks);
+            if t < f64::from(a.travel_ticks) {
+                let u = t / f64::from(a.travel_ticks);
+                return (a.x + (b.x - a.x) * u, a.y + (b.y - a.y) * u);
+            }
+            t -= f64::from(a.travel_ticks);
+        }
+        (self.waypoints[0].x, self.waypoints[0].y)
+    }
+}
+
+impl Platform {
+    pub fn position(&self, frame: f64) -> (f64, f64, f64) {
+        let (dx, dy) = self.motion.as_ref().map_or((0., 0.), |m| m.offset(frame));
+        (self.x1 + dx, self.x2 + dx, self.y + dy)
+    }
+}
+
+/// Ledge grab zone: a half circle on the outside of each enabled block corner, centered `cy` below it. A falling
 /// fighter grabs when their hand point (`handY` above the feet) is inside. `reachIn` lets the flat side extend a
 /// few pixels over the stage. `hangX`/`hangY` = where the feet sit while hanging.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -84,7 +173,7 @@ pub struct Bounds {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Spawn {
     pub x: f64,
-    /// Feet height; omit to stand on the ground.
+    /// Feet height; omit to stand on the highest block below x.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub y: Option<f64>,
     /// 1 = facing right, -1 = left.
@@ -196,6 +285,10 @@ pub struct Starfield {
 }
 
 impl Stage {
+    pub fn spawn_y(&self, x: f64) -> Option<f64> {
+        self.blocks.iter().filter(|b| x >= b.left && x <= b.right).map(|b| b.top).min_by(f64::total_cmp)
+    }
+
     pub fn max_players(&self) -> usize {
         self.spawns.len().min(self.respawns.len())
     }

@@ -77,7 +77,7 @@ fn cpu_matches_draw_cleanly() {
         }
         cv.clear(1., 1.);
         stage::draw_backdrop(&mut cv, &d, s);
-        stage::draw_stage(&mut cv, &d, s);
+        stage::draw_stage(&mut cv, &d, s, 0.);
         assert!(!cv.idx.is_empty());
     }
 }

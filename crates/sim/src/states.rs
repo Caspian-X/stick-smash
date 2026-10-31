@@ -368,12 +368,13 @@ fn ease(k: f64) -> f64 {
 fn st_ledge(w: &World, d: &GameData, f: &mut Fighter, inp: Intent, dir: f64) {
     let g = &d.global.ledge;
     let s = &d.stages[w.stage];
+    let block = &s.blocks[f.sd.ledge_block];
     let side = f.sd.side;
-    let ex = if side < 0. { s.ground.left } else { s.ground.right };
+    let ex = if side < 0. { block.left } else { block.right };
     f.vx = 0.;
     f.vy = 0.;
     f.x = ex + side * s.ledge.hang_x;
-    f.y = s.ground.top + s.ledge.hang_y;
+    f.y = block.top + s.ledge.hang_y;
     if f.t < g.min_hang {
         return;
     }
@@ -389,7 +390,9 @@ fn st_ledge(w: &World, d: &GameData, f: &mut Fighter, inp: Intent, dir: f64) {
         None
     };
     if let Some((kind, inv)) = kind {
+        let block = f.sd.ledge_block;
         f.set_state(State::Climb);
+        f.sd.ledge_block = block;
         f.sd.side = side;
         f.sd.kind = kind.into();
         f.inv = f.inv.max(inv);
@@ -412,7 +415,8 @@ fn st_climb(w: &mut World, d: &GameData, f: &mut Fighter) {
     };
     let side = f.sd.side;
     let s = &d.stages[w.stage];
-    let ex = if side < 0. { s.ground.left } else { s.ground.right };
+    let block = &s.blocks[f.sd.ledge_block];
+    let ex = if side < 0. { block.left } else { block.right };
     let fx = -side;
     f.vx = 0.;
     f.vy = 0.;
@@ -420,15 +424,15 @@ fn st_climb(w: &mut World, d: &GameData, f: &mut Fighter) {
         let k = ease(f64::from(f.t) / f64::from(c.a));
         let x0 = ex + side * s.ledge.hang_x;
         f.x = x0 + (ex + fx * r.ledge_pull_in - x0) * k;
-        let y0 = s.ground.top + s.ledge.hang_y;
-        f.y = y0 + (s.ground.top - y0) * k;
+        let y0 = block.top + s.ledge.hang_y;
+        f.y = y0 + (block.top - y0) * k;
         f.ground = false;
         f.surf = None;
         return;
     }
     if kind == "jump" {
         f.set_state(State::Air);
-        f.y = s.ground.top - r.ledge_jump_offset;
+        f.y = block.top - r.ledge_jump_offset;
         f.vy = -g.jump_speed;
         f.vx = fx * r.ledge_jump_drift;
         f.flip_t = r.flip_frames;
@@ -437,8 +441,8 @@ fn st_climb(w: &mut World, d: &GameData, f: &mut Fighter) {
         return;
     }
     f.ground = true;
-    f.surf = Some(0);
-    f.y = s.ground.top;
+    f.surf = Some(f.sd.ledge_block);
+    f.y = block.top;
     if f.t <= c.b {
         f.x = ex
             + fx * r.ledge_pull_in

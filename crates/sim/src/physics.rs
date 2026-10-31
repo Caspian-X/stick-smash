@@ -7,17 +7,19 @@ use crate::{
 
 pub fn surface(data: &GameData, w: &World, id: usize) -> (f64, f64, f64) {
     let s = &data.stages[w.stage];
-    if id == 0 {
-        (s.ground.left, s.ground.right, s.ground.top)
+    if id < s.blocks.len() {
+        let b = &s.blocks[id];
+        (b.left, b.right, b.top)
     } else {
-        let p = &s.platforms[id - 1];
-        (p.x1, p.x2, p.y)
+        s.platforms[id - s.blocks.len()].position(w.frame as f64)
     }
 }
 pub fn integrate(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, edge_stop: bool) {
     let (was_g, vy, py, surf) = (f.ground, f.vy, f.y, f.surf);
     let g = &d.global.sim;
     let s = &d.stages[w.stage];
+    let px = f.x;
+    let mut supported = false;
     f.x += f.vx;
     if was_g
         && let Some(surf) = surf
@@ -34,38 +36,84 @@ pub fn integrate(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, edge_st
                 f.vx = 0.;
             }
         }
-        let pad = if surf == 0 { g.main_pad } else { g.platform_pad };
-        if f.x >= x1 - pad && f.x <= x2 + pad && !(f.drop > 0 && surf != 0) {
+        let pad = if surf < s.blocks.len() { g.main_pad } else { g.platform_pad };
+        if f.x >= x1 - pad && f.x <= x2 + pad && !(f.drop > 0 && surf >= s.blocks.len()) {
             f.y = y;
             f.vy = 0.;
-            return;
+            supported = true;
         }
     }
-    f.y += f.vy;
-    f.ground = false;
-    f.surf = None;
-    if vy >= 0. && f.drop == 0 {
-        for (n, p) in s.platforms.iter().enumerate() {
-            if py <= p.y + g.surface_tolerance
-                && f.y >= p.y
-                && f.x >= p.x1 - g.platform_pad
-                && f.x <= p.x2 + g.platform_pad
-            {
-                f.y = p.y;
+    if !supported {
+        f.y += f.vy;
+        f.ground = false;
+        f.surf = None;
+        if f.drop == 0 {
+            // Choose the first surface crossed in relative motion, rather than array order.
+            let mut landing: Option<(usize, f64, f64)> = None;
+            for (n, p) in s.platforms.iter().enumerate() {
+                let (x1, x2, y) = p.position(w.frame as f64);
+                let (_, _, old_y) = p.position(w.frame.saturating_sub(1) as f64);
+                let relative = f.y - py - (y - old_y);
+                if relative >= 0.
+                    && py <= old_y + g.surface_tolerance
+                    && f.y >= y
+                    && f.x >= x1 - g.platform_pad
+                    && f.x <= x2 + g.platform_pad
+                {
+                    let t = if relative == 0. { 0. } else { ((old_y - py) / relative).max(0.) };
+                    if landing.is_none_or(|(_, _, best)| t < best) {
+                        landing = Some((n + s.blocks.len(), y, t));
+                    }
+                }
+            }
+            if let Some((id, y, _)) = landing {
+                f.y = y;
                 f.vy = 0.;
                 f.ground = true;
-                f.surf = Some(n + 1);
-                break;
+                f.surf = Some(id);
             }
         }
     }
-    if !f.ground {
-        let b = &d.fighters[f.data].body;
-        let s = &s.ground;
+    resolve_solids(d, s, f, px, py);
+    if f.ground && !was_g {
+        on_land(w, d, i, f, vy);
+    }
+}
+/// Resolve solid faces after velocity integration or platform carry.
+pub fn resolve_solids(d: &GameData, s: &crate::data::Stage, f: &mut Fighter, px: f64, py: f64) {
+    let b = &d.fighters[f.data].body;
+    for (block, s) in s.blocks.iter().enumerate() {
+        // Swept faces prevent fast movement from crossing thin walls or tops.
+        if py < s.top && f.y > s.top {
+            let t = (s.top - py) / (f.y - py);
+            let x = px + (f.x - px) * t;
+            if x + b.half_width > s.left && x - b.half_width < s.right {
+                f.y = s.top;
+                f.vy = 0.;
+                f.ground = true;
+                f.surf = Some(block);
+            }
+        }
+        let dx = f.x - px;
+        for (face, toward) in [(s.left - b.half_width, 1.), (s.right + b.half_width, -1.)] {
+            if dx * toward > 0. && (px - face) * toward <= 0. && (f.x - face) * toward > 0. {
+                let t = (face - px) / dx;
+                let y = py + (f.y - py) * t;
+                if y > s.top && y - b.height < s.bottom {
+                    f.x = face;
+                    f.vx = 0.;
+                }
+            }
+        }
         let (hx1, hx2, hy1, hy2) = (f.x - b.half_width, f.x + b.half_width, f.y - b.height, f.y);
         let xs = (if f.x < (s.left + s.right) / 2. { hx2 } else { hx1 }).clamp(s.left, s.right);
         let sb = s.bottom + ((xs - s.left).min(s.right - xs) / s.under_inset).min(1.) * s.under_depth;
-        if hx2 > s.left && hx1 < s.right && hy2 > s.top && hy1 < sb {
+        if hx2 > s.left && hx1 < s.right && py - b.height >= sb && hy1 < sb && py - f.y > s.under_depth {
+            f.y = sb + b.height;
+            f.vy = 0.;
+            f.ground = false;
+            f.surf = None;
+        } else if hx2 > s.left && hx1 < s.right && hy2 > s.top && hy1 < sb {
             let over = (hy1 - s.bottom).max(0.) * s.under_inset / s.under_depth;
             let (up, dn, lf, rt) = (hy2 - s.top, sb - hy1, hx2 - s.left - over, s.right - hx1 - over);
             let mn = up.min(dn).min(lf).min(rt);
@@ -73,9 +121,11 @@ pub fn integrate(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, edge_st
                 f.y = s.top;
                 f.vy = 0.;
                 f.ground = true;
-                f.surf = Some(0);
+                f.surf = Some(block);
             } else if mn == dn {
                 f.y = sb + b.height;
+                f.ground = false;
+                f.surf = None;
                 if f.vy < 0. {
                     f.vy = 0.;
                 }
@@ -91,9 +141,6 @@ pub fn integrate(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, edge_st
                 }
             }
         }
-    }
-    if f.ground && !was_g {
-        on_land(w, d, i, f, vy);
     }
 }
 pub fn fall(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, edge: bool, cap: Option<f64>) {
@@ -191,32 +238,40 @@ pub fn try_ledge(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
     }
     let s = &d.stages[w.stage];
     let l = &s.ledge;
-    for side in [-1., 1.] {
-        let ex = if side < 0. { s.ground.left } else { s.ground.right };
-        let dx = f.x - ex;
-        let dy = f.y - l.hand_y - (s.ground.top + l.cy);
-        if dx * side < -l.reach_in
-            || dx * dx + dy * dy > l.r * l.r
-            || w.fighters
-                .iter()
-                .enumerate()
-                .any(|(j, g)| j != i && matches!(g.state, State::Ledge | State::Climb) && g.sd.side == side)
-        {
-            continue;
+    for (block, b) in s.blocks.iter().enumerate() {
+        for side in [-1., 1.] {
+            if !(if side < 0. { b.left_ledge } else { b.right_ledge }) {
+                continue;
+            }
+            let ex = if side < 0. { b.left } else { b.right };
+            let dx = f.x - ex;
+            let dy = f.y - l.hand_y - (b.top + l.cy);
+            if dx * side < -l.reach_in
+                || dx * dx + dy * dy > l.r * l.r
+                || w.fighters.iter().enumerate().any(|(j, g)| {
+                    j != i
+                        && matches!(g.state, State::Ledge | State::Climb)
+                        && g.sd.side == side
+                        && g.sd.ledge_block == block
+                })
+            {
+                continue;
+            }
+            f.set_state(State::Ledge);
+            f.sd.side = side;
+            f.sd.ledge_block = block;
+            f.jumps = d.fighters[f.data].stats.air_jumps;
+            f.up_b = false;
+            f.ad_used = false;
+            f.ff = false;
+            f.vx = 0.;
+            f.vy = 0.;
+            f.x = ex + side * l.hang_x;
+            f.y = b.top + l.hang_y;
+            f.face = -side;
+            f.inv = f.inv.max(d.global.ledge.invuln);
+            w.sfx("land");
+            return;
         }
-        f.set_state(State::Ledge);
-        f.sd.side = side;
-        f.jumps = d.fighters[f.data].stats.air_jumps;
-        f.up_b = false;
-        f.ad_used = false;
-        f.ff = false;
-        f.vx = 0.;
-        f.vy = 0.;
-        f.x = ex + side * l.hang_x;
-        f.y = s.ground.top + l.hang_y;
-        f.face = -side;
-        f.inv = f.inv.max(d.global.ledge.invuln);
-        w.sfx("land");
-        return;
     }
 }

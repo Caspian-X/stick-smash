@@ -37,7 +37,18 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
     let cfg = &d.global.ai;
     let v = &cfg.thresholds;
     let s = &d.stages[w.stage];
-    let s = &s.ground;
+    let support = if matches!(st, State::Ledge | State::Climb) { Some(f.sd.ledge_block) } else { f.surf };
+    let s = &s.blocks[support.filter(|&i| i < s.blocks.len()).unwrap_or_else(|| {
+        s.blocks
+            .iter()
+            .enumerate()
+            .min_by(|(_, a), (_, b)| {
+                let distance =
+                    |b: &crate::data::stage::Ground| libm::hypot(f.x - f.x.clamp(b.left, b.right), f.y - b.top);
+                distance(a).total_cmp(&distance(b))
+            })
+            .map_or(0, |(i, _)| i)
+    })];
     let mid = (s.left + s.right) / 2.;
     let c = &d.fighters[f.data];
     let mut inp = Intent::default();
@@ -251,7 +262,7 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
             ai.up_t = v.jump_hold;
         }
         if f.ground
-            && f.surf.is_some_and(|s| s != 0)
+            && f.surf.is_some_and(|s| s >= d.stages[w.stage].blocks.len())
             && dy > v.drop_height
             && adx < v.drop_distance
             && w.rng.next_f64() < v.drop_chance

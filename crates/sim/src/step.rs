@@ -7,6 +7,26 @@ use crate::{
 pub fn step_world(w: &mut World, d: &GameData, inputs: &[Input]) {
     let g = &d.global;
     w.frame += 1;
+    let stage = &d.stages[w.stage];
+    for f in &mut w.fighters {
+        if f.ground
+            && let Some(id) = f.surf
+            && let Some(p) = id.checked_sub(stage.blocks.len()).and_then(|i| stage.platforms.get(i))
+        {
+            let (x, x2, y) = p.position(w.frame as f64);
+            let (px, _, py) = p.position((w.frame - 1) as f64);
+            if x != px || y != py {
+                let (old_x, old_y) = (f.x, f.y);
+                f.x += x - px;
+                f.y += y - py;
+                crate::physics::resolve_solids(d, stage, f, old_x, old_y);
+                if f.surf == Some(id) && (f.x < x - g.sim.platform_pad || f.x > x2 + g.sim.platform_pad || f.y != y) {
+                    f.ground = false;
+                    f.surf = None;
+                }
+            }
+        }
+    }
     if w.count > 0 {
         if w.count.is_multiple_of(crate::TICK_HZ) {
             w.sfx("beep");
