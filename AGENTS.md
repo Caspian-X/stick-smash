@@ -3,13 +3,14 @@
 Stick Smash in Rust: a Smash-style platform fighter, ported from the Phaser/TypeScript version (`../stick-smash`). Bevy 0.20 + bevy_egui 0.43.
 
 ## Commands
-- `cargo run -p game` (add `--features dev` for dynamic linking / faster rebuilds).
-- `cargo test -p sim`: headless sim tests. `cargo clippy --workspace`.
+Tasks live in the `justfile` (`just` lists them). Add new scripts as `just` recipes, not shell files.
+- `just run` (`just dev` for dynamic linking / faster rebuilds), `just test`, `just lint`, `just check`.
+- `just bless` after changing content data types (regenerates schemas, reformats assets). `just shots [dir]` for screenshots.
 
 ## Layout
 - `crates/sim/`: deterministic game logic. A pure function of `(World, GameData, inputs)`.
 - `crates/render/`: Bevy plugin that draws a sim `World` read-only (figures, attachments, stage, fx, camera, debug overlay). Fed via `render::Scene::push` each tick.
-- `crates/game/`: Bevy app (input, audio, menus, egui UI). `cargo run -p game -- --screenshot <dir>` saves PNGs of a CPU match for visual checks. Owns the sim `World` as a resource and steps it in `FixedUpdate` at `sim::TICK_HZ`.
+- `crates/game/`: Bevy app (input devices, bevy_ui menus/HUD, match flow, egui training panel). `cargo run -p game -- --screenshot <dir>` runs a scripted tour (bot devices pressing buttons through title, select, a 4-player match, pause, results, training) and saves PNGs for visual checks; the steps live in `shots.rs`. Owns the sim `World` as a resource and steps it in `FixedUpdate` at `sim::TICK_HZ`.
 - `assets/`: JSON data (global tuning, stage, fighters). Fighters are meant to be user-moddable.
 
 ## Rules

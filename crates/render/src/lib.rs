@@ -84,6 +84,14 @@ impl Scene {
     }
 }
 
+/// What was drawn this frame, for screen-space UI (HUD bubbles, name tags): the visible stage rectangle
+/// `[left, top, right, bottom]` (stage pixels, y down, shake included) and each fighter's drawn feet position.
+#[derive(Resource, Default, Clone)]
+pub struct Framing {
+    pub view: [f64; 4],
+    pub fighters: Vec<(f64, f64)>,
+}
+
 /// Run after the game's sim step so this frame shows the newest tick.
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RenderSystems;
@@ -93,6 +101,7 @@ pub struct RenderPlugin;
 impl Plugin for RenderPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Drawn>()
+            .init_resource::<Framing>()
             .add_systems(Startup, setup)
             .add_systems(Update, (advance, draw).chain().in_set(RenderSystems))
             .add_systems(EguiPrimaryContextPass, debug_labels);
@@ -244,6 +253,7 @@ fn draw(
     layers: Query<(&Mesh2d, &Layer, &mut Transform), Without<RenderCamera>>,
     mut cam: Query<(&mut Transform, &mut Projection), With<RenderCamera>>,
     win: Option<Single<&Window, With<PrimaryWindow>>>,
+    mut framing: ResMut<Framing>,
 ) {
     let st = &mut *st;
     let Some(cur) = st.cur.as_ref() else { return };
@@ -274,6 +284,15 @@ fn draw(
     let rebuild_static = st.stage != Some(cur.stage);
     st.stage = Some(cur.stage);
     let views = fighter_views(d, st.prev.as_ref(), cur, t);
+    let asp = win.as_deref().map_or(16. / 9., |w| aspect(w));
+    let [x0, y0, x1, y1] = fx::Cam {
+        x: c.x + sx,
+        y: c.y + sy,
+        h: c.h,
+    }
+    .view(asp);
+    framing.view = [x0, y0, x1, y1];
+    framing.fighters = views.iter().map(|v| (v.x, v.y)).collect();
     for (mesh, layer, mut tf) in layers {
         if matches!(layer, Layer::Backdrop | Layer::Stars) {
             tf.translation.x = par.x;

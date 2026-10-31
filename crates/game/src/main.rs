@@ -4,78 +4,41 @@ use std::sync::Arc;
 
 use bevy::input::InputSystems;
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 use bevy_egui::{EguiContexts, EguiPlugin, EguiPrimaryContextPass, egui};
 use render::{RenderPlugin, RenderSystems, Scene};
-use sim::data::{Color as DataColor, Source, load};
-use sim::{GameData, Input, MatchConfig, PlayerConfig, TICK_HZ, World as SimWorld, step_world};
+use sim::data::{Source, load};
+use sim::{GameData, TICK_HZ};
 
+mod hud;
+mod input;
+mod menu;
+mod play;
+mod results;
+mod select;
+mod settings;
 mod shots;
+mod training;
+mod ui;
 
-/// The running match. The sim world is plain data; Bevy only owns it as a resource.
-#[derive(Resource)]
-struct Match {
-    world: SimWorld,
-    data: Arc<GameData>,
-    /// P1's fighter (index into `data.fighters`).
-    p1: usize,
+#[derive(States, Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Screen {
+    #[default]
+    Title,
+    Settings,
+    Controls,
+    Select,
+    Match,
+    Results,
 }
 
-impl Match {
-    fn config(&self, seed: u32) -> MatchConfig {
-        let id = |i: usize| self.data.fighters[i % self.data.fighters.len()].id.clone();
-        let cpu = self
-            .data
-            .fighters
-            .iter()
-            .position(|f| f.id == "king")
-            .unwrap_or(0);
-        MatchConfig {
-            seed,
-            players: vec![
-                PlayerConfig::human(&id(self.p1)),
-                PlayerConfig {
-                    cpu: Some(2),
-                    ..PlayerConfig::human(&id(cpu))
-                },
-            ],
-            ..default()
-        }
-    }
-}
+/// Loaded content (built-in plus user content).
+#[derive(Resource, Clone)]
+pub struct Data(pub Arc<GameData>);
 
-/// Keyboard state for P1. Presses seen between ticks are latched so a tap shorter than a tick still counts.
+/// Content problems found at startup, shown as a toast.
 #[derive(Resource, Default)]
-struct Keys {
-    latched: Input,
-}
-
-// Matches the TS CONTROLS[0] layout.
-const LEFT: KeyCode = KeyCode::KeyA;
-const RIGHT: KeyCode = KeyCode::KeyD;
-const UP: KeyCode = KeyCode::KeyW;
-const DOWN: KeyCode = KeyCode::KeyS;
-const BUTTONS: [(KeyCode, u8); 5] = [
-    (KeyCode::Space, 1),
-    (KeyCode::KeyJ, 2),
-    (KeyCode::KeyK, 4),
-    (KeyCode::KeyI, 8),
-    (KeyCode::KeyL, 16),
-];
-
-fn read_input(
-    k: &ButtonInput<KeyCode>,
-    pressed: impl Fn(&ButtonInput<KeyCode>, KeyCode) -> bool,
-) -> Input {
-    let axis = |neg, pos| (i8::from(pressed(k, pos)) - i8::from(pressed(k, neg))) * 127;
-    let buttons = BUTTONS
-        .iter()
-        .filter(|(c, _)| pressed(k, *c))
-        .fold(0, |b, (_, bit)| b | bit);
-    Input {
-        stick: (axis(LEFT, RIGHT), axis(DOWN, UP)),
-        buttons,
-    }
-}
+pub struct ContentErrors(pub Vec<String>);
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -83,222 +46,153 @@ fn main() {
         .iter()
         .position(|a| a == "--screenshot")
         .map(|i| PathBuf::from(args.get(i + 1).map_or("screenshots", |s| s.as_str())));
-    let data = Arc::new(load_data(&[PathBuf::from("assets")]));
+    let assets = PathBuf::from("assets");
+    let mut roots = vec![assets.clone()];
+    if shot_dir.is_none() {
+        roots.extend(settings::user_content_dir());
+    }
+    let (data, errors) = load_data(&roots);
+    let data = Arc::new(data);
+    let persist = settings::Persist(if shot_dir.is_some() {
+        None
+    } else {
+        settings::config_file()
+    });
+    let saved = settings::load(persist.0.as_ref());
     let mut app = App::new();
     app.add_plugins(DefaultPlugins.set(WindowPlugin {
         primary_window: Some(Window {
             title: "Stick Smash".into(),
             resolution: (1280, 720).into(),
             resizable: shot_dir.is_none(),
+            mode: menu::window_mode(saved.fullscreen && shot_dir.is_none()),
             ..default()
         }),
         ..default()
     }))
     .add_plugins((EguiPlugin::default(), RenderPlugin))
-    .insert_resource(ClearColor(Color::srgb_u8(0x0b, 0x0d, 0x2a)))
+    .init_state::<Screen>()
+    .insert_resource(ClearColor(ui::NIGHT))
     .insert_resource(Time::<Fixed>::from_hz(f64::from(TICK_HZ)))
     .insert_resource(Scene::new(data.clone()))
-    .add_systems(EguiPrimaryContextPass, readout);
+    .insert_resource(Data(data))
+    .insert_resource(ContentErrors(errors))
+    .insert_resource(saved)
+    .insert_resource(persist)
+    .init_resource::<input::Devices>()
+    .init_resource::<menu::MenuState>()
+    .init_resource::<hud::PauseMenu>()
+    .init_resource::<results::ResultsMenu>()
+    .add_systems(
+        Startup,
+        move |mut commands: Commands, mut fonts: ResMut<Assets<Font>>| {
+            commands.insert_resource(ui::Fonts::load(&assets, &mut fonts));
+        },
+    )
+    .add_systems(PreUpdate, input::poll.after(InputSystems))
+    .add_systems(
+        FixedUpdate,
+        play::tick.run_if(resource_exists::<play::Match>),
+    )
+    .add_systems(OnEnter(Screen::Title), menu::enter_title)
+    .add_systems(OnEnter(Screen::Settings), menu::enter_settings)
+    .add_systems(OnEnter(Screen::Controls), menu::enter_controls)
+    .add_systems(OnEnter(Screen::Select), select::enter)
+    .add_systems(OnEnter(Screen::Match), hud::spawn)
+    .add_systems(OnEnter(Screen::Results), results::enter)
+    .add_systems(
+        Update,
+        (
+            (
+                play::attract,
+                (menu::update, menu::draw)
+                    .chain()
+                    .run_if(resource_exists::<ui::Fonts>),
+            )
+                .chain()
+                .run_if(|s: Res<State<Screen>>| {
+                    matches!(s.get(), Screen::Title | Screen::Settings | Screen::Controls)
+                }),
+            (select::update, select::draw)
+                .chain()
+                .run_if(in_state(Screen::Select)),
+            (play::match_flow, hud::pause, hud::draw_pause, hud::update)
+                .chain()
+                .run_if(in_state(Screen::Match)),
+            (results::update, results::draw)
+                .chain()
+                .run_if(in_state(Screen::Results)),
+            play::interpolate.run_if(resource_exists::<play::Match>),
+            ui_scale,
+            settings::save,
+        )
+            .before(RenderSystems),
+    )
+    .add_systems(
+        EguiPrimaryContextPass,
+        (training::panel.run_if(in_state(Screen::Match)), toast),
+    );
     if let Some(dir) = shot_dir {
-        let (world, list) = shots::plan(&data);
-        info!(
-            "screenshot plan: {}",
-            list.iter()
-                .map(|s| format!("{}@{}", s.name, s.tick))
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
         fs::create_dir_all(&dir).expect("create screenshot dir");
-        app.insert_resource(Match { world, data, p1: 0 })
-            .insert_resource(shots::Shots {
-                dir,
-                list,
-                next: 0,
-                wait: 0,
-                step: shots::Step::Advance,
-            })
-            .add_systems(Startup, start)
-            .add_systems(Update, shots::run.before(RenderSystems));
-    } else {
-        let p1 = data
-            .fighters
-            .iter()
-            .position(|f| f.id == "brawler")
-            .unwrap_or(0);
-        let mut m = Match {
-            world: SimWorld::new(MatchConfig::default(), &data),
-            data,
-            p1,
-        };
-        m.world = SimWorld::new(m.config(seed()), &m.data);
-        app.insert_resource(m)
-            .init_resource::<Keys>()
-            .add_systems(Startup, start)
-            .add_systems(PreUpdate, latch.after(InputSystems))
-            .add_systems(FixedUpdate, tick)
-            .add_systems(Update, (hotkeys, interpolate).chain().before(RenderSystems));
+        play::FIXED_SEED.store(7, std::sync::atomic::Ordering::Relaxed);
+        app.insert_resource(shots::Script::tour(dir)).add_systems(
+            Update,
+            shots::run
+                .before(menu::update)
+                .before(select::update)
+                .before(hud::pause),
+        );
     }
     app.run();
 }
 
-fn seed() -> u32 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_or(1, |d| d.subsec_nanos() ^ d.as_secs() as u32)
-}
-
-fn start(m: Res<Match>, mut scene: ResMut<Scene>) {
-    scene.reset(&m.world);
-}
-
-fn latch(k: Res<ButtonInput<KeyCode>>, mut keys: ResMut<Keys>) {
-    let p = read_input(&k, |k, c| k.just_pressed(c));
-    let l = &mut keys.latched;
-    l.buttons |= p.buttons;
-    if p.stick.0 != 0 {
-        l.stick.0 = p.stick.0;
-    }
-    if p.stick.1 != 0 {
-        l.stick.1 = p.stick.1;
-    }
-}
-
-fn tick(
-    mut m: ResMut<Match>,
-    k: Res<ButtonInput<KeyCode>>,
-    mut keys: ResMut<Keys>,
-    mut scene: ResMut<Scene>,
-) {
-    let held = read_input(&k, |k, c| k.pressed(c));
-    let l = std::mem::take(&mut keys.latched);
-    let pick = |h: i8, l: i8| if h != 0 { h } else { l };
-    let p1 = Input {
-        stick: (pick(held.stick.0, l.stick.0), pick(held.stick.1, l.stick.1)),
-        buttons: held.buttons | l.buttons,
-    };
-    let Match { world, data, .. } = &mut *m;
-    let mut inputs = vec![Input::default(); world.fighters.len()];
-    inputs[0] = p1;
-    step_world(world, data, &inputs);
-    scene.push(world);
-    world.fx.clear();
-}
-
-fn hotkeys(k: Res<ButtonInput<KeyCode>>, mut m: ResMut<Match>, mut scene: ResMut<Scene>) {
-    if k.just_pressed(KeyCode::F1) {
-        scene.debug = !scene.debug;
-    }
-    let pick = [KeyCode::Digit1, KeyCode::Digit2, KeyCode::Digit3]
-        .iter()
-        .position(|c| k.just_pressed(*c));
-    if let Some(p) = pick.filter(|p| *p < m.data.fighters.len()) {
-        m.p1 = p;
-    }
-    if pick.is_some() || k.just_pressed(KeyCode::KeyR) {
-        m.world = SimWorld::new(m.config(seed()), &m.data);
-        scene.reset(&m.world);
-    }
-}
-
-fn interpolate(time: Res<Time<Fixed>>, mut scene: ResMut<Scene>) {
-    scene.alpha = time.overstep_fraction_f64();
-}
-
-fn player_color(d: &GameData, i: usize) -> egui::Color32 {
-    match d.global.palette.get(i).map(|p| p.main) {
-        Some(DataColor::Rgb(v)) => {
-            egui::Color32::from_rgb((v >> 16) as u8, (v >> 8) as u8, v as u8)
+/// UI is laid out for a 720-pixel-high window and scaled to the real one.
+fn ui_scale(win: Query<&Window, With<PrimaryWindow>>, mut scale: ResMut<UiScale>) {
+    if let Ok(w) = win.single() {
+        let s = (w.height() / 720.).max(0.3);
+        if (scale.0 - s).abs() > 1e-3 {
+            scale.0 = s;
         }
-        _ => egui::Color32::WHITE,
     }
 }
 
-/// Minimal percent/stock readout and match status (the real HUD is milestone 4).
-fn readout(mut ctx: EguiContexts, m: Res<Match>, shots: Option<Res<shots::Shots>>) -> Result {
+fn toast(mut ctx: EguiContexts, errors: Res<ContentErrors>, time: Res<Time>) -> Result {
+    if errors.0.is_empty() || time.elapsed_secs() > 15. {
+        return Ok(());
+    }
     let ctx = ctx.ctx_mut()?;
-    let w = &m.world;
-    let d = &m.data;
-    egui::Area::new(egui::Id::new("readout"))
-        .anchor(egui::Align2::CENTER_BOTTOM, [0., -12.])
+    egui::Area::new(egui::Id::new("content-errors"))
+        .anchor(egui::Align2::RIGHT_BOTTOM, [-16., -16.])
         .show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                for (i, f) in w.fighters.iter().enumerate() {
-                    let name = &d.fighters[f.data].name;
-                    let who = if w.cfg.players[i].cpu.is_some() {
-                        "CPU"
-                    } else {
-                        "P1"
-                    };
-                    let txt = format!("{who} {name}  {:.0}%  ×{}", f.dmg, f.stocks.max(0));
-                    egui::Frame::new()
-                        .fill(egui::Color32::from_black_alpha(150))
-                        .inner_margin(8)
-                        .corner_radius(6)
-                        .show(ui, |ui| {
-                            ui.label(
-                                egui::RichText::new(txt)
-                                    .size(18.)
-                                    .strong()
-                                    .color(player_color(d, i)),
-                            );
-                        });
-                }
-            });
-        });
-    let big = if w.count > 0 {
-        Some(format!("{}", w.count.div_ceil(TICK_HZ)))
-    } else if w.go_t > 0 {
-        Some("GO!".into())
-    } else if w.over {
-        Some(match w.winner {
-            Some(i) => format!("{} wins!", d.fighters[w.fighters[i].data].name),
-            None => "Draw!".into(),
-        })
-    } else if w.end_t > 0 {
-        Some("GAME!".into())
-    } else {
-        None
-    };
-    if let Some(big) = big {
-        egui::Area::new(egui::Id::new("big"))
-            .anchor(egui::Align2::CENTER_CENTER, [0., -80.])
-            .show(ctx, |ui| {
-                ui.add(
-                    egui::Label::new(
-                        egui::RichText::new(big)
-                            .size(72.)
+            egui::Frame::new()
+                .fill(egui::Color32::from_rgba_unmultiplied(60, 14, 24, 235))
+                .corner_radius(8)
+                .inner_margin(10)
+                .show(ui, |ui| {
+                    ui.set_max_width(460.);
+                    ui.label(
+                        egui::RichText::new("Some content didn't load and was skipped")
                             .strong()
                             .color(egui::Color32::WHITE),
-                    )
-                    .extend(),
-                );
-            });
-    }
-    if shots.is_none() {
-        let names: Vec<String> = d
-            .fighters
-            .iter()
-            .enumerate()
-            .map(|(i, f)| format!("{} {}", i + 1, f.name))
-            .collect();
-        egui::Area::new(egui::Id::new("help")).anchor(egui::Align2::LEFT_TOP, [10., 10.]).show(ctx, |ui| {
-            ui.label(
-                egui::RichText::new(format!(
-                    "A/D/W/S move · Space jump · J attack · K special · I grab · L shield\nR restart · {} · F1 debug{}",
-                    names.join(" · "),
-                    if w.over { "\nMatch over: press R" } else { "" }
-                ))
-                .size(13.)
-                .color(egui::Color32::from_white_alpha(170)),
-            );
+                    );
+                    for e in errors.0.iter().take(5) {
+                        ui.label(
+                            egui::RichText::new(e)
+                                .size(12.)
+                                .color(egui::Color32::from_rgb(255, 200, 200)),
+                        );
+                    }
+                    if errors.0.len() > 5 {
+                        ui.label(format!("…and {} more (see the log)", errors.0.len() - 5));
+                    }
+                });
         });
-    }
     Ok(())
 }
 
-/// Loads content from each root in order (built-in first, then user dirs; later files override).
+/// Loads content from each root in order (built-in first, then the user content dir; later files override).
 /// Broken packages are logged and skipped. Panics if nothing playable loads.
-fn load_data(roots: &[PathBuf]) -> GameData {
+fn load_data(roots: &[PathBuf]) -> (GameData, Vec<String>) {
     let mut files = Vec::new();
     for root in roots {
         collect(root, root, &mut files);
@@ -306,7 +200,7 @@ fn load_data(roots: &[PathBuf]) -> GameData {
     match load(files) {
         Ok((data, errors)) => {
             errors.iter().for_each(|e| error!("{e}"));
-            data
+            (data, errors.iter().map(ToString::to_string).collect())
         }
         Err(errors) => panic!(
             "content failed to load:\n{}",

@@ -4,15 +4,44 @@ A Smash-style platform fighter in Rust with Bevy and egui, ported from the Phase
 It's meant for local multiplayer on one machine and online play between installed copies of the game.
 
 ```bash
-cargo run -p game                 # play (P1 keyboard vs a CPU)
+cargo run -p game                 # play
 cargo run -p game --features dev  # faster incremental builds (dynamic linking)
-cargo run -p game -- --screenshot shots/  # CPU-vs-CPU match, saves PNGs at interesting ticks, exits
-cargo test --workspace            # sim (incl. TS traces) + render tests
+cargo run -p game -- --screenshot shots/  # scripted tour through menus, a 4-player match, results, training; saves PNGs
+cargo test --workspace            # sim (incl. TS traces), render and game tests
 ```
 
-Controls (temporary, until the milestone 4 menus): A/D/W/S move, Space jump, J attack, K special, I grab,
-L shield. R restarts, 1–3 picks P1's fighter, F1 toggles the debug overlay (hitboxes, hurtboxes, ledge and
-blast zones, state/move/frame text).
+## How to play
+
+Pick **Versus** or **Training** on the title screen. On character select, any device presses a button to join
+(up to 8 players). Left/right changes your fighter, attack locks in, special backs out. Move down to your card's
+footer and sideways to reach **Add CPU** or a CPU's card (level, fighter, remove), or up to the rules (stocks,
+stage, teams, friendly fire). When everyone's ready, press start. Start/Esc pauses (the device that paused drives
+the menu). After the match: rematch, character select or main menu. F1 toggles the hitbox/debug overlay.
+
+Training: you against a dummy that stands, shields, jumps, fights as a CPU or is controlled by a second device.
+The panel (top right) shows your move and frame, the last hit's frame advantage and combo, and has dummy damage,
+speed, freeze/step and reset. Dummy settings are also in the pause menu.
+
+### Default controls
+
+| | Keyboard left | Keyboard right | Gamepad |
+|---|---|---|---|
+| Move | W A S D | Arrow keys | Left stick / d-pad |
+| Jump | Space (or up) | Right Shift, Num 4 (or up) | X / Y (or up) |
+| Attack | J | . or Num 1 | A |
+| Special | K | / or Num 2 | B |
+| Grab | I | ; or Num 3 | RB |
+| Shield | L | ' or Num 0 | LB, LT, RT |
+| Pause | Esc | Enter | Start |
+
+Settings → Keyboard switches between two keyboard players (above) and one player using both halves. Controls
+rebinds any device (select an action, press the new control; Esc cancels). Tap a direction with attack for a smash
+attack (hold to charge). Shield + left/right rolls, shield + down spot-dodges, shield in the air air-dodges.
+"Up to jump" can be turned off per player on character select.
+
+Settings, bindings and your last picks are saved to the platform config dir (`~/Library/Application Support/
+stick-smash/settings.json` on macOS). Your own fighters and stages go in the platform data dir under
+`stick-smash/content/`, laid out like `assets/`; they load after the built-in content and can override it.
 
 One-shot TS content import (Node 26, sibling `../stick-smash` checkout): `node tools/convert-ts/convert.mjs`, then `BLESS=1 cargo test -p sim --test content`.
 
@@ -21,11 +50,11 @@ One-shot TS content import (Node 26, sibling `../stick-smash` checkout): `node t
 ```
 crates/sim/    deterministic game logic, no Bevy (rollback-ready)
 crates/render/ Bevy plugin drawing a sim World: figures, attachments, stage, effects, camera, debug overlay
-crates/game/   Bevy app: input, match flow, audio, menus, egui UI
-assets/        JSON content: global tuning, stages, fighters (moddable), generated schemas
+crates/game/   Bevy app: input devices, menus (bevy_ui), match flow, HUD, training panel (egui)
+assets/        JSON content: global tuning, stages, fighters (moddable), generated schemas; fonts (OFL)
 docs/          DESIGN.md (decisions), FORMAT.md (content format and move phase semantics)
 tools/         one-shot TS → JSON converter
 ```
 
-Status: milestones 1–3 done (content format, sim verified against TS traces, rendering). The game is
-temporarily playable (one keyboard player vs a CPU); menus, join screen and HUD are milestone 4.
+Status: milestones 1–4 done (content format, sim verified against TS traces, rendering, playable game with
+menus, join/character select, stock matches, training and HUD). Next: the editor.

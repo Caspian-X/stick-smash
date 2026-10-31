@@ -16,6 +16,28 @@ pub struct Render {
     pub camera: Camera,
     pub overlays: Overlays,
     pub fx: FxLook,
+    pub hud: Hud,
+}
+
+/// In-match HUD and match-flow presentation (the game crate reads this; the sim never does).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Hud {
+    /// Percent number color by damage: `[percent, color]` stops, interpolated, sorted by percent.
+    pub damage_ramp: Vec<(f64, Color)>,
+    /// Percent number shake (logical px) while the sim's `hudShake` timer runs, scaled by the timer.
+    pub shake: f64,
+    /// When the match ends ("GAME!"), the sim runs at `speed` for its first `ticks` end-freeze ticks.
+    pub end_slowmo: Slowmo,
+    /// Ticks the winner pose shows after the match is over, before the results screen.
+    pub results_delay: u32,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Slowmo {
+    pub speed: f64,
+    pub ticks: u32,
 }
 
 /// Follow camera. Each tick it frames every fighter that's on screen-worthy (not dead/out), padded, keeps the

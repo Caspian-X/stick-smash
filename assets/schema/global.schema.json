@@ -1072,9 +1072,10 @@
         },
         "camera": { "$ref": "#/$defs/Camera" },
         "overlays": { "$ref": "#/$defs/Overlays" },
-        "fx": { "$ref": "#/$defs/FxLook" }
+        "fx": { "$ref": "#/$defs/FxLook" },
+        "hud": { "$ref": "#/$defs/Hud" }
       },
-      "required": ["alphaGamma", "camera", "overlays", "fx"]
+      "required": ["alphaGamma", "camera", "overlays", "fx", "hud"]
     },
     "Camera": {
       "type": "object",
@@ -1384,6 +1385,51 @@
         "color": { "$ref": "#/$defs/Color" }
       },
       "required": ["r", "grow", "life", "color"]
+    },
+    "Hud": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "damageRamp": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              { "type": "number", "format": "double" },
+              { "$ref": "#/$defs/Color" }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "description": "Percent number color by damage: `[percent, color]` stops, interpolated, sorted by percent."
+        },
+        "shake": {
+          "type": "number",
+          "format": "double",
+          "description": "Percent number shake (logical px) while the sim's `hudShake` timer runs, scaled by the timer."
+        },
+        "endSlowmo": {
+          "$ref": "#/$defs/Slowmo",
+          "description": "When the match ends (\"GAME!\"), the sim runs at `speed` for its first `ticks` end-freeze ticks."
+        },
+        "resultsDelay": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks the winner pose shows after the match is over, before the results screen."
+        }
+      },
+      "required": ["damageRamp", "shake", "endSlowmo", "resultsDelay"],
+      "description": "In-match HUD and match-flow presentation (the game crate reads this; the sim never does)."
+    },
+    "Slowmo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "speed": { "type": "number", "format": "double" },
+        "ticks": { "type": "integer", "format": "uint32", "minimum": 0 }
+      },
+      "required": ["speed", "ticks"]
     }
   }
 }

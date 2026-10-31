@@ -45,10 +45,42 @@ The 5 TS kinds (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) ar
 - Sim input = raw per-player state: quantized stick `(i8, i8)` + button bitflags. The sim derives presses, taps (smash input) and short hops from its own per-fighter input history, which is part of `World` so rollback stays correct.
 - Keyboard maps directions to ±127. At first, sticks behave digitally through thresholds, so the game feels the same as the keyboard. True analog features (DI, walk speed) can come later without a format change.
 - Mixed devices in one match. A join screen where any device presses a button to claim a slot. The keyboard can act as two devices (left/right halves). Rebinding per device. Gamepads are first-class; keyboard is the main test device for now.
+- **Devices** (`game::input`): `Keys` (whole keyboard), `KeysL`/`KeysR` (split, the default), each connected
+  gamepad, and scripted `Bot`s (screenshot tour). Every device maps 10 actions (left, right, up, down, jump, attack,
+  special, grab, shield, start) through a binding profile (`keyboard`, `keyboard-left`, `keyboard-right`,
+  `gamepad:<name>`, falling back to the built-in defaults) to a sim `Input`, plus menu presses: confirm = attack or
+  jump (and Enter), back = special (and Esc/Backspace), start, and repeating directions. Gamepad left stick is
+  analog into the sim stick; the d-pad overrides it. Presses are latched until the next sim tick.
+- **Persistence** (`game::settings`): one JSON file in the platform config dir (settings, bindings, last versus and
+  training picks). User content loads from `<data dir>/stick-smash/content` after the built-in `assets/`;
+  content errors are logged and shown as a toast.
 
 ### UI
 - **bevy_ui** with directional focus navigation for menus, character select, the HUD, and anything else players use with a gamepad.
 - **egui** for the editor, debug overlays and training panels.
+- **Focus navigation** is our own small layer over bevy_ui (`game::ui`), not `bevy_input_focus`: Bevy's
+  `InputFocus` is a single global focus, and character select needs one cursor per player. Each focusable node
+  has a stable `key` and an optional owner; screens are rebuilt from a plain model when it changes and focus
+  survives by key. Directions move geometrically between nodes (last frame's layout, closest by distance +
+  3 × sideways offset; sideways moves stay within 45°; vertical lists wrap). "Spinner" rows take left/right as
+  value changes, so every card has a non-spinner footer (Lock in / Remove CPU / Add CPU) to travel between cards.
+- **Look.** Barlow Condensed Black Italic for the wordmark, percents and big moments, Barlow Condensed for menu
+  rows, Barlow for help text (OFL, `assets/fonts/`, with a system sans fallback for missing glyphs). Ink-navy
+  translucent panels over the live stage, the 8-color palette as the accent strip, gold for focus. The title
+  menus play a CPU attract match behind them; character select shows the picked fighters on the stage (ready ones
+  strike their win pose). UI is laid out for 720 logical pixels high and scaled with the window.
+- **Flow.** Title → Versus/Training → join + character select (one screen) → match → results (rematch, character
+  select, main menu). Pause from any player's Start; only the pausing device drives the pause menu. Training uses
+  the same select screen (one player + a dummy card) and an egui panel; dummy behavior and damage are also in the
+  pause menu for gamepad players.
+- **Teams in the renderer.** Each match gets a copy of `GameData` with the palette reordered per player (team
+  color in team matches). The renderer and HUD color player *i* with palette *i*, so no render changes were
+  needed. The content hash is unaffected (computed at load).
+- **Match stats** (results screen) are game-side: damage increases are credited to the sim's hit trace attacker for
+  that tick (else `sd.by`); a stock lost within 8 s of a hit is a KO for the last hitter, otherwise a self-destruct.
+  Placement: the winner (and teammates) first, then by elimination time.
+- **Presentation tuning** (damage color ramp, hit shake, end-of-match slow motion, results delay) lives in
+  `global.render.hud`; the sim never reads it.
 - **Editor** is a mode of the same executable, reached from the main menu. It's a fast-follow after the first playable build and gets its own UI design (not a port of the TS panels).
 
 ### Crates

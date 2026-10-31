@@ -12,9 +12,12 @@ path = "src/main.rs"
 
 [dependencies]
 sim.workspace = true
-bevy.workspace = true
+bevy = { workspace = true, features = ["system_font_discovery"] }
 bevy_egui.workspace = true
 render.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+dirs.workspace = true
 
 [features]
 # Faster incremental builds while developing: `cargo run --features dev`.

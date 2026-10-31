@@ -1,180 +1,267 @@
-//! `--screenshot <dir>`: a CPU-vs-CPU match that saves PNGs at interesting ticks, then exits. The match is
-//! simulated once up front to find the ticks (attacks, specials, projectiles, a KO, ...), then replayed while
-//! rendering; the sim is deterministic, so both runs agree.
+//! `--screenshot <dir>`: a scripted tour through the real flow, driven by bot devices pressing buttons like
+//! players would (title, settings, controls, a 4-player versus match with CPUs, pause, results, training).
+//! Matches fast-forward between shots. Saves PNGs, then exits.
 
 use std::path::PathBuf;
 
 use bevy::prelude::*;
 use bevy::render::view::screenshot::{Capturing, Screenshot, save_to_disk};
-use render::Scene;
-use sim::world::State;
-use sim::{Fx, GameData, Input, MatchConfig, PlayerConfig, World as SimWorld, step_world};
+use render::Framing;
+use sim::world::State as FState;
 
-use crate::Match;
+use crate::Screen;
+use crate::input::{Act, Devices};
+use crate::play::Match;
 
-pub struct Shot {
-    pub tick: u64,
-    pub name: String,
-    pub debug: bool,
-}
+type Pred = fn(&Match, &Framing, Screen) -> bool;
 
 pub enum Step {
-    Advance,
-    Settle,
-    Capture,
+    Set(u8, Act, bool),
+    Wait(u32),
+    /// Run the match fast until the condition holds (or `max` ticks pass).
+    Until(Pred, u32),
+    Shot(&'static str),
 }
 
 #[derive(Resource)]
-pub struct Shots {
-    pub dir: PathBuf,
-    pub list: Vec<Shot>,
-    pub next: usize,
-    pub wait: u32,
-    pub step: Step,
+pub struct Script {
+    dir: PathBuf,
+    steps: Vec<Step>,
+    at: usize,
+    wait: u32,
+    budget: u32,
+    capturing: bool,
 }
 
-const MAX_TICKS: u64 = 60 * 300;
+fn press(v: &mut Vec<Step>, bot: u8, act: Act) {
+    v.extend([
+        Step::Set(bot, act, true),
+        Step::Wait(3),
+        Step::Set(bot, act, false),
+        Step::Wait(4),
+    ]);
+}
 
-fn config(d: &GameData) -> MatchConfig {
-    let players = d
-        .fighters
-        .iter()
-        .map(|f| PlayerConfig {
-            cpu: Some(2),
-            ..PlayerConfig::human(&f.id)
+fn shot(v: &mut Vec<Step>, name: &'static str) {
+    v.extend([Step::Wait(6), Step::Shot(name)]);
+}
+
+fn screen_is(s: Screen) -> Pred {
+    match s {
+        Screen::Results => |_, _, s| s == Screen::Results,
+        Screen::Match => |_, _, s| s == Screen::Match,
+        Screen::Select => |_, _, s| s == Screen::Select,
+        _ => |_, _, s| s == Screen::Title,
+    }
+}
+
+fn offscreen(m: &Match, fr: &Framing, _: Screen) -> bool {
+    let [x0, y0, x1, _] = fr.view;
+    let w = &m.world;
+    w.frame > 400
+        && w.fighters.iter().any(|f| {
+            f.state == FState::Hitstun && (f.x < x0 - 30. || f.x > x1 + 30. || f.y - 40. < y0 - 30.)
         })
-        .collect();
-    MatchConfig {
-        seed: 7,
-        stocks: 2,
-        players,
-        ..default()
+        && w.fighters.iter().filter(|f| f.dmg > 20.).count() >= 2
+}
+
+impl Script {
+    pub fn tour(dir: PathBuf) -> Self {
+        use Act::*;
+        let mut v = vec![Step::Wait(40)];
+        shot(&mut v, "01-title");
+        for _ in 0..3 {
+            press(&mut v, 0, Down);
+        }
+        press(&mut v, 0, Attack);
+        shot(&mut v, "02-settings");
+        press(&mut v, 0, Special);
+        press(&mut v, 0, Down);
+        press(&mut v, 0, Down);
+        press(&mut v, 0, Attack);
+        press(&mut v, 0, Down);
+        press(&mut v, 0, Down);
+        shot(&mut v, "03-controls");
+        press(&mut v, 0, Special);
+        // Versus: bot 0 opens it (and joins), bot 1 joins.
+        press(&mut v, 0, Attack);
+        press(&mut v, 1, Attack);
+        press(&mut v, 0, Right);
+        press(&mut v, 1, Right);
+        press(&mut v, 1, Right);
+        // Bot 0: down to its footer, over to "Add CPU", add two.
+        press(&mut v, 0, Down);
+        press(&mut v, 0, Down);
+        press(&mut v, 0, Right);
+        press(&mut v, 0, Attack);
+        press(&mut v, 0, Attack);
+        // Left lands on the newest CPU's level: make it hard.
+        press(&mut v, 0, Left);
+        press(&mut v, 0, Right);
+        shot(&mut v, "04-select-choosing");
+        // Back to its own card, then stocks: up into the rules.
+        press(&mut v, 0, Special);
+        press(&mut v, 1, Attack);
+        press(&mut v, 0, Attack);
+        shot(&mut v, "05-select-ready");
+        press(&mut v, 0, Start);
+        v.push(Step::Until(screen_is(Screen::Match), 10));
+        v.push(Step::Wait(70));
+        shot(&mut v, "06-countdown");
+        v.push(Step::Until(
+            |m, _, _| m.world.go_t > 0 && m.world.go_t < 40,
+            400,
+        ));
+        shot(&mut v, "07-go");
+        v.push(Step::Until(offscreen, 5000));
+        v.push(Step::Shot("08-hud-offscreen"));
+        v.push(Step::Until(
+            |m, _, _| m.world.fighters.iter().map(|f| f.dmg).sum::<f64>() > 200.,
+            4000,
+        ));
+        shot(&mut v, "09-hud");
+        press(&mut v, 0, Start);
+        press(&mut v, 0, Down);
+        shot(&mut v, "10-pause");
+        press(&mut v, 0, Start);
+        v.push(Step::Until(|m, _, _| m.world.end_t > 0, 60 * 60 * 6));
+        v.push(Step::Wait(20));
+        v.push(Step::Shot("11-game"));
+        v.push(Step::Until(screen_is(Screen::Results), 600));
+        v.push(Step::Wait(30));
+        v.push(Step::Shot("12-results"));
+        press(&mut v, 0, Right);
+        press(&mut v, 0, Right);
+        press(&mut v, 0, Attack);
+        // Training.
+        v.push(Step::Until(screen_is(Screen::Title), 10));
+        press(&mut v, 0, Down);
+        press(&mut v, 0, Attack);
+        press(&mut v, 0, Attack);
+        shot(&mut v, "13-training-select");
+        press(&mut v, 0, Start);
+        v.push(Step::Until(screen_is(Screen::Match), 10));
+        v.push(Step::Set(0, Right, true));
+        v.push(Step::Until(
+            |m, _, _| m.world.fighters[0].x > m.world.fighters[1].x - 60.,
+            200,
+        ));
+        v.push(Step::Set(0, Right, false));
+        press(&mut v, 0, Attack);
+        v.push(Step::Until(
+            |m, _, _| m.world.trace.as_ref().is_some_and(|t| t.done),
+            120,
+        ));
+        press(&mut v, 0, Special);
+        v.push(Step::Until(
+            |m, _, _| {
+                m.world.fighters[0].state == FState::Attack
+                    && m.world.fighters[0]
+                        .mov
+                        .as_ref()
+                        .is_some_and(|mv| mv.elapsed > 6)
+            },
+            60,
+        ));
+        shot(&mut v, "14-training");
+        // Quit from the pause menu, then fill all eight slots.
+        press(&mut v, 0, Start);
+        for _ in 0..6 {
+            press(&mut v, 0, Down);
+        }
+        press(&mut v, 0, Attack);
+        v.push(Step::Until(screen_is(Screen::Title), 10));
+        press(&mut v, 0, Attack);
+        // Footer, then right past the two remembered CPUs' "Remove CPU" to "Add CPU".
+        press(&mut v, 0, Down);
+        press(&mut v, 0, Down);
+        for _ in 0..3 {
+            press(&mut v, 0, Right);
+        }
+        for _ in 0..5 {
+            press(&mut v, 0, Attack);
+        }
+        shot(&mut v, "15-select-eight");
+        Script {
+            dir,
+            steps: v,
+            at: 0,
+            wait: 0,
+            budget: 0,
+            capturing: false,
+        }
     }
 }
 
-/// The starting world and the screenshots to take.
-pub fn plan(d: &GameData) -> (SimWorld, Vec<Shot>) {
-    let start = SimWorld::new(config(d), d);
-    let mut w = start.clone();
-    let mut list: Vec<Shot> = vec![];
-    let add = |list: &mut Vec<Shot>, tick: u64, name: String, debug: bool| {
-        if !list.iter().any(|s| s.name == name) {
-            list.push(Shot { tick, name, debug });
-        }
-    };
-    let inputs = vec![Input::default(); w.fighters.len()];
-    let mut over_at = None;
-    add(
-        &mut list,
-        u64::from(d.global.match_.countdown / 2),
-        "00-countdown".into(),
-        false,
-    );
-    while w.frame < MAX_TICKS {
-        step_world(&mut w, d, &inputs);
-        let t = w.frame;
-        if w.fx.iter().any(|f| matches!(f, Fx::Beam { .. })) {
-            let n = list.iter().filter(|s| s.name.starts_with("ko")).count();
-            if n < 2 {
-                add(&mut list, t + 3, format!("ko-{n}"), false);
-                add(&mut list, t + 14, format!("ko-{n}-beam"), false);
-            }
-        }
-        w.fx.clear();
-        for p in &w.projs {
-            if p.life > 0 && p.bounces == 0 {
-                add(&mut list, t + 6, format!("proj-{}", p.id), false);
-            }
-        }
-        for f in &w.fighters {
-            let id = &d.fighters[f.data].id;
-            match (f.state, &f.mov) {
-                (State::Attack, Some(m)) => {
-                    let active = !sim::combat::active_boxes(d, f).is_empty();
-                    if active && !m.slot.ends_with("spec") && m.slot != "jab" && m.slot != "grab" {
-                        add(&mut list, t, format!("attack-{id}"), false);
-                        if list.iter().filter(|s| s.name.starts_with("attack")).count() >= 2 {
-                            add(&mut list, t, format!("debug-{id}"), true);
-                        }
-                    }
-                    if m.slot.ends_with("spec") && m.t == 4 {
-                        add(&mut list, t, format!("special-{id}-{}", m.slot), false);
-                    }
-                    if m.charge > 10 {
-                        add(&mut list, t, format!("charge-{id}"), false);
-                    }
-                }
-                (State::Shield, _) if f.t == 8 => add(&mut list, t, "shield".into(), false),
-                (State::Hitstun, _) if f.tumble && f.t == 8 => {
-                    add(&mut list, t, "tumble".into(), false)
-                }
-                (State::Respawn, _) if f.t == 40 => add(&mut list, t, "respawn".into(), false),
-                (State::Ledge, _) if f.t == 10 => add(&mut list, t, "ledge".into(), false),
-                (State::Dizzy, _) if f.t == 30 => add(&mut list, t, "dizzy".into(), false),
-                (State::Roll | State::Airdodge | State::Spot, _) if f.t == 6 => {
-                    add(&mut list, t, "dodge".into(), false)
-                }
-                _ => {}
-            }
-        }
-        if w.over && over_at.is_none() {
-            over_at = Some(t);
-            add(&mut list, t + 40, "zz-win".into(), false);
-        }
-        if over_at.is_some_and(|o| t > o + 60) {
-            break;
-        }
-    }
-    list.sort_by_key(|s| s.tick);
-    (start, list)
-}
-
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     mut commands: Commands,
-    mut shots: ResMut<Shots>,
-    mut m: ResMut<Match>,
-    mut scene: ResMut<Scene>,
+    mut s: ResMut<Script>,
+    mut devs: ResMut<Devices>,
+    m: Option<ResMut<Match>>,
+    fr: Res<Framing>,
+    screen: Res<State<Screen>>,
     capturing: Query<(), With<Capturing>>,
     mut exit: MessageWriter<AppExit>,
 ) {
-    let s = &mut *shots;
-    let Some(shot) = s.list.get(s.next) else {
+    for b in 0..2 {
+        devs.bot(b);
+    }
+    if s.capturing {
         if capturing.is_empty() {
-            exit.write(AppExit::Success);
+            s.capturing = false;
+        } else {
+            return;
         }
+    }
+    if s.wait > 0 {
+        s.wait -= 1;
+        return;
+    }
+    let Some(step) = s.steps.get(s.at) else {
+        exit.write(AppExit::Success);
         return;
     };
-    scene.alpha = 1.;
-    match s.step {
-        Step::Advance => {
-            let Match { world, data, .. } = &mut *m;
-            let inputs = vec![Input::default(); world.fighters.len()];
-            while world.frame < shot.tick {
-                step_world(world, data, &inputs);
-                scene.push(world);
-                world.fx.clear();
-            }
-            scene.debug = shot.debug;
-            s.wait = 3;
-            s.step = Step::Settle;
+    match step {
+        Step::Set(b, act, on) => {
+            devs.bot(*b)[*act as usize] = *on;
+            s.at += 1;
         }
-        Step::Settle => {
-            s.wait = s.wait.saturating_sub(1);
-            if s.wait == 0 {
-                let path = s.dir.join(format!("{:05}-{}.png", shot.tick, shot.name));
-                commands
-                    .spawn(Screenshot::primary_window())
-                    .observe(save_to_disk(path));
-                s.wait = 2;
-                s.step = Step::Capture;
+        Step::Wait(n) => {
+            s.wait = *n;
+            s.at += 1;
+        }
+        Step::Until(pred, max) => {
+            let (pred, max) = (*pred, *max);
+            let done = m.as_ref().is_some_and(|m| pred(m, &fr, *screen.get()));
+            if done || s.budget >= max {
+                if !done {
+                    warn!("screenshot step {} gave up waiting", s.at);
+                }
+                s.budget = 0;
+                s.at += 1;
+            } else if let Some(mut m) = m {
+                let n =
+                    if *screen.get() == Screen::Match && m.paused.is_none() && m.world.end_t == 0 {
+                        3
+                    } else {
+                        0
+                    };
+                m.ff += n;
+                s.budget += n.max(1);
+            } else {
+                s.budget += 1;
             }
         }
-        Step::Capture => {
-            s.wait = s.wait.saturating_sub(1);
-            if s.wait == 0 && capturing.is_empty() {
-                s.next += 1;
-                s.step = Step::Advance;
-            }
+        Step::Shot(name) => {
+            let path = s.dir.join(format!("{name}.png"));
+            info!("screenshot {}", path.display());
+            commands
+                .spawn(Screenshot::primary_window())
+                .observe(save_to_disk(path));
+            s.capturing = true;
+            s.wait = 2;
+            s.at += 1;
         }
     }
 }
