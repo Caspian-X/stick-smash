@@ -259,6 +259,7 @@ The underside slopes inward below `bottom`, exactly as in version 1. Both unders
 `underInset` cannot exceed half the width. Blocks' bounding rectangles including their undersides must not
 intersect (touching is allowed). Build a raised centre or wall with adjacent blocks of different heights.
 Only exposed top corners can be grabbable; disable flags at seams or corners covered by another block.
+The hanging body must also clear neighbouring solids for every loaded fighter.
 Setting a corner flag false makes that edge a walk-off. Ledge grab-zone
 settings remain shared in `ledge`; occupancy is independent for each block and side. All blocks share `art`.
 
@@ -282,15 +283,22 @@ Pass-through `platforms` keep `x1`, `x2`, and `y`, and optionally add `motion`:
 ```
 
 Waypoint `x`/`y` are **offsets** added to the platform's base coordinates, not absolute stage positions.
-At least two waypoints are required. A waypoint waits `waitTicks` (default 0), then travels linearly for its
-positive `travelTicks` to the next waypoint. `loop` travels from the last point back to the first;
-`pingPong` reverses at endpoints, using each departing waypoint's travel duration in either direction.
+At least two waypoints are required. A waypoint waits `waitTicks` (default 0), then travels linearly to the next waypoint.
+Used `travelTicks` durations must be positive. `loop` travels from the last point back to the first;
+`pingPong` reverses at endpoints. Leg j ↔ j+1 uses waypoint j's `travelTicks` in both directions;
+the last waypoint's `travelTicks` is ignored in this mode and may be zero.
 Endpoint waits occur once per visit. `phase` (default 0) advances the cycle in ticks at world frame zero.
 Motion is a pure function of the world frame, including countdown frames. Standing fighters receive the
 platform's position delta once per tick, including during hitlag. Jumping and dropping detach normally;
 carry changes position without adding launch velocity. Moving platforms remain pass-through and have no ledges.
 Rendering samples the same path at interpolated frames. Solid-block motion and per-piece art overrides are
 not part of version 2.
+
+Platforms require standing-body clearance from every block for every loaded fighter, across the full
+continuous path (including between ticks, the closing loop segment, and `global.sim.platformPad`). Contact is allowed; penetration
+is rejected. This rules out platforms under overhangs with less than the tallest fighter's body height of
+clearance. Motion phase is included when resolving spawn support. Spawn bodies and respawn descent/wait
+bodies must clear solids too. Version 1 off-ground spawns without `y` migrate to the old ground height.
 
 Spawn validation checks the body of every loaded fighter against solid geometry, with paths such as
 `spawns[2]`; motion errors identify paths such as `platforms[0].motion.waypoints[1].travelTicks`.

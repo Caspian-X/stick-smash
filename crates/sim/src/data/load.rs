@@ -117,7 +117,9 @@ pub fn load(files: impl IntoIterator<Item = Source>) -> Result<(GameData, Vec<Co
 
     let mut stages = Vec::new();
     for (id, path, v) in raw_stages {
-        match typed::<Stage>(&path, &v).and_then(|s| check_stage(&path, &s, &fighters).map(|()| s)) {
+        match typed::<Stage>(&path, &v)
+            .and_then(|s| check_stage(&path, &s, &fighters, global.sim.platform_pad).map(|()| s))
+        {
             Ok(mut s) => {
                 s.id = id.clone();
                 hashed.push((format!("stage:{id}"), v));
@@ -159,6 +161,21 @@ fn migrate(v: &mut Value) -> Result<(), String> {
             g.insert("leftLedge".into(), Value::Bool(true));
             g.insert("rightLedge".into(), Value::Bool(true));
         }
+        if let (Some(left), Some(right), Some(top), Some(spawns)) = (
+            ground.get("left").and_then(Value::as_f64),
+            ground.get("right").and_then(Value::as_f64),
+            ground.get("top").cloned(),
+            obj.get_mut("spawns").and_then(Value::as_array_mut),
+        ) {
+            for spawn in spawns {
+                if spawn.get("y").is_none()
+                    && spawn.get("x").and_then(Value::as_f64).is_some_and(|x| x < left || x > right)
+                    && let Some(spawn) = spawn.as_object_mut()
+                {
+                    spawn.insert("y".into(), top.clone());
+                }
+            }
+        }
         obj.insert("blocks".into(), Value::Array(vec![ground]));
         obj.insert("schemaVersion".into(), Value::from(2));
     }
@@ -197,7 +214,7 @@ fn resolve(id: &str, raw: &BTreeMap<String, (String, Value)>, chain: &mut Vec<St
     Ok(base)
 }
 
-fn check_stage(file: &str, s: &Stage, fighters: &[Fighter]) -> Result<(), ContentError> {
+fn check_stage(file: &str, s: &Stage, fighters: &[Fighter], platform_pad: f64) -> Result<(), ContentError> {
     positive(file, "width", s.width)?;
     positive(file, "height", s.height)?;
     positive(file, "ledge.r", s.ledge.r)?;
@@ -248,6 +265,22 @@ fn check_stage(file: &str, s: &Stage, fighters: &[Fighter]) -> Result<(), Conten
                         format!("corner is covered by blocks[{j}]; disable this ledge"),
                     ));
                 }
+                if i != j
+                    && fighters.iter().any(|f| {
+                        b.intersects_body(
+                            x + if field == "leftLedge" { -s.ledge.hang_x } else { s.ledge.hang_x },
+                            g.top + s.ledge.hang_y,
+                            f.body.half_width,
+                            f.body.height,
+                        )
+                    })
+                {
+                    return Err(err(
+                        file,
+                        format!("blocks[{i}].{field}"),
+                        format!("hanging body intersects blocks[{j}]"),
+                    ));
+                }
             }
         }
     }
@@ -258,10 +291,7 @@ fn check_stage(file: &str, s: &Stage, fighters: &[Fighter]) -> Result<(), Conten
         for fighter in fighters {
             let body = &fighter.body;
             for (j, b) in s.blocks.iter().enumerate() {
-                let (x1, x2) = (sp.x - body.half_width, sp.x + body.half_width);
-                let xs = (if sp.x < (b.left + b.right) / 2. { x2 } else { x1 }).clamp(b.left, b.right);
-                let bottom = b.bottom + ((xs - b.left).min(b.right - xs) / b.under_inset).min(1.) * b.under_depth;
-                if x2 > b.left && x1 < b.right && y > b.top && y - body.height < bottom {
+                if b.intersects_body(sp.x, y, body.half_width, body.height) {
                     return Err(err(
                         file,
                         format!("spawns[{i}]"),
@@ -278,8 +308,60 @@ fn check_stage(file: &str, s: &Stage, fighters: &[Fighter]) -> Result<(), Conten
                 return Err(err(file, &path, "needs at least two waypoints"));
             }
             for (j, point) in m.waypoints.iter().enumerate() {
-                if point.travel_ticks == 0 {
+                if point.travel_ticks == 0
+                    && !(m.mode == super::stage::PathMode::PingPong && j + 1 == m.waypoints.len())
+                {
                     return Err(err(file, format!("{path}[{j}].travelTicks"), "must be positive"));
+                }
+            }
+        }
+    }
+    for (i, p) in s.platforms.iter().enumerate() {
+        let points: Vec<_> =
+            p.motion.as_ref().map_or_else(|| vec![(0., 0.)], |m| m.waypoints.iter().map(|p| (p.x, p.y)).collect());
+        let segments = if p.motion.as_ref().is_some_and(|m| m.mode == super::stage::PathMode::PingPong) {
+            points.len() - 1
+        } else {
+            points.len()
+        };
+        for k in 0..segments {
+            let (a, b) = (points[k], points[(k + 1) % points.len()]);
+            for (j, block) in s.blocks.iter().enumerate() {
+                for f in fighters {
+                    let rect = [
+                        p.x1 + a.0 - f.body.half_width - platform_pad,
+                        p.y + a.1 - f.body.height,
+                        p.x2 + a.0 + f.body.half_width + platform_pad,
+                        p.y + a.1,
+                    ];
+                    if block.intersects_sweep(rect, [b.0 - a.0, b.1 - a.1]) {
+                        return Err(err(
+                            file,
+                            format!("platforms[{i}]"),
+                            format!("path lacks body clearance from blocks[{j}] for {}", f.id),
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    for (i, point) in s.respawns.iter().enumerate() {
+        for (j, block) in s.blocks.iter().enumerate() {
+            for f in fighters {
+                if block.intersects_sweep(
+                    [
+                        point.x - f.body.half_width,
+                        point.start_y - f.body.height,
+                        point.x + f.body.half_width,
+                        point.start_y,
+                    ],
+                    [0., point.end_y - point.start_y],
+                ) {
+                    return Err(err(
+                        file,
+                        format!("respawns[{i}]"),
+                        format!("descending body intersects blocks[{j}] for {}", f.id),
+                    ));
                 }
             }
         }

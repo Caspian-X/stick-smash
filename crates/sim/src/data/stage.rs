@@ -56,6 +56,52 @@ pub struct Ground {
     pub right_ledge: bool,
 }
 
+impl Ground {
+    pub fn body_bottom(&self, x: f64, half: f64) -> f64 {
+        let x = ((self.left + self.right) / 2.).clamp(x - half, x + half).clamp(self.left, self.right);
+        self.bottom + ((x - self.left).min(self.right - x) / self.under_inset).min(1.) * self.under_depth
+    }
+
+    pub fn intersects_body(&self, x: f64, y: f64, half: f64, height: f64) -> bool {
+        x + half > self.left && x - half < self.right && y > self.top && y - height < self.body_bottom(x, half)
+    }
+
+    /// Exact convex sweep of a rectangle along a straight segment. Contact without penetration is allowed.
+    pub fn intersects_sweep(&self, rect: [f64; 4], delta: [f64; 2]) -> bool {
+        let [left, top, right, bottom] = rect;
+        let [dx, dy] = delta;
+        let polygon = [
+            [self.left, self.top],
+            [self.right, self.top],
+            [self.right, self.bottom],
+            [self.right - self.under_inset, self.bottom + self.under_depth],
+            [self.left + self.under_inset, self.bottom + self.under_depth],
+            [self.left, self.bottom],
+        ];
+        let rectangle = [[left, top], [right, top], [right, bottom], [left, bottom]];
+        for [ax, ay] in
+            [[1., 0.], [0., 1.], [self.under_depth, self.under_inset], [self.under_depth, -self.under_inset], [dy, -dx]]
+        {
+            if ax == 0. && ay == 0. {
+                continue;
+            }
+            let project = |points: &[[f64; 2]]| {
+                points.iter().fold((f64::INFINITY, f64::NEG_INFINITY), |(lo, hi), p| {
+                    let v = p[0] * ax + p[1] * ay;
+                    (lo.min(v), hi.max(v))
+                })
+            };
+            let (lo, hi) = project(&polygon);
+            let (rlo, rhi) = project(&rectangle);
+            let shift = dx * ax + dy * ay;
+            if hi <= rlo + shift.min(0.) || rhi + shift.max(0.) <= lo {
+                return false;
+            }
+        }
+        true
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Platform {
@@ -71,8 +117,8 @@ pub struct Platform {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Motion {
-    /// At least two offsets. Each waypoint's travelTicks controls travel to the next waypoint
-    /// (or previous waypoint on the return leg); waitTicks is spent here before departing.
+    /// At least two offsets. Leg j to j+1 uses waypoint j's travelTicks in both directions.
+    /// In loop mode the last duration closes the loop; in pingPong it is ignored. Waits occur before departure.
     pub waypoints: Vec<Waypoint>,
     pub mode: PathMode,
     /// Advance this many ticks into the repeating cycle at world frame zero.
@@ -96,7 +142,7 @@ pub struct Waypoint {
     pub x: f64,
     /// Vertical translation from the platform's base height (positive is down).
     pub y: f64,
-    /// Positive travel duration departing this waypoint, in simulation ticks.
+    /// Travel ticks to the next waypoint, also used on the return leg. Ignored at the last pingPong waypoint.
     pub travel_ticks: u32,
     #[serde(default)]
     /// Ticks spent at this waypoint before departing; defaults to zero.
@@ -112,10 +158,15 @@ impl Motion {
         }
         let count = if self.mode == PathMode::Loop { n } else { 2 * (n - 1) };
         let index = |k: usize| if k < n { k } else { 2 * (n - 1) - k };
+        let travel = |k: usize| {
+            let a = index(k);
+            let b = index((k + 1) % count);
+            self.waypoints[if self.mode == PathMode::PingPong { a.min(b) } else { a }].travel_ticks
+        };
         let duration: u64 = (0..count)
             .map(|k| {
                 let p = &self.waypoints[index(k)];
-                u64::from(p.wait_ticks) + u64::from(p.travel_ticks)
+                u64::from(p.wait_ticks) + u64::from(travel(k))
             })
             .sum();
         if duration == 0 {
@@ -129,11 +180,11 @@ impl Motion {
                 return (a.x, a.y);
             }
             t -= f64::from(a.wait_ticks);
-            if t < f64::from(a.travel_ticks) {
-                let u = t / f64::from(a.travel_ticks);
+            if t < f64::from(travel(k)) {
+                let u = t / f64::from(travel(k));
                 return (a.x + (b.x - a.x) * u, a.y + (b.y - a.y) * u);
             }
-            t -= f64::from(a.travel_ticks);
+            t -= f64::from(travel(k));
         }
         (self.waypoints[0].x, self.waypoints[0].y)
     }

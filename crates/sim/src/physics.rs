@@ -82,9 +82,10 @@ pub fn integrate(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, edge_st
 /// Resolve solid faces after velocity integration or platform carry.
 pub fn resolve_solids(d: &GameData, s: &crate::data::Stage, f: &mut Fighter, px: f64, py: f64) {
     let b = &d.fighters[f.data].body;
-    for (block, s) in s.blocks.iter().enumerate() {
+    let stage = s;
+    for (block, s) in stage.blocks.iter().enumerate() {
         // Swept faces prevent fast movement from crossing thin walls or tops.
-        if py < s.top && f.y > s.top {
+        if py < s.top && f.y > s.top && !s.intersects_body(f.x, f.y, b.half_width, b.height) {
             let t = (s.top - py) / (f.y - py);
             let x = px + (f.x - px) * t;
             if x + b.half_width > s.left && x - b.half_width < s.right {
@@ -99,7 +100,14 @@ pub fn resolve_solids(d: &GameData, s: &crate::data::Stage, f: &mut Fighter, px:
             if dx * toward > 0. && (px - face) * toward <= 0. && (f.x - face) * toward > 0. {
                 let t = (face - px) / dx;
                 let y = py + (f.y - py) * t;
-                if y > s.top && y - b.height < s.bottom {
+                if y > s.top
+                    && y - b.height < s.bottom
+                    && !stage
+                        .blocks
+                        .iter()
+                        .enumerate()
+                        .any(|(i, other)| i != block && other.intersects_body(face, f.y, b.half_width, b.height))
+                {
                     f.x = face;
                     f.vx = 0.;
                 }
@@ -129,6 +137,34 @@ pub fn resolve_solids(d: &GameData, s: &crate::data::Stage, f: &mut Fighter, px:
                 if f.vy < 0. {
                     f.vy = 0.;
                 }
+            } else if stage.blocks.iter().enumerate().any(|(i, other)| {
+                let x = if mn == lf { f.x - lf } else { f.x + rt };
+                i != block && other.intersects_body(x, f.y, b.half_width, b.height)
+            }) {
+                // A seam or narrow gap cannot eject sideways into its neighbour.
+                let exit = |down: bool| {
+                    let mut y = f.y;
+                    for _ in 0..=stage.blocks.len() {
+                        let old = y;
+                        for other in &stage.blocks {
+                            if other.intersects_body(f.x, y, b.half_width, b.height) {
+                                y = if down { other.body_bottom(f.x, b.half_width) + b.height } else { other.top };
+                            }
+                        }
+                        if old == y {
+                            break;
+                        }
+                    }
+                    y
+                };
+                let (up_y, down_y) = (exit(false), exit(true));
+                f.y = if f.vy < 0. || down_y - f.y < f.y - up_y { down_y } else { up_y };
+                f.vy = 0.;
+                f.surf = stage
+                    .blocks
+                    .iter()
+                    .position(|g| f.y == g.top && f.x + b.half_width > g.left && f.x - b.half_width < g.right);
+                f.ground = f.surf.is_some();
             } else if mn == lf {
                 f.x -= lf;
                 if f.vx > 0. {

@@ -285,8 +285,7 @@ fn draw(
     let [x0, y0, x1, y1] = fx::Cam { x: c.x + sx, y: c.y + sy, h: c.h }.view(asp);
     framing.view = [x0, y0, x1, y1];
     framing.fighters = views.iter().map(|v| (v.x, v.y)).collect();
-    let stage_frame =
-        st.prev.as_ref().map_or(cur.frame as f64, |p| p.frame as f64 + (cur.frame as f64 - p.frame as f64) * t);
+    let stage_frame = stage_frame(st.prev.as_ref().map(|p| p.frame), cur.frame, t);
     for (mesh, layer, mut tf) in layers {
         if matches!(layer, Layer::Backdrop | Layer::Stars) {
             tf.translation.x = par.x;
@@ -386,4 +385,19 @@ fn debug_labels(
         painter.text(pos, egui::Align2::CENTER_BOTTOM, text, font.clone(), egui::Color32::from_rgb(0xe8, 0xff, 0xe8));
     }
     Ok(())
+}
+
+fn stage_frame(previous: Option<u64>, current: u64, t: f64) -> f64 {
+    previous.filter(|p| p.checked_add(1) == Some(current)).map_or(current as f64, |p| p as f64 + t)
+}
+
+#[cfg(test)]
+mod stage_frame_tests {
+    #[test]
+    fn only_consecutive_frames_interpolate() {
+        assert_eq!(super::stage_frame(Some(10), 11, 0.25), 10.25);
+        for (previous, current) in [(Some(10), 20), (Some(20), 10), (Some(10), 10), (None, 10), (Some(u64::MAX), 0)] {
+            assert_eq!(super::stage_frame(previous, current, 0.25), current as f64);
+        }
+    }
 }

@@ -101,7 +101,7 @@
         "waypoints": {
           "type": "array",
           "items": { "$ref": "#/$defs/Waypoint" },
-          "description": "At least two offsets. Each waypoint's travelTicks controls travel to the next waypoint\n(or previous waypoint on the return leg); waitTicks is spent here before departing."
+          "description": "At least two offsets. Leg j to j+1 uses waypoint j's travelTicks in both directions.\nIn loop mode the last duration closes the loop; in pingPong it is ignored. Waits occur before departure."
         },
         "mode": { "$ref": "#/$defs/PathMode" },
         "phase": {
@@ -133,7 +133,7 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Positive travel duration departing this waypoint, in simulation ticks."
+          "description": "Travel ticks to the next waypoint, also used on the return leg. Ignored at the last pingPong waypoint."
         },
         "waitTicks": {
           "type": "integer",

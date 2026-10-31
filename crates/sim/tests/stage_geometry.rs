@@ -107,9 +107,9 @@ fn waypoint_wait_loop_ping_pong_and_phase() {
     assert_eq!(m.offset(60.), (100., 0.));
     assert_eq!(m.offset(80.), (0., 0.));
     m.mode = PathMode::PingPong;
-    assert_eq!(m.offset(60.), (150., -20.));
-    assert_eq!(m.offset(88.), (50., -20.));
-    assert_eq!(m.offset(93.), (0., 0.));
+    assert_eq!(m.offset(45.), (150., -20.));
+    assert_eq!(m.offset(63.), (50., -20.));
+    assert_eq!(m.offset(73.), (0., 0.));
     m.phase = 15;
     assert_eq!(m.offset(0.), (50., -20.));
 }
@@ -292,4 +292,86 @@ fn cpu_recovers_toward_nearest_secondary_block() {
     f.surf = None;
     let intent = sim::ai::ai_input(&mut w, &d, 0, 2);
     assert!(intent.right && !intent.left);
+}
+
+#[test]
+fn rising_at_seams_and_body_width_gaps_cannot_enter_solids() {
+    for gap in [0., 8., 20.] {
+        for reverse in [false, true] {
+            let mut d = common::data();
+            d.stages[0].blocks = vec![island(300., 640., 520.), island(640. + gap, 980., 520.)];
+            if reverse {
+                d.stages[0].blocks.reverse();
+            }
+            let mut w = world(&d);
+            let body = &d.fighters[0].body;
+            let f = &mut w.fighters[0];
+            f.x = 640. + gap / 2.;
+            f.y = 700. + body.height;
+            f.ground = false;
+            f.surf = None;
+            for _ in 0..60 {
+                w.fighters[0].vy = -14.;
+                integrate(&mut w, &d);
+                let f = &w.fighters[0];
+                assert!(f.y > 580. + body.height, "gap={gap}, reverse={reverse}, {f:?}");
+                assert!(d.stages[0].blocks.iter().all(|b| !b.intersects_body(f.x, f.y, body.half_width, body.height)));
+            }
+        }
+    }
+}
+
+#[test]
+fn arena_corner_contact_keeps_legacy_side_exit() {
+    let d = common::data();
+    let mut w = world(&d);
+    let f = &mut w.fighters[0];
+    f.x = 980. + d.fighters[0].body.half_width - 4.;
+    f.y = 513.;
+    f.vy = 12.;
+    f.ground = false;
+    f.surf = None;
+    integrate(&mut w, &d);
+    let f = &w.fighters[0];
+    assert_eq!((f.x, f.y, f.vy), (980. + d.fighters[0].body.half_width, 525., 12.));
+    assert!(!f.ground);
+}
+
+#[test]
+fn ping_pong_uses_forward_leg_duration_in_both_directions() {
+    let mut m = motion(PathMode::PingPong);
+    m.waypoints[2].travel_ticks = 0;
+    assert_eq!(m.offset(33.), m.offset(45.));
+    assert_eq!(m.offset(15.), m.offset(63.));
+    assert_eq!(m.offset(73.), (0., 0.));
+}
+
+#[test]
+fn cpu_crosses_to_an_opponents_island() {
+    let mut d = common::data();
+    d.stages[0].blocks = vec![island(300., 600., 520.), island(660., 980., 520.)];
+    d.stages[0].platforms.clear();
+    d.stages[0].spawns[0].x = 500.;
+    d.stages[0].spawns[1].x = 850.;
+    let mut w = World::new(
+        MatchConfig {
+            training: true,
+            players: vec![
+                PlayerConfig { cpu: Some(2), ..PlayerConfig::human("brawler") },
+                PlayerConfig::human("brawler"),
+            ],
+            ..Default::default()
+        },
+        &d,
+    )
+    .unwrap();
+    let mut arrived = false;
+    for _ in 0..600 {
+        step_world(&mut w, &d, &[]);
+        if w.fighters[0].surf == Some(1) && w.fighters[0].x > 700. {
+            arrived = true;
+            break;
+        }
+    }
+    assert!(arrived, "{:?}", w.fighters[0]);
 }

@@ -334,3 +334,98 @@ fn adjacent_blocks_require_exposed_ledges() {
     let Err(errors) = load(patched(file, v)) else { panic!("invalid stage accepted") };
     assert_eq!(errors[0].path, "blocks[1]");
 }
+
+fn stage_error(patch: serde_json::Value) -> sim::data::ContentError {
+    let file = "stages/arena/stage.json";
+    let mut src = patched(file, patch);
+    let mut backup = sources().into_iter().find(|s| s.path == file).unwrap();
+    backup.path = "stages/backup/stage.json".into();
+    src.push(backup);
+    let (_, mut errors) = load(src).unwrap();
+    assert_eq!(errors.len(), 1, "{errors:?}");
+    errors.remove(0)
+}
+
+#[test]
+fn ledge_hanging_body_needs_clearance_from_neighbours() {
+    let error = stage_error(serde_json::json!({"blocks":[
+        {"left":300,"right":640,"top":520,"bottom":580,"underInset":60,"underDepth":100,"leftLedge":true,"rightLedge":false},
+        {"left":640,"right":980,"top":470,"bottom":580,"underInset":60,"underDepth":100,"leftLedge":true,"rightLedge":true}
+    ]}));
+    assert_eq!(error.path, "blocks[1].leftLedge");
+    assert!(error.msg.contains("hanging body"));
+}
+
+#[test]
+fn platforms_need_body_clearance_along_entire_motion_segments() {
+    use serde_json::json;
+    assert_eq!(stage_error(json!({"platforms":[{"x1":500,"x2":600,"y":700}]})).path, "platforms[0]");
+    // Standing feet may extend past the visible platform by global.sim.platformPad.
+    assert_eq!(stage_error(json!({"platforms":[{"x1":100,"x2":284,"y":600}]})).path, "platforms[0]");
+    // Both endpoints are clear; even a one-tick traversal must not cross the solid.
+    let moving = json!({"x1":100,"x2":150,"y":600,"motion":{"mode":"pingPong","waypoints":[
+        {"x":0,"y":0,"travelTicks":1},{"x":1000,"y":0,"travelTicks":0}
+    ]}});
+    assert_eq!(stage_error(json!({"platforms":[moving]})).path, "platforms[0]");
+    let (_, errors) =
+        load(patched("stages/arena/stage.json", json!({"platforms":[{"x1":500,"x2":600,"y":754}]}))).unwrap();
+    assert!(errors.is_empty(), "{errors:?}");
+}
+
+#[test]
+fn respawn_descent_and_waiting_body_must_clear_solids() {
+    use serde_json::json;
+    for (start, end) in [(400, 550), (750, 400), (600, 600)] {
+        assert_eq!(stage_error(json!({"respawns":[{"x":500,"startY":start,"endY":end}]})).path, "respawns[0]");
+    }
+}
+
+#[test]
+fn version_one_offstage_spawn_keeps_original_ground_height() {
+    let file = "stages/arena/stage.json";
+    let mut src = sources();
+    let stage = src.iter_mut().find(|s| s.path == file).unwrap();
+    let mut v: serde_json::Value = serde_json::from_str(&stage.text).unwrap();
+    let mut ground = v["blocks"][0].clone();
+    ground.as_object_mut().unwrap().shift_remove("leftLedge");
+    ground.as_object_mut().unwrap().shift_remove("rightLedge");
+    v.as_object_mut().unwrap().shift_remove("blocks");
+    v["ground"] = ground;
+    v["schemaVersion"] = 1.into();
+    v["spawns"][0]["x"] = 100.into();
+    stage.text = v.to_string();
+    let (data, errors) = load(src).unwrap();
+    assert!(errors.is_empty(), "{errors:?}");
+    let w = sim::World::new(
+        sim::MatchConfig { training: true, players: vec![sim::PlayerConfig::human("brawler")], ..Default::default() },
+        &data,
+    )
+    .unwrap();
+    assert_eq!(w.fighters[0].y, 520.);
+    assert!(!w.fighters[0].ground);
+}
+
+#[test]
+fn moving_platform_spawns_use_phase_and_validate_carried_clearance() {
+    use serde_json::json;
+    let platform = json!({"x1":400,"x2":600,"y":300,"motion":{"mode":"pingPong","phase":10,"waypoints":[
+        {"x":0,"y":0,"travelTicks":20},{"x":100,"y":-40,"travelTicks":0}
+    ]}});
+    let (data, errors) =
+        load(patched("stages/arena/stage.json", json!({"platforms":[platform],"spawns":[{"x":500,"y":280,"face":1}]})))
+            .unwrap();
+    assert!(errors.is_empty(), "{errors:?}");
+    let mut w = sim::World::new(
+        sim::MatchConfig { training: true, players: vec![sim::PlayerConfig::human("brawler")], ..Default::default() },
+        &data,
+    )
+    .unwrap();
+    assert_eq!(w.fighters[0].surf, Some(1));
+    sim::step_world(&mut w, &data, &[]);
+    assert_eq!((w.fighters[0].x, w.fighters[0].y), (505., 278.));
+    let error = stage_error(json!({"platforms":[{"x1":400,"x2":600,"y":300,"motion":{"mode":"loop","waypoints":[
+        {"x":0,"y":0,"travelTicks":10},{"x":0,"y":320,"travelTicks":10}
+    ]}}],"spawns":[{"x":500,"y":300,"face":1}]}));
+    assert_eq!(error.path, "platforms[0]");
+    assert!(error.msg.contains("clearance"));
+}
