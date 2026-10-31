@@ -35,7 +35,7 @@ fn cpu_matches_draw_cleanly() {
     let anims: Vec<String> = d.fighters[0].anims.keys().cloned().collect();
     for seed in [1, 2] {
         let players = d.fighters.iter().map(|f| PlayerConfig { cpu: Some(2), ..PlayerConfig::human(&f.id) }).collect();
-        let mut w = World::new(MatchConfig { seed, stocks: 2, players, ..Default::default() }, &d);
+        let mut w = World::new(MatchConfig { seed, stocks: 2, players, ..Default::default() }, &d).unwrap();
         let (mut fx, mut cam, mut rng, mut cv) =
             (FxLayer::default(), CameraRig::default(), Rand::default(), Canvas::new(1.));
         let s = &d.stages[w.stage];
@@ -99,7 +99,8 @@ fn poses_resolve_from_chains_and_conditions() {
             ..Default::default()
         },
         &d,
-    );
+    )
+    .unwrap();
     let mut f = w.fighters[0].clone();
     f.ground = true;
     assert_eq!(pose::sample(fd, &pound.anim, 6., None, &f).rot, 0.);

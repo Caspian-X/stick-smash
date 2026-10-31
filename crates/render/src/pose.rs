@@ -87,8 +87,8 @@ pub fn resolve(fd: &FighterData, p: &Pose) -> Skel {
     let mut chain = vec![p];
     let mut cur = p;
     while let Some(next) = cur.from.as_deref().and_then(|n| fd.poses.get(n)) {
-        if chain.len() > 16 {
-            break;
+        if chain.iter().any(|c| std::ptr::eq(*c, next)) {
+            break; // a `from` cycle: stop at the first repeat
         }
         chain.push(next);
         cur = next;

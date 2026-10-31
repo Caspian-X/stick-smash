@@ -1417,9 +1417,15 @@
           "format": "uint32",
           "minimum": 0,
           "description": "Ticks the winner pose shows after the match is over, before the results screen."
+        },
+        "koCreditTicks": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0,
+          "description": "Results stats: a fall counts as a KO for the last hitter if they hit within this many ticks, otherwise\nas a self-destruct."
         }
       },
-      "required": ["damageRamp", "shake", "endSlowmo", "resultsDelay"],
+      "required": ["damageRamp", "shake", "endSlowmo", "resultsDelay", "koCreditTicks"],
       "description": "In-match HUD and match-flow presentation (the game crate reads this; the sim never does)."
     },
     "Slowmo": {

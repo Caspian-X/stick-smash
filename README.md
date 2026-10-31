@@ -15,8 +15,9 @@ cargo test --workspace            # sim (incl. TS traces), render and game tests
 Pick **Versus** or **Training** on the title screen. On character select, any device presses a button to join
 (up to 8 players). Left/right changes your fighter, attack locks in, special backs out. Move down to your card's
 footer and sideways to reach **Add CPU** or a CPU's card (level, fighter, remove), or up to the rules (stocks,
-stage, teams, friendly fire). When everyone's ready, press start. Start/Esc pauses (the device that paused drives
-the menu). After the match: rematch, character select or main menu. F1 toggles the hitbox/debug overlay.
+stage, teams, friendly fire). Only stages that fit the lineup are offered; teams need at least two opposing sides. When everyone's ready, press start. Start/Esc pauses (the device that paused drives
+the menu; ownership moves to a connected device if it disconnects). A disconnected unready player leaves select;
+a ready slot stays available to remove or reclaim with another device. After the match: rematch, character select or main menu. F1 toggles the hitbox/debug overlay.
 
 Training: you against a dummy that stands, shields, jumps, fights as a CPU or is controlled by a second device.
 The panel (top right) shows your move and frame, the last hit's frame advantage and combo, and has dummy damage,
@@ -35,7 +36,9 @@ speed, freeze/step and reset. Dummy settings are also in the pause menu.
 | Pause | Esc | Enter | Start |
 
 Settings → Keyboard switches between two keyboard players (above) and one player using both halves. Controls
-rebinds any device (select an action, press the new control; Esc cancels). Tap a direction with attack for a smash
+rebinds any device (select an action, press the new control; Esc or the gamepad's B/Back cancels).
+Split keyboard bindings refuse keys used by the other half. Gamepads have per-device session overrides with
+shared model defaults. Gameplay presses clear across menus and pause; release held buttons after resuming. Tap a direction with attack for a smash
 attack (hold to charge). Shield + left/right rolls, shield + down spot-dodges, shield in the air air-dodges.
 "Up to jump" can be turned off per player on character select.
 

@@ -15,7 +15,7 @@ const SPEEDS: [f64; 3] = [1., 0.5, 0.25];
 pub fn panel(
     mut ctx: EguiContexts,
     mut m: ResMut<Match>,
-    devs: Res<Devices>,
+    mut devs: ResMut<Devices>,
     data: Res<Data>,
     mut saved: ResMut<Saved>,
     mut scene: ResMut<render::Scene>,
@@ -93,6 +93,7 @@ pub fn panel(
             if mode != m.dummy.mode {
                 m.dummy.mode = mode;
                 m.dummy.dev = None;
+                m.clear_input(&mut devs);
                 saved.training.mode = mode;
                 m.apply_dummy();
             }
@@ -139,6 +140,7 @@ pub fn panel(
                 let label = if m.frozen { "Resume" } else { "Freeze" };
                 if ui.button(label).clicked() {
                     m.frozen = !m.frozen;
+                    m.clear_input(&mut devs);
                 }
                 if ui.add_enabled(m.frozen, egui::Button::new("Step")).clicked() {
                     m.step = true;
@@ -156,6 +158,7 @@ pub fn panel(
     if restart {
         m.restart(&data.0, play::seed());
         scene.reset(&m.world);
+        m.clear_input(&mut devs);
     }
     Ok(())
 }

@@ -96,22 +96,10 @@
       "additionalProperties": false,
       "properties": {
         "default": { "$ref": "#/$defs/Rect" },
-        "knockdown": { "$ref": "#/$defs/Rect" },
-        "crouch": {
-          "anyOf": [
-            { "$ref": "#/$defs/Rect" },
-            { "type": "null" }
-          ]
-        },
-        "ledge": {
-          "anyOf": [
-            { "$ref": "#/$defs/Rect" },
-            { "type": "null" }
-          ]
-        }
+        "knockdown": { "$ref": "#/$defs/Rect" }
       },
       "required": ["default", "knockdown"],
-      "description": "Hurtboxes by state group. Missing optional groups use `default`."
+      "description": "Hurtboxes for the default and knockdown state groups."
     },
     "Rect": {
       "type": "object",
@@ -1393,21 +1381,9 @@
       "additionalProperties": false,
       "properties": {
         "default": { "$ref": "#/$defs/RectPartial" },
-        "knockdown": { "$ref": "#/$defs/RectPartial" },
-        "crouch": {
-          "anyOf": [
-            { "$ref": "#/$defs/RectPartial" },
-            { "type": "null" }
-          ]
-        },
-        "ledge": {
-          "anyOf": [
-            { "$ref": "#/$defs/RectPartial" },
-            { "type": "null" }
-          ]
-        }
+        "knockdown": { "$ref": "#/$defs/RectPartial" }
       },
-      "description": "Hurtboxes by state group. Missing optional groups use `default`."
+      "description": "Hurtboxes for the default and knockdown state groups."
     },
     "RectPartial": {
       "type": "object",

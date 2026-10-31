@@ -211,7 +211,8 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
         let dy = o.y - f.y;
         let adx = dx.abs();
         let tdir = if dx == 0. { 1. } else { sign(dx) };
-        let tx = o.x.clamp(s.left + v.target_pad, s.right - v.target_pad);
+        let pad = v.target_pad.min((s.right - s.left) / 2.);
+        let tx = o.x.clamp(s.left + pad, s.right - pad);
         if (tx - f.x).abs() > v.target_deadzone {
             toward(&mut inp, tx - f.x);
         }

@@ -102,7 +102,7 @@ pub fn seed() -> u32 {
 }
 
 impl Match {
-    pub fn new(base: &Arc<GameData>, mode: Mode, slots: Vec<Slot>, rules: Rules, seed: u32) -> Self {
+    pub fn new(base: &Arc<GameData>, mode: Mode, slots: Vec<Slot>, rules: Rules, seed: u32) -> Result<Self, String> {
         let mut data = (**base).clone();
         data.global.palette =
             slots.iter().map(|s| base.global.palette[s.color % base.global.palette.len()].clone()).collect();
@@ -123,11 +123,11 @@ impl Match {
                 })
                 .collect(),
         };
-        let mut world = SimWorld::new(cfg, &data);
+        let mut world = SimWorld::new(cfg, &data)?;
         if mode == Mode::Showcase {
             world.count = 0;
         }
-        Match {
+        Ok(Match {
             mode,
             world,
             data,
@@ -144,12 +144,12 @@ impl Match {
             over_t: 0,
             end_t: 0,
             debug: mode == Mode::Training,
-        }
+        })
     }
 
     /// Same players and rules, fresh world.
     pub fn restart(&mut self, base: &Arc<GameData>, seed: u32) {
-        let mut m = Match::new(base, self.mode, self.slots.clone(), self.rules.clone(), seed);
+        let Ok(mut m) = Match::new(base, self.mode, self.slots.clone(), self.rules.clone(), seed) else { return };
         m.dummy = self.dummy.clone();
         m.debug = self.debug;
         m.speed = self.speed;
@@ -166,9 +166,10 @@ impl Match {
         }
     }
 
-    pub fn attract(base: &Arc<GameData>, seed: u32) -> Self {
+    pub fn attract(base: &Arc<GameData>, seed: u32) -> Result<Self, String> {
         let n = base.fighters.len();
-        let players = 4.min(base.stages[0].spawns.len());
+        let stage = &base.stages[seed as usize % base.stages.len()];
+        let players = 4.min(stage.max_players());
         let slots = (0..players)
             .map(|i| Slot {
                 dev: None,
@@ -180,8 +181,7 @@ impl Match {
                 color: i,
             })
             .collect();
-        let rules =
-            Rules { stocks: 2, stage: base.stages[seed as usize % base.stages.len()].id.clone(), friendly_fire: false };
+        let rules = Rules { stocks: 2, stage: stage.id.clone(), friendly_fire: false };
         Match::new(base, Mode::Attract, slots, rules, seed)
     }
 
@@ -220,31 +220,31 @@ impl Match {
         }
         scene.push(&self.world);
         self.world.fx.clear();
+        self.world.hits.clear();
     }
 
     /// KOs, falls, self-destructs and damage, credited from damage and stock changes plus the sim's hit trace.
     fn track(&mut self, before: &[(f64, i32)]) {
         let w = &self.world;
-        for (i, f) in w.fighters.iter().enumerate() {
-            let (dmg0, stocks0) = before[i];
-            if f.dmg > dmg0 {
-                let by = w
-                    .trace
-                    .as_ref()
-                    .filter(|t| t.defender == i && t.hit_frame == w.frame)
-                    .map(|t| t.attacker)
-                    .or(f.sd.by)
-                    .filter(|b| *b != i);
-                self.stats[i].taken += f.dmg - dmg0;
-                if let Some(b) = by {
-                    self.stats[b].dealt += f.dmg - dmg0;
-                    self.stats[i].last_hit = Some((b, w.frame));
-                }
+        for hit in &w.hits {
+            if hit.shielded || hit.damage <= 0. {
+                continue;
             }
+            let Some(victim) = self.stats.get_mut(hit.victim) else { continue };
+            victim.taken += hit.damage;
+            if let Some(by) = hit.attacker.filter(|b| *b != hit.victim && *b < w.fighters.len()) {
+                victim.last_hit = Some((by, w.frame));
+                self.stats[by].dealt += hit.damage;
+            }
+        }
+        for (i, f) in w.fighters.iter().enumerate() {
+            let (_, stocks0) = before[i];
             if f.stocks < stocks0 {
                 let s = &mut self.stats[i];
                 s.falls += 1;
-                match s.last_hit.take().filter(|(_, t)| w.frame - t < 60 * 8) {
+                match s.last_hit.take().filter(|(b, t)| {
+                    Some(*b) == f.last_hit_by && w.frame - t < self.data.global.render.hud.ko_credit_ticks
+                }) {
                     Some((b, _)) => self.stats[b].kos += 1,
                     None => self.stats[i].sds += 1,
                 }
@@ -255,15 +255,28 @@ impl Match {
         }
     }
 
+    pub fn clear_input(&mut self, devs: &mut Devices) {
+        devs.clear();
+        for f in &mut self.world.fighters {
+            f.history = default();
+            f.buffer = default();
+        }
+    }
+
     /// Placement (1-based) per player: the winner (and teammates) first, then by how long they lasted.
     pub fn placements(&self) -> Vec<usize> {
         let w = &self.world;
         let team_of = |i: usize| w.cfg.players[i].team;
         let won =
             |i: usize| w.winner.is_some_and(|win| win == i || team_of(win).is_some() && team_of(win) == team_of(i));
+        // Winners tie for first.
         let score = |i: usize| -> (bool, u64, i32, i64) {
             let f = &w.fighters[i];
-            (won(i), self.stats[i].out_at.unwrap_or(u64::MAX), f.stocks, -(f.dmg as i64))
+            if won(i) {
+                (true, 0, 0, 0)
+            } else {
+                (false, self.stats[i].out_at.unwrap_or(u64::MAX), f.stocks, -(f.dmg as i64))
+            }
         };
         (0..w.fighters.len()).map(|i| 1 + (0..w.fighters.len()).filter(|&j| score(j) > score(i)).count()).collect()
     }
@@ -324,7 +337,10 @@ pub fn attract(mut commands: Commands, m: Option<Res<Match>>, data: Res<Data>, m
     let restart = m.as_ref().is_none_or(|m| m.mode != Mode::Attract || m.over_t > 90);
     if restart {
         let seed = m.as_ref().map_or_else(seed, |m| m.world.cfg.seed.wrapping_mul(747_796_405).wrapping_add(1));
-        install(&mut commands, &mut scene, Match::attract(&data.0, seed));
+        match Match::attract(&data.0, seed) {
+            Ok(m) => install(&mut commands, &mut scene, m),
+            Err(e) => error!("attract match: {e}"),
+        }
     }
 }
 
@@ -332,7 +348,7 @@ pub fn attract(mut commands: Commands, m: Option<Res<Match>>, data: Res<Data>, m
 /// the move to the results screen.
 pub fn match_flow(
     mut m: ResMut<Match>,
-    devs: Res<Devices>,
+    mut devs: ResMut<Devices>,
     keys: Res<ButtonInput<KeyCode>>,
     mut scene: ResMut<Scene>,
     mut next: ResMut<NextState<Screen>>,
@@ -341,16 +357,22 @@ pub fn match_flow(
         m.debug = !m.debug;
     }
     scene.debug = m.debug;
+    if m.dummy.dev.is_some_and(|d| !devs.map.contains_key(&d)) {
+        m.dummy.dev = None;
+        m.clear_input(&mut devs);
+    }
     if m.mode == Mode::Training && m.dummy.mode == DummyMode::Human && m.dummy.dev.is_none() {
         let p1 = m.slots[0].dev;
         if let Some((d, _)) = devs.map.iter().find(|(d, s)| Some(**d) != p1 && s.any_press()) {
             m.dummy.dev = Some(*d);
+            m.clear_input(&mut devs);
         }
     }
     if m.paused.is_none() && m.world.end_t == 0 && !m.world.over {
         let human = |d: Dev| m.slots.iter().any(|s| s.dev == Some(d)) || m.dummy.dev == Some(d);
         if let Some((d, _)) = devs.map.iter().find(|(d, s)| s.pressed[Act::Start as usize] && human(**d)) {
             m.paused = Some(*d);
+            m.clear_input(&mut devs);
         }
     }
     if m.mode == Mode::Versus && m.world.over && m.over_t >= m.data.global.render.hud.results_delay {
@@ -361,6 +383,59 @@ pub fn match_flow(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn hit_records_credit_every_victim_and_last_hitter() {
+        let (data, errors) = crate::load_data(&[std::path::PathBuf::from("../../assets")]);
+        assert!(errors.is_empty());
+        let data = Arc::new(data);
+        let mut m = Match::attract(&data, 1).unwrap();
+        let before: Vec<_> = m.world.fighters.iter().map(|f| (f.dmg, f.stocks)).collect();
+        m.world.frame = 10;
+        m.world.hits = vec![
+            sim::HitRecord { attacker: Some(0), victim: 1, damage: 12., shielded: false },
+            sim::HitRecord { attacker: Some(0), victim: 2, damage: 8., shielded: false },
+            sim::HitRecord { attacker: Some(2), victim: 1, damage: 3., shielded: false },
+            sim::HitRecord { attacker: Some(1), victim: 0, damage: 9., shielded: true },
+        ];
+        m.world.fighters[1].last_hit_by = Some(2);
+        m.world.fighters[2].last_hit_by = Some(0);
+        m.world.fighters[1].stocks -= 1;
+        m.track(&before);
+        assert_eq!(m.stats[0].dealt, 20.);
+        assert_eq!(m.stats[1].taken, 15.);
+        assert_eq!(m.stats[2].taken, 8.);
+        assert_eq!(m.stats[0].taken, 0.);
+        assert_eq!(m.stats[2].kos, 1);
+        assert_eq!(m.stats[1].sds, 0);
+        m.world.hits.clear();
+        let before: Vec<_> = m.world.fighters.iter().map(|f| (f.dmg, f.stocks)).collect();
+        m.world.frame += data.global.render.hud.ko_credit_ticks;
+        m.world.fighters[2].stocks -= 1;
+        m.track(&before);
+        assert_eq!(m.stats[2].sds, 1);
+    }
+
+    #[test]
+    fn winning_teammates_share_first() {
+        let (data, errors) = crate::load_data(&[std::path::PathBuf::from("../../assets")]);
+        assert!(errors.is_empty());
+        let data = Arc::new(data);
+        let slot = |i: usize| Slot {
+            dev: None,
+            fighter: 0,
+            cpu: Some(1),
+            team: Some((i % 2) as u8),
+            tap_jump: true,
+            tag: "CPU".into(),
+            color: i,
+        };
+        let rules = Rules { stocks: 1, stage: "arena".into(), friendly_fire: false };
+        let mut m = Match::new(&data, Mode::Versus, (0..4).map(slot).collect(), rules, 7).unwrap();
+        m.world.winner = Some(0);
+        (m.stats[2].out_at, m.stats[1].out_at, m.stats[3].out_at) = (Some(50), Some(10), Some(90));
+        assert_eq!(m.placements(), [1, 4, 1, 3]);
+    }
 
     #[test]
     fn cpu_match_tracks_stats_and_placements() {
@@ -377,7 +452,7 @@ mod tests {
             color: i,
         };
         let rules = Rules { stocks: 1, stage: "arena".into(), friendly_fire: false };
-        let mut m = Match::new(&data, Mode::Versus, (0..3).map(slot).collect(), rules, 7);
+        let mut m = Match::new(&data, Mode::Versus, (0..3).map(slot).collect(), rules, 7).unwrap();
         let (mut devs, mut scene) = (Devices::default(), Scene::new(data.clone()));
         while !m.world.over && m.world.frame < 60 * 60 * 10 {
             m.tick(&mut devs, &mut scene);

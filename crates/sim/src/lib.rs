@@ -21,7 +21,7 @@ pub mod world;
 pub use data::GameData;
 pub use input::Input;
 pub use step::step_world;
-pub use world::{Fx, MatchConfig, PlayerConfig, World};
+pub use world::{Fx, HitRecord, MatchConfig, PlayerConfig, World};
 
 /// Simulation ticks per second.
 pub const TICK_HZ: u32 = 60;

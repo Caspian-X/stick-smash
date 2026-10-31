@@ -328,7 +328,8 @@
       "damageRamp": [[0, "#ffffff"], [50, "#ffe98a"], [100, "#ffa04a"], [150, "#ff4d4d"], [250, "#c41a3b"]],
       "shake": 6,
       "endSlowmo": { "speed": 0.25, "ticks": 50 },
-      "resultsDelay": 100
+      "resultsDelay": 100,
+      "koCreditTicks": 480
     }
   }
 }

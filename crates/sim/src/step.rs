@@ -76,7 +76,10 @@ pub fn step_world(w: &mut World, d: &GameData, inputs: &[Input]) {
     let b = &d.stages[w.stage].blast;
     for i in 0..w.fighters.len() {
         let f = &w.fighters[i];
-        if matches!(f.state, State::Out | State::Dead | State::Respawn | State::Grabbed | State::Win) {
+        if w.end_t > 0
+            || w.over
+            || matches!(f.state, State::Out | State::Dead | State::Respawn | State::Grabbed | State::Win)
+        {
             continue;
         }
         if f.x < b.left || f.x > b.right || f.y > b.bottom || f.y < b.top {
@@ -85,12 +88,11 @@ pub fn step_world(w: &mut World, d: &GameData, inputs: &[Input]) {
     }
     if !w.cfg.training && w.end_t == 0 && !w.over {
         let living: Vec<_> = w.fighters.iter().enumerate().filter(|(_, f)| f.stocks > 0).map(|(i, _)| i).collect();
-        if living.len() < w.fighters.len()
-            && (living.is_empty()
-                || living.iter().all(|&i| {
-                    i == living[0]
-                        || w.cfg.players[i].team.is_some() && w.cfg.players[i].team == w.cfg.players[living[0]].team
-                }))
+        if living.is_empty()
+            || living.iter().all(|&i| {
+                i == living[0]
+                    || w.cfg.players[i].team.is_some() && w.cfg.players[i].team == w.cfg.players[living[0]].team
+            })
         {
             w.winner = living.first().copied();
             w.end_t = g.match_.end_frames;

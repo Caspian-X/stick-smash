@@ -36,7 +36,7 @@ The 5 TS kinds (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) ar
 - **Skeleton:** the current stick figure (head, shoulders, hips, elbows/hands, knees/feet, plus body rotation/pivot). Proportions are per fighter.
 - **Poses:** named keyframe poses. `base` provides every state pose (idle, run cycle, jump, tumble, ledge, shield, knockdown…); fighters override what they need. Move phases animate by keyframing poses (with easing).
 - **Attachments:** vector parts (line, circle, polygon, rounded rect) attached to a joint, with angle keyframes and an optional glow on active frames. This replaces the hard-coded sword/hammer/crown. Image attachments can come later.
-- **Hurtboxes:** per fighter, per state group (default, crouch, knockdown, ledge).
+- **Hurtboxes:** per fighter, with default and knockdown groups. Crouch and ledge groups are future work.
 
 ### Stages
 `stage.json`: solid ground + pass-through platforms, underside shape, ledges (grab zones), blast zones, camera bounds, and spawn/respawn points for up to 8 players. The current stage converts as-is. Bigger stages come later.
@@ -48,9 +48,11 @@ The 5 TS kinds (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) ar
 - **Devices** (`game::input`): `Keys` (whole keyboard), `KeysL`/`KeysR` (split, the default), each connected
   gamepad, and scripted `Bot`s (screenshot tour). Every device maps 10 actions (left, right, up, down, jump, attack,
   special, grab, shield, start) through a binding profile (`keyboard`, `keyboard-left`, `keyboard-right`,
-  `gamepad:<name>`, falling back to the built-in defaults) to a sim `Input`, plus menu presses: confirm = attack or
+  `gamepad:<name>#<session index>` overrides over shared `gamepad:<name>` defaults, falling back to the built-in defaults) to a sim `Input`, plus menu presses: confirm = attack or
   jump (and Enter), back = special (and Esc/Backspace), start, and repeating directions. Gamepad left stick is
-  analog into the sim stick; the d-pad overrides it. Presses are latched until the next sim tick.
+  analog into the sim stick; the d-pad overrides it. Presses are latched until the next sim tick. Screen, pause/resume and ownership changes clear latches and
+  edge history; held controls are suppressed until released. Split-keyboard rebinding refuses keys owned by
+  the other active half; gamepad capture can be cancelled with Esc or B/Back.
 - **Persistence** (`game::settings`): one JSON file in the platform config dir (settings, bindings, last versus and
   training picks). User content loads from `<data dir>/stick-smash/content` after the built-in `assets/`;
   content errors are logged and shown as a toast.
@@ -59,7 +61,9 @@ The 5 TS kinds (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) ar
 - **bevy_ui** with directional focus navigation for menus, character select, the HUD, and anything else players use with a gamepad.
 - **egui** for the editor, debug overlays and training panels.
 - **Focus navigation** is our own small layer over bevy_ui (`game::ui`), not `bevy_input_focus`: Bevy's
-  `InputFocus` is a single global focus, and character select needs one cursor per player. Each focusable node
+  `InputFocus` is a single global focus, and character select needs one cursor per player. Lineup changes are deferred until all devices finish navigation, then
+  cursors are repaired. Lobbies allow eight slots and offer only stages with enough spawn and respawn points;
+  teams require two opposing sides. Unready disconnected slots leave; ready slots can be removed or reclaimed. Each focusable node
   has a stable `key` and an optional owner; screens are rebuilt from a plain model when it changes and focus
   survives by key. Directions move geometrically between nodes (last frame's layout, closest by distance +
   3 × sideways offset; sideways moves stay within 45°; vertical lists wrap). "Spinner" rows take left/right as
@@ -70,15 +74,17 @@ The 5 TS kinds (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) ar
   menus play a CPU attract match behind them; character select shows the picked fighters on the stage (ready ones
   strike their win pose). UI is laid out for 720 logical pixels high and scaled with the window.
 - **Flow.** Title → Versus/Training → join + character select (one screen) → match → results (rematch, character
-  select, main menu). Pause from any player's Start; only the pausing device drives the pause menu. Training uses
+  select, main menu). Pause from any player's Start; the pausing device drives the pause menu, with ownership transferred on disconnect. Training uses
   the same select screen (one player + a dummy card) and an egui panel; dummy behavior and damage are also in the
   pause menu for gamepad players.
 - **Teams in the renderer.** Each match gets a copy of `GameData` with the palette reordered per player (team
   color in team matches). The renderer and HUD color player *i* with palette *i*, so no render changes were
   needed. The content hash is unaffected (computed at load).
-- **Match stats** (results screen) are game-side: damage increases are credited to the sim's hit trace attacker for
-  that tick (else `sd.by`); a stock lost within 8 s of a hit is a KO for the last hitter, otherwise a self-destruct.
+- **Match stats** (results screen) are game-side: every damaging entry in the sim's per-victim `World::hits` records credits damage (shield hits are excluded); a stock lost within 8 s of a hit is a KO for `last_hit_by`, otherwise a self-destruct. Hit records drain each tick alongside effects.
   Placement: the winner (and teammates) first, then by elimination time.
+- **HUD safe area.** The game measures the HUD panels after layout and passes the bottom reserved fraction to
+  the renderer. The camera fits the remaining rectangle; tags share its world mapping and offscreen bubbles
+  stop above the panels.
 - **Presentation tuning** (damage color ramp, hit shake, end-of-match slow motion, results delay) lives in
   `global.render.hud`; the sim never reads it.
 - **Editor** is a mode of the same executable, reached from the main menu. It's a fast-follow after the first playable build and gets its own UI design (not a port of the TS panels).

@@ -27,6 +27,13 @@ pub struct MatchConfig {
     pub players: Vec<PlayerConfig>,
     pub friendly_fire: bool,
 }
+impl MatchConfig {
+    /// Distinct teams plus one side per unteamed player. Match lobbies should require at least two.
+    pub fn opposing_sides(&self) -> usize {
+        self.players.iter().filter(|p| p.team.is_none()).count()
+            + self.players.iter().filter_map(|p| p.team).collect::<std::collections::BTreeSet<_>>().len()
+    }
+}
 impl Default for MatchConfig {
     fn default() -> Self {
         Self {
@@ -159,6 +166,7 @@ pub struct Fighter {
     pub vy: f64,
     pub face: f64,
     pub dmg: f64,
+    pub last_hit_by: Option<usize>,
     pub stocks: i32,
     pub ground: bool,
     pub surf: Option<usize>,
@@ -237,12 +245,21 @@ pub struct Trace {
     pub combo: u32,
     pub combo_dmg: f64,
 }
+#[derive(Clone, Debug, PartialEq)]
+pub struct HitRecord {
+    pub attacker: Option<usize>,
+    pub victim: usize,
+    pub damage: f64,
+    pub shielded: bool,
+}
 /// Entire rollback snapshot; all content and fighter relationships are indices.
 #[derive(Clone, Debug, PartialEq)]
 pub struct World {
     pub frame: u64,
     pub rng: Rng,
     pub fx: Vec<Fx>,
+    /// Per-victim hits; the caller drains these after each tick, like `fx`.
+    pub hits: Vec<HitRecord>,
     pub cfg: MatchConfig,
     pub stage: usize,
     pub fighters: Vec<Fighter>,
@@ -255,13 +272,31 @@ pub struct World {
     pub trace: Option<Trace>,
 }
 impl World {
-    pub fn new(cfg: MatchConfig, data: &GameData) -> Self {
-        let stage = data.stages.iter().position(|s| s.id == cfg.stage).expect("unknown stage");
+    /// Fails for unknown content ids, no players, nonpositive stocks, or insufficient stage capacity.
+    /// One-side configurations are allowed for training; lobbies should check `opposing_sides()`.
+    pub fn new(cfg: MatchConfig, data: &GameData) -> Result<Self, String> {
+        let stage = data
+            .stages
+            .iter()
+            .position(|s| s.id == cfg.stage)
+            .ok_or_else(|| format!("unknown stage {:?}", cfg.stage))?;
         let s = &data.stages[stage];
-        assert!(
-            !cfg.players.is_empty() && cfg.players.len() <= s.spawns.len() && cfg.players.len() <= s.respawns.len(),
-            "stage needs a spawn/respawn per player"
-        );
+        if cfg.players.is_empty() || cfg.players.len() > s.max_players() {
+            return Err(format!(
+                "stage {:?} supports 1..={} players, got {}",
+                s.id,
+                s.max_players(),
+                cfg.players.len()
+            ));
+        }
+        if cfg.stocks <= 0 {
+            return Err("stocks must be positive".into());
+        }
+        for p in &cfg.players {
+            if data.fighter(&p.fighter).is_none() {
+                return Err(format!("unknown fighter {:?}", p.fighter));
+            }
+        }
         let fighters = cfg
             .players
             .iter()
@@ -270,19 +305,26 @@ impl World {
                 let di = data.fighters.iter().position(|f| f.id == p.fighter).expect("unknown fighter");
                 let d = &data.fighters[di];
                 let sp = &s.spawns[i];
+                let y = sp.y.unwrap_or(s.ground.top);
+                let surf = if sp.x >= s.ground.left && sp.x <= s.ground.right && y == s.ground.top {
+                    Some(0)
+                } else {
+                    s.platforms.iter().position(|p| sp.x >= p.x1 && sp.x <= p.x2 && y == p.y).map(|i| i + 1)
+                };
                 Fighter {
                     data: di,
                     x: sp.x,
-                    y: sp.y.unwrap_or(s.ground.top),
+                    y,
                     vx: 0.,
                     vy: 0.,
                     face: f64::from(sp.face),
                     dmg: 0.,
+                    last_hit_by: None,
                     stocks: cfg.stocks,
-                    ground: true,
-                    surf: Some(0),
+                    ground: surf.is_some(),
+                    surf,
                     jumps: d.stats.air_jumps,
-                    state: State::Idle,
+                    state: if surf.is_some() { State::Idle } else { State::Air },
                     t: 0,
                     sd: StateData::default(),
                     mov: None,
@@ -310,10 +352,11 @@ impl World {
                 }
             })
             .collect();
-        Self {
+        Ok(Self {
             frame: 0,
             rng: Rng(cfg.seed),
             fx: vec![],
+            hits: vec![],
             stage,
             fighters,
             projs: vec![],
@@ -324,7 +367,7 @@ impl World {
             over: false,
             trace: None,
             cfg,
-        }
+        })
     }
     pub fn enemies(&self, a: usize, b: usize) -> bool {
         a != b && (self.cfg.players[a].team.is_none() || self.cfg.players[a].team != self.cfg.players[b].team)

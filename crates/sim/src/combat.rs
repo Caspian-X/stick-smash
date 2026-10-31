@@ -75,6 +75,7 @@ pub fn attack_label(d: &GameData, f: &Fighter) -> String {
     }
 }
 fn trace(w: &mut World, a: usize, v: usize, label: String, on_shield: bool, dmg: f64) {
+    w.hits.push(crate::HitRecord { attacker: Some(a), victim: v, damage: dmg, shielded: on_shield });
     let p = w.trace.as_ref();
     let chained = p.is_some_and(|p| !on_shield && !p.on_shield && p.defender == v && p.d_free < 0);
     let (combo, combo_dmg) = if chained {
@@ -162,6 +163,7 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     let (avx, avy) = (w.fighters[attacker].vx, w.fighters[attacker].vy);
     let vic = &mut w.fighters[v];
     vic.dmg = g.sim.max_damage.min(vic.dmg + b.damage);
+    vic.last_hit_by = Some(attacker);
     let kb = knockback(d, b, vic.dmg, d.fighters[vic.data].stats.weight);
     let hl = hitlag_of(d, b, kb);
     vic.lag = if b.kind == HitType::Electric {
@@ -169,7 +171,7 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     } else {
         hl
     };
-    vic.flash = vic.lag + 2;
+    vic.flash = vic.lag.saturating_add(2);
     vic.hud_shake = 12;
     vic.ff = false;
     vic.up_b = false;
@@ -206,8 +208,11 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
         return;
     }
     if b.kind == HitType::Autolink {
-        vic.vx = (px - vic.x) * ht.autolink.pull + avx * ht.autolink.momentum;
-        vic.vy = (py - (vic.y - 40.)) * ht.autolink.pull + avy * ht.autolink.momentum;
+        let h = d.fighters[vic.data].hurtboxes.default;
+        let cx = vic.x + (h.x1 + h.x2) / 2. * vic.face;
+        let cy = vic.y - (h.y1 + h.y2) / 2.;
+        vic.vx = (px - cx) * ht.autolink.pull + avx * ht.autolink.momentum;
+        vic.vy = (py - cy) * ht.autolink.pull + avy * ht.autolink.momentum;
     } else {
         let angle = launch_angle(d, b, kb, grounded) * std::f64::consts::PI / 180.;
         vic.vx = libm::cos(angle) * kb * sgn;

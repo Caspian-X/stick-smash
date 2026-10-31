@@ -77,8 +77,8 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
         let def = &d.fighters[p.fighter_data].projectiles[&p.id];
         p.x += p.vx;
         p.life -= 1;
+        p.cooldown = p.cooldown.saturating_sub(1);
         if let Some(b) = &def.bounce {
-            p.cooldown = p.cooldown.saturating_sub(1);
             let py = p.y;
             p.vy = (p.vy + def.gravity).min(def.max_fall.unwrap_or(f64::INFINITY));
             p.y += p.vy;

@@ -31,6 +31,9 @@ pub struct Hud {
     pub end_slowmo: Slowmo,
     /// Ticks the winner pose shows after the match is over, before the results screen.
     pub results_delay: u32,
+    /// Results stats: a fall counts as a KO for the last hitter if they hit within this many ticks, otherwise
+    /// as a self-destruct.
+    pub ko_credit_ticks: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]

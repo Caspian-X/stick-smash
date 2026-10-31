@@ -194,3 +194,9 @@ pub struct Starfield {
     /// Twinkle speed (degrees per tick).
     pub twinkle: f64,
 }
+
+impl Stage {
+    pub fn max_players(&self) -> usize {
+        self.spawns.len().min(self.respawns.len())
+    }
+}

@@ -39,6 +39,7 @@ fn kind(key: u32) -> (u32, usize) {
 pub struct Pick {
     /// `None`: CPU (or the training dummy).
     pub dev: Option<Dev>,
+    pub disconnected: bool,
     pub fighter: usize,
     pub level: u8,
     pub team: u8,
@@ -70,17 +71,42 @@ impl Select {
         self.slots.iter().enumerate().filter(|(_, p)| p.dev.is_some())
     }
     fn max(&self, d: &sim::GameData) -> usize {
-        let spawns = d.stages.iter().map(|s| s.spawns.len().min(s.respawns.len())).min().unwrap_or(2);
-        if self.mode == Mode::Training { 2 } else { 8.min(spawns).min(d.global.palette.len()) }
+        let _ = d;
+        if self.mode == Mode::Training { 2 } else { 8 }
     }
     pub fn ready(&self) -> bool {
         let mut h = self.humans().peekable();
-        h.peek().is_some() && h.all(|(_, p)| p.ready) && self.slots.len() >= 2
+        h.peek().is_some() && h.all(|(_, p)| p.ready) && self.slots.len() >= 2 && self.start_reason().is_none()
+    }
+    fn start_reason(&self) -> Option<&'static str> {
+        let cfg = sim::MatchConfig {
+            players: self
+                .slots
+                .iter()
+                .map(|p| sim::PlayerConfig { team: self.teams.then_some(p.team), ..sim::PlayerConfig::human("") })
+                .collect(),
+            ..default()
+        };
+        if self.mode == Mode::Versus && self.slots.len() >= 2 && cfg.opposing_sides() < 2 {
+            Some("Choose at least two opposing teams")
+        } else {
+            None
+        }
+    }
+    fn fit_stage(&mut self, d: &sim::GameData) {
+        if d.stages.get(self.stage).is_none_or(|s| s.max_players() < self.slots.len())
+            && let Some(i) = d.stages.iter().position(|s| s.max_players() >= self.slots.len())
+        {
+            self.stage = i;
+        }
     }
     fn color(&self, i: usize) -> usize {
         if self.teams { self.slots[i].team as usize } else { i }
     }
     fn tag(&self, i: usize) -> String {
+        if self.slots[i].disconnected {
+            return format!("P{}", i + 1);
+        }
         match (self.slots[i].dev, self.mode) {
             (Some(_), _) => format!("P{}", i + 1),
             (None, Mode::Training) => "Dummy".into(),
@@ -88,6 +114,12 @@ impl Select {
         }
     }
     fn join(&mut self, dev: Dev, saved: &Saved, d: &sim::GameData) -> bool {
+        if let Some(p) = self.slots.iter_mut().find(|p| p.disconnected) {
+            p.dev = Some(dev);
+            p.disconnected = false;
+            p.ready = false;
+            return true;
+        }
         if self.slots.len() >= self.max(d) || self.mode == Mode::Training && self.humans().count() > 0 {
             return false;
         }
@@ -103,6 +135,7 @@ impl Select {
             at,
             Pick {
                 dev: Some(dev),
+                disconnected: false,
                 fighter,
                 level: 1,
                 team: if self.teams { (at % 2) as u8 } else { pref.team },
@@ -122,6 +155,7 @@ impl Select {
         let i = self.slots.len();
         self.slots.push(Pick {
             dev: None,
+            disconnected: false,
             fighter: d.fighters.iter().position(|f| f.id == pref.fighter).unwrap_or((i + 1) % d.fighters.len()),
             level: pref.level.min(2),
             team: (i % 2) as u8,
@@ -133,13 +167,42 @@ impl Select {
     fn spin(&mut self, k: u32, by: i32, d: &sim::GameData) {
         let (kd, s) = kind(k);
         let cyc = |v: i32, n: i32| (v + by).rem_euclid(n);
+        let p = self.slots.get_mut(s);
         match kd {
-            FIGHTER => self.slots[s].fighter = cyc(self.slots[s].fighter as i32, d.fighters.len() as i32) as usize,
-            LEVEL => self.slots[s].level = cyc(i32::from(self.slots[s].level), 3) as u8,
-            TEAM => self.slots[s].team = cyc(i32::from(self.slots[s].team), i32::from(N_TEAMS)) as u8,
-            TAP => self.slots[s].tap_jump = !self.slots[s].tap_jump,
+            FIGHTER => {
+                if let Some(p) = p {
+                    p.fighter = cyc(p.fighter as i32, d.fighters.len() as i32) as usize;
+                }
+            }
+            LEVEL => {
+                if let Some(p) = p {
+                    p.level = cyc(i32::from(p.level), 3) as u8;
+                }
+            }
+            TEAM => {
+                if let Some(p) = p {
+                    p.team = cyc(i32::from(p.team), i32::from(N_TEAMS)) as u8;
+                }
+            }
+            TAP => {
+                if let Some(p) = p {
+                    p.tap_jump = !p.tap_jump;
+                }
+            }
             STOCKS => self.stocks = cyc(self.stocks - 1, 9) + 1,
-            STAGE => self.stage = cyc(self.stage as i32, d.stages.len() as i32) as usize,
+            STAGE => {
+                let stages: Vec<usize> = d
+                    .stages
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, s)| s.max_players() >= self.slots.len())
+                    .map(|(i, _)| i)
+                    .collect();
+                if !stages.is_empty() {
+                    let at = stages.iter().position(|i| *i == self.stage).unwrap_or(0);
+                    self.stage = stages[cyc(at as i32, stages.len() as i32) as usize];
+                }
+            }
             TEAMS => {
                 self.teams = !self.teams;
                 for (i, p) in self.slots.iter_mut().enumerate() {
@@ -155,15 +218,121 @@ impl Select {
             _ => {}
         }
     }
-    /// Fix cursor owners and keys after slots moved.
-    fn renumber(&mut self) {
+    /// Fix cursor owners and keys after slots moved. `removed` (sorted, old indices) shifts keys that point at a
+    /// later card (a CPU row being edited); a cursor on a removed card or a gone control goes home.
+    fn renumber(&mut self, removed: &[usize]) {
+        let (n, add) = (self.slots.len(), self.mode == Mode::Versus && self.slots.len() < 8);
         for (i, p) in self.slots.iter_mut().enumerate() {
             p.cursor.owner = Some(i);
-            let (kd, s) = kind(p.cursor.key);
-            if matches!(kd, FIGHTER | TEAM | TAP | LOCK) && s != i {
-                p.cursor.key = key(FIGHTER, i);
+            let (kd, si) = kind(p.cursor.key);
+            p.cursor.key = match kd {
+                STOCKS | STAGE | TEAMS | FF => continue,
+                ADD if add => continue,
+                ADD => key(FIGHTER, i),
+                _ if removed.contains(&si) => key(FIGHTER, i),
+                _ => match si - removed.iter().filter(|&&r| r < si).count() {
+                    s if s < n => key(kd, s),
+                    _ => key(FIGHTER, i),
+                },
+            };
+        }
+    }
+    fn frame(&mut self, devs: &Devices, spots: &[Spot], saved: &Saved, d: &sim::GameData) -> (bool, bool) {
+        let s = self;
+        let mut start = false;
+        let mut remove = Vec::new();
+        let mut adds = 0;
+        for (i, p) in s.slots.iter_mut().enumerate() {
+            if p.dev.is_some_and(|dev| !devs.map.contains_key(&dev)) {
+                if p.ready {
+                    p.dev = None;
+                    p.disconnected = true;
+                } else {
+                    remove.push(i);
+                }
             }
         }
+        let navs: Vec<(Dev, Nav)> = devs.navs().collect();
+        for (dev, nav) in navs {
+            let Some(i) = s.slots.iter().position(|p| p.dev == Some(dev)) else {
+                continue;
+            };
+            if remove.contains(&i) {
+                continue;
+            }
+            let own = |k: u32| {
+                let (kd, si) = kind(k);
+                matches!(kd, FIGHTER | TEAM | TAP | LOCK) && si == i
+            };
+            if s.slots[i].ready {
+                match nav {
+                    Nav::Back => s.slots[i].ready = false,
+                    Nav::Start | Nav::Confirm if s.ready() => start = true,
+                    _ => {}
+                }
+                continue;
+            }
+            if nav == Nav::Confirm && own(s.slots[i].cursor.key) {
+                s.slots[i].ready = true;
+                continue;
+            }
+            if nav == Nav::Start {
+                if s.ready() {
+                    start = true;
+                } else {
+                    s.slots[i].ready = true;
+                }
+                continue;
+            }
+            let mut c = s.slots[i].cursor;
+            match c.drive(nav, spots) {
+                Some(Action::Spin(k, by)) => s.spin(k, by, d),
+                Some(Action::Activate(k)) => match kind(k) {
+                    (LOCK, _) => s.slots[i].ready = true,
+                    (ADD, _) => adds += 1,
+                    (REMOVE, si) if s.slots.get(si).is_some_and(|p| p.dev.is_none()) => {
+                        remove.push(si);
+                        c.key = key(FIGHTER, i);
+                    }
+                    _ => {}
+                },
+                Some(Action::Back) if own(c.key) => {
+                    remove.push(i);
+                    continue;
+                }
+                Some(Action::Back) => c.key = key(FIGHTER, i),
+                _ => {}
+            }
+            s.slots[i].cursor = c;
+        }
+        let mut changed = !remove.is_empty() || adds > 0;
+        remove.sort_unstable();
+        remove.dedup();
+        for &i in remove.iter().rev() {
+            s.slots.remove(i);
+        }
+        for _ in 0..adds {
+            s.add_cpu(saved, d);
+        }
+        let mut leave = false;
+        for (dev, st) in &devs.map {
+            if s.slots.iter().any(|p| p.dev == Some(*dev)) {
+                continue;
+            }
+            // A device leaving this frame cannot immediately join again.
+            if devs.navs().any(|(d, n)| d == *dev && n == Nav::Back) {
+                leave |= s.humans().count() == 0;
+                continue;
+            }
+            if st.any_press() && s.join(*dev, saved, d) {
+                changed = true;
+            }
+        }
+        if changed {
+            s.renumber(&remove);
+        }
+        s.fit_stage(d);
+        (start && s.ready() && d.stages[s.stage].max_players() >= s.slots.len(), leave && s.humans().count() == 0)
     }
     pub fn match_slots(&self) -> Vec<Slot> {
         (0..self.slots.len())
@@ -172,7 +341,7 @@ impl Select {
                 Slot {
                     dev: p.dev,
                     fighter: p.fighter,
-                    cpu: (p.dev.is_none() && self.mode == Mode::Versus).then_some(p.level),
+                    cpu: (p.dev.is_none() && !p.disconnected && self.mode == Mode::Versus).then_some(p.level),
                     team: self.teams.then_some(p.team),
                     tap_jump: p.tap_jump,
                     tag: self.tag(i),
@@ -214,6 +383,7 @@ pub fn enter(
         let t = &saved.training;
         sel.slots.push(Pick {
             dev: None,
+            disconnected: false,
             fighter: d.fighters.iter().position(|f| f.id == t.dummy_fighter).unwrap_or(1 % d.fighters.len()),
             level: t.level,
             team: 1,
@@ -232,7 +402,8 @@ pub fn enter(
     if let Some(dev) = init.dev {
         sel.join(dev, &saved, d);
     }
-    sel.renumber();
+    sel.renumber(&[]);
+    sel.fit_stage(d);
     commands.insert_resource(sel);
 }
 
@@ -240,7 +411,7 @@ pub fn enter(
 pub fn update(
     mut commands: Commands,
     sel: Option<ResMut<Select>>,
-    devs: Res<Devices>,
+    mut devs: ResMut<Devices>,
     q: FocusQuery,
     mut saved: ResMut<Saved>,
     data: Res<Data>,
@@ -252,73 +423,13 @@ pub fn update(
     let d = &data.0;
     let spots = ui::spots(&q);
     let mut s = sel.clone();
-    let mut start = false;
-    for (dev, st) in &devs.map {
-        if s.slots.iter().any(|p| p.dev == Some(*dev)) {
-            continue;
-        }
-        if st.nav.contains(&Nav::Back) && s.humans().count() == 0 {
-            next.set(Screen::Title);
-            return;
-        }
-        if st.any_press() && !st.nav.contains(&Nav::Back) && s.join(*dev, &saved, d) {
-            s.renumber();
-        }
+    let (start, leave) = s.frame(&devs, &spots, &saved, d);
+    if leave {
+        next.set(Screen::Title);
+        return;
     }
-    let navs: Vec<(Dev, Nav)> = devs.navs().collect();
-    for (dev, nav) in navs {
-        let Some(i) = s.slots.iter().position(|p| p.dev == Some(dev)) else {
-            continue;
-        };
-        if sel.slots.iter().all(|p| p.dev != Some(dev)) {
-            continue; // joined this frame
-        }
-        let own = |k: u32| {
-            let (kd, si) = kind(k);
-            matches!(kd, FIGHTER | TEAM | TAP | LOCK) && si == i
-        };
-        if s.slots[i].ready {
-            match nav {
-                Nav::Back => s.slots[i].ready = false,
-                Nav::Start | Nav::Confirm if s.ready() => start = true,
-                _ => {}
-            }
-            continue;
-        }
-        if nav == Nav::Confirm && own(s.slots[i].cursor.key) {
-            s.slots[i].ready = true;
-            continue;
-        }
-        if nav == Nav::Start {
-            if s.ready() {
-                start = true;
-            } else {
-                s.slots[i].ready = true;
-            }
-            continue;
-        }
-        let mut c = s.slots[i].cursor;
-        match c.drive(nav, &spots) {
-            Some(Action::Spin(k, by)) => s.spin(k, by, d),
-            Some(Action::Activate(k)) => match kind(k) {
-                (LOCK, _) => s.slots[i].ready = true,
-                (ADD, _) => s.add_cpu(&saved, d),
-                (REMOVE, si) if s.slots.get(si).is_some_and(|p| p.dev.is_none()) => {
-                    s.slots.remove(si);
-                    c.key = key(FIGHTER, i);
-                }
-                _ => {}
-            },
-            Some(Action::Back) if own(c.key) => {
-                s.slots.remove(i);
-                s.renumber();
-                continue;
-            }
-            Some(Action::Back) => c.key = key(FIGHTER, i),
-            _ => {}
-        }
-        s.slots[i].cursor = c;
-        s.renumber();
+    if s.slots.iter().map(|p| p.dev).ne(sel.slots.iter().map(|p| p.dev)) {
+        devs.clear();
     }
     if s != *sel {
         *sel = s;
@@ -327,7 +438,7 @@ pub fn update(
     let rules = Rules { stocks: sel.stocks, stage: d.stages[sel.stage].id.clone(), friendly_fire: sel.ff };
     if start {
         remember(&sel, &mut saved, d);
-        let mut m = Match::new(&data.0, sel.mode, mslots, rules, play::seed());
+        let Ok(mut m) = Match::new(&data.0, sel.mode, mslots, rules, play::seed()) else { return };
         if sel.mode == Mode::Training {
             let t = &saved.training;
             m.dummy.mode = sel.dummy;
@@ -340,7 +451,7 @@ pub fn update(
         next.set(Screen::Match);
         return;
     }
-    if mslots.is_empty() {
+    if mslots.is_empty() || d.stages[sel.stage].max_players() < mslots.len() {
         return;
     }
     // Showcase: rebuild when the lineup changes; ready fighters strike their win pose.
@@ -355,7 +466,9 @@ pub fn update(
             s.cpu = None;
             s.dev = None;
         }
-        play::install(&mut commands, &mut scene, Match::new(&data.0, Mode::Showcase, slots, rules, 1));
+        if let Ok(m) = Match::new(&data.0, Mode::Showcase, slots, rules, 1) {
+            play::install(&mut commands, &mut scene, m);
+        }
     } else if let Some(mut m) = m {
         for (i, f) in m.world.fighters.iter_mut().enumerate() {
             let ready = sel.slots.get(i).is_some_and(|p| p.ready && p.dev.is_some());
@@ -392,8 +505,8 @@ fn remember(sel: &Select, saved: &mut Saved, d: &sim::GameData) {
     v.stage = d.stages[sel.stage].id.clone();
     v.teams = sel.teams;
     v.friendly_fire = sel.ff;
-    v.humans = sel.slots.iter().filter(|p| p.dev.is_some()).map(pref).collect();
-    v.cpus = sel.slots.iter().filter(|p| p.dev.is_none()).map(pref).collect();
+    v.humans = sel.slots.iter().filter(|p| p.dev.is_some() || p.disconnected).map(pref).collect();
+    v.cpus = sel.slots.iter().filter(|p| p.dev.is_none() && !p.disconnected).map(pref).collect();
 }
 
 #[derive(Component)]
@@ -477,8 +590,12 @@ pub fn draw(
                 n.row_gap = Val::Px(14.);
             }))
             .with_children(|p| {
-                if s.ready() {
+                if !d.stages.iter().any(|stage| stage.max_players() >= s.slots.len()) {
+                    p.spawn(txt(&f.heavy, 24., GOLD, "No stage fits this lineup. Remove a player."));
+                } else if s.ready() {
                     ready_banner(p, f);
+                } else if let Some(reason) = s.start_reason() {
+                    p.spawn(txt(&f.heavy, 24., GOLD, reason));
                 }
                 let free = s.slots.len() < s.max(d) && !(s.mode == Mode::Training && s.humans().count() > 0);
                 let n = s.slots.len() + usize::from(free);
@@ -555,7 +672,7 @@ fn ready_banner(p: &mut ChildSpawnerCommands, f: &Fonts) {
 fn card(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, i: usize, w: f32, devs: &Devices) {
     let pk = &s.slots[i];
     let (main, dark, _) = pal(d, s.color(i));
-    let human = pk.dev.is_some();
+    let human = pk.dev.is_some() || pk.disconnected;
     let narrow = w < 200.;
     let fighter = &d.fighters[pk.fighter];
     p.spawn((
@@ -654,7 +771,7 @@ fn card(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, 
             if s.mode == Mode::Training && !human {
                 spin_row(p, f, d, s, key(BEHAVIOR, i), None, "Behavior", s.dummy.label().into(), None, 17.);
             }
-            if !human && s.mode == Mode::Versus {
+            if pk.disconnected || !human && s.mode == Mode::Versus {
                 let k = key(REMOVE, i);
                 let on = focused_by(s, k);
                 p.spawn((
@@ -669,7 +786,12 @@ fn card(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, 
                     Focusable { key: k, owner: None, spin: false },
                 ))
                 .with_children(|p| {
-                    p.spawn(txt(&f.label, 17., if on.is_some() { STAR } else { FAINT }, "Remove CPU"));
+                    p.spawn(txt(
+                        &f.label,
+                        17.,
+                        if on.is_some() { STAR } else { FAINT },
+                        if pk.disconnected { "Remove disconnected player" } else { "Remove CPU" },
+                    ));
                     cursor_chips(p, f, d, s, k);
                 });
             }
@@ -677,7 +799,7 @@ fn card(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, 
                 let k = key(LOCK, i);
                 let on = focused_by(s, k).is_some();
                 let (label, color) = if pk.ready {
-                    ("Ready!", main)
+                    (if pk.disconnected { "Disconnected" } else { "Ready!" }, main)
                 } else if on {
                     ("Lock in", GOLD)
                 } else {
@@ -784,4 +906,135 @@ fn join_card(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Sel
 
 pub fn team_name(t: u8) -> &'static str {
     ["Red team", "Blue team", "Green team", "Yellow team"][t as usize % 4]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn setup() -> (Select, Devices, sim::GameData, Saved) {
+        let (data, errors) = crate::load_data(&[std::path::PathBuf::from("../../assets")]);
+        assert!(errors.is_empty());
+        let saved = Saved::default();
+        let mut s = Select {
+            mode: Mode::Versus,
+            slots: vec![],
+            stocks: 3,
+            stage: 0,
+            teams: false,
+            ff: false,
+            dummy: DummyMode::Stand,
+        };
+        s.join(Dev::Bot(0), &saved, &data);
+        s.join(Dev::Bot(1), &saved, &data);
+        s.add_cpu(&saved, &data);
+        let mut devices = Devices::default();
+        devices.map.insert(Dev::Bot(0), default());
+        devices.map.insert(Dev::Bot(1), default());
+        (s, devices, data, saved)
+    }
+    fn spot(k: u32, spin: bool) -> Spot {
+        Spot { f: Focusable { key: k, owner: None, spin }, center: Vec2::ZERO }
+    }
+    #[test]
+    fn simultaneous_remove_and_edit_uses_original_lineup() {
+        let (mut s, mut devs, d, saved) = setup();
+        s.slots[0].cursor.key = key(REMOVE, 2);
+        s.slots[1].cursor.key = key(LEVEL, 2);
+        devs.map.get_mut(&Dev::Bot(0)).unwrap().nav = vec![Nav::Confirm];
+        devs.map.get_mut(&Dev::Bot(1)).unwrap().nav = vec![Nav::Right];
+        let spots = [spot(key(REMOVE, 2), false), spot(key(LEVEL, 2), true)];
+        s.frame(&devs, &spots, &saved, &d);
+        assert_eq!(s.slots.len(), 2);
+        for (i, p) in s.slots.iter().enumerate() {
+            assert_eq!(p.cursor, Cursor { owner: Some(i), key: key(FIGHTER, i) });
+        }
+        s.spin(key(LEVEL, 7), 1, &d); // stale layout is harmless
+    }
+    #[test]
+    fn cpu_row_focus_survives_lineup_changes() {
+        let (mut s, mut devs, d, saved) = setup();
+        s.add_cpu(&saved, &d);
+        s.slots[0].cursor.key = key(TEAM, 3);
+        s.slots[1].cursor.key = key(ADD, 0);
+        devs.map.get_mut(&Dev::Bot(1)).unwrap().nav = vec![Nav::Confirm];
+        s.frame(&devs, &[spot(key(ADD, 0), false)], &saved, &d);
+        assert_eq!((s.slots.len(), s.slots[0].cursor.key), (5, key(TEAM, 3)));
+        s.slots[1].cursor.key = key(REMOVE, 2);
+        s.frame(&devs, &[spot(key(REMOVE, 2), false)], &saved, &d);
+        assert_eq!((s.slots.len(), s.slots[0].cursor.key), (4, key(TEAM, 2)));
+    }
+    #[test]
+    fn start_and_back_in_one_frame_does_not_start() {
+        let (mut s, mut devs, d, saved) = setup();
+        for p in &mut s.slots {
+            p.ready = true;
+        }
+        devs.map.get_mut(&Dev::Bot(0)).unwrap().nav = vec![Nav::Start];
+        devs.map.get_mut(&Dev::Bot(1)).unwrap().nav = vec![Nav::Back];
+        assert!(!s.frame(&devs, &[], &saved, &d).0);
+        assert!(!s.slots[1].ready);
+    }
+    #[test]
+    fn simultaneous_leave_and_join_keeps_new_player() {
+        let (mut s, mut devs, d, saved) = setup();
+        s.slots.truncate(1);
+        s.slots[0].cursor.key = key(FIGHTER, 0);
+        devs.map.get_mut(&Dev::Bot(0)).unwrap().nav = vec![Nav::Back];
+        devs.map.get_mut(&Dev::Bot(1)).unwrap().nav = vec![Nav::Confirm];
+        let (_, leave) = s.frame(&devs, &[spot(key(FIGHTER, 0), true)], &saved, &d);
+        assert!(!leave);
+        assert_eq!(s.slots.len(), 1);
+        assert_eq!(s.slots[0].dev, Some(Dev::Bot(1)));
+        assert!(!s.slots[0].ready);
+    }
+    #[test]
+    fn disconnect_releases_unready_slot_and_ready_slot_can_be_reclaimed() {
+        let (mut s, mut devs, d, saved) = setup();
+        s.slots[0].ready = true;
+        devs.map.clear();
+        s.frame(&devs, &[], &saved, &d);
+        assert_eq!(s.slots.len(), 2);
+        assert!(s.slots[0].disconnected);
+        assert_eq!(s.slots[0].dev, None);
+        assert!(s.join(Dev::Bot(2), &saved, &d));
+        assert_eq!(s.slots[0].dev, Some(Dev::Bot(2)));
+        assert!(!s.slots[0].ready);
+    }
+    #[test]
+    fn another_device_can_remove_a_ready_disconnected_player() {
+        let (mut s, mut devs, d, saved) = setup();
+        s.slots[0].ready = true;
+        s.slots[1].cursor.key = key(REMOVE, 0);
+        devs.map.remove(&Dev::Bot(0));
+        devs.map.get_mut(&Dev::Bot(1)).unwrap().nav = vec![Nav::Confirm];
+        s.frame(&devs, &[spot(key(REMOVE, 0), false)], &saved, &d);
+        assert_eq!(s.slots.len(), 2);
+        assert_eq!(s.slots[0].dev, Some(Dev::Bot(1)));
+        assert!(!s.slots.iter().any(|p| p.disconnected));
+    }
+    #[test]
+    fn teams_need_opposition_and_stages_fit_lineup() {
+        let (mut s, _, mut d, saved) = setup();
+        s.teams = true;
+        for p in &mut s.slots {
+            p.team = 0;
+            p.ready = true;
+        }
+        assert!(!s.ready());
+        s.slots[1].team = 1;
+        assert!(s.ready());
+        let mut small = d.stages[0].clone();
+        small.spawns.truncate(2);
+        small.respawns.truncate(2);
+        d.stages.insert(0, small);
+        s.stage = 0;
+        s.fit_stage(&d);
+        assert_eq!(s.stage, 1);
+        s.spin(key(STAGE, 0), 1, &d);
+        assert_eq!(s.stage, 1);
+        while s.slots.len() < 8 {
+            s.add_cpu(&saved, &d);
+        }
+        assert_eq!(s.slots.len(), 8);
+    }
 }

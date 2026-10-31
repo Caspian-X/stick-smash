@@ -266,7 +266,7 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
         }
         State::Hitstun => {
             let h = &g.hitstun;
-            f.hitstun -= 1;
+            f.hitstun = f.hitstun.saturating_sub(1);
             f.vx *= if f.ground { h.ground_drag } else { h.air_drag };
             f.vx += dir * h.drift_accel;
             if f.tumble {
@@ -474,6 +474,8 @@ fn st_hold(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, 
         f.sd.pt -= 1;
         if f.sd.pt == g.pummel_hit_frame {
             vic.dmg += g.pummel_damage;
+            vic.last_hit_by = Some(i);
+            w.hits.push(crate::HitRecord { attacker: Some(i), victim: v, damage: g.pummel_damage, shielded: false });
             vic.flash = 5;
             vic.hud_shake = 6;
             f.lag = g.pummel_hitlag;

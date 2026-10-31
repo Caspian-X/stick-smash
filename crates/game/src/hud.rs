@@ -34,6 +34,9 @@ pub struct Big;
 #[derive(Component)]
 pub struct HudRoot;
 
+#[derive(Component)]
+pub struct HudPanels;
+
 const MAX_STOCK_ICONS: i32 = 5;
 const BUBBLE: f32 = 54.;
 
@@ -101,15 +104,18 @@ pub fn spawn(mut commands: Commands, m: Res<Match>, fonts: Res<Fonts>) {
             });
         }
         // Panels.
-        p.spawn(node(|n| {
-            n.position_type = PositionType::Absolute;
-            n.bottom = Val::Px(14.);
-            n.left = Val::Px(0.);
-            n.right = Val::Px(0.);
-            n.flex_direction = FlexDirection::Row;
-            n.justify_content = JustifyContent::Center;
-            n.column_gap = Val::Px(10.);
-        }))
+        p.spawn((
+            HudPanels,
+            node(|n| {
+                n.position_type = PositionType::Absolute;
+                n.bottom = Val::Px(14.);
+                n.left = Val::Px(0.);
+                n.right = Val::Px(0.);
+                n.flex_direction = FlexDirection::Row;
+                n.justify_content = JustifyContent::Center;
+                n.column_gap = Val::Px(10.);
+            }),
+        ))
         .with_children(|p| {
             for (i, s) in m.slots.iter().enumerate() {
                 let (main, dark, _) = pal(d, i);
@@ -299,7 +305,7 @@ pub fn update(
             && x > x0
             && x < x1
             && y - 40. > y0
-            && y - 40. < y1;
+            && y - 40. < y1 - (y1 - y0) * fr.bottom_safe_area;
         *vis = if show { Visibility::Inherited } else { Visibility::Hidden };
         node.left = Val::Px(p.x - 20.);
         node.width = Val::Px(40.);
@@ -311,7 +317,7 @@ pub fn update(
         let (x, y) = pos(b.0);
         let p = to_ui(&fr, size, x, y - 40.);
         let m_ = BUBBLE / 2. + 10.;
-        let c = Vec2::new(p.x.clamp(m_, size.x - m_), p.y.clamp(m_, size.y - m_));
+        let c = Vec2::new(p.x.clamp(m_, size.x - m_), p.y.clamp(m_, size.y * (1. - fr.bottom_safe_area as f32) - m_));
         let off = p - c;
         let show = !gone(f.state) && f.state != FState::Respawn && off.length() > 1.;
         *vis = if show { Visibility::Inherited } else { Visibility::Hidden };
@@ -375,13 +381,19 @@ const TO_MENU: u32 = 8;
 pub fn pause(
     mut m: ResMut<Match>,
     mut pm: ResMut<PauseMenu>,
-    devs: Res<Devices>,
+    mut devs: ResMut<Devices>,
     q: FocusQuery,
     data: Res<Data>,
     mut saved: ResMut<Saved>,
     mut next: ResMut<NextState<Screen>>,
     mut scene: ResMut<render::Scene>,
 ) {
+    if m.paused.is_some_and(|d| !devs.map.contains_key(&d)) {
+        if let Some(d) = devs.map.keys().next().copied() {
+            m.paused = Some(d);
+        }
+        m.clear_input(&mut devs);
+    }
     let Some(by) = m.paused else {
         pm.cursor = Cursor { key: RESUME, owner: None };
         pm.open = false;
@@ -404,10 +416,12 @@ pub fn pause(
             Some(Action::Activate(RESTART)) => {
                 m.restart(&data.0, play::seed());
                 scene.reset(&m.world);
+                m.clear_input(&mut devs);
             }
             Some(Action::Activate(RESET)) => {
                 m.restart(&data.0, play::seed());
                 scene.reset(&m.world);
+                m.clear_input(&mut devs);
                 m.paused = None;
             }
             Some(Action::Spin(DUMMY, by)) => {
@@ -415,6 +429,7 @@ pub fn pause(
                 let i = all.iter().position(|x| *x == m.dummy.mode).unwrap_or(0) as i32;
                 m.dummy.mode = all[(i + by).rem_euclid(all.len() as i32) as usize];
                 m.dummy.dev = None;
+                m.clear_input(&mut devs);
                 saved.training.mode = m.dummy.mode;
                 m.apply_dummy();
             }
@@ -428,6 +443,9 @@ pub fn pause(
             Some(Action::Activate(TO_MENU)) => next.set(Screen::Title),
             _ => {}
         }
+    }
+    if m.paused.is_none() {
+        m.clear_input(&mut devs);
     }
     if pm.cursor != c {
         pm.cursor = c;
@@ -503,4 +521,23 @@ pub fn draw_pause(
                 menu_list(p, f, &items, pm.cursor.key, 460., 30.);
             });
         });
+}
+
+/// Layout reports physical pixels, so this ratio also handles window/UI scaling.
+pub fn safe_area(
+    screen: Res<State<Screen>>,
+    panels: Query<&ComputedNode, With<HudPanels>>,
+    win: Query<&Window, With<PrimaryWindow>>,
+    scale: Res<UiScale>,
+    mut scene: ResMut<render::Scene>,
+) {
+    scene.bottom_safe_area = if *screen.get() == Screen::Match {
+        let height = panels.iter().map(|n| n.size().y).fold(0., f32::max);
+        win.single().map_or(0., |w| {
+            let margin = 28. * scale.0 * w.scale_factor();
+            f64::from((height + margin) / w.physical_height().max(1) as f32).clamp(0., 0.5)
+        })
+    } else {
+        0.
+    };
 }

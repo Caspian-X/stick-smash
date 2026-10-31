@@ -154,3 +154,81 @@ fn user_file_overrides_builtin() {
 fn fmt_errors(e: &[sim::data::ContentError]) -> String {
     e.iter().map(|e| format!("  {e}\n")).collect()
 }
+
+fn patched(file: &str, patch: serde_json::Value) -> Vec<Source> {
+    let mut src = sources();
+    let s = src.iter_mut().find(|s| s.path == file).unwrap();
+    let mut v = serde_json::from_str(&s.text).unwrap();
+    merge(&mut v, &patch);
+    s.text = v.to_string();
+    src
+}
+
+#[test]
+fn invalid_fighter_numbers_skip_package_with_path() {
+    use serde_json::json;
+    let file = "fighters/king/fighter.json";
+    for (patch, path) in [
+        (json!({"stats":{"runSpeed":-1}}), "stats.runSpeed"),
+        (json!({"stats":{"weight":0}}), "stats.weight"),
+        (json!({"stats":{"gravity":0}}), "stats.gravity"),
+        (json!({"stats":{"fallSpeed":-1}}), "stats.fallSpeed"),
+        (json!({"hurtboxes":{"default":{"x1":16,"x2":-16}}}), "hurtboxes.default"),
+        (json!({"throws":{"f":{"release":0}}}), "throws.f"),
+        (json!({"moves":{"jab":{"phases":[{"name":"hit","frames":-1}]}}}), "moves.jab.phases[0].frames"),
+        (
+            json!({"moves":{"jab":{"phases":[{"name":"hit","frames":5,"hitboxes":[{"x":0,"y":0,"r":0,"damage":1,"bkb":1,"kbg":0,"angle":0}]}]}}}),
+            "moves.jab.phases[0].hitboxes[0].r",
+        ),
+        (
+            json!({"moves":{"jab":{"phases":[{"name":"hit","frames":5,"events":[{"every":0}]}]}}}),
+            "moves.jab.phases[0].events[0].every",
+        ),
+    ] {
+        let (data, errors) = load(patched(file, patch)).unwrap();
+        assert!(data.fighter("king").is_none());
+        assert_eq!(errors.len(), 1, "{errors:?}");
+        assert_eq!(errors[0].file, file);
+        assert_eq!(errors[0].path, path);
+    }
+}
+
+#[test]
+fn invalid_global_numbers_are_fatal() {
+    use serde_json::json;
+    for (patch, path) in [
+        (json!({"knockback":{"chargeDamageDivisor":0}}), "knockback.chargeDamageDivisor"),
+        (json!({"respawn":{"descendFrames":0}}), "respawn.descendFrames"),
+        (json!({"hitTypes":{"windbox":{"maxSpeed":-1}}}), "hitTypes.windbox.maxSpeed"),
+        (json!({"ledge":{"climb":{"a":0}}}), "ledge.climb"),
+        (json!({"ledge":{"roll":{"a":10,"b":10}}}), "ledge.roll"),
+    ] {
+        let errors = load(patched("global.json", patch)).unwrap_err();
+        assert_eq!(errors[0].file, "global.json");
+        assert_eq!(errors[0].path, path);
+    }
+}
+
+#[test]
+fn invalid_stage_numbers_skip_package_with_path() {
+    use serde_json::json;
+    let file = "stages/arena/stage.json";
+    for (patch, path) in [
+        (json!({"blast":{"left":1600}}), "blast"),
+        (json!({"camera":{"bottom":-1000}}), "camera"),
+        (json!({"ground":{"underInset":0}}), "ground.underInset"),
+        (json!({"ground":{"underDepth":0}}), "ground.underDepth"),
+        (json!({"ledge":{"r":0}}), "ledge.r"),
+        (json!({"spawns":[{"x":500,"face":0}]}), "spawns[0].face"),
+    ] {
+        let mut src = patched(file, patch);
+        let mut backup = sources().into_iter().find(|s| s.path == file).unwrap();
+        backup.path = "stages/backup/stage.json".into();
+        src.push(backup);
+        let (data, errors) = load(src).unwrap();
+        assert!(data.stage("arena").is_none() && data.stage("backup").is_some());
+        assert_eq!(errors.len(), 1);
+        assert_eq!(errors[0].file, file);
+        assert_eq!(errors[0].path, path);
+    }
+}

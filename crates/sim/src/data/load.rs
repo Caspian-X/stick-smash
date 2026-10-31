@@ -87,12 +87,8 @@ pub fn load(files: impl IntoIterator<Item = Source>) -> Result<(GameData, Vec<Co
             return Err(errors);
         }
     };
-    if global.input.stick_threshold <= 0 {
-        errors.push(err("global.json", "input.stickThreshold", "must be between 1 and 127"));
-        return Err(errors);
-    }
-    if global.palette.is_empty() {
-        errors.push(err("global.json", "palette", "needs at least one color set"));
+    if let Err(e) = check_global("global.json", &global) {
+        errors.push(e);
         return Err(errors);
     }
     let mut hashed = vec![("global".to_string(), gv)];
@@ -191,6 +187,21 @@ fn resolve(id: &str, raw: &BTreeMap<String, (String, Value)>, chain: &mut Vec<St
 }
 
 fn check_stage(file: &str, s: &Stage) -> Result<(), ContentError> {
+    positive(file, "width", s.width)?;
+    positive(file, "height", s.height)?;
+    positive(file, "ground.underDepth", s.ground.under_depth)?;
+    positive(file, "ground.underInset", s.ground.under_inset)?;
+    positive(file, "ledge.r", s.ledge.r)?;
+    for (name, b) in [("blast", &s.blast), ("camera", &s.camera)] {
+        if b.left >= b.right || b.top >= b.bottom {
+            return Err(err(file, name, "needs left < right and top < bottom"));
+        }
+    }
+    for (i, sp) in s.spawns.iter().enumerate() {
+        if ![-1, 1].contains(&sp.face) {
+            return Err(err(file, format!("spawns[{i}].face"), "must be -1 or 1"));
+        }
+    }
     let g = &s.ground;
     if g.left >= g.right || g.top >= g.bottom {
         return Err(err(file, "ground", "needs left < right and top < bottom"));
@@ -210,6 +221,40 @@ fn check_stage(file: &str, s: &Stage) -> Result<(), ContentError> {
 /// Cross-reference checks serde can't do.
 fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
     let e = |path: String, msg: String| err(file, path, msg);
+    let stats = serde_json::to_value(&f.stats).unwrap();
+    for (name, value) in stats.as_object().unwrap() {
+        let n = value.as_f64().unwrap();
+        if matches!(
+            name.as_str(),
+            "weight"
+                | "runSpeed"
+                | "jumpSpeed"
+                | "shortHopSpeed"
+                | "airJumpSpeed"
+                | "airSpeed"
+                | "gravity"
+                | "fallSpeed"
+                | "fastFallSpeed"
+        ) {
+            positive(file, &format!("stats.{name}"), n)?;
+        } else {
+            nonnegative(file, &format!("stats.{name}"), n)?;
+        }
+    }
+    positive(file, "body.halfWidth", f.body.half_width)?;
+    positive(file, "body.height", f.body.height)?;
+    for (name, r) in [("default", f.hurtboxes.default), ("knockdown", f.hurtboxes.knockdown)] {
+        if r.x1 >= r.x2 || r.y1 >= r.y2 {
+            return Err(err(file, format!("hurtboxes.{name}"), "needs x1 < x2 and y1 < y2"));
+        }
+    }
+    nonnegative(file, "ai.reach", f.ai.reach)?;
+    for (name, t) in [("f", &f.throws.f), ("b", &f.throws.b), ("u", &f.throws.u), ("d", &f.throws.d)] {
+        if t.release == 0 || t.total < t.release {
+            return Err(err(file, format!("throws.{name}"), "needs 0 < release <= total"));
+        }
+        check_hitbox(file, &format!("throws.{name}.hit"), &t.hit, false)?;
+    }
     if !(0.0..=1.0).contains(&f.ai.counter_chance) {
         return Err(err(file, "ai.counterChance", "must be between 0 and 1"));
     }
@@ -265,10 +310,39 @@ fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
         return Err(e("attachments".into(), "ids must be unique".into()));
     }
     for (slot, m) in f.moves.iter() {
-        check_move(&format!("moves.{slot}"), m, f, &attach_ids, &e, &check_anim)?;
+        check_move(file, &format!("moves.{slot}"), m, f, &attach_ids, &e, &check_anim)?;
     }
     for (id, p) in &f.projectiles {
+        let path = format!("projectiles.{id}");
+        positive(file, &format!("{path}.r"), p.r)?;
+        nonnegative(file, &format!("{path}.gravity"), p.gravity)?;
+        if let Some(n) = p.max_fall {
+            positive(file, &format!("{path}.maxFall"), n)?;
+        }
+        for (name, n) in [("life", p.life), ("max", p.max)] {
+            positive(file, &format!("{path}.{name}"), f64::from(n))?;
+            if n > i32::MAX as u32 {
+                return Err(err(file, format!("{path}.{name}"), "exceeds i32::MAX"));
+            }
+        }
+        if let Some(b) = &p.bat {
+            positive(file, &format!("{path}.bat.speed"), b.speed)?;
+            check_life(file, &format!("{path}.bat.life"), b.life)?;
+        }
+        if let Some(b) = &p.bounce {
+            for (name, n) in [
+                ("restitution", b.restitution),
+                ("minSpeed", b.min_speed),
+                ("friction", b.friction),
+                ("wallRestitution", b.wall_restitution),
+            ] {
+                nonnegative(file, &format!("{path}.bounce.{name}"), n)?;
+            }
+            check_life(file, &format!("{path}.bounce.fizzleLife"), b.fizzle_life)?;
+        }
+        check_hitbox(file, &format!("{path}.hit"), &p.hit, false)?;
         for (i, ev) in p.trail.iter().enumerate() {
+            check_event(file, &format!("{path}.trail[{i}]"), ev)?;
             if ev.at.is_some() && (ev.from.is_some() || ev.to.is_some()) {
                 return Err(e(format!("projectiles.{id}.trail[{i}]"), "use either `at` or `from`/`to`".into()));
             }
@@ -278,6 +352,7 @@ fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
 }
 
 fn check_move(
+    file: &str,
     path: &str,
     m: &Move,
     f: &Fighter,
@@ -297,13 +372,29 @@ fn check_move(
         if [END, HELPLESS, LANDING].contains(&p.name.as_str()) {
             return Err(e(format!("{pp}.name"), format!("{:?} is reserved", p.name)));
         }
-        check_phase(&pp, p, &names, f, attach_ids, e)?;
+        for (i, h) in p.hitboxes.iter().enumerate() {
+            check_hitbox(file, &format!("{pp}.hitboxes[{i}]"), h, true)?;
+        }
+        if let Some(n) = p.fall_cap {
+            positive(file, &format!("{pp}.fallCap"), n)?;
+        }
+        nonnegative(file, &format!("{pp}.airAccelMult"), p.air_accel_mult)?;
+        if let Some(c) = &p.counter {
+            for (name, n) in
+                [("damageMult", c.damage_mult), ("minDamage", c.min_damage), ("reflectSpeed", c.reflect_speed)]
+            {
+                nonnegative(file, &format!("{pp}.counter.{name}"), n)?;
+            }
+            check_life(file, &format!("{pp}.counter.reflectLife"), c.reflect_life)?;
+        }
+        check_phase(file, &pp, p, &names, f, attach_ids, e)?;
         check_anim(format!("{pp}.anim"), &p.anim)?;
     }
     Ok(())
 }
 
 fn check_phase(
+    file: &str,
     pp: &str,
     p: &Phase,
     names: &BTreeSet<&str>,
@@ -311,12 +402,8 @@ fn check_phase(
     attach_ids: &BTreeSet<&str>,
     e: &impl Fn(String, String) -> ContentError,
 ) -> Result<(), ContentError> {
-    for (i, h) in p.hitboxes.iter().enumerate() {
-        if h.end.is_some_and(|end| end < h.start) {
-            return Err(e(format!("{pp}.hitboxes[{i}]"), "end is before start".into()));
-        }
-    }
     for (i, ev) in p.events.iter().enumerate() {
+        check_event(file, &format!("{pp}.events[{i}]"), ev)?;
         if ev.at.is_some() && (ev.from.is_some() || ev.to.is_some()) {
             return Err(e(format!("{pp}.events[{i}]"), "use either `at` or `from`/`to`".into()));
         }
@@ -353,5 +440,145 @@ fn check_phase(
     if let Some(id) = p.attach.keys().find(|k| !attach_ids.contains(k.as_str())) {
         return Err(e(format!("{pp}.attach.{id}"), "no attachment with this id".into()));
     }
+    Ok(())
+}
+
+fn positive(file: &str, path: &str, n: f64) -> Result<(), ContentError> {
+    if n.is_finite() && n > 0. { Ok(()) } else { Err(err(file, path, "must be finite and positive")) }
+}
+fn nonnegative(file: &str, path: &str, n: f64) -> Result<(), ContentError> {
+    if n.is_finite() && n >= 0. { Ok(()) } else { Err(err(file, path, "must be finite and non-negative")) }
+}
+fn check_life(file: &str, path: &str, n: u32) -> Result<(), ContentError> {
+    if n > 0 && n <= i32::MAX as u32 { Ok(()) } else { Err(err(file, path, "must be between 1 and i32::MAX")) }
+}
+fn check_hitbox(file: &str, path: &str, h: &super::Hitbox, geometry: bool) -> Result<(), ContentError> {
+    if geometry {
+        positive(file, &format!("{path}.r"), h.r)?;
+    }
+    for (name, n) in [
+        ("damage", h.damage),
+        ("bkb", h.bkb),
+        ("kbg", h.kbg),
+        ("hitstunMult", h.hitstun_mult),
+        ("hitlagMult", h.hitlag_mult),
+        ("shieldDmgMult", h.shield_dmg_mult),
+        ("shieldStunMult", h.shield_stun_mult),
+    ] {
+        nonnegative(file, &format!("{path}.{name}"), n)?;
+    }
+    if h.end.is_some_and(|n| n < h.start) {
+        return Err(err(file, path, "end is before start"));
+    }
+    if h.rehit == Some(0) {
+        return Err(err(file, format!("{path}.rehit"), "must be positive"));
+    }
+    for (i, frame) in h.frames.iter().enumerate() {
+        nonnegative(file, &format!("{path}.frames[{i}][0]"), frame[0])?;
+        if geometry {
+            positive(file, &format!("{path}.frames[{i}][3]"), frame[3])?;
+        }
+    }
+    Ok(())
+}
+fn check_event(file: &str, path: &str, ev: &super::Event) -> Result<(), ContentError> {
+    if ev.every == Some(0) {
+        return Err(err(file, format!("{path}.every"), "must be positive"));
+    }
+    if ev.from.zip(ev.to).is_some_and(|(a, b)| a > b) {
+        return Err(err(file, path, "from is after to"));
+    }
+    if let Some(n) = ev.cap_fall {
+        positive(file, &format!("{path}.capFall"), n)?;
+    }
+    Ok(())
+}
+fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
+    if g.input.stick_threshold <= 0 {
+        return Err(err(file, "input.stickThreshold", "must be between 1 and 127"));
+    }
+    if g.palette.is_empty() {
+        return Err(err(file, "palette", "needs at least one color set"));
+    }
+    positive(file, "knockback.chargeDamageDivisor", g.knockback.charge_damage_divisor)?;
+    positive(file, "hitTypes.windbox.maxSpeed", g.hit_types.windbox.max_speed)?;
+    positive(file, "shield.max", g.shield.max)?;
+    positive(file, "hitstun.gravity", g.hitstun.gravity)?;
+    positive(file, "hitstun.maxFall", g.hitstun.max_fall)?;
+    positive(file, "shield.breakGravity", g.shield.break_gravity)?;
+    positive(file, "shield.breakMaxFall", g.shield.break_max_fall)?;
+    positive(file, "respawn.descendFrames", f64::from(g.respawn.descend_frames))?;
+    positive(file, "match.endFrames", f64::from(g.match_.end_frames))?;
+    for (name, c) in
+        [("climb", &g.ledge.climb), ("attack", &g.ledge.attack), ("roll", &g.ledge.roll), ("jump", &g.ledge.jump)]
+    {
+        if c.a == 0 || c.b < c.a || c.end < c.b || name != "jump" && c.b == c.a {
+            return Err(err(file, format!("ledge.{name}"), "needs 0 < a < b <= end (jump may have a == b)"));
+        }
+        nonnegative(file, &format!("ledge.{name}.dist"), c.dist)?;
+    }
+    // These sections contain magnitudes/timings; signed velocities and angles are excluded.
+    let value = serde_json::to_value(g).unwrap();
+    for section in [
+        "movement",
+        "knockback",
+        "hitstun",
+        "hitlag",
+        "shield",
+        "dodge",
+        "landing",
+        "tech",
+        "grab",
+        "respawn",
+        "match",
+        "sim",
+    ] {
+        for (name, n) in value[section].as_object().unwrap() {
+            if section == "movement" && name == "fastFallMinVy" {
+                continue;
+            }
+            if let Some(n) = n.as_f64() {
+                nonnegative(file, &format!("{section}.{name}"), n)?;
+            }
+        }
+    }
+    for (name, boxes) in [("knockdown.attack", &g.knockdown.attack), ("ledge.attackHit", &g.ledge.attack_hit)] {
+        for (i, h) in boxes.iter().enumerate() {
+            check_hitbox(file, &format!("{name}[{i}]"), h, true)?;
+        }
+    }
+    for (name, [a, b]) in
+        [("knockdown.attackActive", g.knockdown.attack_active), ("ledge.attackActive", g.ledge.attack_active)]
+    {
+        if a > b {
+            return Err(err(file, name, "start is after end"));
+        }
+    }
+    if g.grab.pummel_hit_frame >= g.grab.pummel_frames {
+        return Err(err(file, "grab.pummelHitFrame", "must be less than pummelFrames"));
+    }
+    if g.dodge.roll_move_start > g.dodge.roll_move_end || g.dodge.roll_move_end > g.dodge.roll_frames {
+        return Err(err(file, "dodge.rollMoveEnd", "needs rollMoveStart <= rollMoveEnd <= rollFrames"));
+    }
+    for name in ["react", "charge", "aggression", "mash", "tech", "shieldResponse", "defend", "projectileDefend"] {
+        for (i, n) in value["ai"][name].as_array().unwrap().iter().enumerate() {
+            let n = n.as_f64().unwrap();
+            nonnegative(file, &format!("ai.{name}[{i}]"), n)?;
+            if !["react", "charge"].contains(&name) && n > 1. {
+                return Err(err(file, format!("ai.{name}[{i}]"), "must be between 0 and 1"));
+            }
+        }
+    }
+    let v = &g.ai.thresholds;
+    for (name, a, b) in [
+        ("ledgeWait", v.ledge_wait_min, v.ledge_wait_max),
+        ("hold", v.hold_min, v.hold_max),
+        ("shieldHold", v.shield_hold_min, v.shield_hold_max),
+    ] {
+        if a < 0. || b < a {
+            return Err(err(file, format!("ai.thresholds.{name}Max"), "needs 0 <= min <= max"));
+        }
+    }
+    nonnegative(file, "ai.thresholds.targetPad", v.target_pad)?;
     Ok(())
 }

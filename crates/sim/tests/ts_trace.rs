@@ -64,8 +64,7 @@ fn matches_typescript_traces() {
         .collect();
     paths.sort();
     if paths.is_empty() {
-        eprintln!("TS trace fixtures absent; skipping comparison");
-        return;
+        panic!("TS trace fixtures absent; run just record-traces");
     }
     let filter = std::env::var("TRACE_FILTER").unwrap_or_default();
     let mut failures = vec![];
@@ -98,7 +97,8 @@ fn matches_typescript_traces() {
                 friendly_fire: false,
             },
             &d,
-        );
+        )
+        .unwrap();
         if let Some(setup) = cfg["setup"].as_array() {
             for setup in setup {
                 let i = setup["player"].as_u64().unwrap() as usize;

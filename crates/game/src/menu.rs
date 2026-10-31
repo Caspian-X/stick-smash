@@ -18,6 +18,7 @@ pub struct MenuState {
     /// Controls screen: the profile being edited and the action waiting for a control.
     pub profile: usize,
     pub capture: Option<usize>,
+    pub warning: Option<String>,
 }
 
 const VERSUS: u32 = 1;
@@ -47,14 +48,14 @@ pub fn enter_controls(mut st: ResMut<MenuState>) {
 fn profiles(saved: &Saved, devs: &Devices) -> Vec<(Dev, String)> {
     let mut v: Vec<Dev> = if saved.split_keyboard { vec![Dev::KeysL, Dev::KeysR] } else { vec![Dev::Keys] };
     v.extend(devs.map.keys().filter(|d| matches!(d, Dev::Pad(_))));
-    v.into_iter().map(|d| (d, input::profile(d, &devs.names))).collect()
+    v.into_iter().map(|d| (d, devs.profile(d))).collect()
 }
 
 #[allow(clippy::too_many_arguments)]
 pub fn update(
     screen: Res<State<Screen>>,
     mut st: ResMut<MenuState>,
-    devs: Res<Devices>,
+    mut devs: ResMut<Devices>,
     q: FocusQuery,
     mut saved: ResMut<Saved>,
     mut next: ResMut<NextState<Screen>>,
@@ -74,8 +75,19 @@ pub fn update(
             .iter()
             .filter(|(d, _)| if kb { matches!(d, Dev::Keys | Dev::KeysL | Dev::KeysR) } else { *d == pd })
             .find_map(|(_, s)| s.raw.clone());
+        let cancel = devs
+            .map
+            .iter()
+            .any(|(d, s)| matches!(d, Dev::Keys | Dev::KeysL | Dev::KeysR) && s.raw.as_deref() == Some("Escape"))
+            || devs.map.get(pd).is_some_and(|s| s.raw.as_deref() == Some("Select") || s.raw.as_deref() == Some("East"));
         match raw {
-            Some(r) if kb && r == "Escape" => s.capture = None,
+            _ if cancel => s.capture = None,
+            Some(r) if input::keyboard_conflict(&saved, prof, &r) => {
+                s.warning = Some(format!(
+                    "{} is used by the other keyboard player. Choose another key.",
+                    input::control_label(&r)
+                ));
+            }
             Some(r) => {
                 let mut b = input::binds(&saved, prof);
                 b[a] = vec![r];
@@ -83,6 +95,8 @@ pub fn update(
                     .bindings
                     .insert(prof.clone(), ACTS.iter().zip(b).map(|(act, v)| (act.id().to_string(), v)).collect());
                 s.capture = None;
+                s.warning = None;
+                devs.clear();
             }
             None => {}
         }
@@ -108,7 +122,10 @@ pub fn update(
             }
             (Screen::Title, _) => {}
             (_, Action::Back | Action::Activate(BACK)) => next.set(Screen::Title),
-            (Screen::Settings, Action::Spin(KEYBOARD, _)) => saved.split_keyboard = !saved.split_keyboard,
+            (Screen::Settings, Action::Spin(KEYBOARD, _)) => {
+                saved.split_keyboard = !saved.split_keyboard;
+                devs.clear();
+            }
             (Screen::Settings, Action::Spin(HITBOXES, _)) => saved.versus_hitboxes = !saved.versus_hitboxes,
             (Screen::Settings, Action::Spin(WINDOW, _)) => {
                 saved.fullscreen = !saved.fullscreen;
@@ -121,6 +138,7 @@ pub fn update(
             }
             (Screen::Controls, Action::Activate(k)) if (ACT0..ACT0 + 10).contains(&k) => {
                 s.capture = Some((k - ACT0) as usize);
+                s.warning = None;
             }
             (Screen::Controls, Action::Activate(RESET)) => {
                 if let Some((_, prof)) = profs.get(s.profile) {
@@ -248,13 +266,16 @@ pub fn draw(
                 }
                 Screen::Controls => {
                     heading(p, f, d, "Controls");
+                    if let Some(warning) = &st.warning {
+                        p.spawn(txt(&f.body, 16., GOLD, warning));
+                    }
                     let Some((_, prof)) = profs.get(st.profile) else { return };
                     let pname = profs.get(st.profile).map_or_else(String::new, |(dv, _)| devs.name(*dv));
                     let b = input::binds(&saved, prof);
                     let mut items = vec![Item::spin(PROFILE, "Device", pname)];
                     for (i, act) in ACTS.iter().enumerate() {
                         let v = if st.capture == Some(i) {
-                            "Press a control…  (Esc cancels)".to_string()
+                            "Press a control…  (Esc / B / Back cancels)".to_string()
                         } else {
                             b[i].iter().map(|c| input::control_label(c)).collect::<Vec<_>>().join("  or  ")
                         };

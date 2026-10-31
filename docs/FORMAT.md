@@ -179,12 +179,18 @@ center position; additional player slots have their own points.
 
 ## Match and input snapshots
 
-`World::new(MatchConfig, &GameData)` resolves stage/fighter ids into content indices. Player config contains
+`World::new(MatchConfig, &GameData) -> Result<World, String>` resolves stage/fighter ids into content indices.
+It returns an error for unknown ids, zero players, nonpositive stocks, or too many players for the stage.
+`Stage::max_players()` is `min(spawns.len(), respawns.len())`; lobbies use it to size player slots and filter stages.
+`MatchConfig::opposing_sides()` counts distinct teams plus each unteamed player separately; lobbies should
+require at least two sides. The constructor permits one side for training and tests. Player config contains
 `fighter`, optional CPU level, optional team, and `tap_jump`; match config also contains seed, stocks, training,
 and friendly fire. `None` teams are free-for-all. Friendly fire permits teammate hit/grab/projectile interaction;
-AI still targets enemies. Winner is the last surviving team (or individual in free-for-all); all surviving
+AI still targets enemies. Victory is evaluated every tick when at most one side has stocks left, even without
+a prior elimination. Winner is the last surviving team (or individual in free-for-all); all surviving
 winning teammates enter the win state. Simultaneous elimination is a draw. Training replenishes stocks and
-never ends. Pair passes run in player-index order, and overlapping push pairs run in lexicographic order.
+never ends. Once the result is committed and `end_t` starts, KO processing is disabled (also after `over`);
+movement, combat, and effects continue, but stocks cannot change during the ending animation. Pair passes run in player-index order, and overlapping push pairs run in lexicographic order.
 
 Raw `Input` is `(i8,i8)` stick (y up) and button bits jump=1, attack=2, special=4, grab=8, shield=16. Human
 history advances during countdown, hitlag, respawn/death, and match ending. Rising direction edges update
@@ -200,3 +206,23 @@ sets reset on phase entry. Counter damage and accumulated charge persist across 
 
 For multiple victims in one hit pass, an immediate `hit` transition changes the boxes used for subsequent
 victims in index order. A successful grab leaves the attack state, so it takes only the first eligible victim.
+
+
+`World::hits: Vec<HitRecord>` records every damaging hit, shield hit, throw, pummel, and projectile hit in
+simulation order. `HitRecord` contains `attacker: Option<usize>`, `victim: usize`, `damage: f64` (the attack's
+nominal damage), and `shielded: bool`. The game drains it each tick alongside `World::fx`; both queues are
+part of the rollback snapshot. `Fighter::last_hit_by: Option<usize>` remembers the latest damaging attacker
+across state changes. Shield hits do not change it. The single training trace still describes only the latest hit.
+
+Spawn `y` is the feet height (default ground top). A fighter starts grounded on the ground or platform whose
+height matches that spawn and whose horizontal span contains it; otherwise it starts airborne.
+Hurtbox groups are `default` and `knockdown`. Autolink pulls toward the victim's `default` hurtbox center.
+
+Content validation rejects nonpositive movement speeds, gravity, fall speeds, weight and collision radii,
+negative magnitudes/timings, reversed hurtbox/stage bounds and frame windows, zero divisors/event periods,
+and invalid content references. Integer frame counts are unsigned. Throws require `0 < release <= total`;
+ledge options require `0 < a < b <= end` (jump allows `a == b`). Ground `underDepth` and `underInset` and
+respawn `descendFrames` must be positive. Projectile lifetimes must fit a positive `i32`. Throw/projectile
+hitbox geometry is ignored; only projectile `r` and active melee hitbox radii must be positive.
+Global validation errors abort loading; invalid fighter/stage packages are skipped with a file and JSON path.
+On stages narrower than twice the AI target padding, that padding is reduced to half the ground width.

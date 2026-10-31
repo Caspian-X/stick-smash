@@ -79,16 +79,12 @@ pub struct Body {
     pub height: f64,
 }
 
-/// Hurtboxes by state group. Missing optional groups use `default`.
+/// Hurtboxes for the default and knockdown state groups.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Hurtboxes {
     pub default: Rect,
     pub knockdown: Rect,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub crouch: Option<Rect>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub ledge: Option<Rect>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]

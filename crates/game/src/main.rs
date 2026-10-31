@@ -56,16 +56,20 @@ fn main() {
     let persist = settings::Persist(if shot_dir.is_some() { None } else { settings::config_file() });
     let saved = settings::load(persist.0.as_ref());
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins.set(WindowPlugin {
-        primary_window: Some(Window {
-            title: "Stick Smash".into(),
-            resolution: (1280, 720).into(),
-            resizable: shot_dir.is_none(),
-            mode: menu::window_mode(saved.fullscreen && shot_dir.is_none()),
-            ..default()
-        }),
-        ..default()
-    }))
+    app.add_plugins(
+        DefaultPlugins
+            .set(bevy::render::RenderPlugin { synchronous_pipeline_compilation: shot_dir.is_some(), ..default() })
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    title: "Stick Smash".into(),
+                    resolution: (1280, 720).into(),
+                    resizable: shot_dir.is_none(),
+                    mode: menu::window_mode(saved.fullscreen && shot_dir.is_none()),
+                    ..default()
+                }),
+                ..default()
+            }),
+    )
     .add_plugins((EguiPlugin::default(), RenderPlugin))
     .init_state::<Screen>()
     .insert_resource(ClearColor(ui::NIGHT))
@@ -83,12 +87,15 @@ fn main() {
         commands.insert_resource(ui::Fonts::load(&assets, &mut fonts));
     })
     .add_systems(PreUpdate, input::poll.after(InputSystems))
+    .add_systems(PostUpdate, hud::safe_area.after(bevy::ui::UiSystems::Layout))
     .add_systems(FixedUpdate, play::tick.run_if(resource_exists::<play::Match>))
     .add_systems(OnEnter(Screen::Title), menu::enter_title)
     .add_systems(OnEnter(Screen::Settings), menu::enter_settings)
     .add_systems(OnEnter(Screen::Controls), menu::enter_controls)
     .add_systems(OnEnter(Screen::Select), select::enter)
-    .add_systems(OnEnter(Screen::Match), hud::spawn)
+    .add_systems(OnEnter(Screen::Match), (input::clear, hud::spawn))
+    .add_systems(OnEnter(Screen::Select), input::clear)
+    .add_systems(OnEnter(Screen::Title), input::clear)
     .add_systems(OnEnter(Screen::Results), results::enter)
     .add_systems(
         Update,

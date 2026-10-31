@@ -58,13 +58,15 @@ pub struct Scene {
     pub alpha: f64,
     /// Debug overlay (hitboxes, hurtboxes, ledge and blast zones, state text).
     pub debug: bool,
+    /// Fraction of the window reserved below gameplay (measured by the host UI).
+    pub bottom_safe_area: f64,
     pending: VecDeque<World>,
     reset: bool,
 }
 
 impl Scene {
     pub fn new(data: Arc<GameData>) -> Self {
-        Scene { data, alpha: 1., debug: false, pending: VecDeque::new(), reset: true }
+        Scene { data, alpha: 1., debug: false, bottom_safe_area: 0., pending: VecDeque::new(), reset: true }
     }
     /// Record the world after a tick. Its pending `fx` become effects.
     pub fn push(&mut self, w: &World) {
@@ -84,6 +86,7 @@ impl Scene {
 pub struct Framing {
     pub view: [f64; 4],
     pub fighters: Vec<(f64, f64)>,
+    pub bottom_safe_area: f64,
 }
 
 /// Run after the game's sim step so this frame shows the newest tick.
@@ -164,7 +167,7 @@ fn advance(mut scene: ResMut<Scene>, mut st: ResMut<Drawn>, win: Option<Single<&
         let fx = std::mem::take(&mut w.fx);
         st.fx.consume(&d, &w, &fx, view);
         st.fx.tick(&d);
-        st.cam.tick(&d, &w, asp);
+        st.cam.tick(&d, &w, asp / (1. - scene.bottom_safe_area.clamp(0., 0.5)));
         st.prev = st.cur.take();
         st.cur = Some(w);
     }
@@ -221,7 +224,12 @@ fn draw(
     let d = &*scene.data;
     let t = scene.alpha.clamp(0., 1.);
     let px_h = win.as_deref().map_or(720., |w| f64::from(w.physical_height().max(1)));
-    let Some(c) = st.cam.at(t) else { return };
+    let Some(mut c) = st.cam.at(t) else { return };
+    let safe = scene.bottom_safe_area.clamp(0., 0.5);
+    let full_height = c.h / (1. - safe);
+    c.y += (full_height - c.h) / 2.;
+    c.h = full_height;
+    framing.bottom_safe_area = safe;
     let (sx, sy) = st.fx.shake_offset();
     st.shake = (sx, sy);
     let s = &d.stages[cur.stage];

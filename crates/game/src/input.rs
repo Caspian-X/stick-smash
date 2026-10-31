@@ -79,11 +79,12 @@ pub struct DevState {
     /// A control pressed this frame, by binding name (for remapping).
     pub raw: Option<String>,
     rep: Option<(Nav, f32)>,
+    blocked: [bool; 10],
 }
 
 impl DevState {
     pub fn input(&self) -> Input {
-        let h = &self.held;
+        let h: [bool; 10] = std::array::from_fn(|i| self.held[i] && !self.blocked[i]);
         let ax = |neg: bool, pos: bool, analog: f32| match (neg, pos) {
             (true, false) => -127,
             (false, true) => 127,
@@ -94,6 +95,28 @@ impl DevState {
             buttons: (0..5).filter(|b| h[4 + b]).fold(0, |a, b| a | 1 << b),
         }
     }
+    fn sample(&mut self, held: [bool; 10]) -> [bool; 10] {
+        for (i, h) in held.iter().enumerate() {
+            self.blocked[i] &= h;
+        }
+        let pressed: [bool; 10] = std::array::from_fn(|i| held[i] && !self.held[i] && !self.blocked[i]);
+        self.held = held;
+        self.pressed = pressed;
+        if pressed[0] {
+            self.latch.stick.0 = -127;
+        }
+        if pressed[1] {
+            self.latch.stick.0 = 127;
+        }
+        if pressed[2] {
+            self.latch.stick.1 = 127;
+        }
+        if pressed[3] {
+            self.latch.stick.1 = -127;
+        }
+        self.latch.buttons |= (0..5).filter(|b| pressed[4 + b]).fold(0, |a, b| a | 1 << b);
+        pressed
+    }
     pub fn any_press(&self) -> bool {
         self.pressed[4..].iter().any(|p| *p) || self.nav.iter().any(|n| matches!(n, Nav::Confirm | Nav::Start))
     }
@@ -103,6 +126,7 @@ impl DevState {
 pub struct Devices {
     pub map: BTreeMap<Dev, DevState>,
     pub names: BTreeMap<Dev, String>,
+    pad_profiles: BTreeMap<Dev, String>,
     /// Actions each bot holds, set by the script.
     pub bots: BTreeMap<u8, [bool; 10]>,
 }
@@ -110,6 +134,9 @@ pub struct Devices {
 impl Devices {
     pub fn navs(&self) -> impl Iterator<Item = (Dev, Nav)> + '_ {
         self.map.iter().flat_map(|(d, s)| s.nav.iter().map(move |n| (*d, *n)))
+    }
+    pub fn profile(&self, d: Dev) -> String {
+        self.pad_profiles.get(&d).cloned().unwrap_or_else(|| profile(d, &self.names))
     }
     pub fn name(&self, d: Dev) -> String {
         self.names.get(&d).cloned().unwrap_or_else(|| label(d))
@@ -125,6 +152,17 @@ impl Devices {
         Input {
             stick: (pick(held.stick.0, l.stick.0), pick(held.stick.1, l.stick.1)),
             buttons: held.buttons | l.buttons,
+        }
+    }
+    /// Discard menu presses and suppress held controls until release.
+    pub fn clear(&mut self) {
+        for s in self.map.values_mut() {
+            s.latch = Input::default();
+            s.pressed = [false; 10];
+            s.blocked = s.held;
+            s.nav.clear();
+            s.raw = None;
+            s.rep = None;
         }
     }
     pub fn bot(&mut self, n: u8) -> &mut [bool; 10] {
@@ -148,7 +186,15 @@ pub fn profile(d: Dev, names: &BTreeMap<Dev, String>) -> String {
         Dev::Keys => "keyboard".into(),
         Dev::KeysL => "keyboard-left".into(),
         Dev::KeysR => "keyboard-right".into(),
-        Dev::Pad(_) => format!("gamepad:{}", names.get(&d).map_or("", |s| s.as_str())),
+        Dev::Pad(_) => {
+            let name = names.get(&d).map_or("", |s| s.as_str());
+            let index = names
+                .iter()
+                .filter(|(dev, n)| matches!(dev, Dev::Pad(_)) && n.as_str() == name)
+                .position(|(dev, _)| *dev == d)
+                .unwrap_or(0);
+            format!("gamepad:{name}#{index}")
+        }
         Dev::Bot(_) => "bot".into(),
     }
 }
@@ -205,9 +251,12 @@ pub fn default_binds(profile: &str) -> [Vec<&'static str>; 10] {
 
 /// The controls bound to each action for a profile (saved overrides, else defaults).
 pub fn binds(saved: &Saved, profile: &str) -> [Vec<String>; 10] {
-    let key =
-        if profile.starts_with("gamepad:") && !saved.bindings.contains_key(profile) { "gamepad" } else { profile };
-    let custom = saved.bindings.get(key);
+    let model = profile.rsplit_once('#').map_or(profile, |(model, _)| model);
+    let custom = saved
+        .bindings
+        .get(profile)
+        .or_else(|| saved.bindings.get(model))
+        .or_else(|| profile.starts_with("gamepad:").then(|| saved.bindings.get("gamepad")).flatten());
     let def = default_binds(profile);
     std::array::from_fn(|i| {
         custom
@@ -402,6 +451,10 @@ pub fn poll(
     let mut live: Vec<Dev> = if saved.split_keyboard { vec![Dev::KeysL, Dev::KeysR] } else { vec![Dev::Keys] };
     for (n, (e, _, name)) in pads.iter().enumerate() {
         let label = name.map_or_else(|| format!("Gamepad {}", n + 1), |nm| nm.as_str().to_string());
+        if !devs.pad_profiles.contains_key(&Dev::Pad(e)) {
+            let index = devs.names.iter().filter(|(dev, name)| matches!(dev, Dev::Pad(_)) && **name == label).count();
+            devs.pad_profiles.insert(Dev::Pad(e), format!("gamepad:{label}#{index}"));
+        }
         devs.names.insert(Dev::Pad(e), label);
         live.push(Dev::Pad(e));
     }
@@ -413,7 +466,7 @@ pub fn poll(
         let mut stick = Vec2::ZERO;
         let mut raw = None;
         let mut extra: Vec<Nav> = vec![];
-        let prof = profile(d, &devs.names);
+        let prof = devs.profile(d);
         match d {
             Dev::Keys | Dev::KeysL | Dev::KeysR => {
                 let b = binds(&saved, &prof);
@@ -444,25 +497,10 @@ pub fn poll(
             Dev::Bot(n) => held = devs.bots[&n],
         }
         let s = devs.map.entry(d).or_default();
-        let pressed: [bool; 10] = std::array::from_fn(|i| held[i] && !s.held[i]);
-        s.held = held;
-        s.pressed = pressed;
+        let pressed = s.sample(held);
         s.stick = stick;
         s.raw = raw;
         let now = s.input();
-        if pressed[0] {
-            s.latch.stick.0 = -127;
-        }
-        if pressed[1] {
-            s.latch.stick.0 = 127;
-        }
-        if pressed[2] {
-            s.latch.stick.1 = 127;
-        }
-        if pressed[3] {
-            s.latch.stick.1 = -127;
-        }
-        s.latch.buttons |= (0..5).filter(|b| pressed[4 + b]).fold(0, |a, b| a | 1 << b);
         s.nav = extra;
         if pressed[4] || pressed[5] {
             s.nav.push(Nav::Confirm);
@@ -499,5 +537,57 @@ pub fn poll(
             }
             (None, _) => s.rep = None,
         }
+    }
+}
+
+/// Clear input when screens or ownership change.
+pub fn clear(mut devs: ResMut<Devices>) {
+    devs.clear();
+}
+
+pub fn keyboard_conflict(saved: &Saved, profile: &str, control: &str) -> bool {
+    let other = match profile {
+        "keyboard-left" => "keyboard-right",
+        "keyboard-right" => "keyboard-left",
+        _ => return false,
+    };
+    saved.split_keyboard && binds(saved, other).iter().flatten().any(|c| c == control)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn clearing_drops_taps_and_blocks_held_buttons_until_release() {
+        let mut d = Devices::default();
+        let s = d.map.entry(Dev::Keys).or_default();
+        s.held[5] = true;
+        s.latch.buttons = 3;
+        s.pressed[5] = true;
+        d.clear();
+        assert_eq!(d.take(Dev::Keys).buttons, 0);
+        assert!(!d.map[&Dev::Keys].pressed[5]);
+        let s = d.map.get_mut(&Dev::Keys).unwrap();
+        let mut held = [false; 10];
+        held[5] = true;
+        s.sample(held);
+        assert_eq!(s.input().buttons, 0);
+        s.sample([false; 10]);
+        s.sample(held);
+        assert_eq!(d.take(Dev::Keys).buttons, 2);
+    }
+    #[test]
+    fn identical_gamepads_can_override_model_defaults_independently() {
+        let mut saved = Saved::default();
+        saved.bindings.insert("gamepad:Same".into(), [("attack".into(), vec!["North".into()])].into());
+        saved.bindings.insert("gamepad:Same#1".into(), [("attack".into(), vec!["West".into()])].into());
+        assert_eq!(binds(&saved, "gamepad:Same#0")[5], ["North"]);
+        assert_eq!(binds(&saved, "gamepad:Same#1")[5], ["West"]);
+    }
+    #[test]
+    fn split_keyboard_conflicts_include_defaults() {
+        let saved = Saved::default();
+        assert!(keyboard_conflict(&saved, "keyboard-left", "Period"));
+        assert!(!keyboard_conflict(&saved, "keyboard-left", "KeyJ"));
     }
 }
