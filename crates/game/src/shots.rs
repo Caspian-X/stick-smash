@@ -91,21 +91,68 @@ impl Script {
         press(&mut v, 0, Attack);
         v.push(Step::Wait(20));
         {
-            use editor::Cmd;
-            use editor::preview::Subject;
-            v.push(Step::Editor(Cmd::Fighter("swordfighter".into())));
-            v.push(Step::Editor(Cmd::Subject(Subject::Move("fsmash".into()))));
-            v.push(Step::Editor(Cmd::Dummy(true)));
+            use editor::preview::{Section, Subject};
+            use editor::{Cmd, Dialog};
+            let ed = |v: &mut Vec<Step>, c: Cmd| v.push(Step::Editor(c));
+            ed(&mut v, Cmd::Fighter("swordfighter".into()));
+            ed(&mut v, Cmd::Subject(Subject::Move("fsmash".into())));
+            ed(&mut v, Cmd::Dummy(true));
             v.push(Step::Wait(4));
-            v.push(Step::Editor(Cmd::Frame(SHOT_FRAME)));
-            v.push(Step::Editor(Cmd::Hitbox(Some(0))));
+            ed(&mut v, Cmd::Frame(SHOT_FRAME));
+            ed(&mut v, Cmd::Hitbox(Some(0)));
             shot(&mut v, "03b-editor-move");
-            v.push(Step::Editor(Cmd::Fighter("brawler".into())));
-            v.push(Step::Editor(Cmd::Subject(Subject::Pose("stand".into()))));
+            ed(&mut v, Cmd::Onion(true));
+            ed(&mut v, Cmd::Frame(SHOT_FRAME - 8));
+            ed(&mut v, Cmd::Hitbox(None));
+            shot(&mut v, "03b2-editor-onion");
+            ed(&mut v, Cmd::Onion(false));
+            // A broken transition: inline problem, dirty markers, then the leave prompt.
+            ed(
+                &mut v,
+                Cmd::Edit(|f| {
+                    f.moves.fsmash.phases[0].transitions.push(sim::data::Transition {
+                        on: sim::data::Trigger::Timeout,
+                        cond: None,
+                        from: None,
+                        to: "nowhere".into(),
+                        lag: None,
+                    })
+                }),
+            );
+            shot(&mut v, "03b3-editor-problem");
+            ed(&mut v, Cmd::Back);
+            shot(&mut v, "03b4-editor-leave");
+            ed(&mut v, Cmd::Dismiss);
+            ed(&mut v, Cmd::Undo);
+            shot(&mut v, "03b4b-editor-toast");
+            // Let the toast expire (it lives a few seconds) so the next shots show only what they're about.
+            v.push(Step::Wait(800));
+            ed(&mut v, Cmd::Help(true));
+            shot(&mut v, "03b5-editor-help");
+            ed(&mut v, Cmd::Help(false));
+            ed(&mut v, Cmd::Subject(Subject::Data(Section::Attachments)));
+            ed(&mut v, Cmd::Search("a".into()));
+            shot(&mut v, "03b6-editor-attachments");
+            ed(&mut v, Cmd::Search(String::new()));
+            ed(&mut v, Cmd::Fighter("brawler".into()));
+            ed(&mut v, Cmd::Subject(Subject::Data(Section::Projectiles)));
+            shot(&mut v, "03b7-editor-projectiles");
+            ed(&mut v, Cmd::Subject(Subject::Pose("stand".into())));
             shot(&mut v, "03c-editor-pose");
-            v.push(Step::Editor(Cmd::Subject(Subject::Fighter)));
-            shot(&mut v, "03d-editor-stats");
-            v.push(Step::Editor(Cmd::Back));
+            ed(&mut v, Cmd::Subject(Subject::Fighter));
+            ed(
+                &mut v,
+                Cmd::Dialog(Dialog::NewFighter {
+                    id: "ninja".into(),
+                    name: "Ninja".into(),
+                    extends: "brawler".into(),
+                    error: None,
+                }),
+            );
+            shot(&mut v, "03d-editor-new-fighter");
+            ed(&mut v, Cmd::Dismiss);
+            shot(&mut v, "03e-editor-stats");
+            ed(&mut v, Cmd::Back);
             v.push(Step::Wait(10));
         }
         // Versus: bot 0 opens it (and joins), bot 1 joins.

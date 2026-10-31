@@ -2,14 +2,19 @@
 //! throws and poses; scrub a real-sim preview; edit hitboxes, phases, poses and stats directly; undo; validate with
 //! the real loader; save into the user content dir with `extends` kept intact; test in training.
 //!
-//! The model (`doc`, `preview`, `view`) is plain Rust; `ui` is the egui layer. See docs/DESIGN.md "Editor".
+//! The model (`doc`, `preview`, `view`) is plain Rust; the egui layer is `ui` (frame, top bar, shortcuts, dialogs),
+//! `browser`, `viewport`, `timeline`, `inspect` and `form` (schema-driven forms). See docs/DESIGN.md "Editor".
 
+mod browser;
 pub mod doc;
+mod form;
 mod inspect;
 pub mod preview;
 mod style;
+mod timeline;
 mod ui;
 pub mod view;
+mod viewport;
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -41,6 +46,8 @@ pub struct EditorConfig {
 pub enum Request {
     /// Leave to the main menu.
     Back,
+    /// Quit the game (after the unsaved-changes prompt).
+    Quit,
     /// Play training with this (unsaved) content and fighter, then come back.
     Test { data: Arc<GameData>, fighter: String },
 }
@@ -60,7 +67,47 @@ pub enum Cmd {
     Frame(usize),
     Hitbox(Option<usize>),
     Dummy(bool),
+    /// Leave, asking first if anything is unsaved.
     Back,
+    Help(bool),
+    Search(String),
+    Onion(bool),
+    /// An undoable edit of the current fighter.
+    Edit(fn(&mut sim::data::Fighter)),
+    Dialog(Dialog),
+    /// Close any dialog.
+    Dismiss,
+    Undo,
+}
+
+/// A modal dialog.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Dialog {
+    /// Unsaved changes before leaving (`quit`: the game).
+    Leave {
+        quit: bool,
+    },
+    NewFighter {
+        id: String,
+        name: String,
+        extends: String,
+        error: Option<String>,
+    },
+    RenamePose {
+        old: String,
+        new: String,
+    },
+    /// Copy the move in `from` over another slot.
+    CopyMove {
+        from: String,
+        to: Option<String>,
+    },
+}
+
+pub(crate) struct Toast {
+    pub msg: String,
+    pub error: bool,
+    pub left: f32,
 }
 
 #[derive(Resource, Default)]
@@ -104,6 +151,12 @@ pub fn read_roots(roots: &[PathBuf]) -> Files {
     }
     files
 }
+
+/// Every move slot, in browser order.
+pub const SLOTS: [&str; 19] = [
+    "jab", "ftilt", "utilt", "dtilt", "dashatk", "fsmash", "usmash", "dsmash", "nair", "fair", "bair", "uair", "dair",
+    "nspec", "sspec", "uspec", "dspec", "grab", "dashgrab",
+];
 
 pub fn move_ref(m: &Moves, slot: impl AsRef<str>) -> Option<&Move> {
     m.iter().find(|(s, _)| *s == slot.as_ref()).map(|(_, m)| m)
@@ -189,8 +242,12 @@ pub struct Editor {
     hover: Option<Hit>,
     pub show_hurt: bool,
     pub show_inactive: bool,
-    /// Message, is-error, seconds left.
-    status: Option<(String, bool, f32)>,
+    pub onion: bool,
+    pub looping: bool,
+    pub search: String,
+    focus_search: bool,
+    pub dialog: Option<Dialog>,
+    toasts: Vec<Toast>,
     /// Problems that refused the last save.
     pub problems: Vec<sim::data::ContentError>,
     pub to_assets: bool,
@@ -203,7 +260,7 @@ impl Editor {
         let files = read_roots(&config.roots);
         let (ws, errors) =
             Workspace::new(files).map_err(|e| e.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n"))?;
-        let cur = ws.data.fighters[0].id.clone();
+        let cur = ws.data.fighters.first().ok_or("no playable fighters")?.id.clone();
         let mut ed = Editor {
             ws,
             load_errors: errors.iter().map(ToString::to_string).collect(),
@@ -228,7 +285,12 @@ impl Editor {
             hover: None,
             show_hurt: true,
             show_inactive: true,
-            status: None,
+            onion: false,
+            looping: true,
+            search: String::new(),
+            focus_search: false,
+            dialog: None,
+            toasts: vec![],
             problems: vec![],
             to_assets: false,
             help: false,
@@ -247,6 +309,10 @@ impl Editor {
         if self.ws.doc(id).is_none() {
             return;
         }
+        if self.cur != id {
+            // Notes about the previous fighter (undo, saved…) don't apply to this one.
+            self.toasts.retain(|t| t.error);
+        }
         self.cur = id.into();
         self.select(self.subject.clone());
         self.reframe = true;
@@ -261,7 +327,7 @@ impl Editor {
             self.hitbox = None;
             self.frame = 0;
         }
-        self.playing = s == Subject::Fighter;
+        self.playing = s.idle();
         self.subject = s;
         self.stale = true;
         self.followed = usize::MAX;
@@ -298,20 +364,58 @@ impl Editor {
     }
 
     fn say(&mut self, msg: impl Into<String>, error: bool) {
-        self.status = Some((msg.into(), error, if error { 8. } else { 4. }));
+        let msg = msg.into();
+        self.toasts.retain(|t| t.msg != msg);
+        self.toasts.push(Toast { msg, error, left: if error { style::TOAST_ERR_SECS } else { style::TOAST_SECS } });
+        if self.toasts.len() > 4 {
+            self.toasts.remove(0);
+        }
     }
 
-    pub fn save(&mut self) {
+    /// Fighters with unsaved changes (names).
+    pub fn unsaved(&self) -> Vec<String> {
+        self.ws.unsaved()
+    }
+
+    /// Asks before leaving the editor or quitting if anything is unsaved; otherwise requests it right away.
+    pub fn leave(&mut self, quit: bool, out: &mut Outbox) {
+        if self.unsaved().is_empty() {
+            out.request = Some(if quit { Request::Quit } else { Request::Back });
+        } else {
+            self.dialog = Some(Dialog::Leave { quit });
+        }
+    }
+
+    pub fn save(&mut self) -> bool {
         let id = self.cur.clone();
+        self.save_id(&id)
+    }
+
+    /// Saves every fighter with unsaved changes; false if any was refused.
+    pub fn save_all(&mut self) -> bool {
+        let ids: Vec<String> = self.ws.docs.values().filter(|d| d.dirty()).map(|d| d.id.clone()).collect();
+        let mut ok = true;
+        for id in ids {
+            ok &= self.save_id(&id);
+        }
+        ok
+    }
+
+    fn save_id(&mut self, id: &str) -> bool {
+        let id = id.to_string();
         let dir = if self.to_assets { Some(self.config.assets.clone()) } else { self.config.user_dir.clone() };
         let Some(dir) = dir else {
             self.say("Saving is disabled (no user content dir)", true);
-            return;
+            return false;
         };
         match self.ws.prepare_save(&id) {
             doc::Saved::Refused(errors) => {
-                self.say(format!("Not saved: {} problem(s)", errors.len().max(1)), true);
-                self.problems = errors;
+                let n = errors.len().max(1);
+                self.say(format!("{id} not saved: {n} problem{}", if n == 1 { "" } else { "s" }), true);
+                if id == self.cur {
+                    self.problems = errors;
+                }
+                false
             }
             doc::Saved::Ok { text, data } => {
                 let path = dir.join(doc::fighter_path(&id));
@@ -321,9 +425,13 @@ impl Editor {
                     Ok(()) => {
                         self.ws.saved(&id, text, data);
                         self.problems.clear();
-                        self.say(format!("Saved {}", path.display()), false);
+                        self.say(format!("✔ Saved {}", path.display()), false);
+                        true
                     }
-                    Err(e) => self.say(format!("Couldn't write {}: {e}", path.display()), true),
+                    Err(e) => {
+                        self.say(format!("Couldn't write {}: {e}", path.display()), true);
+                        false
+                    }
                 }
             }
         }
@@ -360,6 +468,7 @@ fn exit(mut scene: ResMut<render::Scene>, mut ctx: EguiContexts, ed: Option<ResM
     if let Some(mut ed) = ed {
         ed.shown = None;
         ed.playing = false;
+        ed.dialog = None;
     }
 }
 
@@ -413,7 +522,17 @@ fn frame(
                 ed.setup.dummy = on;
                 ed.stale = true;
             }
-            Cmd::Back => out.request = Some(Request::Back),
+            Cmd::Back => ed.leave(false, &mut out),
+            Cmd::Help(on) => ed.help = on,
+            Cmd::Search(q) => ed.search = q,
+            Cmd::Onion(on) => ed.onion = on,
+            Cmd::Edit(f) => {
+                ed.doc().edit(f);
+                ed.stale = true;
+            }
+            Cmd::Dialog(d) => ed.dialog = Some(d),
+            Cmd::Dismiss => ed.dialog = None,
+            Cmd::Undo => ui::undo(&mut ed, false),
         }
     }
     ui::run(ctx, &mut ed, &mut scene, time.delta_secs(), &mut out);
@@ -434,4 +553,81 @@ pub(crate) fn tests_fighter() -> sim::world::Fighter {
     )
     .unwrap();
     w.fighters[0].clone()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use preview::Section;
+
+    /// Drives the whole egui layer headlessly through every kind of subject and dialog, a few frames each.
+    #[test]
+    fn every_screen_draws() {
+        let assets = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets");
+        let config = EditorConfig { roots: vec![assets.clone()], assets: assets.clone(), user_dir: None, dev: false };
+        let mut ed = Editor::new(config).unwrap();
+        let mut scene = render::Scene::new(ed.ws.data.clone());
+        let mut out = Outbox::default();
+        let ctx = egui::Context::default();
+        ctx.run_ui(Default::default(), |_| {}).textures_delta.clear();
+        style::install_fonts(&ctx, &assets);
+        let base = ctx.global_style();
+        let mut frame = |ed: &mut Editor| {
+            for _ in 0..3 {
+                let input = egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(1280., 720.))),
+                    ..Default::default()
+                };
+                ctx.begin_pass(input);
+                ctx.set_global_style(style::style(&base));
+                ui::run(&ctx, ed, &mut scene, 1. / 60., &mut out);
+                ctx.end_pass().textures_delta.clear();
+            }
+        };
+        let ids: Vec<String> = ed.ws.data.fighters.iter().map(|f| f.id.clone()).collect();
+        for id in &ids {
+            ed.open(id);
+            let mut subjects: Vec<Subject> = SLOTS.iter().map(|s| Subject::Move(s.to_string())).collect();
+            subjects.extend(["f", "b", "u", "d"].map(|k| Subject::Throw(k.into())));
+            subjects.push(Subject::Fighter);
+            subjects.extend(Section::ALL.map(Subject::Data));
+            subjects.extend(ed.ws.docs[id].fighter.poses.keys().take(2).map(|n| Subject::Pose(n.clone())));
+            for s in subjects {
+                ed.select(s);
+                ed.hitbox = Some(0);
+                ed.onion = true;
+                frame(&mut ed);
+                ed.set_frame(8);
+                frame(&mut ed);
+            }
+        }
+        ed.search = "air".into();
+        ed.help = true;
+        ed.doc().edit(|f| {
+            f.moves.jab.phases[0].transitions.push(sim::data::Transition {
+                on: sim::data::Trigger::Timeout,
+                cond: None,
+                from: None,
+                to: "nowhere".into(),
+                lag: None,
+            })
+        });
+        ed.select(Subject::Move("jab".into()));
+        frame(&mut ed);
+        for d in [
+            Dialog::Leave { quit: true },
+            Dialog::NewFighter { id: "x".into(), name: "X".into(), extends: "base".into(), error: Some("e".into()) },
+            Dialog::RenamePose { old: "stand".into(), new: "stand2".into() },
+            Dialog::CopyMove { from: "jab".into(), to: Some("ftilt".into()) },
+        ] {
+            ed.dialog = Some(d);
+            frame(&mut ed);
+        }
+        ed.leave(false, &mut out);
+        assert!(matches!(ed.dialog, Some(Dialog::Leave { quit: false })), "unsaved edits ask before leaving");
+        ed.dialog = None;
+        ed.doc().revert();
+        ed.leave(false, &mut out);
+        assert!(matches!(out.request, Some(Request::Back)));
+    }
 }

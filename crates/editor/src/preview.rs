@@ -15,6 +15,52 @@ pub enum Subject {
     Pose(String),
     /// Fighter stats: the idle animation.
     Fighter,
+    /// Another fighter-wide section (also previews the idle animation).
+    Data(Section),
+}
+
+/// Fighter-wide data edited through schema forms.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Section {
+    Style,
+    Attachments,
+    Projectiles,
+    Effects,
+    Anims,
+    Ai,
+}
+
+impl Section {
+    pub const ALL: [Section; 6] =
+        [Section::Style, Section::Attachments, Section::Projectiles, Section::Effects, Section::Anims, Section::Ai];
+    pub fn name(self) -> &'static str {
+        match self {
+            Section::Style => "Style",
+            Section::Attachments => "Attachments",
+            Section::Projectiles => "Projectiles",
+            Section::Effects => "Effects",
+            Section::Anims => "Animations",
+            Section::Ai => "CPU behavior",
+        }
+    }
+    /// The fighter JSON key it edits.
+    pub fn key(self) -> &'static str {
+        match self {
+            Section::Style => "style",
+            Section::Attachments => "attachments",
+            Section::Projectiles => "projectiles",
+            Section::Effects => "fx",
+            Section::Anims => "anims",
+            Section::Ai => "ai",
+        }
+    }
+}
+
+impl Subject {
+    /// Plays the idle loop rather than a one-shot.
+    pub fn idle(&self) -> bool {
+        matches!(self, Subject::Fighter | Subject::Data(_))
+    }
 }
 
 pub const AERIALS: [&str; 5] = ["nair", "fair", "bair", "uair", "dair"];
@@ -119,7 +165,7 @@ pub fn simulate(data: Arc<GameData>, fighter: &str, subj: &Subject, setup: &Setu
             sim::combat::start_hold(&mut w, d, 0, 1);
             w.fighters[0].t = d.global.grab.min_hold;
         }
-        Subject::Pose(_) | Subject::Fighter => {}
+        Subject::Pose(_) | Subject::Fighter | Subject::Data(_) => {}
     }
     let stick = match subj {
         Subject::Throw(k) => match k.as_str() {
@@ -140,7 +186,7 @@ pub fn simulate(data: Arc<GameData>, fighter: &str, subj: &Subject, setup: &Setu
     w.hits.clear();
     let limit = match subj {
         Subject::Pose(_) => 1,
-        Subject::Fighter => 120,
+        Subject::Fighter | Subject::Data(_) => 120,
         _ => MAX_FRAMES,
     };
     let mut free_since: Option<usize> = None;
@@ -164,7 +210,7 @@ pub fn simulate(data: Arc<GameData>, fighter: &str, subj: &Subject, setup: &Setu
         marks.push(mark(&w));
         w.fx.clear();
         w.hits.clear();
-        if matches!(subj, Subject::Fighter) {
+        if subj.idle() {
             continue;
         }
         let f = &w.fighters[0];

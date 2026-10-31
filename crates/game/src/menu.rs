@@ -67,6 +67,7 @@ pub fn update(
     mut commands: Commands,
     mut exit: MessageWriter<AppExit>,
     mut win: Query<&mut Window, With<PrimaryWindow>>,
+    mut ed: Option<ResMut<editor::Editor>>,
 ) {
     let spots = ui::spots(&q);
     let mut s = st.clone();
@@ -124,7 +125,9 @@ pub fn update(
             (Screen::Title, Action::Activate(CONTROLS)) => next.set(Screen::Controls),
             (Screen::Title, Action::Activate(SETTINGS)) => next.set(Screen::Settings),
             (Screen::Title, Action::Activate(QUIT)) => {
-                exit.write(AppExit::Success);
+                if !crate::editing::ask_quit(ed.as_deref_mut(), &mut next) {
+                    exit.write(AppExit::Success);
+                }
             }
             (Screen::Title, _) => {}
             (_, Action::Back | Action::Activate(BACK)) => next.set(Screen::Title),

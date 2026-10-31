@@ -2660,6 +2660,7 @@ dependencies = [
  "bevy",
  "bevy_egui",
  "render",
+ "serde",
  "serde_json",
  "sim",
 ]

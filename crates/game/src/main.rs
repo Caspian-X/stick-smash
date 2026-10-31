@@ -71,6 +71,8 @@ fn main() {
                     mode: menu::window_mode(saved.fullscreen && shot_dir.is_none()),
                     ..default()
                 }),
+                // `editing::close_requested` quits, after the editor's unsaved-changes prompt.
+                close_when_requested: false,
                 ..default()
             }),
     )

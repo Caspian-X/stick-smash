@@ -4,7 +4,8 @@
 use std::path::PathBuf;
 
 use bevy::prelude::*;
-use editor::{EditorConfig, EditorPlugin, Outbox, Request};
+use bevy::window::WindowCloseRequested;
+use editor::{Dialog, Editor, EditorConfig, EditorPlugin, Outbox, Request};
 
 use crate::input::Dev;
 use crate::play::{self, Match, Mode, Rules, Slot};
@@ -21,7 +22,31 @@ pub fn setup(app: &mut App, assets: PathBuf, user_dir: Option<PathBuf>) {
     app.insert_resource(EditorConfig { roots, assets, user_dir, dev: cfg!(feature = "dev") })
         .add_plugins(EditorPlugin { state: Screen::Editor })
         .add_systems(OnEnter(Screen::Editor), enter)
-        .add_systems(Update, requests.run_if(in_state(Screen::Editor)));
+        .add_systems(Update, (requests.run_if(in_state(Screen::Editor)), close_requested));
+}
+
+/// Quitting with unsaved editor changes: opens the editor's prompt instead. Returns whether it did.
+pub fn ask_quit(ed: Option<&mut Editor>, next: &mut NextState<Screen>) -> bool {
+    match ed {
+        Some(ed) if !ed.unsaved().is_empty() => {
+            ed.dialog = Some(Dialog::Leave { quit: true });
+            next.set(Screen::Editor);
+            true
+        }
+        _ => false,
+    }
+}
+
+/// The window's close button (the window doesn't close by itself, see `main`).
+fn close_requested(
+    mut closes: MessageReader<WindowCloseRequested>,
+    mut ed: Option<ResMut<Editor>>,
+    mut next: ResMut<NextState<Screen>>,
+    mut exit: MessageWriter<AppExit>,
+) {
+    if closes.read().count() > 0 && !ask_quit(ed.as_deref_mut(), &mut next) {
+        exit.write(AppExit::Success);
+    }
 }
 
 fn enter(mut commands: Commands, testing: Option<Res<Testing>>, mut data: ResMut<Data>) {
@@ -39,6 +64,7 @@ fn requests(
     saved: Res<Saved>,
     mut scene: ResMut<render::Scene>,
     mut next: ResMut<NextState<Screen>>,
+    mut exit: MessageWriter<AppExit>,
 ) {
     match out.request.take() {
         Some(Request::Back) => {
@@ -46,6 +72,9 @@ fn requests(
                 data.0 = d;
             }
             next.set(Screen::Title);
+        }
+        Some(Request::Quit) => {
+            exit.write(AppExit::Success);
         }
         Some(Request::Test { data: d, fighter }) => {
             let Some(fi) = d.fighters.iter().position(|f| f.id == fighter) else { return };

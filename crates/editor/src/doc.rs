@@ -8,6 +8,7 @@ use serde_json::Value;
 use sim::GameData;
 use sim::data::fighter::Fighter;
 use sim::data::json::{merge, to_compact_string};
+use sim::data::visual::{AnimKey, Pose, PoseRef};
 use sim::data::{ContentError, Source, load};
 
 /// Every content file the game loaded, by path relative to a content root (`fighters/<id>/fighter.json`). User
@@ -47,6 +48,109 @@ pub fn fighter_path(id: &str) -> String {
     format!("fighters/{id}/fighter.json")
 }
 
+/// Fighter package ids in the files (abstract ones too), for `extends`.
+pub fn package_ids(files: &Files) -> Vec<String> {
+    files
+        .0
+        .keys()
+        .filter_map(|p| p.strip_prefix("fighters/")?.strip_suffix("/fighter.json").map(String::from))
+        .collect()
+}
+
+/// `base`, or `base2`, `base3`… whichever isn't taken.
+pub fn unique_name(base: &str, taken: impl Fn(&str) -> bool) -> String {
+    if !taken(base) {
+        return base.into();
+    }
+    (2..).map(|n| format!("{base}{n}")).find(|n| !taken(n)).expect("some name is free")
+}
+
+/// Calls `fx` on every pose key in the fighter: move phases and state animations.
+fn each_anim_key(f: &mut Fighter, mut fx: impl FnMut(&mut AnimKey)) {
+    for slot in crate::SLOTS {
+        if let Some(mv) = crate::move_mut(&mut f.moves, slot) {
+            mv.phases.iter_mut().flat_map(|p| p.anim.iter_mut()).for_each(&mut fx);
+        }
+    }
+    f.anims.values_mut().flat_map(|a| a.keys.iter_mut()).for_each(fx);
+}
+
+/// How many pose keys and poses refer to the named pose.
+pub fn pose_uses(f: &Fighter, name: &str) -> usize {
+    let named = |k: &AnimKey| match &k.pose {
+        PoseRef::Named(n) => n == name,
+        PoseRef::Inline(p) => p.from.as_deref() == Some(name),
+    };
+    f.moves.iter().flat_map(|(_, m)| m.phases.iter()).flat_map(|p| p.anim.iter()).filter(|k| named(k)).count()
+        + f.anims.values().flat_map(|a| a.keys.iter()).filter(|k| named(k)).count()
+        + f.poses.values().filter(|p| p.from.as_deref() == Some(name)).count()
+}
+
+/// Like `pose_uses`, but `stand` also counts the poses and inline keys without a `from` (they fill in from it).
+pub fn pose_users(f: &Fighter, name: &str) -> usize {
+    if name != "stand" {
+        return pose_uses(f, name);
+    }
+    let inline = |k: &AnimKey| matches!(&k.pose, PoseRef::Inline(p) if p.from.is_none());
+    pose_uses(f, name)
+        + f.moves.iter().flat_map(|(_, m)| m.phases.iter()).flat_map(|p| p.anim.iter()).filter(|k| inline(k)).count()
+        + f.anims.values().flat_map(|a| a.keys.iter()).filter(|k| inline(k)).count()
+        + f.poses.iter().filter(|(n, p)| *n != name && p.from.is_none()).count()
+}
+
+/// "Used by 3 keys and poses" / "Not used by any key or pose".
+pub fn uses_text(name: &str, n: usize) -> String {
+    match (n, name == "stand") {
+        (0, _) => "Not used by any key or pose".into(),
+        (1, _) => "Used by 1 key or pose".into(),
+        (n, false) => format!("Used by {n} keys and poses"),
+        (n, true) => format!("The base pose: {n} keys and poses build on it"),
+    }
+}
+
+/// Renames a pose and every reference to it. Refuses taken or empty names.
+pub fn rename_pose(f: &mut Fighter, old: &str, new: &str) -> bool {
+    if new.is_empty() || f.poses.contains_key(new) {
+        return false;
+    }
+    let Some(p) = f.poses.remove(old) else { return false };
+    f.poses.insert(new.into(), p);
+    let fix = |n: &mut Option<String>| {
+        if n.as_deref() == Some(old) {
+            *n = Some(new.into());
+        }
+    };
+    for p in f.poses.values_mut() {
+        fix(&mut p.from);
+    }
+    each_anim_key(f, |k| match &mut k.pose {
+        PoseRef::Named(n) if n == old => *n = new.into(),
+        PoseRef::Inline(p) => fix(&mut p.from),
+        PoseRef::Named(_) => {}
+    });
+    true
+}
+
+/// Adds a pose (a copy of `from`'s joints, or one that inherits `stand`) under a free name; returns the name.
+pub fn new_pose(f: &mut Fighter, base: &str, from: Option<&Pose>) -> String {
+    let name = unique_name(base, |n| f.poses.contains_key(n));
+    f.poses.insert(
+        name.clone(),
+        from.cloned().unwrap_or_else(|| Pose { from: Some("stand".into()), ..Default::default() }),
+    );
+    name
+}
+
+/// Copies move `from` over slot `to`.
+pub fn copy_move(f: &mut Fighter, from: &str, to: &str) -> bool {
+    let Some(mv) = crate::move_ref(&f.moves, from).cloned() else { return false };
+    if to == "sspec" && f.moves.sspec.is_none() {
+        f.moves.sspec = Some(mv);
+        return true;
+    }
+    crate::move_mut(&mut f.moves, to).map(|m| *m = mv).is_some()
+}
+
 /// One fighter being edited.
 #[derive(Clone, Debug)]
 pub struct Doc {
@@ -62,6 +166,8 @@ pub struct Doc {
     pub saved: Fighter,
     /// Problems in `fighter` (cross-reference checks); the preview keeps the last good data meanwhile.
     pub errors: Vec<ContentError>,
+    /// Created in the editor and never written: unsaved until the first save.
+    pub fresh: bool,
     undo: Vec<Fighter>,
     redo: Vec<Fighter>,
     /// The last undo step is still growing (a drag or typing in progress).
@@ -83,6 +189,7 @@ impl Doc {
             fighter: fighter.clone(),
             saved: fighter.clone(),
             errors: vec![],
+            fresh: false,
             undo: vec![],
             redo: vec![],
             open: false,
@@ -90,7 +197,7 @@ impl Doc {
     }
 
     pub fn dirty(&self) -> bool {
-        self.fighter != self.saved
+        self.fresh || self.fighter != self.saved
     }
     pub fn can_undo(&self) -> bool {
         !self.undo.is_empty()
@@ -102,7 +209,8 @@ impl Doc {
     /// Record that `fighter` changed from `before`. With `ongoing`, later changes join this step until
     /// [`Doc::close_step`] (one undo step per drag or text edit).
     pub fn changed(&mut self, before: Fighter, ongoing: bool) {
-        if !(self.open && ongoing) {
+        // A discrete `edit` inside the frame already recorded this step.
+        if !(self.open && ongoing) && self.undo.last() != Some(&before) {
             self.undo.push(before);
             if self.undo.len() > UNDO_LIMIT {
                 self.undo.remove(0);
@@ -233,16 +341,69 @@ impl Workspace {
         self.docs.get_mut(id)
     }
 
-    /// Loaded content with every open document's current fighter swapped in (unsaved edits included), skipping
-    /// documents that don't validate.
+    /// Loaded content with every open document's current fighter swapped in (unsaved edits and new fighters
+    /// included), skipping documents that don't validate.
     pub fn live_data(&self) -> GameData {
         let mut d = (*self.data).clone();
         for doc in self.docs.values().filter(|doc| doc.errors.is_empty()) {
-            if let Some(f) = d.fighters.iter_mut().find(|f| f.id == doc.id) {
-                *f = doc.fighter.clone();
+            match d.fighters.iter_mut().find(|f| f.id == doc.id) {
+                Some(f) => *f = doc.fighter.clone(),
+                None => d.fighters.push(doc.fighter.clone()),
             }
         }
         d
+    }
+
+    /// Playable fighters, including new unsaved ones: id, name, dirty.
+    pub fn fighters(&self) -> Vec<(String, String, bool)> {
+        let mut v: Vec<_> = self
+            .data
+            .fighters
+            .iter()
+            .map(|f| match self.docs.get(&f.id) {
+                Some(d) => (f.id.clone(), d.fighter.name.clone(), d.dirty()),
+                None => (f.id.clone(), f.name.clone(), false),
+            })
+            .collect();
+        v.extend(self.docs.values().filter(|d| d.fresh).map(|d| (d.id.clone(), d.fighter.name.clone(), true)));
+        v
+    }
+
+    /// Names of fighters with unsaved changes.
+    pub fn unsaved(&self) -> Vec<String> {
+        self.docs.values().filter(|d| d.dirty()).map(|d| d.fighter.name.clone()).collect()
+    }
+
+    /// A new fighter package `id` that inherits everything from `extends`. Lives in memory until saved.
+    pub fn new_fighter(&mut self, id: &str, name: &str, extends: &str) -> Result<(), String> {
+        let ok = |c: char| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '_';
+        if id.is_empty() || !id.chars().all(ok) {
+            return Err("Use lowercase letters, digits, - and _ for the id".into());
+        }
+        let path = fighter_path(id);
+        if self.files.0.contains_key(&path) || self.docs.contains_key(id) {
+            return Err(format!("A fighter called {id} already exists"));
+        }
+        let parent = self.files.raw(&fighter_path(extends)).ok_or(format!("No fighter {extends}"))?;
+        let version = parent.get("schemaVersion").cloned().unwrap_or(1.into());
+        let raw = serde_json::json!({
+            "$schema": "../../schema/fighter.schema.json",
+            "schemaVersion": version,
+            "extends": extends,
+            "name": if name.is_empty() { id } else { name },
+        });
+        let mut files = self.files.clone();
+        files.0.insert(path.clone(), to_compact_string(&raw));
+        let (data, errors) =
+            load(files.sources()).map_err(|e| e.iter().map(ToString::to_string).collect::<Vec<_>>().join("; "))?;
+        if let Some(e) = errors.iter().find(|e| e.file == path) {
+            return Err(e.to_string());
+        }
+        let f = data.fighter(id).ok_or("The new fighter didn't load")?;
+        let mut doc = Doc::open(&files, f);
+        doc.fresh = true;
+        self.docs.insert(id.into(), doc);
+        Ok(())
     }
 
     /// Runs the real loader over all content with the patched document in place. Refuses on any error in this
@@ -278,6 +439,7 @@ impl Workspace {
         self.files.0.insert(doc.path.clone(), text);
         doc.raw = self.files.raw(&doc.path).unwrap_or(Value::Null);
         doc.saved = doc.fighter.clone();
+        doc.fresh = false;
         self.data = Arc::new(*data);
         // Children of this package see the new parent.
         let files = &self.files;
@@ -362,6 +524,77 @@ mod tests {
         assert!(doc.errors[0].path.starts_with("moves.jab.phases[0].transitions"), "{:?}", doc.errors);
         let Saved::Refused(errors) = ws.prepare_save(&id) else { panic!("saved invalid data") };
         assert!(errors.iter().any(|e| e.path.contains("transitions")), "{errors:?}");
+    }
+
+    #[test]
+    fn new_fighter_saves_as_a_thin_package() {
+        let (mut ws, _) = Workspace::new(files()).unwrap();
+        assert!(ws.new_fighter("Bad Id", "", "base").is_err());
+        assert!(ws.new_fighter("brawler", "", "base").is_err());
+        ws.new_fighter("ninja", "Ninja", "brawler").unwrap();
+        assert!(ws.fighters().iter().any(|(id, name, dirty)| id == "ninja" && name == "Ninja" && *dirty));
+        assert!(ws.live_data().fighter("ninja").is_some());
+        let doc = ws.doc("ninja").unwrap();
+        doc.edit(|f| f.stats.weight = 0.8);
+        let Saved::Ok { text, data } = ws.prepare_save("ninja") else { panic!("save refused") };
+        let v: Value = serde_json::from_str(&text).unwrap();
+        assert_eq!(v["extends"], "brawler");
+        assert_eq!(v["stats"], serde_json::json!({ "weight": 0.8 }));
+        assert!(v.get("moves").is_none());
+        ws.saved("ninja", text, data);
+        assert!(!ws.doc("ninja").unwrap().dirty());
+        assert_eq!(ws.data.fighter("ninja").unwrap().stats.weight, 0.8);
+    }
+
+    #[test]
+    fn stand_counts_the_poses_that_build_on_it() {
+        let (ws, _) = Workspace::new(files()).unwrap();
+        for f in &ws.data.fighters {
+            assert!(pose_users(f, "stand") > 0, "{}", f.id);
+            assert!(pose_users(f, "stand") >= pose_uses(f, "stand"));
+        }
+        assert_eq!(uses_text("crouch", 1), "Used by 1 key or pose");
+        assert_eq!(uses_text("crouch", 3), "Used by 3 keys and poses");
+    }
+
+    #[test]
+    fn renaming_a_pose_follows_references_and_saves() {
+        let (mut ws, _) = Workspace::new(files()).unwrap();
+        let id =
+            ws.data.fighters.iter().find(|f| f.extends.is_some() && pose_uses(f, "crouch") > 0).unwrap().id.clone();
+        let doc = ws.doc(&id).unwrap();
+        let name = "crouch".to_string();
+        let uses = pose_uses(&doc.fighter, &name);
+        assert!(uses > 0);
+        doc.edit(|f| assert!(rename_pose(f, &name, "renamed")));
+        assert!(doc.errors.is_empty(), "{:?}", doc.errors);
+        assert_eq!(pose_uses(&doc.fighter, "renamed"), uses);
+        assert_eq!(pose_uses(&doc.fighter, &name), 0);
+        doc.edit(|f| assert!(!rename_pose(f, "renamed", "stand")));
+        let made = {
+            let mut f = doc.fighter.clone();
+            new_pose(&mut f, "renamed", None)
+        };
+        assert_eq!(made, "renamed2");
+        let Saved::Ok { text, data } = ws.prepare_save(&id) else { panic!("save refused") };
+        ws.saved(&id, text, data);
+        assert!(ws.data.fighter(&id).unwrap().poses.contains_key("renamed"));
+    }
+
+    #[test]
+    fn copying_a_move_fills_the_slot() {
+        let (mut ws, _) = Workspace::new(files()).unwrap();
+        let id = ws.data.fighters[0].id.clone();
+        let doc = ws.doc(&id).unwrap();
+        doc.edit(|f| {
+            f.moves.sspec = None;
+            assert!(copy_move(f, "nspec", "sspec"));
+            assert!(copy_move(f, "jab", "ftilt"));
+            assert!(!copy_move(f, "jab", "nope"));
+        });
+        assert_eq!(doc.fighter.moves.sspec.as_ref(), Some(&doc.fighter.moves.nspec));
+        assert_eq!(doc.fighter.moves.ftilt, doc.fighter.moves.jab);
+        assert!(doc.errors.is_empty(), "{:?}", doc.errors);
     }
 
     #[test]
