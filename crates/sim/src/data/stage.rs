@@ -29,11 +29,27 @@ pub struct Stage {
     pub blast: Bounds,
     /// The camera never shows past these.
     pub camera: Bounds,
+    /// Presentation-only visible-height limits in stage pixels. Each absent bound uses the automatic
+    /// geometry-derived range; camera bounds still cap the view. Values must be positive, minHeight ≤ maxHeight.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub zoom: Option<Zoom>,
     /// Start positions by player slot. Needs one per player (8 for a full match).
     pub spawns: Vec<Spawn>,
     /// Respawn points by player slot.
     pub respawns: Vec<RespawnPoint>,
     pub art: StageArt,
+}
+
+/// Optional follow-camera zoom overrides; omitted bounds are automatic.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Zoom {
+    /// Closest visible height in stage pixels; absent uses the automatic stage-size scaling.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub min_height: Option<f64>,
+    /// Widest visible height in stage pixels; absent fits the stage geometry automatically.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_height: Option<f64>,
 }
 
 /// Solid rectangle with a tapered underside. Only the two top corners can be ledges.

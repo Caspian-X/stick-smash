@@ -225,6 +225,19 @@ pub fn check_stage(file: &str, s: &Stage, fighters: &[Fighter], platform_pad: f6
             return Err(err(file, name, "needs left < right and top < bottom"));
         }
     }
+    if let Some(z) = &s.zoom {
+        if let Some(n) = z.min_height {
+            positive(file, "zoom.minHeight", n)?;
+        }
+        if let Some(n) = z.max_height {
+            positive(file, "zoom.maxHeight", n)?;
+        }
+        if let (Some(min), Some(max)) = (z.min_height, z.max_height)
+            && min > max
+        {
+            return Err(err(file, "zoom", "needs minHeight ≤ maxHeight"));
+        }
+    }
     for (i, sp) in s.spawns.iter().enumerate() {
         if ![-1, 1].contains(&sp.face) {
             return Err(err(file, format!("spawns[{i}].face"), "must be -1 or 1"));
@@ -663,6 +676,24 @@ fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
     }
     if g.palette.is_empty() {
         return Err(err(file, "palette", "needs at least one color set"));
+    }
+    let c = &g.render.camera;
+    for (name, n) in [
+        ("minHeight", c.min_height),
+        ("maxHeight", c.max_height),
+        ("referencePlayWidth", c.reference_play_width),
+        ("referencePlayHeight", c.reference_play_height),
+    ] {
+        positive(file, &format!("render.camera.{name}"), n)?;
+    }
+    if c.min_height > c.max_height {
+        return Err(err(file, "render.camera", "needs minHeight ≤ maxHeight"));
+    }
+    for (name, n) in [("minScaleStart", c.min_scale_start), ("minScaleFloor", c.min_scale_floor)] {
+        positive(file, &format!("render.camera.{name}"), n)?;
+        if n > 1. {
+            return Err(err(file, format!("render.camera.{name}"), "must be ≤ 1"));
+        }
     }
     positive(file, "knockback.chargeDamageDivisor", g.knockback.charge_damage_divisor)?;
     positive(file, "hitTypes.windbox.maxSpeed", g.hit_types.windbox.max_speed)?;

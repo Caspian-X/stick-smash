@@ -6,6 +6,7 @@
 //! to the fraction of a tick elapsed since the last push; frames between ticks interpolate. Requires `EguiPlugin`
 //! for the debug text.
 
+pub mod camera;
 pub mod canvas;
 pub mod debug;
 pub mod draw;

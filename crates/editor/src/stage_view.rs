@@ -808,6 +808,7 @@ pub struct Overlay<'a> {
     pub symmetry: bool,
     /// Player colors, for spawn markers.
     pub colors: &'a [u32],
+    pub zoom_view: Option<[f64; 4]>,
 }
 
 pub fn dashed(cv: &mut Canvas, a: P, b: P, w: f64, col: Rgba, dash: f64) {
@@ -874,6 +875,9 @@ pub fn draw(cv: &mut Canvas, o: &Overlay, px: f64) {
         dashed(cv, [c, vt], [c, vb], 1.5 * px, Rgba::hex(SEL, 0.55), 10. * px);
     }
     if o.layers.bounds {
+        if let Some(r) = o.zoom_view {
+            dashed_rect(cv, r, px, Rgba::hex(CAMERA, 0.8), 10. * px);
+        }
         for (p, col) in [(Part::Camera, CAMERA), (Part::Blast, BLAST)] {
             let Some(Shape::Rect(r)) = shape(s, p) else { continue };
             let on = o.sel == Some(p);

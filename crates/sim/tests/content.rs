@@ -429,3 +429,17 @@ fn moving_platform_spawns_use_phase_and_validate_carried_clearance() {
     assert_eq!(error.path, "platforms[0]");
     assert!(error.msg.contains("clearance"));
 }
+
+#[test]
+fn stage_zoom_requires_positive_ordered_overrides() {
+    for (zoom, path) in [
+        (serde_json::json!({"minHeight": 0}), "zoom.minHeight"),
+        (serde_json::json!({"maxHeight": -1}), "zoom.maxHeight"),
+        (serde_json::json!({"minHeight": 700, "maxHeight": 600}), "zoom"),
+    ] {
+        assert_eq!(stage_error(serde_json::json!({"zoom": zoom})).path, path);
+    }
+    for zoom in [serde_json::json!({"minHeight": 400}), serde_json::json!({"maxHeight": 1200})] {
+        assert!(load(patched("stages/arena/stage.json", serde_json::json!({"zoom": zoom}))).unwrap().1.is_empty());
+    }
+}

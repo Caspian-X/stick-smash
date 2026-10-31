@@ -250,7 +250,8 @@ pub fn camera_target(d: &GameData, w: &World, aspect: f64) -> Cam {
         let hh = (cy - y0).max(y1 - cy);
         Cam { x: cx, y: cy, h: (2. * hh).max(2. * hw / aspect) }
     };
-    cam.h = cam.h.clamp(c.min_height, c.max_height);
+    let range = crate::camera::zoom_range(s, c, aspect);
+    cam.h = cam.h.clamp(range.min, range.max);
     clamp_to(cam, &s.camera, aspect)
 }
 

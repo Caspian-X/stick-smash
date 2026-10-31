@@ -226,6 +226,7 @@ pub(crate) fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
     let colors = ed.st.data.as_deref().map(stage_ed::colors).unwrap_or_default();
     let mut act: Option<(Part, &'static str)> = None;
     let mut dialog = None;
+    let camera = ed.st.data.as_ref().map(|d| d.global.render.camera.clone());
     let before = ed.stage_doc().item.clone();
     egui::ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
         ui.add_space(6.);
@@ -418,6 +419,20 @@ pub(crate) fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
                         note_list(ui, &notes, &part.path());
                         bounds(ui, part, b, on);
                     });
+                }
+                if let Some(c) = &camera {
+                    let auto = render::camera::automatic_range(s, c, 16. / 9.);
+                    let effective = render::camera::zoom_range(s, c, 16. / 9.);
+                    ui.label(faint(format!("Automatic (16:9): {:.0}–{:.0} px", auto.min, auto.max)));
+                    ui.label(faint(format!("Effective (16:9): {:.0}–{:.0} px", effective.min, effective.max)));
+                    ui.label(faint(tip("zoom")));
+                    errs(ui, &errors, "zoom");
+                    let mut z = s.zoom.clone().unwrap_or_default();
+                    grid(ui, "st-zoom", |ui| {
+                        optional_zoom(ui, "min height", &mut z.min_height, auto.min, form::doc("stage.Zoom", "minHeight"));
+                        optional_zoom(ui, "max height", &mut z.max_height, auto.max, form::doc("stage.Zoom", "maxHeight"));
+                    });
+                    s.zoom = (z.min_height.is_some() || z.max_height.is_some()).then_some(z);
                 }
             }
             Section::Spawns => {
@@ -800,8 +815,28 @@ pub(crate) fn goto(ed: &mut Editor, path: &str) {
                 p if p.starts_with("respawns") => Section::Respawns,
                 p if p.starts_with("platforms") => Section::Platforms,
                 p if p.starts_with("blocks") => Section::Blocks,
+                p if p.starts_with("zoom") => Section::Bounds,
                 _ => Section::Overview,
             };
         }
     }
+}
+
+fn optional_zoom(ui: &mut egui::Ui, label: &str, v: &mut Option<f64>, auto: f64, help: String) {
+    ui.label(label).on_hover_text(&help);
+    ui.horizontal(|ui| match v {
+        Some(n) => {
+            num_cell(ui, n, &help);
+            if mini(ui, style::ICON_DEL, FAINT, "Use automatic height") {
+                *v = None;
+            }
+        }
+        None => {
+            ui.label(RichText::new("— auto").color(FAINT));
+            if mini(ui, "+ set", GOLD, &help) {
+                *v = Some(auto);
+            }
+        }
+    });
+    ui.end_row();
 }

@@ -57,7 +57,7 @@ impl Section {
             Section::Blocks => &["blocks"],
             Section::Platforms => &["platforms"],
             Section::Ledge => &["ledge"],
-            Section::Bounds => &["blast", "camera"],
+            Section::Bounds => &["blast", "camera", "zoom"],
             Section::Spawns => &["spawns"],
             Section::Respawns => &["respawns"],
             Section::Art => &["art"],

@@ -56,6 +56,18 @@ pub struct Camera {
     /// Zoom limits as visible height in stage pixels: `minHeight` = closest zoom, `maxHeight` = widest.
     pub min_height: f64,
     pub max_height: f64,
+    /// Reference play-area width before camera padding.
+    #[serde(default = "reference_play_width")]
+    pub reference_play_width: f64,
+    /// Reference play-area height (including block undersides), before camera padding.
+    #[serde(default = "reference_play_height")]
+    pub reference_play_height: f64,
+    /// Only stages smaller than this fraction of both reference dimensions zoom in tighter.
+    #[serde(default = "min_scale_start")]
+    pub min_scale_start: f64,
+    /// Smallest automatic minHeight multiplier; scaling below minScaleStart is linear.
+    #[serde(default = "min_scale_floor")]
+    pub min_scale_floor: f64,
     /// 0..1: how far the framing center is pulled toward the stage's center (keeps the stage in view).
     pub stage_bias: f64,
     /// Fighters are framed no further than this outside the blast zone (keeps KO'd fighters from yanking it).
@@ -66,6 +78,25 @@ pub struct Camera {
     /// Screen shake (stage pixels): multiplied by `shakeDecay` each tick, cut off below `shakeMin`.
     pub shake_decay: f64,
     pub shake_min: f64,
+}
+
+// Older replay payloads omit these presentation fields. Keep fallback tuning in the bundled JSON too.
+fn camera_default(key: &str) -> f64 {
+    let v: serde_json::Value =
+        serde_json::from_str(include_str!("../../../../assets/global.json")).expect("bundled global JSON");
+    v["render"]["camera"][key].as_f64().expect("bundled camera tuning")
+}
+fn reference_play_width() -> f64 {
+    camera_default("referencePlayWidth")
+}
+fn reference_play_height() -> f64 {
+    camera_default("referencePlayHeight")
+}
+fn min_scale_start() -> f64 {
+    camera_default("minScaleStart")
+}
+fn min_scale_floor() -> f64 {
+    camera_default("minScaleFloor")
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]

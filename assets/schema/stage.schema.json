@@ -25,6 +25,13 @@
     "ledge": { "$ref": "#/$defs/LedgeZone" },
     "blast": { "$ref": "#/$defs/Bounds", "description": "Fighters past these lines are KO'd." },
     "camera": { "$ref": "#/$defs/Bounds", "description": "The camera never shows past these." },
+    "zoom": {
+      "anyOf": [
+        { "$ref": "#/$defs/Zoom" },
+        { "type": "null" }
+      ],
+      "description": "Presentation-only visible-height limits in stage pixels. Each absent bound uses the automatic\ngeometry-derived range; camera bounds still cap the view. Values must be positive, minHeight ≤ maxHeight."
+    },
     "spawns": {
       "type": "array",
       "items": { "$ref": "#/$defs/Spawn" },
@@ -179,6 +186,23 @@
         "bottom": { "type": "number", "format": "double" }
       },
       "required": ["left", "right", "top", "bottom"]
+    },
+    "Zoom": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "minHeight": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Closest visible height in stage pixels; absent uses the automatic stage-size scaling."
+        },
+        "maxHeight": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Widest visible height in stage pixels; absent fits the stage geometry automatically."
+        }
+      },
+      "description": "Optional follow-camera zoom overrides; omitted bounds are automatic."
     },
     "Spawn": {
       "type": "object",

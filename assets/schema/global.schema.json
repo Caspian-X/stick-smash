@@ -1103,6 +1103,30 @@
           "description": "Zoom limits as visible height in stage pixels: `minHeight` = closest zoom, `maxHeight` = widest."
         },
         "maxHeight": { "type": "number", "format": "double" },
+        "referencePlayWidth": {
+          "type": "number",
+          "format": "double",
+          "description": "Reference play-area width before camera padding.",
+          "default": 680.0
+        },
+        "referencePlayHeight": {
+          "type": "number",
+          "format": "double",
+          "description": "Reference play-area height (including block undersides), before camera padding.",
+          "default": 395.0
+        },
+        "minScaleStart": {
+          "type": "number",
+          "format": "double",
+          "description": "Only stages smaller than this fraction of both reference dimensions zoom in tighter.",
+          "default": 0.8
+        },
+        "minScaleFloor": {
+          "type": "number",
+          "format": "double",
+          "description": "Smallest automatic minHeight multiplier; scaling below minScaleStart is linear.",
+          "default": 0.5
+        },
         "stageBias": {
           "type": "number",
           "format": "double",
