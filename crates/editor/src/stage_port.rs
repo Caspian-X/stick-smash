@@ -32,11 +32,10 @@ pub(crate) fn overlay(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::
         view: [a[0], a[1], z[0], z[1]],
         symmetry: ed.st.symmetry,
         colors: &colors,
-        zoom_view: {
-            let [l, t, r, b] = render::camera::play_area(&doc.item);
-            let range = render::camera::zoom_range(&doc.item, &data.global.render.camera, 16. / 9.);
-            Some(render::fx::Cam { x: (l + r) / 2., y: (t + b) / 2., h: range.max }.view(16. / 9.))
-        },
+        zoom_view: Some(
+            render::fx::max_zoom_view(&doc.item, &data.global.render.camera, style::PREVIEW_ASPECT)
+                .view(style::PREVIEW_ASPECT),
+        ),
     };
     stage_view::draw(&mut scene.overlay, &o, px);
 }

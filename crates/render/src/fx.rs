@@ -255,6 +255,19 @@ pub fn camera_target(d: &GameData, w: &World, aspect: f64) -> Cam {
     clamp_to(cam, &s.camera, aspect)
 }
 
+/// Maximum stage view, using the same padded centre, bias and bounds clamp as fighter framing.
+pub fn max_zoom_view(s: &sim::data::Stage, c: &sim::data::render::Camera, aspect: f64) -> Cam {
+    let [l, t, r, b] = crate::camera::play_area(s);
+    let cx = (l + r) / 2.;
+    let cy = (t - c.pad_top + b + c.pad_bottom) / 2.;
+    let cam = Cam {
+        x: cx + (s.width / 2. - cx) * c.stage_bias,
+        y: cy + (s.height / 2. - cy) * c.stage_bias,
+        h: crate::camera::zoom_range(s, c, aspect).max,
+    };
+    clamp_to(cam, &s.camera, aspect)
+}
+
 fn clamp_to(mut cam: Cam, b: &sim::data::stage::Bounds, aspect: f64) -> Cam {
     cam.h = cam.h.min(b.bottom - b.top).min((b.right - b.left) / aspect);
     let (hw, hh) = (cam.h * aspect / 2., cam.h / 2.);
@@ -289,5 +302,103 @@ impl CameraRig {
     }
     pub fn at(&self, t: f64) -> Option<Cam> {
         Some(self.prev?.lerp(self.cur?, t))
+    }
+}
+
+#[cfg(test)]
+mod camera_tests {
+    use super::*;
+
+    fn old_target(d: &GameData, w: &World, aspect: f64) -> Cam {
+        let s = &d.stages[w.stage];
+        let c = &d.global.render.camera;
+        let (sx, sy) = (s.width / 2., s.height / 2.);
+        let m = c.blast_margin;
+        let pts: Vec<(f64, f64)> = w
+            .fighters
+            .iter()
+            .filter(|f| !matches!(f.state, State::Dead | State::Out))
+            .map(|f| (f.x.clamp(s.blast.left - m, s.blast.right + m), f.y.clamp(s.blast.top - m, s.blast.bottom + m)))
+            .collect();
+        let mut cam = if pts.is_empty() {
+            Cam { x: sx, y: sy, h: s.height }
+        } else {
+            let x0 = pts.iter().map(|p| p.0).fold(f64::MAX, f64::min) - c.pad_x;
+            let x1 = pts.iter().map(|p| p.0).fold(f64::MIN, f64::max) + c.pad_x;
+            let y0 = pts.iter().map(|p| p.1).fold(f64::MAX, f64::min) - c.pad_top;
+            let y1 = pts.iter().map(|p| p.1).fold(f64::MIN, f64::max) + c.pad_bottom;
+            let cx = (x0 + x1) / 2. + (sx - (x0 + x1) / 2.) * c.stage_bias;
+            let cy = (y0 + y1) / 2. + (sy - (y0 + y1) / 2.) * c.stage_bias;
+            let hw = (cx - x0).max(x1 - cx);
+            let hh = (cy - y0).max(y1 - cy);
+            Cam { x: cx, y: cy, h: (2. * hh).max(2. * hw / aspect) }
+        };
+        cam.h = cam.h.clamp(c.min_height, c.max_height);
+        clamp_to(cam, &s.camera, aspect)
+    }
+
+    #[test]
+    fn arena_cpu_rig_matches_legacy_camera_frame_by_frame() {
+        let sources = [
+            ("global.json", include_str!("../../../assets/global.json")),
+            ("stages/arena/stage.json", include_str!("../../../assets/stages/arena/stage.json")),
+            ("fighters/base/fighter.json", include_str!("../../../assets/fighters/base/fighter.json")),
+            ("fighters/brawler/fighter.json", include_str!("../../../assets/fighters/brawler/fighter.json")),
+        ]
+        .map(|(path, text)| sim::data::Source { path: path.into(), text: text.into() });
+        let (d, errors) = sim::data::load(sources).unwrap();
+        assert!(errors.is_empty());
+        let cfg = sim::MatchConfig {
+            training: true,
+            players: vec![sim::PlayerConfig { cpu: Some(2), ..sim::PlayerConfig::human("brawler") }; 2],
+            ..Default::default()
+        };
+        let mut w = World::new(cfg, &d).unwrap();
+        let mut rig = CameraRig::default();
+        let mut legacy = None::<Cam>;
+        let c = &d.global.render.camera;
+        let aspect = 16. / 9.;
+        for frame in 0..900 {
+            let target = old_target(&d, &w, aspect);
+            let next = match legacy {
+                None => target,
+                Some(cur) => clamp_to(
+                    Cam {
+                        x: cur.x + (target.x - cur.x) * c.follow,
+                        y: cur.y + (target.y - cur.y) * c.follow,
+                        h: cur.h + (target.h - cur.h) * c.zoom_follow,
+                    },
+                    &d.stages[w.stage].camera,
+                    aspect,
+                ),
+            };
+            rig.tick(&d, &w, aspect);
+            assert_eq!(rig.prev, Some(legacy.unwrap_or(next)), "previous frame {frame}");
+            assert_eq!(rig.cur, Some(next), "frame {frame}");
+            legacy = Some(next);
+            sim::step_world(&mut w, &d, &[sim::Input::default(); 2]);
+            w.fx.clear();
+            w.hits.clear();
+        }
+    }
+
+    #[test]
+    fn max_view_uses_padded_bias_and_camera_bounds() {
+        let s: sim::data::Stage =
+            serde_json::from_str(include_str!("../../../assets/stages/arena/stage.json")).unwrap();
+        let g: sim::data::Global = serde_json::from_str(include_str!("../../../assets/global.json")).unwrap();
+        let [l, t, r, b] = crate::camera::play_area(&s);
+        let c = &g.render.camera;
+        let cy = (t - c.pad_top + b + c.pad_bottom) / 2.;
+        let expected = clamp_to(
+            Cam {
+                x: (l + r) / 2. + (s.width / 2. - (l + r) / 2.) * c.stage_bias,
+                y: cy + (s.height / 2. - cy) * c.stage_bias,
+                h: crate::camera::zoom_range(&s, c, 16. / 9.).max,
+            },
+            &s.camera,
+            16. / 9.,
+        );
+        assert_eq!(max_zoom_view(&s, c, 16. / 9.), expected);
     }
 }

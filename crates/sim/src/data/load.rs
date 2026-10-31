@@ -226,6 +226,9 @@ pub fn check_stage(file: &str, s: &Stage, fighters: &[Fighter], platform_pad: f6
         }
     }
     if let Some(z) = &s.zoom {
+        if z.min_height.is_none() && z.max_height.is_none() {
+            return Err(err(file, "zoom", "needs at least one height override; omit zoom for automatic limits"));
+        }
         if let Some(n) = z.min_height {
             positive(file, "zoom.minHeight", n)?;
         }
@@ -669,7 +672,8 @@ fn check_event(file: &str, path: &str, ev: &super::Event) -> Result<(), ContentE
     }
     Ok(())
 }
-fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
+/// Validates global content, including presentation tuning in embedded replay payloads.
+pub fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
     check_audio(file, &g.audio)?;
     if g.input.stick_threshold <= 0 {
         return Err(err(file, "input.stickThreshold", "must be between 1 and 127"));
@@ -689,11 +693,12 @@ fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
     if c.min_height > c.max_height {
         return Err(err(file, "render.camera", "needs minHeight ≤ maxHeight"));
     }
-    for (name, n) in [("minScaleStart", c.min_scale_start), ("minScaleFloor", c.min_scale_floor)] {
-        positive(file, &format!("render.camera.{name}"), n)?;
-        if n > 1. {
-            return Err(err(file, format!("render.camera.{name}"), "must be ≤ 1"));
-        }
+    positive(file, "render.camera.minScaleStart", c.min_scale_start)?;
+    if c.min_scale_start > 1. {
+        return Err(err(file, "render.camera.minScaleStart", "must be ≤ 1"));
+    }
+    if !c.min_scale_floor.is_finite() || !(0. ..=1.).contains(&c.min_scale_floor) {
+        return Err(err(file, "render.camera.minScaleFloor", "must be finite and between 0 and 1"));
     }
     positive(file, "knockback.chargeDamageDivisor", g.knockback.charge_damage_divisor)?;
     positive(file, "hitTypes.windbox.maxSpeed", g.hit_types.windbox.max_speed)?;

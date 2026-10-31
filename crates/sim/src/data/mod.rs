@@ -2,6 +2,7 @@
 //! does the file I/O. See `docs/FORMAT.md` for the format and the move phase semantics.
 
 pub mod audio;
+pub mod camera;
 pub mod common;
 pub mod fighter;
 pub mod global;

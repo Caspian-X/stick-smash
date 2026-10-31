@@ -804,6 +804,19 @@ mod tests {
     }
 
     #[test]
+    fn viewing_empty_zoom_does_not_edit_the_stage() {
+        let mut ed = editor();
+        ed.set_mode(Mode::Stages);
+        ed.st.section = stage_ed::Section::Bounds;
+        ed.stage_doc().item.zoom = Some(sim::data::stage::Zoom::default());
+        let before = ed.stage_doc().item.clone();
+        let ctx = egui::Context::default();
+        let _ = ctx.run_ui(Default::default(), |ui| stage_panels::inspector(ui, &mut ed));
+        assert_eq!(ed.stage_doc().item, before);
+        assert!(!ed.stage_doc().can_undo());
+    }
+
+    #[test]
     fn toolbar_undo_isnt_recorded_as_an_edit() {
         let mut ed = editor();
         ed.set_mode(Mode::Stages);

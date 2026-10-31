@@ -308,7 +308,7 @@ Internally, surface ids are block indices followed by platform indices offset by
 ### Stage follow-camera zoom
 
 The presentation-only `zoom` object optionally overrides either visible-height limit:
-`"zoom": { "minHeight": 480, "maxHeight": 1600 }`. Omitted bounds are automatic. Both values must be
+`"zoom": { "minHeight": 480, "maxHeight": 1600 }`. Omitted bounds are automatic; an empty `zoom` object is invalid. Both values must be
 positive and `minHeight ≤ maxHeight`; stage `camera` bounds always cap the final view. This is an optional
 version-2 extension and does not affect simulation snapshots or replay checksums.
 
@@ -316,7 +316,7 @@ The automatic play area unions block rectangles (including undersides) and platf
 At the current aspect ratio, its padded fit height is compared with the padded reference dimensions in
 `global.render.camera.referencePlayWidth/Height`. The automatic maximum is `maxHeight` times that ratio
 (with a minimum multiplier of 1), enlarged if necessary to accommodate the follow camera's stage bias.
-Reference-sized and smaller fits retain the global maximum. The automatic minimum is `minHeight` times
+Arena retains the global range at landscape aspects; portrait framing may widen to fit its padded play area. The automatic minimum is `minHeight` times
 `clamp(max(width/referencePlayWidth, height/referencePlayHeight) / minScaleStart, minScaleFloor, 1)`.
 Thus only clearly smaller stages zoom in tighter. The editor displays both automatic and effective ranges
-at 16:9 and draws the effective maximum view around the play-area centre when bounds are visible.
+at 16:9 and draws the effective maximum view with stage bias and camera-bound clamping when bounds are visible.

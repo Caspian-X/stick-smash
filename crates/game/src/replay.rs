@@ -810,6 +810,7 @@ mod content {
     }
     pub fn deserialize<'de, D: serde::Deserializer<'de>>(d: D) -> Result<GameData, D::Error> {
         let (mut data, fighters, stages): (GameData, Vec<String>, Vec<String>) = Deserialize::deserialize(d)?;
+        sim::data::load::check_global("replay global", &data.global).map_err(serde::de::Error::custom)?;
         if data.fighters.len() != fighters.len() || data.stages.len() != stages.len() {
             return Err(serde::de::Error::custom("invalid content ids"));
         }
@@ -849,6 +850,15 @@ mod tests {
         assert!(w.over);
         (r, w)
     }
+    #[test]
+    fn replay_payload_rejects_invalid_camera_globals() {
+        let (mut r, _) = recorded();
+        r.data.global.render.camera.min_scale_floor = 2.;
+        let encoded = serde_json::to_vec(&r).unwrap();
+        let error = serde_json::from_slice::<Replay>(&encoded).err().expect("invalid replay globals rejected");
+        assert!(error.to_string().contains("render.camera.minScaleFloor"));
+    }
+
     #[test]
     fn cpu_match_round_trip_checksums_outcome_and_seek() {
         let (r, expected) = recorded();

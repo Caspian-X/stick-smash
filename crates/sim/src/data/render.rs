@@ -56,10 +56,10 @@ pub struct Camera {
     /// Zoom limits as visible height in stage pixels: `minHeight` = closest zoom, `maxHeight` = widest.
     pub min_height: f64,
     pub max_height: f64,
-    /// Reference play-area width before camera padding.
+    /// Reference play-area width before camera padding; the bundled value is Arena’s play area.
     #[serde(default = "reference_play_width")]
     pub reference_play_width: f64,
-    /// Reference play-area height (including block undersides), before camera padding.
+    /// Reference play-area height (including block undersides), before camera padding; the bundled value is Arena’s play area.
     #[serde(default = "reference_play_height")]
     pub reference_play_height: f64,
     /// Only stages smaller than this fraction of both reference dimensions zoom in tighter.

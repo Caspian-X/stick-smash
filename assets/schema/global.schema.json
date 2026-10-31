@@ -1106,13 +1106,13 @@
         "referencePlayWidth": {
           "type": "number",
           "format": "double",
-          "description": "Reference play-area width before camera padding.",
+          "description": "Reference play-area width before camera padding; the bundled value is Arena’s play area.",
           "default": 680.0
         },
         "referencePlayHeight": {
           "type": "number",
           "format": "double",
-          "description": "Reference play-area height (including block undersides), before camera padding.",
+          "description": "Reference play-area height (including block undersides), before camera padding; the bundled value is Arena’s play area.",
           "default": 395.0
         },
         "minScaleStart": {

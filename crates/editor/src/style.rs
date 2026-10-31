@@ -6,6 +6,8 @@ use std::sync::Arc;
 
 use bevy_egui::egui::{self, Color32, CornerRadius, FontData, FontFamily, FontId, Stroke, Style, TextStyle};
 
+pub const PREVIEW_ASPECT: f64 = 16. / 9.;
+
 pub const NIGHT: Color32 = Color32::from_rgb(11, 13, 42);
 pub const INK: Color32 = Color32::from_rgb(16, 19, 56);
 pub const INK2: Color32 = Color32::from_rgb(24, 28, 74);

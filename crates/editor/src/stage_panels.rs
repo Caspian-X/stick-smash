@@ -421,18 +421,21 @@ pub(crate) fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
                     });
                 }
                 if let Some(c) = &camera {
-                    let auto = render::camera::automatic_range(s, c, 16. / 9.);
-                    let effective = render::camera::zoom_range(s, c, 16. / 9.);
+                    let auto = render::camera::automatic_range(s, c, style::PREVIEW_ASPECT);
+                    let effective = render::camera::zoom_range(s, c, style::PREVIEW_ASPECT);
                     ui.label(faint(format!("Automatic (16:9): {:.0}–{:.0} px", auto.min, auto.max)));
                     ui.label(faint(format!("Effective (16:9): {:.0}–{:.0} px", effective.min, effective.max)));
                     ui.label(faint(tip("zoom")));
                     errs(ui, &errors, "zoom");
                     let mut z = s.zoom.clone().unwrap_or_default();
+                    let before_zoom = z.clone();
                     grid(ui, "st-zoom", |ui| {
                         optional_zoom(ui, "min height", &mut z.min_height, auto.min, form::doc("stage.Zoom", "minHeight"));
                         optional_zoom(ui, "max height", &mut z.max_height, auto.max, form::doc("stage.Zoom", "maxHeight"));
                     });
-                    s.zoom = (z.min_height.is_some() || z.max_height.is_some()).then_some(z);
+                    if z != before_zoom {
+                        s.zoom = (z.min_height.is_some() || z.max_height.is_some()).then_some(z);
+                    }
                 }
             }
             Section::Spawns => {

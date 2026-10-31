@@ -433,6 +433,7 @@ fn moving_platform_spawns_use_phase_and_validate_carried_clearance() {
 #[test]
 fn stage_zoom_requires_positive_ordered_overrides() {
     for (zoom, path) in [
+        (serde_json::json!({}), "zoom"),
         (serde_json::json!({"minHeight": 0}), "zoom.minHeight"),
         (serde_json::json!({"maxHeight": -1}), "zoom.maxHeight"),
         (serde_json::json!({"minHeight": 700, "maxHeight": 600}), "zoom"),
@@ -442,4 +443,19 @@ fn stage_zoom_requires_positive_ordered_overrides() {
     for zoom in [serde_json::json!({"minHeight": 400}), serde_json::json!({"maxHeight": 1200})] {
         assert!(load(patched("stages/arena/stage.json", serde_json::json!({"zoom": zoom}))).unwrap().1.is_empty());
     }
+}
+
+#[test]
+fn camera_globals_validate_zoom_scaling_and_limits() {
+    let mut g = load(sources()).unwrap().0.global;
+    for floor in [f64::NAN, f64::INFINITY, -0.1, 1.1] {
+        g.render.camera.min_scale_floor = floor;
+        assert_eq!(sim::data::load::check_global("global", &g).unwrap_err().path, "render.camera.minScaleFloor");
+    }
+    for floor in [0., 1.] {
+        g.render.camera.min_scale_floor = floor;
+        assert!(sim::data::load::check_global("global", &g).is_ok());
+    }
+    g.render.camera.min_height = g.render.camera.max_height + 1.;
+    assert_eq!(sim::data::load::check_global("global", &g).unwrap_err().path, "render.camera");
 }

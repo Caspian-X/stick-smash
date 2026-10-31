@@ -1,5 +1,5 @@
 //! Geometry-derived presentation limits shared by the follow camera and stage editor.
-use sim::data::{Stage, render::Camera};
+use super::{Stage, render::Camera};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ZoomRange {
@@ -47,16 +47,12 @@ pub fn automatic_range(s: &Stage, c: &Camera, aspect: f64) -> ZoomRange {
     let fit = |w: f64, h: f64| ((w + 2. * c.pad_x) / aspect).max(h + c.pad_top + c.pad_bottom);
     let ratio = fit(w, h) / fit(c.reference_play_width, c.reference_play_height);
     let size = (w / c.reference_play_width).max(h / c.reference_play_height);
-    let min = c.min_height * (size / c.min_scale_start).clamp(c.min_scale_floor, 1.);
-    let mut max = c.max_height;
-    if ratio > 1. {
-        // Preserve the reference range, but allow enough room for the follow camera's biased centre too.
-        let cx = (l + r) / 2.;
-        let cy = (t - c.pad_top + b + c.pad_bottom) / 2.;
-        let bias_x = (s.width / 2. - cx).abs() * c.stage_bias;
-        let bias_y = (s.height / 2. - cy).abs() * c.stage_bias;
-        max = (max * ratio).max(fit(w + 2. * bias_x, h + 2. * bias_y));
-    }
+    let min = c.min_height * (size / c.min_scale_start).max(c.min_scale_floor).min(1.);
+    let cx = (l + r) / 2.;
+    let cy = (t - c.pad_top + b + c.pad_bottom) / 2.;
+    let bias_x = (s.width / 2. - cx).abs() * c.stage_bias;
+    let bias_y = (s.height / 2. - cy).abs() * c.stage_bias;
+    let max = (c.max_height * ratio.max(1.)).max(fit(w + 2. * bias_x, h + 2. * bias_y));
     cap(s, aspect, ZoomRange { min, max })
 }
 
@@ -81,8 +77,8 @@ mod tests {
     use super::*;
 
     fn data() -> (Stage, Camera) {
-        let s = serde_json::from_str(include_str!("../../../assets/stages/arena/stage.json")).unwrap();
-        let g: sim::data::Global = serde_json::from_str(include_str!("../../../assets/global.json")).unwrap();
+        let s = serde_json::from_str(include_str!("../../../../assets/stages/arena/stage.json")).unwrap();
+        let g: crate::data::Global = serde_json::from_str(include_str!("../../../../assets/global.json")).unwrap();
         (s, g.render.camera)
     }
 
@@ -97,11 +93,26 @@ mod tests {
     }
 
     #[test]
-    fn arena_keeps_reference_range_at_every_aspect() {
+    fn arena_keeps_reference_range_at_landscape_aspects() {
         let (s, c) = data();
-        for aspect in [16. / 9., 4. / 3., 0.5, 3.] {
+        for aspect in [1.2, 4. / 3., 16. / 9., 21. / 9., 3.] {
             assert_eq!(automatic_range(&s, &c, aspect), ZoomRange { min: c.min_height, max: c.max_height });
         }
+    }
+
+    #[test]
+    fn portrait_max_is_continuous_at_reference_size() {
+        let (s, c) = data();
+        for aspect in [0.5, 0.75, 16. / 9.] {
+            let baseline = automatic_range(&s, &c, aspect).max;
+            for delta in [-1., -0.001, 0.001, 1.] {
+                let mut resized = s.clone();
+                resized.blocks[0].right += delta;
+                let changed = automatic_range(&resized, &c, aspect).max;
+                assert!((changed - baseline).abs() <= delta.abs() * 4., "{aspect}: {baseline} → {changed}");
+            }
+        }
+        assert!(automatic_range(&s, &c, 0.5).max > c.max_height);
     }
 
     #[test]
@@ -124,12 +135,12 @@ mod tests {
     #[test]
     fn overrides_win_and_mixed_bounds_stay_ordered() {
         let (mut s, c) = data();
-        s.zoom = Some(sim::data::stage::Zoom { min_height: Some(600.), max_height: Some(1300.) });
+        s.zoom = Some(crate::data::stage::Zoom { min_height: Some(600.), max_height: Some(1300.) });
         assert_eq!(zoom_range(&s, &c, 16. / 9.), ZoomRange { min: 600., max: 1300. });
         s.zoom.as_mut().unwrap().min_height = None;
         s.zoom.as_mut().unwrap().max_height = Some(300.);
         assert_eq!(zoom_range(&s, &c, 16. / 9.), ZoomRange { min: 300., max: 300. });
-        s.zoom = Some(sim::data::stage::Zoom { min_height: Some(1500.), max_height: None });
+        s.zoom = Some(crate::data::stage::Zoom { min_height: Some(1500.), max_height: None });
         assert_eq!(zoom_range(&s, &c, 16. / 9.), ZoomRange { min: 1500., max: 1500. });
         s.camera.bottom = s.camera.top + 700.;
         assert_eq!(zoom_range(&s, &c, 16. / 9.), ZoomRange { min: 700., max: 700. });
@@ -138,12 +149,12 @@ mod tests {
     #[test]
     fn motion_extrema_and_camera_cap() {
         let (mut s, c) = data();
-        s.platforms[0].motion = Some(sim::data::stage::Motion {
-            mode: sim::data::stage::PathMode::PingPong,
+        s.platforms[0].motion = Some(crate::data::stage::Motion {
+            mode: crate::data::stage::PathMode::PingPong,
             phase: 0,
             waypoints: vec![
-                sim::data::stage::Waypoint { x: 0., y: 0., travel_ticks: 1, wait_ticks: 0 },
-                sim::data::stage::Waypoint { x: 2000., y: -1000., travel_ticks: 1, wait_ticks: 0 },
+                crate::data::stage::Waypoint { x: 0., y: 0., travel_ticks: 1, wait_ticks: 0 },
+                crate::data::stage::Waypoint { x: 2000., y: -1000., travel_ticks: 1, wait_ticks: 0 },
             ],
         });
         let area = play_area(&s);
