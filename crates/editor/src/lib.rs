@@ -808,10 +808,13 @@ mod tests {
         let mut ed = editor();
         ed.set_mode(Mode::Stages);
         ed.st.section = stage_ed::Section::Bounds;
+        ed.st.data = Some(ed.ws.data.clone());
         ed.stage_doc().item.zoom = Some(sim::data::stage::Zoom::default());
         let before = ed.stage_doc().item.clone();
         let ctx = egui::Context::default();
-        let _ = ctx.run_ui(Default::default(), |ui| stage_panels::inspector(ui, &mut ed));
+        ctx.run_ui(Default::default(), |_| {}).textures_delta.clear();
+        style::install_fonts(&ctx, &Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets"));
+        ctx.run_ui(Default::default(), |ui| stage_panels::inspector(ui, &mut ed)).textures_delta.clear();
         assert_eq!(ed.stage_doc().item, before);
         assert!(!ed.stage_doc().can_undo());
     }
