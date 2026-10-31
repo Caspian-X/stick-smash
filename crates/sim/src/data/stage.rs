@@ -18,7 +18,9 @@ pub struct Stage {
     /// Default view size; the camera starts framing `[0, width] × [0, height]`.
     pub width: f64,
     pub height: f64,
-    pub ground: Ground,
+    /// Static solids in collision tie-break order. At least one is required. Bounds including
+    /// undersides must not overlap; touching blocks can form walls or a raised centre.
+    pub blocks: Vec<Ground>,
     /// Pass-through platforms.
     #[serde(default)]
     pub platforms: Vec<Platform>,
@@ -34,7 +36,7 @@ pub struct Stage {
     pub art: StageArt,
 }
 
-/// The main solid block. Its top corners are the grabbable ledges.
+/// Solid rectangle with a tapered underside. Only the two top corners can be ledges.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Ground {
@@ -46,7 +48,58 @@ pub struct Ground {
     /// Underside below `bottom`: slopes `depth` down while moving `inset` inward, so rising fighters slide out to
     /// the wall.
     pub under_depth: f64,
+    /// Positive taper width on each side; cannot exceed half the block width.
     pub under_inset: f64,
+    /// Whether the top-left corner can be grabbed.
+    pub left_ledge: bool,
+    /// Whether the top-right corner can be grabbed.
+    pub right_ledge: bool,
+}
+
+impl Ground {
+    pub fn body_bottom(&self, x: f64, half: f64) -> f64 {
+        let x = ((self.left + self.right) / 2.).clamp(x - half, x + half).clamp(self.left, self.right);
+        self.bottom + ((x - self.left).min(self.right - x) / self.under_inset).min(1.) * self.under_depth
+    }
+
+    pub fn intersects_body(&self, x: f64, y: f64, half: f64, height: f64) -> bool {
+        x + half > self.left && x - half < self.right && y > self.top && y - height < self.body_bottom(x, half)
+    }
+
+    /// Exact convex sweep of a rectangle along a straight segment. Contact without penetration is allowed.
+    pub fn intersects_sweep(&self, rect: [f64; 4], delta: [f64; 2]) -> bool {
+        let [left, top, right, bottom] = rect;
+        let [dx, dy] = delta;
+        let polygon = [
+            [self.left, self.top],
+            [self.right, self.top],
+            [self.right, self.bottom],
+            [self.right - self.under_inset, self.bottom + self.under_depth],
+            [self.left + self.under_inset, self.bottom + self.under_depth],
+            [self.left, self.bottom],
+        ];
+        let rectangle = [[left, top], [right, top], [right, bottom], [left, bottom]];
+        for [ax, ay] in
+            [[1., 0.], [0., 1.], [self.under_depth, self.under_inset], [self.under_depth, -self.under_inset], [dy, -dx]]
+        {
+            if ax == 0. && ay == 0. {
+                continue;
+            }
+            let project = |points: &[[f64; 2]]| {
+                points.iter().fold((f64::INFINITY, f64::NEG_INFINITY), |(lo, hi), p| {
+                    let v = p[0] * ax + p[1] * ay;
+                    (lo.min(v), hi.max(v))
+                })
+            };
+            let (lo, hi) = project(&polygon);
+            let (rlo, rhi) = project(&rectangle);
+            let shift = dx * ax + dy * ay;
+            if hi <= rlo + shift.min(0.) || rhi + shift.max(0.) <= lo {
+                return false;
+            }
+        }
+        true
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -55,9 +108,96 @@ pub struct Platform {
     pub x1: f64,
     pub x2: f64,
     pub y: f64,
+    /// Translation relative to x1/x2/y; absent means stationary.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub motion: Option<Motion>,
 }
 
-/// Ledge grab zone: a half circle on the outside of each ground corner, centered `cy` below it. A falling
+/// Deterministic translation sampled at the world frame. Travel is linear; no velocity state is stored.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Motion {
+    /// At least two offsets. Leg j to j+1 uses waypoint j's travelTicks in both directions.
+    /// In loop mode the last duration closes the loop; in pingPong it is ignored. Waits occur before departure.
+    pub waypoints: Vec<Waypoint>,
+    pub mode: PathMode,
+    /// Advance this many ticks into the repeating cycle at world frame zero.
+    #[serde(default)]
+    pub phase: u64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum PathMode {
+    /// Last waypoint travels back to the first.
+    Loop,
+    /// Reverse at each endpoint, without duplicating endpoint waits.
+    PingPong,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Waypoint {
+    /// Horizontal translation from the platform's base coordinates.
+    pub x: f64,
+    /// Vertical translation from the platform's base height (positive is down).
+    pub y: f64,
+    /// Travel ticks to the next waypoint, also used on the return leg. Ignored at the last pingPong waypoint.
+    pub travel_ticks: u32,
+    #[serde(default)]
+    /// Ticks spent at this waypoint before departing; defaults to zero.
+    pub wait_ticks: u32,
+}
+
+impl Motion {
+    /// Fractional frames are supported for rendering; simulation uses integer world frames.
+    pub fn offset(&self, frame: f64) -> (f64, f64) {
+        let n = self.waypoints.len();
+        if n < 2 {
+            return (0., 0.);
+        }
+        let count = if self.mode == PathMode::Loop { n } else { 2 * (n - 1) };
+        let index = |k: usize| if k < n { k } else { 2 * (n - 1) - k };
+        let travel = |k: usize| {
+            let a = index(k);
+            let b = index((k + 1) % count);
+            self.waypoints[if self.mode == PathMode::PingPong { a.min(b) } else { a }].travel_ticks
+        };
+        let duration: u64 = (0..count)
+            .map(|k| {
+                let p = &self.waypoints[index(k)];
+                u64::from(p.wait_ticks) + u64::from(travel(k))
+            })
+            .sum();
+        if duration == 0 {
+            return (0., 0.);
+        }
+        let mut t = (frame % duration as f64 + (self.phase % duration) as f64) % duration as f64;
+        for k in 0..count {
+            let a = &self.waypoints[index(k)];
+            let b = &self.waypoints[index((k + 1) % count)];
+            if t < f64::from(a.wait_ticks) {
+                return (a.x, a.y);
+            }
+            t -= f64::from(a.wait_ticks);
+            if t < f64::from(travel(k)) {
+                let u = t / f64::from(travel(k));
+                return (a.x + (b.x - a.x) * u, a.y + (b.y - a.y) * u);
+            }
+            t -= f64::from(travel(k));
+        }
+        (self.waypoints[0].x, self.waypoints[0].y)
+    }
+}
+
+impl Platform {
+    pub fn position(&self, frame: f64) -> (f64, f64, f64) {
+        let (dx, dy) = self.motion.as_ref().map_or((0., 0.), |m| m.offset(frame));
+        (self.x1 + dx, self.x2 + dx, self.y + dy)
+    }
+}
+
+/// Ledge grab zone: a half circle on the outside of each enabled block corner, centered `cy` below it. A falling
 /// fighter grabs when their hand point (`handY` above the feet) is inside. `reachIn` lets the flat side extend a
 /// few pixels over the stage. `hangX`/`hangY` = where the feet sit while hanging.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -84,7 +224,7 @@ pub struct Bounds {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Spawn {
     pub x: f64,
-    /// Feet height; omit to stand on the ground.
+    /// Feet height; omit to stand on the highest block below x.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub y: Option<f64>,
     /// 1 = facing right, -1 = left.
@@ -196,6 +336,10 @@ pub struct Starfield {
 }
 
 impl Stage {
+    pub fn spawn_y(&self, x: f64) -> Option<f64> {
+        self.blocks.iter().filter(|b| x >= b.left && x <= b.right).map(|b| b.top).min_by(f64::total_cmp)
+    }
+
     pub fn max_players(&self) -> usize {
         self.spawns.len().min(self.respawns.len())
     }

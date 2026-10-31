@@ -122,7 +122,7 @@ pub fn simulate(data: Arc<GameData>, fighter: &str, subj: &Subject, setup: &Setu
     };
     let mut w = World::new(cfg, d)?;
     let s = &d.stages[st];
-    let (cx, top) = ((s.ground.left + s.ground.right) / 2., s.ground.top);
+    let (cx, top) = ((s.blocks[0].left + s.blocks[0].right) / 2., s.blocks[0].top);
     for (i, f) in w.fighters.iter_mut().enumerate() {
         f.x = if i == 0 { cx } else { cx + setup.dummy_dist.max(0.) };
         f.y = top;

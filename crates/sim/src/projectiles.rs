@@ -83,7 +83,7 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
             p.vy = (p.vy + def.gravity).min(def.max_fall.unwrap_or(f64::INFINITY));
             p.y += p.vy;
             if p.vy > 0. {
-                for si in 0..=s.platforms.len() {
+                for si in 0..s.blocks.len() + s.platforms.len() {
                     let (x1, x2, y) = crate::physics::surface(d, w, si);
                     if py + p.r > y + g.surface_tolerance
                         || p.y + p.r < y
@@ -106,14 +106,15 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                     break;
                 }
             }
-            let s = &s.ground;
-            if p.y + p.r > s.top + g.projectile_wall_top
-                && p.y - p.r < s.bottom
-                && p.x > s.left - p.r
-                && p.x < s.right + p.r
-            {
-                p.vx = -p.vx * b.wall_restitution;
-                p.x = if p.x < (s.left + s.right) / 2. { s.left - p.r } else { s.right + p.r };
+            for s in &s.blocks {
+                if p.y + p.r > s.top + g.projectile_wall_top
+                    && p.y - p.r < s.bottom
+                    && p.x > s.left - p.r
+                    && p.x < s.right + p.r
+                {
+                    p.vx = -p.vx * b.wall_restitution;
+                    p.x = if p.x < (s.left + s.right) / 2. { s.left - p.r } else { s.right + p.r };
+                }
             }
         } else {
             p.vy = (p.vy + def.gravity).min(def.max_fall.unwrap_or(f64::INFINITY));

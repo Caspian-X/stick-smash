@@ -124,6 +124,8 @@ pub struct StateData {
     pub n: f64,
     pub kind: String,
     pub side: f64,
+    /// Block index while hanging or climbing.
+    pub ledge_block: usize,
     pub dir: f64,
     pub dirl: bool,
     pub dx: f64,
@@ -305,12 +307,17 @@ impl World {
                 let di = data.fighters.iter().position(|f| f.id == p.fighter).expect("unknown fighter");
                 let d = &data.fighters[di];
                 let sp = &s.spawns[i];
-                let y = sp.y.unwrap_or(s.ground.top);
-                let surf = if sp.x >= s.ground.left && sp.x <= s.ground.right && y == s.ground.top {
-                    Some(0)
-                } else {
-                    s.platforms.iter().position(|p| sp.x >= p.x1 && sp.x <= p.x2 && y == p.y).map(|i| i + 1)
-                };
+                let y = sp.y.unwrap_or_else(|| s.spawn_y(sp.x).unwrap_or(0.));
+                let surf =
+                    s.blocks.iter().position(|b| sp.x >= b.left && sp.x <= b.right && y == b.top).or_else(|| {
+                        s.platforms
+                            .iter()
+                            .position(|p| {
+                                let (x1, x2, py) = p.position(0.);
+                                sp.x >= x1 && sp.x <= x2 && y == py
+                            })
+                            .map(|i| i + s.blocks.len())
+                    });
                 Fighter {
                     data: di,
                     x: sp.x,

@@ -1,10 +1,21 @@
 {
   "$schema": "../../schema/stage.schema.json",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "name": "Arena",
   "width": 1280,
   "height": 720,
-  "ground": { "left": 300, "right": 980, "top": 520, "bottom": 580, "underDepth": 100, "underInset": 60 },
+  "blocks": [
+    {
+      "left": 300,
+      "right": 980,
+      "top": 520,
+      "bottom": 580,
+      "underDepth": 100,
+      "underInset": 60,
+      "leftLedge": true,
+      "rightLedge": true
+    }
+  ],
   "platforms": [
     { "x1": 390, "x2": 570, "y": 400 },
     { "x1": 710, "x2": 890, "y": 400 },

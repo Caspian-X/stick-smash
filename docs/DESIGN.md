@@ -39,7 +39,7 @@ The 5 TS kinds (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) ar
 - **Hurtboxes:** per fighter, with default and knockdown groups. Crouch and ledge groups are future work.
 
 ### Stages
-`stage.json`: solid ground + pass-through platforms, underside shape, ledges (grab zones), blast zones, camera bounds, and spawn/respawn points for up to 8 players. The current stage converts as-is. Bigger stages come later.
+`stage.json` (version 2): multiple static solid blocks with tapered undersides and independent top-corner ledges, pass-through platforms with optional frame-based waypoint motion, shared art and ledge zones, blast/camera bounds, and spawn/respawn points for up to 8 players. Version 1 ground migrates to a block with both ledges enabled. See FORMAT.md for motion timing and geometry constraints.
 
 ### Input
 - Sim input = raw per-player state: quantized stick `(i8, i8)` + button bitflags. The sim derives presses, taps (smash input) and short hops from its own per-fighter input history, which is part of `World` so rollback stays correct.

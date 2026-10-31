@@ -31,17 +31,22 @@ pub fn draw_debug(cv: &mut Canvas, d: &GameData, w: &World, pos: &[(f64, f64)]) 
         Rgba::hex(0xff3355, 0.6),
     );
     let l = &s.ledge;
-    for side in [-1., 1.] {
-        let cx = if side < 0. { s.ground.left } else { s.ground.right };
-        let c = [cx, s.ground.top + l.cy];
-        let a0 = if side < 0. { PI / 2. } else { -PI / 2. };
-        cv.fill_sector(c, 0., l.r, a0, a0 + PI, Rgba::hex(0x66ffcc, 0.08));
-        let n = 24;
-        let pts: Vec<_> = (0..=n)
-            .map(|k| a0 + PI * f64::from(k) / f64::from(n))
-            .map(|a| [c[0] + l.r * a.cos(), c[1] + l.r * a.sin()])
-            .collect();
-        cv.stroke_closed(&pts, 1., Rgba::hex(0x66ffcc, 0.45));
+    for b in &s.blocks {
+        for side in [-1., 1.] {
+            if !(if side < 0. { b.left_ledge } else { b.right_ledge }) {
+                continue;
+            }
+            let cx = if side < 0. { b.left } else { b.right };
+            let c = [cx, b.top + l.cy];
+            let a0 = if side < 0. { PI / 2. } else { -PI / 2. };
+            cv.fill_sector(c, 0., l.r, a0, a0 + PI, Rgba::hex(0x66ffcc, 0.08));
+            let n = 24;
+            let pts: Vec<_> = (0..=n)
+                .map(|k| a0 + PI * f64::from(k) / f64::from(n))
+                .map(|a| [c[0] + l.r * a.cos(), c[1] + l.r * a.sin()])
+                .collect();
+            cv.stroke_closed(&pts, 1., Rgba::hex(0x66ffcc, 0.45));
+        }
     }
     for p in &w.projs {
         cv.stroke_circle([p.x, p.y], p.r, 2., Rgba::hex(0xff3355, 1.));

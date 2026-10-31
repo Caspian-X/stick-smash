@@ -11,7 +11,11 @@
       "description": "Default view size; the camera starts framing `[0, width] × [0, height]`."
     },
     "height": { "type": "number", "format": "double" },
-    "ground": { "$ref": "#/$defs/Ground" },
+    "blocks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Ground" },
+      "description": "Static solids in collision tie-break order. At least one is required. Bounds including\nundersides must not overlap; touching blocks can form walls or a raised centre."
+    },
     "platforms": {
       "type": "array",
       "items": { "$ref": "#/$defs/Platform" },
@@ -38,7 +42,7 @@
     "name",
     "width",
     "height",
-    "ground",
+    "blocks",
     "ledge",
     "blast",
     "camera",
@@ -62,10 +66,16 @@
           "format": "double",
           "description": "Underside below `bottom`: slopes `depth` down while moving `inset` inward, so rising fighters slide out to\nthe wall."
         },
-        "underInset": { "type": "number", "format": "double" }
+        "underInset": {
+          "type": "number",
+          "format": "double",
+          "description": "Positive taper width on each side; cannot exceed half the block width."
+        },
+        "leftLedge": { "type": "boolean", "description": "Whether the top-left corner can be grabbed." },
+        "rightLedge": { "type": "boolean", "description": "Whether the top-right corner can be grabbed." }
       },
-      "required": ["left", "right", "top", "bottom", "underDepth", "underInset"],
-      "description": "The main solid block. Its top corners are the grabbable ledges."
+      "required": ["left", "right", "top", "bottom", "underDepth", "underInset", "leftLedge", "rightLedge"],
+      "description": "Solid rectangle with a tapered underside. Only the two top corners can be ledges."
     },
     "Platform": {
       "type": "object",
@@ -73,9 +83,77 @@
       "properties": {
         "x1": { "type": "number", "format": "double" },
         "x2": { "type": "number", "format": "double" },
-        "y": { "type": "number", "format": "double" }
+        "y": { "type": "number", "format": "double" },
+        "motion": {
+          "anyOf": [
+            { "$ref": "#/$defs/Motion" },
+            { "type": "null" }
+          ],
+          "description": "Translation relative to x1/x2/y; absent means stationary."
+        }
       },
       "required": ["x1", "x2", "y"]
+    },
+    "Motion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "waypoints": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Waypoint" },
+          "description": "At least two offsets. Leg j to j+1 uses waypoint j's travelTicks in both directions.\nIn loop mode the last duration closes the loop; in pingPong it is ignored. Waits occur before departure."
+        },
+        "mode": { "$ref": "#/$defs/PathMode" },
+        "phase": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0,
+          "description": "Advance this many ticks into the repeating cycle at world frame zero.",
+          "default": 0
+        }
+      },
+      "required": ["waypoints", "mode"],
+      "description": "Deterministic translation sampled at the world frame. Travel is linear; no velocity state is stored."
+    },
+    "Waypoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "type": "number",
+          "format": "double",
+          "description": "Horizontal translation from the platform's base coordinates."
+        },
+        "y": {
+          "type": "number",
+          "format": "double",
+          "description": "Vertical translation from the platform's base height (positive is down)."
+        },
+        "travelTicks": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Travel ticks to the next waypoint, also used on the return leg. Ignored at the last pingPong waypoint."
+        },
+        "waitTicks": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks spent at this waypoint before departing; defaults to zero.",
+          "default": 0
+        }
+      },
+      "required": ["x", "y", "travelTicks"]
+    },
+    "PathMode": {
+      "oneOf": [
+        { "type": "string", "const": "loop", "description": "Last waypoint travels back to the first." },
+        {
+          "type": "string",
+          "const": "pingPong",
+          "description": "Reverse at each endpoint, without duplicating endpoint waits."
+        }
+      ]
     },
     "LedgeZone": {
       "type": "object",
@@ -89,7 +167,7 @@
         "hangY": { "type": "number", "format": "double" }
       },
       "required": ["r", "cy", "handY", "reachIn", "hangX", "hangY"],
-      "description": "Ledge grab zone: a half circle on the outside of each ground corner, centered `cy` below it. A falling\nfighter grabs when their hand point (`handY` above the feet) is inside. `reachIn` lets the flat side extend a\nfew pixels over the stage. `hangX`/`hangY` = where the feet sit while hanging."
+      "description": "Ledge grab zone: a half circle on the outside of each enabled block corner, centered `cy` below it. A falling\nfighter grabs when their hand point (`handY` above the feet) is inside. `reachIn` lets the flat side extend a\nfew pixels over the stage. `hangX`/`hangY` = where the feet sit while hanging."
     },
     "Bounds": {
       "type": "object",
@@ -110,7 +188,7 @@
         "y": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Feet height; omit to stand on the ground."
+          "description": "Feet height; omit to stand on the highest block below x."
         },
         "face": {
           "type": "integer",
