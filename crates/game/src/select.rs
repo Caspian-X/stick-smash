@@ -29,7 +29,8 @@ const STOCKS: u32 = 7;
 const STAGE: u32 = 8;
 const TEAMS: u32 = 9;
 const FF: u32 = 10;
-/// Options popover rows (not focusable; the popover takes over that player's presses).
+/// A human's options popover rows (not focusable; the popover takes over that player's presses). `TEAM` is also
+/// a CPU card row.
 const TEAM: u32 = 13;
 const TAP: u32 = 14;
 const N_TEAMS: u8 = 4;
@@ -498,9 +499,10 @@ fn click(sel: &mut Select, devs: &mut Devices, q: &FocusQuery, pointer: &Pointer
     let Some(at) = pointer.win.single().ok().and_then(|w| Some(w.cursor_position()? * w.scale_factor())) else {
         return;
     };
-    let Some(dev) = [Dev::Keys, Dev::KeysL, Dev::KeysR].into_iter().find(|d| devs.map.contains_key(d)) else {
-        return;
-    };
+    // The keyboard (half) already playing, else the first one that could join.
+    let keys = [Dev::Keys, Dev::KeysL, Dev::KeysR];
+    let joined = keys.into_iter().find(|d| sel.slots.iter().any(|p| p.dev == Some(*d)));
+    let Some(dev) = joined.or_else(|| keys.into_iter().find(|d| devs.map.contains_key(d))) else { return };
     let hit = q.iter().find(|(_, n, t)| {
         let d = (at - t.affine().translation).abs() * 2.;
         d.x <= n.size().x && d.y <= n.size().y
@@ -566,6 +568,9 @@ pub fn update(
     if s != *sel {
         *sel = s;
     }
+    if !portraits.data.as_ref().is_some_and(|p| std::sync::Arc::ptr_eq(p, &data.0)) {
+        portraits.data = Some(data.0.clone());
+    }
     portraits.cells = (0..d.fighters.len().min(Portraits::MAX))
         .map(|t| {
             let on = sel.humans().find(|(_, p)| p.cursor.key == key(TILE, t));
@@ -596,10 +601,11 @@ pub fn update(
     if mslots.is_empty() || d.stages[sel.stage].max_players() < mslots.len() {
         return;
     }
-    // Showcase: rebuild when the lineup changes. Everyone is on one team so flourishes never hit anybody.
+    // Showcase: rebuild when the lineup's size, colors or stage change; a different fighter is swapped in place so
+    // nobody else moves. Everyone is on one team so flourishes never hit anybody.
     let showcase = m.as_ref().is_some_and(|m| {
         m.mode == Mode::Showcase
-            && m.slots.iter().map(|s| (s.fighter, s.color)).eq(mslots.iter().map(|s| (s.fighter, s.color)))
+            && m.slots.iter().map(|s| s.color).eq(mslots.iter().map(|s| s.color))
             && m.rules.stage == rules.stage
     });
     if !showcase {
@@ -609,11 +615,22 @@ pub fn update(
             s.dev = None;
             s.team = Some(0);
         }
-        if let Ok(m) = Match::new(&data.0, Mode::Showcase, slots, Rules { friendly_fire: false, ..rules }, 1) {
+        if let Ok(mut m) = Match::new(&data.0, Mode::Showcase, slots, Rules { friendly_fire: false, ..rules }, 1) {
+            // Left to right in card order.
+            let mut spots: Vec<_> = m.world.fighters.iter().map(|f| (f.x, f.y, f.surf, f.ground, f.face)).collect();
+            spots.sort_by(|a, b| a.0.total_cmp(&b.0));
+            for (f, (x, y, surf, ground, face)) in m.world.fighters.iter_mut().zip(spots) {
+                (f.x, f.y, f.surf, f.ground, f.face) = (x, y, surf, ground, face);
+            }
             play::install(&mut commands, &mut scene, m);
         }
     } else if let Some(mut m) = m {
         let m = &mut *m;
+        for (i, s) in mslots.iter().enumerate() {
+            if m.slots[i].fighter != s.fighter {
+                swap_fighter(m, i, s.fighter);
+            }
+        }
         let slot = &m.data.global.render.select.flourish;
         for i in 0..m.world.fighters.len() {
             let ready = sel.slots.get(i).is_some_and(|p| p.ready && p.dev.is_some());
@@ -635,6 +652,18 @@ pub fn update(
             }
         }
     }
+}
+
+/// Put another fighter in showcase slot `i`, where it stands.
+fn swap_fighter(m: &mut Match, i: usize, fighter: usize) {
+    let f = &mut m.world.fighters[i];
+    f.data = fighter;
+    f.mov = None;
+    f.jumps = m.data.fighters[fighter].stats.air_jumps;
+    f.set_state(if f.ground { FState::Idle } else { FState::Air });
+    m.world.projs.retain(|p| p.owner != i);
+    m.world.cfg.players[i].fighter = m.data.fighters[fighter].id.clone();
+    m.slots[i].fighter = fighter;
 }
 
 fn remember(sel: &Select, saved: &mut Saved, d: &sim::GameData) {
@@ -1160,6 +1189,10 @@ fn card(
             if !human && s.mode == Mode::Versus {
                 spin_row(p, f, d, s, key(LEVEL, i), "Level", LEVELS[pk.level as usize].into(), None, 16.);
             }
+            if !human && s.teams {
+                let short = team_name(pk.team).trim_end_matches(" team").into();
+                spin_row(p, f, d, s, key(TEAM, i), "Team", short, Some(pal(d, pk.team as usize).0), 16.);
+            }
             if s.mode == Mode::Training && !human {
                 spin_row(p, f, d, s, key(BEHAVIOR, i), "Behavior", s.dummy.label().into(), None, 16.);
             }
@@ -1552,5 +1585,16 @@ mod tests {
         st.nav = vec![Nav::Back];
         s.frame(&devs, &[], &saved, &d);
         assert_eq!((s.slots.len(), s.slots[0].menu), (3, None));
+    }
+    #[test]
+    fn cpu_team_row_spins_that_cpu() {
+        let (mut s, mut devs, d, saved) = setup();
+        s.teams = true;
+        s.slots[0].cursor.key = key(TEAM, 2);
+        let team = s.slots[2].team;
+        devs.map.get_mut(&Dev::Bot(0)).unwrap().nav = vec![Nav::Right];
+        s.frame(&devs, &[spot(key(TEAM, 2), true)], &saved, &d);
+        assert_eq!(s.slots[2].team, (team + 1) % N_TEAMS);
+        assert_eq!(s.slots[0].team, 0);
     }
 }

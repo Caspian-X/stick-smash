@@ -329,6 +329,12 @@ fn select() -> Vec<Step> {
     // Keep title → select → match navigation covered by real button presses.
     v.extend([Step::Select(Mode::Versus, 8), Step::Wait(20)]);
     shot(&mut v, "15-select-eight");
+    // Right past the random tile lands on Teams, the nearest rules row: CPU cards gain a Team row.
+    for _ in 0..4 {
+        press(&mut v, 0, Right);
+    }
+    press(&mut v, 0, Attack);
+    shot(&mut v, "15b-select-teams");
     v
 }
 
@@ -783,6 +789,7 @@ mod tests {
 13-training-select
 14-training
 15-select-eight
+15b-select-teams
 16a-select-citadel
 16b-select-isles
 16c-select-foundry
