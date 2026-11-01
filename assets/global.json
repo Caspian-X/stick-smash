@@ -363,13 +363,30 @@
         "magnetSpeed": 0.4,
         "reach": 18,
         "slideSecs": 0.13,
-        "fan": 15,
+        "fan": 17,
+        "rest": 0.3,
         "land": 0.12,
         "drop": 0.32,
         "bounceSecs": 0.4,
         "bounceWobble": 22,
         "stroke": 5.5,
-        "scale": 1
+        "scale": 1,
+        "motion": {
+          "lean": 0.0006,
+          "leanMax": 0.26,
+          "leanSpring": [240, 0.45],
+          "stretch": 0.00016,
+          "stretchMax": 0.14,
+          "stretchSpring": [320, 0.4],
+          "chipSpring": [260, 0.38],
+          "chipLag": 9,
+          "chipSwing": 0.025,
+          "stillSpeed": 25,
+          "breathAfter": 1.2,
+          "breathSecs": 2.8,
+          "breathBob": 1.6,
+          "breathScale": 0.03
+        }
       },
       "hints": { "showSecs": 6, "idleSecs": 4, "fadeSecs": 0.25 }
     }

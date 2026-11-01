@@ -346,6 +346,9 @@ fn select() -> Vec<Step> {
     press(&mut v, 0, Attack);
     v.extend([Step::PointAt(0, key(TILE, 6)), Step::Wait(20)]);
     shot(&mut v, "04b-select-carry-cpu");
+    // Mid-glide the arrow leans and stretches, the chip trailing; it comes back to drop the chip.
+    v.extend([Step::Stick(0, Vec2::new(-1., 0.1)), Step::Wait(9), Step::Shot("04c-select-carry-glide")]);
+    v.extend([Step::Stick(0, Vec2::ZERO), Step::PointAt(0, key(TILE, 6)), Step::Wait(20)]);
     press(&mut v, 0, Attack);
     // Bot 1 closes the options, changes its pick and locks in. Bot 0's pointer rests mouse-like on the stage strip.
     press(&mut v, 1, Special);
@@ -1014,6 +1017,7 @@ mod tests {
 04-select-choosing
 04a-select-solo
 04b-select-carry-cpu
+04c-select-carry-glide
 05-select-ready
 05b-stage-votes
 05c-stage-roulette

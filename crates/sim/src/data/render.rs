@@ -63,8 +63,10 @@ pub struct PointerLook {
     pub reach: f32,
     /// Digital presses hop to the neighbouring target, sliding there in this many seconds.
     pub slide_secs: f32,
-    /// Pointers resting on one target fan out by this much per player.
+    /// Pointers resting on one target fan out by this much per player (at most a fifth of its width), from `rest` of
+    /// its height above its centre (so the chip riding on the arrow stays clear of a tile's name).
     pub fan: f32,
+    pub rest: f32,
     /// Squash and bounce when a pointer lands (`land`) or drops a chip (`drop`): scale amplitude, fading out over
     /// `bounceSecs` while wobbling `bounceWobble` radians per second.
     pub land: f32,
@@ -74,6 +76,35 @@ pub struct PointerLook {
     /// Stroke thickness and size scale of the arrow.
     pub stroke: f32,
     pub scale: f32,
+    pub motion: PointerMotion,
+}
+
+/// How a pointer reacts to its motion. Springs have a stiffness (per second squared) and a damping ratio (1 is
+/// critical, lower swings).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PointerMotion {
+    /// Leans into its horizontal travel by `lean` radians per pixel per second, at most `leanMax`.
+    pub lean: f32,
+    pub lean_max: f32,
+    pub lean_spring: [f32; 2],
+    /// Stretches along its travel by `stretch` per pixel per second, at most `stretchMax`; springing back past rest
+    /// squashes it as it stops.
+    pub stretch: f32,
+    pub stretch_max: f32,
+    pub stretch_spring: [f32; 2],
+    /// A carried chip trails behind on a spring, softly limited to `chipLag` pixels away, and swings `chipSwing`
+    /// radians per pixel of sideways lag.
+    pub chip_spring: [f32; 2],
+    pub chip_lag: f32,
+    pub chip_swing: f32,
+    /// Still (below `stillSpeed` pixels per second) for `breathAfter` seconds, it breathes: a bob of `breathBob`
+    /// pixels and a `breathScale` swell every `breathSecs`, fading in over a second, each player out of phase.
+    pub still_speed: f32,
+    pub breath_after: f32,
+    pub breath_secs: f32,
+    pub breath_bob: f32,
+    pub breath_scale: f32,
 }
 
 /// Per-card control hints: shown for `showSecs` after joining, after `idleSecs` without input, and while the

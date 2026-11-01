@@ -1591,8 +1591,9 @@
         "fan": {
           "type": "number",
           "format": "float",
-          "description": "Pointers resting on one target fan out by this much per player."
+          "description": "Pointers resting on one target fan out by this much per player (at most a fifth of its width), from `rest` of\nits height above its centre (so the chip riding on the arrow stays clear of a tile's name)."
         },
+        "rest": { "type": "number", "format": "float" },
         "land": {
           "type": "number",
           "format": "float",
@@ -1606,7 +1607,8 @@
           "format": "float",
           "description": "Stroke thickness and size scale of the arrow."
         },
-        "scale": { "type": "number", "format": "float" }
+        "scale": { "type": "number", "format": "float" },
+        "motion": { "$ref": "#/$defs/PointerMotion" }
       },
       "required": [
         "speed",
@@ -1619,14 +1621,81 @@
         "reach",
         "slideSecs",
         "fan",
+        "rest",
         "land",
         "drop",
         "bounceSecs",
         "bounceWobble",
         "stroke",
-        "scale"
+        "scale",
+        "motion"
       ],
       "description": "Select screens' player pointers. Units are logical UI pixels (the screen is 720 high) and seconds."
+    },
+    "PointerMotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lean": {
+          "type": "number",
+          "format": "float",
+          "description": "Leans into its horizontal travel by `lean` radians per pixel per second, at most `leanMax`."
+        },
+        "leanMax": { "type": "number", "format": "float" },
+        "leanSpring": {
+          "type": "array",
+          "items": { "type": "number", "format": "float" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "stretch": {
+          "type": "number",
+          "format": "float",
+          "description": "Stretches along its travel by `stretch` per pixel per second, at most `stretchMax`; springing back past rest\nsquashes it as it stops."
+        },
+        "stretchMax": { "type": "number", "format": "float" },
+        "stretchSpring": {
+          "type": "array",
+          "items": { "type": "number", "format": "float" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "chipSpring": {
+          "type": "array",
+          "items": { "type": "number", "format": "float" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "A carried chip trails behind on a spring, softly limited to `chipLag` pixels away, and swings `chipSwing`\nradians per pixel of sideways lag."
+        },
+        "chipLag": { "type": "number", "format": "float" },
+        "chipSwing": { "type": "number", "format": "float" },
+        "stillSpeed": {
+          "type": "number",
+          "format": "float",
+          "description": "Still (below `stillSpeed` pixels per second) for `breathAfter` seconds, it breathes: a bob of `breathBob`\npixels and a `breathScale` swell every `breathSecs`, fading in over a second, each player out of phase."
+        },
+        "breathAfter": { "type": "number", "format": "float" },
+        "breathSecs": { "type": "number", "format": "float" },
+        "breathBob": { "type": "number", "format": "float" },
+        "breathScale": { "type": "number", "format": "float" }
+      },
+      "required": [
+        "lean",
+        "leanMax",
+        "leanSpring",
+        "stretch",
+        "stretchMax",
+        "stretchSpring",
+        "chipSpring",
+        "chipLag",
+        "chipSwing",
+        "stillSpeed",
+        "breathAfter",
+        "breathSecs",
+        "breathBob",
+        "breathScale"
+      ],
+      "description": "How a pointer reacts to its motion. Springs have a stiffness (per second squared) and a damping ratio (1 is\ncritical, lower swings)."
     },
     "HintLook": {
       "type": "object",

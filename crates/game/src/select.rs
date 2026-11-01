@@ -461,12 +461,8 @@ impl Select {
         ptrs.map.retain(|dev, _| s.slots.iter().any(|p| p.dev == Some(*dev)));
         for (i, p) in s.slots.iter().enumerate() {
             if let Some(ptr) = p.dev.and_then(|dev| ptrs.map.get_mut(&dev)) {
-                ptr.look = Look {
-                    color: pal(d, s.color(i)).0,
-                    tag: format!("P{}", i + 1),
-                    held: !p.ready,
-                    carry: p.carry.map(|(c, _)| (s.tag(c), pal(d, s.color(c)).0)),
-                };
+                let carry = p.carry.map(|(c, _)| (s.tag(c), pal(d, s.color(c)).0));
+                ptr.look = Look::new(pal(d, s.color(i)).0, i, !p.ready, carry);
             }
         }
         (start && s.ready() && d.stages[s.stage].max_players() >= s.slots.len(), leave && s.humans().count() == 0)
@@ -1815,7 +1811,7 @@ mod tests {
         t.s.slots[0].cursor.key = key(TILE, 2);
         t.navs([vec![Nav::Confirm], vec![]]).frame(&spots);
         assert!(t.s.slots[0].ready);
-        assert!(!t.ptrs.map[&Dev::Bot(0)].look.held, "the chip is on the tile, not the pointer");
+        assert_eq!(t.ptrs.map[&Dev::Bot(0)].look.chip, None, "the chip is on the tile, not the pointer");
         // The free pointer roams without changing the pick, and still adds CPUs.
         t.navs([vec![Nav::Right], vec![]]).frame(&spots);
         assert_eq!((t.s.slots[0].fighter, t.s.slots[0].cursor.key), (2, key(TILE, 3)));
@@ -1827,7 +1823,7 @@ mod tests {
         // Confirm on your own chip picks it up (P2 isn't ready, so it doesn't start).
         t.s.slots[0].cursor.key = key(TILE, 3);
         t.navs([vec![Nav::Confirm], vec![]]).frame(&spots);
-        assert!(!t.s.slots[0].ready && t.ptrs.map[&Dev::Bot(0)].look.held);
+        assert!(!t.s.slots[0].ready && t.ptrs.map[&Dev::Bot(0)].look.own);
         // Back while locked picks it up and brings the pointer to it; back again on the roster leaves.
         t.navs([vec![Nav::Confirm], vec![]]).frame(&spots);
         t.s.slots[0].cursor.key = key(ADD, 0);
@@ -1855,7 +1851,8 @@ mod tests {
         t.s.slots[0].cursor.key = key(FIGHTER, 2);
         t.navs([vec![Nav::Confirm], vec![]]).frame(&spots);
         assert_eq!(t.s.slots[0].carry, Some((2, f)));
-        assert_eq!(t.ptrs.map[&Dev::Bot(0)].look.carry.as_ref().map(|c| c.0.as_str()), Some("CPU"));
+        let look = &t.ptrs.map[&Dev::Bot(0)].look;
+        assert_eq!((look.chip.as_ref().map(|c| c.0.as_str()), look.own), (Some("CPU"), false), "it rides the arrow");
         // Nobody else can grab it meanwhile.
         t.s.slots[1].cursor.key = key(FIGHTER, 2);
         t.navs([vec![], vec![Nav::Confirm]]).frame(&spots);

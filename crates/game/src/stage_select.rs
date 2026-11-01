@@ -172,12 +172,7 @@ impl Vote {
                 self.preview = t;
             }
             self.voters[v].cursor = c;
-            ptr.look = Look {
-                color: pal(d, sel.color(slot)).0,
-                tag: format!("P{}", slot + 1),
-                held: self.voters[v].vote.is_none(),
-                carry: None,
-            };
+            ptr.look = Look::new(pal(d, sel.color(slot)).0, slot, self.voters[v].vote.is_none(), None);
         }
         let votes: Vec<usize> = self.voters.iter().filter_map(|v| v.vote).collect();
         if leave || votes.is_empty() || !go && votes.len() < self.voters.len() {

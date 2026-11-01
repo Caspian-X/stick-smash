@@ -5,13 +5,16 @@
 //! is whatever target is under it (`NONE`: nothing).
 //!
 //! The look: an arrow drawn like a fighter's limbs (three thick rounded strokes with a dark outline and a neon glow in
-//! the player's colour), with the player's tag riding on its tail, filled while the player holds their chip. It
-//! squashes and bounces when it lands on a target or drops a chip.
+//! the player's colour). Whatever chip the player holds rides on its tail: their own until they drop it, or a CPU's
+//! while carrying it. An empty arrow shows only a small player number. It squashes and bounces when it lands on a
+//! target or drops a chip, leans into and stretches along its travel, the chip trails on a spring, and a pointer left
+//! still breathes.
 
 use std::collections::BTreeMap;
+use std::ops::{Add, Mul, Sub};
 
 use bevy::prelude::*;
-use sim::data::render::PointerLook;
+use sim::data::render::{PointerLook, PointerMotion};
 
 use crate::grid;
 use crate::input::{Dev, Devices, Nav};
@@ -31,11 +34,56 @@ pub enum Drive {
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Look {
     pub color: Color,
-    pub tag: String,
-    /// Holding its own chip: a filled tag (an outline once the chip is dropped).
-    pub held: bool,
-    /// Carrying someone else's chip: its label and colour.
-    pub carry: Option<(String, Color)>,
+    /// The player's number, small near the tail when the arrow doesn't carry their own chip.
+    pub num: String,
+    /// The chip riding on the arrow: its label and colour.
+    pub chip: Option<(String, Color)>,
+    /// That chip is the player's own.
+    pub own: bool,
+}
+
+impl Look {
+    /// Player `slot`'s pointer: holding their own chip (`held`), else carrying someone else's (`carry`) or empty.
+    pub fn new(color: Color, slot: usize, held: bool, carry: Option<(String, Color)>) -> Self {
+        let own = held && carry.is_none();
+        let chip = carry.or_else(|| held.then(|| (format!("P{}", slot + 1), color)));
+        Look { color, num: (slot + 1).to_string(), chip, own }
+    }
+}
+
+/// Motion-driven animation, stepped with real time by [`Pointer::animate`]: springs as (value, velocity).
+#[derive(Clone, Debug, Default)]
+pub struct Anim {
+    last: Option<Vec2>,
+    pub lean: (f32, f32),
+    pub stretch: (f32, f32),
+    /// Last direction of travel.
+    dir: Vec2,
+    /// Where the chip is (it trails the tip).
+    pub chip: (Vec2, Vec2),
+    /// Seconds still, and of animation.
+    still: f32,
+    clock: f32,
+}
+
+/// How to draw a pointer this frame: the arrow's lean (radians, clockwise), scale and bob, and the chip's offset
+/// and swing.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Pose {
+    pub lean: f32,
+    pub scale: Vec2,
+    pub bob: f32,
+    pub chip: Vec2,
+    pub swing: f32,
+}
+
+/// One semi-implicit step of a damped spring toward `to`: `[stiffness, damping ratio]`.
+fn spring<T>(x: &mut T, v: &mut T, to: T, [k, z]: [f32; 2], h: f32)
+where
+    T: Copy + Add<Output = T> + Sub<Output = T> + Mul<f32, Output = T>,
+{
+    *v = *v + ((to - *x) * k - *v * (2. * z * k.sqrt())) * h;
+    *x = *x + *v * h;
 }
 
 #[derive(Clone, Debug, Default)]
@@ -52,6 +100,7 @@ pub struct Pointer {
     /// Fan-out index, so pointers on one target don't cover each other.
     pub fan: usize,
     pub look: Look,
+    pub anim: Anim,
 }
 
 #[derive(Resource, Default)]
@@ -117,12 +166,66 @@ impl Pointer {
         let s = a * (1. - t / cfg.bounce_secs.max(0.01)).max(0.).powi(2) * (t * cfg.bounce_wobble).cos();
         Vec2::new(1. + s, 1. - s)
     }
-    /// Where the tip rests on a target: its centre, fanned out per player.
+    /// Where the tip rests on a target: a little above its centre, fanned out per player (closer on small targets).
     pub fn snap(&self, s: &Spot, cfg: &PointerLook) -> Vec2 {
-        // A stair up to the right, so every tag (down-right of its tip) stays readable.
-        let (i, k) = (self.fan % 8, (self.fan % 4) as f32 - 1.5);
-        let off = Vec2::new(k, -0.75 * k + if i >= 4 { 1. } else { 0. }) * cfg.fan;
-        s.center + off.clamp(-s.size * 0.42, s.size * 0.42)
+        // A stair up to the right, so every chip (down-right of its tip) shows at least its number.
+        let (i, k) = (self.fan % 8, (self.fan % 4) as f32);
+        let off = Vec2::new(k - 1., -0.5 * k + if i >= 4 { 0.5 } else { 0. }) * cfg.fan.min(s.size.x * 0.2);
+        let lim = s.size * 0.42;
+        (s.center + off - Vec2::new(0., s.size.y * cfg.rest)).clamp(s.center - lim, s.center + lim)
+    }
+    /// Steps the motion springs by `dt` real seconds, in slices short enough that any frame rate moves alike.
+    pub fn animate(&mut self, m: &PointerMotion, dt: f32) {
+        let a = &mut self.anim;
+        let dt = dt.min(0.1);
+        if dt <= 0. {
+            return;
+        }
+        let from = a.last.unwrap_or_else(|| {
+            a.chip = (self.pos, Vec2::ZERO);
+            self.pos
+        });
+        a.last = Some(self.pos);
+        let vel = (self.pos - from) / dt;
+        let speed = vel.length();
+        if speed > m.still_speed {
+            (a.dir, a.still) = (vel / speed, 0.);
+        } else {
+            a.still += dt;
+        }
+        a.clock += dt;
+        let lean = (vel.x * m.lean).clamp(-m.lean_max, m.lean_max);
+        let stretch = (speed * m.stretch).min(m.stretch_max);
+        let n = (dt * 240.).ceil();
+        let h = dt / n;
+        for i in 1..=n as usize {
+            spring(&mut a.lean.0, &mut a.lean.1, lean, m.lean_spring, h);
+            spring(&mut a.stretch.0, &mut a.stretch.1, stretch, m.stretch_spring, h);
+            spring(&mut a.chip.0, &mut a.chip.1, from.lerp(self.pos, i as f32 / n), m.chip_spring, h);
+        }
+        // A jump (the mouse, a moved layout) never flings the chip far.
+        let off = a.chip.0 - self.pos;
+        if off.length() > m.chip_lag * 4. {
+            a.chip.0 = self.pos + off.normalize() * m.chip_lag * 4.;
+        }
+    }
+    pub fn pose(&self, cfg: &PointerLook) -> Pose {
+        let (a, m) = (&self.anim, &cfg.motion);
+        // Stretch along the last travel, thinner across it.
+        let s = a.stretch.0;
+        let along = Vec2::ONE + s * (a.dir * a.dir * 1.5 - Vec2::splat(0.5));
+        let fade = (a.still - m.breath_after).clamp(0., 1.);
+        let w = (a.clock * std::f32::consts::TAU / m.breath_secs.max(0.1) + self.fan as f32 * 2.4).sin() * fade;
+        let off = a.chip.0 - self.pos;
+        let len = off.length();
+        let chip = if len > 0.01 { off / len * m.chip_lag * (len / m.chip_lag.max(0.1)).tanh() } else { Vec2::ZERO };
+        Pose {
+            lean: a.lean.0,
+            scale: self.squash(cfg) * along * (1. + w * m.breath_scale),
+            bob: w * m.breath_bob,
+            chip,
+            swing: -chip.x * m.chip_swing,
+        }
     }
 }
 
@@ -269,14 +372,21 @@ pub struct PointerLayer;
 #[derive(Component)]
 pub struct PointerNode(Dev, Look);
 
-/// Keeps one arrow per pointer, above all select UI: rebuilt when its look changes, moved and squashed every frame.
+/// The chip riding on a pointer's arrow; pivots where it hangs.
+#[derive(Component)]
+pub struct PointerChip(Dev);
+
+/// Keeps one arrow per pointer, above all select UI: rebuilt when its look changes, animated every frame.
+#[allow(clippy::too_many_arguments)]
 pub fn draw(
     mut commands: Commands,
-    ptrs: Res<Pointers>,
+    mut ptrs: ResMut<Pointers>,
     layer: Query<Entity, With<PointerLayer>>,
-    mut nodes: Query<(Entity, &PointerNode, &mut Node, &mut UiTransform)>,
+    mut nodes: Query<(Entity, &PointerNode, &mut Node, &mut UiTransform), Without<PointerChip>>,
+    mut chips: Query<(&PointerChip, &mut UiTransform), Without<PointerNode>>,
     fonts: Option<Res<Fonts>>,
     data: Res<crate::Data>,
+    time: Res<Time<Real>>,
 ) {
     let Some(f) = fonts else { return };
     let cfg = &data.0.global.render.select.pointer;
@@ -284,19 +394,31 @@ pub fn draw(
         commands.spawn((root(), PointerLayer, GlobalZIndex(30), Pickable::IGNORE));
         return;
     };
+    let dt = time.delta_secs();
+    for p in ptrs.map.values_mut() {
+        p.animate(&cfg.motion, dt);
+    }
     let mut have = vec![];
     for (e, pn, mut n, mut tf) in &mut nodes {
         match ptrs.map.get(&pn.0) {
             Some(p) if p.look == pn.1 => {
                 have.push(pn.0);
+                let pose = p.pose(cfg);
                 n.left = Val::Px(p.pos.x);
-                n.top = Val::Px(p.pos.y);
-                let s = p.squash(cfg);
-                if tf.scale != s {
-                    tf.scale = s;
-                }
+                n.top = Val::Px(p.pos.y + pose.bob);
+                tf.set_if_neq(UiTransform { scale: pose.scale, rotation: Rot2::radians(pose.lean), ..default() });
             }
             _ => commands.entity(e).despawn(),
+        }
+    }
+    for (pc, mut tf) in &mut chips {
+        if let Some(p) = ptrs.map.get(&pc.0) {
+            let pose = p.pose(cfg);
+            tf.set_if_neq(UiTransform {
+                translation: Val2::px(pose.chip.x, pose.chip.y),
+                rotation: Rot2::radians(pose.swing),
+                ..default()
+            });
         }
     }
     for (dev, p) in &ptrs.map {
@@ -310,12 +432,12 @@ pub fn draw(
                     n.left = Val::Px(p.pos.x);
                     n.top = Val::Px(p.pos.y);
                 }),
-                UiTransform::from_scale(p.squash(cfg)),
+                UiTransform::from_scale(p.pose(cfg).scale),
                 // Later players draw on top; keep P1 above the rest.
                 ZIndex(-(p.fan as i32)),
                 PointerNode(*dev, p.look.clone()),
             ))
-            .with_children(|c| arrow(c, &f, &p.look, cfg));
+            .with_children(|c| arrow(c, &f, *dev, &p.look, cfg));
         });
     }
 }
@@ -341,7 +463,7 @@ fn stroke(p: &mut ChildSpawnerCommands, a: Vec2, b: Vec2, w: f32, color: Color, 
     }
 }
 
-fn arrow(p: &mut ChildSpawnerCommands, f: &Fonts, look: &Look, cfg: &PointerLook) {
+fn arrow(p: &mut ChildSpawnerCommands, f: &Fonts, dev: Dev, look: &Look, cfg: &PointerLook) {
     let (k, w) = (cfg.scale, cfg.stroke * cfg.scale);
     // The tip is at the origin: a shaft back to the lower right, two barbs (down a little italic slant, and right).
     let tail = Vec2::new(17., 25.) * k;
@@ -364,28 +486,54 @@ fn arrow(p: &mut ChildSpawnerCommands, f: &Fonts, look: &Look, cfg: &PointerLook
         }),
         BackgroundColor(Color::WHITE.with_alpha(0.9)),
     ));
-    let tag = |p: &mut ChildSpawnerCommands, at: Vec2, label: &str, color: Color, filled: bool, size: f32| {
+    // Not carrying its own chip, a small number says whose arrow it is.
+    if !look.own {
+        let d = 14. * k;
+        let at = tail + Vec2::new(-10., 3.) * k;
         p.spawn((
             node(|n| {
                 n.position_type = PositionType::Absolute;
-                n.left = Val::Px(at.x);
-                n.top = Val::Px(at.y);
+                n.left = Val::Px(at.x - d / 2.);
+                n.top = Val::Px(at.y - d / 2.);
+                n.width = Val::Px(d);
+                n.height = Val::Px(d);
+                n.border = UiRect::all(Val::Px(1.5));
+                n.border_radius = BorderRadius::MAX;
+                n.justify_content = JustifyContent::Center;
+                n.align_items = AlignItems::Center;
+            }),
+            BackgroundColor(alpha(NIGHT, 0.9)),
+            BorderColor::all(look.color),
+        ))
+        .with_child(txt(&f.display, 10. * k, look.color, &look.num));
+    }
+    let Some((label, color)) = &look.chip else { return };
+    // Hangs from the tail (the far end of the shaft).
+    let at = tail + Vec2::new(-2., -1.) * k;
+    let size = 16. * k;
+    p.spawn((
+        node(|n| {
+            n.position_type = PositionType::Absolute;
+            n.left = Val::Px(at.x);
+            n.top = Val::Px(at.y);
+        }),
+        PointerChip(dev),
+    ))
+    .with_children(|p| {
+        p.spawn((
+            node(|n| {
+                n.position_type = PositionType::Absolute;
                 n.padding = UiRect::axes(Val::Px(size * 0.32), Val::Px(0.));
                 n.border = UiRect::all(Val::Px(2.));
                 n.border_radius = BorderRadius::all(Val::Px(5.));
             }),
-            BackgroundColor(if filled { color } else { alpha(NIGHT, 0.92) }),
-            BorderColor::all(if filled { NIGHT } else { color }),
-            BoxShadow::new(alpha(color, 0.5), Val::Px(0.), Val::Px(0.), Val::Px(0.), Val::Px(10.)),
+            BackgroundColor(*color),
+            BorderColor::all(NIGHT),
+            BoxShadow::new(alpha(*color, 0.5), Val::Px(0.), Val::Px(0.), Val::Px(0.), Val::Px(10.)),
             UiTransform::from_rotation(Rot2::degrees(-8.)),
         ))
-        .with_child(txt(&f.display, size, if filled { NIGHT } else { color }, label));
-    };
-    let at = tail + Vec2::new(-2., -1.) * k;
-    tag(p, at, &look.tag, look.color, look.held, 16. * k);
-    if let Some((label, color)) = &look.carry {
-        tag(p, at + Vec2::new(10., 18.) * k, label, *color, true, 14. * k);
-    }
+        .with_child(txt(&f.display, size, NIGHT, label));
+    });
 }
 
 #[cfg(test)]
@@ -478,7 +626,56 @@ mod tests {
         let cfg = cfg();
         let s = spot(1, 100., 100.);
         let at: Vec<Vec2> = (0..4).map(|i| Pointer::new(Vec2::ZERO, i).snap(&s, &cfg)).collect();
-        assert!(at.windows(2).all(|w| w[0].distance(w[1]) >= cfg.fan * 0.9));
+        assert!(at.windows(2).all(|w| w[0].distance(w[1]) >= cfg.fan.min(12.) * 0.9), "{at:?}");
         assert!(at.iter().all(|a| s.dist(*a) == 0.));
+    }
+
+    #[test]
+    fn the_arrow_carries_exactly_the_chip_in_hand() {
+        let (red, green) = (Color::srgb(1., 0., 0.), Color::srgb(0., 1., 0.));
+        let held = Look::new(red, 0, true, None);
+        assert_eq!((held.chip, held.own), (Some(("P1".into(), red)), true));
+        let empty = Look::new(red, 1, false, None);
+        assert_eq!((empty.chip, empty.own, empty.num.as_str()), (None, false, "2"), "dropped: just the number");
+        let cpu = Look::new(red, 0, false, Some(("CPU".into(), green)));
+        assert_eq!((cpu.chip, cpu.own), (Some(("CPU".into(), green)), false), "a CPU chip rides where its own would");
+        assert_eq!(Look::new(red, 0, true, Some(("CPU".into(), green))).chip.unwrap().0, "CPU");
+    }
+
+    /// Glides right for half a second, then stops, animated at `fps`; returns the pose mid-glide and once settled.
+    fn glide(fps: f32) -> (Pose, Pose) {
+        let cfg = cfg();
+        let mut p = Pointer::new(Vec2::new(100., 300.), 1);
+        let dt = 1. / fps;
+        let mut mid = None;
+        let mut t = 0.;
+        while t < 3. {
+            t += dt;
+            p.pos.x = 100. + 800. * t.min(0.5);
+            p.animate(&cfg.motion, dt);
+            if mid.is_none() && t >= 0.4 {
+                mid = Some(p.pose(&cfg));
+            }
+        }
+        (mid.unwrap(), p.pose(&cfg))
+    }
+
+    #[test]
+    fn motion_springs_lean_stretch_and_settle_alike_at_any_frame_rate() {
+        let m = cfg().motion;
+        let (slow, fast) = (glide(30.), glide(144.));
+        assert!(slow.0.lean > 0.1 && slow.0.scale.x > 1.05 && slow.0.chip.x < -m.chip_lag * 0.5, "{:?}", slow.0);
+        let near = |a: Pose, b: Pose, tol: f32| {
+            (a.lean - b.lean).abs() < tol
+                && a.scale.distance(b.scale) < tol
+                && a.chip.distance(b.chip) < tol * m.chip_lag * 4.
+                && (a.bob - b.bob).abs() < tol * m.breath_bob.max(1.) * 4.
+        };
+        assert!(near(slow.0, fast.0, 0.04), "mid-glide {:?} vs {:?}", slow.0, fast.0);
+        assert!(near(slow.1, fast.1, 0.04), "settled {:?} vs {:?}", slow.1, fast.1);
+        // Settled: upright, unstretched, the chip home; only the breath remains.
+        let s = slow.1;
+        assert!(s.lean.abs() < 1e-3 && s.chip.length() < 0.05, "{s:?}");
+        assert!((s.scale - Vec2::ONE).abs().max_element() <= m.breath_scale + 1e-3, "{s:?}");
     }
 }
