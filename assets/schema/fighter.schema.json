@@ -163,6 +163,10 @@
           "format": "double",
           "description": "Success probability, sampled after geometry and ownership checks pass."
         },
+        "neutral": {
+          "type": "boolean",
+          "description": "Face the target and clear directional input before selecting the special (neutral, or down with `down`)."
+        },
         "down": { "type": "boolean", "description": "Add down to the toward-target special input." },
         "hold": {
           "type": ["array", "null"],

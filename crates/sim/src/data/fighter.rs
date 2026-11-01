@@ -213,6 +213,9 @@ pub struct SpecialTactic {
     pub no_projectile: bool,
     /// Success probability, sampled after geometry and ownership checks pass.
     pub chance: f64,
+    /// Face the target and clear directional input before selecting the special (neutral, or down with `down`).
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub neutral: bool,
     /// Add down to the toward-target special input.
     pub down: bool,
     /// Optional special-button hold duration range; sampled then floored.

@@ -407,6 +407,26 @@ fn training() -> Vec<Step> {
         60,
     ));
     shot(&mut v, "14-training");
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Wait(4), Step::OpenEditor, Step::Wait(20)]);
+    for (id, slot, frame, name) in [
+        ("ninja", "fsmash", 14, "14b-ninja-heel"),
+        ("ninja", "nspec", 18, "14c-ninja-stars"),
+        ("ninja", "uspec", 5, "14d-ninja-smoke"),
+        ("yoyo", "fsmash", 17, "14e-yoyo-world"),
+        ("yoyo", "nspec", 16, "14f-yoyo-out"),
+        ("yoyo", "nspec", 24, "14g-yoyo-return"),
+        ("wrangler", "fsmash", 21, "14h-wrangler-tip"),
+        ("wrangler", "nspec", 15, "14i-wrangler-pull"),
+        ("wrangler", "uspec", 5, "14j-wrangler-hitch"),
+    ] {
+        ed(&mut v, Cmd::Fighter(id.into()));
+        ed(&mut v, Cmd::Subject(editor::preview::Subject::Move(slot.into())));
+        ed(&mut v, Cmd::Dummy(!(id == "ninja" && slot == "nspec")));
+        v.push(Step::Wait(4));
+        ed(&mut v, Cmd::Frame(frame));
+        ed(&mut v, Cmd::Hitbox(None));
+        shot(&mut v, name);
+    }
     v
 }
 
@@ -788,6 +808,15 @@ mod tests {
 12d-results-return
 13-training-select
 14-training
+14b-ninja-heel
+14c-ninja-stars
+14d-ninja-smoke
+14e-yoyo-world
+14f-yoyo-out
+14g-yoyo-return
+14h-wrangler-tip
+14i-wrangler-pull
+14j-wrangler-hitch
 15-select-eight
 15b-select-teams
 16a-select-citadel

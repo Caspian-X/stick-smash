@@ -745,19 +745,19 @@ mod tests {
         let (mut ws, _) = Workspace::new(files()).unwrap();
         assert!(ws.new_fighter("Bad Id", "", "base").is_err());
         assert!(ws.new_fighter("brawler", "", "base").is_err());
-        ws.new_fighter("ninja", "Ninja", "brawler").unwrap();
-        assert!(ws.fighters().iter().any(|(id, name, dirty)| id == "ninja" && name == "Ninja" && *dirty));
-        assert!(ws.live_data().fighter("ninja").is_some());
-        let doc = ws.doc("ninja").unwrap();
+        ws.new_fighter("test-fighter", "Test Fighter", "brawler").unwrap();
+        assert!(ws.fighters().iter().any(|(id, name, dirty)| id == "test-fighter" && name == "Test Fighter" && *dirty));
+        assert!(ws.live_data().fighter("test-fighter").is_some());
+        let doc = ws.doc("test-fighter").unwrap();
         doc.edit(|f| f.stats.weight = 0.8);
-        let Saved::Ok { text, data } = ws.prepare_save::<Fighter>("ninja") else { panic!("save refused") };
+        let Saved::Ok { text, data } = ws.prepare_save::<Fighter>("test-fighter") else { panic!("save refused") };
         let v: Value = serde_json::from_str(&text).unwrap();
         assert_eq!(v["extends"], "brawler");
         assert_eq!(v["stats"], serde_json::json!({ "weight": 0.8 }));
         assert!(v.get("moves").is_none());
-        ws.saved::<Fighter>("ninja", text, data);
-        assert!(!ws.doc("ninja").unwrap().dirty());
-        assert_eq!(ws.data.fighter("ninja").unwrap().stats.weight, 0.8);
+        ws.saved::<Fighter>("test-fighter", text, data);
+        assert!(!ws.doc("test-fighter").unwrap().dirty());
+        assert_eq!(ws.data.fighter("test-fighter").unwrap().stats.weight, 0.8);
     }
 
     #[test]

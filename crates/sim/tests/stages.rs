@@ -314,3 +314,41 @@ fn cpu_matches_finish_on_every_stage() {
         assert!(w8.fighters.iter().any(|f| f.state == State::Win));
     }
 }
+
+#[test]
+fn new_fighters_cpu_matchups() {
+    let d = common::data();
+    let mut failures = vec![];
+    for id in ["ninja", "yoyo", "wrangler"] {
+        let mut total_wins = 0;
+        for s in &d.stages {
+            let (mut wins, mut kos, mut self_kos, mut finished) = (0, 0, 0, 0);
+            for opponent in ["brawler", "king", "swordfighter"] {
+                for seed in 1..=4 {
+                    let pair = if seed % 2 == 0 { [opponent, id] } else { [id, opponent] };
+                    let own = usize::from(seed % 2 == 0);
+                    let (st, w) = cpu_match(&d, &s.id, &pair, seed, 3);
+                    if !w.over {
+                        println!(
+                            "unfinished {id} vs {opponent} {} seed {seed}: {:?}",
+                            s.id,
+                            w.fighters.iter().map(|f| (f.x, f.y, f.stocks, f.dmg, f.state)).collect::<Vec<_>>()
+                        );
+                    }
+                    finished += usize::from(w.over);
+                    wins += usize::from(w.fighters[own].state == State::Win);
+                    kos += st.kos;
+                    self_kos += st.self_kos;
+                }
+            }
+            println!("{id:8} {:8}: {wins}/12 wins, {finished}/12 finished, {kos} KOs, {self_kos} self-KOs", s.id);
+            total_wins += wins;
+            if finished != 12 {
+                failures.push(format!("{id} on {}: {finished}/12 finished", s.id));
+            }
+            assert!(self_kos * 3 <= kos, "{id} on {}: excessive self-KOs", s.id);
+        }
+        assert!((12..=36).contains(&total_wins), "{id}: {total_wins}/48 wins is outside the balance band");
+    }
+    assert!(failures.is_empty(), "{failures:?}");
+}
