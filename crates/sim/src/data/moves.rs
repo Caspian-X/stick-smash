@@ -36,31 +36,61 @@ pub struct Moves {
 }
 
 impl Moves {
+    pub const SLOTS: [&str; 19] = [
+        "jab", "ftilt", "utilt", "dtilt", "dashatk", "fsmash", "usmash", "dsmash", "nair", "fair", "bair", "uair",
+        "dair", "grab", "dashgrab", "nspec", "sspec", "uspec", "dspec",
+    ];
+    pub fn get(&self, slot: &str) -> Option<&Move> {
+        Some(match slot {
+            "jab" => &self.jab,
+            "ftilt" => &self.ftilt,
+            "utilt" => &self.utilt,
+            "dtilt" => &self.dtilt,
+            "dashatk" => &self.dashatk,
+            "fsmash" => &self.fsmash,
+            "usmash" => &self.usmash,
+            "dsmash" => &self.dsmash,
+            "nair" => &self.nair,
+            "fair" => &self.fair,
+            "bair" => &self.bair,
+            "uair" => &self.uair,
+            "dair" => &self.dair,
+            "grab" => &self.grab,
+            "dashgrab" => &self.dashgrab,
+            "nspec" => &self.nspec,
+            "sspec" => return self.sspec.as_ref(),
+            "uspec" => &self.uspec,
+            "dspec" => &self.dspec,
+            _ => return None,
+        })
+    }
+    pub fn get_mut(&mut self, slot: &str) -> Option<&mut Move> {
+        Some(match slot {
+            "jab" => &mut self.jab,
+            "ftilt" => &mut self.ftilt,
+            "utilt" => &mut self.utilt,
+            "dtilt" => &mut self.dtilt,
+            "dashatk" => &mut self.dashatk,
+            "fsmash" => &mut self.fsmash,
+            "usmash" => &mut self.usmash,
+            "dsmash" => &mut self.dsmash,
+            "nair" => &mut self.nair,
+            "fair" => &mut self.fair,
+            "bair" => &mut self.bair,
+            "uair" => &mut self.uair,
+            "dair" => &mut self.dair,
+            "grab" => &mut self.grab,
+            "dashgrab" => &mut self.dashgrab,
+            "nspec" => &mut self.nspec,
+            "sspec" => return self.sspec.as_mut(),
+            "uspec" => &mut self.uspec,
+            "dspec" => &mut self.dspec,
+            _ => return None,
+        })
+    }
     /// All present moves with their slot names, in slot order.
     pub fn iter(&self) -> impl Iterator<Item = (&'static str, &Move)> {
-        [
-            ("jab", Some(&self.jab)),
-            ("ftilt", Some(&self.ftilt)),
-            ("utilt", Some(&self.utilt)),
-            ("dtilt", Some(&self.dtilt)),
-            ("dashatk", Some(&self.dashatk)),
-            ("fsmash", Some(&self.fsmash)),
-            ("usmash", Some(&self.usmash)),
-            ("dsmash", Some(&self.dsmash)),
-            ("nair", Some(&self.nair)),
-            ("fair", Some(&self.fair)),
-            ("bair", Some(&self.bair)),
-            ("uair", Some(&self.uair)),
-            ("dair", Some(&self.dair)),
-            ("grab", Some(&self.grab)),
-            ("dashgrab", Some(&self.dashgrab)),
-            ("nspec", Some(&self.nspec)),
-            ("sspec", self.sspec.as_ref()),
-            ("uspec", Some(&self.uspec)),
-            ("dspec", Some(&self.dspec)),
-        ]
-        .into_iter()
-        .filter_map(|(k, m)| m.map(|m| (k, m)))
+        Self::SLOTS.into_iter().filter_map(|slot| self.get(slot).map(|m| (slot, m)))
     }
 }
 

@@ -75,7 +75,6 @@ pub fn attack_label(d: &GameData, f: &Fighter) -> String {
     }
 }
 fn trace(w: &mut World, a: usize, v: usize, label: String, on_shield: bool, dmg: f64, armored: bool) {
-    w.hits.push(crate::HitRecord { attacker: Some(a), victim: v, damage: dmg, shielded: on_shield });
     let p = w.trace.as_ref();
     let chained =
         p.is_some_and(|p| !armored && !p.armored && !on_shield && !p.on_shield && p.defender == v && p.d_free < 0);
@@ -158,6 +157,12 @@ pub struct HitSource {
 fn armors_hit(d: &GameData, f: &Fighter, damage: f64) -> bool {
     f.state == State::Attack && f.mov.is_some() && moves::phase(d, f).armor_threshold.is_some_and(|n| damage <= n)
 }
+pub(crate) fn credit_damage(w: &mut World, d: &GameData, attacker: usize, victim: usize, damage: f64) {
+    let f = &mut w.fighters[victim];
+    f.dmg = d.global.sim.max_damage.min(f.dmg + damage);
+    f.last_hit_by = Some(attacker);
+    w.hits.push(crate::HitRecord { attacker: Some(attacker), victim, damage, shielded: false });
+}
 pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitSource) {
     let HitSource { attacker, direction: sgn, point, projectile: proj, label } = source;
     let g = &d.global;
@@ -167,9 +172,8 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     release_grab(w, d, v);
     let label = label.unwrap_or_else(|| attack_label(d, &w.fighters[attacker]));
     let (avx, avy) = (w.fighters[attacker].vx, w.fighters[attacker].vy);
+    credit_damage(w, d, attacker, v, b.damage);
     let vic = &mut w.fighters[v];
-    vic.dmg = g.sim.max_damage.min(vic.dmg + b.damage);
-    vic.last_hit_by = Some(attacker);
     let kb = knockback(d, b, vic.dmg, d.fighters[vic.data].stats.weight);
     let hl = hitlag_of(d, b, kb);
     vic.lag = if b.kind == HitType::Electric {
@@ -332,6 +336,7 @@ pub fn shield_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: Hit
             a.vx = -a.face * s.attacker_pushback;
         }
     }
+    w.hits.push(crate::HitRecord { attacker: Some(a), victim: v, damage: b.damage, shielded: true });
     trace(w, a, v, label, true, b.damage, false);
     let f = &w.fighters[v];
     w.ring(f.x, f.y - 38., 20., 2.5, 10);
@@ -422,22 +427,10 @@ pub fn hit_pass(w: &mut World, d: &GameData) {
                     continue;
                 }
                 let f = &mut w.fighters[a];
-                if f.sd.hit.contains(&v)
-                    && !b
-                        .hit
-                        .rehit
-                        .is_some_and(|n| f.sd.hit_at.iter().find(|(j, _)| *j == v).is_none_or(|(_, at)| t - *at >= n))
-                {
+                if !f.sd.can_hit(v, t, b.hit.rehit) {
                     continue;
                 }
-                if !f.sd.hit.contains(&v) {
-                    f.sd.hit.push(v);
-                }
-                if let Some((_, at)) = f.sd.hit_at.iter_mut().find(|(j, _)| *j == v) {
-                    *at = t;
-                } else {
-                    f.sd.hit_at.push((v, t));
-                }
+                f.sd.record_hit(v, t);
                 hit = true;
                 let sgn = direction(&w.fighters[a], w.fighters[v].x, b.hit.dir);
                 if b.hit.kind == HitType::Grab {

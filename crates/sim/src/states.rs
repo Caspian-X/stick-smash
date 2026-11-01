@@ -5,11 +5,9 @@ use crate::{
     world::{Fighter, State},
 };
 use crate::{combat, moves, physics::*};
-pub fn roll(w: &mut World, d: &GameData, f: &mut Fighter, dir: f64, tech: bool, getup: bool) {
+pub fn roll(w: &mut World, d: &GameData, f: &mut Fighter, dir: f64) {
     f.set_state(State::Roll);
     f.sd.dir = dir;
-    f.sd.tech = tech;
-    f.sd.getup = getup;
     f.face = dir;
     f.inv = d.global.dodge.roll_invuln;
     w.sfx("roll");
@@ -214,7 +212,7 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
             } else if inp.sp && inp.up && !f.up_b {
                 moves::up_special(w, d, i, &mut f, dir);
             } else if inp.tap_r || inp.tap_l {
-                roll(w, d, &mut f, if inp.tap_r { 1. } else { -1. }, false, false);
+                roll(w, d, &mut f, if inp.tap_r { 1. } else { -1. });
             } else if inp.tap_d {
                 f.set_state(State::Spot);
                 f.inv = g.dodge.spot_invuln;
@@ -295,7 +293,7 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
                         f.sd.kind = "atk".into();
                         f.inv = k.attack_invuln;
                     } else if dir != 0. {
-                        roll(w, d, &mut f, dir, false, true);
+                        roll(w, d, &mut f, dir);
                     } else if inp.jump || inp.up || inp.shield_p || inp.sp || inp.grab {
                         f.set_state(State::Getup);
                         f.sd.kind = "stand".into();
@@ -477,9 +475,8 @@ fn st_hold(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, 
     if f.sd.pt > 0 {
         f.sd.pt -= 1;
         if f.sd.pt == g.pummel_hit_frame {
-            vic.dmg += g.pummel_damage;
-            vic.last_hit_by = Some(i);
-            w.hits.push(crate::HitRecord { attacker: Some(i), victim: v, damage: g.pummel_damage, shielded: false });
+            combat::credit_damage(w, d, i, v, g.pummel_damage);
+            let vic = &mut w.fighters[v];
             vic.flash = 5;
             vic.hud_shake = 6;
             f.lag = g.pummel_hitlag;

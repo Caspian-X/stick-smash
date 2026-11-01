@@ -353,6 +353,8 @@ pub struct InputRules {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SimRules {
+    /// Keep effect ranges and charge particles from advancing gameplay randomness.
+    pub separate_cosmetic_rng: bool,
     pub jumpsquat_friction: f64,
     pub landing_friction: f64,
     pub shield_friction: f64,

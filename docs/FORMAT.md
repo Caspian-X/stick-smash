@@ -80,7 +80,9 @@ ground or helpless in the air. `landing` goes to landing lag for `lag` frames. A
 neither fires on every frame from 1. Frame-0 events must use `at: 0`. `every: K` also requires the world frame to
 be divisible by K. `if` restricts to `grounded`, `airborne` or `countered`. One event's actions run in this order:
 `mulVel`, `setVel`, `addVel`, `capFall`, `leaveGround`, `invuln`, `spawn`, `sfx`, `fx`. Random ranges (`[a, b]`)
-in effects draw from the world RNG in field order (x, y, vx, vy, life, size), so effects affect determinism.
+in effects draw in field order (x, y, vx, vy, life, size). With `global.sim.separateCosmeticRng` (default true),
+effect ranges and charge particles use a separate rollback-owned RNG seeded from the match seed, leaving the
+gameplay RNG unchanged. Set it false to share the gameplay RNG for TS compatibility. Both streams are deterministic.
 
 ### Transitions
 

@@ -54,6 +54,7 @@ fn mismatch(a: &Value, b: &Value, path: &str) -> Option<String> {
 fn matches_typescript_traces() {
     let mut d = common::data();
     d.global.input.buffer_frames = 0;
+    d.global.sim.separate_cosmetic_rng = false;
     d.global.ai.thresholds.surface_chase_ticks = 0;
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/ts");
     let mut paths: Vec<_> = fs::read_dir(dir)

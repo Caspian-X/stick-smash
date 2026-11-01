@@ -9,7 +9,7 @@ use data::moves::{AirControl, Button, Cond};
 
 pub fn definition<'a>(d: &'a GameData, f: &Fighter) -> &'a Move {
     let slot = &f.mov.as_ref().expect("attack move").slot;
-    d.fighters[f.data].moves.iter().find(|(s, _)| s == slot).map(|(_, m)| m).unwrap_or(&d.fighters[f.data].moves.nspec)
+    d.fighters[f.data].moves.get(slot).expect("known, present move slot")
 }
 pub fn phase<'a>(d: &'a GameData, f: &Fighter) -> &'a Phase {
     &definition(d, f).phases[f.mov.as_ref().unwrap().phase]
@@ -25,7 +25,7 @@ pub fn cond(f: &Fighter, c: Option<Cond>) -> bool {
 fn num(w: &mut World, n: Num) -> f64 {
     match n {
         Num::Fixed(n) => n,
-        Num::Range([a, b]) => w.rng.range(a, b),
+        Num::Range([a, b]) => w.effect_rng().range(a, b),
     }
 }
 pub fn effects(
@@ -150,8 +150,7 @@ fn transition(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, tr: &Trans
             let m = f.mov.as_mut().unwrap();
             m.phase = n;
             m.t = 0;
-            f.sd.hit.clear();
-            f.sd.hit_at.clear();
+            f.sd.clear_hits();
             events(w, d, i, f);
         }
     }
@@ -270,16 +269,16 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
             w.sfx("charge");
         }
         if n.is_multiple_of(3) {
-            let x = f.x + w.rng.range(-20., 20.);
-            let y = f.y - w.rng.range(10., 80.);
+            let x = f.x + w.effect_rng().range(-20., 20.);
+            let y = f.y - w.effect_rng().range(10., 80.);
             w.part((x, y), (0., -1.), 14., Color::Rgb(0xffe680), 3., 0.);
         }
         if c.jet {
-            let x = f.x - f.face * w.rng.range(56., 66.);
-            let y = f.y - w.rng.range(56., 70.);
-            let vx = -f.face * w.rng.range(2., 4.);
-            let vy = w.rng.range(-0.5, 0.5);
-            let sz = w.rng.range(3., 6.);
+            let x = f.x - f.face * w.effect_rng().range(56., 66.);
+            let y = f.y - w.effect_rng().range(56., 70.);
+            let vx = -f.face * w.effect_rng().range(2., 4.);
+            let vy = w.effect_rng().range(-0.5, 0.5);
+            let sz = w.effect_rng().range(3., 6.);
             w.part((x, y), (vx, vy), 12., Color::Rgb(if !n.is_multiple_of(2) { 0xff9a3c } else { 0xffe680 }), sz, 0.);
             if n.is_multiple_of(6) {
                 w.sfx("jet");
@@ -313,14 +312,13 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
                 }
         });
         // The ending tick keeps the phase that ended for movement.
-        let old = p.clone();
         if let Some(tr) = tr {
             transition(w, d, i, f, tr);
         } else if p.frames.is_some_and(|n| t >= n) && !p.transitions.iter().any(|t| t.on == Trigger::Timeout) {
             f.set_state(if f.ground { State::Idle } else { State::Air });
         }
         if f.mov.is_none() {
-            movement(w, d, i, f, inp, (def, &old, t));
+            movement(w, d, i, f, inp, (def, p, t));
             return;
         }
     }

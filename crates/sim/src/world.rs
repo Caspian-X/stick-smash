@@ -119,8 +119,7 @@ impl State {
 }
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct StateData {
-    pub hit: Vec<usize>,
-    pub hit_at: Vec<(usize, u32)>,
+    hit_at: Vec<(usize, u32)>,
     pub n: f64,
     pub kind: String,
     pub side: f64,
@@ -135,8 +134,21 @@ pub struct StateData {
     pub timer: f64,
     pub pt: u32,
     pub stun: i32,
-    pub tech: bool,
-    pub getup: bool,
+}
+impl StateData {
+    pub(crate) fn can_hit(&self, victim: usize, tick: u32, rehit: Option<u32>) -> bool {
+        self.hit_at.iter().find(|(v, _)| *v == victim).is_none_or(|(_, at)| rehit.is_some_and(|n| tick - *at >= n))
+    }
+    pub(crate) fn record_hit(&mut self, victim: usize, tick: u32) {
+        if let Some((_, at)) = self.hit_at.iter_mut().find(|(v, _)| *v == victim) {
+            *at = tick;
+        } else {
+            self.hit_at.push((victim, tick));
+        }
+    }
+    pub(crate) fn clear_hits(&mut self) {
+        self.hit_at.clear();
+    }
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MoveState {
@@ -272,6 +284,8 @@ pub struct HitRecord {
 pub struct World {
     pub frame: u64,
     pub rng: Rng,
+    /// None preserves legacy shared gameplay/effect randomness.
+    pub cosmetic_rng: Option<Rng>,
     pub fx: Vec<Fx>,
     /// Per-victim hits; the caller drains these after each tick, like `fx`.
     pub hits: Vec<HitRecord>,
@@ -375,6 +389,7 @@ impl World {
         Ok(Self {
             frame: 0,
             rng: Rng(cfg.seed),
+            cosmetic_rng: data.global.sim.separate_cosmetic_rng.then_some(Rng(cfg.seed)),
             fx: vec![],
             hits: vec![],
             stage,
@@ -397,6 +412,9 @@ impl World {
             && (self.cfg.friendly_fire
                 || self.cfg.players[a].team.is_none()
                 || self.cfg.players[a].team != self.cfg.players[b].team)
+    }
+    pub(crate) fn effect_rng(&mut self) -> &mut Rng {
+        self.cosmetic_rng.as_mut().unwrap_or(&mut self.rng)
     }
     pub fn sfx(&mut self, name: impl Into<String>) {
         self.fx.push(Fx::Sfx { name: name.into(), arg: None, x: None });

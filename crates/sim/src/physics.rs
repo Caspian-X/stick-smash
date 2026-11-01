@@ -241,7 +241,7 @@ pub fn on_land(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, vy: f64) 
             f.tumble = false;
             if w.frame as i64 - f.last_sp <= i64::from(g.tech.window) {
                 if f.in_dir != 0. {
-                    crate::states::roll(w, d, f, f.in_dir, true, false);
+                    crate::states::roll(w, d, f, f.in_dir);
                 } else {
                     f.set_state(State::Tech);
                     f.inv = g.tech.invuln;

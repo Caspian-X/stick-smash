@@ -142,6 +142,7 @@
   ],
   "input": { "stickThreshold": 64, "bufferFrames": 5 },
   "sim": {
+    "separateCosmeticRng": true,
     "jumpsquatFriction": 0.9,
     "landingFriction": 0.8,
     "shieldFriction": 0.85,
