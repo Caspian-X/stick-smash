@@ -49,7 +49,7 @@ fn all_assets_load() {
     let (data, errors) = load(sources()).unwrap_or_else(|e| panic!("content failed to load:\n{}", fmt_errors(&e)));
     assert!(errors.is_empty(), "content errors:\n{}", fmt_errors(&errors));
     let ids: Vec<&str> = data.fighters.iter().map(|f| f.id.as_str()).collect();
-    assert_eq!(ids, ["brawler", "dancer", "golem", "king", "lancer", "swordfighter"]);
+    assert_eq!(ids, ["brawler", "dancer", "golem", "king", "lancer", "ninja", "swordfighter", "wrangler", "yoyo"]);
     let ids: Vec<&str> = data.stages.iter().map(|s| s.id.as_str()).collect();
     assert_eq!(ids, ["arena", "citadel", "foundry", "isles"]);
     assert!(data.stages.iter().all(|s| s.max_players() >= 8));

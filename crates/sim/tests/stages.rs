@@ -553,3 +553,42 @@ fn fighter_balance_diagnostics() {
         println!("BALANCE {id} {}", serde_json::to_string(&stats).unwrap());
     }
 }
+
+#[test]
+fn roster_cpu_matchups() {
+    let d = common::data();
+    let roster = ["brawler", "king", "ninja", "swordfighter", "wrangler", "yoyo"];
+    for id in roster {
+        let (mut total_wins, mut total_finished) = (0, 0);
+        for s in &d.stages {
+            let (mut wins, mut kos, mut self_kos, mut finished) = (0, 0, 0, 0);
+            for opponent in roster.into_iter().filter(|opponent| *opponent != id) {
+                for seed in 1..=4 {
+                    let pair = if seed % 2 == 0 { [opponent, id] } else { [id, opponent] };
+                    let own = usize::from(seed % 2 == 0);
+                    let (st, w) = cpu_match(&d, &s.id, &pair, seed, 3);
+                    if !w.over {
+                        println!(
+                            "unfinished {id} vs {opponent} {} seed {seed}: {:?}",
+                            s.id,
+                            w.fighters.iter().map(|f| (f.x, f.y, f.stocks, f.dmg, f.state)).collect::<Vec<_>>()
+                        );
+                    }
+                    finished += usize::from(w.over);
+                    wins += usize::from(w.fighters[own].state == State::Win);
+                    kos += st.kos;
+                    self_kos += st.self_kos;
+                }
+            }
+            println!("{id:8} {:8}: {wins}/20 wins, {finished}/20 finished, {kos} KOs, {self_kos} self-KOs", s.id);
+            total_wins += wins;
+            total_finished += finished;
+            assert!(self_kos * 3 <= kos, "{id} on {}: excessive self-KOs", s.id);
+        }
+        println!("{id:8} total: {total_wins}/80 wins, {total_finished}/80 finished");
+        if matches!(id, "ninja" | "yoyo" | "wrangler") {
+            assert!((20..=60).contains(&total_wins), "{id}: {total_wins}/80 wins is outside the balance band");
+        }
+        assert!(total_finished == 80, "{id}: only {total_finished}/80 duels finished");
+    }
+}
