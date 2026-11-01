@@ -314,3 +314,32 @@ fn cpu_matches_finish_on_every_stage() {
         assert!(w8.fighters.iter().any(|f| f.state == State::Win));
     }
 }
+
+#[test]
+fn new_fighter_cpu_matchups() {
+    let d = common::data();
+    for stage in &d.stages {
+        for fighter in ["golem", "lancer", "dancer"] {
+            let mut wins = 0;
+            let mut kos = 0;
+            let mut self_kos = 0;
+            for opponent in ["brawler", "king", "swordfighter"] {
+                for seed in 1..=4 {
+                    let ids = if seed % 2 == 0 { [opponent, fighter] } else { [fighter, opponent] };
+                    let (st, w) = cpu_match(&d, &stage.id, &ids, seed, 2);
+                    assert!(
+                        w.over,
+                        "{}: {fighter} vs {opponent} seed {seed} unfinished: {:?}",
+                        stage.id,
+                        w.fighters.iter().map(|f| (f.x, f.y, f.dmg, f.stocks, f.state)).collect::<Vec<_>>()
+                    );
+                    wins += usize::from(w.fighters[usize::from(seed % 2 == 0)].state == State::Win);
+                    kos += st.kos;
+                    self_kos += st.self_kos;
+                }
+            }
+            println!("{} {fighter}: {wins}/12 wins, {kos} KOs, {self_kos} self-KOs", stage.id);
+            assert!(self_kos * 3 <= kos, "{} {fighter}: too many self-destructs", stage.id);
+        }
+    }
+}

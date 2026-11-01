@@ -1,0 +1,680 @@
+{
+  "$schema": "../../schema/fighter.schema.json",
+  "schemaVersion": 1,
+  "extends": "base",
+  "name": "Dancer",
+  "tagline": "Never stop moving, never miss a beat",
+  "blurb": "Fast, light kick combos · special: spinning top · side: cartwheel · up: spiral kick · down: tripping sweep",
+  "moves": {
+    "jab": {
+      "name": "Quickstep",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 15,
+          "hitboxes": [
+            { "start": 3, "end": 7, "x": 46, "y": 45, "r": 17, "damage": 3.3, "bkb": 5, "kbg": 0.12, "angle": 70 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 2, "pose": "kick", "lerp": true },
+            { "at": 8, "pose": "kick" },
+            { "at": 14, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 3, "sfx": "swing" }
+          ]
+        }
+      ]
+    },
+    "ftilt": {
+      "name": "Side Beat",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 25,
+          "hitboxes": [
+            { "start": 6, "end": 10, "x": 53, "y": 49, "r": 21, "damage": 8.8, "bkb": 5, "kbg": 0.12, "angle": 40 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 5, "pose": "kick", "lerp": true },
+            { "at": 11, "pose": "kick" },
+            { "at": 24, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 6, "sfx": "swing" }
+          ]
+        }
+      ]
+    },
+    "utilt": {
+      "name": "High Heel",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 25,
+          "hitboxes": [
+            { "start": 6, "end": 10, "x": 16, "y": 97, "r": 23, "damage": 7.7, "bkb": 5, "kbg": 0.12, "angle": 90 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 5, "pose": "heel", "lerp": true },
+            { "at": 11, "pose": "heel" },
+            { "at": 24, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 6, "sfx": "swing" }
+          ]
+        }
+      ]
+    },
+    "dtilt": {
+      "name": "Floor Tap",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 23,
+          "hitboxes": [
+            { "start": 5, "end": 9, "x": 52, "y": 8, "r": 20, "damage": 5.5, "bkb": 5, "kbg": 0.12, "angle": 75 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 4, "pose": "sweep", "lerp": true },
+            { "at": 10, "pose": "sweep" },
+            { "at": 22, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 5, "sfx": "swing" }
+          ]
+        }
+      ]
+    },
+    "dashatk": {
+      "name": "Skip Kick",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 29,
+          "hitboxes": [
+            { "start": 6, "end": 10, "x": 50, "y": 48, "r": 23, "damage": 8.8, "bkb": 5, "kbg": 0.12, "angle": 60 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 5, "pose": "kick", "lerp": true },
+            { "at": 11, "pose": "kick" },
+            { "at": 28, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 6, "sfx": "swing" }
+          ]
+        }
+      ]
+    },
+    "fsmash": {
+      "name": "Crescendo",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 43,
+          "hitboxes": [
+            { "start": 13, "end": 17, "x": 57, "y": 47, "r": 24, "damage": 17.6, "bkb": 5, "kbg": 0.12, "angle": 35 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 12, "pose": "kick", "lerp": true },
+            { "at": 18, "pose": "kick" },
+            { "at": 42, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 13, "sfx": "swing" }
+          ],
+          "charge": { "frame": 5 }
+        }
+      ]
+    },
+    "usmash": {
+      "name": "Inverted Finale",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 42,
+          "hitboxes": [
+            { "start": 12, "end": 16, "x": 0, "y": 90, "r": 43, "damage": 15.4, "bkb": 5, "kbg": 0.12, "angle": 90 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 11, "pose": "handstand", "lerp": true },
+            { "at": 17, "pose": "handstand" },
+            { "at": 41, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 12, "sfx": "swing" }
+          ],
+          "charge": { "frame": 5 }
+        }
+      ]
+    },
+    "dsmash": {
+      "name": "Breakstep",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 40,
+          "hitboxes": [
+            { "start": 11, "end": 15, "x": 48, "y": 10, "r": 25, "damage": 14.3, "bkb": 5, "kbg": 0.12, "angle": 30 },
+            {
+              "start": 18,
+              "end": 22,
+              "x": -45,
+              "y": 10,
+              "r": 25,
+              "damage": 14.3,
+              "bkb": 5,
+              "kbg": 0.12,
+              "angle": 30,
+              "dir": "away"
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 10, "pose": "sweep", "lerp": true },
+            { "at": 16, "pose": "sweep" },
+            {
+              "at": 18,
+              "pose": { "from": "sweep", "rot": 180, "pivot": 15 }
+            },
+            { "at": 39, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 11, "sfx": "swing" }
+          ],
+          "charge": { "frame": 5 }
+        }
+      ]
+    },
+    "fair": {
+      "name": "Double Time",
+      "phases": [
+        {
+          "name": "first",
+          "frames": 11,
+          "hitboxes": [
+            { "start": 5, "end": 9, "x": 53, "y": 49, "r": 21, "damage": 3.3, "bkb": 3, "kbg": 0.024, "angle": 70 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 4, "pose": "kick", "lerp": true },
+            { "at": 10, "pose": "kick" }
+          ],
+          "events": [
+            { "at": 5, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "second" },
+            { "on": "land", "to": "landing", "lag": 8 }
+          ]
+        },
+        {
+          "name": "second",
+          "frames": 17,
+          "hitboxes": [
+            { "start": 2, "end": 6, "x": 53, "y": 49, "r": 21, "damage": 5.5, "bkb": 5, "kbg": 0.12, "angle": 45 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "kick" },
+            { "at": 7, "pose": "air", "lerp": true }
+          ],
+          "events": [
+            { "at": 2, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 8 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "bair": {
+      "name": "Backbeat",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 29,
+          "hitboxes": [
+            {
+              "start": 7,
+              "end": 11,
+              "x": -48,
+              "y": 47,
+              "r": 23,
+              "damage": 11.0,
+              "bkb": 5,
+              "kbg": 0.12,
+              "angle": 40,
+              "dir": "back"
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 6, "pose": "spinKick", "lerp": true },
+            { "at": 12, "pose": "spinKick" },
+            { "at": 28, "pose": "air", "lerp": true }
+          ],
+          "events": [
+            { "at": 7, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 8 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "uair": {
+      "name": "Sky Heel",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 25,
+          "hitboxes": [
+            { "start": 5, "end": 9, "x": 16, "y": 98, "r": 24, "damage": 8.8, "bkb": 5, "kbg": 0.12, "angle": 85 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 4, "pose": "heel", "lerp": true },
+            { "at": 10, "pose": "heel" },
+            { "at": 24, "pose": "air", "lerp": true }
+          ],
+          "events": [
+            { "at": 5, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 8 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "dair": {
+      "name": "Downbeat",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 34,
+          "hitboxes": [
+            { "start": 9, "end": 13, "x": 0, "y": -15, "r": 24, "damage": 11.0, "bkb": 5, "kbg": 0.12, "angle": -70 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 8, "pose": "diveHeel", "lerp": true },
+            { "at": 14, "pose": "diveHeel" },
+            { "at": 33, "pose": "air", "lerp": true }
+          ],
+          "events": [
+            { "at": 9, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 8 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "nair": {
+      "name": "Air Pirouette",
+      "phases": [
+        {
+          "name": "spin",
+          "frames": 17,
+          "hitboxes": [
+            {
+              "start": 4,
+              "end": 15,
+              "x": 0,
+              "y": 48,
+              "r": 49,
+              "damage": 2,
+              "bkb": 2,
+              "kbg": 0.015,
+              "angle": 75,
+              "rehit": 5,
+              "type": "autolink"
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spinKick" },
+            {
+              "at": 16,
+              "pose": { "from": "spinKick", "rot": 720, "pivot": 45 },
+              "lerp": true
+            }
+          ],
+          "events": [
+            { "at": 4, "sfx": "swing" },
+            { "at": 10, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "finish" },
+            { "on": "land", "to": "landing", "lag": 8 }
+          ]
+        },
+        {
+          "name": "finish",
+          "frames": 17,
+          "hitboxes": [
+            { "start": 0, "end": 3, "x": 42, "y": 52, "r": 28, "damage": 6.6, "bkb": 6, "kbg": 0.12, "angle": 50 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "kick" }
+          ],
+          "events": [
+            { "at": 0, "sfx": "smash" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 8 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "nspec": {
+      "name": "Spinning Top",
+      "phases": [
+        {
+          "name": "spin",
+          "frames": 24,
+          "hitboxes": [
+            {
+              "start": 4,
+              "end": 22,
+              "x": 0,
+              "y": 48,
+              "r": 49,
+              "damage": 2,
+              "bkb": 2,
+              "kbg": 0.015,
+              "angle": 75,
+              "rehit": 5,
+              "type": "autolink"
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spinKick" },
+            {
+              "at": 23,
+              "pose": { "from": "spinKick", "rot": 720, "pivot": 45 },
+              "lerp": true
+            }
+          ],
+          "events": [
+            { "at": 4, "sfx": "swing" },
+            { "at": 10, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "finish" }
+          ],
+          "airAccelMult": 1.3
+        },
+        {
+          "name": "finish",
+          "frames": 17,
+          "hitboxes": [
+            { "start": 0, "end": 3, "x": 42, "y": 52, "r": 28, "damage": 6.6, "bkb": 6, "kbg": 0.12, "angle": 50 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "kick" }
+          ],
+          "events": [
+            { "at": 0, "sfx": "smash" }
+          ],
+          "transitions": []
+        }
+      ]
+    },
+    "sspec": {
+      "name": "Cartwheel",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 37,
+          "hitboxes": [
+            { "start": 5, "end": 17, "x": 32, "y": 63, "r": 34, "damage": 8.8, "bkb": 5, "kbg": 0.108, "angle": 65 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "handstand" },
+            {
+              "at": 20,
+              "pose": { "from": "handstand", "rot": 360, "pivot": 45 },
+              "lerp": true
+            },
+            { "at": 30, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 5, "sfx": "swing" },
+            {
+              "at": 5,
+              "setVel": { "x": 9 },
+              "sfx": "swing"
+            }
+          ],
+          "slide": 20
+        }
+      ]
+    },
+    "uspec": {
+      "name": "Rising Spiral",
+      "phases": [
+        {
+          "name": "spin",
+          "frames": 20,
+          "hitboxes": [
+            {
+              "start": 4,
+              "end": 18,
+              "x": 0,
+              "y": 48,
+              "r": 49,
+              "damage": 2,
+              "bkb": 2,
+              "kbg": 0.015,
+              "angle": 75,
+              "rehit": 5,
+              "type": "autolink"
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spinKick" },
+            {
+              "at": 19,
+              "pose": { "from": "spinKick", "rot": 720, "pivot": 45 },
+              "lerp": true
+            }
+          ],
+          "events": [
+            { "at": 4, "sfx": "swing" },
+            { "at": 10, "sfx": "swing" },
+            {
+              "at": 2,
+              "setVel": { "x": 2.5, "y": 19 },
+              "leaveGround": true,
+              "sfx": "djump"
+            }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "finish" }
+          ],
+          "ledgeGrab": 5
+        },
+        {
+          "name": "finish",
+          "frames": 17,
+          "hitboxes": [
+            { "start": 0, "end": 3, "x": 42, "y": 52, "r": 28, "damage": 6.6, "bkb": 6, "kbg": 0.12, "angle": 50 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "kick" }
+          ],
+          "events": [
+            { "at": 0, "sfx": "smash" }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "helpless" },
+            { "on": "land", "to": "landing", "lag": 12 }
+          ],
+          "ledgeGrab": 0
+        }
+      ],
+      "air": "upSpecial"
+    },
+    "dspec": {
+      "name": "Low Sweep",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 34,
+          "hitboxes": [
+            {
+              "start": 7,
+              "end": 13,
+              "x": 51,
+              "y": 8,
+              "r": 25,
+              "damage": 7.7,
+              "bkb": 4,
+              "kbg": 0.084,
+              "angle": 20,
+              "type": "trip"
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "sweep" }
+          ],
+          "events": [
+            { "at": 7, "sfx": "swing" }
+          ]
+        }
+      ]
+    }
+  },
+  "stats": {
+    "weight": 1.08,
+    "runSpeed": 6.8,
+    "runAccel": 1.3,
+    "jumpSpeed": 15.8,
+    "shortHopSpeed": 11,
+    "airSpeed": 5.3,
+    "airAccel": 0.55,
+    "gravity": 0.7
+  },
+  "ai": {
+    "reach": 64,
+    "counterChance": 0,
+    "specials": [
+      {
+        "minDistance": 65,
+        "maxDistance": 260,
+        "height": 60,
+        "chance": 0.22,
+        "grounded": true,
+        "noProjectile": false,
+        "down": false,
+        "hold": null
+      },
+      {
+        "minDistance": 10,
+        "maxDistance": 65,
+        "height": 40,
+        "chance": 0.14,
+        "grounded": true,
+        "noProjectile": false,
+        "down": true,
+        "hold": null
+      }
+    ]
+  },
+  "style": { "torsoWidth": 5, "frontLimbWidth": 5, "backLimbWidth": 4, "headRadius": 9 },
+  "poses": {
+    "kick": {
+      "head": [-10, 65],
+      "shoulder": [-8, 49],
+      "hip": [0, 30],
+      "elbowF": [10, 45],
+      "handF": [15, 61],
+      "elbowB": [-24, 44],
+      "handB": [-32, 56],
+      "kneeF": [28, 45],
+      "footF": [55, 49],
+      "kneeB": [-15, 18],
+      "footB": [-22, 0]
+    },
+    "heel": { "from": "kick", "kneeF": [11, 64], "footF": [16, 99] },
+    "sweep": {
+      "head": [-8, 29],
+      "shoulder": [-4, 17],
+      "hip": [8, 13],
+      "elbowF": [-10, 7],
+      "handF": [-20, 0],
+      "elbowB": [-18, 14],
+      "handB": [-31, 1],
+      "kneeF": [32, 8],
+      "footF": [56, 5],
+      "kneeB": [0, 9],
+      "footB": [-19, 0]
+    },
+    "handstand": {
+      "head": [0, 22],
+      "shoulder": [0, 33],
+      "hip": [3, 55],
+      "elbowF": [16, 17],
+      "handF": [21, 0],
+      "elbowB": [-17, 16],
+      "handB": [-23, 0],
+      "kneeF": [27, 69],
+      "footF": [49, 86],
+      "kneeB": [-22, 68],
+      "footB": [-39, 86]
+    },
+    "spinKick": { "from": "kick", "kneeB": [-30, 39], "footB": [-52, 47] },
+    "diveHeel": { "from": "heel", "rot": 180, "pivot": 45 }
+  },
+  "attachments": [
+    {
+      "id": "ribbon",
+      "joint": "shoulder",
+      "behind": true,
+      "angle": 165,
+      "sway": { "deg": 18, "period": 24 },
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[0, 4], [22, 8], [45, 1], [62, 8], [55, -2], [30, -5], [9, -1]],
+          "fill": "playerLight",
+          "stroke": "playerLight",
+          "width": 2
+        },
+        {
+          "shape": "poly",
+          "points": [[0, -1], [18, -8], [37, -6], [51, -17], [34, -13], [13, -14]],
+          "fill": "player",
+          "stroke": "playerLight",
+          "width": 2
+        }
+      ]
+    },
+    {
+      "id": "ankleF",
+      "joint": "footF",
+      "shapes": [
+        { "shape": "line", "from": [-5, 1], "to": [6, 1], "width": 6, "color": "playerLight" }
+      ]
+    },
+    {
+      "id": "ankleB",
+      "joint": "footB",
+      "shapes": [
+        { "shape": "line", "from": [-5, 1], "to": [6, 1], "width": 6, "color": "playerLight" }
+      ]
+    }
+  ]
+}

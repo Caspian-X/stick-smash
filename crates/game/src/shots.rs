@@ -43,7 +43,7 @@ pub enum Step {
 type Entry = (&'static str, fn() -> Vec<Step>);
 
 /// Every section in full-tour order; `--shots` picks a subset in the order given.
-const TOUR: [Entry; 8] = [
+const TOUR: [Entry; 9] = [
     ("menus", menus),
     ("fighter-editor", fighter_editor),
     ("stage-editor", stage_editor),
@@ -51,6 +51,7 @@ const TOUR: [Entry; 8] = [
     ("match", match_shots),
     ("results-replay", results_replay),
     ("training", training),
+    ("fighter-kits", fighter_kits),
     ("stages", stages),
 ];
 
@@ -407,6 +408,28 @@ fn training() -> Vec<Step> {
         60,
     ));
     shot(&mut v, "14-training");
+    v
+}
+
+fn fighter_kits() -> Vec<Step> {
+    use editor::preview::Subject;
+    let mut v = vec![Step::OpenEditor, Step::Wait(20)];
+    for (fighter, slot, frame, name) in [
+        ("golem", "fsmash", 20, "18a-golem-smash"),
+        ("golem", "nspec", 18, "18b-golem-pound"),
+        ("golem", "dspec", 12, "18c-golem-skin"),
+        ("lancer", "ftilt", 9, "19a-lancer-thrust"),
+        ("lancer", "uspec", 4, "19b-lancer-vault"),
+        ("lancer", "dair", 11, "19c-lancer-pogo"),
+        ("dancer", "fsmash", 14, "20a-dancer-kick"),
+        ("dancer", "usmash", 13, "20b-dancer-handstand"),
+        ("dancer", "dspec", 9, "20c-dancer-sweep"),
+    ] {
+        ed(&mut v, Cmd::Subject(Subject::Move(slot.into())));
+        ed(&mut v, Cmd::Fighter(fighter.into()));
+        ed(&mut v, Cmd::Frame(frame));
+        shot(&mut v, name);
+    }
     v
 }
 
@@ -796,7 +819,16 @@ mod tests {
 17a-match-citadel
 17b-match-isles
 17b2-match-isles-wide
-17c-match-foundry";
+17c-match-foundry
+18a-golem-smash
+18b-golem-pound
+18c-golem-skin
+19a-lancer-thrust
+19b-lancer-vault
+19c-lancer-pogo
+20a-dancer-kick
+20b-dancer-handstand
+20c-dancer-sweep";
         assert_eq!(names, expected.lines().collect::<Vec<_>>());
     }
 }

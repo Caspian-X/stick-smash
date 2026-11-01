@@ -292,6 +292,11 @@
           ],
           "description": "Counter stance: hits received during the window are countered."
         },
+        "armorThreshold": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Hits dealing at most this damage preserve the phase and velocity (damage and hitlag still apply).\nGrabs bypass armor. Omit for normal hit reactions."
+        },
         "hover": { "type": "boolean", "description": "Airborne: vertical speed is held at 0 (hovering startup)." },
         "fallCap": {
           "type": ["number", "null"],

@@ -1,0 +1,693 @@
+{
+  "$schema": "../../schema/fighter.schema.json",
+  "schemaVersion": 1,
+  "extends": "base",
+  "name": "Golem",
+  "tagline": "A walking mountain with a fragile return",
+  "blurb": "Heavy stone fists · special: seismic pound · side: shoulder charge · up: rock launch · down: stone skin",
+  "moves": {
+    "jab": {
+      "name": "Gravel Knuckle",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 21,
+          "hitboxes": [
+            { "start": 6, "end": 10, "x": 38, "y": 45, "r": 22, "damage": 5.4, "bkb": 6, "kbg": 0.1357, "angle": 45 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stonePunch" }
+          ],
+          "events": [
+            { "at": 6, "sfx": "swing" }
+          ]
+        }
+      ]
+    },
+    "ftilt": {
+      "name": "Boulder Fist",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 33,
+          "hitboxes": [
+            { "start": 8, "end": 12, "x": 52, "y": 45, "r": 25, "damage": 11.88, "bkb": 6, "kbg": 0.1357, "angle": 45 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stonePunch" }
+          ],
+          "events": [
+            { "at": 8, "sfx": "swing" }
+          ]
+        }
+      ]
+    },
+    "utilt": {
+      "name": "Quarry Lift",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 32,
+          "hitboxes": [
+            { "start": 8, "end": 12, "x": 4, "y": 99, "r": 30, "damage": 10.8, "bkb": 6, "kbg": 0.1357, "angle": 88 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stoneLift" }
+          ],
+          "events": [
+            { "at": 8, "sfx": "swing" }
+          ]
+        }
+      ]
+    },
+    "dtilt": {
+      "name": "Fault Line",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 29,
+          "hitboxes": [
+            { "start": 7, "end": 11, "x": 39, "y": 12, "r": 25, "damage": 9.72, "bkb": 6, "kbg": 0.1357, "angle": 45 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" }
+          ],
+          "events": [
+            { "at": 7, "sfx": "swing" }
+          ]
+        }
+      ]
+    },
+    "dashatk": {
+      "name": "Heavy Step",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 40,
+          "hitboxes": [
+            { "start": 8, "end": 12, "x": 35, "y": 43, "r": 32, "damage": 11.88, "bkb": 6, "kbg": 0.1357, "angle": 45 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "lean" }
+          ],
+          "events": [
+            { "at": 8, "sfx": "swing" }
+          ]
+        }
+      ]
+    },
+    "fsmash": {
+      "name": "Monolith",
+      "phases": [
+        {
+          "name": "windup",
+          "frames": 18,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" }
+          ],
+          "armorThreshold": 6,
+          "charge": { "frame": 8 },
+          "transitions": [
+            { "on": "timeout", "to": "strike" }
+          ]
+        },
+        {
+          "name": "strike",
+          "frames": 32,
+          "hitboxes": [
+            { "start": 0, "end": 4, "x": 58, "y": 43, "r": 30, "damage": 21.6, "bkb": 8, "kbg": 0.2006, "angle": 35 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stonePunch" }
+          ],
+          "events": [
+            { "at": 0, "sfx": "smash" }
+          ]
+        }
+      ]
+    },
+    "usmash": {
+      "name": "Mountain Rise",
+      "phases": [
+        {
+          "name": "windup",
+          "frames": 18,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" }
+          ],
+          "armorThreshold": 6,
+          "charge": { "frame": 8 },
+          "transitions": [
+            { "on": "timeout", "to": "strike" }
+          ]
+        },
+        {
+          "name": "strike",
+          "frames": 32,
+          "hitboxes": [
+            { "start": 0, "end": 5, "x": 0, "y": 112, "r": 36, "damage": 19.44, "bkb": 8, "kbg": 0.1888, "angle": 88 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stoneLift" }
+          ],
+          "events": [
+            { "at": 0, "sfx": "smash" }
+          ]
+        }
+      ]
+    },
+    "dsmash": {
+      "name": "Tectonic Split",
+      "phases": [
+        {
+          "name": "windup",
+          "frames": 18,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" }
+          ],
+          "armorThreshold": 6,
+          "charge": { "frame": 8 },
+          "transitions": [
+            { "on": "timeout", "to": "strike" }
+          ]
+        },
+        {
+          "name": "strike",
+          "frames": 32,
+          "hitboxes": [
+            {
+              "start": 0,
+              "end": 5,
+              "x": 48,
+              "y": 13,
+              "r": 32,
+              "damage": 17.28,
+              "bkb": 7,
+              "kbg": 0.177,
+              "angle": 28,
+              "dir": "away"
+            },
+            {
+              "start": 0,
+              "end": 5,
+              "x": -48,
+              "y": 13,
+              "r": 32,
+              "damage": 17.28,
+              "bkb": 7,
+              "kbg": 0.177,
+              "angle": 28,
+              "dir": "away"
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" }
+          ],
+          "events": [
+            { "at": 0, "sfx": "smash" }
+          ]
+        }
+      ]
+    },
+    "nair": {
+      "name": "Rolling Stone",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 38,
+          "hitboxes": [
+            { "start": 10, "end": 15, "x": 0, "y": 43, "r": 43, "damage": 9.72, "bkb": 6, "kbg": 0.1416, "angle": 50 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "curl" }
+          ],
+          "events": [
+            { "at": 10, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 8 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "fair": {
+      "name": "Granite Hammer",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 38,
+          "hitboxes": [
+            {
+              "start": 10,
+              "end": 15,
+              "x": 46,
+              "y": 39,
+              "r": 29,
+              "damage": 14.04,
+              "bkb": 6,
+              "kbg": 0.1416,
+              "angle": 38
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stonePunch" }
+          ],
+          "events": [
+            { "at": 10, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 8 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "bair": {
+      "name": "Back Boulder",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 38,
+          "hitboxes": [
+            {
+              "start": 10,
+              "end": 15,
+              "x": -40,
+              "y": 44,
+              "r": 29,
+              "damage": 12.96,
+              "bkb": 6,
+              "kbg": 0.1416,
+              "angle": 40,
+              "dir": "back"
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "back" }
+          ],
+          "events": [
+            { "at": 10, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 8 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "uair": {
+      "name": "Ceiling Breaker",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 38,
+          "hitboxes": [
+            {
+              "start": 10,
+              "end": 15,
+              "x": 0,
+              "y": 102,
+              "r": 28,
+              "damage": 11.88,
+              "bkb": 6,
+              "kbg": 0.1416,
+              "angle": 85
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stoneLift" }
+          ],
+          "events": [
+            { "at": 10, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 8 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "dair": {
+      "name": "Falling Rubble",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 38,
+          "hitboxes": [
+            {
+              "start": 10,
+              "end": 15,
+              "x": 0,
+              "y": -7,
+              "r": 27,
+              "damage": 14.04,
+              "bkb": 6,
+              "kbg": 0.1416,
+              "angle": -90,
+              "type": "spike"
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" },
+            { "at": 8, "pose": "stoneDrop", "lerp": true }
+          ],
+          "events": [
+            { "at": 10, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 8 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "sspec": {
+      "name": "Lumbering Charge",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 48,
+          "hitboxes": [
+            {
+              "start": 12,
+              "end": 23,
+              "x": 32,
+              "y": 43,
+              "r": 32,
+              "damage": 12.96,
+              "bkb": 7,
+              "kbg": 0.1298,
+              "angle": 38
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "lean" }
+          ],
+          "events": [
+            { "at": 12, "sfx": "swing" },
+            {
+              "at": 12,
+              "setVel": { "x": 8 },
+              "sfx": "smash"
+            }
+          ],
+          "slide": 26
+        }
+      ]
+    },
+    "uspec": {
+      "name": "Rock Launch",
+      "phases": [
+        {
+          "name": "rise",
+          "frames": 42,
+          "hitboxes": [
+            { "start": 5, "end": 16, "x": 0, "y": 64, "r": 33, "damage": 10, "bkb": 6, "kbg": 0.118, "angle": 80 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stoneLift" }
+          ],
+          "events": [
+            {
+              "at": 5,
+              "setVel": { "x": 2, "y": 18 },
+              "leaveGround": true,
+              "sfx": "djump"
+            }
+          ],
+          "ledgeGrab": 5,
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 15 },
+            { "on": "timeout", "to": "helpless" }
+          ]
+        }
+      ],
+      "air": "upSpecial"
+    },
+    "dspec": {
+      "name": "Stone Skin",
+      "phases": [
+        {
+          "name": "brace",
+          "frames": 5,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "skin" }
+          ]
+        },
+        {
+          "name": "skin",
+          "frames": 22,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" }
+          ],
+          "armorThreshold": 16,
+          "events": [
+            {
+              "at": 0,
+              "sfx": "counter",
+              "fx": [
+                { "type": "ring", "x": 0, "y": 38, "r": 24, "grow": 1, "life": 22, "color": "#b3c5ce" }
+              ]
+            }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "recover" }
+          ]
+        },
+        {
+          "name": "recover",
+          "frames": 17,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" }
+          ]
+        }
+      ]
+    },
+    "nspec": {
+      "name": "Seismic Pound",
+      "phases": [
+        {
+          "name": "windup",
+          "frames": 14,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" }
+          ],
+          "hover": true,
+          "transitions": [
+            { "on": "timeout", "to": "fall" }
+          ]
+        },
+        {
+          "name": "fall",
+          "frames": 65,
+          "hitboxes": [
+            { "start": 0, "end": 64, "x": 0, "y": 8, "r": 31, "damage": 12, "bkb": 6, "kbg": 0.118, "angle": -65 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" }
+          ],
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "y": -12 },
+              "sfx": "swing"
+            }
+          ],
+          "transitions": [
+            { "on": "grounded", "to": "impact" },
+            { "on": "land", "to": "impact" },
+            { "on": "timeout", "to": "helpless" }
+          ]
+        },
+        {
+          "name": "impact",
+          "frames": 32,
+          "hitboxes": [
+            { "start": 0, "end": 4, "x": 0, "y": 14, "r": 45, "damage": 11, "bkb": 6, "kbg": 0.1416, "angle": 65 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" }
+          ],
+          "events": [
+            {
+              "at": 0,
+              "spawn": "waveF",
+              "sfx": "smash",
+              "fx": [
+                { "type": "dust", "n": 16 },
+                { "type": "shake", "k": 6 }
+              ]
+            },
+            { "at": 0, "spawn": "waveB" }
+          ]
+        }
+      ]
+    }
+  },
+  "stats": {
+    "weight": 0.78,
+    "runSpeed": 4.2,
+    "runAccel": 0.7,
+    "jumpSpeed": 14.9,
+    "shortHopSpeed": 9,
+    "airJumpSpeed": 12.8,
+    "airJumps": 1,
+    "airSpeed": 3.5,
+    "airAccel": 0.32,
+    "gravity": 0.85,
+    "fallSpeed": 11.5,
+    "fastFallSpeed": 16
+  },
+  "hurtboxes": {
+    "default": { "x1": -22, "x2": 22, "y1": 0, "y2": 83 }
+  },
+  "style": {
+    "headRadius": 13,
+    "headRing": 5,
+    "torsoWidth": 11,
+    "frontLimbWidth": 9,
+    "backLimbWidth": 8,
+    "headFill": "#343d48"
+  },
+  "poses": {
+    "stonePunch": {
+      "head": [7, 70],
+      "shoulder": [4, 54],
+      "hip": [-5, 29],
+      "elbowF": [26, 48],
+      "handF": [53, 45],
+      "elbowB": [-21, 43],
+      "handB": [-27, 27],
+      "kneeF": [15, 16],
+      "footF": [28, 0],
+      "kneeB": [-17, 14],
+      "footB": [-24, 0]
+    },
+    "stoneLift": { "head": [0, 70], "elbowF": [24, 85], "handF": [7, 111], "elbowB": [-24, 85], "handB": [-7, 111] },
+    "stoneBrace": { "from": "crouch", "elbowF": [23, 36], "handF": [17, 61], "elbowB": [-23, 36], "handB": [-17, 61] },
+    "stoneDrop": { "from": "stoneBrace", "kneeF": [16, 23], "footF": [17, -7], "kneeB": [-16, 23], "footB": [-17, -7] }
+  },
+  "attachments": [
+    {
+      "id": "chest",
+      "joint": "shoulder",
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[-18, 4], [-13, 15], [13, 15], [20, 0], [13, -25], [-13, -25]],
+          "fill": "playerDark",
+          "stroke": "playerLight",
+          "width": 2
+        }
+      ]
+    },
+    {
+      "id": "stoneF",
+      "joint": "handF",
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[-11, -9], [-15, 4], [-7, 13], [9, 11], [14, -3], [6, -12]],
+          "fill": "playerDark",
+          "stroke": "playerLight",
+          "width": 2
+        }
+      ]
+    },
+    {
+      "id": "stoneB",
+      "joint": "handB",
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[-11, -9], [-15, 4], [-7, 13], [9, 11], [14, -3], [6, -12]],
+          "fill": "playerDark",
+          "stroke": "playerLight",
+          "width": 2
+        }
+      ]
+    },
+    {
+      "id": "brow",
+      "joint": "head",
+      "shapes": [
+        { "shape": "line", "from": [-12, 5], "to": [13, 5], "width": 5, "color": "playerLight" }
+      ]
+    }
+  ],
+  "projectiles": {
+    "waveF": {
+      "name": "Fault wave",
+      "spawn": [30, 10],
+      "vel": [5, 0],
+      "r": 16,
+      "life": 22,
+      "max": 2,
+      "hit": { "start": 6, "end": 10, "x": 0, "y": 0, "r": 16, "damage": 6, "bkb": 4, "kbg": 0.08, "angle": 55 },
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[-15, -8], [0, 15], [15, -8]],
+          "fill": "#8a9caa",
+          "stroke": "playerLight",
+          "width": 2
+        }
+      ]
+    },
+    "waveB": {
+      "name": "Fault wave",
+      "spawn": [-30, 10],
+      "vel": [-5, 0],
+      "r": 16,
+      "life": 22,
+      "max": 2,
+      "hit": { "start": 6, "end": 10, "x": 0, "y": 0, "r": 16, "damage": 6, "bkb": 4, "kbg": 0.08, "angle": 55 },
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[-15, -8], [0, 15], [15, -8]],
+          "fill": "#8a9caa",
+          "stroke": "playerLight",
+          "width": 2
+        }
+      ]
+    }
+  },
+  "ai": {
+    "reach": 85,
+    "counterChance": 0.18,
+    "specials": [
+      {
+        "minDistance": 50,
+        "maxDistance": 220,
+        "height": 65,
+        "chance": 0.13,
+        "grounded": true,
+        "noProjectile": false,
+        "down": false,
+        "hold": null
+      },
+      {
+        "minDistance": 15,
+        "maxDistance": 65,
+        "height": 55,
+        "chance": 0.08,
+        "grounded": true,
+        "noProjectile": false,
+        "down": true,
+        "hold": null
+      }
+    ]
+  }
+}

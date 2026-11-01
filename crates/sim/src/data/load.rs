@@ -554,6 +554,9 @@ fn check_move(
         for (i, h) in p.hitboxes.iter().enumerate() {
             check_hitbox(file, &format!("{pp}.hitboxes[{i}]"), h, true)?;
         }
+        if let Some(n) = p.armor_threshold {
+            nonnegative(file, &format!("{pp}.armorThreshold"), n)?;
+        }
         if let Some(n) = p.fall_cap {
             positive(file, &format!("{pp}.fallCap"), n)?;
         }

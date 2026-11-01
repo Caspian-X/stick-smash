@@ -158,6 +158,9 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     let g = &d.global;
     let ht = &g.hit_types;
     let grounded = w.fighters[v].ground;
+    let armored = w.fighters[v].state == State::Attack
+        && w.fighters[v].mov.is_some()
+        && moves::phase(d, &w.fighters[v]).armor_threshold.is_some_and(|n| b.damage <= n);
     release_grab(w, d, v);
     let label = label.unwrap_or_else(|| attack_label(d, &w.fighters[attacker]));
     let (avx, avy) = (w.fighters[attacker].vx, w.fighters[attacker].vy);
@@ -173,9 +176,11 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     };
     vic.flash = vic.lag.saturating_add(2);
     vic.hud_shake = 12;
-    vic.ff = false;
-    vic.up_b = false;
-    vic.ad_used = false;
+    if !armored {
+        vic.ff = false;
+        vic.up_b = false;
+        vic.ad_used = false;
+    }
     if !proj {
         w.fighters[attacker].lag = hl;
     }
@@ -184,6 +189,10 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     let (px, py) = point;
     let hx = (px + vic.x) / 2.;
     let hy = (py + vic.y - 40.) / 2.;
+    if armored {
+        w.fx.push(Fx::Sfx { name: "hit".into(), arg: Some(kb), x: Some(hx) });
+        return;
+    }
     if b.kind == HitType::Trip && grounded {
         vic.set_state(State::Knockdown);
         vic.vx = sgn * ht.trip.slide;

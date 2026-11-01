@@ -49,7 +49,9 @@ fn all_assets_load() {
     let (data, errors) = load(sources()).unwrap_or_else(|e| panic!("content failed to load:\n{}", fmt_errors(&e)));
     assert!(errors.is_empty(), "content errors:\n{}", fmt_errors(&errors));
     let ids: Vec<&str> = data.fighters.iter().map(|f| f.id.as_str()).collect();
-    assert_eq!(ids, ["brawler", "king", "swordfighter"]);
+    for id in ["brawler", "dancer", "golem", "king", "lancer", "swordfighter"] {
+        assert!(ids.contains(&id), "missing fighter {id}");
+    }
     let ids: Vec<&str> = data.stages.iter().map(|s| s.id.as_str()).collect();
     assert_eq!(ids, ["arena", "citadel", "foundry", "isles"]);
     assert!(data.stages.iter().all(|s| s.max_players() >= 8));
@@ -172,6 +174,10 @@ fn invalid_fighter_numbers_skip_package_with_path() {
     let file = "fighters/king/fighter.json";
     for (patch, path) in [
         (json!({"stats":{"runSpeed":-1}}), "stats.runSpeed"),
+        (
+            json!({"moves":{"jab":{"phases":[{"name":"hit","frames":5,"armorThreshold":-1}]}}}),
+            "moves.jab.phases[0].armorThreshold",
+        ),
         (json!({"stats":{"weight":0}}), "stats.weight"),
         (json!({"stats":{"gravity":0}}), "stats.gravity"),
         (json!({"stats":{"fallSpeed":-1}}), "stats.fallSpeed"),
