@@ -66,7 +66,7 @@
           "name": "main",
           "frames": 19,
           "hitboxes": [
-            { "x": 39, "y": 48, "r": 20, "damage": 5, "bkb": 5, "kbg": 0.11, "angle": 42, "start": 4, "end": 9 }
+            { "x": 39, "y": 48, "r": 20, "damage": 5, "bkb": 4, "kbg": 0.05, "angle": 42, "start": 4, "end": 9 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -117,7 +117,7 @@
           "name": "main",
           "frames": 29,
           "hitboxes": [
-            { "x": 57, "y": 46, "r": 28, "damage": 10, "bkb": 5, "kbg": 0.11, "angle": 42, "start": 8, "end": 13 }
+            { "x": 57, "y": 46, "r": 28, "damage": 10, "bkb": 5, "kbg": 0.12, "angle": 42, "start": 8, "end": 13 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -168,7 +168,7 @@
           "name": "main",
           "frames": 30,
           "hitboxes": [
-            { "x": 10, "y": 92, "r": 29, "damage": 8, "bkb": 5, "kbg": 0.11, "angle": 85, "start": 8, "end": 13 }
+            { "x": 10, "y": 92, "r": 29, "damage": 8, "bkb": 6, "kbg": 0.1, "angle": 85, "start": 8, "end": 13 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -219,7 +219,7 @@
           "name": "main",
           "frames": 26,
           "hitboxes": [
-            { "x": 47, "y": 16, "r": 22, "damage": 7, "bkb": 5, "kbg": 0.11, "angle": 42, "start": 6, "end": 11 }
+            { "x": 47, "y": 16, "r": 22, "damage": 7, "bkb": 5, "kbg": 0.08, "angle": 42, "start": 6, "end": 11 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -270,7 +270,7 @@
           "name": "main",
           "frames": 34,
           "hitboxes": [
-            { "x": 43, "y": 48, "r": 28, "damage": 9, "bkb": 5, "kbg": 0.11, "angle": 42, "start": 10, "end": 15 }
+            { "x": 43, "y": 48, "r": 28, "damage": 9, "bkb": 6, "kbg": 0.11, "angle": 42, "start": 10, "end": 15 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -319,15 +319,15 @@
       "phases": [
         {
           "name": "main",
-          "frames": 47,
+          "frames": 44,
           "hitboxes": [
-            { "x": 69, "y": 48, "r": 35, "damage": 17, "bkb": 8, "kbg": 0.17, "angle": 42, "start": 18, "end": 23 }
+            { "x": 69, "y": 48, "r": 35, "damage": 17, "bkb": 8, "kbg": 0.17, "angle": 42, "start": 15, "end": 20 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
-            { "at": 18, "sfx": "smash" },
+            { "at": 15, "sfx": "smash" },
             {
-              "at": 18,
+              "at": 15,
               "fx": [
                 { "type": "ring", "x": 0, "y": 48, "r": 12, "grow": 3, "life": 12, "color": "player" }
               ]
@@ -336,7 +336,7 @@
           "anim": [
             { "at": 0, "pose": "back" },
             {
-              "at": 17,
+              "at": 14,
               "pose": {
                 "head": [4, 62],
                 "elbowF": [13.248, 48.0],
@@ -350,7 +350,7 @@
               }
             },
             {
-              "at": 18,
+              "at": 15,
               "pose": {
                 "head": [4, 62],
                 "elbowF": [33.12, 48.0],
@@ -363,12 +363,12 @@
                 "footB": [-17, 0]
               }
             },
-            { "at": 23, "pose": "stand", "lerp": true }
+            { "at": 20, "pose": "stand", "lerp": true }
           ],
-          "charge": { "frame": 13 },
+          "charge": { "frame": 10 },
           "attach": {
-            "staff": { "angle": [[0, 120], [17, 110], [20, 0]] },
-            "rune": { "angle": [[0, 120], [17, 110], [20, 0]], "show": [0, 17] }
+            "staff": { "angle": [[0, 120], [14, 110], [17, 0]] },
+            "rune": { "angle": [[0, 120], [14, 110], [17, 0]], "show": [0, 14] }
           }
         }
       ]
@@ -378,15 +378,15 @@
       "phases": [
         {
           "name": "main",
-          "frames": 45,
+          "frames": 43,
           "hitboxes": [
-            { "x": 0, "y": 100, "r": 40, "damage": 17, "bkb": 8, "kbg": 0.17, "angle": 85, "start": 17, "end": 22 }
+            { "x": 0, "y": 100, "r": 40, "damage": 17, "bkb": 8, "kbg": 0.17, "angle": 85, "start": 15, "end": 20 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
-            { "at": 17, "sfx": "smash" },
+            { "at": 15, "sfx": "smash" },
             {
-              "at": 17,
+              "at": 15,
               "fx": [
                 { "type": "ring", "x": 0, "y": 100, "r": 12, "grow": 3, "life": 12, "color": "player" }
               ]
@@ -395,7 +395,7 @@
           "anim": [
             { "at": 0, "pose": "back" },
             {
-              "at": 16,
+              "at": 14,
               "pose": {
                 "head": [4, 62],
                 "elbowF": [0.0, 68.8],
@@ -409,7 +409,7 @@
               }
             },
             {
-              "at": 17,
+              "at": 15,
               "pose": {
                 "head": [4, 62],
                 "elbowF": [0.0, 68.8],
@@ -422,12 +422,12 @@
                 "footB": [-17, 0]
               }
             },
-            { "at": 22, "pose": "stand", "lerp": true }
+            { "at": 20, "pose": "stand", "lerp": true }
           ],
-          "charge": { "frame": 12 },
+          "charge": { "frame": 10 },
           "attach": {
-            "staff": { "angle": [[0, 120], [16, 110], [19, 90]] },
-            "rune": { "angle": [[0, 120], [16, 110], [19, 90]], "show": [0, 16] }
+            "staff": { "angle": [[0, 120], [14, 110], [17, 90]] },
+            "rune": { "angle": [[0, 120], [14, 110], [17, 90]], "show": [0, 14] }
           }
         }
       ]
@@ -437,7 +437,7 @@
       "phases": [
         {
           "name": "main",
-          "frames": 43,
+          "frames": 41,
           "hitboxes": [
             {
               "x": 48,
@@ -447,8 +447,8 @@
               "bkb": 7,
               "kbg": 0.16,
               "angle": 40,
-              "start": 16,
-              "end": 21,
+              "start": 14,
+              "end": 19,
               "dir": "away"
             },
             {
@@ -459,16 +459,16 @@
               "bkb": 7,
               "kbg": 0.16,
               "angle": 40,
-              "start": 16,
-              "end": 21,
+              "start": 14,
+              "end": 19,
               "dir": "away"
             }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
-            { "at": 16, "sfx": "smash" },
+            { "at": 14, "sfx": "smash" },
             {
-              "at": 16,
+              "at": 14,
               "fx": [
                 { "type": "ring", "x": 0, "y": 16, "r": 12, "grow": 3, "life": 12, "color": "player" }
               ]
@@ -477,7 +477,7 @@
           "anim": [
             { "at": 0, "pose": "back" },
             {
-              "at": 15,
+              "at": 13,
               "pose": {
                 "head": [4, 62],
                 "elbowF": [9.216000000000001, 35.2],
@@ -491,7 +491,7 @@
               }
             },
             {
-              "at": 16,
+              "at": 14,
               "pose": {
                 "head": [4, 62],
                 "elbowF": [23.04, 35.2],
@@ -504,12 +504,12 @@
                 "footB": [-17, 0]
               }
             },
-            { "at": 21, "pose": "stand", "lerp": true }
+            { "at": 19, "pose": "stand", "lerp": true }
           ],
-          "charge": { "frame": 11 },
+          "charge": { "frame": 9 },
           "attach": {
-            "staff": { "angle": [[0, 120], [15, 110], [18, 0]] },
-            "rune": { "angle": [[0, 120], [15, 110], [18, 0]], "show": [0, 15] }
+            "staff": { "angle": [[0, 120], [13, 110], [16, 0]] },
+            "rune": { "angle": [[0, 120], [13, 110], [16, 0]], "show": [0, 13] }
           }
         }
       ]
@@ -527,8 +527,8 @@
               "y": 43,
               "r": 48,
               "damage": 8,
-              "bkb": 5,
-              "kbg": 0.11,
+              "bkb": 4,
+              "kbg": 0.085,
               "angle": 42,
               "start": 7,
               "end": 14,
@@ -572,7 +572,7 @@
             { "at": 12, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 10 }
+            { "on": "land", "to": "landing", "lag": 7 }
           ],
           "attach": {
             "staff": { "angle": [[0, 120], [6, 110], [9, 0]] }
@@ -588,7 +588,7 @@
           "name": "main",
           "frames": 34,
           "hitboxes": [
-            { "x": 51, "y": 48, "r": 29, "damage": 10, "bkb": 5, "kbg": 0.11, "angle": 42, "start": 10, "end": 17 }
+            { "x": 51, "y": 48, "r": 29, "damage": 10, "bkb": 5, "kbg": 0.12, "angle": 42, "start": 10, "end": 17 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -648,8 +648,8 @@
               "y": 45,
               "r": 27,
               "damage": 11,
-              "bkb": 5,
-              "kbg": 0.11,
+              "bkb": 6,
+              "kbg": 0.13,
               "angle": 42,
               "start": 10,
               "end": 17,
@@ -709,7 +709,7 @@
           "name": "main",
           "frames": 29,
           "hitboxes": [
-            { "x": 0, "y": 99, "r": 28, "damage": 9, "bkb": 5, "kbg": 0.11, "angle": 85, "start": 8, "end": 15 }
+            { "x": 0, "y": 99, "r": 28, "damage": 9, "bkb": 5, "kbg": 0.1, "angle": 85, "start": 8, "end": 15 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -748,7 +748,7 @@
             { "at": 13, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 10 }
+            { "on": "land", "to": "landing", "lag": 8 }
           ],
           "attach": {
             "staff": { "angle": [[0, 120], [7, 110], [10, 90]] }
@@ -769,8 +769,8 @@
               "y": -2,
               "r": 27,
               "damage": 10,
-              "bkb": 5,
-              "kbg": 0.11,
+              "bkb": 4,
+              "kbg": 0.1,
               "angle": -75,
               "start": 11,
               "end": 18,
@@ -814,7 +814,7 @@
             { "at": 16, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 10 }
+            { "on": "land", "to": "landing", "lag": 14 }
           ],
           "attach": {
             "staff": { "angle": [[0, 120], [10, 110], [13, 0]] }
@@ -890,7 +890,7 @@
       "phases": [
         {
           "name": "startup",
-          "frames": 4,
+          "frames": 6,
           "hover": true,
           "events": [
             {
@@ -907,15 +907,15 @@
         },
         {
           "name": "rise",
-          "frames": 38,
-          "ledgeGrab": 2,
+          "frames": 24,
+          "ledgeGrab": 0,
           "hitboxes": [
-            { "x": 0, "y": 48, "r": 25, "damage": 5, "bkb": 5, "kbg": 0.06, "angle": 85, "start": 0, "end": 10 }
+            { "x": 0, "y": 48, "r": 23, "damage": 4, "bkb": 5, "kbg": 0.06, "angle": 85, "start": 0, "end": 6 }
           ],
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 2.5, "y": 17 },
+              "setVel": { "x": 0, "y": 9 },
               "leaveGround": true,
               "sfx": "djump"
             },
@@ -926,11 +926,16 @@
               "fx": [
                 { "type": "part", "x": -8, "y": 16, "vx": 0, "vy": -3, "life": 14, "color": "player", "size": 5 }
               ]
+            },
+            {
+              "from": 1,
+              "to": 23,
+              "setVel": { "y": 9 }
             }
           ],
           "transitions": [
             { "on": "land", "to": "landing", "lag": 12, "from": 3 },
-            { "on": "timeout", "to": "helpless" }
+            { "on": "timeout", "to": "hover" }
           ],
           "anim": [
             { "at": 0, "pose": "lift" }
@@ -938,7 +943,33 @@
           "attach": {
             "staff": { "angle": [[0, 85]] }
           },
-          "fallCap": 3
+          "fallCap": 3,
+          "airAccelMult": 1.8
+        },
+        {
+          "name": "hover",
+          "frames": 20,
+          "hover": true,
+          "airAccelMult": 1.8,
+          "ledgeGrab": 0,
+          "anim": [
+            { "at": 0, "pose": "airTuck" }
+          ],
+          "attach": {
+            "staff": { "angle": [[0, 90]] }
+          },
+          "events": [
+            {
+              "every": 4,
+              "fx": [
+                { "type": "ring", "x": 0, "y": 10, "r": 16, "grow": 1, "life": 12, "color": "player" }
+              ]
+            }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 10 },
+            { "on": "timeout", "to": "helpless" }
+          ]
         }
       ]
     },

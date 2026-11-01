@@ -253,7 +253,8 @@
       "upAttackDistance": 60,
       "downAttackHeight": 50,
       "downAttackDistance": 40,
-      "projectileTargetHeight": 40
+      "projectileTargetHeight": 40,
+      "surfaceChaseTicks": 90
     }
   },
   "render": {

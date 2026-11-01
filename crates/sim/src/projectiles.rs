@@ -29,6 +29,8 @@ pub fn spawn(w: &mut World, d: &GameData, i: usize, f: &Fighter, id: &str) {
         hit,
         bounces: 0,
         cooldown: 0,
+        age: 0,
+        surf: None,
     });
     if let Some(s) = &p.spawn_sfx {
         w.sfx(s.clone());
@@ -55,6 +57,7 @@ pub fn bat(w: &mut World, d: &GameData, a: usize, bx: &[ActiveBox]) {
         p.vy = -bat.vy;
         p.life = bat.life as i32;
         p.bounces = 0;
+        p.surf = None;
         p.cooldown = bat.cooldown;
         w.fighters[a].lag = w.fighters[a].lag.max(bat.hitlag);
         let (x, y) = (p.x, p.y);
@@ -82,6 +85,18 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
         if def.explosion.is_some() && p.life <= 0 {
             continue;
         }
+        if let Some(id) = p.surf {
+            let (x1, x2, y) = crate::physics::surface(d, w, id);
+            if let Some(platform) = id.checked_sub(s.blocks.len()).and_then(|i| s.platforms.get(i)) {
+                let (old_x, _, old_y) = platform.position(w.frame.saturating_sub(1) as f64);
+                p.x += x1 - old_x;
+                p.y += y - old_y;
+            }
+            if p.x < x1 || p.x > x2 || p.vx != 0. || p.vy != 0. {
+                p.surf = None;
+            }
+        }
+        p.age = p.age.saturating_add(1);
         p.x += p.vx;
         p.life -= 1;
         p.cooldown = p.cooldown.saturating_sub(1);
@@ -103,8 +118,12 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                     p.y = y - p.r;
                     p.vy = -b.min_speed.max(p.vy * b.restitution);
                     p.vx *= b.friction;
-                    p.bounces += 1;
+                    if p.vx == 0. && p.vy == 0. {
+                        p.surf = Some(si);
+                    }
+                    // A settled gadget is still supported; gravity contact is not another bounce.
                     if impact {
+                        p.bounces += 1;
                         w.dust(p.x, y, 3);
                         if let Some(s) = &b.sfx {
                             w.sfx(s.clone());
@@ -137,7 +156,7 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
         }
         let detonate = def.explosion.as_ref().is_some_and(|e| {
             p.life <= 0
-                || def.life.saturating_sub(p.life.max(0) as u32) >= e.arm_ticks
+                || p.age >= e.arm_ticks
                     && e.proximity.is_some_and(|r| {
                         w.fighters.iter().enumerate().any(|(v, f)| {
                             w.opponents(p.owner, v)
@@ -164,8 +183,13 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
             {
                 continue;
             }
-            if let Some(c) = combat::countering(d, &w.fighters[v]).filter(|_| !detonate) {
+            if detonate && combat::countering(d, &w.fighters[v]).is_some() {
+                combat::counter(w, d, v, None, 0.);
+                continue;
+            }
+            if let Some(c) = combat::countering(d, &w.fighters[v]) {
                 p.owner = v;
+                p.surf = None;
                 p.vx = -p.vx * c.reflect_speed;
                 p.life = c.reflect_life as i32;
                 if let Some(vy) = def.reflect_vy {
@@ -174,6 +198,18 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                 combat::counter(w, d, v, None, 0.);
                 continue;
             }
+            let direction = if detonate {
+                let away = sign(w.fighters[v].x - p.x);
+                if away != 0. {
+                    away
+                } else if p.vx != 0. {
+                    sign(p.vx)
+                } else {
+                    w.fighters[p.owner].face
+                }
+            } else {
+                sign(p.vx)
+            };
             let label = Some(def.name.clone());
             if w.fighters[v].state == State::Shield {
                 combat::shield_hit(
@@ -181,13 +217,7 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                     d,
                     v,
                     &p.hit,
-                    combat::HitSource {
-                        attacker: p.owner,
-                        direction: sign(p.vx),
-                        point: (p.x, p.y),
-                        projectile: true,
-                        label,
-                    },
+                    combat::HitSource { attacker: p.owner, direction, point: (p.x, p.y), projectile: true, label },
                 );
             } else {
                 combat::apply_hit(
@@ -195,13 +225,7 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                     d,
                     v,
                     &p.hit,
-                    combat::HitSource {
-                        attacker: p.owner,
-                        direction: sign(p.vx),
-                        point: (p.x, p.y),
-                        projectile: true,
-                        label,
-                    },
+                    combat::HitSource { attacker: p.owner, direction, point: (p.x, p.y), projectile: true, label },
                 );
             }
             if !detonate {

@@ -332,6 +332,12 @@ fn ranged_roster_cpu_matchups() {
                     let slot = (seed % 2) as usize;
                     let fighters = if slot == 0 { [id, opponent] } else { [opponent, id] };
                     let (st, w) = cpu_match(&d, &s.id, &fighters, seed, 3);
+                    assert!(
+                        w.over,
+                        "{} {id} vs {opponent} seed {seed}: duel reached tick cap {:?}",
+                        s.id,
+                        w.fighters.iter().map(|f| (f.x, f.y, f.surf, f.state, &f.ai)).collect::<Vec<_>>()
+                    );
                     draws += usize::from(!w.over);
                     let won = usize::from(w.fighters[slot].state == State::Win);
                     pair_wins += won;
@@ -370,4 +376,81 @@ fn ranged_roster_four_player_matches_finish() {
         println!("{} ranged 4p: winners archer/wizard/tinker/brawler {wins:?}, {kos} KOs, {self_kos} self-KOs", s.id);
         assert!(self_kos * 5 <= kos, "{}: too many ranged roster self-destructs", s.id);
     }
+}
+
+#[test]
+fn isles_duels_leave_separate_platforms_and_finish() {
+    let d = common::data();
+    for seed in 1..=4 {
+        let players = ["brawler", "king"].map(|id| PlayerConfig { cpu: Some(2), ..PlayerConfig::human(id) }).to_vec();
+        let mut w = World::new(MatchConfig { stage: "isles".into(), players, seed, ..Default::default() }, &d).unwrap();
+        w.count = 0;
+        let blocks = d.stages[w.stage].blocks.len();
+        for (i, f) in w.fighters.iter_mut().enumerate() {
+            let surface = blocks + i;
+            let (x1, x2, y) = d.stages[w.stage].platforms[i].position(0.);
+            f.x = (x1 + x2) / 2.;
+            f.y = y;
+            f.ground = true;
+            f.surf = Some(surface);
+            f.set_state(State::Idle);
+            f.inv = 0;
+            f.blink = 0;
+        }
+        let mut crossed = false;
+        for tick in 0..60_000 {
+            step_world(&mut w, &d, &[]);
+            w.fx.clear();
+            w.hits.clear();
+            crossed |= w.fighters.iter().enumerate().any(|(i, f)| f.surf.is_some_and(|id| id != blocks + i));
+            if w.over {
+                break;
+            }
+            assert!(
+                tick + 1 < 60_000,
+                "Isles separated Brawler/King seed {seed} stalled {:?}",
+                w.fighters.iter().map(|f| (f.x, f.y, f.surf, f.state, &f.ai)).collect::<Vec<_>>()
+            );
+        }
+        assert!(crossed);
+    }
+}
+
+#[test]
+fn blocked_surface_pursuit_waits_for_timeout_then_jumps_at_the_edge() {
+    let mut d = common::data();
+    d.global.ai.thresholds.surface_chase_ticks = 3;
+    d.global.ai.aggression = [0.; 3];
+    let mut w = World::new(
+        MatchConfig {
+            stage: "isles".into(),
+            training: true,
+            players: vec![PlayerConfig::human("brawler"), PlayerConfig::human("king")],
+            ..Default::default()
+        },
+        &d,
+    )
+    .unwrap();
+    let blocks = d.stages[w.stage].blocks.len();
+    for (i, f) in w.fighters.iter_mut().enumerate() {
+        f.x = if i == 0 { 400. } else { 880. };
+        f.y = 430.;
+        f.ground = true;
+        f.surf = Some(blocks + i);
+        f.ai.pursuit_x = f.x;
+    }
+    for _ in 0..2 {
+        sim::ai::ai_input(&mut w, &d, 0, 2);
+        assert!(!w.fighters[0].ai.pursuit);
+    }
+    let mut replay = w.clone();
+    assert_eq!(sim::ai::ai_input(&mut w, &d, 0, 2), sim::ai::ai_input(&mut replay, &d, 0, 2));
+    assert_eq!(w, replay);
+    assert!(w.fighters[0].ai.pursuit);
+    w.fighters[0].x = 480.;
+    let inp = sim::ai::ai_input(&mut w, &d, 0, 2);
+    assert!(inp.right && inp.jump && inp.jump_held);
+    w.fighters[0].surf = w.fighters[1].surf;
+    sim::ai::ai_input(&mut w, &d, 0, 2);
+    assert!(!w.fighters[0].ai.pursuit);
 }

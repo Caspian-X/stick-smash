@@ -158,6 +158,12 @@ pub struct AiState {
     pub up_t: f64,
     pub hold_t: f64,
     pub pum: f64,
+    #[serde(default)]
+    pub pursuit_ticks: u32,
+    #[serde(default)]
+    pub pursuit_x: f64,
+    #[serde(default)]
+    pub pursuit: bool,
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Fighter {
@@ -233,6 +239,11 @@ pub struct Projectile {
     pub hit: Hitbox,
     pub bounces: u32,
     pub cooldown: u32,
+    /// Elapsed ticks, independent of fuse resets and bounce limits.
+    #[serde(default)]
+    pub age: u32,
+    #[serde(default)]
+    pub surf: Option<usize>,
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Trace {

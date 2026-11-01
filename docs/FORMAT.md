@@ -113,9 +113,14 @@ Optional `explosion: { "armTicks": 30, "proximity": 42, "radius": 52, "sfx": "qu
 suppresses contact hits. After `armTicks` elapsed ticks, an opposing hittable hurtbox within `proximity`
 triggers a blast; omit proximity for a fuse-only bomb. Lifetime expiry always detonates. The blast uses `hit`
 and `radius`, hits every eligible opponent once (shields still work), emits projectile-local FX/SFX and removes
-the projectile. Blasts cannot be reflected; unexploded gadgets can clash with opposing projectiles. `max`
+the projectile. Blast knockback and shield pushback point away from the blast center, with travel direction
+then owner facing as tie-breakers. Active counters trigger without reflecting the blast or taking its damage;
+other victims remain eligible. Unexploded gadgets can clash with opposing projectiles. `max`
 also limits planted gadgets; a second spawn at the limit fails without replacing the first. Bounce physics
-can settle a mine with zero restitution, minimum speed and friction. No additional rollback state is needed.
+can settle a mine with zero restitution, minimum speed and friction. Settled contacts do not count as bounces;
+a resting projectile retains its supporting surface and rides its motion delta. A projectile's rollback `age`
+counts elapsed ticks independently of life changes from batting, reflection and bounce fizzling. Proximity uses
+this age; fuse expiry still detonates even before arming.
 
 ## Visuals
 
@@ -173,6 +178,14 @@ attack attempt probability, `mash` and `tech` are per-tick chances, `shieldRespo
 and timing for the shared decision tree. Probability cutoffs in a branch are cumulative (e.g. ledge jump,
 attack, shield, then climb); wait/hold ranges sample a uniform value then floor it. Heights/distances are pixels,
 velocities pixels/tick, durations ticks. These fields preserve the TS branch order and conditional RNG calls.
+
+`global.ai.thresholds.surfaceChaseTicks` is the no-progress timeout for chasing an opponent on another
+surface outside attack reach. After that many blocked grounded ticks the CPU commits to the target's surface,
+walks toward its departure edge and jumps, using the normal air-jump / recovery logic toward the destination.
+Horizontal progress resets the timer. Reaching the target surface or attack range ends the commitment.
+When enabled, movement targets and departure edges use actual support surfaces, including platforms,
+rather than the source block bounds. Zero keeps reference routing; TS trace tests use zero. Pursuit state
+is part of the rollback snapshot.
 
 Each fighter's `ai` contains:
 

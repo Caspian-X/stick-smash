@@ -6,7 +6,7 @@
   "tagline": "A solution with a short fuse",
   "blurb": "A gadgeteer with bouncing fuse bombs, one proximity mine, a wind-up wrench and a sputtering jetpack. Build space before swinging.",
   "stats": {
-    "weight": 0.9,
+    "weight": 0.95,
     "runSpeed": 5.2,
     "airSpeed": 4.3,
     "gravity": 0.72,
@@ -25,7 +25,6 @@
         "grounded": false,
         "noProjectile": true,
         "down": false,
-        "hold": [0, 8],
         "neutral": true
       },
       {
@@ -73,7 +72,7 @@
           "name": "main",
           "frames": 17,
           "hitboxes": [
-            { "x": 34, "y": 44, "r": 19, "damage": 4, "bkb": 5, "kbg": 0.11, "angle": 40, "start": 3, "end": 8 }
+            { "x": 34, "y": 44, "r": 19, "damage": 4, "bkb": 4, "kbg": 0.05, "angle": 40, "start": 3, "end": 8 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -124,7 +123,7 @@
           "name": "main",
           "frames": 28,
           "hitboxes": [
-            { "x": 49, "y": 43, "r": 23, "damage": 10, "bkb": 5, "kbg": 0.11, "angle": 40, "start": 8, "end": 13 }
+            { "x": 49, "y": 43, "r": 23, "damage": 10, "bkb": 5, "kbg": 0.12, "angle": 40, "start": 8, "end": 13 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -175,7 +174,7 @@
           "name": "main",
           "frames": 27,
           "hitboxes": [
-            { "x": 9, "y": 88, "r": 26, "damage": 8, "bkb": 5, "kbg": 0.11, "angle": 82, "start": 7, "end": 12 }
+            { "x": 9, "y": 88, "r": 26, "damage": 8, "bkb": 6, "kbg": 0.1, "angle": 82, "start": 7, "end": 12 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -226,7 +225,7 @@
           "name": "main",
           "frames": 23,
           "hitboxes": [
-            { "x": 40, "y": 14, "r": 22, "damage": 6, "bkb": 5, "kbg": 0.11, "angle": 40, "start": 5, "end": 10 }
+            { "x": 40, "y": 14, "r": 22, "damage": 6, "bkb": 5, "kbg": 0.08, "angle": 40, "start": 5, "end": 10 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -277,7 +276,7 @@
           "name": "main",
           "frames": 31,
           "hitboxes": [
-            { "x": 30, "y": 43, "r": 28, "damage": 9, "bkb": 5, "kbg": 0.11, "angle": 40, "start": 8, "end": 13 }
+            { "x": 30, "y": 43, "r": 28, "damage": 9, "bkb": 6, "kbg": 0.11, "angle": 40, "start": 8, "end": 13 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -513,8 +512,8 @@
               "y": 40,
               "r": 42,
               "damage": 7,
-              "bkb": 5,
-              "kbg": 0.11,
+              "bkb": 4,
+              "kbg": 0.085,
               "angle": 40,
               "start": 5,
               "end": 12,
@@ -558,7 +557,7 @@
             { "at": 10, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 10 }
+            { "on": "land", "to": "landing", "lag": 7 }
           ],
           "attach": {
             "wrench": { "angle": [[0, 120], [4, 110], [7, 0]] }
@@ -574,7 +573,7 @@
           "name": "main",
           "frames": 33,
           "hitboxes": [
-            { "x": 48, "y": 44, "r": 26, "damage": 12, "bkb": 5, "kbg": 0.11, "angle": 40, "start": 10, "end": 17 }
+            { "x": 48, "y": 44, "r": 26, "damage": 12, "bkb": 5, "kbg": 0.12, "angle": 40, "start": 10, "end": 17 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -634,8 +633,8 @@
               "y": 39,
               "r": 26,
               "damage": 11,
-              "bkb": 5,
-              "kbg": 0.11,
+              "bkb": 6,
+              "kbg": 0.13,
               "angle": 40,
               "start": 7,
               "end": 14,
@@ -695,7 +694,7 @@
           "name": "main",
           "frames": 27,
           "hitboxes": [
-            { "x": 4, "y": 91, "r": 26, "damage": 8, "bkb": 5, "kbg": 0.11, "angle": 82, "start": 7, "end": 14 }
+            { "x": 4, "y": 91, "r": 26, "damage": 8, "bkb": 5, "kbg": 0.1, "angle": 82, "start": 7, "end": 14 }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -734,7 +733,7 @@
             { "at": 12, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 10 }
+            { "on": "land", "to": "landing", "lag": 8 }
           ],
           "attach": {
             "wrench": { "angle": [[0, 120], [6, 110], [9, 90]] }
@@ -755,8 +754,8 @@
               "y": 0,
               "r": 25,
               "damage": 10,
-              "bkb": 5,
-              "kbg": 0.11,
+              "bkb": 4,
+              "kbg": 0.1,
               "angle": -75,
               "start": 12,
               "end": 19,
@@ -800,7 +799,7 @@
             { "at": 17, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 10 }
+            { "on": "land", "to": "landing", "lag": 14 }
           ],
           "attach": {
             "wrench": { "angle": [[0, 120], [11, 110], [14, 0]] }
@@ -884,7 +883,7 @@
       "phases": [
         {
           "name": "startup",
-          "frames": 4,
+          "frames": 2,
           "hover": true,
           "events": [
             {
@@ -901,15 +900,15 @@
         },
         {
           "name": "rise",
-          "frames": 38,
+          "frames": 12,
           "ledgeGrab": 2,
           "hitboxes": [
-            { "x": 0, "y": 48, "r": 25, "damage": 5, "bkb": 5, "kbg": 0.06, "angle": 85, "start": 0, "end": 10 }
+            { "x": 0, "y": 48, "r": 25, "damage": 7, "bkb": 6, "kbg": 0.08, "angle": 85, "start": 0, "end": 7 }
           ],
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 2.5, "y": 19 },
+              "setVel": { "x": 4.5, "y": 22 },
               "leaveGround": true,
               "sfx": "djump"
             },
@@ -924,15 +923,32 @@
           ],
           "transitions": [
             { "on": "land", "to": "landing", "lag": 12, "from": 3 },
-            { "on": "timeout", "to": "helpless" }
+            { "on": "timeout", "to": "coast" }
           ],
           "anim": [
-            { "at": 0, "pose": "lift" }
+            {
+              "at": 0,
+              "pose": { "from": "lift", "rot": -15 }
+            }
           ],
           "attach": {
             "flame": { "show": [0, 24] },
             "wrench": { "angle": [[0, 20]] }
-          }
+          },
+          "airAccelMult": 0.6
+        },
+        {
+          "name": "coast",
+          "frames": 24,
+          "fallCap": 8,
+          "ledgeGrab": 0,
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 14 },
+            { "on": "timeout", "to": "helpless" }
+          ]
         }
       ]
     },
@@ -961,7 +977,7 @@
       "spawn": [30, 48],
       "vel": [5.5, 6],
       "r": 10,
-      "life": 75,
+      "life": 60,
       "max": 2,
       "hit": { "x": 0, "y": 0, "r": 10, "damage": 11, "bkb": 6, "kbg": 0.1, "angle": 65, "start": 0, "end": 0 },
       "spawnSfx": "shoot",
@@ -983,13 +999,14 @@
       },
       "explosion": {
         "radius": 64,
-        "armTicks": 0,
+        "armTicks": 10,
         "sfx": "quake",
         "fx": [
           { "type": "ring", "x": 0, "y": 0, "r": 10, "grow": 5, "life": 12, "color": "#ffc36b" },
           { "type": "burst", "x": 0, "y": 0, "color": "#ffe6a0", "n": 16, "speed": 5, "life": 17, "size": 4 },
           { "type": "shake", "k": 3 }
-        ]
+        ],
+        "proximity": 24
       }
     },
     "mine": {
