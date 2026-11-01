@@ -36,6 +36,8 @@ pub struct SelectLook {
     /// ratio); below `sizeSmall` reads "Small", above `sizeLarge` "Large", otherwise "Medium".
     pub size_small: f64,
     pub size_large: f64,
+    /// Stage thumbnails show the play area scaled by `[width, height]` (then widened to the tile's aspect).
+    pub thumb_crop: [f64; 2],
 }
 
 /// Stage select vote roulette: a highlight hops over the voted stages, slowing down, and lands on the winner.
@@ -50,6 +52,10 @@ pub struct Roulette {
     pub curve: f32,
     /// Seconds the landed stage shows before the match starts.
     pub pause: f32,
+    /// The landed tile's scale, plus a bounce of `landBounce` (fading out over the pause) bouncing `landWobble` radians over the pause.
+    pub land_scale: f32,
+    pub land_bounce: f32,
+    pub land_wobble: f32,
 }
 
 /// In-match HUD and match-flow presentation (the game crate reads this; the sim never does).

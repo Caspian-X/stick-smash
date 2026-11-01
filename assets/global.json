@@ -340,9 +340,18 @@
       "rosterColor": { "main": "#d9dcf5", "dark": "#8a8fb8", "light": "#ffffff" },
       "flipSecs": 0.22,
       "bannerSecs": 0.35,
-      "roulette": { "secs": 2.2, "hops": 14, "curve": 2.4, "pause": 1.1 },
+      "roulette": {
+        "secs": 2.2,
+        "hops": 14,
+        "curve": 2.4,
+        "pause": 1.1,
+        "landScale": 1.1,
+        "landBounce": 0.16,
+        "landWobble": 16
+      },
       "sizeSmall": 0.85,
-      "sizeLarge": 1.25
+      "sizeLarge": 1.25,
+      "thumbCrop": [1.3, 1.5]
     }
   },
   "audio": {

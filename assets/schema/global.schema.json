@@ -1495,9 +1495,25 @@
           "format": "double",
           "description": "Stage size labels: play area relative to `camera.referencePlayWidth` / `referencePlayHeight` (the larger\nratio); below `sizeSmall` reads \"Small\", above `sizeLarge` \"Large\", otherwise \"Medium\"."
         },
-        "sizeLarge": { "type": "number", "format": "double" }
+        "sizeLarge": { "type": "number", "format": "double" },
+        "thumbCrop": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Stage thumbnails show the play area scaled by `[width, height]` (then widened to the tile's aspect)."
+        }
       },
-      "required": ["flourish", "rosterColor", "flipSecs", "bannerSecs", "roulette", "sizeSmall", "sizeLarge"],
+      "required": [
+        "flourish",
+        "rosterColor",
+        "flipSecs",
+        "bannerSecs",
+        "roulette",
+        "sizeSmall",
+        "sizeLarge",
+        "thumbCrop"
+      ],
       "description": "Character select presentation (the game crate reads this; the sim never does)."
     },
     "Roulette": {
@@ -1520,9 +1536,16 @@
           "type": "number",
           "format": "float",
           "description": "Seconds the landed stage shows before the match starts."
-        }
+        },
+        "landScale": {
+          "type": "number",
+          "format": "float",
+          "description": "The landed tile's scale, plus a bounce of `landBounce` (fading out over the pause) bouncing `landWobble` radians over the pause."
+        },
+        "landBounce": { "type": "number", "format": "float" },
+        "landWobble": { "type": "number", "format": "float" }
       },
-      "required": ["secs", "hops", "curve", "pause"],
+      "required": ["secs", "hops", "curve", "pause", "landScale", "landBounce", "landWobble"],
       "description": "Stage select vote roulette: a highlight hops over the voted stages, slowing down, and lands on the winner."
     },
     "Audio": {

@@ -795,7 +795,7 @@ pub fn draw(
                         n.padding = UiRect::all(Val::Px(8.));
                         n.border_radius = BorderRadius::all(Val::Px(10.));
                     }),
-                    BackgroundColor(NIGHT),
+                    BackgroundColor(INK.with_alpha(1.)),
                 ))
                 .with_children(|p| {
                     // Stocks and the stage are chosen on stage select in versus.
@@ -816,8 +816,8 @@ pub fn draw(
             });
             let bottom = roster(p, f, d, s, &portraits);
             if s.ready() {
-                // Centered in the showcase strip between the roster and the cards.
-                ready_banner(p, f, (bottom + 545.) / 2. - 40.);
+                // Just under the roster, above the fighters' flourishes.
+                ready_banner(p, f, bottom + 6.);
             }
             // Bottom: cards and hints.
             p.spawn((

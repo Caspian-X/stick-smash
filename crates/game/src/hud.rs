@@ -548,13 +548,13 @@ pub fn safe_area(
             let height = panels.iter().map(|n| n.size().y).fold(0., f32::max);
             (f64::from((height + margin) / h).clamp(0., 0.5), 0.)
         }
-        // Character select: the showcase sits in the strip between the roster and the cards. The fighters stand low
-        // on screen anyway, so a short roster doesn't push them; a tall one only by what it overlaps.
+        // Character select: the showcase is framed in the gap between the roster and the cards (the camera's padding
+        // keeps whole fighters inside it).
         Screen::Select => edges.iter().fold((0f64, 0f64), |(b, t), (n, tf, e)| {
             let y = tf.affine().translation.y;
             match e {
                 Safe::Bottom => (b.max(f64::from((h - (y - n.size().y / 2.)) / h)), t),
-                Safe::Top => (b, t.max(f64::from((y + n.size().y / 2.) / h) - 0.3).max(0.)),
+                Safe::Top => (b, t.max(f64::from((y + n.size().y / 2.) / h))),
             }
         }),
         _ => (0., 0.),

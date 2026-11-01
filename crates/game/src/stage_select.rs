@@ -118,8 +118,8 @@ impl Vote {
         let cols = GRID.layout(n).cols;
         let fit = fitting(d, sel.slots.len());
         let votable = |t: usize| fit.contains(&t) || t == d.stages.len() && !fit.is_empty();
-        self.voters.retain(|v| devs.map.contains_key(&v.dev));
-        if self.voters.is_empty() {
+        // A dropped controller sends everyone back to character select, which holds its slot for reconnecting.
+        if self.voters.iter().any(|v| !devs.map.contains_key(&v.dev)) {
             return (false, true);
         }
         if !self.hops.is_empty() {
@@ -222,7 +222,11 @@ pub fn update(
     let (mut v, mut s) = (vote.clone(), sel.clone());
     click(&mut v, &mut devs, &q, &mouse);
     let (spin, leave) = v.frame(&mut s, &devs, &spots, d);
+    // Successive votes keep drawing from the same sequence.
+    s.roll = v.roll;
     if leave {
+        *sel = s;
+        clock.0 = None;
         commands.insert_resource(FromStages);
         next.set(Screen::Select);
         return;
@@ -306,7 +310,7 @@ pub fn animate(
     let land = if v.hops.len() > 1 { r.secs } else { 0. };
     let k = ((t - land) / r.pause.max(0.01)).clamp(0., 1.);
     for mut tf in &mut q {
-        let s = 1.1 + 0.16 * (1. - k) * (k * 16.).sin().abs();
+        let s = r.land_scale + r.land_bounce * (1. - k) * (k * r.land_wobble).sin().abs();
         if tf.scale.x != s {
             tf.scale = Vec2::splat(s);
         }
@@ -400,7 +404,7 @@ pub fn draw(
                         n.padding = UiRect::axes(Val::Px(14.), Val::Px(6.));
                         n.border_radius = BorderRadius::all(Val::Px(10.));
                     }),
-                    BackgroundColor(on.map_or(NIGHT, |x| color(x).0.mix(&NIGHT, 0.75))),
+                    BackgroundColor(on.map_or(INK.with_alpha(1.), |x| color(x).0.mix(&NIGHT, 0.75))),
                     Focusable { key: k, owner: None, spin: true },
                 ))
                 .with_children(|p| {
@@ -679,7 +683,45 @@ mod tests {
     }
 
     #[test]
+    fn a_dropped_voter_returns_to_character_select_even_mid_roulette() {
+        let d = data();
+        let app = lobby(&d);
+        let mut sel = app.world().resource::<Select>().clone();
+        let spots = tiles(d.stages.len() + 1);
+        let mut v = Vote::new(&sel);
+        v.voters[0].cursor.key = key(TILE, 0);
+        v.frame(&mut sel, &devices([vec![Nav::Confirm], vec![]]), &spots, &d);
+        let mut gone = devices([vec![], vec![]]);
+        gone.map.remove(&Dev::Bot(1));
+        assert_eq!(v.frame(&mut sel, &gone, &spots, &d), (false, true), "not counted as everyone voted");
+        v.hops = vec![0, 1];
+        assert_eq!(v.frame(&mut sel, &gone, &spots, &d), (false, true));
+    }
+
+    #[test]
+    fn the_random_state_carries_over_to_the_next_vote() {
+        let d = data();
+        let app = lobby(&d);
+        let mut sel = app.world().resource::<Select>().clone();
+        let spots = tiles(d.stages.len() + 1);
+        let mut rolls = vec![];
+        for _ in 0..3 {
+            let mut v = Vote::new(&sel);
+            for x in &mut v.voters {
+                x.cursor.key = key(TILE, d.stages.len());
+            }
+            let (spin, _) = v.frame(&mut sel, &devices([vec![Nav::Confirm], vec![Nav::Confirm]]), &spots, &d);
+            assert!(spin);
+            sel.roll = v.roll;
+            rolls.push(v.roll);
+        }
+        rolls.dedup();
+        assert_eq!(rolls.len(), 3);
+    }
+
+    #[test]
     fn roulette_weights_votes_resolves_random_and_slows_down() {
+        let d = data();
         let fit = [0, 1, 3];
         let mut roll = 7;
         for _ in 0..50 {
@@ -691,7 +733,7 @@ mod tests {
         assert_eq!(hops.len(), 11);
         assert!(hops.windows(2).all(|w| w[0] != w[1]), "hops move to another voted stage every time");
         assert_eq!(roulette(&[4, 4], 10, &mut roll), [4], "one distinct stage just lands");
-        let r = sim::data::render::Roulette { secs: 2., hops: 10, curve: 2., pause: 1. };
+        let r = sim::data::render::Roulette { secs: 2., curve: 2., ..d.global.render.select.roulette.clone() };
         let at: Vec<usize> = [0., 0.5, 1., 1.5, 2., 3.].iter().map(|t| hop_at(*t, 10, &r)).collect();
         assert_eq!((at[0], at[4], at[5]), (0, 10, 10));
         assert!(at.windows(2).all(|w| w[0] <= w[1]));

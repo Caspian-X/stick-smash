@@ -195,7 +195,10 @@ pub fn tile(p: &mut ChildSpawnerCommands, f: &Fonts, t: Tile, content: impl FnOn
             .with_child((
                 txt(
                     &f.heavy,
-                    (t.w * if small { 0.15 } else { 0.17 }).clamp(10., 19.),
+                    // Shrinks to fit the tile (condensed glyphs are about 0.44 em wide).
+                    (t.w * if small { 0.15 } else { 0.17 })
+                        .min((t.w - 6.) / (0.44 * label.chars().count().max(1) as f32))
+                        .clamp(8., 19.),
                     if lead.is_some() { STAR } else { DIM },
                     label,
                 ),

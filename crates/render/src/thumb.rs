@@ -53,10 +53,10 @@ pub(crate) fn setup(
 
 /// The stage cropped to its play area (padded, at the cell's aspect): the backdrop, stars and moon are trimmed to the
 /// crop so nothing spills into the neighboring cells.
-fn cropped(s: &Stage, aspect: f64) -> Stage {
+fn cropped(s: &Stage, aspect: f64, crop: [f64; 2]) -> Stage {
     let [l, t, r, b] = sim::data::camera::play_area(s);
     let (cx, cy) = ((l + r) / 2., (t + b) / 2.);
-    let (mut w, mut h) = ((r - l) * 1.3, (b - t) * 1.5);
+    let (mut w, mut h) = ((r - l) * crop[0], (b - t) * crop[1]);
     if w / h < aspect {
         w = h * aspect;
     } else {
@@ -132,7 +132,8 @@ pub(crate) fn draw(
     let Some(base) = thumbs.data.clone().filter(|_| !thumbs.cells.is_empty()) else { return };
     if !cache.data.as_ref().is_some_and(|c| Arc::ptr_eq(c, &base)) {
         let aspect = f64::from(THUMBS.cell.x / THUMBS.cell.y);
-        cache.stages = base.stages.iter().map(|s| cropped(s, aspect)).collect();
+        let crop = base.global.render.select.thumb_crop;
+        cache.stages = base.stages.iter().map(|s| cropped(s, aspect, crop)).collect();
         cache.data = Some(base.clone());
     }
     let d = &*base;
