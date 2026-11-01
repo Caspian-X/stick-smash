@@ -339,7 +339,10 @@
       "flourish": "usmash",
       "rosterColor": { "main": "#d9dcf5", "dark": "#8a8fb8", "light": "#ffffff" },
       "flipSecs": 0.22,
-      "bannerSecs": 0.35
+      "bannerSecs": 0.35,
+      "roulette": { "secs": 2.2, "hops": 14, "curve": 2.4, "pause": 1.1 },
+      "sizeSmall": 0.85,
+      "sizeLarge": 1.25
     }
   },
   "audio": {

@@ -12,6 +12,7 @@ use sim::{GameData, TICK_HZ};
 
 mod audio;
 mod editing;
+mod grid;
 mod hud;
 mod input;
 mod menu;
@@ -21,6 +22,7 @@ mod results;
 mod select;
 mod settings;
 mod shots;
+mod stage_select;
 mod training;
 mod ui;
 
@@ -31,6 +33,8 @@ pub enum Screen {
     Settings,
     Controls,
     Select,
+    /// Versus stage vote, after character select.
+    Stages,
     Match,
     Results,
     Replays,
@@ -137,6 +141,8 @@ fn main() {
     .add_systems(OnEnter(Screen::Controls), menu::enter_controls)
     .add_systems(OnEnter(Screen::Select), select::enter)
     .add_systems(OnExit(Screen::Select), select::exit)
+    .add_systems(OnEnter(Screen::Stages), (stage_select::enter, input::clear))
+    .add_systems(OnExit(Screen::Stages), stage_select::exit)
     .add_systems(OnEnter(Screen::Match), (input::clear, hud::spawn))
     .add_systems(OnEnter(Screen::Select), input::clear)
     .add_systems(OnEnter(Screen::Title), input::clear)
@@ -150,6 +156,7 @@ fn main() {
                 .chain()
                 .run_if(|s: Res<State<Screen>>| matches!(s.get(), Screen::Title | Screen::Settings | Screen::Controls)),
             (select::update, select::draw, select::animate).chain().run_if(in_state(Screen::Select)),
+            (stage_select::update, stage_select::draw, stage_select::animate).chain().run_if(in_state(Screen::Stages)),
             (play::match_flow, hud::pause, hud::draw_pause, hud::update).chain().run_if(in_state(Screen::Match)),
             (results::update, results::draw).chain().run_if(in_state(Screen::Results)),
             replay::library.run_if(in_state(Screen::Replays)),
@@ -167,7 +174,12 @@ fn main() {
         play::FIXED_SEED.store(7, std::sync::atomic::Ordering::Relaxed);
         app.insert_resource(script.expect("screenshot script")).add_systems(
             Update,
-            shots::run.after(play::attract).before(menu::update).before(select::update).before(hud::pause),
+            shots::run
+                .after(play::attract)
+                .before(menu::update)
+                .before(select::update)
+                .before(stage_select::update)
+                .before(hud::pause),
         );
     }
     if !app.run().is_success() {

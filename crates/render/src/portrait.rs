@@ -1,29 +1,20 @@
-//! Live fighter figures for UI tiles (the character select roster). Every figure is drawn off-screen into one
-//! image, a cell each; UI nodes show a cell with `ImageNode::rect`. Set [`Portraits::cells`] each frame; leave it
-//! empty to stop rendering. Colors index [`Portraits::data`]'s palette (the content as loaded, not a match's
-//! player-ordered copy).
+//! Live fighter figures for UI tiles (the character select roster), one sheet cell per fighter (see [`crate::sheet`]).
+//! Set [`Portraits::cells`] each frame; leave it empty to stop rendering. Colors index [`Portraits::data`]'s palette
+//! (the content as loaded, not a match's player-ordered copy).
 
 use std::sync::Arc;
 
-use bevy::asset::RenderAssetUsages;
-use bevy::camera::visibility::{NoFrustumCulling, RenderLayers};
-use bevy::camera::{RenderTarget, ScalingMode};
-use bevy::mesh::PrimitiveTopology;
 use bevy::prelude::*;
-use bevy::render::render_resource::TextureFormat;
 use sim::world::{Fighter, State};
 use sim::{GameData, MatchConfig, PlayerConfig, World};
 
 use crate::canvas::Canvas;
 use crate::draw::{FighterView, draw_fighter};
-use crate::{Rand, pose, upload};
+use crate::sheet::{self, Cams, Meshes, Sheet};
+use crate::{Rand, pose};
 
-/// Cell size in stage pixels and texture pixels per stage pixel.
-const CELL: Vec2 = Vec2::new(104., 128.);
-const PX: f32 = 2.4;
-const COLS: usize = 8;
-const ROWS: usize = 2;
-const LAYER: usize = 7;
+/// Cells in stage pixels.
+pub const SHEET: Sheet = Sheet { cell: Vec2::new(104., 128.), px: 2.4, cols: 8, layer: 7 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Portrait {
@@ -41,20 +32,12 @@ pub struct Portraits {
 }
 
 impl Portraits {
-    pub const MAX: usize = COLS * ROWS;
     /// Cell height / width.
-    pub const ASPECT: f32 = CELL.y / CELL.x;
-    /// Region of `image` showing cell `k`.
+    pub const ASPECT: f32 = SHEET.cell.y / SHEET.cell.x;
     pub fn rect(k: usize) -> Rect {
-        let min = Vec2::new((k % COLS) as f32, (k / COLS) as f32) * CELL * PX;
-        Rect::from_corners(min, min + CELL * PX)
+        SHEET.rect(k)
     }
 }
-
-#[derive(Component)]
-pub(crate) struct PortraitCam;
-#[derive(Component)]
-pub(crate) struct PortraitMesh;
 
 /// One idle fighter per roster entry with its horizontal draw offset, a scale that fits every fighter's idle
 /// extent in a cell, and the palette with the neutral color appended; rebuilt when content changes.
@@ -67,7 +50,7 @@ pub(crate) struct Cache {
 }
 
 /// Room for a figure: cell size less side margins and the name band.
-const ROOM: (f64, f64) = (CELL.x as f64 - 8., CELL.y as f64 - 34.);
+const ROOM: (f64, f64) = (SHEET.cell.x as f64 - 8., SHEET.cell.y as f64 - 34.);
 const FEET: f64 = 26.;
 
 pub(crate) fn setup(
@@ -76,29 +59,7 @@ pub(crate) fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut mats: ResMut<Assets<ColorMaterial>>,
 ) {
-    let size = CELL * PX * Vec2::new(COLS as f32, ROWS as f32);
-    let image =
-        images.add(Image::new_target_texture(size.x as u32, size.y as u32, TextureFormat::Rgba8UnormSrgb, None));
-    let world = CELL * Vec2::new(COLS as f32, ROWS as f32);
-    commands.spawn((
-        Camera2d,
-        Camera { order: -1, is_active: false, clear_color: ClearColorConfig::Custom(Color::NONE), ..default() },
-        RenderTarget::Image(image.clone().into()),
-        Projection::Orthographic(OrthographicProjection {
-            scaling_mode: ScalingMode::Fixed { width: world.x, height: world.y },
-            ..OrthographicProjection::default_2d()
-        }),
-        Transform::from_xyz(world.x / 2., -world.y / 2., 0.),
-        RenderLayers::layer(LAYER),
-        PortraitCam,
-    ));
-    commands.spawn((
-        Mesh2d(meshes.add(Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default()))),
-        MeshMaterial2d(mats.add(ColorMaterial::default())),
-        NoFrustumCulling,
-        RenderLayers::layer(LAYER),
-        PortraitMesh,
-    ));
+    let image = SHEET.spawn(&mut commands, &mut images, &mut meshes, &mut mats);
     commands.insert_resource(Portraits { image, cells: vec![], data: None });
 }
 
@@ -106,17 +67,13 @@ pub(crate) fn draw(
     portraits: Res<Portraits>,
     time: Res<Time>,
     mut cache: Local<Cache>,
-    mut cam: Query<&mut Camera, With<PortraitCam>>,
-    mesh: Query<&Mesh2d, With<PortraitMesh>>,
-    mut meshes: ResMut<Assets<Mesh>>,
+    mut cams: Cams,
+    meshes: Meshes,
+    mut assets: ResMut<Assets<Mesh>>,
+    mut images: ResMut<Assets<Image>>,
 ) {
-    let on = !portraits.cells.is_empty();
-    if let Ok(mut c) = cam.single_mut()
-        && c.is_active != on
-    {
-        c.is_active = on;
-    }
-    if !on {
+    sheet::prepare(&SHEET, &portraits.image, portraits.cells.len(), &mut images, &mut cams);
+    if portraits.cells.is_empty() {
         return;
     }
     let Some(base) = portraits.data.clone() else { return };
@@ -158,15 +115,15 @@ pub(crate) fn draw(
     }
     let Some(d) = cache.drawn.clone() else { return };
     let neutral = d.global.palette.len() - 1;
-    let mut cv = Canvas::new(f64::from(PX));
+    let mut cv = Canvas::new(f64::from(SHEET.px));
     cv.alpha_gamma = d.global.render.alpha_gamma;
-    for (k, p) in portraits.cells.iter().enumerate().take(Portraits::MAX) {
+    for (k, p) in portraits.cells.iter().enumerate() {
         let Some((mut f, dx)) = cache.fighters.iter().find(|(f, _)| f.data == p.fighter).cloned() else { continue };
         if p.win {
             f.state = State::Win;
         }
-        let x = f64::from(((k % COLS) as f32 + 0.5) * CELL.x);
-        let y = f64::from(((k / COLS) as f32 + 1.) * CELL.y) - FEET;
+        let o = SHEET.origin(k) + SHEET.cell * Vec2::new(0.5, 1.);
+        let (x, y) = (f64::from(o.x), f64::from(o.y) - FEET);
         cv.save();
         cv.translate(x, y);
         cv.scale(cache.scale, cache.scale);
@@ -175,9 +132,5 @@ pub(crate) fn draw(
         draw_fighter(&mut cv, &d, frame, &FighterView { i, f: &f, x: dx, y: 0., skel }, &mut rng);
         cv.restore();
     }
-    if let Ok(m) = mesh.single()
-        && let Some(mut m) = meshes.get_mut(&m.0)
-    {
-        upload(&mut m, &cv);
-    }
+    sheet::show(&SHEET, &cv, &meshes, &mut assets);
 }

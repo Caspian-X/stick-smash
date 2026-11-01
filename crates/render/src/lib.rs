@@ -13,7 +13,9 @@ pub mod draw;
 pub mod fx;
 pub mod portrait;
 pub mod pose;
+pub mod sheet;
 pub mod stage;
+pub mod thumb;
 
 use std::collections::VecDeque;
 use std::sync::Arc;
@@ -62,6 +64,8 @@ pub struct Scene {
     pub debug: bool,
     /// Fraction of the window reserved below gameplay (measured by the host UI).
     pub bottom_safe_area: f64,
+    /// Fraction of the window reserved above gameplay (character select's roster).
+    pub top_safe_area: f64,
     /// Fixed camera for the whole window (the editor's pan/zoom) instead of the follow camera. No shake.
     pub fixed_view: Option<fx::Cam>,
     /// Extra geometry in stage pixels drawn above everything (editor handles). The owner clears it.
@@ -79,6 +83,7 @@ impl Scene {
             alpha: 1.,
             debug: false,
             bottom_safe_area: 0.,
+            top_safe_area: 0.,
             fixed_view: None,
             overlay: Canvas::default(),
             pose_override: None,
@@ -89,6 +94,11 @@ impl Scene {
     /// Record the world after a tick. Its pending `fx` become effects.
     pub fn push(&mut self, w: &World) {
         self.pending.push_back(w.clone());
+    }
+    /// Reserved (bottom, top) window fractions, leaving at least a fifth of the window for gameplay.
+    fn safe(&self) -> (f64, f64) {
+        let b = self.bottom_safe_area.clamp(0., 0.5);
+        (b, self.top_safe_area.clamp(0., 0.8 - b))
     }
     /// Start over (new match): no interpolation from the old world, no leftover effects, camera snaps.
     pub fn reset(&mut self, w: &World) {
@@ -118,9 +128,10 @@ impl Plugin for RenderPlugin {
         app.init_resource::<Drawn>()
             .init_resource::<Framing>()
             .init_resource::<portrait::Portraits>()
+            .init_resource::<thumb::StageThumbs>()
             // The portrait camera comes second, so the window camera stays egui's primary context.
-            .add_systems(Startup, (setup, portrait::setup).chain())
-            .add_systems(Update, ((advance, draw).chain(), portrait::draw).in_set(RenderSystems))
+            .add_systems(Startup, (setup, portrait::setup, thumb::setup).chain())
+            .add_systems(Update, ((advance, draw).chain(), portrait::draw, thumb::draw).in_set(RenderSystems))
             .add_systems(EguiPrimaryContextPass, debug_labels);
     }
 }
@@ -195,7 +206,8 @@ fn advance(mut scene: ResMut<Scene>, mut st: ResMut<Drawn>, win: Option<Single<&
         let fx = std::mem::take(&mut w.fx);
         st.fx.consume(&d, &w, &fx, view);
         st.fx.tick(&d);
-        st.cam.tick(&d, &w, asp / (1. - scene.bottom_safe_area.clamp(0., 0.5)));
+        let (b, t) = scene.safe();
+        st.cam.tick(&d, &w, asp / (1. - b - t));
         st.prev = st.cur.take();
         st.cur = Some(w);
     }
@@ -266,9 +278,9 @@ fn draw(
     let t = scene.alpha.clamp(0., 1.);
     let px_h = win.as_deref().map_or(720., |w| f64::from(w.physical_height().max(1)));
     let Some(mut c) = scene.fixed_view.or_else(|| st.cam.at(t)) else { return };
-    let safe = if scene.fixed_view.is_some() { 0. } else { scene.bottom_safe_area.clamp(0., 0.5) };
-    let full_height = c.h / (1. - safe);
-    c.y += (full_height - c.h) / 2.;
+    let (safe, top) = if scene.fixed_view.is_some() { (0., 0.) } else { scene.safe() };
+    let full_height = c.h / (1. - safe - top);
+    c.y += (safe - top) / 2. * full_height;
     c.h = full_height;
     framing.bottom_safe_area = safe;
     let (sx, sy) = if scene.fixed_view.is_some() { (0., 0.) } else { st.fx.shake_offset() };

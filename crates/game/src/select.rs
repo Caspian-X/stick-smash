@@ -1,15 +1,15 @@
 //! Join + character select (versus and training). Any free device presses a button to claim the next slot. Each
-//! player moves a colored chip over the roster tiles (hovering previews the fighter, attack locks it in, the "?"
+//! player moves a colored chip over the roster grid (hovering previews the fighter, attack locks it in, the "?"
 //! tile rolls a random one), CPU cards, and the rules panel. Grab / Shield opens a player's card options (team,
-//! up to jump). Start (or attack while locked in) starts once everyone is ready. The picked fighters stand on the
-//! stage behind the cards, and a locked-in fighter plays `render.select.flourish` before its win pose.
+//! up to jump). Start (or attack while locked in) goes on once everyone is ready: to stage select in versus, straight
+//! into the match in training. The picked fighters stand on the stage in a strip between the roster and the cards,
+//! and a locked-in fighter plays `render.select.flourish` before its win pose.
 
-use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
-use bevy::window::PrimaryWindow;
 use render::portrait::{Portrait, Portraits};
 use sim::world::State as FState;
 
+use crate::grid::{self, Area, Chip, key, kind};
 use crate::input::{self, Act, Dev, Devices, Nav};
 use crate::play::{self, Match, Mode, Rules, Slot};
 use crate::settings::{DummyMode, PlayerPref, Saved};
@@ -25,7 +25,7 @@ const REMOVE: u32 = 5;
 const BEHAVIOR: u32 = 12;
 const ADD: u32 = 6;
 /// Rules panel.
-const STOCKS: u32 = 7;
+pub(crate) const STOCKS: u32 = 7;
 const STAGE: u32 = 8;
 const TEAMS: u32 = 9;
 const FF: u32 = 10;
@@ -36,12 +36,13 @@ const TAP: u32 = 14;
 const N_TEAMS: u8 = 4;
 const LEVELS: [&str; 3] = ["Easy", "Normal", "Hard"];
 
-fn key(kind: u32, slot: usize) -> u32 {
-    kind << 8 | slot as u32
-}
-fn kind(key: u32) -> (u32, usize) {
-    (key >> 8, (key & 255) as usize)
-}
+/// Room for the roster grid, between the title and the rules panel.
+const ROSTER: Area = Area { w: 700., h: 330., aspect: Portraits::ASPECT, extra: 0., gap: 10., max: 116. };
+const ROSTER_TOP: f32 = 18.;
+
+/// Set by stage select when backing out, so everyone stays locked in.
+#[derive(Resource)]
+pub struct FromStages;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Pick {
@@ -91,7 +92,7 @@ pub struct Moments {
 }
 
 impl Select {
-    fn humans(&self) -> impl Iterator<Item = (usize, &Pick)> {
+    pub(crate) fn humans(&self) -> impl Iterator<Item = (usize, &Pick)> {
         self.slots.iter().enumerate().filter(|(_, p)| p.dev.is_some())
     }
     fn max(&self) -> usize {
@@ -123,7 +124,7 @@ impl Select {
             self.stage = i;
         }
     }
-    fn color(&self, i: usize) -> usize {
+    pub(crate) fn color(&self, i: usize) -> usize {
         if self.teams { self.slots[i].team as usize } else { i }
     }
     fn tag(&self, i: usize) -> String {
@@ -209,7 +210,7 @@ impl Select {
         p.menu = None;
         p.cursor.key = Self::home(p, d);
     }
-    fn spin(&mut self, k: u32, by: i32, d: &sim::GameData) {
+    pub(crate) fn spin(&mut self, k: u32, by: i32, d: &sim::GameData) {
         let (kd, s) = kind(k);
         let cyc = |v: i32, n: i32| (v + by).rem_euclid(n);
         let p = self.slots.get_mut(s);
@@ -341,7 +342,8 @@ impl Select {
             }
             let mut c = s.slots[i].cursor;
             let before = c.key;
-            match c.drive(nav, spots) {
+            let n = d.fighters.len() + 1;
+            match grid::drive(&mut c, nav, spots, TILE, n, ROSTER.layout(n).cols) {
                 Some(Action::Spin(k, by)) => s.spin(k, by, d),
                 Some(Action::Activate(k)) => match kind(k) {
                     (TILE, _) => {
@@ -428,13 +430,17 @@ pub fn enter(
     sel: Option<ResMut<Select>>,
     saved: Res<Saved>,
     data: Res<Data>,
+    back: Option<Res<FromStages>>,
 ) {
     let d = &data.0;
     commands.insert_resource(Moments::default());
     if let (None, Some(mut sel)) = (&init, sel) {
-        for p in sel.slots.iter_mut().filter(|p| p.dev.is_some()) {
-            p.ready = false;
+        if back.is_none() {
+            for p in sel.slots.iter_mut().filter(|p| p.dev.is_some()) {
+                p.ready = false;
+            }
         }
+        commands.remove_resource::<FromStages>();
         return;
     }
     let Some(init) = init else { return };
@@ -485,30 +491,15 @@ pub fn exit(mut portraits: ResMut<Portraits>) {
     portraits.cells.clear();
 }
 
-#[derive(SystemParam)]
-pub struct Pointer<'w, 's> {
-    win: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
-    mouse: Res<'w, ButtonInput<MouseButton>>,
-}
-
 /// A left click acts as the keyboard's confirm press on the control under the pointer.
-fn click(sel: &mut Select, devs: &mut Devices, q: &FocusQuery, pointer: &Pointer, fighters: usize) {
-    if !pointer.mouse.just_pressed(MouseButton::Left) {
+fn click(sel: &mut Select, devs: &mut Devices, q: &FocusQuery, pointer: &Mouse, fighters: usize) {
+    if !pointer.clicked() {
         return;
     }
-    let Some(at) = pointer.win.single().ok().and_then(|w| Some(w.cursor_position()? * w.scale_factor())) else {
-        return;
-    };
-    // The keyboard (half) already playing, else the first one that could join.
-    let keys = [Dev::Keys, Dev::KeysL, Dev::KeysR];
-    let joined = keys.into_iter().find(|d| sel.slots.iter().any(|p| p.dev == Some(*d)));
-    let Some(dev) = joined.or_else(|| keys.into_iter().find(|d| devs.map.contains_key(d))) else { return };
-    let hit = q.iter().find(|(_, n, t)| {
-        let d = (at - t.affine().translation).abs() * 2.;
-        d.x <= n.size().x && d.y <= n.size().y
-    });
+    let hit = pointer.hit(q);
+    let Some(dev) = keyboard(devs, |d| sel.slots.iter().any(|p| p.dev == Some(d))) else { return };
     if let Some(p) = sel.slots.iter_mut().find(|p| p.dev == Some(dev)) {
-        let Some((f, _, _)) = hit.filter(|(f, _, _)| p.cursor.allowed(f)) else { return };
+        let Some(f) = hit.filter(|f| p.cursor.allowed(f)) else { return };
         if p.ready || p.menu.is_some() {
             return;
         }
@@ -531,13 +522,13 @@ pub fn update(
     sel: Option<ResMut<Select>>,
     mut devs: ResMut<Devices>,
     q: FocusQuery,
-    pointer: Pointer,
+    pointer: Mouse,
     time: Res<Time>,
     mut saved: ResMut<Saved>,
     data: Res<Data>,
     mut next: ResMut<NextState<Screen>>,
     mut scene: ResMut<render::Scene>,
-    (m, mut moments, mut portraits): (Option<ResMut<Match>>, ResMut<Moments>, ResMut<Portraits>),
+    (mut m, mut moments, mut portraits): (Option<ResMut<Match>>, ResMut<Moments>, ResMut<Portraits>),
 ) {
     let Some(mut sel) = sel else { return };
     let d = &data.0;
@@ -571,7 +562,7 @@ pub fn update(
     if !portraits.data.as_ref().is_some_and(|p| std::sync::Arc::ptr_eq(p, &data.0)) {
         portraits.data = Some(data.0.clone());
     }
-    portraits.cells = (0..d.fighters.len().min(Portraits::MAX))
+    portraits.cells = (0..d.fighters.len())
         .map(|t| {
             let on = sel.humans().find(|(_, p)| p.cursor.key == key(TILE, t));
             Portrait {
@@ -583,75 +574,88 @@ pub fn update(
         .collect();
     let mslots = sel.match_slots();
     let rules = Rules { stocks: sel.stocks, stage: d.stages[sel.stage].id.clone(), friendly_fire: sel.ff };
+    if start && sel.mode == Mode::Versus {
+        next.set(Screen::Stages);
+        return;
+    }
     if start {
         remember(&sel, &mut saved, d);
         let Ok(mut m) = Match::new(&data.0, sel.mode, mslots, rules, play::seed()) else { return };
-        if sel.mode == Mode::Training {
-            let t = &saved.training;
-            m.dummy.mode = sel.dummy;
-            m.dummy.level = t.level;
-            m.apply_dummy();
-        } else {
-            m.debug = saved.versus_hitboxes;
-        }
+        let t = &saved.training;
+        m.dummy.mode = sel.dummy;
+        m.dummy.level = t.level;
+        m.apply_dummy();
         play::install(&mut commands, &mut scene, m);
         next.set(Screen::Match);
         return;
     }
-    if mslots.is_empty() || d.stages[sel.stage].max_players() < mslots.len() {
-        return;
+    let Some(m) = showcase(&mut commands, &mut scene, m.as_deref_mut(), &data.0, &mslots, &rules) else { return };
+    let slot = &m.data.global.render.select.flourish;
+    for i in 0..m.world.fighters.len() {
+        let ready = sel.slots.get(i).is_some_and(|p| p.ready && p.dev.is_some());
+        let f = &mut m.world.fighters[i];
+        let has = m.data.fighters[f.data].moves.iter().any(|(s, _)| s == slot.as_str());
+        if ready && f.state == FState::Idle && moments.flourish.contains(&i) {
+            moments.flourish.retain(|j| *j != i);
+            if has && f.ground {
+                let mut f = f.clone();
+                sim::moves::start_move(&mut m.world, &m.data, i, &mut f, slot);
+                m.world.fighters[i] = f;
+            } else {
+                f.set_state(FState::Win);
+            }
+        } else if ready && f.state == FState::Idle {
+            f.set_state(FState::Win);
+        } else if !ready && f.state == FState::Win {
+            f.set_state(FState::Idle);
+        }
     }
-    // Showcase: rebuild when the lineup's size, colors or stage change; a different fighter is swapped in place so
-    // nobody else moves. Everyone is on one team so flourishes never hit anybody.
-    let showcase = m.as_ref().is_some_and(|m| {
+}
+
+/// Keeps the showcase (the lineup standing on `rules.stage` behind the screen) in step: rebuilt when the lineup's
+/// size, colors or stage change, standing left to right in card order; otherwise a changed pick is swapped in place
+/// so nobody else moves. Everyone is on one team so flourishes never hit anybody. `None` while it is being rebuilt
+/// (or nothing fits).
+pub(crate) fn showcase<'a>(
+    commands: &mut Commands,
+    scene: &mut render::Scene,
+    m: Option<&'a mut Match>,
+    data: &std::sync::Arc<sim::GameData>,
+    mslots: &[Slot],
+    rules: &Rules,
+) -> Option<&'a mut Match> {
+    if mslots.is_empty() || data.stage(&rules.stage).is_none_or(|s| s.max_players() < mslots.len()) {
+        return None;
+    }
+    let m = m.filter(|m| {
         m.mode == Mode::Showcase
             && m.slots.iter().map(|s| s.color).eq(mslots.iter().map(|s| s.color))
             && m.rules.stage == rules.stage
     });
-    if !showcase {
-        let mut slots = mslots;
+    let Some(m) = m else {
+        let mut slots = mslots.to_vec();
         for s in &mut slots {
             s.cpu = None;
             s.dev = None;
             s.team = Some(0);
         }
-        if let Ok(mut m) = Match::new(&data.0, Mode::Showcase, slots, Rules { friendly_fire: false, ..rules }, 1) {
-            // Left to right in card order.
+        let rules = Rules { friendly_fire: false, ..rules.clone() };
+        if let Ok(mut m) = Match::new(data, Mode::Showcase, slots, rules, 1) {
             let mut spots: Vec<_> = m.world.fighters.iter().map(|f| (f.x, f.y, f.surf, f.ground, f.face)).collect();
             spots.sort_by(|a, b| a.0.total_cmp(&b.0));
             for (f, (x, y, surf, ground, face)) in m.world.fighters.iter_mut().zip(spots) {
                 (f.x, f.y, f.surf, f.ground, f.face) = (x, y, surf, ground, face);
             }
-            play::install(&mut commands, &mut scene, m);
+            play::install(commands, scene, m);
         }
-    } else if let Some(mut m) = m {
-        let m = &mut *m;
-        for (i, s) in mslots.iter().enumerate() {
-            if m.slots[i].fighter != s.fighter {
-                swap_fighter(m, i, s.fighter);
-            }
-        }
-        let slot = &m.data.global.render.select.flourish;
-        for i in 0..m.world.fighters.len() {
-            let ready = sel.slots.get(i).is_some_and(|p| p.ready && p.dev.is_some());
-            let f = &mut m.world.fighters[i];
-            let has = m.data.fighters[f.data].moves.iter().any(|(s, _)| s == slot.as_str());
-            if ready && f.state == FState::Idle && moments.flourish.contains(&i) {
-                moments.flourish.retain(|j| *j != i);
-                if has && f.ground {
-                    let mut f = f.clone();
-                    sim::moves::start_move(&mut m.world, &m.data, i, &mut f, slot);
-                    m.world.fighters[i] = f;
-                } else {
-                    f.set_state(FState::Win);
-                }
-            } else if ready && f.state == FState::Idle {
-                f.set_state(FState::Win);
-            } else if !ready && f.state == FState::Win {
-                f.set_state(FState::Idle);
-            }
+        return None;
+    };
+    for (i, s) in mslots.iter().enumerate() {
+        if m.slots[i].fighter != s.fighter {
+            swap_fighter(m, i, s.fighter);
         }
     }
+    Some(m)
 }
 
 /// Put another fighter in showcase slot `i`, where it stands.
@@ -666,7 +670,7 @@ fn swap_fighter(m: &mut Match, i: usize, fighter: usize) {
     m.slots[i].fighter = fighter;
 }
 
-fn remember(sel: &Select, saved: &mut Saved, d: &sim::GameData) {
+pub(crate) fn remember(sel: &Select, saved: &mut Saved, d: &sim::GameData) {
     let pref = |p: &Pick| PlayerPref {
         fighter: d.fighters[p.fighter].id.clone(),
         level: p.level,
@@ -787,41 +791,47 @@ pub fn draw(
                 p.spawn((
                     node(|n| {
                         n.flex_direction = FlexDirection::Column;
-                        n.width = Val::Px(250.);
+                        n.width = Val::Px(220.);
                         n.padding = UiRect::all(Val::Px(8.));
                         n.border_radius = BorderRadius::all(Val::Px(10.));
                     }),
-                    BackgroundColor(INK_SOFT),
+                    BackgroundColor(NIGHT),
                 ))
                 .with_children(|p| {
+                    // Stocks and the stage are chosen on stage select in versus.
                     let onoff = |b: bool| if b { "On" } else { "Off" };
-                    let mut rules = vec![(STAGE, "Stage", d.stages[s.stage].name.clone())];
+                    let mut rules = vec![];
                     if s.mode == Mode::Versus {
-                        rules.insert(0, (STOCKS, "Stocks", s.stocks.to_string()));
                         rules.push((TEAMS, "Teams", onoff(s.teams).into()));
                         if s.teams {
                             rules.push((FF, "Friendly fire", onoff(s.ff).into()));
                         }
+                    } else {
+                        rules.push((STAGE, "Stage", d.stages[s.stage].name.clone()));
                     }
                     for (k, label, value) in rules {
                         spin_row(p, f, d, s, key(k, 0), label, value, None, 17.);
                     }
                 });
             });
-            roster(p, f, d, s, &portraits);
+            let bottom = roster(p, f, d, s, &portraits);
             if s.ready() {
-                ready_banner(p, f);
+                // Centered in the showcase strip between the roster and the cards.
+                ready_banner(p, f, (bottom + 545.) / 2. - 40.);
             }
             // Bottom: cards and hints.
-            p.spawn(node(|n| {
-                n.position_type = PositionType::Absolute;
-                n.bottom = Val::Px(14.);
-                n.left = Val::Px(0.);
-                n.right = Val::Px(0.);
-                n.flex_direction = FlexDirection::Column;
-                n.align_items = AlignItems::Center;
-                n.row_gap = Val::Px(10.);
-            }))
+            p.spawn((
+                node(|n| {
+                    n.position_type = PositionType::Absolute;
+                    n.bottom = Val::Px(14.);
+                    n.left = Val::Px(0.);
+                    n.right = Val::Px(0.);
+                    n.flex_direction = FlexDirection::Column;
+                    n.align_items = AlignItems::Center;
+                    n.row_gap = Val::Px(10.);
+                }),
+                Safe::Bottom,
+            ))
             .with_children(|p| {
                 if !d.stages.iter().any(|stage| stage.max_players() >= s.slots.len()) {
                     p.spawn(txt(&f.heavy, 22., GOLD, "No stage fits this lineup. Remove a player."));
@@ -859,135 +869,57 @@ pub fn draw(
     );
 }
 
-/// The fighter tiles and the random tile, with every player's chip on the tile it points at.
-fn roster(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, portraits: &Portraits) {
+/// The fighter tiles and the random tile, with every player's chip on the tile it points at. Returns the grid's
+/// bottom edge.
+fn roster(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, portraits: &Portraits) -> f32 {
     let n = d.fighters.len() + 1;
-    let cols = n.min(8);
-    let w = ((560. - 10. * (cols - 1) as f32) / cols as f32).min(116.);
-    p.spawn(node(|n| {
-        n.position_type = PositionType::Absolute;
-        n.top = Val::Px(18.);
-        n.left = Val::Px(0.);
-        n.right = Val::Px(0.);
-        n.justify_content = JustifyContent::Center;
-    }))
-    .with_children(|p| {
-        p.spawn((
-            node(|n| {
-                n.flex_direction = FlexDirection::Row;
-                n.flex_wrap = FlexWrap::Wrap;
-                n.justify_content = JustifyContent::Center;
-                n.max_width = Val::Px(600.);
-                n.padding = UiRect::all(Val::Px(8.));
-                n.row_gap = Val::Px(10.);
-                n.column_gap = Val::Px(10.);
-                n.border_radius = BorderRadius::all(Val::Px(14.));
-            }),
-            BackgroundColor(alpha(NIGHT, 0.94)),
-        ))
-        .with_children(|p| {
-            for t in 0..n {
-                tile(p, f, d, s, t, w, portraits);
-            }
-        });
-    });
-}
-
-fn tile(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, t: usize, w: f32, pt: &Portraits) {
-    let k = key(TILE, t);
-    let chips: Vec<usize> = s.humans().filter(|(_, p)| p.cursor.key == k).map(|(i, _)| i).collect();
-    let lead = chips.first().map(|&i| pal(d, s.color(i)).0);
-    let locked = chips.iter().any(|&i| s.slots[i].ready);
-    let h = w * Portraits::ASPECT;
-    let random = t >= d.fighters.len();
-    p.spawn((
-        node(|n| {
-            n.width = Val::Px(w);
-            n.height = Val::Px(h);
-            n.border = UiRect::all(Val::Px(if lead.is_some() { 3. } else { 1.5 }));
-            n.border_radius = BorderRadius::all(Val::Px(10.));
-            n.overflow = Overflow::clip();
-        }),
-        BackgroundGradient::from(LinearGradient::to_bottom(vec![
-            ColorStop::auto(lead.unwrap_or(LINE).mix(&NIGHT, if locked { 0.45 } else { 0.75 })),
-            ColorStop::auto(NIGHT),
-        ])),
-        BorderColor::all(lead.unwrap_or(alpha(LINE, 0.9))),
-        BoxShadow::new(alpha(lead.unwrap_or(NIGHT), 0.55), Val::Px(0.), Val::Px(0.), Val::Px(1.), Val::Px(14.)),
-        UiTransform::from_scale(Vec2::splat(if lead.is_some() { 1.05 } else { 1. })),
-        Focusable { key: k, owner: None, spin: false },
-    ))
-    .with_children(|p| {
-        let full = |n: &mut Node| {
-            n.position_type = PositionType::Absolute;
-            n.left = Val::Px(0.);
-            n.right = Val::Px(0.);
-            n.top = Val::Px(0.);
-            n.bottom = Val::Px(0.);
-        };
-        if random {
-            p.spawn((node(|n| {
-                full(n);
-                n.justify_content = JustifyContent::Center;
-                n.align_items = AlignItems::Center;
-                n.padding.bottom = Val::Px(14.);
-            }),))
-                .with_child(txt(&f.display, w * 0.62, lead.unwrap_or(GOLD), "?"));
-        } else if t < Portraits::MAX {
-            p.spawn((node(full), ImageNode { rect: Some(Portraits::rect(t)), ..ImageNode::new(pt.image.clone()) }));
-        }
-        let name = if random { "Random" } else { &d.fighters[t].name };
-        p.spawn((
-            node(|n| {
-                n.position_type = PositionType::Absolute;
-                n.left = Val::Px(0.);
-                n.right = Val::Px(0.);
-                n.bottom = Val::Px(0.);
-                n.justify_content = JustifyContent::Center;
-                n.padding = UiRect::new(Val::Px(4.), Val::Px(4.), Val::Px(10.), Val::Px(3.));
-            }),
-            BackgroundGradient::from(LinearGradient::to_bottom(vec![
-                ColorStop::auto(alpha(NIGHT, 0.)),
-                ColorStop::auto(alpha(NIGHT, 0.92)),
-            ])),
-        ))
-        .with_child((
-            txt(&f.heavy, (w * 0.17).clamp(13., 19.), if lead.is_some() { STAR } else { DIM }, name),
-            TextLayout::new(Justify::Center, LineBreak::NoWrap),
-        ));
-        // Chips fan out along the top edge; later ones overlap earlier ones but every label start stays visible.
-        let cw = 30.;
-        let step = if chips.len() > 1 { ((w - 10. - cw) / (chips.len() - 1) as f32).min(cw + 3.) } else { 0. };
-        for (n, &i) in chips.iter().enumerate() {
-            chip(p, f, d, s, i, 5. + n as f32 * step);
+    let l = ROSTER.layout(n);
+    let left = 640. - (l.cols as f32 * (l.w + ROSTER.gap) - ROSTER.gap) / 2. - 8.;
+    let place = |n: &mut Node| {
+        n.top = Val::Px(ROSTER_TOP);
+        n.left = Val::Px(left);
+    };
+    grid::panel(p, l, ROSTER.gap, place, Safe::Top, |p| {
+        for t in 0..n {
+            let k = key(TILE, t);
+            let chips = s
+                .humans()
+                .filter(|(_, p)| p.cursor.key == k)
+                .map(|(i, p)| {
+                    let (color, _, light) = pal(d, s.color(i));
+                    Chip { label: format!("P{}", i + 1), color, light, locked: p.ready }
+                })
+                .collect();
+            let random = t >= d.fighters.len();
+            let name = if random { "Random" } else { &d.fighters[t].name };
+            let tile = grid::Tile { key: k, w: l.w, h: l.h, name, chips, highlight: None, off: None };
+            let lead = tile.chips.first().map(|c| c.color);
+            grid::tile(p, f, tile, |p| {
+                if random {
+                    p.spawn(node(|n| {
+                        grid::fill(n);
+                        n.justify_content = JustifyContent::Center;
+                        n.align_items = AlignItems::Center;
+                        n.padding.bottom = Val::Px(l.h * 0.1);
+                    }))
+                    .with_child(txt(&f.display, l.w * 0.62, lead.unwrap_or(GOLD), "?"));
+                } else {
+                    p.spawn((
+                        node(grid::fill),
+                        ImageNode { rect: Some(Portraits::rect(t)), ..ImageNode::new(portraits.image.clone()) },
+                    ));
+                }
+            });
         }
     });
+    ROSTER_TOP + 16. + l.rows as f32 * (l.h + ROSTER.gap) - ROSTER.gap
 }
 
-fn chip(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, i: usize, left: f32) {
-    let (main, _, light) = pal(d, s.color(i));
-    let ready = s.slots[i].ready;
+fn ready_banner(p: &mut ChildSpawnerCommands, f: &Fonts, top: f32) {
     p.spawn((
         node(|n| {
             n.position_type = PositionType::Absolute;
-            n.top = Val::Px(5.);
-            n.left = Val::Px(left);
-            n.padding = UiRect::axes(Val::Px(5.), Val::Px(0.));
-            n.border = UiRect::all(Val::Px(1.5));
-            n.border_radius = BorderRadius::all(Val::Px(5.));
-        }),
-        BackgroundColor(main),
-        BorderColor::all(if ready { light } else { NIGHT }),
-        BoxShadow::new(alpha(NIGHT, 0.6), Val::Px(1.), Val::Px(2.), Val::Px(0.), Val::Px(3.)),
-    ))
-    .with_child(txt(&f.display, 15., NIGHT, format!("P{}", i + 1)));
-}
-
-fn ready_banner(p: &mut ChildSpawnerCommands, f: &Fonts) {
-    p.spawn((
-        node(|n| {
-            n.position_type = PositionType::Absolute;
-            n.top = Val::Px(232.);
+            n.top = Val::Px(top);
             n.left = Val::Px(0.);
             n.right = Val::Px(0.);
             n.justify_content = JustifyContent::Center;

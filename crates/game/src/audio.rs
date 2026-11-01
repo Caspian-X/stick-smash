@@ -20,7 +20,7 @@ impl Plugin for SoundPlugin {
         app.init_resource::<Bank>()
             .add_systems(Startup, synthesize)
             .add_systems(PreUpdate, navigation.after(input::poll))
-            .add_systems(PostUpdate, (selection, playback).chain());
+            .add_systems(PostUpdate, ((selection, voting), playback).chain());
     }
 }
 
@@ -168,6 +168,28 @@ fn selection(
         }
     }
     *prev = now;
+}
+
+/// Stage select: a vote placed, each roulette hop, the landing.
+fn voting(
+    vote: Option<Res<crate::stage_select::Vote>>,
+    mut prev: Local<Option<(usize, usize, bool)>>,
+    mut bank: ResMut<Bank>,
+) {
+    let Some(v) = vote else {
+        *prev = None;
+        return;
+    };
+    let now = (v.voters.iter().filter(|x| x.vote.is_some()).count(), v.hop, v.landed);
+    if let Some((votes, hop, landed)) = *prev {
+        if now.2 && !landed || now.0 > votes {
+            bank.pending.remove("confirm");
+            bank.queue("ready", None, None);
+        } else if now.1 != hop {
+            bank.queue("menu", None, None);
+        }
+    }
+    *prev = Some(now);
 }
 
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]

@@ -38,16 +38,21 @@ pub enum Step {
     Stage(&'static str),
     /// Start a four-CPU versus match on this stage.
     Versus(&'static str),
+    /// Swap in content with the built-in fighters and stages repeated up to this many each (until the section ends).
+    Big(usize),
+    /// Wait until the stage roulette has run this many seconds.
+    Spin(f32),
 }
 
 type Entry = (&'static str, fn() -> Vec<Step>);
 
 /// Every section in full-tour order; `--shots` picks a subset in the order given.
-const TOUR: [Entry; 8] = [
+const TOUR: [Entry; 9] = [
     ("menus", menus),
     ("fighter-editor", fighter_editor),
     ("stage-editor", stage_editor),
     ("select", select),
+    ("roster", roster),
     ("match", match_shots),
     ("results-replay", results_replay),
     ("training", training),
@@ -74,6 +79,8 @@ pub struct Script {
     capturing: bool,
     started: Instant,
     failures: Vec<&'static str>,
+    /// Content before a [`Step::Big`], put back on reset.
+    original: Option<std::sync::Arc<sim::GameData>>,
 }
 
 impl Section {
@@ -101,6 +108,7 @@ fn screen_is(s: Screen) -> Pred {
         Screen::Results => |_, _, s| s == Screen::Results,
         Screen::Match => |_, _, s| s == Screen::Match,
         Screen::Select => |_, _, s| s == Screen::Select,
+        Screen::Stages => |_, _, s| s == Screen::Stages,
         Screen::Playback => |_, _, s| s == Screen::Playback,
         Screen::Editor => |_, _, s| s == Screen::Editor,
         _ => |_, _, s| s == Screen::Title,
@@ -324,17 +332,45 @@ fn select() -> Vec<Step> {
     press(&mut v, 0, Attack);
     v.push(Step::Wait(14));
     shot(&mut v, "05-select-ready");
+    // Start: on to the stage vote. Bot 0 votes for the stage its chip starts on, bot 1 moves on.
     press(&mut v, 0, Start);
-    v.push(Step::Until(screen_is(Screen::Match), 10));
+    v.push(Step::Until(screen_is(Screen::Stages), 10));
+    v.push(Step::Wait(10));
+    press(&mut v, 0, Attack);
+    press(&mut v, 1, Right);
+    shot(&mut v, "05b-stage-votes");
+    // Bot 1's vote completes the votes: the roulette runs, lands, and the match starts.
+    press(&mut v, 1, Attack);
+    v.push(Step::Spin(0.9));
+    v.push(Step::Shot("05c-stage-roulette"));
+    v.push(Step::Spin(2.5));
+    v.push(Step::Shot("05d-stage-landed"));
+    v.push(Step::Until(screen_is(Screen::Match), 300));
     // Keep title → select → match navigation covered by real button presses.
     v.extend([Step::Select(Mode::Versus, 8), Step::Wait(20)]);
     shot(&mut v, "15-select-eight");
-    // Right past the random tile lands on Teams, the nearest rules row: CPU cards gain a Team row.
-    for _ in 0..4 {
-        press(&mut v, 0, Right);
-    }
+    // Up from the roster reaches the rules: CPU cards gain a Team row.
+    press(&mut v, 0, Up);
     press(&mut v, 0, Attack);
     shot(&mut v, "15b-select-teams");
+    v
+}
+
+/// A thirty-fighter, thirty-stage roster (the built-ins repeated): the grids shrink and wrap into rows.
+fn roster() -> Vec<Step> {
+    let mut v = vec![Step::Big(30), Step::Wait(2), Step::Select(Mode::Versus, 4), Step::Wait(20)];
+    press(&mut v, 0, Down);
+    press(&mut v, 0, Down);
+    press(&mut v, 0, Left);
+    shot(&mut v, "15c-select-roster-30");
+    press(&mut v, 0, Attack);
+    press(&mut v, 0, Start);
+    v.push(Step::Until(screen_is(Screen::Stages), 10));
+    v.push(Step::Wait(10));
+    press(&mut v, 0, Down);
+    press(&mut v, 0, Right);
+    press(&mut v, 0, Right);
+    shot(&mut v, "15d-stage-select-30");
     v
 }
 
@@ -460,6 +496,7 @@ impl Script {
             capturing: false,
             started: Instant::now(),
             failures: vec![],
+            original: None,
         })
     }
 }
@@ -475,7 +512,7 @@ pub fn run(
     capturing: Query<(), With<Capturing>>,
     mut exit: MessageWriter<AppExit>,
     mut inbox: ResMut<editor::Inbox>,
-    sel: Option<ResMut<Select>>,
+    (sel, clock): (Option<ResMut<Select>>, Option<Res<crate::stage_select::Clock>>),
     data: Res<Data>,
     mut scene: ResMut<render::Scene>,
     mut next: ResMut<NextState<Screen>>,
@@ -549,6 +586,9 @@ pub fn run(
             commands.insert_resource(editor::Inbox::default());
             commands.insert_resource(editor::Outbox::default());
             commands.insert_resource(crate::settings::Saved::default());
+            if let Some(o) = s.original.take() {
+                commands.insert_resource(Data(o));
+            }
             commands.insert_resource(crate::menu::MenuState {
                 cursor: crate::ui::Cursor { key: 1, owner: None },
                 ..default()
@@ -556,7 +596,7 @@ pub fn run(
             commands.insert_resource(crate::hud::PauseMenu::default());
             commands.insert_resource(crate::results::ResultsMenu::default());
             *devs = Devices::default();
-            *scene = render::Scene::new(data.0.clone());
+            *scene = render::Scene::new(s.original.clone().unwrap_or_else(|| data.0.clone()));
             // Panel widths, scroll offsets and open headers would otherwise carry over from earlier sections.
             for mut ctx in &mut egui {
                 ctx.get_mut().memory_mut(|m| {
@@ -677,6 +717,25 @@ pub fn run(
             }
             s.at += 1;
         }
+        Step::Big(n) => {
+            let n = *n;
+            let base = s.original.get_or_insert_with(|| data.0.clone()).clone();
+            commands.insert_resource(Data(std::sync::Arc::new(big(&base, n))));
+            s.at += 1;
+        }
+        Step::Spin(secs) => {
+            let secs = *secs;
+            if clock.is_some_and(|c| c.secs().is_some_and(|t| t >= secs)) {
+                s.budget = 0;
+                s.at += 1;
+            } else if s.budget > 600 {
+                error!("screenshot section {name}: the roulette never reached {secs}s");
+                s.failures.push(name);
+                s.at = s.sections[s.section].steps.len();
+            } else {
+                s.budget += 1;
+            }
+        }
         Step::Shot(name) => {
             let path = s.dir.join(format!("{name}.png"));
             info!("screenshot {}", path.display());
@@ -686,6 +745,22 @@ pub fn run(
             s.at += 1;
         }
     }
+}
+
+/// The built-in fighters and stages repeated (numbered copies) up to `n` each.
+fn big(d: &sim::GameData, n: usize) -> sim::GameData {
+    let mut b = d.clone();
+    for k in d.fighters.len()..n {
+        let mut f = d.fighters[k % d.fighters.len()].clone();
+        (f.id, f.name) = (format!("{}-{k}", f.id), format!("{} {}", f.name, k / d.fighters.len() + 1));
+        b.fighters.push(f);
+    }
+    for k in d.stages.len()..n {
+        let mut s = d.stages[k % d.stages.len()].clone();
+        (s.id, s.name) = (format!("{}-{k}", s.id), format!("{} {}", s.name, k / d.stages.len() + 1));
+        b.stages.push(s);
+    }
+    b
 }
 
 #[cfg(test)]
@@ -776,6 +851,9 @@ mod tests {
 03q-stage-moving-sandbox
 04-select-choosing
 05-select-ready
+05b-stage-votes
+05c-stage-roulette
+05d-stage-landed
 06-countdown
 07-go
 08-hud-offscreen
@@ -790,6 +868,8 @@ mod tests {
 14-training
 15-select-eight
 15b-select-teams
+15c-select-roster-30
+15d-stage-select-30
 16a-select-citadel
 16b-select-isles
 16c-select-foundry

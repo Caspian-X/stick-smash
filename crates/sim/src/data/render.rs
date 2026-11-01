@@ -31,6 +31,25 @@ pub struct SelectLook {
     /// Seconds for a card's READY flip and the ready banner's slide-in.
     pub flip_secs: f32,
     pub banner_secs: f32,
+    pub roulette: Roulette,
+    /// Stage size labels: play area relative to `camera.referencePlayWidth` / `referencePlayHeight` (the larger
+    /// ratio); below `sizeSmall` reads "Small", above `sizeLarge` "Large", otherwise "Medium".
+    pub size_small: f64,
+    pub size_large: f64,
+}
+
+/// Stage select vote roulette: a highlight hops over the voted stages, slowing down, and lands on the winner.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Roulette {
+    /// Seconds from the first hop to the landing.
+    pub secs: f32,
+    /// Hops before the landing (more distinct votes only change where it starts).
+    pub hops: u32,
+    /// Hop `k` of `hops` happens at `secs * (k / hops)^curve`: above 1 the hops slow down.
+    pub curve: f32,
+    /// Seconds the landed stage shows before the match starts.
+    pub pause: f32,
 }
 
 /// In-match HUD and match-flow presentation (the game crate reads this; the sim never does).

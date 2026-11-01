@@ -535,17 +535,34 @@ pub fn draw_pause(
 pub fn safe_area(
     screen: Res<State<Screen>>,
     panels: Query<&ComputedNode, With<HudPanels>>,
+    edges: Query<(&ComputedNode, &UiGlobalTransform, &Safe)>,
     win: Query<&Window, With<PrimaryWindow>>,
     scale: Res<UiScale>,
     mut scene: ResMut<render::Scene>,
 ) {
-    scene.bottom_safe_area = if matches!(screen.get(), Screen::Match | Screen::Playback) {
-        let height = panels.iter().map(|n| n.size().y).fold(0., f32::max);
-        win.single().map_or(0., |w| {
+    let Ok(w) = win.single() else { return };
+    let h = w.physical_height().max(1) as f32;
+    let (bottom, top) = match screen.get() {
+        Screen::Match | Screen::Playback => {
             let margin = 28. * scale.0 * w.scale_factor();
-            f64::from((height + margin) / w.physical_height().max(1) as f32).clamp(0., 0.5)
-        })
-    } else {
-        0.
+            let height = panels.iter().map(|n| n.size().y).fold(0., f32::max);
+            (f64::from((height + margin) / h).clamp(0., 0.5), 0.)
+        }
+        // Character select: the showcase sits in the strip between the roster and the cards. The fighters stand low
+        // on screen anyway, so a short roster doesn't push them; a tall one only by what it overlaps.
+        Screen::Select => edges.iter().fold((0f64, 0f64), |(b, t), (n, tf, e)| {
+            let y = tf.affine().translation.y;
+            match e {
+                Safe::Bottom => (b.max(f64::from((h - (y - n.size().y / 2.)) / h)), t),
+                Safe::Top => (b, t.max(f64::from((y + n.size().y / 2.) / h) - 0.3).max(0.)),
+            }
+        }),
+        _ => (0., 0.),
     };
+    if scene.bottom_safe_area != bottom {
+        scene.bottom_safe_area = bottom;
+    }
+    if scene.top_safe_area != top {
+        scene.top_safe_area = top;
+    }
 }

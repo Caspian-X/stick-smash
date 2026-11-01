@@ -10,7 +10,10 @@ use bevy::ui::UiGlobalTransform;
 use sim::GameData;
 use sim::data::Color as DataColor;
 
-use crate::input::Nav;
+use bevy::ecs::system::SystemParam;
+use bevy::window::PrimaryWindow;
+
+use crate::input::{Dev, Devices, Nav};
 
 pub const NIGHT: Color = Color::srgb(0.043, 0.051, 0.165);
 pub const INK: Color = Color::srgba(0.055, 0.067, 0.2, 0.9);
@@ -201,6 +204,42 @@ impl Cursor {
         }
         None
     }
+}
+
+/// Marks UI that covers the top / bottom of the screen; the gameplay view is framed between them (character select).
+#[derive(Component, Clone, Copy, PartialEq, Eq)]
+pub enum Safe {
+    Top,
+    Bottom,
+}
+
+/// The mouse, for clicking on focusable controls.
+#[derive(SystemParam)]
+pub struct Mouse<'w, 's> {
+    win: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
+    mouse: Res<'w, ButtonInput<MouseButton>>,
+}
+
+impl Mouse<'_, '_> {
+    pub fn clicked(&self) -> bool {
+        self.mouse.just_pressed(MouseButton::Left)
+    }
+    /// The focusable under the pointer.
+    pub fn hit(&self, q: &FocusQuery) -> Option<Focusable> {
+        let at = self.win.single().ok().and_then(|w| Some(w.cursor_position()? * w.scale_factor()))?;
+        q.iter()
+            .find(|(_, n, t)| {
+                let d = (at - t.affine().translation).abs() * 2.;
+                d.x <= n.size().x && d.y <= n.size().y
+            })
+            .map(|(f, _, _)| *f)
+    }
+}
+
+/// The keyboard (half) clicks act for: one already `playing`, else the first connected.
+pub fn keyboard(devs: &Devices, playing: impl Fn(Dev) -> bool) -> Option<Dev> {
+    let keys = [Dev::Keys, Dev::KeysL, Dev::KeysR];
+    keys.into_iter().find(|d| playing(*d)).or_else(|| keys.into_iter().find(|d| devs.map.contains_key(d)))
 }
 
 /// A menu row: label, optional spinner value, focused look.

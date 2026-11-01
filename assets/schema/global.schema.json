@@ -1488,10 +1488,42 @@
           "format": "float",
           "description": "Seconds for a card's READY flip and the ready banner's slide-in."
         },
-        "bannerSecs": { "type": "number", "format": "float" }
+        "bannerSecs": { "type": "number", "format": "float" },
+        "roulette": { "$ref": "#/$defs/Roulette" },
+        "sizeSmall": {
+          "type": "number",
+          "format": "double",
+          "description": "Stage size labels: play area relative to `camera.referencePlayWidth` / `referencePlayHeight` (the larger\nratio); below `sizeSmall` reads \"Small\", above `sizeLarge` \"Large\", otherwise \"Medium\"."
+        },
+        "sizeLarge": { "type": "number", "format": "double" }
       },
-      "required": ["flourish", "rosterColor", "flipSecs", "bannerSecs"],
+      "required": ["flourish", "rosterColor", "flipSecs", "bannerSecs", "roulette", "sizeSmall", "sizeLarge"],
       "description": "Character select presentation (the game crate reads this; the sim never does)."
+    },
+    "Roulette": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "secs": { "type": "number", "format": "float", "description": "Seconds from the first hop to the landing." },
+        "hops": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Hops before the landing (more distinct votes only change where it starts)."
+        },
+        "curve": {
+          "type": "number",
+          "format": "float",
+          "description": "Hop `k` of `hops` happens at `secs * (k / hops)^curve`: above 1 the hops slow down."
+        },
+        "pause": {
+          "type": "number",
+          "format": "float",
+          "description": "Seconds the landed stage shows before the match starts."
+        }
+      },
+      "required": ["secs", "hops", "curve", "pause"],
+      "description": "Stage select vote roulette: a highlight hops over the voted stages, slowing down, and lands on the winner."
     },
     "Audio": {
       "type": "object",
