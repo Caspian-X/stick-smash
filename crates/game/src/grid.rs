@@ -8,13 +8,6 @@ use bevy::prelude::*;
 use crate::input::{Dev, Nav};
 use crate::ui::*;
 
-pub fn key(kind: u32, slot: usize) -> u32 {
-    kind << 8 | slot as u32
-}
-pub fn kind(key: u32) -> (u32, usize) {
-    (key >> 8, (key & 255) as usize)
-}
-
 /// Room for a grid, in logical pixels. A tile is `w` wide and `w * aspect + extra` tall, at most `max` wide.
 #[derive(Clone, Copy, Debug)]
 pub struct Area {
@@ -172,8 +165,8 @@ pub fn tile(p: &mut ChildSpawnerCommands, f: &Fonts, t: Tile, content: impl FnOn
             ColorStop::auto(lead.unwrap_or(LINE).mix(&NIGHT, if locked { 0.45 } else { 0.75 })),
             ColorStop::auto(NIGHT),
         ])),
-        BorderColor::all(lead.unwrap_or(alpha(LINE, 0.9))),
-        BoxShadow::new(alpha(lead.unwrap_or(NIGHT), 0.55), Val::Px(0.), Val::Px(0.), Val::Px(1.), Val::Px(14.)),
+        BorderColor::all(lead.unwrap_or(LINE.with_alpha(0.9))),
+        BoxShadow::new(lead.unwrap_or(NIGHT).with_alpha(0.55), Val::Px(0.), Val::Px(0.), Val::Px(1.), Val::Px(14.)),
         UiTransform::from_scale(Vec2::splat(if lead.is_some() { 1.06 } else { 1. })),
         ZIndex(i32::from(lead.is_some())),
         Focusable { key: t.key, owner: None, spin: false },
@@ -181,7 +174,7 @@ pub fn tile(p: &mut ChildSpawnerCommands, f: &Fonts, t: Tile, content: impl FnOn
     .with_children(|p| {
         content(p);
         if t.off.is_some() {
-            p.spawn((node(fill), BackgroundColor(alpha(NIGHT, 0.6))));
+            p.spawn((node(fill), BackgroundColor(NIGHT.with_alpha(0.6))));
         }
         let label = t.off.as_deref().unwrap_or(t.name);
         if !small || lead.is_some() || !t.chips.is_empty() || t.off.is_some() {
@@ -196,8 +189,8 @@ pub fn tile(p: &mut ChildSpawnerCommands, f: &Fonts, t: Tile, content: impl FnOn
                         UiRect::new(Val::Px(3.), Val::Px(3.), Val::Px(if small { 6. } else { 10. }), Val::Px(2.));
                 }),
                 BackgroundGradient::from(LinearGradient::to_bottom(vec![
-                    ColorStop::auto(alpha(NIGHT, 0.)),
-                    ColorStop::auto(alpha(NIGHT, 0.92)),
+                    ColorStop::auto(NIGHT.with_alpha(0.)),
+                    ColorStop::auto(NIGHT.with_alpha(0.92)),
                 ])),
             ))
             .with_child((
@@ -224,6 +217,17 @@ pub fn tile(p: &mut ChildSpawnerCommands, f: &Fonts, t: Tile, content: impl FnOn
     });
 }
 
+/// The random tile's face: a big "?" (`size` high, lifted by `lift`) in `color`.
+pub fn random_face(p: &mut ChildSpawnerCommands, f: &Fonts, size: f32, lift: f32, color: Color) {
+    p.spawn(node(|n| {
+        fill(n);
+        n.justify_content = JustifyContent::Center;
+        n.align_items = AlignItems::Center;
+        n.padding.bottom = Val::Px(lift);
+    }))
+    .with_child(txt(&f.display, size, color, "?"));
+}
+
 pub fn fill(n: &mut Node) {
     n.position_type = PositionType::Absolute;
     n.left = Val::Px(0.);
@@ -244,7 +248,7 @@ fn chip(p: &mut ChildSpawnerCommands, f: &Fonts, c: &Chip, left: f32, size: f32)
         }),
         BackgroundColor(c.color),
         BorderColor::all(if c.cpu { NIGHT } else { c.light }),
-        BoxShadow::new(alpha(NIGHT, 0.6), Val::Px(1.), Val::Px(2.), Val::Px(0.), Val::Px(3.)),
+        BoxShadow::new(NIGHT.with_alpha(0.6), Val::Px(1.), Val::Px(2.), Val::Px(0.), Val::Px(3.)),
         UiTransform::default(),
     ))
     .insert_if(DropIn(c.drop.unwrap_or(Dev::Keys)), || c.drop.is_some())

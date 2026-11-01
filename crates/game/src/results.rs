@@ -10,6 +10,17 @@ use crate::select::team_name;
 use crate::ui::{self, *};
 use crate::{Data, Screen};
 
+pub struct ResultsPlugin;
+
+impl Plugin for ResultsPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<ResultsMenu>().add_systems(OnEnter(Screen::Results), enter).add_systems(
+            Update,
+            (update.in_set(UiSystems::Input), draw.in_set(UiSystems::Draw)).run_if(in_state(Screen::Results)),
+        );
+    }
+}
+
 const REMATCH: u32 = 1;
 const SELECT: u32 = 2;
 const MENU: u32 = 3;
@@ -22,7 +33,7 @@ pub struct ResultsMenu {
     pub message: String,
 }
 
-pub fn enter(mut rm: ResMut<ResultsMenu>, mut m: ResMut<Match>, shots: Option<Res<crate::shots::Script>>) {
+fn enter(mut rm: ResMut<ResultsMenu>, mut m: ResMut<Match>, shots: Option<Res<crate::shots::Script>>) {
     if m.recording_done {
         return;
     }
@@ -38,11 +49,11 @@ pub fn enter(mut rm: ResMut<ResultsMenu>, mut m: ResMut<Match>, shots: Option<Re
     rm.cursor = Cursor { key: REMATCH, owner: None };
 }
 
-pub fn update(
+fn update(
     testing: Option<Res<crate::editing::Testing>>,
     mut m: ResMut<Match>,
     mut rm: ResMut<ResultsMenu>,
-    devs: Res<Devices>,
+    mut devs: ResMut<Devices>,
     q: FocusQuery,
     data: Res<Data>,
     mut next: ResMut<NextState<Screen>>,
@@ -54,8 +65,7 @@ pub fn update(
     for (_, nav) in devs.navs().collect::<Vec<_>>() {
         match c.drive(nav, &spots) {
             Some(Action::Activate(REMATCH) | Action::Start) => {
-                m.restart(&data.0, play::seed());
-                scene.reset(&m.world);
+                play::restart(&mut m, &data.0, &mut scene, &mut devs);
                 next.set(Screen::Match);
             }
             // A test match from the editor goes back there.
@@ -83,23 +93,23 @@ pub fn update(
     }
 }
 
-#[derive(Component)]
-pub struct ResultsRoot(u32, String);
+/// What the results screen shows besides the frozen match.
+#[derive(Clone, PartialEq)]
+pub struct ResultsKey {
+    cursor: u32,
+    message: String,
+}
 
-pub fn draw(
+fn draw(
     testing: Option<Res<crate::editing::Testing>>,
     mut commands: Commands,
     m: Res<Match>,
     rm: Res<ResultsMenu>,
-    roots: Query<(Entity, &ResultsRoot)>,
+    roots: Roots<ResultsKey>,
     fonts: Res<Fonts>,
 ) {
-    if roots.iter().any(|(_, r)| r.0 == rm.cursor.key && r.1 == rm.message) {
-        return;
-    }
-    for (e, _) in &roots {
-        commands.entity(e).despawn();
-    }
+    let key = ResultsKey { cursor: rm.cursor.key, message: rm.message.clone() };
+    let Some(mut root) = ui::rebuild(&mut commands, &roots, &key, Screen::Results, z::SCREEN) else { return };
     let f = &*fonts;
     let d = &m.data;
     let w = &m.world;
@@ -115,81 +125,74 @@ pub fn draw(
     };
     let sub = w.winner.map(|i| d.fighters[w.fighters[i].data].name.clone());
     let n = order.len();
-    let cw = (1180. / n as f32 - 12.).min(230.);
-    commands
-        .spawn((
-            root(),
-            ResultsRoot(rm.cursor.key, rm.message.clone()),
-            DespawnOnExit(Screen::Results),
-            GlobalZIndex(5),
-            BackgroundGradient::from(LinearGradient::to_bottom(vec![
-                ColorStop::new(alpha(NIGHT, 0.5), Val::Percent(0.)),
-                ColorStop::new(alpha(NIGHT, 0.82), Val::Percent(45.)),
-                ColorStop::new(alpha(NIGHT, 0.95), Val::Percent(100.)),
-            ])),
-        ))
+    let cw = card_width(n, 230.);
+    root.insert(BackgroundGradient::from(LinearGradient::to_bottom(vec![
+        ColorStop::new(NIGHT.with_alpha(0.5), Val::Percent(0.)),
+        ColorStop::new(NIGHT.with_alpha(0.82), Val::Percent(45.)),
+        ColorStop::new(NIGHT.with_alpha(0.95), Val::Percent(100.)),
+    ])))
+    .with_children(|p| {
+        p.spawn(node(|n| {
+            n.flex_direction = FlexDirection::Column;
+            n.padding = UiRect::new(Val::Px(70.), Val::Px(70.), Val::Px(50.), Val::Px(30.));
+            n.height = Val::Percent(100.);
+        }))
         .with_children(|p| {
+            p.spawn((
+                txt(&f.display, 110., color, title),
+                TextShadow { offset: Vec2::new(0., 5.), color: NIGHT.with_alpha(0.8) },
+                LineHeight::RelativeToFont(0.9),
+            ));
+            if let Some(s) = sub {
+                p.spawn(txt(&f.heavy, 26., DIM, s));
+            }
+            p.spawn(txt(&f.body, 16., DIM, &rm.message));
+            p.spawn(node(|n| n.flex_grow = 1.));
             p.spawn(node(|n| {
-                n.flex_direction = FlexDirection::Column;
-                n.padding = UiRect::new(Val::Px(70.), Val::Px(70.), Val::Px(50.), Val::Px(30.));
-                n.height = Val::Percent(100.);
+                n.flex_direction = FlexDirection::Row;
+                n.column_gap = Val::Px(CARD_GAP);
+                n.align_items = AlignItems::FlexEnd;
+                n.margin.bottom = Val::Px(30.);
             }))
             .with_children(|p| {
-                p.spawn((
-                    txt(&f.display, 110., color, title),
-                    TextShadow { offset: Vec2::new(0., 5.), color: alpha(NIGHT, 0.8) },
-                    LineHeight::RelativeToFont(0.9),
-                ));
-                if let Some(s) = sub {
-                    p.spawn(txt(&f.heavy, 26., DIM, s));
+                for &i in &order {
+                    column(p, f, &m, i, place[i], cw);
                 }
-                p.spawn(txt(&f.body, 16., DIM, &rm.message));
-                p.spawn(node(|n| n.flex_grow = 1.));
-                p.spawn(node(|n| {
-                    n.flex_direction = FlexDirection::Row;
-                    n.column_gap = Val::Px(12.);
-                    n.align_items = AlignItems::FlexEnd;
-                    n.margin.bottom = Val::Px(30.);
-                }))
-                .with_children(|p| {
-                    for &i in &order {
-                        column(p, f, &m, i, place[i], cw);
-                    }
-                });
-                p.spawn(node(|n| {
-                    n.flex_direction = FlexDirection::Row;
-                    n.column_gap = Val::Px(14.);
-                }))
-                .with_children(|p| {
-                    // Editor tests go back to the editor and leave no replay.
-                    let items: &[(u32, &str)] = if testing.is_some() {
-                        &[(REMATCH, "Rematch"), (MENU, "Back to editor")]
-                    } else {
-                        &[
-                            (REMATCH, "Rematch"),
-                            (SELECT, "Character select"),
-                            (MENU, "Main menu"),
-                            (SAVE, "Save replay"),
-                            (WATCH, "Watch replay"),
-                        ]
-                    };
-                    for &(k, label) in items {
-                        let on = rm.cursor.key == k;
-                        p.spawn((
-                            node(|n| {
-                                n.padding = UiRect::axes(Val::Px(22.), Val::Px(6.));
-                                n.border = UiRect::all(Val::Px(2.));
-                                n.border_radius = BorderRadius::all(Val::Px(8.));
-                            }),
-                            BackgroundColor(if on { alpha(GOLD, 0.14) } else { INK_SOFT }),
-                            BorderColor::all(if on { GOLD } else { alpha(LINE, 0.8) }),
-                            Focusable { key: k, owner: None, spin: false },
-                        ))
-                        .with_child(txt(&f.label, 21., if on { GOLD } else { STAR }, label));
-                    }
-                });
+            });
+            p.spawn(node(|n| {
+                n.flex_direction = FlexDirection::Row;
+                n.column_gap = Val::Px(14.);
+            }))
+            .with_children(|p| {
+                // Editor tests go back to the editor and leave no replay.
+                let items: &[(u32, &str)] = if testing.is_some() {
+                    &[(REMATCH, "Rematch"), (MENU, "Back to editor")]
+                } else {
+                    &[
+                        (REMATCH, "Rematch"),
+                        (SELECT, "Character select"),
+                        (MENU, "Main menu"),
+                        (SAVE, "Save replay"),
+                        (WATCH, "Watch replay"),
+                    ]
+                };
+                for &(k, label) in items {
+                    let on = rm.cursor.key == k;
+                    p.spawn((
+                        node(|n| {
+                            n.padding = UiRect::axes(Val::Px(22.), Val::Px(6.));
+                            n.border = UiRect::all(Val::Px(2.));
+                            n.border_radius = BorderRadius::all(Val::Px(8.));
+                        }),
+                        BackgroundColor(if on { GOLD.with_alpha(0.14) } else { INK_SOFT }),
+                        BorderColor::all(if on { GOLD } else { LINE.with_alpha(0.8) }),
+                        Focusable { key: k, owner: None, spin: false },
+                    ))
+                    .with_child(txt(&f.label, 21., if on { GOLD } else { STAR }, label));
+                }
             });
         });
+    });
 }
 
 fn column(p: &mut ChildSpawnerCommands, f: &Fonts, m: &Match, i: usize, place: usize, w: f32) {
@@ -206,8 +209,14 @@ fn column(p: &mut ChildSpawnerCommands, f: &Fonts, m: &Match, i: usize, place: u
             n.border = UiRect::all(Val::Px(2.));
         }),
         BackgroundColor(INK),
-        BorderColor::all(if first { main } else { alpha(main, 0.3) }),
-        BoxShadow::new(alpha(main, if first { 0.45 } else { 0. }), Val::Px(0.), Val::Px(0.), Val::Px(2.), Val::Px(22.)),
+        BorderColor::all(if first { main } else { main.with_alpha(0.3) }),
+        BoxShadow::new(
+            main.with_alpha(if first { 0.45 } else { 0. }),
+            Val::Px(0.),
+            Val::Px(0.),
+            Val::Px(2.),
+            Val::Px(22.),
+        ),
     ))
     .with_children(|p| {
         p.spawn((
@@ -222,7 +231,7 @@ fn column(p: &mut ChildSpawnerCommands, f: &Fonts, m: &Match, i: usize, place: u
         ))
         .with_children(|p| {
             p.spawn(txt(&f.display, if first { 72. } else { 52. }, NIGHT, ordinal(place)));
-            p.spawn(txt(&f.display, 26., alpha(NIGHT, 0.85), m.slots[i].tag.clone()));
+            p.spawn(txt(&f.display, 26., NIGHT.with_alpha(0.85), m.slots[i].tag.clone()));
         });
         p.spawn(node(|n| {
             n.flex_direction = FlexDirection::Column;

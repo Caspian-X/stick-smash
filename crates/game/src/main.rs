@@ -4,15 +4,16 @@ use std::sync::Arc;
 
 use bevy::input::InputSystems;
 use bevy::prelude::*;
-use bevy::window::PrimaryWindow;
 use bevy_egui::{EguiContexts, EguiPlugin, EguiPrimaryContextPass, egui};
 use render::{RenderPlugin, RenderSystems, Scene};
 use sim::data::{Source, load};
 use sim::{GameData, TICK_HZ};
+use ui::UiSystems;
 
 mod audio;
 mod editing;
 mod grid;
+mod hints;
 mod hud;
 mod input;
 mod menu;
@@ -23,6 +24,7 @@ mod results;
 mod select;
 mod settings;
 mod shots;
+mod showcase;
 mod stage_select;
 mod training;
 mod ui;
@@ -119,6 +121,16 @@ fn main() {
     )
     .add_plugins((EguiPlugin::default(), RenderPlugin, audio::SoundPlugin))
     .init_state::<Screen>()
+    .add_plugins((
+        ui::UiPlugin,
+        pointer::PointerPlugin,
+        menu::MenuPlugin,
+        select::SelectPlugin,
+        stage_select::StagePlugin,
+        hud::HudPlugin,
+        results::ResultsPlugin,
+        training::TrainingPlugin,
+    ))
     .insert_resource(ClearColor(ui::NIGHT))
     .insert_resource(Time::<Fixed>::from_hz(f64::from(TICK_HZ)))
     .insert_resource(Scene::new(data.clone()))
@@ -127,76 +139,32 @@ fn main() {
     .insert_resource(saved)
     .insert_resource(persist)
     .init_resource::<input::Devices>()
-    .init_resource::<pointer::Pointers>()
-    .init_resource::<menu::MenuState>()
-    .init_resource::<hud::PauseMenu>()
-    .init_resource::<results::ResultsMenu>()
     .init_resource::<replay::Library>()
     .add_systems(Startup, move |mut commands: Commands, mut fonts: ResMut<Assets<Font>>| {
         commands.insert_resource(ui::Fonts::load(&assets, &mut fonts));
     })
     .add_systems(PreUpdate, input::poll.after(InputSystems))
-    .add_systems(PostUpdate, hud::safe_area.after(bevy::ui::UiSystems::Layout))
     .add_systems(FixedUpdate, play::tick.run_if(resource_exists::<play::Match>))
-    .add_systems(OnEnter(Screen::Title), menu::enter_title)
-    .add_systems(OnEnter(Screen::Settings), menu::enter_settings)
-    .add_systems(OnEnter(Screen::Controls), menu::enter_controls)
-    .add_systems(OnEnter(Screen::Select), select::enter)
-    .add_systems(OnExit(Screen::Select), select::exit)
-    .add_systems(OnEnter(Screen::Stages), (stage_select::enter, input::clear))
-    .add_systems(OnExit(Screen::Stages), stage_select::exit)
-    .add_systems(OnEnter(Screen::Match), (input::clear, hud::spawn))
-    .add_systems(OnEnter(Screen::Select), input::clear)
-    .add_systems(OnEnter(Screen::Title), input::clear)
-    .add_systems(OnEnter(Screen::Results), results::enter)
     .add_systems(OnEnter(Screen::Replays), replay::enter)
-    .add_systems(OnEnter(Screen::Playback), hud::spawn)
     .add_systems(
         Update,
         (
-            (play::attract, (menu::update, menu::draw).chain().run_if(resource_exists::<ui::Fonts>))
-                .chain()
-                .run_if(|s: Res<State<Screen>>| matches!(s.get(), Screen::Title | Screen::Settings | Screen::Controls)),
-            (select::update, select::draw, select::animate).chain().run_if(in_state(Screen::Select)),
-            (stage_select::update, stage_select::draw, stage_select::animate).chain().run_if(in_state(Screen::Stages)),
-            pointer::draw.after(select::animate).after(stage_select::animate),
-            (play::match_flow, hud::pause, hud::draw_pause, hud::update).chain().run_if(in_state(Screen::Match)),
-            (results::update, results::draw).chain().run_if(in_state(Screen::Results)),
-            replay::library.run_if(in_state(Screen::Replays)),
-            (replay::controls, hud::update).chain().run_if(in_state(Screen::Playback)),
-            play::interpolate.run_if(resource_exists::<play::Match>),
-            ui_scale,
+            replay::library.in_set(UiSystems::Input).run_if(in_state(Screen::Replays)),
+            replay::controls.in_set(UiSystems::Input).run_if(in_state(Screen::Playback)),
+            play::interpolate.before(RenderSystems).run_if(resource_exists::<play::Match>),
             settings::save,
-        )
-            .before(RenderSystems),
+        ),
     )
-    .add_systems(EguiPrimaryContextPass, (training::panel.run_if(in_state(Screen::Match)), toast));
+    .add_systems(EguiPrimaryContextPass, toast);
     editing::setup(&mut app, assets_root, if shot_dir.is_some() { None } else { settings::user_content_dir() });
     if let Some(dir) = shot_dir {
         fs::create_dir_all(&dir).expect("create screenshot dir");
         play::FIXED_SEED.store(7, std::sync::atomic::Ordering::Relaxed);
-        app.insert_resource(script.expect("screenshot script")).add_systems(
-            Update,
-            shots::run
-                .after(play::attract)
-                .before(menu::update)
-                .before(select::update)
-                .before(stage_select::update)
-                .before(hud::pause),
-        );
+        app.insert_resource(script.expect("screenshot script"))
+            .add_systems(Update, shots::run.after(play::attract).after(input::clear).before(UiSystems::Input));
     }
     if !app.run().is_success() {
         std::process::exit(1);
-    }
-}
-
-/// UI is laid out for a 720-pixel-high window and scaled to the real one.
-fn ui_scale(win: Query<&Window, With<PrimaryWindow>>, mut scale: ResMut<UiScale>) {
-    if let Ok(w) = win.single() {
-        let s = (w.height() / 720.).max(0.3);
-        if (scale.0 - s).abs() > 1e-3 {
-            scale.0 = s;
-        }
     }
 }
 
@@ -205,6 +173,7 @@ fn toast(mut ctx: EguiContexts, errors: Res<ContentErrors>, time: Res<Time>) -> 
         return Ok(());
     }
     let ctx = ctx.ctx_mut()?;
+    let star = ui::egui(ui::STAR);
     egui::Area::new(egui::Id::new("content-errors")).anchor(egui::Align2::RIGHT_BOTTOM, [-16., -16.]).show(ctx, |ui| {
         egui::Frame::new()
             .fill(egui::Color32::from_rgba_unmultiplied(60, 14, 24, 235))
@@ -212,11 +181,7 @@ fn toast(mut ctx: EguiContexts, errors: Res<ContentErrors>, time: Res<Time>) -> 
             .inner_margin(10)
             .show(ui, |ui| {
                 ui.set_max_width(460.);
-                ui.label(
-                    egui::RichText::new("Some content didn't load and was skipped")
-                        .strong()
-                        .color(egui::Color32::WHITE),
-                );
+                ui.label(egui::RichText::new("Some content didn't load and was skipped").strong().color(star));
                 for e in errors.0.iter().take(5) {
                     ui.label(egui::RichText::new(e).size(12.).color(egui::Color32::from_rgb(255, 200, 200)));
                 }

@@ -17,11 +17,20 @@ use bevy::prelude::*;
 use sim::data::render::{PointerLook, PointerMotion};
 
 use crate::grid;
-use crate::input::{Dev, Devices, Nav};
+use crate::input::{Dev, DevState, Devices, Nav};
 use crate::ui::*;
 
-/// Cursor key for "over nothing".
-pub const NONE: u32 = 0;
+pub struct PointerPlugin;
+
+impl Plugin for PointerPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<Pointers>()
+            .add_systems(Startup, |mut commands: Commands| {
+                commands.spawn((root(), PointerLayer, GlobalZIndex(z::POINTERS), Pickable::IGNORE));
+            })
+            .add_systems(Update, draw.after(UiSystems::Animate).before(render::RenderSystems));
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum Drive {
@@ -112,6 +121,22 @@ pub struct Pointers {
     pub screen: Vec2,
 }
 
+impl Pointers {
+    /// Nobody points at anything (leaving a select screen).
+    pub fn reset(&mut self) {
+        self.map.clear();
+        self.mouse = None;
+    }
+    /// `dev`'s pointer, made on cursor `c`'s target (else mid-screen) the first time; `fan`: its place among
+    /// pointers resting on one target.
+    pub fn of(&mut self, dev: Dev, fan: usize, c: &Cursor, spots: &[Spot]) -> &mut Pointer {
+        let at = spots.iter().find(|s| s.f.key == c.key).map_or(self.screen / 2., |s| s.center);
+        let p = self.map.entry(dev).or_insert_with(|| Pointer::new(at, fan));
+        p.fan = fan;
+        p
+    }
+}
+
 /// A tile grid for digital hops.
 #[derive(Clone, Copy, Debug)]
 pub struct Grid {
@@ -130,12 +155,6 @@ pub fn nearest(pos: Vec2, spots: &[Spot]) -> Option<&Spot> {
 /// The target under `pos`, or the nearest within `reach` of its edge.
 pub fn under(pos: Vec2, spots: &[Spot], reach: f32) -> Option<&Spot> {
     nearest(pos, spots).filter(|s| s.dist(pos) <= reach)
-}
-
-/// Back-out ease with a small overshoot.
-fn ease(t: f32) -> f32 {
-    let t = t.clamp(0., 1.) - 1.;
-    1. + 2.2 * t * t * t + 1.2 * t * t
 }
 
 impl Pointer {
@@ -199,7 +218,7 @@ impl Pointer {
         a.clock += dt;
         let lean = (vel.x * m.lean).clamp(-m.lean_max, m.lean_max);
         let stretch = (speed * m.stretch).min(m.stretch_max);
-        let n = (dt * 240.).ceil();
+        let n = (dt * m.substeps.max(1.)).ceil();
         let h = dt / n;
         for i in 1..=n as usize {
             spring(&mut a.lean.0, &mut a.lean.1, lean, m.lean_spring, h);
@@ -359,13 +378,30 @@ pub fn steer(
                     p.rest = true;
                     p.bump(cfg.land);
                 }
-                from.lerp(to, ease(k))
+                from.lerp(to, ease_out_back(k, cfg.slide_overshoot))
             }
             // Resting: follow the target if the layout moves.
             None => to,
         };
     }
     out
+}
+
+/// One frame of a player's pointer and cursor from their device `st` ([`steer`]). Returns their actions and the
+/// cursor's new target when it moved onto another.
+pub fn drive(
+    p: &mut Pointer,
+    c: &mut Cursor,
+    st: &DevState,
+    spots: &[Spot],
+    grid: Option<Grid>,
+    cfg: &PointerLook,
+    dt: f32,
+    screen: Vec2,
+) -> (Vec<Action>, Option<u32>) {
+    let before = c.key;
+    let acts = steer(p, c, &st.nav, st.stick, spots, grid, cfg, dt, screen);
+    (acts, (c.key != before).then_some(c.key))
 }
 
 #[derive(Component)]
@@ -382,29 +418,25 @@ pub struct PointerChip(Dev);
 pub fn draw(
     mut commands: Commands,
     mut ptrs: ResMut<Pointers>,
-    layer: Query<Entity, With<PointerLayer>>,
+    layer: Single<Entity, With<PointerLayer>>,
     mut nodes: Query<(Entity, &PointerNode, &mut Node, &mut UiTransform), Without<PointerChip>>,
     mut chips: Query<(&PointerChip, &mut UiTransform), Without<PointerNode>>,
-    fonts: Option<Res<Fonts>>,
+    f: Res<Fonts>,
     data: Res<crate::Data>,
     time: Res<Time<Real>>,
 ) {
-    let Some(f) = fonts else { return };
     let cfg = &data.0.global.render.select.pointer;
-    let Ok(layer) = layer.single() else {
-        commands.spawn((root(), PointerLayer, GlobalZIndex(30), Pickable::IGNORE));
-        return;
-    };
     let dt = time.delta_secs();
     for p in ptrs.map.values_mut() {
         p.animate(&cfg.motion, dt);
     }
+    let poses: BTreeMap<Dev, Pose> = ptrs.map.iter().map(|(d, p)| (*d, p.pose(cfg))).collect();
     let mut have = vec![];
     for (e, pn, mut n, mut tf) in &mut nodes {
         match ptrs.map.get(&pn.0) {
             Some(p) if p.look == pn.1 => {
                 have.push(pn.0);
-                let pose = p.pose(cfg);
+                let pose = poses[&pn.0];
                 n.left = Val::Px(p.pos.x);
                 n.top = Val::Px(p.pos.y + pose.bob);
                 tf.set_if_neq(UiTransform { scale: pose.scale, rotation: Rot2::radians(pose.lean), ..default() });
@@ -413,8 +445,7 @@ pub fn draw(
         }
     }
     for (pc, mut tf) in &mut chips {
-        if let Some(p) = ptrs.map.get(&pc.0) {
-            let pose = p.pose(cfg);
+        if let Some(pose) = poses.get(&pc.0) {
             tf.set_if_neq(UiTransform {
                 translation: Val2::px(pose.chip.x, pose.chip.y),
                 rotation: Rot2::radians(pose.swing),
@@ -426,14 +457,14 @@ pub fn draw(
         if have.contains(dev) {
             continue;
         }
-        commands.entity(layer).with_children(|c| {
+        commands.entity(*layer).with_children(|c| {
             c.spawn((
                 node(|n| {
                     n.position_type = PositionType::Absolute;
                     n.left = Val::Px(p.pos.x);
                     n.top = Val::Px(p.pos.y);
                 }),
-                UiTransform::from_scale(p.pose(cfg).scale),
+                UiTransform::from_scale(poses[dev].scale),
                 // Later players draw on top; keep P1 above the rest.
                 ZIndex(-(p.fan as i32)),
                 PointerNode(*dev, p.look.clone()),
@@ -470,10 +501,10 @@ fn arrow(p: &mut ChildSpawnerCommands, f: &Fonts, dev: Dev, look: &Look, cfg: &P
     let tail = Vec2::new(17., 25.) * k;
     let strokes = [(Vec2::ZERO, tail), (Vec2::ZERO, Vec2::new(1.5, 18.) * k), (Vec2::ZERO, Vec2::new(16., 5.) * k)];
     for (a, b) in strokes {
-        stroke(p, a, b, w + 4., alpha(NIGHT, 0.92), None);
+        stroke(p, a, b, w + 4., NIGHT.with_alpha(0.92), None);
     }
     for (a, b) in strokes {
-        stroke(p, a, b, w, look.color, Some(alpha(look.color, 0.75)));
+        stroke(p, a, b, w, look.color, Some(look.color.with_alpha(0.75)));
     }
     // A bright hotspot at the tip.
     p.spawn((
@@ -503,7 +534,7 @@ fn arrow(p: &mut ChildSpawnerCommands, f: &Fonts, dev: Dev, look: &Look, cfg: &P
                 n.justify_content = JustifyContent::Center;
                 n.align_items = AlignItems::Center;
             }),
-            BackgroundColor(alpha(NIGHT, 0.9)),
+            BackgroundColor(NIGHT.with_alpha(0.9)),
             BorderColor::all(look.color),
         ))
         .with_child(txt(&f.display, 10. * k, look.color, &look.num));
@@ -530,7 +561,7 @@ fn arrow(p: &mut ChildSpawnerCommands, f: &Fonts, dev: Dev, look: &Look, cfg: &P
             }),
             BackgroundColor(*color),
             BorderColor::all(NIGHT),
-            BoxShadow::new(alpha(*color, 0.5), Val::Px(0.), Val::Px(0.), Val::Px(0.), Val::Px(10.)),
+            BoxShadow::new(color.with_alpha(0.5), Val::Px(0.), Val::Px(0.), Val::Px(0.), Val::Px(10.)),
             UiTransform::from_rotation(Rot2::degrees(-8.)),
         ))
         .with_child(txt(&f.display, size, NIGHT, label));

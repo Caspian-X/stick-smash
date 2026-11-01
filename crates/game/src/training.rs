@@ -3,16 +3,26 @@
 
 use bevy::prelude::*;
 use bevy_egui::{EguiContexts, egui};
+use sim::data::render::CPU_LEVELS;
 use sim::world::State as FState;
 
-use crate::Data;
 use crate::input::Devices;
 use crate::play::{self, Match, Mode};
 use crate::settings::{DummyMode, Saved};
+use crate::ui::{self, DIM, GOLD, INK, LINE, STAR};
+use crate::{Data, Screen};
 
 const SPEEDS: [f64; 3] = [1., 0.5, 0.25];
 
-pub fn panel(
+pub struct TrainingPlugin;
+
+impl Plugin for TrainingPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(bevy_egui::EguiPrimaryContextPass, panel.run_if(in_state(Screen::Match)));
+    }
+}
+
+fn panel(
     mut ctx: EguiContexts,
     mut m: ResMut<Match>,
     mut devs: ResMut<Devices>,
@@ -24,11 +34,10 @@ pub fn panel(
         return Ok(());
     }
     let ctx = ctx.ctx_mut()?;
-    let gold = egui::Color32::from_rgb(255, 211, 90);
-    let dim = egui::Color32::from_rgb(140, 148, 200);
+    let (gold, dim, star) = (ui::egui(GOLD), ui::egui(DIM), ui::egui(STAR));
     let frame = egui::Frame::new()
-        .fill(egui::Color32::from_rgba_unmultiplied(14, 17, 51, 230))
-        .stroke(egui::Stroke::new(1., egui::Color32::from_rgb(51, 59, 122)))
+        .fill(ui::egui(INK))
+        .stroke(egui::Stroke::new(1., ui::egui(LINE)))
         .corner_radius(10)
         .inner_margin(12);
     let mut restart = false;
@@ -39,7 +48,7 @@ pub fn panel(
         .frame(frame)
         .default_width(270.)
         .show(ctx, |ui| {
-            ui.style_mut().visuals.override_text_color = Some(egui::Color32::from_rgb(232, 236, 255));
+            ui.style_mut().visuals.override_text_color = Some(star);
             let w = &m.world;
             let d = &m.data;
             let p1 = &w.fighters[0];
@@ -91,16 +100,12 @@ pub fn panel(
                 }
             });
             if mode != m.dummy.mode {
-                m.dummy.mode = mode;
-                m.dummy.dev = None;
-                m.clear_input(&mut devs);
-                saved.training.mode = mode;
-                m.apply_dummy();
+                m.set_dummy_mode(mode, &mut devs, &mut saved);
             }
             if mode == DummyMode::Cpu {
                 let mut lv = m.dummy.level;
                 ui.horizontal(|ui| {
-                    for (i, n) in ["Easy", "Normal", "Hard"].iter().enumerate() {
+                    for (i, n) in CPU_LEVELS.iter().enumerate() {
                         ui.selectable_value(&mut lv, i as u8, *n);
                     }
                 });
@@ -156,9 +161,7 @@ pub fn panel(
             ui.label(egui::RichText::new("F1 hitboxes · Start / Esc pause").color(dim).size(11.));
         });
     if restart {
-        m.restart(&data.0, play::seed());
-        scene.reset(&m.world);
-        m.clear_input(&mut devs);
+        play::restart(&mut m, &data.0, &mut scene, &mut devs);
     }
     Ok(())
 }

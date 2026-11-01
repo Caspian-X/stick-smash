@@ -319,8 +319,8 @@ fn stage_editor() -> Vec<Step> {
 }
 
 fn select() -> Vec<Step> {
-    use crate::grid::key;
     use crate::select::{FIGHTER, TILE};
+    use crate::ui::key;
     let mut v = Vec::new();
     // Versus: bot 0 opens it (and joins); its pointer starts on its fighter's tile, hints showing.
     press(&mut v, 0, Attack);
@@ -384,8 +384,8 @@ fn select() -> Vec<Step> {
 
 /// A thirty-fighter, thirty-stage roster (the built-ins repeated): the grids shrink and wrap into rows.
 fn roster() -> Vec<Step> {
-    use crate::grid::key;
     use crate::select::TILE;
+    use crate::ui::key;
     let mut v = vec![Step::Big(30), Step::Wait(2), Step::Select(Mode::Versus, 2), Step::Wait(20)];
     // Four players: everyone gathers on one tile (the pointers fan out), bot 0 hops in from below.
     for b in 1..4 {
@@ -728,7 +728,7 @@ pub fn run(
         }
         Step::LeaveRoster(b, act) => {
             let on_roster = sel.as_ref().is_some_and(|s| {
-                s.slots.iter().any(|p| p.dev == Some(Dev::Bot(*b)) && crate::grid::kind(p.cursor.key).0 == 1)
+                s.slots.iter().any(|p| p.dev == Some(Dev::Bot(*b)) && crate::ui::kind(p.cursor.key).0 == 1)
             });
             devs.bot(*b)[*act as usize] = on_roster && s.budget.is_multiple_of(2);
             if on_roster && s.budget < 60 {

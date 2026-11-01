@@ -184,6 +184,15 @@ impl Match {
         self.recording = None;
     }
 
+    /// Training: the dummy behaves like `mode` from now on (and next time).
+    pub fn set_dummy_mode(&mut self, mode: DummyMode, devs: &mut Devices, saved: &mut crate::settings::Saved) {
+        self.dummy.mode = mode;
+        self.dummy.dev = None;
+        self.clear_input(devs);
+        saved.training.mode = mode;
+        self.apply_dummy();
+    }
+
     pub fn apply_dummy(&mut self) {
         if self.mode == Mode::Training && self.world.cfg.players.len() > 1 {
             self.world.cfg.players[1].cpu = (self.dummy.mode == DummyMode::Cpu).then_some(self.dummy.level);
@@ -378,6 +387,13 @@ pub fn interpolate(time: Res<Time<Fixed>>, m: Res<Match>, mut scene: ResMut<Scen
     if m.paused.is_none() && !(matches!(m.mode, Mode::Training | Mode::Replay) && m.frozen) {
         scene.alpha = m.alpha(time.overstep_fraction_f64());
     }
+}
+
+/// Same players and rules on a fresh world (drawn afresh), with no input carried over.
+pub fn restart(m: &mut Match, data: &Arc<GameData>, scene: &mut Scene, devs: &mut Devices) {
+    m.restart(data, seed());
+    scene.reset(&m.world);
+    m.clear_input(devs);
 }
 
 /// Swap in a match: the renderer starts fresh with its data.

@@ -7,11 +7,32 @@ use bevy::window::PrimaryWindow;
 use render::Framing;
 use sim::world::State as FState;
 
-use crate::input::{Devices, Nav};
+use crate::input::{Dev, Devices, Nav};
 use crate::play::{self, Match, Mode};
 use crate::settings::{DummyMode, Saved};
 use crate::ui::{self, *};
 use crate::{Data, Screen};
+
+pub struct HudPlugin;
+
+impl Plugin for HudPlugin {
+    fn build(&self, app: &mut App) {
+        let in_match = in_state(Screen::Match);
+        app.init_resource::<PauseMenu>()
+            .add_systems(OnEnter(Screen::Match), spawn)
+            .add_systems(OnEnter(Screen::Playback), spawn)
+            .add_systems(
+                Update,
+                (
+                    (play::match_flow, pause).chain().in_set(UiSystems::Input).run_if(in_match.clone()),
+                    draw_pause.in_set(UiSystems::Draw).run_if(in_match.clone()),
+                    (percents, stocks, tags, bubbles, big)
+                        .in_set(UiSystems::Animate)
+                        .run_if(in_match.or_else(in_state(Screen::Playback))),
+                ),
+            );
+    }
+}
 
 #[derive(Component)]
 pub struct Pct(usize);
@@ -34,19 +55,16 @@ pub struct Big;
 #[derive(Component)]
 pub struct HudRoot;
 
-#[derive(Component)]
-pub struct HudPanels;
-
 const MAX_STOCK_ICONS: i32 = 5;
 const BUBBLE: f32 = 54.;
 
-pub fn spawn(mut commands: Commands, m: Res<Match>, fonts: Res<Fonts>, screen: Res<State<Screen>>) {
+fn spawn(mut commands: Commands, m: Res<Match>, fonts: Res<Fonts>, screen: Res<State<Screen>>) {
     let f = &*fonts;
     let d = &m.data;
     let n = m.slots.len();
-    let w = (1240. / n as f32 - 10.).min(236.);
+    let w = card_width(n, 236.);
     let training = m.mode == Mode::Training;
-    commands.spawn((root(), HudRoot, DespawnOnExit(*screen.get()), GlobalZIndex(2))).with_children(|p| {
+    commands.spawn((root(), HudRoot, DespawnOnExit(*screen.get()), GlobalZIndex(z::HUD))).with_children(|p| {
         for (i, s) in m.slots.iter().enumerate() {
             let (main, _, _) = pal(d, i);
             p.spawn((
@@ -61,7 +79,7 @@ pub fn spawn(mut commands: Commands, m: Res<Match>, fonts: Res<Fonts>, screen: R
             .with_children(|p| {
                 p.spawn((
                     txt(&f.heavy, 17., main, s.tag.clone()),
-                    TextShadow { offset: Vec2::new(0., 1.5), color: alpha(NIGHT, 0.9) },
+                    TextShadow { offset: Vec2::new(0., 1.5), color: NIGHT.with_alpha(0.9) },
                 ));
                 p.spawn((
                     node(|n| {
@@ -85,7 +103,7 @@ pub fn spawn(mut commands: Commands, m: Res<Match>, fonts: Res<Fonts>, screen: R
                 }),
                 BackgroundColor(INK),
                 BorderColor::all(main),
-                BoxShadow::new(alpha(main, 0.5), Val::Px(0.), Val::Px(0.), Val::Px(0.), Val::Px(12.)),
+                BoxShadow::new(main.with_alpha(0.5), Val::Px(0.), Val::Px(0.), Val::Px(0.), Val::Px(12.)),
                 Bubble(i),
                 Visibility::Hidden,
             ))
@@ -105,7 +123,7 @@ pub fn spawn(mut commands: Commands, m: Res<Match>, fonts: Res<Fonts>, screen: R
         }
         // Panels.
         p.spawn((
-            HudPanels,
+            Safe::Bottom,
             node(|n| {
                 n.position_type = PositionType::Absolute;
                 n.bottom = Val::Px(14.);
@@ -113,7 +131,7 @@ pub fn spawn(mut commands: Commands, m: Res<Match>, fonts: Res<Fonts>, screen: R
                 n.right = Val::Px(0.);
                 n.flex_direction = FlexDirection::Row;
                 n.justify_content = JustifyContent::Center;
-                n.column_gap = Val::Px(10.);
+                n.column_gap = Val::Px(CARD_GAP);
             }),
         ))
         .with_children(|p| {
@@ -209,7 +227,7 @@ pub fn spawn(mut commands: Commands, m: Res<Match>, fonts: Res<Fonts>, screen: R
         .with_children(|p| {
             p.spawn((
                 txt(&f.display, 180., STAR, ""),
-                TextShadow { offset: Vec2::new(0., 6.), color: alpha(NIGHT, 0.7) },
+                TextShadow { offset: Vec2::new(0., 6.), color: NIGHT.with_alpha(0.7) },
                 Big,
                 UiTransform::default(),
             ));
@@ -226,56 +244,43 @@ fn stock_icon(p: &mut ChildSpawnerCommands, c: Color, i: usize, k: i32) {
             n.border_radius = BorderRadius::MAX;
         }),
         BackgroundColor(c),
-        BorderColor::all(alpha(STAR, 0.8)),
+        BorderColor::all(STAR.with_alpha(0.8)),
         Stock(i, k),
     ));
 }
 
-/// Stage pixel (y down) → UI logical pixel.
-fn to_ui(fr: &Framing, size: Vec2, x: f64, y: f64) -> Vec2 {
-    let [x0, y0, x1, y1] = fr.view;
-    Vec2::new(((x - x0) / (x1 - x0)) as f32 * size.x, ((y - y0) / (y1 - y0)) as f32 * size.y)
-}
-
-pub fn update(
+/// Percents: the damage number in its ramp color, shaking while hit; "Out" once out of stocks.
+fn percents(
     m: Res<Match>,
-    fr: Res<Framing>,
     time: Res<Time>,
-    scale: Res<UiScale>,
-    win: Query<&Window, With<PrimaryWindow>>,
-    mut texts: ParamSet<(
-        Query<(&Pct, &mut Text, &mut TextColor, &mut UiTransform)>,
-        Query<(&mut Text, &mut TextColor, &mut UiTransform, &mut Visibility), With<Big>>,
-        Query<(&BubblePct, &mut Text)>,
-        Query<(&Stock, &mut Text)>,
-        Query<(&PctSign, &mut TextSpan)>,
-    )>,
-    mut panels: Query<(&Panel, &mut BackgroundGradient)>,
-    mut stocks: Query<(&Stock, &mut Visibility), (Without<Text>, Without<Big>, Without<Tag>, Without<Bubble>)>,
-    mut tags: Query<(&Tag, &mut Node, &mut Visibility), (Without<Bubble>, Without<Stock>, Without<Big>)>,
-    mut bubbles: Query<
-        (&Bubble, &mut Node, &mut Visibility, &mut UiTransform),
-        (Without<Tag>, Without<Stock>, Without<Big>, Without<Pct>),
-    >,
-    mut nubs: Query<(&BubbleNub, &mut Node), (Without<Tag>, Without<Bubble>)>,
+    mut pcts: Query<(&Pct, &mut Text, &mut TextColor, &mut UiTransform)>,
+    mut signs: Query<(&PctSign, &mut TextSpan)>,
 ) {
-    let w = &m.world;
-    let d = &m.data;
+    let (w, d) = (&m.world, &m.data);
+    let look = &d.global.render.hud;
     let t = time.elapsed_secs();
-    let size = win.single().map_or(Vec2::new(1280., 720.), |w| Vec2::new(w.width(), w.height())) / scale.0.max(0.01);
-    let gone = |s: FState| matches!(s, FState::Out | FState::Dead);
-    for (p, mut text, mut color, mut tf) in &mut texts.p0() {
+    for (p, mut text, mut color, mut tf) in &mut pcts {
         let f = &w.fighters[p.0];
         let out = f.state == FState::Out;
         text.0 = if out { "Out".into() } else { format!("{}", f.dmg.floor() as i64) };
         color.0 = if out { FAINT } else { ui::damage_color(d, f.dmg) };
-        let k = d.global.render.hud.shake as f32 * f.hud_shake.min(12) as f32 / 12.;
-        let j = |s: f32| (t * 91. + s + p.0 as f32 * 7.).sin() * k;
+        let k = look.shake as f32 * f.hud_shake.min(12) as f32 / 12.;
+        let j = |s: f32| (t * look.look.shake_speed + s + p.0 as f32 * 7.).sin() * k;
         tf.translation = Val2::px(j(0.), j(1.7));
     }
-    for (p, mut span) in &mut texts.p4() {
+    for (p, mut span) in &mut signs {
         span.0 = if w.fighters[p.0].state == FState::Out { String::new() } else { "%".into() };
     }
+}
+
+/// Panels fade once their player is out; stock icons (or the ×N count) follow the stocks left.
+fn stocks(
+    m: Res<Match>,
+    mut panels: Query<(&Panel, &mut BackgroundGradient)>,
+    mut icons: Query<(&Stock, &mut Visibility), Without<Text>>,
+    mut counts: Query<(&Stock, &mut Text)>,
+) {
+    let w = &m.world;
     for (p, mut bg) in &mut panels {
         let out = w.fighters[p.0].state == FState::Out;
         let a = if out { 0.45 } else { 0.92 };
@@ -285,44 +290,89 @@ pub fn update(
             }
         }
     }
-    for (s, mut vis) in &mut stocks {
+    for (s, mut vis) in &mut icons {
         *vis = if w.fighters[s.0].stocks >= s.1 { Visibility::Inherited } else { Visibility::Hidden };
     }
-    for (s, mut text) in &mut texts.p3() {
+    for (s, mut text) in &mut counts {
         text.0 = format!("×{}", w.fighters[s.0].stocks.max(0));
     }
+}
+
+/// Stage pixel (y down) → UI logical pixel.
+fn to_ui(fr: &Framing, size: Vec2, x: f64, y: f64) -> Vec2 {
     let [x0, y0, x1, y1] = fr.view;
-    let pos = |i: usize| fr.fighters.get(i).copied().unwrap_or((w.fighters[i].x, w.fighters[i].y));
+    Vec2::new(((x - x0) / (x1 - x0)) as f32 * size.x, ((y - y0) / (y1 - y0)) as f32 * size.y)
+}
+
+/// Where fighter `i` is drawn this frame.
+fn drawn(m: &Match, fr: &Framing, i: usize) -> (f64, f64) {
+    fr.fighters.get(i).copied().unwrap_or((m.world.fighters[i].x, m.world.fighters[i].y))
+}
+
+fn gone(s: FState) -> bool {
+    matches!(s, FState::Out | FState::Dead)
+}
+
+/// Name tags over fighters on screen, before the countdown ends.
+fn tags(
+    m: Res<Match>,
+    fr: Res<Framing>,
+    win: Query<&Window, With<PrimaryWindow>>,
+    scale: Res<UiScale>,
+    mut tags: Query<(&Tag, &mut Node, &mut Visibility)>,
+) {
+    let w = &m.world;
+    let look = &m.data.global.render.hud.look;
+    let size = screen_size(win.single().ok(), &scale);
+    let [x0, y0, x1, y1] = fr.view;
+    let (top, bottom) = (y0 + (y1 - y0) * fr.top_safe_area, y1 - (y1 - y0) * fr.bottom_safe_area);
     for (tag, mut node, mut vis) in &mut tags {
         let f = &w.fighters[tag.0];
-        let (x, y) = pos(tag.0);
-        let p = to_ui(&fr, size, x, y - 96.);
+        let (x, y) = drawn(&m, &fr, tag.0);
+        let p = to_ui(&fr, size, x, y - look.tag_height);
+        let at = y - look.anchor_height;
         let show = !gone(f.state)
             && f.state != FState::Win
             && m.mode != Mode::Showcase
             && w.count == 0
             && x > x0
             && x < x1
-            && y - 40. > y0
-            && y - 40. < y1 - (y1 - y0) * fr.bottom_safe_area;
+            && at > top
+            && at < bottom;
         *vis = if show { Visibility::Inherited } else { Visibility::Hidden };
         node.left = Val::Px(p.x - 20.);
         node.width = Val::Px(40.);
         node.top = Val::Px(p.y - 26.);
     }
+}
+
+/// Offscreen fighters: a bubble at the screen edge with their percent, its nub pointing at them, smaller further out.
+fn bubbles(
+    m: Res<Match>,
+    fr: Res<Framing>,
+    win: Query<&Window, With<PrimaryWindow>>,
+    scale: Res<UiScale>,
+    mut bubbles: Query<(&Bubble, &mut Node, &mut Visibility, &mut UiTransform)>,
+    mut nubs: Query<(&BubbleNub, &mut Node), Without<Bubble>>,
+    mut pcts: Query<(&BubblePct, &mut Text)>,
+) {
+    let w = &m.world;
+    let look = &m.data.global.render.hud.look;
+    let size = screen_size(win.single().ok(), &scale);
+    let (top, bottom) = (size.y * fr.top_safe_area as f32, size.y * (1. - fr.bottom_safe_area as f32));
     let mut nub_pos = vec![None; w.fighters.len()];
     for (b, mut node, mut vis, mut tf) in &mut bubbles {
         let f = &w.fighters[b.0];
-        let (x, y) = pos(b.0);
-        let p = to_ui(&fr, size, x, y - 40.);
+        let (x, y) = drawn(&m, &fr, b.0);
+        let p = to_ui(&fr, size, x, y - look.anchor_height);
         let m_ = BUBBLE / 2. + 10.;
-        let c = Vec2::new(p.x.clamp(m_, size.x - m_), p.y.clamp(m_, size.y * (1. - fr.bottom_safe_area as f32) - m_));
+        let c = Vec2::new(p.x.clamp(m_, size.x - m_), p.y.clamp(top + m_, bottom - m_));
         let off = p - c;
         let show = !gone(f.state) && f.state != FState::Respawn && off.length() > 1.;
         *vis = if show { Visibility::Inherited } else { Visibility::Hidden };
         node.left = Val::Px(c.x - BUBBLE / 2.);
         node.top = Val::Px(c.y - BUBBLE / 2.);
-        tf.scale = Vec2::splat((1. - off.length() / 900.).clamp(0.7, 1.));
+        tf.scale = Vec2::splat((1. - off.length() / look.bubble_shrink).clamp(look.bubble_min_scale, 1.));
         let dir = off.normalize_or_zero();
         nub_pos[b.0] = Some(dir * (BUBBLE / 2. + 3.) + Vec2::splat(BUBBLE / 2. - 3. - 6.));
     }
@@ -332,11 +382,16 @@ pub fn update(
             node.top = Val::Px(p.y);
         }
     }
-    for (b, mut text) in &mut texts.p2() {
+    for (b, mut text) in &mut pcts {
         text.0 = format!("{}%", w.fighters[b.0].dmg.floor() as i64);
     }
-    // Countdown, GO!, GAME!
-    let g = &d.global.match_;
+}
+
+/// The countdown, GO! and GAME!, popping in.
+fn big(m: Res<Match>, mut q: Query<(&mut Text, &mut TextColor, &mut UiTransform, &mut Visibility), With<Big>>) {
+    let w = &m.world;
+    let g = &m.data.global.match_;
+    let look = &m.data.global.render.hud.look;
     let hz = sim::TICK_HZ;
     let (s, color, pop): (String, Color, f32) = if m.mode == Mode::Training || m.mode == Mode::Showcase {
         (String::new(), STAR, 0.)
@@ -350,13 +405,13 @@ pub fn update(
     } else {
         (String::new(), STAR, 0.)
     };
-    for (mut text, mut tc, mut tf, mut vis) in &mut texts.p1() {
+    for (mut text, mut tc, mut tf, mut vis) in &mut q {
         *vis = if s.is_empty() { Visibility::Hidden } else { Visibility::Inherited };
         text.0.clone_from(&s);
         let fade = if s == "GO!" { (1. - pop) * 2. } else { 1. };
         tc.0 = color.with_alpha(fade.clamp(0., 1.));
-        let e = (pop * 6.).min(1.);
-        tf.scale = Vec2::splat(1.5 - 0.5 * (1. - (1. - e).powi(3)));
+        let e = (pop * look.pop_speed).min(1.);
+        tf.scale = Vec2::splat(look.pop_scale - (look.pop_scale - 1.) * (1. - (1. - e).powi(3)));
         tf.rotation = Rot2::degrees(if s == "GAME!" { -4. } else { 0. });
     }
 }
@@ -376,7 +431,7 @@ const HITBOXES: u32 = 6;
 const TO_SELECT: u32 = 7;
 const TO_MENU: u32 = 8;
 
-pub fn pause(
+fn pause(
     testing: Option<Res<crate::editing::Testing>>,
     mut m: ResMut<Match>,
     mut pm: ResMut<PauseMenu>,
@@ -412,25 +467,14 @@ pub fn pause(
         }
         match c.drive(nav, &spots) {
             Some(Action::Back | Action::Activate(RESUME)) => m.paused = None,
-            Some(Action::Activate(RESTART)) => {
-                m.restart(&data.0, play::seed());
-                scene.reset(&m.world);
-                m.clear_input(&mut devs);
-            }
+            Some(Action::Activate(RESTART)) => play::restart(&mut m, &data.0, &mut scene, &mut devs),
             Some(Action::Activate(RESET)) => {
-                m.restart(&data.0, play::seed());
-                scene.reset(&m.world);
-                m.clear_input(&mut devs);
+                play::restart(&mut m, &data.0, &mut scene, &mut devs);
                 m.paused = None;
             }
             Some(Action::Spin(DUMMY, by)) => {
-                let all = DummyMode::ALL;
-                let i = all.iter().position(|x| *x == m.dummy.mode).unwrap_or(0) as i32;
-                m.dummy.mode = all[(i + by).rem_euclid(all.len() as i32) as usize];
-                m.dummy.dev = None;
-                m.clear_input(&mut devs);
-                saved.training.mode = m.dummy.mode;
-                m.apply_dummy();
+                let mode = m.dummy.mode.cycle(by);
+                m.set_dummy_mode(mode, &mut devs, &mut saved);
             }
             Some(Action::Spin(DUMMY_PCT, by)) => {
                 let p = (m.world.fighters[1].dmg + 10. * f64::from(by)).clamp(0., 300.);
@@ -453,114 +497,68 @@ pub fn pause(
     }
 }
 
-#[derive(Component)]
-pub struct PauseRoot(String);
+/// What the pause menu shows.
+#[derive(Clone, PartialEq)]
+pub struct PauseKey {
+    by: Dev,
+    cursor: Cursor,
+    dummy: DummyMode,
+    dummy_dmg: f64,
+    hitboxes: bool,
+}
 
-pub fn draw_pause(
+fn draw_pause(
     testing: Option<Res<crate::editing::Testing>>,
     mut commands: Commands,
     m: Res<Match>,
     pm: Res<PauseMenu>,
     devs: Res<Devices>,
-    roots: Query<(Entity, &PauseRoot)>,
+    roots: Roots<PauseKey>,
     fonts: Res<Fonts>,
 ) {
     let training = m.mode == Mode::Training;
-    let sig = match m.paused {
-        Some(_) => format!(
-            "{:?}{:?}{}{}{}",
-            pm.cursor,
-            m.dummy.mode,
-            m.world.fighters.get(1).map_or(0., |f| f.dmg),
-            m.debug,
-            m.paused.is_some()
-        ),
-        None => String::new(),
-    };
-    if roots.iter().any(|(_, r)| r.0 == sig) || sig.is_empty() && roots.is_empty() {
-        return;
-    }
-    for (e, _) in &roots {
-        commands.entity(e).despawn();
-    }
+    let key = m.paused.map(|by| PauseKey {
+        by,
+        cursor: pm.cursor,
+        dummy: m.dummy.mode,
+        dummy_dmg: m.world.fighters.get(1).map_or(0., |f| f.dmg),
+        hitboxes: m.debug,
+    });
+    let Some(mut root) = ui::rebuild(&mut commands, &roots, key.as_ref(), Screen::Match, z::PAUSE) else { return };
     let Some(by) = m.paused else { return };
     let f = &*fonts;
     let slot = m.slots.iter().position(|s| s.dev == Some(by));
     let who = slot.map_or_else(|| devs.name(by), |i| format!("{} · {}", m.slots[i].tag, devs.name(by)));
-    commands
-        .spawn((
-            root(),
-            PauseRoot(sig),
-            DespawnOnExit(Screen::Match),
-            GlobalZIndex(10),
-            BackgroundColor(alpha(NIGHT, 0.62)),
-        ))
+    root.insert(BackgroundColor(NIGHT.with_alpha(0.62))).with_children(|p| {
+        p.spawn(node(|n| {
+            n.flex_direction = FlexDirection::Column;
+            n.justify_content = JustifyContent::Center;
+            n.padding = UiRect::left(Val::Px(84.));
+            n.height = Val::Percent(100.);
+            n.row_gap = Val::Px(6.);
+        }))
         .with_children(|p| {
-            p.spawn(node(|n| {
-                n.flex_direction = FlexDirection::Column;
-                n.justify_content = JustifyContent::Center;
-                n.padding = UiRect::left(Val::Px(84.));
-                n.height = Val::Percent(100.);
-                n.row_gap = Val::Px(6.);
-            }))
-            .with_children(|p| {
-                p.spawn(txt(&f.display, 96., STAR, "Paused"));
-                p.spawn((
-                    txt(&f.body, 16., DIM, format!("Paused by {who}. Only this device controls the menu.")),
-                    node(|n| n.margin.bottom = Val::Px(26.)),
-                ));
-                let mut items = vec![Item::button(RESUME, "Resume")];
-                if training {
-                    items.push(Item::spin(DUMMY, "Dummy", m.dummy.mode.label()));
-                    items.push(Item::spin(DUMMY_PCT, "Dummy damage", format!("{}%", m.world.fighters[1].dmg.floor())));
-                    items.push(Item::button(RESET, "Reset positions"));
-                    items.push(Item::spin(HITBOXES, "Hitboxes", if m.debug { "On" } else { "Off" }));
-                } else {
-                    items.push(Item::button(RESTART, "Restart"));
-                }
-                if testing.is_some() {
-                    items.push(Item::button(TO_MENU, "Back to editor"));
-                } else {
-                    items.push(Item::button(TO_SELECT, "Character select"));
-                    items.push(Item::button(TO_MENU, "Quit to menu"));
-                }
-                menu_list(p, f, &items, pm.cursor.key, 460., 30.);
-            });
-        });
-}
-
-/// Layout reports physical pixels, so this ratio also handles window/UI scaling.
-pub fn safe_area(
-    screen: Res<State<Screen>>,
-    panels: Query<&ComputedNode, With<HudPanels>>,
-    edges: Query<(&ComputedNode, &UiGlobalTransform, &Safe)>,
-    win: Query<&Window, With<PrimaryWindow>>,
-    scale: Res<UiScale>,
-    mut scene: ResMut<render::Scene>,
-) {
-    let Ok(w) = win.single() else { return };
-    let h = w.physical_height().max(1) as f32;
-    let (bottom, top) = match screen.get() {
-        Screen::Match | Screen::Playback => {
-            let margin = 28. * scale.0 * w.scale_factor();
-            let height = panels.iter().map(|n| n.size().y).fold(0., f32::max);
-            (f64::from((height + margin) / h).clamp(0., 0.5), 0.)
-        }
-        // Character select: the showcase is framed in the gap between the roster and the cards (the camera's padding
-        // keeps whole fighters inside it).
-        Screen::Select => edges.iter().fold((0f64, 0f64), |(b, t), (n, tf, e)| {
-            let y = tf.affine().translation.y;
-            match e {
-                Safe::Bottom => (b.max(f64::from((h - (y - n.size().y / 2.)) / h)), t),
-                Safe::Top => (b, t.max(f64::from((y + n.size().y / 2.) / h))),
+            p.spawn(txt(&f.display, 96., STAR, "Paused"));
+            p.spawn((
+                txt(&f.body, 16., DIM, format!("Paused by {who}. Only this device controls the menu.")),
+                node(|n| n.margin.bottom = Val::Px(26.)),
+            ));
+            let mut items = vec![Item::button(RESUME, "Resume")];
+            if training {
+                items.push(Item::spin(DUMMY, "Dummy", m.dummy.mode.label()));
+                items.push(Item::spin(DUMMY_PCT, "Dummy damage", format!("{}%", m.world.fighters[1].dmg.floor())));
+                items.push(Item::button(RESET, "Reset positions"));
+                items.push(Item::spin(HITBOXES, "Hitboxes", on_off(m.debug)));
+            } else {
+                items.push(Item::button(RESTART, "Restart"));
             }
-        }),
-        _ => (0., 0.),
-    };
-    if scene.bottom_safe_area != bottom {
-        scene.bottom_safe_area = bottom;
-    }
-    if scene.top_safe_area != top {
-        scene.top_safe_area = top;
-    }
+            if testing.is_some() {
+                items.push(Item::button(TO_MENU, "Back to editor"));
+            } else {
+                items.push(Item::button(TO_SELECT, "Character select"));
+                items.push(Item::button(TO_MENU, "Quit to menu"));
+            }
+            menu_list(p, f, &items, pm.cursor.key, List::new(460., 30.));
+        });
+    });
 }
