@@ -22,7 +22,7 @@
         "maxDistance": 430,
         "height": 100,
         "chance": 0.38,
-        "grounded": false,
+        "grounded": true,
         "noProjectile": true,
         "down": false,
         "neutral": true
