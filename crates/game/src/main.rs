@@ -6,7 +6,7 @@ use bevy::input::InputSystems;
 use bevy::prelude::*;
 use bevy_egui::{EguiContexts, EguiPlugin, EguiPrimaryContextPass, egui};
 use render::{RenderPlugin, RenderSystems, Scene};
-use sim::data::{Source, load};
+use sim::data::load;
 use sim::{GameData, TICK_HZ};
 use ui::UiSystems;
 
@@ -197,35 +197,32 @@ fn toast(mut ctx: EguiContexts, errors: Res<ContentErrors>, time: Res<Time>) -> 
 /// Broken packages are logged and skipped. Panics if nothing playable loads.
 fn load_data(roots: &[PathBuf]) -> (GameData, Vec<String>) {
     let mut files = Vec::new();
+    let mut errors = Vec::new();
     for root in roots {
-        collect(root, root, &mut files);
+        let (sources, failures) = sim::data::sources(root);
+        files.extend(sources);
+        errors.extend(failures);
     }
     match load(files) {
-        Ok((data, errors)) => {
+        Ok((data, failures)) => {
+            errors.extend(failures);
             errors.iter().for_each(|e| error!("{e}"));
             (data, errors.iter().map(ToString::to_string).collect())
         }
-        Err(errors) => {
+        Err(failures) => {
+            errors.extend(failures);
             panic!("content failed to load:\n{}", errors.iter().map(|e| format!("  {e}\n")).collect::<String>())
         }
     }
 }
 
-fn collect(root: &Path, dir: &Path, out: &mut Vec<Source>) {
-    let Ok(rd) = fs::read_dir(dir) else { return };
-    let mut paths: Vec<_> = rd.flatten().map(|e| e.path()).collect();
-    paths.sort();
-    for p in paths {
-        if p.is_dir() {
-            collect(root, &p, out);
-        } else if p.extension().is_some_and(|e| e == "json") {
-            match fs::read_to_string(&p) {
-                Ok(text) => out.push(Source {
-                    path: p.strip_prefix(root).unwrap_or(&p).to_string_lossy().replace('\\', "/"),
-                    text,
-                }),
-                Err(e) => error!("{}: {e}", p.display()),
-            }
-        }
-    }
+#[cfg(test)]
+pub(crate) fn test_data() -> Arc<GameData> {
+    static DATA: std::sync::OnceLock<Arc<GameData>> = std::sync::OnceLock::new();
+    DATA.get_or_init(|| {
+        let (data, errors) = load_data(&[PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets")]);
+        assert!(errors.is_empty(), "{errors:?}");
+        Arc::new(data)
+    })
+    .clone()
 }

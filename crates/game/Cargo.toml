@@ -11,7 +11,7 @@ name = "stick-smash"
 path = "src/main.rs"
 
 [dependencies]
-sim.workspace = true
+sim = { workspace = true, features = ["fs"] }
 bevy = { workspace = true, features = ["system_font_discovery", "wav"] }
 bevy_egui.workspace = true
 render.workspace = true

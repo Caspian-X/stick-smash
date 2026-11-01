@@ -573,7 +573,7 @@ mod tests {
     use super::*;
 
     fn cfg() -> PointerLook {
-        let (data, _) = crate::load_data(&[std::path::PathBuf::from("../../assets")]);
+        let data = crate::test_data();
         data.global.render.select.pointer.clone()
     }
     fn spot(key: u32, x: f32, y: f32) -> Spot {

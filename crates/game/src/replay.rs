@@ -835,8 +835,7 @@ mod content {
 mod tests {
     use super::*;
     fn recorded() -> (Replay, World) {
-        let (data, errors) = crate::load_data(&[PathBuf::from("../../assets")]);
-        assert!(errors.is_empty());
+        let data = crate::test_data();
         let cfg = MatchConfig {
             stocks: 1,
             seed: 7,
@@ -940,8 +939,7 @@ mod tests {
     }
     #[test]
     fn input_resets_round_trip_and_survive_snapshot_seeks() {
-        let (mut data, errors) = crate::load_data(&[PathBuf::from("../../assets")]);
-        assert!(errors.is_empty());
+        let mut data = (*crate::test_data()).clone();
         data.global.replay.checkpoint_ticks = 1;
         assert_eq!(interval(&data), u64::from(sim::TICK_HZ));
         let cfg = MatchConfig { training: true, ..default() };

@@ -29,14 +29,14 @@ mod ui;
 pub mod view;
 mod viewport;
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use bevy_egui::{EguiContexts, EguiPrimaryContextPass, egui};
 use sim::GameData;
-use sim::data::moves::{Move, Moves, Throw, Throws};
+use sim::data::moves::{Throw, Throws};
 use sim::data::stage::Stage;
 
 use doc::{Content, Files, Kind, Workspace};
@@ -181,24 +181,15 @@ impl<S: States + Copy> Plugin for EditorPlugin<S> {
 
 /// Reads every `.json` under each root (skipping `schema/`), later roots replacing earlier files.
 pub fn read_roots(roots: &[PathBuf]) -> Files {
-    fn walk(root: &Path, dir: &Path, out: &mut Files) {
-        let Ok(rd) = std::fs::read_dir(dir) else { return };
-        let mut paths: Vec<_> = rd.flatten().map(|e| e.path()).collect();
-        paths.sort();
-        for p in paths {
-            if p.is_dir() && p.file_name().is_some_and(|n| n != "schema") {
-                walk(root, &p, out);
-            } else if p.extension().is_some_and(|e| e == "json")
-                && let Ok(text) = std::fs::read_to_string(&p)
-            {
-                let path = p.strip_prefix(root).unwrap_or(&p).to_string_lossy().replace('\\', "/");
-                out.0.insert(path, text);
-            }
-        }
-    }
     let mut files = Files::default();
-    for r in roots {
-        walk(r, r, &mut files);
+    for root in roots {
+        let (sources, errors) = sim::data::sources(root);
+        for e in errors {
+            error!("{e}");
+        }
+        for source in sources {
+            files.0.insert(source.path, source.text);
+        }
     }
     files
 }
@@ -209,33 +200,6 @@ pub const SLOTS: [&str; 19] = [
     "nspec", "sspec", "uspec", "dspec", "grab", "dashgrab",
 ];
 
-pub fn move_ref(m: &Moves, slot: impl AsRef<str>) -> Option<&Move> {
-    m.iter().find(|(s, _)| *s == slot.as_ref()).map(|(_, m)| m)
-}
-pub fn move_mut(m: &mut Moves, slot: impl AsRef<str>) -> Option<&mut Move> {
-    Some(match slot.as_ref() {
-        "jab" => &mut m.jab,
-        "ftilt" => &mut m.ftilt,
-        "utilt" => &mut m.utilt,
-        "dtilt" => &mut m.dtilt,
-        "dashatk" => &mut m.dashatk,
-        "fsmash" => &mut m.fsmash,
-        "usmash" => &mut m.usmash,
-        "dsmash" => &mut m.dsmash,
-        "nair" => &mut m.nair,
-        "fair" => &mut m.fair,
-        "bair" => &mut m.bair,
-        "uair" => &mut m.uair,
-        "dair" => &mut m.dair,
-        "grab" => &mut m.grab,
-        "dashgrab" => &mut m.dashgrab,
-        "nspec" => &mut m.nspec,
-        "sspec" => return m.sspec.as_mut(),
-        "uspec" => &mut m.uspec,
-        "dspec" => &mut m.dspec,
-        _ => return None,
-    })
-}
 pub fn throw_ref<'a>(t: &'a Throws, k: &str) -> &'a Throw {
     match k {
         "b" => &t.b,
@@ -473,7 +437,7 @@ impl Editor {
         }
     }
 
-    fn say(&mut self, msg: impl Into<String>, error: bool) {
+    pub fn say(&mut self, msg: impl Into<String>, error: bool) {
         let msg = msg.into();
         self.toasts.retain(|t| t.msg != msg);
         self.toasts.push(Toast { msg, error, left: if error { style::TOAST_ERR_SECS } else { style::TOAST_SECS } });
@@ -683,11 +647,8 @@ pub(crate) fn tests_fighter() -> sim::world::Fighter {
     let files = doc::tests_files();
     let (d, _) = sim::data::load(files.sources()).unwrap();
     let id = d.fighters[0].id.clone();
-    let w = sim::World::new(
-        sim::MatchConfig { players: vec![sim::PlayerConfig::human(&id)], training: true, ..Default::default() },
-        &d,
-    )
-    .unwrap();
+    let w =
+        sim::World::new(sim::MatchConfig::sandbox("arena", vec![sim::PlayerConfig::human(&id)], 12345), &d).unwrap();
     w.fighters[0].clone()
 }
 
@@ -696,6 +657,7 @@ mod tests {
     use super::*;
     use preview::Section;
     use stage_view::Part;
+    use std::path::Path;
     const SANDBOX_MAX_TEST: usize = 1;
 
     /// Drives the whole egui layer headlessly through every kind of subject and dialog, a few frames each.

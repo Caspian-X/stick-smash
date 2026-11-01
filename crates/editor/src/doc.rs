@@ -159,8 +159,8 @@ pub fn unique_name(base: &str, taken: impl Fn(&str) -> bool) -> String {
 
 /// Calls `fx` on every pose key in the fighter: move phases and state animations.
 fn each_anim_key(f: &mut Fighter, mut fx: impl FnMut(&mut AnimKey)) {
-    for slot in crate::SLOTS {
-        if let Some(mv) = crate::move_mut(&mut f.moves, slot) {
+    for slot in sim::data::moves::Moves::SLOTS {
+        if let Some(mv) = f.moves.get_mut(slot) {
             mv.phases.iter_mut().flat_map(|p| p.anim.iter_mut()).for_each(&mut fx);
         }
     }
@@ -235,12 +235,12 @@ pub fn new_pose(f: &mut Fighter, base: &str, from: Option<&Pose>) -> String {
 
 /// Copies move `from` over slot `to`.
 pub fn copy_move(f: &mut Fighter, from: &str, to: &str) -> bool {
-    let Some(mv) = crate::move_ref(&f.moves, from).cloned() else { return false };
+    let Some(mv) = f.moves.get(from).cloned() else { return false };
     if to == "sspec" && f.moves.sspec.is_none() {
         f.moves.sspec = Some(mv);
         return true;
     }
-    crate::move_mut(&mut f.moves, to).map(|m| *m = mv).is_some()
+    f.moves.get_mut(to).map(|m| *m = mv).is_some()
 }
 
 /// One package (fighter or stage) being edited.

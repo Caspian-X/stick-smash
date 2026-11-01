@@ -14,8 +14,7 @@ use crate::stage_ed::{self, SANDBOX_MAX};
 use crate::stage_view;
 use crate::style::{self, DIM, FAINT, GOLD, INK2, NIGHT, RED, STAR, faint, key};
 use crate::{
-    Dialog, Editor, Mode, Outbox, Request, browser, doc, inspect, move_mut, move_ref, stage_panels, stage_port,
-    timeline, viewport,
+    Dialog, Editor, Mode, Outbox, Request, browser, doc, inspect, stage_panels, stage_port, timeline, viewport,
 };
 
 /// A pose being edited in the viewport: a named pose, or an inline pose in a move's anim key.
@@ -29,7 +28,7 @@ pub fn pose_mut<'a>(f: &'a mut sim::data::Fighter, t: &PoseTarget) -> Option<&'a
     match t {
         PoseTarget::Named(n) => f.poses.get_mut(n),
         PoseTarget::Inline { slot, phase, key } => {
-            match &mut move_mut(&mut f.moves, slot)?.phases.get_mut(*phase)?.anim.get_mut(*key)?.pose {
+            match &mut f.moves.get_mut(slot)?.phases.get_mut(*phase)?.anim.get_mut(*key)?.pose {
                 PoseRef::Inline(p) => Some(p),
                 PoseRef::Named(_) => None,
             }
@@ -56,7 +55,7 @@ pub(crate) fn pose_target(ed: &Editor) -> Option<(PoseTarget, Skel)> {
         Subject::Pose(n) => fd.poses.get(n).map(|p| (PoseTarget::Named(n.clone()), resolve(fd, p))),
         Subject::Move(slot) => {
             let Playhead { fighter: f, phase: Some((p, t)) } = at_playhead(ed)? else { return None };
-            let anim = &move_ref(&fd.moves, slot)?.phases.get(p)?.anim;
+            let anim = &fd.moves.get(slot)?.phases.get(p)?.anim;
             let live: Vec<usize> = (0..anim.len()).filter(|&i| sim::moves::cond(&f, anim[i].cond)).collect();
             let t = f64::from(t);
             let li = live.iter().rposition(|&i| anim[i].at <= t).unwrap_or(0);

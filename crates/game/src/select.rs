@@ -1477,8 +1477,7 @@ mod tests {
     }
     impl T {
         fn new() -> Self {
-            let (data, errors) = crate::load_data(&[std::path::PathBuf::from("../../assets")]);
-            assert!(errors.is_empty());
+            let data = (*crate::test_data()).clone();
             let saved = Saved::default();
             let mut s = Select {
                 mode: Mode::Versus,

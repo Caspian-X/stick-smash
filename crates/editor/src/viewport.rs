@@ -11,7 +11,7 @@ use crate::preview::Subject;
 use crate::style::{self, FAINT, INK, STAR, caps};
 use crate::ui::{at_playhead, hint, pose_mut, pose_target};
 use crate::view::{self, Hit};
-use crate::{Drag, Editor, move_mut, move_ref};
+use crate::{Drag, Editor};
 
 pub(crate) fn sync_scene(ed: &mut Editor, scene: &mut render::Scene, dt: f32) {
     let Some(run) = &ed.run else { return };
@@ -74,7 +74,7 @@ pub(crate) struct PlayheadBoxes {
 pub(crate) fn playhead_boxes(ed: &Editor) -> Option<PlayheadBoxes> {
     let Subject::Move(slot) = &ed.subject else { return None };
     let crate::ui::Playhead { fighter: f, phase: Some((p, t)) } = at_playhead(ed)? else { return None };
-    let boxes = move_ref(&ed.ws.docs.get(&ed.cur)?.item.moves, slot)?.phases.get(p)?.hitboxes.clone();
+    let boxes = ed.ws.docs.get(&ed.cur)?.item.moves.get(slot)?.phases.get(p)?.hitboxes.clone();
     Some(PlayheadBoxes { f, phase: p, t, boxes })
 }
 
@@ -249,12 +249,10 @@ fn drag_box(
 ) {
     let Subject::Move(slot) = ed.subject.clone() else { return };
     let s = |v: f64| crate::stage_view::Snap::fighter(coarse, fine).v(v);
-    let Some(h) =
-        move_mut(&mut ed.fighter().moves, &slot).and_then(|mv| mv.phases.get_mut(phase)).and_then(|p| match kind {
-            Hit::Body(i) | Hit::Rim(i) | Hit::Angle(i) => p.hitboxes.get_mut(i),
-            Hit::Joint(_) => None,
-        })
-    else {
+    let Some(h) = ed.fighter().moves.get_mut(&slot).and_then(|mv| mv.phases.get_mut(phase)).and_then(|p| match kind {
+        Hit::Body(i) | Hit::Rim(i) | Hit::Angle(i) => p.hitboxes.get_mut(i),
+        Hit::Joint(_) => None,
+    }) else {
         return;
     };
     let (x, y, r) = orig;

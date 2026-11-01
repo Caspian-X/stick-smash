@@ -567,9 +567,7 @@ mod tests {
     use crate::select::SelectInit;
 
     fn data() -> std::sync::Arc<GameData> {
-        let (data, errors) = crate::load_data(&[std::path::PathBuf::from("../../assets")]);
-        assert!(errors.is_empty());
-        std::sync::Arc::new(data)
+        crate::test_data()
     }
 
     /// Character select with bots 0 and 1 joined (and the default CPUs), everyone locked in.

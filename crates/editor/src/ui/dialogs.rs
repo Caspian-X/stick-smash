@@ -150,7 +150,7 @@ fn copy_move(ui: &mut egui::Ui, ed: &mut Editor, d: &mut Dialog, keys: Keys) -> 
     let f = &ed.ws.docs[&ed.cur].item;
     ui.horizontal_wrapped(|ui| {
         for slot in crate::SLOTS.iter().filter(|s| **s != from.as_str()) {
-            let exists = move_ref(&f.moves, slot).is_some();
+            let exists = f.moves.get(slot).is_some();
             let txt = if exists { slot.to_string() } else { format!("{slot} (new)") };
             if ui.selectable_label(to.as_deref() == Some(slot), txt).clicked() {
                 *to = Some(slot.to_string());

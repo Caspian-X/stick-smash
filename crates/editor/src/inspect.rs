@@ -17,7 +17,7 @@ use sim::data::ContentError;
 use crate::preview::{Section, Subject};
 use crate::style::{self, DIM, FAINT, GOLD, RED, STAR, caps, faint, heading};
 use crate::ui::at_playhead;
-use crate::{Dialog, Editor, doc, form, move_mut, throw_mut};
+use crate::{Dialog, Editor, doc, form, throw_mut};
 
 const TRIGGERS: [(Trigger, &str); 9] = [
     (Trigger::Timeout, "timeout"),
@@ -463,7 +463,7 @@ fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<G
     let note = inherited_note(ed, &format!("moves.{slot}"));
     let (mut ph, mut hb) = (ed.phase, ed.hitbox);
     let mut copy = false;
-    let Some(mv) = move_mut(&mut ed.fighter().moves, slot) else { return };
+    let Some(mv) = ed.fighter().moves.get_mut(slot) else { return };
     let base = format!("moves.{slot}");
     ui.horizontal(|ui| {
         ui.add(
@@ -1208,7 +1208,7 @@ fn cur_phase(ed: &mut Editor) -> Option<(&mut Phase, Option<u32>)> {
     let Subject::Move(slot) = ed.subject.clone() else { return None };
     let t = at_playhead(ed).and_then(|p| p.phase).filter(|(p, _)| *p == ed.phase).map(|(_, t)| t);
     let ph = ed.phase;
-    let mv: &mut Move = move_mut(&mut ed.fighter().moves, &slot)?;
+    let mv: &mut Move = ed.fighter().moves.get_mut(&slot)?;
     Some((mv.phases.get_mut(ph)?, t))
 }
 

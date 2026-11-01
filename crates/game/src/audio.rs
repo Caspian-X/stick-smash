@@ -293,10 +293,8 @@ fn playback(
 mod tests {
     use super::*;
 
-    fn data() -> sim::GameData {
-        let (data, errors) = crate::load_data(&[std::path::PathBuf::from("../../assets")]);
-        assert!(errors.is_empty(), "{errors:?}");
-        data
+    fn data() -> std::sync::Arc<sim::GameData> {
+        crate::test_data()
     }
 
     #[test]
@@ -392,7 +390,7 @@ mod tests {
 
     #[test]
     fn unavailable_output_expires_queued_voices_and_mute_discards_events() {
-        let mut data = data();
+        let mut data = (*data()).clone();
         data.global.audio.max_voices = 1;
         let mut app = App::new();
         app.insert_resource(Data(std::sync::Arc::new(data)))
@@ -428,7 +426,7 @@ mod tests {
     fn old_settings_use_content_defaults_and_volumes_roundtrip() {
         let mut saved: settings::Saved = serde_json::from_str(r#"{"fullscreen":true}"#).unwrap();
         assert!(saved.volume.is_none());
-        saved.volume = Some(data().global.audio.defaults);
+        saved.volume = Some(data().global.audio.defaults.clone());
         let json = serde_json::to_string(&saved).unwrap();
         assert_eq!(serde_json::from_str::<settings::Saved>(&json).unwrap(), saved);
     }

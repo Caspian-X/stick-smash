@@ -5,7 +5,7 @@ use bevy_egui::egui::{self, FontId, Key, RichText};
 
 use crate::preview::{Section, Subject};
 use crate::style::{self, DIM, FAINT, GOLD, RED, STAR, caps};
-use crate::{Dialog, Editor, doc, move_ref};
+use crate::{Dialog, Editor, doc};
 
 const GROUPS: [(&str, &[&str]); 5] = [
     ("Ground", &["jab", "ftilt", "utilt", "dtilt", "dashatk"]),
@@ -28,7 +28,7 @@ pub fn visible(ed: &Editor) -> Vec<Subject> {
     let mut v = vec![];
     for (_, slots) in GROUPS {
         for &slot in slots {
-            if let Some(m) = move_ref(&f.moves, slot)
+            if let Some(m) = f.moves.get(slot)
                 && matches(&q, &[slot, &m.name])
             {
                 v.push(Subject::Move(slot.into()));
@@ -128,7 +128,7 @@ pub fn browser(ui: &mut egui::Ui, ed: &mut Editor) {
                 group_label(ui, group);
                 for &slot in slots {
                     let subj = Subject::Move(slot.into());
-                    match move_ref(&f.moves, slot) {
+                    match f.moves.get(slot) {
                         Some(m) if shown.contains(&subj) => {
                             let dirty = changed(&format!("moves.{slot}"));
                             let r = item(ui, ed.subject == subj, slot, &m.name, dirty, bad(&format!("moves.{slot}")));
@@ -285,7 +285,7 @@ fn act(ed: &mut Editor, a: Action) {
             ed.doc().edit(|f| {
                 if slot == "sspec" {
                     f.moves.sspec = saved.moves.sspec.clone();
-                } else if let (Some(m), Some(s)) = (crate::move_mut(&mut f.moves, slot), move_ref(&saved.moves, slot)) {
+                } else if let (Some(m), Some(s)) = (f.moves.get_mut(slot), saved.moves.get(slot)) {
                     *m = s.clone();
                 }
             });

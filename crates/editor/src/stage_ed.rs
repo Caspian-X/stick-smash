@@ -171,7 +171,7 @@ pub fn sandbox(data: &GameData, id: &str, cpus: usize, level: u8) -> Result<Worl
             PlayerConfig { cpu: (cpus > 0).then_some(level), ..PlayerConfig::human(f) }
         })
         .collect();
-    let cfg = MatchConfig { seed: 7, stage: id.into(), stocks: 1, training: true, players, ..Default::default() };
+    let cfg = MatchConfig::sandbox(id, players, 7);
     let mut w = World::new(cfg, data)?;
     if cpus == 0 {
         w.fighters[0].state = State::Out;

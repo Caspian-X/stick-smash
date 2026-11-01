@@ -119,14 +119,7 @@ pub fn simulate(data: Arc<GameData>, fighter: &str, subj: &Subject, setup: &Setu
     let n = if dummy { 2 } else { 1 };
     let st = stage(d, n).ok_or("no stage fits the sandbox")?;
     let players = (0..n).map(|_| PlayerConfig::human(fighter)).collect();
-    let cfg = MatchConfig {
-        seed: 1,
-        stage: d.stages[st].id.clone(),
-        stocks: 1,
-        training: true,
-        players,
-        ..Default::default()
-    };
+    let cfg = MatchConfig::sandbox(&d.stages[st].id, players, 1);
     let mut w = World::new(cfg, d)?;
     let s = &d.stages[st];
     let (cx, top) = ((s.blocks[0].left + s.blocks[0].right) / 2., s.blocks[0].top);
@@ -153,7 +146,7 @@ pub fn simulate(data: Arc<GameData>, fighter: &str, subj: &Subject, setup: &Setu
     let mut button = 2u8;
     match subj {
         Subject::Move(slot) => {
-            let Some((_, mv)) = d.fighter(fighter).and_then(|f| f.moves.iter().find(|(s, _)| s == slot)) else {
+            let Some(mv) = d.fighter(fighter).and_then(|f| f.moves.get(slot)) else {
                 return Err(format!("no move {slot}"));
             };
             if mv
