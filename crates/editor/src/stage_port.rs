@@ -1,13 +1,13 @@
 //! The stage viewport: pan/zoom over the real rendered stage, direct manipulation of its parts (snapping and
 //! symmetry), slot labels, the overlay, and the floating toolbars (view, add, sandbox).
 
-use bevy_egui::egui::{self, Align2, Color32, PointerButton, Rect, RichText, Sense, UiBuilder};
+use bevy_egui::egui::{self, Align2, Color32, Rect, RichText, Sense, UiBuilder};
 
+use crate::Editor;
 use crate::stage_ed::{self, Drag, GRIDS, SANDBOX_MAX};
 use crate::stage_view::{self, Grip, Layers, Part};
 use crate::style::{self, DIM, FAINT, GOLD, INK, NIGHT, STAR, caps};
 use crate::ui::hint;
-use crate::{Editor, view};
 
 fn layers(ed: &Editor) -> Layers {
     Layers { bounds: ed.st.show_bounds, spawns: ed.st.show_spawns }
@@ -15,18 +15,18 @@ fn layers(ed: &Editor) -> Layers {
 
 pub(crate) fn overlay(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::Scene) {
     let ppp = f64::from(ctx.pixels_per_point());
-    let px = 1. / ed.st.cam.zoom;
+    let px = 1. / ed.st.pane.cam.zoom;
     let Some(data) = ed.st.data.clone() else { return };
-    scene.overlay.clear(ed.st.cam.zoom * ppp, data.global.render.alpha_gamma);
+    scene.overlay.clear(ed.st.pane.cam.zoom * ppp, data.global.render.alpha_gamma);
     let Some(doc) = ed.ws.stages.get(&ed.st.cur) else { return };
     let [l, t, r, b] = ed.port.rect;
-    let a = ed.st.cam.to_stage(&ed.port, [l, t]);
-    let z = ed.st.cam.to_stage(&ed.port, [r, b]);
+    let a = ed.st.pane.cam.to_stage(&ed.port, [l, t]);
+    let z = ed.st.pane.cam.to_stage(&ed.port, [r, b]);
     let colors = stage_ed::colors(&data);
     let o = stage_view::Overlay {
         s: &doc.item,
         sel: ed.st.sel,
-        hover: ed.st.hover,
+        hover: ed.st.pane.hover,
         layers: layers(ed),
         grid: ed.st.grid.then_some(ed.st.grid_size),
         view: [a[0], a[1], z[0], z[1]],
@@ -42,85 +42,58 @@ pub(crate) fn overlay(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::
 
 pub(crate) fn viewport(ui: &mut egui::Ui, ed: &mut Editor) {
     let rect = ui.max_rect();
-    let win = ui.ctx().viewport_rect();
-    ed.port = view::Port {
-        rect: [rect.left(), rect.top(), rect.right(), rect.bottom()].map(f64::from),
-        window: [f64::from(win.width()), f64::from(win.height())],
-    };
-    if ed.st.reframe {
-        ed.st.reframe = false;
+    ed.port = crate::pane::port(ui);
+    if ed.st.pane.reframe {
+        ed.st.pane.reframe = false;
         stage_ed::frame_stage(ed);
     }
     // Picking a bound (from the browser or Tab) zooms out to show it whole.
     if ed.st.sel != ed.st.seen_sel {
         ed.st.seen_sel = ed.st.sel;
         if let Some(p @ (Part::Blast | Part::Camera)) = ed.st.sel
-            && ed.st.drag.is_none()
+            && ed.st.pane.drag.is_none()
             && let Some(stage_view::Shape::Rect(r)) =
                 ed.ws.stages.get(&ed.st.cur).and_then(|d| stage_view::shape(&d.item, p))
         {
             stage_ed::frame_rect(ed, r);
         }
     }
-    let resp = ui.allocate_rect(rect, Sense::click_and_drag());
-    let to_stage = |ed: &Editor, p: egui::Pos2| ed.st.cam.to_stage(&ed.port, [f64::from(p.x), f64::from(p.y)]);
-    let px = 1. / ed.st.cam.zoom;
-    let (coarse, fine) = ui.input(|i| (i.modifiers.shift, i.modifiers.alt));
-    let sn = ed.st.snap(coarse, fine);
     let Some(stage) = ed.ws.stages.get(&ed.st.cur).map(|d| d.item.clone()) else { return };
-    let mouse = resp.hover_pos().or(resp.interact_pointer_pos());
-    if ed.st.drag.is_none() {
-        ed.st.hover = mouse
-            .filter(|_| resp.hovered())
-            .and_then(|m| stage_view::hit_test(&stage, ed.st.sel, to_stage(ed, m), px, layers(ed)));
+    crate::pane::interact(ui, ed, StageInteraction { stage: &stage });
+    labels(ui, ed, &stage, rect);
+    chrome(ui, ed, rect, &stage);
+}
+
+struct StageInteraction<'a> {
+    stage: &'a sim::data::Stage,
+}
+
+impl crate::pane::Interaction for StageInteraction<'_> {
+    type Hit = stage_view::Handle;
+    type Shown = ();
+    fn pane(ed: &mut Editor) -> &mut crate::Pane<Self::Hit, ()> {
+        &mut ed.st.pane
     }
-    if resp.hovered() {
-        let (scroll, pinch) = ui.input(|i| (i.smooth_scroll_delta.y, i.zoom_delta()));
-        let k = f64::from(pinch) * (f64::from(scroll) * 0.0025).exp();
-        if (k - 1.).abs() > 1e-4
-            && let Some(m) = mouse
-        {
-            let port = ed.port;
-            ed.st.cam.zoom_at(&port, [f64::from(m.x), f64::from(m.y)], k);
-            ed.st.cam.zoom = ed.st.cam.zoom.max(0.1);
-        }
+    fn hit(&self, ed: &Editor, m: [f64; 2], px: f64) -> Option<Self::Hit> {
+        stage_view::hit_test(self.stage, ed.st.sel, m, px, layers(ed))
     }
-    if resp.drag_started_by(PointerButton::Secondary) || resp.drag_started_by(PointerButton::Middle) {
-        ed.st.drag = Some(Drag::Pan);
-    } else if resp.drag_started_by(PointerButton::Primary) {
-        let grab = resp.interact_pointer_pos().map(|p| to_stage(ed, p)).unwrap_or_default();
-        ed.st.drag = Some(match ed.st.hover {
+    fn start(&self, ed: &mut Editor, grab: [f64; 2]) -> Option<Drag> {
+        Some(match ed.st.pane.hover {
             Some(h) => {
                 ed.st.select(Some(h.part));
-                let partner = if ed.st.symmetry { stage_view::partner(&stage, h.part) } else { None };
-                Drag::Part { h, orig: Box::new(stage.clone()), grab, partner }
+                let partner = if ed.st.symmetry { stage_view::partner(self.stage, h.part) } else { None };
+                Drag::Part { h, orig: Box::new(self.stage.clone()), grab, partner }
             }
             None => Drag::Pan,
-        });
+        })
     }
-    if resp.dragged()
-        && let Some(drag) = ed.st.drag.clone()
-    {
-        match &drag {
-            Drag::Pan => {
-                let d = resp.drag_delta();
-                ed.st.cam.center[0] -= f64::from(d.x) * px;
-                ed.st.cam.center[1] -= f64::from(d.y) * px;
-            }
-            Drag::Part { .. } => {
-                if let Some(m) = resp.interact_pointer_pos().map(|p| to_stage(ed, p))
-                    && stage_ed::drag_to(ed, &drag, m, sn)
-                {
-                    ed.st.stale = true;
-                }
-            }
+    fn drag(&self, ed: &mut Editor, drag: &Drag, m: [f64; 2], (coarse, fine): (bool, bool)) {
+        if stage_ed::drag_to(ed, drag, m, ed.st.snap(coarse, fine)) {
+            ed.st.pane.stale = true;
         }
     }
-    if resp.drag_stopped() {
-        ed.st.drag = None;
-    }
-    if resp.clicked() {
-        match ed.st.hover {
+    fn click(&self, ed: &mut Editor) {
+        match ed.st.pane.hover {
             Some(h) => {
                 ed.st.select(Some(h.part));
                 match (h.grip, h.part) {
@@ -132,29 +105,23 @@ pub(crate) fn viewport(ui: &mut egui::Ui, ed: &mut Editor) {
             None => ed.st.sel = None,
         }
     }
-    if resp.double_clicked() && ed.st.hover.is_none() {
-        ed.st.reframe = true;
+    fn cursor(&self, ed: &Editor) -> egui::CursorIcon {
+        match (&ed.st.pane.drag, ed.st.pane.hover.map(|h| h.grip)) {
+            (Some(_), _) => egui::CursorIcon::Grabbing,
+            (_, Some(Grip::Sides([l, t, r, b]))) => match (l || r, t || b) {
+                (true, true) if l == t => egui::CursorIcon::ResizeNwSe,
+                (true, true) => egui::CursorIcon::ResizeNeSw,
+                (true, false) => egui::CursorIcon::ResizeHorizontal,
+                _ => egui::CursorIcon::ResizeVertical,
+            },
+            (_, Some(Grip::End(_))) => egui::CursorIcon::ResizeHorizontal,
+            (_, Some(Grip::Start)) => egui::CursorIcon::ResizeVertical,
+            (_, Some(Grip::Face | Grip::Ledge(_))) => egui::CursorIcon::PointingHand,
+            (_, Some(Grip::Rim)) => egui::CursorIcon::ResizeHorizontal,
+            (_, Some(Grip::Move)) => egui::CursorIcon::Move,
+            _ => egui::CursorIcon::Default,
+        }
     }
-    let cursor = match (&ed.st.drag, ed.st.hover.map(|h| h.grip)) {
-        (Some(_), _) => egui::CursorIcon::Grabbing,
-        (_, Some(Grip::Sides([l, t, r, b]))) => match (l || r, t || b) {
-            (true, true) if l == t => egui::CursorIcon::ResizeNwSe,
-            (true, true) => egui::CursorIcon::ResizeNeSw,
-            (true, false) => egui::CursorIcon::ResizeHorizontal,
-            _ => egui::CursorIcon::ResizeVertical,
-        },
-        (_, Some(Grip::End(_))) => egui::CursorIcon::ResizeHorizontal,
-        (_, Some(Grip::Start)) => egui::CursorIcon::ResizeVertical,
-        (_, Some(Grip::Face | Grip::Ledge(_))) => egui::CursorIcon::PointingHand,
-        (_, Some(Grip::Rim)) => egui::CursorIcon::ResizeHorizontal,
-        (_, Some(Grip::Move)) => egui::CursorIcon::Move,
-        _ => egui::CursorIcon::Default,
-    };
-    if resp.hovered() || ed.st.drag.is_some() {
-        ui.ctx().set_cursor_icon(cursor);
-    }
-    labels(ui, ed, &stage, rect);
-    chrome(ui, ed, rect, &stage);
 }
 
 /// Slot numbers on spawns (`1`…) and respawns (`R1`…), in the player's color.
@@ -162,13 +129,13 @@ fn labels(ui: &egui::Ui, ed: &Editor, s: &sim::data::Stage, rect: Rect) {
     if !ed.st.show_spawns {
         return;
     }
-    let px = 1. / ed.st.cam.zoom;
+    let px = 1. / ed.st.pane.cam.zoom;
     let colors = ed.st.data.as_deref().map(stage_ed::colors).unwrap_or_default();
     let painter = ui.painter_at(rect);
     let parts = (0..s.spawns.len()).map(Part::Spawn).chain((0..s.respawns.len()).map(Part::Respawn));
     for p in parts {
         let Some(at) = stage_view::label_at(s, p, px) else { continue };
-        let [x, y] = ed.st.cam.to_screen(&ed.port, at);
+        let [x, y] = ed.st.pane.cam.to_screen(&ed.port, at);
         let (i, text) = match p {
             Part::Spawn(i) => (i, format!("{}", i + 1)),
             Part::Respawn(i) => (i, format!("R{}", i + 1)),
@@ -218,9 +185,9 @@ fn chrome(ui: &mut egui::Ui, ed: &mut Editor, rect: Rect, stage: &sim::data::Sta
                     .on_hover_text("Symmetry: edits mirror around the stage's centre x  M");
                 ui.separator();
                 if ui.button("⛶").on_hover_text("Frame the stage  F · double-click").clicked() {
-                    st.reframe = true;
+                    st.pane.reframe = true;
                 }
-                ui.label(RichText::new(format!("{:.0}%", st.cam.zoom * 100.)).color(FAINT).small());
+                ui.label(RichText::new(format!("{:.0}%", st.pane.cam.zoom * 100.)).color(FAINT).small());
             });
             if wide {
                 add_pill(ui, ed);
@@ -230,7 +197,10 @@ fn chrome(ui: &mut egui::Ui, ed: &mut Editor, rect: Rect, stage: &sim::data::Sta
             add_pill(ui, ed);
         }
     });
-    let sand = Rect::from_min_size(rect.left_bottom() + egui::vec2(10., -68.), egui::vec2(rect.width() - 20., 30.));
+    let sand = Rect::from_min_size(
+        rect.left_bottom() + egui::vec2(10., -style::SANDBOX_BOTTOM),
+        egui::vec2(rect.width() - 20., 30.),
+    );
     ui.scope_builder(UiBuilder::new().max_rect(sand), |ui| {
         ui.horizontal(|ui| {
             pill(ui, |ui| sandbox_bar(ui, ed));
@@ -264,11 +234,11 @@ fn chrome(ui: &mut egui::Ui, ed: &mut Editor, rect: Rect, stage: &sim::data::Sta
             crate::stage_panels::goto(ed, &e.path);
         }
     }
-    let shown = ed.st.drag.as_ref().and_then(|d| match d {
+    let shown = ed.st.pane.drag.as_ref().and_then(|d| match d {
         Drag::Part { h, .. } => Some(h.part),
-        Drag::Pan => None,
+        _ => None,
     });
-    let hints: &[(&str, &str)] = match (ed.st.drag.is_some(), ed.st.hover.map(|h| h.grip)) {
+    let hints: &[(&str, &str)] = match (ed.st.pane.drag.is_some(), ed.st.pane.hover.map(|h| h.grip)) {
         (true, _) if shown.is_some() => &[("⇧", "snap to grid"), ("Alt", "fine")],
         (true, _) => &[],
         (_, Some(Grip::Face)) => &[("click", "flip facing")],
@@ -292,9 +262,11 @@ fn chrome(ui: &mut egui::Ui, ed: &mut Editor, rect: Rect, stage: &sim::data::Sta
             ("?", "all shortcuts"),
         ],
     };
-    let hint_rect =
-        Rect::from_min_size(rect.left_bottom() + egui::vec2(12., -28.), egui::vec2(rect.width() - 24., 22.));
-    let part = shown.or(ed.st.hover.map(|h| h.part)).or(ed.st.sel);
+    let hint_rect = Rect::from_min_size(
+        rect.left_bottom() + egui::vec2(12., -style::HINT_BOTTOM),
+        egui::vec2(rect.width() - 24., 22.),
+    );
+    let part = shown.or(ed.st.pane.hover.map(|h| h.part)).or(ed.st.sel);
     ui.scope_builder(UiBuilder::new().max_rect(hint_rect), |ui| {
         ui.set_clip_rect(hint_rect.intersect(ui.clip_rect()));
         ui.horizontal(|ui| {
@@ -390,13 +362,13 @@ fn sandbox_bar(ui: &mut egui::Ui, ed: &mut Editor) {
         if lv != ed.st.level {
             ed.st.level = lv;
             ed.st.world = None;
-            ed.st.stale = true;
+            ed.st.pane.stale = true;
         }
         let icon = if ed.st.paused { "▶" } else { "⏸" };
         ui.toggle_value(&mut ed.st.paused, icon).on_hover_text("Pause the CPUs  Space");
         if ui.button("⟲").on_hover_text("Restart the sandbox").clicked() {
             ed.st.world = None;
-            ed.st.stale = true;
+            ed.st.pane.stale = true;
         }
     }
 }

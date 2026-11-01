@@ -16,7 +16,7 @@ use sim::data::ContentError;
 
 use crate::preview::{Section, Subject};
 use crate::style::{self, DIM, FAINT, GOLD, RED, STAR, caps, faint, heading};
-use crate::ui::{at_playhead, fighter};
+use crate::ui::at_playhead;
 use crate::{Dialog, Editor, doc, form, move_mut, throw_mut};
 
 const TRIGGERS: [(Trigger, &str); 9] = [
@@ -94,21 +94,65 @@ pub(crate) fn optional<T>(
     default: impl FnOnce() -> T,
     edit: impl FnOnce(&mut egui::Ui, &mut T),
 ) {
-    ui.horizontal(|ui| match v {
+    optional_with(ui, v, unset, || Some(default()), edit, Optional::default());
+}
+
+pub(crate) struct Optional<'a> {
+    pub inline: bool,
+    pub add: &'a str,
+    pub remove: String,
+    pub add_tip: &'a str,
+    pub remove_tip: String,
+}
+
+impl Default for Optional<'_> {
+    fn default() -> Self {
+        Self {
+            inline: true,
+            add: "+ set",
+            remove: style::ICON_DEL.into(),
+            add_tip: "Give it its own value",
+            remove_tip: String::new(),
+        }
+    }
+}
+
+pub(crate) fn optional_with<T>(
+    ui: &mut egui::Ui,
+    v: &mut Option<T>,
+    unset: &str,
+    default: impl FnOnce() -> Option<T>,
+    edit: impl FnOnce(&mut egui::Ui, &mut T),
+    buttons: Optional<'_>,
+) {
+    match v {
         Some(x) => {
-            edit(ui, x);
-            if mini(ui, style::ICON_DEL, FAINT, &format!("Clear ({unset})")) {
+            let content = |ui: &mut egui::Ui| {
+                edit(ui, x);
+                if buttons.inline {
+                    let tip =
+                        if buttons.remove_tip.is_empty() { format!("Clear ({unset})") } else { buttons.remove_tip };
+                    mini(ui, &buttons.remove, FAINT, &tip)
+                } else {
+                    ui.small_button(&buttons.remove).clicked()
+                }
+            };
+            let clear = if buttons.inline { ui.horizontal(content).inner } else { content(ui) };
+            if clear {
                 *v = None;
             }
         }
         None => {
-            ui.label(RichText::new(format!("— {unset}")).color(FAINT));
-            if mini(ui, "+ set", GOLD, "Give it its own value") {
-                *v = Some(default());
-            }
+            ui.horizontal(|ui| {
+                ui.label(RichText::new(format!("— {unset}")).color(FAINT));
+                if mini(ui, buttons.add, GOLD, buttons.add_tip) {
+                    *v = default();
+                }
+            });
         }
-    });
+    }
 }
+
 pub(crate) fn opt_num(ui: &mut egui::Ui, label: &str, tip: &str, v: &mut Option<f64>, default: f64, unset: &str) {
     row(ui, label, tip, |ui| {
         optional(ui, v, unset, || default, |ui, x| drop(drag(ui, DragValue::new(x).speed(0.1).max_decimals(3))));
@@ -123,11 +167,17 @@ pub(crate) fn check(ui: &mut egui::Ui, label: &str, tip: &str, v: &mut bool) {
 pub(crate) fn grid(ui: &mut egui::Ui, id: impl std::hash::Hash + std::fmt::Debug, add: impl FnOnce(&mut egui::Ui)) {
     egui::Grid::new(id).num_columns(2).spacing([10., 5.]).min_col_width(style::LABEL_W).show(ui, add);
 }
-pub(crate) fn section(ui: &mut egui::Ui, title: &str, open: bool, add: impl FnOnce(&mut egui::Ui)) {
+pub(crate) fn section<R>(
+    ui: &mut egui::Ui,
+    title: &str,
+    open: bool,
+    add: impl FnOnce(&mut egui::Ui) -> R,
+) -> Option<R> {
     ui.add_space(2.);
     egui::CollapsingHeader::new(RichText::new(title).family(style::label()).size(16.).color(STAR))
         .default_open(open)
-        .show(ui, add);
+        .show(ui, add)
+        .body_returned
 }
 
 /// Problems whose path is `prefix` or inside it, shown in place.
@@ -173,7 +223,7 @@ pub fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
                 inherited(ui, ed, &format!("throws.{k}"));
                 errs(ui, &errors, &format!("throws.{k}"));
                 let w = ed_weight(&data, &ed.cur);
-                let t = throw_mut(&mut fighter(ed).throws, &k);
+                let t = throw_mut(&mut ed.fighter().throws, &k);
                 grid(ui, "throw", |ui| {
                     int(ui, "release", &d("Throw", "release"), &mut t.release);
                     int(ui, "total", "Throw length in frames", &mut t.total);
@@ -184,7 +234,9 @@ pub fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
             Subject::Fighter => fighter_panel(ui, ed, &errors),
             Subject::Data(s) => data_panel(ui, ed, s, &errors),
         }
-        problems(ui, ed, &errors);
+        if let Some(path) = crate::ui::problem_panel(ui, &errors) {
+            goto(ed, &path);
+        }
     });
 }
 
@@ -208,36 +260,21 @@ fn inherited(ui: &mut egui::Ui, ed: &Editor, path: &str) {
     }
 }
 
-fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<GameData>>, errors: &[ContentError]) {
-    let playhead_t = at_playhead(ed).and_then(|(_, m)| m).filter(|(p, _)| *p == ed.phase).map(|(_, t)| t);
-    let w = ed_weight(&data, &ed.cur);
-    let poses: Vec<String> = fighter(ed).poses.keys().cloned().collect();
-    let projectiles: Vec<String> = fighter(ed).projectiles.keys().cloned().collect();
-    let attachments: Vec<String> = fighter(ed).attachments.iter().map(|a| a.id.clone()).collect();
-    let note = inherited_note(ed, &format!("moves.{slot}"));
-    let (mut ph, mut hb) = (ed.phase, ed.hitbox);
-    let mut copy = false;
-    let Some(mv) = move_mut(&mut fighter(ed).moves, slot) else { return };
-    let base = format!("moves.{slot}");
-    ui.horizontal(|ui| {
-        ui.add(
-            egui::TextEdit::singleline(&mut mv.name)
-                .font(egui::FontId::new(20., style::display()))
-                .frame(egui::Frame::NONE)
-                .desired_width(200.),
-        )
-        .on_hover_text("Move name (training panel, debug overlay). Click to rename.");
-        ui.label(caps(slot));
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            copy = ui.small_button("Copy to…").on_hover_text("Copy this move over another slot").clicked();
-        });
-    });
-    if let Some(n) = note {
-        ui.label(faint(n));
-    }
-    let move_errs: Vec<ContentError> =
-        errors.iter().filter(|e| under(&e.path, &base) && !e.path.contains("phases[")).cloned().collect();
-    errs(ui, &move_errs, &base);
+struct PhaseSelection {
+    phase: usize,
+    hitbox: Option<usize>,
+    jump: Option<usize>,
+    changed: bool,
+}
+
+fn phase_list(
+    ui: &mut egui::Ui,
+    mv: &mut Move,
+    mut ph: usize,
+    mut hb: Option<usize>,
+    base: &str,
+    errors: &[ContentError],
+) -> PhaseSelection {
     let phase_n = mv.phases.len();
     ph = ph.min(phase_n - 1);
     let mut jump: Option<usize> = None;
@@ -332,9 +369,19 @@ fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<G
             None => {}
         }
     });
-    let names: Vec<String> = mv.phases.iter().map(|p| p.name.clone()).collect();
-    let pbase = format!("{base}.phases[{ph}]");
-    let p = &mut mv.phases[ph];
+    PhaseSelection { phase: ph, hitbox: hb, jump, changed: phases_changed }
+}
+
+fn hitbox_panel(
+    ui: &mut egui::Ui,
+    p: &mut Phase,
+    mut hb: Option<usize>,
+    pbase: &str,
+    playhead_t: Option<u32>,
+    data: Option<&GameData>,
+    w: f64,
+    errors: &[ContentError],
+) -> Option<usize> {
     if hb.is_some_and(|h| h >= p.hitboxes.len()) {
         hb = None;
     }
@@ -399,12 +446,54 @@ fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<G
                 ui.label(RichText::new(format!("Hitbox {h}")).family(style::label()).size(16.).color(GOLD));
                 errs(ui, errors, &format!("{pbase}.hitboxes[{h}]"));
                 let b = &mut p.hitboxes[h];
-                hit_fields(ui, b, true, data.as_deref(), w);
+                hit_fields(ui, b, true, data, w);
                 key_frames(ui, b, playhead_t);
             });
         }
     });
-    section(ui, &format!("Phase · {}", p.name), true, |ui| {
+    hb
+}
+
+fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<GameData>>, errors: &[ContentError]) {
+    let playhead_t = at_playhead(ed).and_then(|p| p.phase).filter(|(p, _)| *p == ed.phase).map(|(_, t)| t);
+    let w = ed_weight(&data, &ed.cur);
+    let poses: Vec<String> = ed.fighter().poses.keys().cloned().collect();
+    let projectiles: Vec<String> = ed.fighter().projectiles.keys().cloned().collect();
+    let attachments: Vec<String> = ed.fighter().attachments.iter().map(|a| a.id.clone()).collect();
+    let note = inherited_note(ed, &format!("moves.{slot}"));
+    let (mut ph, mut hb) = (ed.phase, ed.hitbox);
+    let mut copy = false;
+    let Some(mv) = move_mut(&mut ed.fighter().moves, slot) else { return };
+    let base = format!("moves.{slot}");
+    ui.horizontal(|ui| {
+        ui.add(
+            egui::TextEdit::singleline(&mut mv.name)
+                .font(egui::FontId::new(20., style::display()))
+                .frame(egui::Frame::NONE)
+                .desired_width(200.),
+        )
+        .on_hover_text("Move name (training panel, debug overlay). Click to rename.");
+        ui.label(caps(slot));
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            copy = ui.small_button("Copy to…").on_hover_text("Copy this move over another slot").clicked();
+        });
+    });
+    if let Some(n) = note {
+        ui.label(faint(n));
+    }
+    let move_errs: Vec<ContentError> =
+        errors.iter().filter(|e| under(&e.path, &base) && !e.path.contains("phases[")).cloned().collect();
+    errs(ui, &move_errs, &base);
+    let selection = phase_list(ui, mv, ph, hb, &base, errors);
+    ph = selection.phase;
+    hb = selection.hitbox;
+    let (jump, phases_changed) = (selection.jump, selection.changed);
+    let names: Vec<String> = mv.phases.iter().map(|p| p.name.clone()).collect();
+    let pbase = format!("{base}.phases[{ph}]");
+    let p = &mut mv.phases[ph];
+    hb = hitbox_panel(ui, p, hb, &pbase, playhead_t, data.as_deref(), w, errors);
+    let rename = section(ui, &format!("Phase · {}", p.name), true, |ui| {
+        let mut rename = None;
         let own: Vec<ContentError> = errors
             .iter()
             .filter(|e| {
@@ -421,7 +510,7 @@ fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<G
                 let old = p.name.clone();
                 if ui.text_edit_singleline(&mut p.name).changed() {
                     // Renaming keeps transitions pointing here (fixed up below).
-                    ui.data_mut(|d| d.insert_temp(egui::Id::new("ed-rename"), (old, p.name.clone())));
+                    rename = Some((old, p.name.clone()));
                 }
             });
             row(ui, "frames", &d("Phase", "frames"), |ui| {
@@ -456,8 +545,10 @@ fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<G
                 ui.label(faint(format!("Attachments: {}", attachments.join(", "))));
             }
         });
-    });
-    if let Some((old, new)) = ui.data_mut(|d| d.remove_temp::<(String, String)>(egui::Id::new("ed-rename"))) {
+        rename
+    })
+    .flatten();
+    if let Some((old, new)) = rename {
         for q in &mut mv.phases {
             for t in &mut q.transitions {
                 if t.to == old {
@@ -924,7 +1015,7 @@ fn pose_panel(ui: &mut egui::Ui, ed: &mut Editor, name: &str, errors: &[ContentE
                 .clicked();
         });
     });
-    let uses = doc::pose_users(fighter(ed), name);
+    let uses = doc::pose_users(ed.fighter(), name);
     let what = if uses > 0 { " · edits show everywhere it's used" } else { "" };
     ui.label(faint(format!("{}{what}. Drag joints in the viewport.", doc::uses_text(name, uses))));
     inherited(ui, ed, &format!("poses.{name}"));
@@ -932,12 +1023,12 @@ fn pose_panel(ui: &mut egui::Ui, ed: &mut Editor, name: &str, errors: &[ContentE
     if rename {
         ed.dialog = Some(Dialog::RenamePose { old: name.into(), new: name.into() });
     }
-    let names: Vec<String> = fighter(ed).poses.keys().filter(|n| *n != name).cloned().collect();
+    let names: Vec<String> = ed.fighter().poses.keys().filter(|n| *n != name).cloned().collect();
     let parent =
         |f: &sim::data::Fighter| f.poses.get(name).map(|p| Pose { from: p.from.clone(), ..Default::default() });
-    let Some(inherit) = parent(fighter(ed)).map(|p| render::pose::resolve(fighter(ed), &p)) else { return };
+    let Some(inherit) = parent(ed.fighter()).map(|p| render::pose::resolve(ed.fighter(), &p)) else { return };
     let base = if name == "stand" { "default" } else { "inherited" };
-    let Some(p) = fighter(ed).poses.get_mut(name) else { return };
+    let Some(p) = ed.fighter().poses.get_mut(name) else { return };
     grid(ui, "pose", |ui| {
         row(ui, "from", &d("Pose", "from"), |ui| {
             let mut opts: Vec<(Option<String>, &str)> = vec![(None, "stand")];
@@ -1003,7 +1094,7 @@ fn stat_tip(key: &str) -> String {
 fn fighter_panel(ui: &mut egui::Ui, ed: &mut Editor, errors: &[ContentError]) {
     let id = ed.cur.clone();
     let fresh = ed.ws.docs.get(&id).is_some_and(|d| d.fresh);
-    let f = fighter(ed);
+    let f = ed.fighter();
     ui.label(heading(&f.name));
     ui.label(faint(format!(
         "fighters/{id}{}{}",
@@ -1082,7 +1173,7 @@ fn data_panel(ui: &mut egui::Ui, ed: &mut Editor, s: Section, errors: &[ContentE
     ui.label(faint("Hover a field for help · ✖ removes an optional field · + Field adds one."));
     ui.add_space(4.);
     let id = egui::Id::new(("data", s.key()));
-    let f = fighter(ed);
+    let f = ed.fighter();
     match s {
         Section::Style => drop(form::edit(ui, id, form::def("Style"), &mut f.style)),
         Section::Attachments => drop(form::edit(ui, id, &form::array_of("Attachment"), &mut f.attachments)),
@@ -1093,46 +1184,21 @@ fn data_panel(ui: &mut egui::Ui, ed: &mut Editor, s: Section, errors: &[ContentE
     }
 }
 
-/// Every problem, each clickable to its place.
-fn problems(ui: &mut egui::Ui, ed: &mut Editor, list: &[ContentError]) {
-    if list.is_empty() {
-        return;
-    }
-    ui.add_space(10.);
-    egui::Frame::new().fill(style::ERR_BG).corner_radius(8).inner_margin(10).show(ui, |ui| {
-        ui.label(RichText::new("Problems (fix before saving)").color(RED).strong());
-        for e in list {
-            let txt = format!("{}: {}", if e.path.is_empty() { &e.file } else { &e.path }, e.msg);
-            if ui.link(RichText::new(txt).color(style::ERR_TEXT)).on_hover_text("Go there").clicked() {
-                goto(ed, &e.path);
-            }
-        }
-    });
-}
-
 /// Selects what a JSON path like `moves.jab.phases[1].hitboxes[0].r` points at.
 pub fn goto(ed: &mut Editor, path: &str) {
     let parts: Vec<&str> = path.split('.').collect();
-    let idx = |s: &str, key: &str| {
-        s.strip_prefix(key)
-            .and_then(|r| r.strip_prefix('['))
-            .and_then(|r| r.split(']').next())
-            .and_then(|n| n.parse::<usize>().ok())
-    };
     match parts.as_slice() {
         ["moves", slot, rest @ ..] => {
             ed.select(Subject::Move(slot.to_string()));
-            if let Some(p) = rest.first().and_then(|s| idx(s, "phases")) {
+            if let Some(p) = rest.first().and_then(|s| crate::section::index_of(s, "phases")) {
                 ed.phase = p;
-                ed.hitbox = rest.get(1).and_then(|s| idx(s, "hitboxes"));
+                ed.hitbox = rest.get(1).and_then(|s| crate::section::index_of(s, "hitboxes"));
                 ed.followed = ed.frame;
             }
         }
         ["throws", k, ..] => ed.select(Subject::Throw(k.to_string())),
         ["poses", n, ..] => ed.select(Subject::Pose(n.to_string())),
-        [k, ..] if let Some(s) = Section::ALL.into_iter().find(|s| k.starts_with(s.key())) => {
-            ed.select(Subject::Data(s))
-        }
+        [k, ..] if let Some(s) = crate::section::of_path::<Section>(k) => ed.select(Subject::Data(s)),
         _ => ed.select(Subject::Fighter),
     }
 }
@@ -1140,9 +1206,9 @@ pub fn goto(ed: &mut Editor, path: &str) {
 /// Current phase on the playhead, for keyboard hitbox operations.
 fn cur_phase(ed: &mut Editor) -> Option<(&mut Phase, Option<u32>)> {
     let Subject::Move(slot) = ed.subject.clone() else { return None };
-    let t = at_playhead(ed).and_then(|(_, m)| m).filter(|(p, _)| *p == ed.phase).map(|(_, t)| t);
+    let t = at_playhead(ed).and_then(|p| p.phase).filter(|(p, _)| *p == ed.phase).map(|(_, t)| t);
     let ph = ed.phase;
-    let mv: &mut Move = move_mut(&mut fighter(ed).moves, &slot)?;
+    let mv: &mut Move = move_mut(&mut ed.fighter().moves, &slot)?;
     Some((mv.phases.get_mut(ph)?, t))
 }
 
@@ -1171,7 +1237,7 @@ pub fn delete_hitbox(ed: &mut Editor) {
 
 pub fn nudge_hitbox(ed: &mut Editor, dx: f64, dy: f64) {
     let Some(h) = ed.hitbox else { return };
-    let t = at_playhead(ed).and_then(|(_, m)| m).map_or(0, |(_, t)| t);
+    let t = at_playhead(ed).and_then(|p| p.phase).map_or(0, |(_, t)| t);
     let Some((p, _)) = cur_phase(ed) else { return };
     let Some(b) = p.hitboxes.get_mut(h) else { return };
     match crate::view::geom_source(b, t).1 {

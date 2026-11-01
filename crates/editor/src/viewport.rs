@@ -1,7 +1,7 @@
 //! The viewport: playback into the render scene, pan/zoom, direct manipulation of hitboxes and joints (with snapping
 //! modifiers), the overlay with onion skins, and the floating toolbars.
 
-use bevy_egui::egui::{self, Color32, PointerButton, Rect, RichText, Sense, UiBuilder};
+use bevy_egui::egui::{self, Color32, Rect, RichText, Sense, UiBuilder};
 use render::canvas::Rgba;
 use render::pose::resolve;
 use sim::data::Hitbox;
@@ -9,58 +9,45 @@ use sim::world::{Fighter, State};
 
 use crate::preview::Subject;
 use crate::style::{self, FAINT, INK, STAR, caps};
-use crate::ui::{at_playhead, fighter, hint, pose_mut, pose_target};
+use crate::ui::{at_playhead, hint, pose_mut, pose_target};
 use crate::view::{self, Hit};
 use crate::{Drag, Editor, move_mut, move_ref};
-
-/// Drag precision from the modifiers: Shift snaps to whole pixels, Alt doesn't snap, default half pixels.
-fn snap(v: f64, coarse: bool, fine: bool) -> f64 {
-    if fine {
-        (v * 10.).round() / 10.
-    } else if coarse {
-        v.round()
-    } else {
-        (v * 2.).round() / 2.
-    }
-}
 
 pub(crate) fn sync_scene(ed: &mut Editor, scene: &mut render::Scene, dt: f32) {
     let Some(run) = &ed.run else { return };
     let n = run.frames.len();
     let run_gen = ed.run_gen;
     if ed.playing && n > 1 {
-        ed.acc += f64::from(dt) * 60. * ed.speed;
-        while ed.acc >= 1. {
-            ed.acc -= 1.;
+        ed.pane.acc += f64::from(dt) * 60. * ed.speed;
+        while ed.pane.acc >= 1. {
+            ed.pane.acc -= 1.;
             if ed.frame + 1 >= n && !ed.looping && !ed.subject.idle() {
                 ed.playing = false;
-                ed.acc = 0.;
+                ed.pane.acc = 0.;
                 break;
             }
             ed.frame += 1;
             if ed.frame >= n {
                 ed.frame = 0;
-                ed.shown = None;
+                ed.pane.shown = None;
             }
-            if ed.shown.is_some_and(|(k, g)| g == run_gen && k + 1 == ed.frame) {
+            if ed.pane.shown.is_some_and(|(k, g)| g == run_gen && k + 1 == ed.frame) {
                 scene.push(&run.frames[ed.frame]);
-                ed.shown = Some((ed.frame, run_gen));
+                ed.pane.shown = Some((ed.frame, run_gen));
             }
         }
-        scene.alpha = ed.acc;
+        scene.alpha = ed.pane.acc;
     } else {
-        ed.acc = 0.;
+        ed.pane.acc = 0.;
         scene.alpha = 1.;
     }
     ed.frame = ed.frame.min(n - 1);
-    if ed.shown != Some((ed.frame, run_gen)) {
+    if ed.pane.shown != Some((ed.frame, run_gen)) {
         scene.data = run.data.clone();
         scene.reset(&run.frames[ed.frame]);
-        ed.shown = Some((ed.frame, run_gen));
+        ed.pane.shown = Some((ed.frame, run_gen));
     }
-    scene.debug = false;
-    scene.bottom_safe_area = 0.;
-    scene.fixed_view = Some(ed.cam.window_view(&ed.port));
+    crate::pane::sync_scene(scene, ed.pane.cam, &ed.port);
     scene.pose_override = match &ed.subject {
         Subject::Pose(n) => ed.ws.docs.get(&ed.cur).and_then(|d| d.item.poses.get(n).map(|p| (0, resolve(&d.item, p)))),
         _ => None,
@@ -77,27 +64,34 @@ pub(crate) fn sync_scene(ed: &mut Editor, scene: &mut render::Scene, dt: f32) {
 }
 
 /// The current phase's hitboxes (from the edited data) on the playhead.
-pub(crate) fn playhead_boxes(ed: &Editor) -> Option<(Fighter, usize, u32, Vec<Hitbox>)> {
+pub(crate) struct PlayheadBoxes {
+    pub f: Fighter,
+    pub phase: usize,
+    pub t: u32,
+    pub boxes: Vec<Hitbox>,
+}
+
+pub(crate) fn playhead_boxes(ed: &Editor) -> Option<PlayheadBoxes> {
     let Subject::Move(slot) = &ed.subject else { return None };
-    let (f, Some((p, t))) = at_playhead(ed)? else { return None };
+    let crate::ui::Playhead { fighter: f, phase: Some((p, t)) } = at_playhead(ed)? else { return None };
     let boxes = move_ref(&ed.ws.docs.get(&ed.cur)?.item.moves, slot)?.phases.get(p)?.hitboxes.clone();
-    Some((f, p, t, boxes))
+    Some(PlayheadBoxes { f, phase: p, t, boxes })
 }
 
 pub(crate) fn overlay(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::Scene) {
     let ppp = f64::from(ctx.pixels_per_point());
-    let px = 1. / ed.cam.zoom;
+    let px = 1. / ed.pane.cam.zoom;
     let Some(run) = &ed.run else { return };
     let gamma = run.data.global.render.alpha_gamma;
-    scene.overlay.clear(ed.cam.zoom * ppp, gamma);
-    let Some((f, _)) = at_playhead(ed) else { return };
+    scene.overlay.clear(ed.pane.cam.zoom * ppp, gamma);
+    let Some(crate::ui::Playhead { fighter: f, .. }) = at_playhead(ed) else { return };
     if ed.onion && !ed.playing && matches!(ed.subject, Subject::Move(_) | Subject::Throw(_)) {
         onion(ed, &mut scene.overlay, px);
     }
     let fd = &ed.ws.docs[&ed.cur].item;
     let hurt = if f.state == State::Knockdown { fd.hurtboxes.knockdown } else { fd.hurtboxes.default };
     let (boxes, shown) = match playhead_boxes(ed) {
-        Some((f, _, t, b)) => {
+        Some(PlayheadBoxes { f, t, boxes: b, .. }) => {
             let cd = f.mov.as_ref().map_or(0., |m| m.counter_damage);
             let s = view::shown(&f, &b, t, cd);
             (b, s)
@@ -113,7 +107,7 @@ pub(crate) fn overlay(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::
         boxes: &boxes,
         shown: &shown,
         sel: ed.hitbox,
-        hover: ed.hover,
+        hover: ed.pane.hover,
         joints: &joints,
         show_hurt: ed.show_hurt,
         show_inactive: ed.show_inactive,
@@ -159,114 +153,89 @@ fn joint_points(ed: &Editor, f: &Fighter) -> Vec<[f64; 2]> {
 
 pub(crate) fn viewport(ui: &mut egui::Ui, ed: &mut Editor) {
     let rect = ui.max_rect();
-    let win = ui.ctx().viewport_rect();
-    ed.port = view::Port {
-        rect: [rect.left(), rect.top(), rect.right(), rect.bottom()].map(f64::from),
-        window: [f64::from(win.width()), f64::from(win.height())],
-    };
-    if ed.reframe
+    ed.port = crate::pane::port(ui);
+    if ed.pane.reframe
         && let Some(f) = ed.run.as_ref().map(|r| r.frames[0].fighters[0].clone())
     {
-        ed.reframe = false;
-        ed.cam.zoom = (f64::from(rect.height()) / 240.).clamp(0.5, 8.);
-        ed.cam.center = [f.x + 30., f.y - 60.];
+        ed.pane.reframe = false;
+        ed.pane.cam.zoom = (f64::from(rect.height()) / 240.).clamp(view::Cam::MIN_ZOOM, view::Cam::MAX_ZOOM);
+        ed.pane.cam.center = [f.x + 30., f.y - 60.];
     }
-    let resp = ui.allocate_rect(rect, Sense::click_and_drag());
-    let to_stage = |ed: &Editor, p: egui::Pos2| ed.cam.to_stage(&ed.port, [f64::from(p.x), f64::from(p.y)]);
-    let px = 1. / ed.cam.zoom;
-    let (coarse, fine) = ui.input(|i| (i.modifiers.shift, i.modifiers.alt));
-    let boxes = playhead_boxes(ed);
-    let mouse = resp.hover_pos().or(resp.interact_pointer_pos());
-    if ed.drag.is_none() {
-        ed.hover = mouse.filter(|_| resp.hovered()).and_then(|m| {
-            let m = to_stage(ed, m);
-            let (f, shown, b) = match &boxes {
-                Some((f, _, t, b)) => {
-                    (f.clone(), view::shown(f, b, *t, f.mov.as_ref().map_or(0., |m| m.counter_damage)), b.clone())
-                }
-                None => (at_playhead(ed)?.0, vec![], vec![]),
-            };
-            let joints = joint_points(ed, &f);
-            view::hit_test(&f, &b, &shown, ed.hitbox, &joints, m, px)
-        });
+    crate::pane::interact(ui, ed, FighterInteraction { boxes: playhead_boxes(ed) });
+    chrome(ui, ed, rect);
+}
+
+struct FighterInteraction {
+    boxes: Option<PlayheadBoxes>,
+}
+
+impl crate::pane::Interaction for FighterInteraction {
+    type Hit = Hit;
+    type Shown = (usize, u32);
+    fn pane(ed: &mut Editor) -> &mut crate::Pane<Hit, Self::Shown> {
+        &mut ed.pane
     }
-    if resp.hovered() {
-        let (scroll, pinch) = ui.input(|i| (i.smooth_scroll_delta.y, i.zoom_delta()));
-        let k = f64::from(pinch) * (f64::from(scroll) * 0.0025).exp();
-        if (k - 1.).abs() > 1e-4
-            && let Some(m) = mouse
-        {
-            let port = ed.port;
-            ed.cam.zoom_at(&port, [f64::from(m.x), f64::from(m.y)], k);
-        }
+    fn hit(&self, ed: &Editor, m: [f64; 2], px: f64) -> Option<Hit> {
+        let (f, shown, b) = match &self.boxes {
+            Some(PlayheadBoxes { f, t, boxes: b, .. }) => {
+                (f.clone(), view::shown(f, b, *t, f.mov.as_ref().map_or(0., |m| m.counter_damage)), b.clone())
+            }
+            None => (at_playhead(ed)?.fighter, vec![], vec![]),
+        };
+        let joints = joint_points(ed, &f);
+        view::hit_test(&f, &b, &shown, ed.hitbox, &joints, m, px)
     }
-    if resp.drag_started_by(PointerButton::Secondary) || resp.drag_started_by(PointerButton::Middle) {
-        ed.drag = Some(Drag::Pan);
-    } else if resp.drag_started_by(PointerButton::Primary) {
-        let grab = resp.interact_pointer_pos().map(|p| to_stage(ed, p)).unwrap_or_default();
-        ed.drag = match (ed.hover, &boxes) {
-            (Some(h @ (Hit::Body(i) | Hit::Rim(i) | Hit::Angle(i))), Some((f, p, t, b))) => {
+    fn start(&self, ed: &mut Editor, grab: [f64; 2]) -> Option<Drag> {
+        match (ed.pane.hover, &self.boxes) {
+            (
+                Some(h @ (Hit::Body(i) | Hit::Rim(i) | Hit::Angle(i))),
+                Some(PlayheadBoxes { f, phase: p, t, boxes: b }),
+            ) => {
                 ed.hitbox = Some(i);
                 let (g, _) = view::geom_source(&b[i], *t);
                 Some(Drag::Box { kind: h, phase: *p, t: *t, f: Box::new(f.clone()), grab, orig: g })
             }
             (Some(Hit::Joint(j)), _) => match (pose_target(ed), at_playhead(ed)) {
-                (Some((target, skel)), Some((f, _))) => Some(Drag::Joint { j, target, f: Box::new(f), skel }),
+                (Some((target, skel)), Some(crate::ui::Playhead { fighter: f, .. })) => {
+                    Some(Drag::Joint { j, target, f: Box::new(f), skel })
+                }
                 _ => None,
             },
             _ => Some(Drag::Pan),
-        };
-    }
-    if resp.dragged()
-        && let Some(drag) = ed.drag.clone()
-    {
-        match drag {
-            Drag::Pan => {
-                let d = resp.drag_delta();
-                ed.cam.center[0] -= f64::from(d.x) * px;
-                ed.cam.center[1] -= f64::from(d.y) * px;
-            }
-            Drag::Box { kind, phase, t, f, grab, orig } => {
-                if let Some(m) = resp.interact_pointer_pos().map(|p| to_stage(ed, p)) {
-                    drag_box(ed, (kind, phase, t), &f, grab, orig, m, (coarse, fine));
-                }
-            }
-            Drag::Joint { j, target, f, skel } => {
-                if let Some(m) = resp.interact_pointer_pos().map(|p| to_stage(ed, p)) {
-                    let p = view::stage_to_joint(&f, &skel, m).map(|v| snap(v, coarse, fine));
-                    if let Some(pose) = pose_mut(fighter(ed), &target) {
-                        *view::pose_joint(pose, j) = Some(p);
-                    }
-                }
-            }
         }
     }
-    if resp.drag_stopped() {
-        ed.drag = None;
+    fn drag(&self, ed: &mut Editor, drag: &Drag, m: [f64; 2], (coarse, fine): (bool, bool)) {
+        match drag {
+            Drag::Box { kind, phase, t, f, grab, orig } => {
+                drag_box(ed, (*kind, *phase, *t), f, *grab, *orig, m, (coarse, fine));
+            }
+            Drag::Joint { j, target, f, skel } => {
+                let p = view::stage_to_joint(f, skel, m).map(|v| crate::stage_view::Snap::fighter(coarse, fine).v(v));
+                if let Some(pose) = pose_mut(ed.fighter(), target) {
+                    *view::pose_joint(pose, *j) = Some(p);
+                }
+            }
+            _ => {}
+        }
     }
-    if resp.clicked() {
-        match ed.hover {
+    fn click(&self, ed: &mut Editor) {
+        match ed.pane.hover {
             Some(Hit::Body(i) | Hit::Rim(i) | Hit::Angle(i)) => ed.hitbox = Some(i),
             Some(Hit::Joint(_)) => {}
             None => ed.hitbox = None,
         }
     }
-    if resp.double_clicked() && ed.hover.is_none() {
-        ed.reframe = true;
+    fn cursor(&self, ed: &Editor) -> egui::CursorIcon {
+        match (&ed.pane.drag, ed.pane.hover) {
+            (Some(Drag::Pan), _) => egui::CursorIcon::Grabbing,
+            (Some(Drag::Joint { .. }), _) => egui::CursorIcon::Grabbing,
+            (_, Some(Hit::Rim(_))) => egui::CursorIcon::ResizeNeSw,
+            (_, Some(Hit::Angle(_))) => egui::CursorIcon::Crosshair,
+            (_, Some(Hit::Joint(_))) => egui::CursorIcon::Grab,
+            (_, Some(_)) => egui::CursorIcon::Move,
+            _ => egui::CursorIcon::Default,
+        }
     }
-    let cursor = match (&ed.drag, ed.hover) {
-        (Some(Drag::Pan), _) => egui::CursorIcon::Grabbing,
-        (Some(Drag::Joint { .. }), _) => egui::CursorIcon::Grabbing,
-        (_, Some(Hit::Rim(_))) => egui::CursorIcon::ResizeNeSw,
-        (_, Some(Hit::Angle(_))) => egui::CursorIcon::Crosshair,
-        (_, Some(Hit::Joint(_))) => egui::CursorIcon::Grab,
-        (_, Some(_)) => egui::CursorIcon::Move,
-        _ => egui::CursorIcon::Default,
-    };
-    if resp.hovered() || ed.drag.is_some() {
-        ui.ctx().set_cursor_icon(cursor);
-    }
-    chrome(ui, ed, rect);
 }
 
 fn drag_box(
@@ -279,9 +248,9 @@ fn drag_box(
     (coarse, fine): (bool, bool),
 ) {
     let Subject::Move(slot) = ed.subject.clone() else { return };
-    let s = |v: f64| snap(v, coarse, fine);
+    let s = |v: f64| crate::stage_view::Snap::fighter(coarse, fine).v(v);
     let Some(h) =
-        move_mut(&mut fighter(ed).moves, &slot).and_then(|mv| mv.phases.get_mut(phase)).and_then(|p| match kind {
+        move_mut(&mut ed.fighter().moves, &slot).and_then(|mv| mv.phases.get_mut(phase)).and_then(|p| match kind {
             Hit::Body(i) | Hit::Rim(i) | Hit::Angle(i) => p.hitboxes.get_mut(i),
             Hit::Joint(_) => None,
         })
@@ -303,7 +272,7 @@ fn drag_box(
             h.angle = if coarse {
                 (a / 15.).round() * 15.
             } else if fine {
-                (a * 10.).round() / 10.
+                (a * (1. / style::FINE_STEP)).round() / (1. / style::FINE_STEP)
             } else {
                 a.round()
             };
@@ -346,9 +315,9 @@ fn chrome(ui: &mut egui::Ui, ed: &mut Editor, rect: Rect) {
                     .then(|| ed.onion = !ed.onion);
                 ui.separator();
                 if ui.button("⛶").on_hover_text("Frame the fighter  F · double-click").clicked() {
-                    ed.reframe = true;
+                    ed.pane.reframe = true;
                 }
-                ui.label(RichText::new(format!("{:.0}%", ed.cam.zoom * 100. / 3.)).color(FAINT).small());
+                ui.label(RichText::new(format!("{:.0}%", ed.pane.cam.zoom * 100. / 3.)).color(FAINT).small());
             });
             if matches!(ed.subject, Subject::Move(_) | Subject::Throw(_)) {
                 pill(ui, |ui| setup_bar(ui, ed));
@@ -381,7 +350,7 @@ fn chrome(ui: &mut egui::Ui, ed: &mut Editor, rect: Rect) {
             crate::inspect::goto(ed, &e.path);
         }
     }
-    let hints: &[(&str, &str)] = match (&ed.subject, ed.hover, ed.playing, ed.drag.is_some()) {
+    let hints: &[(&str, &str)] = match (&ed.subject, ed.pane.hover, ed.playing, ed.pane.drag.is_some()) {
         (_, _, true, _) => &[("Space", "pause"), ("L", if ed.looping { "loop on" } else { "loop off" })],
         (_, _, _, true) => &[("⇧", "snap"), ("Alt", "fine")],
         (_, Some(Hit::Angle(_)), _, _) => &[("drag", "aim the launch angle"), ("⇧", "15°")],
@@ -401,15 +370,17 @@ fn chrome(ui: &mut egui::Ui, ed: &mut Editor, rect: Rect) {
         (Subject::Pose(_), _, _, _) => &[("drag", "joints to pose"), ("wheel", "zoom"), ("right-drag", "pan")],
         _ => &[("wheel", "zoom"), ("right-drag", "pan"), ("?", "all shortcuts")],
     };
-    let hint_rect =
-        Rect::from_min_size(rect.left_bottom() + egui::vec2(12., -28.), egui::vec2(rect.width() - 24., 22.));
+    let hint_rect = Rect::from_min_size(
+        rect.left_bottom() + egui::vec2(12., -style::HINT_BOTTOM),
+        egui::vec2(rect.width() - 24., 22.),
+    );
     ui.scope_builder(UiBuilder::new().max_rect(hint_rect), |ui| {
         ui.horizontal(|ui| {
             for (k, v) in hints {
                 hint(ui, k, v);
                 ui.add_space(6.);
             }
-            if let Some(Hit::Joint(j)) = ed.hover {
+            if let Some(Hit::Joint(j)) = ed.pane.hover {
                 ui.label(RichText::new(view::JOINTS[j]).color(STAR));
             }
         });

@@ -134,79 +134,159 @@ fn track(ui: &mut egui::Ui, ed: &mut Editor) {
     let label_w = 84.;
     let height = 18. + 22. + if is_move { rows as f32 * row_h + 2. * 15. + 4. } else { 0. };
     let (rect, resp) = ui.allocate_exact_size(egui::vec2(ui.available_width(), height), Sense::click_and_drag());
-    let p = ui.painter_at(rect);
-    p.rect_filled(rect, 6, style::NIGHT);
-    let x0 = rect.left() + label_w;
-    let w = ((rect.width() - label_w - 8.) / n as f32).max(1.);
-    let fx = |k: usize| x0 + k as f32 * w;
-    let small = style::text(10.5);
-    // Ruler.
-    let step = if w >= 9. {
-        5
-    } else if w >= 3. {
-        10
-    } else {
-        30
+    let track = Track {
+        run,
+        rect,
+        resp,
+        p: ui.painter_at(rect),
+        phase: ed.phase,
+        x0: rect.left() + label_w,
+        w: ((rect.width() - label_w - 8.) / n as f32).max(1.),
     };
-    for k in 0..n {
-        let x = fx(k);
-        let major = k % step == 0;
-        if major || w >= 5. {
-            p.line_segment(
-                [egui::pos2(x, rect.top() + if major { 4. } else { 10. }), egui::pos2(x, rect.top() + 16.)],
-                Stroke::new(1., LINE),
-            );
-        }
-        if major {
-            p.text(egui::pos2(x + 2., rect.top() + 2.), Align2::LEFT_TOP, k.to_string(), small.clone(), FAINT);
-        }
-    }
+    track.p.rect_filled(rect, 6, style::NIGHT);
+    track.ruler();
     let mut y = rect.top() + 18.;
-    let lbl = |y: f32, s: &str| {
-        p.text(egui::pos2(rect.left() + 8., y + 7.), Align2::LEFT_CENTER, s, FontId::new(13., style::label()), DIM)
-    };
-    // Phase segments (from the simulation).
-    lbl(y + 2., if is_move { "PHASES" } else { "STATE" });
-    let mut k = 0;
-    while k < n {
-        let m = run.marks[k];
-        let mut e = k;
-        while e + 1 < n
-            && run.marks[e + 1].phase.map(|p| p.0) == m.phase.map(|p| p.0)
-            && run.marks[e + 1].state == m.state
-        {
-            e += 1;
-        }
-        let r = Rect::from_min_max(egui::pos2(fx(k) + 0.5, y), egui::pos2(fx(e + 1) - 0.5, y + 18.));
-        let (fill, name) = match m.phase {
-            Some((pi, _)) => (PHASE_COLORS[pi % 6], phase_names.get(pi).cloned().unwrap_or_default()),
-            None => (style::INK2, m.state.name().to_string()),
-        };
-        let sel = m.phase.is_some_and(|(pi, _)| pi == ed.phase);
-        p.rect_filled(r, 3, if m.phase.is_some() { fill.gamma_multiply(if sel { 0.9 } else { 0.4 }) } else { fill });
-        if sel {
-            p.rect_stroke(r, 3, Stroke::new(1., STAR.gamma_multiply(0.6)), egui::StrokeKind::Inside);
-        }
-        if r.width() > 30. {
-            p.text(
-                r.left_center() + egui::vec2(5., 0.),
-                Align2::LEFT_CENTER,
-                name,
-                FontId::new(12.5, style::label()),
-                if m.phase.is_some() { style::NIGHT } else { FAINT },
-            );
-        }
-        k = e + 1;
-    }
+    track.phases(y, is_move, &phase_names);
     y += 22.;
-    let in_phase = |k: usize| run.marks[k].phase.filter(|(pi, _)| *pi == ed.phase).map(|(_, t)| t);
-    let mut row_hit = None;
-    let mut key_hit = None;
+    let (mut row_hit, mut key_hit) = (None, None);
     if is_move {
+        row_hit = track.hitboxes(y, &boxes, ed.hitbox);
+        y += rows as f32 * row_h + 2.;
+        track.events(y, &events);
+        y += 15.;
+        key_hit = track.pose_keys(y, &keys);
+    }
+    track.hover(&phase_names);
+    track.playhead(ed.frame);
+    let resp = &track.resp;
+    let x0 = track.x0;
+    let dragging = resp.dragged();
+    if let Some(i) = row_hit {
+        ed.hitbox = Some(i);
+    }
+    if (resp.dragged() || resp.clicked())
+        && let Some(pos) = resp.interact_pointer_pos()
+        && pos.x >= x0
+    {
+        let k = track.frame_at(pos.x);
+        ed.set_frame(key_hit.unwrap_or(k));
+    }
+    if dragging {
+        ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeHorizontal);
+    }
+}
+
+struct Track<'a> {
+    run: &'a crate::preview::Run,
+    rect: Rect,
+    resp: egui::Response,
+    p: egui::Painter,
+    phase: usize,
+    x0: f32,
+    w: f32,
+}
+
+impl Track<'_> {
+    fn x(&self, k: usize) -> f32 {
+        self.x0 + k as f32 * self.w
+    }
+    fn frame_at(&self, x: f32) -> usize {
+        (((x - self.x0) / self.w).floor().max(0.) as usize).min(self.run.marks.len() - 1)
+    }
+    fn in_phase(&self, k: usize) -> Option<u32> {
+        self.run.marks[k].phase.filter(|(pi, _)| *pi == self.phase).map(|(_, t)| t)
+    }
+    fn label(&self, y: f32, text: &str) {
+        self.p.text(
+            egui::pos2(self.rect.left() + 8., y + 7.),
+            Align2::LEFT_CENTER,
+            text,
+            FontId::new(13., style::label()),
+            DIM,
+        );
+    }
+    fn ruler(&self) {
+        let (p, rect, w) = (&self.p, self.rect, self.w);
+        let fx = |k| self.x(k);
+        let n = self.run.marks.len();
+        let small = style::text(10.5);
+        // Ruler.
+        let step = if w >= 9. {
+            5
+        } else if w >= 3. {
+            10
+        } else {
+            30
+        };
+        for k in 0..n {
+            let x = fx(k);
+            let major = k % step == 0;
+            if major || w >= 5. {
+                p.line_segment(
+                    [egui::pos2(x, rect.top() + if major { 4. } else { 10. }), egui::pos2(x, rect.top() + 16.)],
+                    Stroke::new(1., LINE),
+                );
+            }
+            if major {
+                p.text(egui::pos2(x + 2., rect.top() + 2.), Align2::LEFT_TOP, k.to_string(), small.clone(), FAINT);
+            }
+        }
+    }
+    fn phases(&self, y: f32, is_move: bool, phase_names: &[String]) {
+        let p = &self.p;
+        let fx = |k| self.x(k);
+        let (run, n) = (self.run, self.run.marks.len());
+        let lbl = |y, s| self.label(y, s);
+        // Phase segments (from the simulation).
+        lbl(y + 2., if is_move { "PHASES" } else { "STATE" });
+        let mut k = 0;
+        while k < n {
+            let m = run.marks[k];
+            let mut e = k;
+            while e + 1 < n
+                && run.marks[e + 1].phase.map(|p| p.0) == m.phase.map(|p| p.0)
+                && run.marks[e + 1].state == m.state
+            {
+                e += 1;
+            }
+            let r = Rect::from_min_max(egui::pos2(fx(k) + 0.5, y), egui::pos2(fx(e + 1) - 0.5, y + 18.));
+            let (fill, name) = match m.phase {
+                Some((pi, _)) => (PHASE_COLORS[pi % 6], phase_names.get(pi).cloned().unwrap_or_default()),
+                None => (style::INK2, m.state.name().to_string()),
+            };
+            let sel = m.phase.is_some_and(|(pi, _)| pi == self.phase);
+            p.rect_filled(
+                r,
+                3,
+                if m.phase.is_some() { fill.gamma_multiply(if sel { 0.9 } else { 0.4 }) } else { fill },
+            );
+            if sel {
+                p.rect_stroke(r, 3, Stroke::new(1., STAR.gamma_multiply(0.6)), egui::StrokeKind::Inside);
+            }
+            if r.width() > 30. {
+                p.text(
+                    r.left_center() + egui::vec2(5., 0.),
+                    Align2::LEFT_CENTER,
+                    name,
+                    FontId::new(12.5, style::label()),
+                    if m.phase.is_some() { style::NIGHT } else { FAINT },
+                );
+            }
+            k = e + 1;
+        }
+    }
+    fn hitboxes(&self, y: f32, boxes: &[sim::data::Hitbox], selected: Option<usize>) -> Option<usize> {
+        let (p, rect) = (&self.p, self.rect);
+        let fx = |k| self.x(k);
+        let resp = &self.resp;
+        let (rows, row_h, n) = (boxes.len().min(8), 14., self.run.marks.len());
+        let in_phase = |k| self.in_phase(k);
+        let mut row_hit = None;
+        let small = style::text(10.5);
         // Hitbox windows for the selected phase.
         for (i, h) in boxes.iter().take(rows).enumerate() {
             let ry = y + i as f32 * row_h;
-            let sel = ed.hitbox == Some(i);
+            let sel = selected == Some(i);
             if sel {
                 p.rect_filled(
                     Rect::from_min_max(
@@ -261,7 +341,14 @@ fn track(ui: &mut egui::Ui, ed: &mut Editor) {
                 FAINT,
             );
         }
-        y += rows as f32 * row_h + 2.;
+        row_hit
+    }
+    fn events(&self, y: f32, events: &[sim::data::moves::Event]) {
+        let (p, w) = (&self.p, self.w);
+        let fx = |k| self.x(k);
+        let (run, n) = (self.run, self.run.marks.len());
+        let in_phase = |k| self.in_phase(k);
+        let lbl = |y, s| self.label(y, s);
         // Events of the selected phase: ranges as bars, single frames as dots.
         lbl(y, "EVENTS");
         for k in 0..n {
@@ -281,7 +368,15 @@ fn track(ui: &mut egui::Ui, ed: &mut Editor) {
                 }
             }
         }
-        y += 15.;
+    }
+    fn pose_keys(&self, y: f32, keys: &[f64]) -> Option<usize> {
+        let (p, w) = (&self.p, self.w);
+        let fx = |k| self.x(k);
+        let (run, n) = (self.run, self.run.marks.len());
+        let resp = &self.resp;
+        let in_phase = |k| self.in_phase(k);
+        let lbl = |y, s| self.label(y, s);
+        let mut key_hit = None;
         lbl(y, "POSE KEYS");
         for k in 0..n {
             if let Some(t) = in_phase(k)
@@ -304,36 +399,36 @@ fn track(ui: &mut egui::Ui, ed: &mut Editor) {
                 }
             }
         }
+        key_hit
     }
-    // Hover line and readout.
-    if let Some(h) = resp.hover_pos().filter(|h| h.x >= x0) {
-        let k = (((h.x - x0) / w).floor().max(0.) as usize).min(n - 1);
-        let x = fx(k) + w / 2.;
-        p.line_segment(
-            [egui::pos2(x, rect.top()), egui::pos2(x, rect.bottom())],
-            Stroke::new(1., STAR.gamma_multiply(0.25)),
-        );
-        let tip = match run.marks[k].phase {
-            Some((pi, t)) => format!("frame {k} · {} {t}", phase_names.get(pi).cloned().unwrap_or_default()),
-            None => format!("frame {k} · {}", run.marks[k].state.name()),
-        };
-        resp.clone().on_hover_text_at_pointer(tip);
+    fn hover(&self, phase_names: &[String]) {
+        let (p, rect, w) = (&self.p, self.rect, self.w);
+        let fx = |k| self.x(k);
+        let (run, n) = (self.run, self.run.marks.len());
+        let resp = &self.resp;
+        let x0 = self.x0;
+        // Hover line and readout.
+        if let Some(h) = resp.hover_pos().filter(|h| h.x >= x0) {
+            let k = (((h.x - x0) / w).floor().max(0.) as usize).min(n - 1);
+            let x = fx(k) + w / 2.;
+            p.line_segment(
+                [egui::pos2(x, rect.top()), egui::pos2(x, rect.bottom())],
+                Stroke::new(1., STAR.gamma_multiply(0.25)),
+            );
+            let tip = match run.marks[k].phase {
+                Some((pi, t)) => format!("frame {k} · {} {t}", phase_names.get(pi).cloned().unwrap_or_default()),
+                None => format!("frame {k} · {}", run.marks[k].state.name()),
+            };
+            resp.clone().on_hover_text_at_pointer(tip);
+        }
     }
-    // Playhead.
-    let x = fx(ed.frame.min(n - 1)) + w / 2.;
-    p.line_segment([egui::pos2(x, rect.top()), egui::pos2(x, rect.bottom())], Stroke::new(2., GOLD));
-    p.rect_filled(Rect::from_center_size(egui::pos2(x, rect.top() + 3.), egui::vec2(9., 7.)), 2, GOLD);
-    if let Some(i) = row_hit {
-        ed.hitbox = Some(i);
-    }
-    if (resp.dragged() || resp.clicked())
-        && let Some(pos) = resp.interact_pointer_pos()
-        && pos.x >= x0
-    {
-        let k = (((pos.x - x0) / w).floor().max(0.) as usize).min(n - 1);
-        ed.set_frame(key_hit.unwrap_or(k));
-    }
-    if resp.dragged() {
-        ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeHorizontal);
+    fn playhead(&self, frame: usize) {
+        let (p, rect, w) = (&self.p, self.rect, self.w);
+        let fx = |k| self.x(k);
+        let n = self.run.marks.len();
+        // Playhead.
+        let x = fx(frame.min(n - 1)) + w / 2.;
+        p.line_segment([egui::pos2(x, rect.top()), egui::pos2(x, rect.bottom())], Stroke::new(2., GOLD));
+        p.rect_filled(Rect::from_center_size(egui::pos2(x, rect.top() + 3.), egui::vec2(9., 7.)), 2, GOLD);
     }
 }

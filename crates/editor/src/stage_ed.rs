@@ -8,7 +8,8 @@ use sim::world::State;
 use sim::{GameData, Input, MatchConfig, PlayerConfig, World, step_world};
 
 use crate::Editor;
-use crate::stage_view::{self, Grip, Handle, Part, Shape, Snap};
+use crate::pane::Pane;
+use crate::stage_view::{self, Grip, Part, Shape, Snap};
 use crate::view::Cam;
 
 /// Inspector / browser sections.
@@ -76,27 +77,20 @@ impl Section {
     }
 }
 
-/// An in-progress viewport drag.
-#[derive(Clone, Debug)]
-pub(crate) enum Drag {
-    Pan,
-    /// A handle, from the stage as it was when grabbed.
-    Part {
-        h: Handle,
-        orig: Box<Stage>,
-        grab: [f64; 2],
-        partner: Option<Part>,
-    },
+impl crate::section::Section for Section {
+    const ALL: &'static [Self] = &Self::ALL;
+    fn keys(self) -> &'static [&'static str] {
+        self.keys()
+    }
 }
+
+pub(crate) use crate::Drag;
 
 pub struct StageEd {
     pub cur: String,
     pub section: Section,
     pub sel: Option<Part>,
-    pub hover: Option<Handle>,
-    pub(crate) drag: Option<Drag>,
-    pub cam: Cam,
-    pub reframe: bool,
+    pub pane: Pane<stage_view::Handle, ()>,
     /// Draw the grid and snap to it.
     pub grid: bool,
     pub grid_size: f64,
@@ -118,12 +112,8 @@ pub struct StageEd {
     pub clock_play: bool,
     /// Jump the preview clock to this frame.
     pub scrub: Option<u64>,
-    pub stale: bool,
     /// Selection the viewport last saw (selecting a bound frames it).
     pub(crate) seen_sel: Option<Part>,
-    /// The scene shows the current world.
-    pub shown: bool,
-    acc: f64,
 }
 
 impl StageEd {
@@ -132,10 +122,7 @@ impl StageEd {
             cur: cur.into(),
             section: Section::Overview,
             sel: None,
-            hover: None,
-            drag: None,
-            cam: Cam { center: [640., 360.], zoom: 0.5 },
-            reframe: true,
+            pane: Pane::new(Cam { center: [640., 360.], zoom: 0.5 }),
             grid: false,
             grid_size: 10.,
             symmetry: false,
@@ -149,10 +136,7 @@ impl StageEd {
             built: None,
             clock_play: true,
             scrub: None,
-            stale: true,
             seen_sel: None,
-            shown: false,
-            acc: 0.,
         }
     }
 
@@ -167,7 +151,7 @@ impl StageEd {
         if n != self.sandbox {
             self.sandbox = n;
             self.world = None;
-            self.stale = true;
+            self.pane.stale = true;
         }
     }
 
@@ -198,8 +182,8 @@ pub fn sandbox(data: &GameData, id: &str, cpus: usize, level: u8) -> Result<Worl
 /// Brings the preview up to date with the edits and steps the sandbox; feeds the render scene.
 pub(crate) fn sync_scene(ed: &mut Editor, scene: &mut render::Scene, dt: f32) {
     let id = ed.st.cur.clone();
-    if ed.st.stale {
-        ed.st.stale = false;
+    if ed.st.pane.stale {
+        ed.st.pane.stale = false;
         let valid = ed.ws.stages.get(&id).is_some_and(|d| d.errors.is_empty());
         if valid || ed.st.data.is_none() {
             let data = Arc::new(ed.ws.live_data());
@@ -222,7 +206,7 @@ pub(crate) fn sync_scene(ed: &mut Editor, scene: &mut render::Scene, dt: f32) {
                 }
             }
             ed.st.data = Some(data);
-            ed.st.shown = false;
+            ed.st.pane.shown = None;
         }
     }
     let (Some(w), Some(data)) = (ed.st.world.as_mut(), ed.st.data.clone()) else { return };
@@ -230,31 +214,31 @@ pub(crate) fn sync_scene(ed: &mut Editor, scene: &mut render::Scene, dt: f32) {
     if let Some(f) = ed.st.scrub.take().filter(|_| ed.st.sandbox == 0) {
         w.frame = f;
         ed.st.clock_play = false;
-        ed.st.shown = false;
+        ed.st.pane.shown = None;
     }
-    if !ed.st.shown {
+    if ed.st.pane.shown.is_none() {
         scene.data = data.clone();
         scene.reset(w);
-        ed.st.shown = true;
+        ed.st.pane.shown = Some(());
     }
     let moving = data.stages[w.stage].platforms.iter().any(|p| p.motion.is_some());
     if ed.st.sandbox == 0 && moving && ed.st.clock_play {
         // Just the stage: advance the clock so moving platforms play.
-        ed.st.acc += f64::from(dt) * f64::from(sim::TICK_HZ);
+        ed.st.pane.acc += f64::from(dt) * f64::from(sim::TICK_HZ);
         let mut steps = 0;
-        while ed.st.acc >= 1. && steps < 4 {
-            ed.st.acc -= 1.;
+        while ed.st.pane.acc >= 1. && steps < 4 {
+            ed.st.pane.acc -= 1.;
             steps += 1;
             w.frame += 1;
             scene.push(w);
         }
-        ed.st.acc = ed.st.acc.min(1.);
-        scene.alpha = ed.st.acc;
+        ed.st.pane.acc = ed.st.pane.acc.min(1.);
+        scene.alpha = ed.st.pane.acc;
     } else if ed.st.sandbox > 0 && !ed.st.paused {
-        ed.st.acc += f64::from(dt) * f64::from(sim::TICK_HZ);
+        ed.st.pane.acc += f64::from(dt) * f64::from(sim::TICK_HZ);
         let mut steps = 0;
-        while ed.st.acc >= 1. && steps < 4 {
-            ed.st.acc -= 1.;
+        while ed.st.pane.acc >= 1. && steps < 4 {
+            ed.st.pane.acc -= 1.;
             steps += 1;
             let inputs = vec![Input::default(); w.fighters.len()];
             step_world(w, &data, &inputs);
@@ -262,16 +246,14 @@ pub(crate) fn sync_scene(ed: &mut Editor, scene: &mut render::Scene, dt: f32) {
             w.fx.clear();
             w.hits.clear();
         }
-        ed.st.acc = ed.st.acc.min(1.);
-        scene.alpha = ed.st.acc;
+        ed.st.pane.acc = ed.st.pane.acc.min(1.);
+        scene.alpha = ed.st.pane.acc;
     } else {
-        ed.st.acc = 0.;
+        ed.st.pane.acc = 0.;
         scene.alpha = 1.;
     }
-    scene.debug = false;
-    scene.bottom_safe_area = 0.;
+    crate::pane::sync_scene(scene, ed.st.pane.cam, &ed.port);
     scene.pose_override = None;
-    scene.fixed_view = Some(ed.st.cam.window_view(&ed.port));
 }
 
 /// Whether the sim-relevant geometry (blocks, platforms, spawn and respawn slots) is the same; art, names and
@@ -283,9 +265,7 @@ fn same_geometry(a: &Stage, b: &Stage) -> bool {
 /// Frames the stage: the blocks, platforms (and their paths) and respawn points with room around them (the blast zone is a wheel
 /// away).
 pub(crate) fn frame_stage(ed: &mut Editor) {
-    let Some(s) = ed.ws.stages.get(&ed.st.cur).map(|d| d.item.clone()) else { return };
-    let [l, t, r, b] = ed.port.rect;
-    let (w, h) = ((r - l).max(1.), (b - t).max(1.));
+    let Some(s) = ed.ws.stages.get(&ed.st.cur).map(|d| &d.item) else { return };
     let mut bb = [f64::INFINITY, f64::INFINITY, f64::NEG_INFINITY, f64::NEG_INFINITY];
     let blocks = s.blocks.iter().flat_map(|g| [[g.left, g.top], [g.right, g.bottom + g.under_depth]]);
     let platforms = s.platforms.iter().flat_map(|p| {
@@ -296,19 +276,21 @@ pub(crate) fn frame_stage(ed: &mut Editor) {
     for [x, y] in blocks.chain(platforms).chain(s.respawns.iter().map(|r| [r.x, r.start_y])) {
         bb = [bb[0].min(x), bb[1].min(y), bb[2].max(x), bb[3].max(y)];
     }
-    let pad = 140.;
-    let (bw, bh) = (bb[2] - bb[0] + 2. * pad, bb[3] - bb[1] + 2. * pad);
-    // Leave room for the toolbars on top.
-    ed.st.cam.zoom = (w / bw).min((h - 90.) / bh).clamp(0.1, 12.);
-    ed.st.cam.center = [(bb[0] + bb[2]) / 2., (bb[1] + bb[3]) / 2. - 45. / ed.st.cam.zoom];
+    let pad = crate::style::FRAME_PAD;
+    frame_bbox(&mut ed.st.pane.cam, &ed.port, [bb[0] - pad, bb[1] - pad, bb[2] + pad, bb[3] + pad]);
 }
 
 /// Fits stage rect `[l, t, r, b]` in the viewport (below the toolbars).
 pub(crate) fn frame_rect(ed: &mut Editor, [l, t, r, b]: [f64; 4]) {
-    let [pl, pt, pr, pb] = ed.port.rect;
-    let (w, h) = ((pr - pl).max(1.), (pb - pt - 90.).max(1.));
-    ed.st.cam.zoom = (w / ((r - l) * 1.08)).min(h / ((b - t) * 1.08)).clamp(0.1, 12.);
-    ed.st.cam.center = [(l + r) / 2., (t + b) / 2. - 45. / ed.st.cam.zoom];
+    let (dx, dy) = ((r - l) * crate::style::BOUND_PAD_RATIO, (b - t) * crate::style::BOUND_PAD_RATIO);
+    frame_bbox(&mut ed.st.pane.cam, &ed.port, [l - dx, t - dy, r + dx, b + dy]);
+}
+
+fn frame_bbox(cam: &mut Cam, port: &crate::view::Port, [l, t, r, b]: [f64; 4]) {
+    let [pl, pt, pr, pb] = port.rect;
+    let (w, h) = ((pr - pl).max(1.), (pb - pt - crate::style::FRAME_TOP).max(1.));
+    cam.zoom = (w / (r - l)).min(h / (b - t)).clamp(Cam::MIN_ZOOM, Cam::MAX_ZOOM);
+    cam.center = [(l + r) / 2., (t + b) / 2. - crate::style::FRAME_OFFSET / cam.zoom];
 }
 
 pub(crate) fn stage_mut(ed: &mut Editor) -> &mut Stage {
@@ -318,11 +300,11 @@ pub(crate) fn stage_mut(ed: &mut Editor) -> &mut Stage {
 /// One undoable edit of the current stage.
 pub(crate) fn edit(ed: &mut Editor, f: impl FnOnce(&mut Stage)) {
     ed.stage_doc().edit(f);
-    ed.st.stale = true;
+    ed.st.pane.stale = true;
 }
 
 pub(crate) fn add_platform(ed: &mut Editor) {
-    let at = ed.st.cam.center;
+    let at = ed.st.pane.cam.center;
     let (sym, sn) = (ed.st.symmetry, ed.st.snap(false, false));
     let mut made = None;
     edit(ed, |s| made = Some(stage_view::add_platform(s, at, sym, sn)));
@@ -331,7 +313,7 @@ pub(crate) fn add_platform(ed: &mut Editor) {
 }
 
 pub(crate) fn add_spawn(ed: &mut Editor, respawn: bool) {
-    let x = ed.st.cam.center[0].round();
+    let x = ed.st.pane.cam.center[0].round();
     let mut made = None;
     edit(ed, |s| made = Some(if respawn { stage_view::add_respawn(s, x) } else { stage_view::add_spawn(s, x) }));
     ed.st.select(made);
@@ -356,7 +338,7 @@ pub(crate) fn delete_selected(ed: &mut Editor) {
 }
 
 pub(crate) fn add_block(ed: &mut Editor) {
-    let at = ed.st.cam.center;
+    let at = ed.st.pane.cam.center;
     let (sym, sn) = (ed.st.symmetry, ed.st.snap(false, false));
     let mut made = None;
     edit(ed, |s| made = Some(stage_view::add_block(s, at, sym, sn)));
@@ -431,11 +413,70 @@ pub(crate) fn flip(ed: &mut Editor, i: usize) {
     });
 }
 
+pub(crate) struct MirrorPaths(Vec<(Option<sim::data::stage::Motion>, Option<Part>)>);
+
+pub(crate) fn mirror_paths(s: &Stage) -> MirrorPaths {
+    MirrorPaths(
+        s.platforms
+            .iter()
+            .enumerate()
+            .map(|(i, p)| (p.motion.clone(), stage_view::partner(s, Part::Platform(i))))
+            .collect(),
+    )
+}
+
+pub(crate) fn fix_mirror_paths(s: &mut Stage, before: MirrorPaths) {
+    for (i, (motion, partner)) in before.0.into_iter().enumerate().take(s.platforms.len()) {
+        if s.platforms[i].motion != motion
+            && let Some(q @ Part::Platform(k)) = partner
+            && k != i
+        {
+            stage_view::apply_mirror(s, Part::Platform(i), q, Grip::Move);
+        }
+    }
+}
+
+enum PartValue {
+    Block(sim::data::stage::Ground),
+    Platform(sim::data::stage::Platform),
+    Spawn(sim::data::stage::Spawn),
+    Respawn(sim::data::stage::RespawnPoint),
+    Bounds(sim::data::stage::Bounds),
+    Ledge(sim::data::stage::LedgeZone),
+}
+
+impl PartValue {
+    fn of(s: &Stage, p: Part) -> Option<Self> {
+        Some(match p {
+            Part::Block(i) => Self::Block(s.blocks.get(i)?.clone()),
+            Part::Platform(i) | Part::Waypoint(i, _) => Self::Platform(s.platforms.get(i)?.clone()),
+            Part::Spawn(i) => Self::Spawn(s.spawns.get(i)?.clone()),
+            Part::Respawn(i) => Self::Respawn(s.respawns.get(i)?.clone()),
+            Part::Blast => Self::Bounds(s.blast.clone()),
+            Part::Camera => Self::Bounds(s.camera.clone()),
+            Part::Ledge => Self::Ledge(s.ledge.clone()),
+        })
+    }
+    fn matches(&self, s: &Stage, p: Part) -> bool {
+        match (self, p) {
+            (Self::Block(v), Part::Block(i)) => s.blocks.get(i) == Some(v),
+            (Self::Platform(v), Part::Platform(i) | Part::Waypoint(i, _)) => s.platforms.get(i) == Some(v),
+            (Self::Spawn(v), Part::Spawn(i)) => s.spawns.get(i) == Some(v),
+            (Self::Respawn(v), Part::Respawn(i)) => s.respawns.get(i) == Some(v),
+            (Self::Bounds(v), Part::Blast) => s.blast == *v,
+            (Self::Bounds(v), Part::Camera) => s.camera == *v,
+            (Self::Ledge(v), Part::Ledge) => s.ledge == *v,
+            _ => false,
+        }
+    }
+}
+
 /// Applies a viewport drag at stage point `m`. Returns whether the stage changed (snapping often holds it still).
 pub(crate) fn drag_to(ed: &mut Editor, drag: &Drag, m: [f64; 2], sn: Snap) -> bool {
     let Drag::Part { h, orig, grab, partner } = drag else { return false };
     let s = stage_mut(ed);
-    let before = s.clone();
+    let before = PartValue::of(s, h.part);
+    let mirrored = partner.filter(|q| *q != h.part).and_then(|q| PartValue::of(s, q));
     match h.grip {
         Grip::Rim => {
             s.ledge.r = sn
@@ -464,7 +505,7 @@ pub(crate) fn drag_to(ed: &mut Editor, drag: &Drag, m: [f64; 2], sn: Snap) -> bo
     if let Some(q) = *partner {
         stage_view::apply_mirror(s, h.part, q, h.grip);
     }
-    *s != before
+    before.is_some_and(|v| !v.matches(s, h.part)) || mirrored.zip(*partner).is_some_and(|(v, q)| !v.matches(s, q))
 }
 
 /// Live problems (the loader's checks) and notes for the current stage.

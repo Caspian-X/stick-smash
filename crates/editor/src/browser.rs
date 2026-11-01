@@ -5,7 +5,6 @@ use bevy_egui::egui::{self, FontId, Key, RichText};
 
 use crate::preview::{Section, Subject};
 use crate::style::{self, DIM, FAINT, GOLD, RED, STAR, caps};
-use crate::ui::fighter;
 use crate::{Dialog, Editor, doc, move_ref};
 
 const GROUPS: [(&str, &[&str]); 5] = [
@@ -111,17 +110,14 @@ pub fn browser(ui: &mut egui::Ui, ed: &mut Editor) {
     let shown = visible(ed);
     let mut pick: Option<Subject> = None;
     let mut action: Option<Action> = None;
-    let errors: Vec<String> =
-        ed.ws.docs.get(&ed.cur).map(|d| d.errors.iter().map(|e| e.path.clone()).collect()).unwrap_or_default();
-    let bad = |prefix: &str| {
-        errors
-            .iter()
-            .any(|p| p == prefix || p.starts_with(&format!("{prefix}.")) || p.starts_with(&format!("{prefix}[")))
-    };
+    let doc = &ed.ws.docs[&ed.cur];
+    let dirty = doc::dirty_paths(doc);
+    let changed = |prefix: &str| crate::section::dirty(&dirty, prefix);
+    let bad = |prefix: &str| crate::inspect::has_err(&doc.errors, prefix);
     egui::ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             let doc = ed.ws.docs.get(&ed.cur).expect("open");
-            let (f, saved) = (&doc.item, &doc.saved);
+            let f = &doc.item;
             let searching = !ed.search.trim().is_empty();
             for (group, slots) in GROUPS {
                 let any = slots.iter().any(|s| shown.contains(&Subject::Move(s.to_string())));
@@ -134,7 +130,7 @@ pub fn browser(ui: &mut egui::Ui, ed: &mut Editor) {
                     let subj = Subject::Move(slot.into());
                     match move_ref(&f.moves, slot) {
                         Some(m) if shown.contains(&subj) => {
-                            let dirty = move_ref(&saved.moves, slot) != Some(m);
+                            let dirty = changed(&format!("moves.{slot}"));
                             let r = item(ui, ed.subject == subj, slot, &m.name, dirty, bad(&format!("moves.{slot}")));
                             if r.clicked() {
                                 pick = Some(subj);
@@ -172,8 +168,7 @@ pub fn browser(ui: &mut egui::Ui, ed: &mut Editor) {
             for (k, name) in THROWS {
                 let subj = Subject::Throw(k.into());
                 if shown.contains(&subj) {
-                    let dirty =
-                        crate::throw_mut(&mut saved.throws.clone(), k) != crate::throw_mut(&mut f.throws.clone(), k);
+                    let dirty = changed(&format!("throws.{k}"));
                     if item(ui, ed.subject == subj, &format!("throw.{k}"), name, dirty, bad(&format!("throws.{k}")))
                         .clicked()
                     {
@@ -185,25 +180,25 @@ pub fn browser(ui: &mut egui::Ui, ed: &mut Editor) {
                 group_label(ui, "Fighter");
             }
             if shown.contains(&Subject::Fighter) {
-                let dirty = f.stats != saved.stats
-                    || f.body != saved.body
-                    || f.hurtboxes != saved.hurtboxes
-                    || f.name != saved.name
-                    || f.blurb != saved.blurb
-                    || f.tagline != saved.tagline;
+                let dirty = ["stats", "body", "hurtboxes", "name", "blurb", "tagline"].iter().any(|k| changed(k));
                 let b = bad("stats") || bad("body") || bad("hurtboxes");
                 if item(ui, ed.subject == Subject::Fighter, "stats", "body · hurtboxes", dirty, b).clicked() {
                     pick = Some(Subject::Fighter);
                 }
             }
             for s in Section::ALL {
-                if shown.contains(&Subject::Data(s)) {
-                    let (a, b) = (section_value(f, s), section_value(saved, s));
-                    if item(ui, ed.subject == Subject::Data(s), s.name(), &section_count(f, s), a != b, bad(s.key()))
-                        .clicked()
-                    {
-                        pick = Some(Subject::Data(s));
-                    }
+                if shown.contains(&Subject::Data(s))
+                    && item(
+                        ui,
+                        ed.subject == Subject::Data(s),
+                        s.name(),
+                        &section_count(f, s),
+                        changed(s.key()),
+                        bad(s.key()),
+                    )
+                    .clicked()
+                {
+                    pick = Some(Subject::Data(s));
                 }
             }
             let poses: Vec<&String> =
@@ -219,8 +214,7 @@ pub fn browser(ui: &mut egui::Ui, ed: &mut Editor) {
                     });
                 });
                 for name in poses {
-                    let p = &f.poses[name];
-                    let dirty = saved.poses.get(name) != Some(p);
+                    let dirty = changed(&format!("poses.{name}"));
                     let subj = Subject::Pose(name.clone());
                     let uses = doc::pose_users(f, name);
                     let r = item(
@@ -263,18 +257,6 @@ pub fn browser(ui: &mut egui::Ui, ed: &mut Editor) {
     }
 }
 
-fn section_value(f: &sim::data::Fighter, s: Section) -> serde_json::Value {
-    let v = match s {
-        Section::Style => serde_json::to_value(&f.style),
-        Section::Attachments => serde_json::to_value(&f.attachments),
-        Section::Projectiles => serde_json::to_value(&f.projectiles),
-        Section::Effects => serde_json::to_value(&f.fx),
-        Section::Anims => serde_json::to_value(&f.anims),
-        Section::Ai => serde_json::to_value(&f.ai),
-    };
-    v.unwrap_or_default()
-}
-
 fn section_count(f: &sim::data::Fighter, s: Section) -> String {
     match s {
         Section::Attachments => f.attachments.len().to_string(),
@@ -307,7 +289,7 @@ fn act(ed: &mut Editor, a: Action) {
                     *m = s.clone();
                 }
             });
-            ed.stale = true;
+            ed.pane.stale = true;
             ed.say(format!("Reverted {slot} · ⌘Z to undo"), false);
         }
         Action::AddSspec => {
@@ -325,8 +307,8 @@ fn act(ed: &mut Editor, a: Action) {
         }
         Action::NewPose => {
             let shown = crate::ui::pose_target(ed).and_then(|(t, _)| match t {
-                crate::ui::PoseTarget::Named(n) => fighter(ed).poses.get(&n).cloned(),
-                t => crate::ui::pose_mut(fighter(ed), &t).map(|p| p.clone()),
+                crate::ui::PoseTarget::Named(n) => ed.fighter().poses.get(&n).cloned(),
+                t => crate::ui::pose_mut(ed.fighter(), &t).map(|p| p.clone()),
             });
             let mut name = String::new();
             ed.doc().edit(|f| name = doc::new_pose(f, "pose", shown.as_ref()));
@@ -335,7 +317,7 @@ fn act(ed: &mut Editor, a: Action) {
         }
         Action::RenamePose(n) => ed.dialog = Some(Dialog::RenamePose { old: n.clone(), new: n }),
         Action::DuplicatePose(n) => {
-            let p = fighter(ed).poses.get(&n).cloned();
+            let p = ed.fighter().poses.get(&n).cloned();
             let mut name = String::new();
             ed.doc().edit(|f| name = doc::new_pose(f, &format!("{n}_copy"), p.as_ref()));
             ed.select(Subject::Pose(name));
