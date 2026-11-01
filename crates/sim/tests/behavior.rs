@@ -1,21 +1,8 @@
 mod common;
+use common::run_draining as run;
 use sim::{GameData, Input, MatchConfig, PlayerConfig, World, combat, moves, step_world, world::State};
 fn world(d: &GameData, id: &str) -> World {
-    World::new(
-        MatchConfig {
-            training: true,
-            players: vec![PlayerConfig::human(id), PlayerConfig::human(id)],
-            ..Default::default()
-        },
-        d,
-    )
-    .unwrap()
-}
-fn run(w: &mut World, d: &GameData, n: usize, inputs: &[Input]) {
-    for _ in 0..n {
-        step_world(w, d, inputs);
-        w.fx.clear();
-    }
+    common::fighters(d, id, &[id])
 }
 fn press(w: &mut World, d: &GameData, stick: (i8, i8), buttons: u8) {
     run(w, d, 1, &[Input { stick, buttons }]);
@@ -120,7 +107,7 @@ fn ledge_half_circle_and_occupancy() {
     let mut far = setup(s.ledge.r + 10.);
     run(&mut far, &d, 40, &[]);
     assert_ne!(far.fighters[0].state, State::Ledge);
-    let mut cfg = MatchConfig { training: true, ..Default::default() };
+    let mut cfg = MatchConfig::sandbox("arena", MatchConfig::default().players, MatchConfig::default().seed);
     cfg.players = vec![PlayerConfig::human("brawler"); 4];
     let mut w = World::new(cfg, &d).unwrap();
     w.fighters[3].set_state(State::Ledge);
@@ -179,10 +166,8 @@ fn every_cpu_matchup_is_deterministic_and_deals_damage() {
             let mut w = World::new(cfg, &d).unwrap();
             let mut copy = w.clone();
             for _ in 0..6000 {
-                step_world(&mut w, &d, &[]);
-                step_world(&mut copy, &d, &[]);
-                w.fx.clear();
-                copy.fx.clear();
+                common::step_draining(&mut w, &d, &[]);
+                common::step_draining(&mut copy, &d, &[]);
                 if w.over {
                     break;
                 }
@@ -206,24 +191,19 @@ fn four_player_cpu_and_teams_rollback() {
                     ..PlayerConfig::human(id)
                 })
                 .collect();
-            let mut w = World::new(
-                MatchConfig { seed: 42, training: true, players, friendly_fire: ff, ..Default::default() },
-                &d,
-            )
-            .unwrap();
+            let mut w = World::new(MatchConfig { friendly_fire: ff, ..MatchConfig::sandbox("arena", players, 42) }, &d)
+                .unwrap();
             let mut initial = w.clone();
             run(&mut w, &d, 3000, &[]);
             let mut rollback = w.clone();
             for _ in 0..3000 {
-                step_world(&mut w, &d, &[]);
-                step_world(&mut rollback, &d, &[]);
-                w.fx.clear();
-                rollback.fx.clear();
+                common::step_draining(&mut w, &d, &[]);
+                common::step_draining(&mut rollback, &d, &[]);
                 assert_eq!(w, rollback);
             }
             run(&mut initial, &d, 6000, &[]);
             assert_eq!(w, initial);
-            assert!(w.fighters.iter().any(|f| f.dmg > 0. || f.stocks < 3));
+            assert!(w.fighters.iter().any(|f| f.dmg > 0. || f.stocks < 1));
             assert!(w.fighters.iter().all(|f| f.x.is_finite() && f.y.is_finite()));
         }
     }
@@ -232,7 +212,10 @@ fn four_player_cpu_and_teams_rollback() {
 fn friendly_fire_filters_melee_grabs_projectiles_and_cancels() {
     let d = common::data();
     for ff in [false, true] {
-        let mut cfg = MatchConfig { training: true, friendly_fire: ff, ..Default::default() };
+        let mut cfg = MatchConfig {
+            friendly_fire: ff,
+            ..MatchConfig::sandbox("arena", MatchConfig::default().players, MatchConfig::default().seed)
+        };
         cfg.players = vec![
             PlayerConfig { team: Some(0), ..PlayerConfig::human("brawler") },
             PlayerConfig { team: Some(0), ..PlayerConfig::human("brawler") },
@@ -280,7 +263,10 @@ fn friendly_fire_filters_melee_grabs_projectiles_and_cancels() {
 #[test]
 fn ai_target_is_nearest_enemy_and_ties_use_index() {
     let d = common::data();
-    let mut cfg = MatchConfig { training: true, friendly_fire: true, ..Default::default() };
+    let mut cfg = MatchConfig {
+        friendly_fire: true,
+        ..MatchConfig::sandbox("arena", MatchConfig::default().players, MatchConfig::default().seed)
+    };
     cfg.players = vec![PlayerConfig::human("brawler"); 4];
     cfg.players[0].team = Some(0);
     cfg.players[1].team = Some(0);
@@ -362,7 +348,7 @@ fn human_history_consumes_frozen_presses() {
 #[test]
 fn a_grab_takes_one_victim_in_index_order() {
     let d = common::data();
-    let cfg = MatchConfig { training: true, players: vec![PlayerConfig::human("brawler"); 4], ..Default::default() };
+    let cfg = MatchConfig::sandbox("arena", vec![PlayerConfig::human("brawler"); 4], MatchConfig::default().seed);
     let mut w = World::new(cfg, &d).unwrap();
     for i in 1..4 {
         w.fighters[i].x = w.fighters[0].x + 34.;
@@ -425,7 +411,7 @@ fn spawn_support_resolves_ground_platform_and_air() {
     s.spawns[0].y = Some(p.y);
     s.spawns[1].y = Some(s.blocks[0].top - 100.);
     let mut w = World::new(
-        MatchConfig { training: true, players: vec![PlayerConfig::human("brawler"); 3], ..Default::default() },
+        MatchConfig::sandbox("arena", vec![PlayerConfig::human("brawler"); 3], MatchConfig::default().seed),
         &d,
     )
     .unwrap();
@@ -491,12 +477,8 @@ fn eight_player_cpu_ffa_determinism_and_rollback() {
         if tick % 1000 == 0 {
             snapshots.push((tick, w.clone()));
         }
-        step_world(&mut w, &d, &[]);
-        step_world(&mut copy, &d, &[]);
-        w.fx.clear();
-        copy.fx.clear();
-        w.hits.clear();
-        copy.hits.clear();
+        common::step_draining(&mut w, &d, &[]);
+        common::step_draining(&mut copy, &d, &[]);
         assert_eq!(w, copy);
     }
     assert!(w.fighters.iter().any(|f| f.dmg > 0. || f.stocks < 3));
@@ -504,9 +486,7 @@ fn eight_player_cpu_ffa_determinism_and_rollback() {
     snapshots.push((0, initial));
     for (tick, mut restored) in snapshots {
         for _ in tick..6000 {
-            step_world(&mut restored, &d, &[]);
-            restored.fx.clear();
-            restored.hits.clear();
+            common::step_draining(&mut restored, &d, &[]);
         }
         assert_eq!(w, restored, "rollback from {tick}");
     }
@@ -545,7 +525,7 @@ fn bat_without_bounce_recovers_cooldown_and_can_be_batted_again() {
 #[test]
 fn hit_records_keep_every_victim_and_last_attacker() {
     let d = common::data();
-    let cfg = MatchConfig { training: true, players: vec![PlayerConfig::human("brawler"); 4], ..Default::default() };
+    let cfg = MatchConfig::sandbox("arena", vec![PlayerConfig::human("brawler"); 4], MatchConfig::default().seed);
     let mut w = World::new(cfg, &d).unwrap();
     for i in 1..4 {
         w.fighters[i].x = w.fighters[0].x + 35.;
@@ -644,11 +624,11 @@ fn autolink_uses_default_hurtbox_center() {
 fn narrow_stage_ai_target_padding_is_safe() {
     let mut d = common::data();
     d.stages[0].blocks[0].right = d.stages[0].blocks[0].left + 10.;
-    let cfg = MatchConfig {
-        training: true,
-        players: vec![PlayerConfig { cpu: Some(2), ..PlayerConfig::human("brawler") }; 2],
-        ..Default::default()
-    };
+    let cfg = MatchConfig::sandbox(
+        "arena",
+        vec![PlayerConfig { cpu: Some(2), ..PlayerConfig::human("brawler") }; 2],
+        MatchConfig::default().seed,
+    );
     let mut w = World::new(cfg, &d).unwrap();
     for f in &mut w.fighters {
         f.x = d.stages[0].blocks[0].left + 5.;

@@ -9,11 +9,11 @@ fn phase_armor_takes_damage_but_preserves_motion_and_recovery() {
     for projectile in [false, true] {
         for (damage, armored) in [(5., true), (6., true), (6.1, false)] {
             let mut w = World::new(
-                MatchConfig {
-                    training: true,
-                    players: vec![PlayerConfig::human("brawler"), PlayerConfig::human("brawler")],
-                    ..Default::default()
-                },
+                MatchConfig::sandbox(
+                    "arena",
+                    vec![PlayerConfig::human("brawler"), PlayerConfig::human("brawler")],
+                    MatchConfig::default().seed,
+                ),
                 &d,
             )
             .unwrap();
@@ -58,11 +58,11 @@ fn grabs_bypass_phase_armor() {
     let id = d.fighters.iter().position(|f| f.id == "brawler").unwrap();
     d.fighters[id].moves.jab.phases[0].armor_threshold = Some(100.);
     let mut w = World::new(
-        MatchConfig {
-            training: true,
-            players: vec![PlayerConfig::human("brawler"), PlayerConfig::human("brawler")],
-            ..Default::default()
-        },
+        MatchConfig::sandbox(
+            "arena",
+            vec![PlayerConfig::human("brawler"), PlayerConfig::human("brawler")],
+            MatchConfig::default().seed,
+        ),
         &d,
     )
     .unwrap();
@@ -83,11 +83,11 @@ fn armored_hits_break_training_combos_in_both_directions() {
     let id = d.fighters.iter().position(|f| f.id == "brawler").unwrap();
     d.fighters[id].moves.jab.phases[0].armor_threshold = Some(6.);
     let mut w = World::new(
-        MatchConfig {
-            training: true,
-            players: vec![PlayerConfig::human("brawler"), PlayerConfig::human("brawler")],
-            ..Default::default()
-        },
+        MatchConfig::sandbox(
+            "arena",
+            vec![PlayerConfig::human("brawler"), PlayerConfig::human("brawler")],
+            MatchConfig::default().seed,
+        ),
         &d,
     )
     .unwrap();
@@ -131,11 +131,11 @@ fn windboxes_preserve_velocity_only_during_armor() {
     for armor in [None, Some(0.), Some(6.)] {
         d.fighters[id].moves.jab.phases[0].armor_threshold = armor;
         let mut w = World::new(
-            MatchConfig {
-                training: true,
-                players: vec![PlayerConfig::human("brawler"), PlayerConfig::human("brawler")],
-                ..Default::default()
-            },
+            MatchConfig::sandbox(
+                "arena",
+                vec![PlayerConfig::human("brawler"), PlayerConfig::human("brawler")],
+                MatchConfig::default().seed,
+            ),
             &d,
         )
         .unwrap();

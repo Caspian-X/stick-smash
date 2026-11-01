@@ -1,17 +1,9 @@
 mod common;
-use sim::{GameData, Input, MatchConfig, PlayerConfig, World, moves, step_world};
+use sim::{GameData, Input, World, moves};
 
 fn setup(id: &str, distance: f64) -> (GameData, World) {
     let d = common::data();
-    let mut w = World::new(
-        MatchConfig {
-            training: true,
-            players: vec![PlayerConfig::human(id), PlayerConfig::human("brawler")],
-            ..Default::default()
-        },
-        &d,
-    )
-    .unwrap();
+    let mut w = common::fighters(&d, id, &["brawler"]);
     w.count = 0;
     w.fighters[0].x = 450.;
     w.fighters[0].face = 1.;
@@ -30,7 +22,7 @@ fn ninja_throws_three_separate_stars() {
     let (d, mut w) = setup("ninja", 400.);
     start(&mut w, &d, "nspec");
     for _ in 0..18 {
-        step_world(&mut w, &d, &[Input::default(); 2]);
+        common::step_preserving(&mut w, &d, &[Input::default(); 2]);
     }
     assert_eq!(w.projs.len(), 3);
     assert!(w.projs.windows(2).all(|p| p[0].x > p[1].x));
@@ -47,7 +39,7 @@ fn yoyo_can_hit_on_both_outward_and_return_passes() {
         w.fighters[1].y = w.fighters[0].y;
         w.fighters[1].vx = 0.;
         w.fighters[1].vy = 0.;
-        step_world(&mut w, &d, &[Input::default(); 2]);
+        common::step_preserving(&mut w, &d, &[Input::default(); 2]);
         if w.hits.drain(..).any(|h| h.attacker == Some(0) && !h.shielded) {
             phases.push(moves::phase(&d, &w.fighters[0]).name.clone());
         }
@@ -60,7 +52,7 @@ fn wrangler_lasso_pulls_a_distant_victim_inward() {
     let (d, mut w) = setup("wrangler", 90.);
     start(&mut w, &d, "nspec");
     for _ in 0..20 {
-        step_world(&mut w, &d, &[Input::default(); 2]);
+        common::step_preserving(&mut w, &d, &[Input::default(); 2]);
         if !w.hits.is_empty() {
             assert!(w.fighters[1].vx < 0., "lasso must pull toward its owner");
             return;
@@ -99,7 +91,7 @@ fn ninja_shadow_dash_crosses_an_opponent() {
     start(&mut w, &d, "sspec");
     let mut protected = false;
     for _ in 0..17 {
-        step_world(&mut w, &d, &[Input::default(); 2]);
+        common::step_preserving(&mut w, &d, &[Input::default(); 2]);
         protected |= w.fighters[0].inv > 0;
     }
     assert!(protected && w.fighters[0].x > w.fighters[1].x);
@@ -117,7 +109,7 @@ fn ninja_substitution_advances_and_strikes_back() {
     let mut strike = false;
     let mut furthest = w.fighters[0].x;
     for _ in 0..40 {
-        step_world(&mut w, &d, &[Input::default(); 2]);
+        common::step_preserving(&mut w, &d, &[Input::default(); 2]);
         furthest = furthest.max(w.fighters[0].x);
         strike |= w.hits.drain(..).any(|h| h.attacker == Some(0));
     }
@@ -177,7 +169,7 @@ fn ninja_substitution_reaches_a_far_whip_attacker() {
     w.fighters[1] = attacker;
     let mut strike = false;
     for _ in 0..40 {
-        step_world(&mut w, &d, &[Input::default(); 2]);
+        common::step_preserving(&mut w, &d, &[Input::default(); 2]);
         strike |= w.hits.drain(..).any(|h| h.attacker == Some(0));
     }
     assert!(strike, "substitution must reach the whip's owner after countering its tip");
@@ -197,7 +189,7 @@ fn ninja_projectile_substitution_does_not_dash_off_a_ledge() {
     sim::projectiles::spawn(&mut w, &d, 1, &attacker, "energyBall");
     let mut reflected = false;
     for _ in 0..20 {
-        step_world(&mut w, &d, &[Input::default(); 2]);
+        common::step_preserving(&mut w, &d, &[Input::default(); 2]);
         reflected |= w.projs.iter().any(|p| p.owner == 0);
     }
     assert!(reflected);

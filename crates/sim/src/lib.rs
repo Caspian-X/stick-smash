@@ -1,7 +1,8 @@
 //! Deterministic Stick Smash simulation: a pure function of `(World, GameData, inputs)`.
 //!
 //! Rules for this crate (see AGENTS.md):
-//! - No Bevy, no file/network I/O, no wall-clock time, no thread-local or OS randomness.
+//! - No Bevy, no core file/network I/O, no wall-clock time, no thread-local or OS randomness.
+//!   The opt-in `fs` feature provides only the content-root reader `data::sources`.
 //! - Randomness comes from [`rng::Rng`] stored on the world.
 //! - Transcendental math goes through `libm` so results match across platforms (rollback netcode).
 //! - Visual/audio side effects are emitted as [`Fx`] events for the game crate to consume.

@@ -1,11 +1,10 @@
 mod common;
 
 use sim::data::stage::{Ground, Motion, PathMode, Platform, Waypoint};
-use sim::{GameData, MatchConfig, PlayerConfig, World, input::Intent, physics, step_world, world::State};
+use sim::{GameData, MatchConfig, PlayerConfig, World, input::Intent, physics, world::State};
 
 fn world(d: &GameData) -> World {
-    World::new(MatchConfig { training: true, players: vec![PlayerConfig::human("brawler")], ..Default::default() }, d)
-        .unwrap()
+    common::fighters(d, "brawler", &[])
 }
 fn island(left: f64, right: f64, top: f64) -> Ground {
     Ground {
@@ -122,14 +121,14 @@ fn ride_moving_platform_and_replay_snapshot() {
     d.stages[0].spawns[0].y = Some(300.);
     let mut w = world(&d);
     for _ in 0..15 {
-        step_world(&mut w, &d, &[]);
+        common::step_preserving(&mut w, &d, &[]);
     }
     assert_eq!((w.fighters[0].x, w.fighters[0].y), (550., 280.));
     assert_eq!(w.fighters[0].surf, Some(1));
     let mut rollback = w.clone();
     for _ in 0..180 {
-        step_world(&mut w, &d, &[]);
-        step_world(&mut rollback, &d, &[]);
+        common::step_preserving(&mut w, &d, &[]);
+        common::step_preserving(&mut rollback, &d, &[]);
         assert_eq!(w, rollback);
         let (x1, _, y) = d.stages[0].platforms[0].position(w.frame as f64);
         assert_eq!((w.fighters[0].x, w.fighters[0].y), (x1 + 100., y));
@@ -253,11 +252,11 @@ fn platform_carry_cannot_push_through_a_wall_during_hitlag() {
     d.stages[0].spawns[0].y = Some(300.);
     let mut w = world(&d);
     w.fighters[0].lag = 3;
-    step_world(&mut w, &d, &[]);
+    common::step_preserving(&mut w, &d, &[]);
     assert_eq!(w.fighters[0].x, 700. - d.fighters[0].body.half_width);
     assert_eq!(w.fighters[0].surf, None);
     let x = w.fighters[0].x;
-    step_world(&mut w, &d, &[]);
+    common::step_preserving(&mut w, &d, &[]);
     assert_eq!(w.fighters[0].x, x);
 }
 
@@ -354,20 +353,17 @@ fn cpu_crosses_to_an_opponents_island() {
     d.stages[0].spawns[0].x = 500.;
     d.stages[0].spawns[1].x = 850.;
     let mut w = World::new(
-        MatchConfig {
-            training: true,
-            players: vec![
-                PlayerConfig { cpu: Some(2), ..PlayerConfig::human("brawler") },
-                PlayerConfig::human("brawler"),
-            ],
-            ..Default::default()
-        },
+        MatchConfig::sandbox(
+            "arena",
+            vec![PlayerConfig { cpu: Some(2), ..PlayerConfig::human("brawler") }, PlayerConfig::human("brawler")],
+            MatchConfig::default().seed,
+        ),
         &d,
     )
     .unwrap();
     let mut arrived = false;
     for _ in 0..600 {
-        step_world(&mut w, &d, &[]);
+        common::step_preserving(&mut w, &d, &[]);
         if w.fighters[0].surf == Some(1) && w.fighters[0].x > 700. {
             arrived = true;
             break;

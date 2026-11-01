@@ -13,8 +13,11 @@ assets/
   schema/                      generated
 ```
 
-Every file has `"$schema"` (relative path to its schema) and `"schemaVersion"`. The loader migrates older
-versions forward and rejects newer ones.
+Every file has `"$schema"` (relative path to its schema) and `"schemaVersion"`. Versions are **per content
+kind**: global and fighter formats are currently version 1; stages are version 2. Only stage version 1 migrates
+`ground` to `blocks`. Existing global/fighter files declaring version 2 are accepted as legacy aliases of version
+1 and normalized on load; no fighter or global format change accompanied that version. Unknown versions are
+rejected. Future migrations are dispatched by content kind so a stage change cannot alter a fighter or global file.
 
 **Packages.** A fighter with `"extends": "<id>"` is merged over its parent before it's read: objects key by key,
 arrays replaced whole, `null` deletes a key. `"abstract": true` marks a parent-only package (not playable, not

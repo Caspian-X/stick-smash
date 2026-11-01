@@ -1,6 +1,6 @@
 {
   "$schema": "../../schema/fighter.schema.json",
-  "schemaVersion": 2,
+  "schemaVersion": 1,
   "extends": "base",
   "name": "Archer",
   "tagline": "Make every arrow count",

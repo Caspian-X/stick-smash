@@ -4,21 +4,13 @@ mod common;
 use sim::{GameData, Input, MatchConfig, PlayerConfig, World, step_world, world::State};
 
 fn sandbox(d: &GameData, stage: &str, fighter: &str) -> World {
-    let cfg = MatchConfig {
-        stage: stage.into(),
-        training: true,
-        players: vec![PlayerConfig { tap_jump: false, ..PlayerConfig::human(fighter) }],
-        ..Default::default()
-    };
-    let mut w = World::new(cfg, d).unwrap();
+    let mut w = common::sandbox(d, stage, vec![PlayerConfig { tap_jump: false, ..PlayerConfig::human(fighter) }]);
     w.count = 0;
     w
 }
 
 fn tick(w: &mut World, d: &GameData, input: Input) {
-    step_world(w, d, &[input]);
-    w.fx.clear();
-    w.hits.clear();
+    common::step_draining(w, d, &[input]);
 }
 
 // One joint motion cycle covers the relative timing of launch and destination platforms.
@@ -701,12 +693,11 @@ fn blocked_surface_pursuit_waits_for_timeout_then_jumps_at_the_edge() {
     d.global.ai.thresholds.surface_chase_ticks = 3;
     d.global.ai.aggression = [0.; 3];
     let mut w = World::new(
-        MatchConfig {
-            stage: "isles".into(),
-            training: true,
-            players: vec![PlayerConfig::human("brawler"), PlayerConfig::human("king")],
-            ..Default::default()
-        },
+        MatchConfig::sandbox(
+            "isles",
+            vec![PlayerConfig::human("brawler"), PlayerConfig::human("king")],
+            MatchConfig::default().seed,
+        ),
         &d,
     )
     .unwrap();

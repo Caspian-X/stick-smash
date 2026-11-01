@@ -1,11 +1,8 @@
 mod common;
-use sim::{GameData, Input, MatchConfig, PlayerConfig, World, step_world};
+use sim::{GameData, Input, MatchConfig, PlayerConfig, World};
 
 fn world(d: &GameData, fighter: &str, opponents: usize) -> World {
-    let players = std::iter::once(PlayerConfig::human(fighter))
-        .chain((0..opponents).map(|_| PlayerConfig::human("brawler")))
-        .collect();
-    let mut w = World::new(MatchConfig { players, training: true, ..Default::default() }, d).unwrap();
+    let mut w = common::fighters(d, fighter, &vec!["brawler"; opponents]);
     w.count = 0;
     for f in &mut w.fighters {
         f.inv = 0;
@@ -19,7 +16,11 @@ fn held_arrow_scales_speed_and_damage_and_keeps_its_arc() {
     let fire = |held| {
         let mut w = world(&d, "archer", 0);
         for t in 0..100 {
-            step_world(&mut w, &d, &[Input { buttons: if t < held { 4 } else { 0 }, ..Default::default() }]);
+            common::step_preserving(
+                &mut w,
+                &d,
+                &[Input { buttons: if t < held { 4 } else { 0 }, ..Default::default() }],
+            );
             if let Some(p) = w.projs.first() {
                 return p.clone();
             }
@@ -197,12 +198,7 @@ fn settled_mines_ride_vertical_and_horizontal_lifts_without_extra_bounces() {
     d.fighters[data].projectiles.get_mut("mine").unwrap().bounce.as_mut().unwrap().max_bounces = 1;
     for platform in [0, 2] {
         let mut w = World::new(
-            MatchConfig {
-                stage: "foundry".into(),
-                training: true,
-                players: vec![PlayerConfig::human("tinker")],
-                ..Default::default()
-            },
+            MatchConfig::sandbox("foundry", vec![PlayerConfig::human("tinker")], MatchConfig::default().seed),
             &d,
         )
         .unwrap();
