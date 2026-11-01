@@ -18,7 +18,7 @@ use super::stage::Stage;
 use super::visual::{Anim, PoseRef};
 use super::{GameData, SCHEMA_VERSION};
 
-/// A problem in one content file. The package it belongs to was skipped.
+/// A problem in a content source or resolved package.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContentError {
     pub file: String,
@@ -43,6 +43,51 @@ pub struct Source {
     pub text: String,
 }
 
+/// Reads JSON sources in path order, skipping `schema` directories and symbolic links.
+/// Read failures include the affected path; callers can log them before loading the remaining sources.
+#[cfg(feature = "fs")]
+pub fn sources(root: impl AsRef<std::path::Path>) -> (Vec<Source>, Vec<ContentError>) {
+    fn walk(root: &std::path::Path, dir: &std::path::Path, out: &mut Vec<Source>, errors: &mut Vec<ContentError>) {
+        let path = |p: &std::path::Path| p.strip_prefix(root).unwrap_or(p).to_string_lossy().replace('\\', "/");
+        let entries = match std::fs::read_dir(dir) {
+            Ok(entries) => entries,
+            Err(e) => {
+                errors.push(err(&path(dir), "", e.to_string()));
+                return;
+            }
+        };
+        let mut entries: Vec<_> = entries
+            .filter_map(|e| match e {
+                Ok(e) => Some(e),
+                Err(e) => {
+                    errors.push(err(&path(dir), "", e.to_string()));
+                    None
+                }
+            })
+            .collect();
+        entries.sort_by_key(|e| e.file_name());
+        for entry in entries {
+            let p = entry.path();
+            match entry.file_type() {
+                Ok(t) if t.is_dir() && entry.file_name() != "schema" => walk(root, &p, out, errors),
+                Ok(t) if t.is_file() && p.extension().is_some_and(|e| e == "json") => {
+                    match std::fs::read_to_string(&p) {
+                        Ok(text) => out.push(Source { path: path(&p), text }),
+                        Err(e) => errors.push(err(&path(&p), "", e.to_string())),
+                    }
+                }
+                Err(e) => errors.push(err(&path(&p), "", e.to_string())),
+                _ => {}
+            }
+        }
+    }
+    let (mut out, mut errors) = (Vec::new(), Vec::new());
+    walk(root.as_ref(), root.as_ref(), &mut out, &mut errors);
+    out.sort_by(|a, b| a.path.cmp(&b.path));
+    errors.sort_by(|a, b| a.file.cmp(&b.file));
+    (out, errors)
+}
+
 /// Loaded content plus errors for packages that were skipped. Fails only if `global.json` is unusable or no
 /// playable fighter or stage loaded.
 pub fn load(files: impl IntoIterator<Item = Source>) -> Result<(GameData, Vec<ContentError>), Vec<ContentError>> {
@@ -57,12 +102,12 @@ pub fn load(files: impl IntoIterator<Item = Source>) -> Result<(GameData, Vec<Co
     for (path, text) in &by_path {
         let parts: Vec<&str> = path.split('/').collect();
         let kind = match parts.as_slice() {
-            ["global.json"] => "global",
-            ["fighters", _, "fighter.json"] => "fighter",
-            ["stages", _, "stage.json"] => "stage",
+            ["global.json"] => ContentKind::Global,
+            ["fighters", _, "fighter.json"] => ContentKind::Fighter,
+            ["stages", _, "stage.json"] => ContentKind::Stage,
             _ => continue,
         };
-        let v = match parse(path, text) {
+        let v = match parse(path, text, kind) {
             Ok(v) => v,
             Err(e) => {
                 errors.push(e);
@@ -70,8 +115,8 @@ pub fn load(files: impl IntoIterator<Item = Source>) -> Result<(GameData, Vec<Co
             }
         };
         match kind {
-            "global" => raw_global = Some(v),
-            "fighter" => drop(raw_fighters.insert(parts[1].to_string(), (path.clone(), v))),
+            ContentKind::Global => raw_global = Some(v),
+            ContentKind::Fighter => drop(raw_fighters.insert(parts[1].to_string(), (path.clone(), v))),
             _ => raw_stages.push((parts[1].to_string(), path.clone(), v)),
         }
     }
@@ -105,7 +150,7 @@ pub fn load(files: impl IntoIterator<Item = Source>) -> Result<(GameData, Vec<Co
         if merged.get("abstract").and_then(Value::as_bool) == Some(true) {
             continue;
         }
-        match typed::<Fighter>(path, &merged).and_then(|f| check_fighter(path, &f).map(|()| f)) {
+        match typed::<Fighter>(path, &merged) {
             Ok(mut f) => {
                 f.id = id.clone();
                 hashed.push((format!("fighter:{id}"), merged));
@@ -117,9 +162,7 @@ pub fn load(files: impl IntoIterator<Item = Source>) -> Result<(GameData, Vec<Co
 
     let mut stages = Vec::new();
     for (id, path, v) in raw_stages {
-        match typed::<Stage>(&path, &v)
-            .and_then(|s| check_stage(&path, &s, &fighters, global.sim.platform_pad).map(|()| s))
-        {
+        match typed::<Stage>(&path, &v) {
             Ok(mut s) => {
                 s.id = id.clone();
                 hashed.push((format!("stage:{id}"), v));
@@ -129,29 +172,107 @@ pub fn load(files: impl IntoIterator<Item = Source>) -> Result<(GameData, Vec<Co
         }
     }
 
-    if fighters.is_empty() || stages.is_empty() {
-        errors.push(err("", "", if fighters.is_empty() { "no playable fighter loaded" } else { "no stage loaded" }));
+    let mut data = GameData { global, stages, fighters, hash: 0 };
+    let invalid = validate(&data);
+    let skipped: BTreeSet<_> = invalid.iter().map(|e| e.file.as_str()).collect();
+    data.fighters.retain(|f| !skipped.contains(format!("fighters/{}/fighter.json", f.id).as_str()));
+    data.stages.retain(|s| !skipped.contains(format!("stages/{}/stage.json", s.id).as_str()));
+    errors.extend(invalid);
+    if data.fighters.is_empty() || data.stages.is_empty() {
+        errors.push(err(
+            "",
+            "",
+            if data.fighters.is_empty() { "no playable fighter loaded" } else { "no stage loaded" },
+        ));
         return Err(errors);
     }
+    hashed.retain(|(key, _)| match key.split_once(':') {
+        Some(("fighter", id)) => data.fighter(id).is_some(),
+        Some(("stage", id)) => data.stage(id).is_some(),
+        _ => true,
+    });
     let all = Value::Array(hashed.into_iter().map(|(k, v)| Value::Array(vec![Value::String(k), v])).collect());
-    Ok((GameData { global, stages, fighters, hash: content_hash(&all) }, errors))
+    data.hash = content_hash(&all);
+    Ok((data, errors))
+}
+
+/// Validates resolved content (including embedded replay data). Reports the first problem per package,
+/// plus missing packages and duplicate ids. Paths use the same file/JSON coordinates as [`load`].
+pub fn validate(data: &GameData) -> Vec<ContentError> {
+    let mut errors = Vec::new();
+    errors.extend(check_global("global.json", &data.global).err());
+    let mut ids = BTreeSet::new();
+    for f in &data.fighters {
+        let file = format!("fighters/{}/fighter.json", f.id);
+        if !ids.insert(&f.id) {
+            errors.push(err(&file, "id", "duplicate fighter package id"));
+        }
+        errors.extend(check_fighter(&file, f).err());
+    }
+    let fighters = if errors.iter().any(|e| e.file.starts_with("fighters/")) {
+        std::borrow::Cow::Owned(
+            data.fighters
+                .iter()
+                .filter(|f| !errors.iter().any(|e| e.file == format!("fighters/{}/fighter.json", f.id)))
+                .cloned()
+                .collect::<Vec<_>>(),
+        )
+    } else {
+        std::borrow::Cow::Borrowed(data.fighters.as_slice())
+    };
+    ids.clear();
+    for s in &data.stages {
+        let file = format!("stages/{}/stage.json", s.id);
+        if !ids.insert(&s.id) {
+            errors.push(err(&file, "id", "duplicate stage package id"));
+        }
+        errors.extend(check_stage(&file, s, &fighters, data.global.sim.platform_pad).err());
+    }
+    if data.fighters.is_empty() {
+        errors.push(err("", "fighters", "needs at least one playable fighter"));
+    }
+    if data.stages.is_empty() {
+        errors.push(err("", "stages", "needs at least one stage"));
+    }
+    errors
 }
 
 fn err(file: &str, path: impl Into<String>, msg: impl Into<String>) -> ContentError {
     ContentError { file: file.into(), path: path.into(), msg: msg.into() }
 }
 
-fn parse(path: &str, text: &str) -> Result<Value, ContentError> {
+fn parse(path: &str, text: &str, kind: ContentKind) -> Result<Value, ContentError> {
     let mut v: Value = serde_json::from_str(text).map_err(|e| err(path, "", e.to_string()))?;
-    migrate(&mut v).map_err(|m| err(path, "schemaVersion", m))?;
+    migrate_kind(kind, &mut v).map_err(|m| err(path, "schemaVersion", m))?;
     Ok(v)
 }
 
-/// Upgrades older files in place. Each future format change adds a step here.
+/// Content formats have independent version histories.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ContentKind {
+    Global,
+    Fighter,
+    Stage,
+}
+
+/// Upgrades a stage in place. Kept for existing stage editor callers.
 pub fn migrate(v: &mut Value) -> Result<(), String> {
+    migrate_kind(ContentKind::Stage, v)
+}
+
+/// Upgrades only the selected content format. Fighter/global version 2 is a legacy alias for version 1.
+pub fn migrate_kind(kind: ContentKind, v: &mut Value) -> Result<(), String> {
     let ver = v.get("schemaVersion").and_then(Value::as_u64).ok_or("missing or not a number")?;
-    if ver == 0 || ver > u64::from(SCHEMA_VERSION) {
-        return Err(format!("version {ver} isn't supported (this build reads 1 to {SCHEMA_VERSION})"));
+    let max = match kind {
+        ContentKind::Stage => SCHEMA_VERSION,
+        ContentKind::Fighter | ContentKind::Global => 2,
+    };
+    if ver == 0 || ver > u64::from(max) {
+        return Err(format!("version {ver} isn't supported (this build reads 1 to {max})"));
+    }
+    if kind != ContentKind::Stage {
+        v["schemaVersion"] = Value::from(1);
+        return Ok(());
     }
     if ver == 1
         && let Some(obj) = v.as_object_mut()
@@ -220,7 +341,13 @@ pub fn check_stage(file: &str, s: &Stage, fighters: &[Fighter], platform_pad: f6
     positive(file, "width", s.width)?;
     positive(file, "height", s.height)?;
     positive(file, "ledge.r", s.ledge.r)?;
+    for (name, n) in [("hangX", s.ledge.hang_x), ("hangY", s.ledge.hang_y)] {
+        finite(file, &format!("ledge.{name}"), n)?;
+    }
     for (name, b) in [("blast", &s.blast), ("camera", &s.camera)] {
+        for (field, n) in [("left", b.left), ("right", b.right), ("top", b.top), ("bottom", b.bottom)] {
+            finite(file, &format!("{name}.{field}"), n)?;
+        }
         if b.left >= b.right || b.top >= b.bottom {
             return Err(err(file, name, "needs left < right and top < bottom"));
         }
@@ -242,6 +369,10 @@ pub fn check_stage(file: &str, s: &Stage, fighters: &[Fighter], platform_pad: f6
         }
     }
     for (i, sp) in s.spawns.iter().enumerate() {
+        finite(file, &format!("spawns[{i}].x"), sp.x)?;
+        if let Some(y) = sp.y {
+            finite(file, &format!("spawns[{i}].y"), y)?;
+        }
         if ![-1, 1].contains(&sp.face) {
             return Err(err(file, format!("spawns[{i}].face"), "must be -1 or 1"));
         }
@@ -251,6 +382,9 @@ pub fn check_stage(file: &str, s: &Stage, fighters: &[Fighter], platform_pad: f6
     }
     for (i, g) in s.blocks.iter().enumerate() {
         let path = format!("blocks[{i}]");
+        for (field, n) in [("left", g.left), ("right", g.right), ("top", g.top), ("bottom", g.bottom)] {
+            finite(file, &format!("{path}.{field}"), n)?;
+        }
         if g.left >= g.right || g.top >= g.bottom {
             return Err(err(file, &path, "needs left < right and top < bottom"));
         }
@@ -320,12 +454,17 @@ pub fn check_stage(file: &str, s: &Stage, fighters: &[Fighter], platform_pad: f6
         }
     }
     for (i, p) in s.platforms.iter().enumerate() {
+        for (field, n) in [("x1", p.x1), ("x2", p.x2), ("y", p.y)] {
+            finite(file, &format!("platforms[{i}].{field}"), n)?;
+        }
         if let Some(m) = &p.motion {
             let path = format!("platforms[{i}].motion.waypoints");
             if m.waypoints.len() < 2 {
                 return Err(err(file, &path, "needs at least two waypoints"));
             }
             for (j, point) in m.waypoints.iter().enumerate() {
+                finite(file, &format!("{path}[{j}].x"), point.x)?;
+                finite(file, &format!("{path}[{j}].y"), point.y)?;
                 if point.travel_ticks == 0
                     && !(m.mode == super::stage::PathMode::PingPong && j + 1 == m.waypoints.len())
                 {
@@ -364,6 +503,9 @@ pub fn check_stage(file: &str, s: &Stage, fighters: &[Fighter], platform_pad: f6
         }
     }
     for (i, point) in s.respawns.iter().enumerate() {
+        for (field, n) in [("x", point.x), ("startY", point.start_y), ("endY", point.end_y)] {
+            finite(file, &format!("respawns[{i}].{field}"), n)?;
+        }
         for (j, block) in s.blocks.iter().enumerate() {
             for f in fighters {
                 if block.intersects_sweep(
@@ -400,29 +542,13 @@ pub fn check_stage(file: &str, s: &Stage, fighters: &[Fighter], platform_pad: f6
 /// every edit before simulating.
 pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
     let e = |path: String, msg: String| err(file, path, msg);
-    let stats = serde_json::to_value(&f.stats).unwrap();
-    for (name, value) in stats.as_object().unwrap() {
-        let n = value.as_f64().unwrap();
-        if matches!(
-            name.as_str(),
-            "weight"
-                | "runSpeed"
-                | "jumpSpeed"
-                | "shortHopSpeed"
-                | "airJumpSpeed"
-                | "airSpeed"
-                | "gravity"
-                | "fallSpeed"
-                | "fastFallSpeed"
-        ) {
-            positive(file, &format!("stats.{name}"), n)?;
-        } else {
-            nonnegative(file, &format!("stats.{name}"), n)?;
-        }
-    }
+    check_stats(file, &f.stats)?;
     positive(file, "body.halfWidth", f.body.half_width)?;
     positive(file, "body.height", f.body.height)?;
     for (name, r) in [("default", f.hurtboxes.default), ("knockdown", f.hurtboxes.knockdown)] {
+        for (field, n) in [("x1", r.x1), ("x2", r.x2), ("y1", r.y1), ("y2", r.y2)] {
+            finite(file, &format!("hurtboxes.{name}.{field}"), n)?;
+        }
         if r.x1 >= r.x2 || r.y1 >= r.y2 {
             return Err(err(file, format!("hurtboxes.{name}"), "needs x1 < x2 and y1 < y2"));
         }
@@ -434,22 +560,25 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
         }
         check_hitbox(file, &format!("throws.{name}.hit"), &t.hit, false)?;
     }
-    if !(0.0..=1.0).contains(&f.ai.counter_chance) {
-        return Err(err(file, "ai.counterChance", "must be between 0 and 1"));
-    }
+    probability(file, "ai.counterChance", f.ai.counter_chance)?;
     if let Some(name) = &f.ai.recovery_shield_cancel
         && !f.moves.uspec.phases.iter().any(|p| &p.name == name)
     {
         return Err(err(file, "ai.recoveryShieldCancel", "must name a phase in uspec"));
     }
     for (i, t) in f.ai.specials.iter().enumerate() {
-        if !(0.0..=1.0).contains(&t.chance)
-            || t.min_distance < 0.0
-            || t.max_distance.is_some_and(|n| n <= t.min_distance)
-            || t.height <= 0.0
-            || t.hold.is_some_and(|[a, b]| a < 0.0 || b < a)
-        {
-            return Err(err(file, format!("ai.specials[{i}]"), "invalid distance, height, chance, or hold range"));
+        let path = format!("ai.specials[{i}]");
+        probability(file, &format!("{path}.chance"), t.chance)?;
+        nonnegative(file, &format!("{path}.minDistance"), t.min_distance)?;
+        positive(file, &format!("{path}.height"), t.height)?;
+        if let Some(n) = t.max_distance {
+            finite(file, &format!("{path}.maxDistance"), n)?;
+            if n <= t.min_distance {
+                return Err(err(file, format!("{path}.maxDistance"), "must exceed minDistance"));
+            }
+        }
+        if let Some([a, b]) = t.hold {
+            nonnegative_range(file, &format!("{path}.hold"), a, b)?;
         }
     }
     let pose_ok = |r: &PoseRef| match r {
@@ -493,6 +622,18 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
     }
     for (id, p) in &f.projectiles {
         let path = format!("projectiles.{id}");
+        for (field, n) in [
+            ("spawn[0]", p.spawn[0]),
+            ("spawn[1]", p.spawn[1]),
+            ("vel[0]", p.vel[0]),
+            ("vel[1]", p.vel[1]),
+            ("spin", p.spin),
+        ] {
+            finite(file, &format!("{path}.{field}"), n)?;
+        }
+        if let Some(n) = p.reflect_vy {
+            finite(file, &format!("{path}.reflectVy"), n)?;
+        }
         positive(file, &format!("{path}.r"), p.r)?;
         nonnegative(file, &format!("{path}.gravity"), p.gravity)?;
         if let Some(n) = p.max_fall {
@@ -516,6 +657,7 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
         }
         if let Some(b) = &p.bat {
             positive(file, &format!("{path}.bat.speed"), b.speed)?;
+            finite(file, &format!("{path}.bat.vy"), b.vy)?;
             check_life(file, &format!("{path}.bat.life"), b.life)?;
         }
         if let Some(b) = &p.bounce {
@@ -645,6 +787,9 @@ fn check_life(file: &str, path: &str, n: u32) -> Result<(), ContentError> {
     if n > 0 && n <= i32::MAX as u32 { Ok(()) } else { Err(err(file, path, "must be between 1 and i32::MAX")) }
 }
 fn check_hitbox(file: &str, path: &str, h: &super::Hitbox, geometry: bool) -> Result<(), ContentError> {
+    for (name, n) in [("x", h.x), ("y", h.y), ("angle", h.angle), ("hitstunAdd", h.hitstun_add)] {
+        finite(file, &format!("{path}.{name}"), n)?;
+    }
     if geometry {
         positive(file, &format!("{path}.r"), h.r)?;
     }
@@ -667,6 +812,8 @@ fn check_hitbox(file: &str, path: &str, h: &super::Hitbox, geometry: bool) -> Re
     }
     for (i, frame) in h.frames.iter().enumerate() {
         nonnegative(file, &format!("{path}.frames[{i}][0]"), frame[0])?;
+        finite(file, &format!("{path}.frames[{i}][1]"), frame[1])?;
+        finite(file, &format!("{path}.frames[{i}][2]"), frame[2])?;
         if geometry {
             positive(file, &format!("{path}.frames[{i}][3]"), frame[3])?;
         }
@@ -674,6 +821,15 @@ fn check_hitbox(file: &str, path: &str, h: &super::Hitbox, geometry: bool) -> Re
     Ok(())
 }
 fn check_event(file: &str, path: &str, ev: &super::Event) -> Result<(), ContentError> {
+    for (name, vel) in [("mulVel", &ev.mul_vel), ("setVel", &ev.set_vel), ("addVel", &ev.add_vel)] {
+        if let Some(vel) = vel {
+            for (axis, n) in [("x", vel.x), ("y", vel.y)] {
+                if let Some(n) = n {
+                    finite(file, &format!("{path}.{name}.{axis}"), n)?;
+                }
+            }
+        }
+    }
     if ev.every == Some(0) {
         return Err(err(file, format!("{path}.every"), "must be positive"));
     }
@@ -730,31 +886,18 @@ pub fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
         }
         nonnegative(file, &format!("ledge.{name}.dist"), c.dist)?;
     }
-    // These sections contain magnitudes/timings; signed velocities and angles are excluded.
-    let value = serde_json::to_value(g).unwrap();
-    for section in [
-        "movement",
-        "knockback",
-        "hitstun",
-        "hitlag",
-        "shield",
-        "dodge",
-        "landing",
-        "tech",
-        "grab",
-        "respawn",
-        "match",
-        "sim",
-    ] {
-        for (name, n) in value[section].as_object().unwrap() {
-            if section == "movement" && name == "fastFallMinVy" {
-                continue;
-            }
-            if let Some(n) = n.as_f64() {
-                nonnegative(file, &format!("{section}.{name}"), n)?;
-            }
-        }
-    }
+    check_movement(file, &g.movement)?;
+    check_knockback(file, &g.knockback)?;
+    check_hitstun(file, &g.hitstun)?;
+    check_hitlag(file, &g.hitlag)?;
+    check_shield(file, &g.shield)?;
+    check_dodge(file, &g.dodge)?;
+    check_landing(file, &g.landing)?;
+    check_grab(file, &g.grab)?;
+    check_sim(file, &g.sim)?;
+    check_hit_types(file, &g.hit_types)?;
+    nonnegative(file, "ledge.jumpSpeed", g.ledge.jump_speed)?;
+    check_ai(file, &g.ai)?;
     for (name, boxes) in [("knockdown.attack", &g.knockdown.attack), ("ledge.attackHit", &g.ledge.attack_hit)] {
         for (i, h) in boxes.iter().enumerate() {
             check_hitbox(file, &format!("{name}[{i}]"), h, true)?;
@@ -773,71 +916,402 @@ pub fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
     if g.dodge.roll_move_start > g.dodge.roll_move_end || g.dodge.roll_move_end > g.dodge.roll_frames {
         return Err(err(file, "dodge.rollMoveEnd", "needs rollMoveStart <= rollMoveEnd <= rollFrames"));
     }
-    for name in ["react", "charge", "aggression", "mash", "tech", "shieldResponse", "defend", "projectileDefend"] {
-        for (i, n) in value["ai"][name].as_array().unwrap().iter().enumerate() {
-            let n = n.as_f64().unwrap();
-            nonnegative(file, &format!("ai.{name}[{i}]"), n)?;
-            if !["react", "charge"].contains(&name) && n > 1. {
-                return Err(err(file, format!("ai.{name}[{i}]"), "must be between 0 and 1"));
-            }
-        }
-    }
-    let v = &g.ai.thresholds;
-    for (name, a, b) in [
-        ("ledgeWait", v.ledge_wait_min, v.ledge_wait_max),
-        ("hold", v.hold_min, v.hold_max),
-        ("shieldHold", v.shield_hold_min, v.shield_hold_max),
-    ] {
-        if a < 0. || b < a {
-            return Err(err(file, format!("ai.thresholds.{name}Max"), "needs 0 <= min <= max"));
-        }
-    }
-    nonnegative(file, "ai.thresholds.targetPad", v.target_pad)?;
     Ok(())
 }
 
 fn check_audio(file: &str, a: &super::audio::Audio) -> Result<(), ContentError> {
-    let range = |path: &str, n: f64, lo: f64, hi: f64| {
-        if n.is_finite() && (lo..=hi).contains(&n) {
-            Ok(())
-        } else {
-            Err(err(file, path, format!("must be between {lo} and {hi}")))
-        }
-    };
-    range("audio.sampleRate", f64::from(a.sample_rate), 8000., 96000.)?;
-    range("audio.strengthLevels", a.strength_levels as f64, 1., 16.)?;
-    range("audio.maxVoices", a.max_voices as f64, 1., 128.)?;
-    range("audio.maxPerFrame", a.max_per_frame as f64, 1., 32.)?;
-    range("audio.pan", a.pan, 0., 4.)?;
-    range("audio.depth", a.depth, 0.1, 4.)?;
-    range("audio.earGap", a.ear_gap, 0.1, 4.)?;
-    range("audio.pitchVariation", a.pitch_variation, 0., 0.5)?;
-    range("audio.volumeStep", a.volume_step, 0.001, 1.)?;
-    range("audio.cooldown", a.cooldown, 0., 10.)?;
+    range(file, "audio.sampleRate", f64::from(a.sample_rate), 8000., 96000.)?;
+    range(file, "audio.strengthLevels", a.strength_levels as f64, 1., 16.)?;
+    range(file, "audio.maxVoices", a.max_voices as f64, 1., 128.)?;
+    range(file, "audio.maxPerFrame", a.max_per_frame as f64, 1., 32.)?;
+    range(file, "audio.pan", a.pan, 0., 4.)?;
+    range(file, "audio.depth", a.depth, 0.1, 4.)?;
+    range(file, "audio.earGap", a.ear_gap, 0.1, 4.)?;
+    range(file, "audio.pitchVariation", a.pitch_variation, 0., 0.5)?;
+    range(file, "audio.volumeStep", a.volume_step, 0.001, 1.)?;
+    range(file, "audio.cooldown", a.cooldown, 0., 10.)?;
     positive(file, "audio.strengthMax", a.strength_max)?;
     for (n, v) in [("master", a.defaults.master), ("sfx", a.defaults.sfx), ("music", a.defaults.music)] {
-        range(&format!("audio.defaults.{n}"), v, 0., 1.)?;
+        range(file, &format!("audio.defaults.{n}"), v, 0., 1.)?;
     }
     if a.sounds.len() > 128 {
         return Err(err(file, "audio.sounds", "at most 128 sounds"));
     }
     for (name, s) in &a.sounds {
         let p = format!("audio.sounds.{name}");
-        range(&format!("{p}.volume"), s.volume, 0., 1.)?;
-        range(&format!("{p}.cooldown"), s.cooldown, 0., 10.)?;
-        range(&format!("{p}.strengthGain"), s.strength_gain, 0., 1.)?;
-        range(&format!("{p}.strengthDuration"), s.strength_duration, 0.1, 4.)?;
-        range(&format!("{p}.layers"), s.layers.len() as f64, 1., 8.)?;
+        range(file, &format!("{p}.volume"), s.volume, 0., 1.)?;
+        range(file, &format!("{p}.cooldown"), s.cooldown, 0., 10.)?;
+        range(file, &format!("{p}.strengthGain"), s.strength_gain, 0., 1.)?;
+        range(file, &format!("{p}.strengthDuration"), s.strength_duration, 0.1, 4.)?;
+        range(file, &format!("{p}.layers"), s.layers.len() as f64, 1., 8.)?;
         for (i, l) in s.layers.iter().enumerate() {
             let p = format!("{p}.layers[{i}]");
             for (n, v) in [("from", l.from), ("to", l.to)] {
-                range(&format!("{p}.{n}"), v, 1., f64::from(a.sample_rate) / 2.)?;
+                range(file, &format!("{p}.{n}"), v, 1., f64::from(a.sample_rate) / 2.)?;
             }
-            range(&format!("{p}.duration"), l.duration, 0.001, 3.)?;
-            range(&format!("{p}.attack"), l.attack, 0., l.duration)?;
-            range(&format!("{p}.decay"), l.decay, 0., 30.)?;
-            range(&format!("{p}.gain"), l.gain, 0., 1.)?;
+            range(file, &format!("{p}.duration"), l.duration, 0.001, 3.)?;
+            range(file, &format!("{p}.attack"), l.attack, 0., l.duration)?;
+            range(file, &format!("{p}.decay"), l.decay, 0., 30.)?;
+            range(file, &format!("{p}.gain"), l.gain, 0., 1.)?;
         }
+    }
+    Ok(())
+}
+
+fn finite(file: &str, path: &str, n: f64) -> Result<(), ContentError> {
+    if n.is_finite() { Ok(()) } else { Err(err(file, path, "must be finite")) }
+}
+fn range(file: &str, path: &str, n: f64, lo: f64, hi: f64) -> Result<(), ContentError> {
+    if n.is_finite() && (lo..=hi).contains(&n) {
+        Ok(())
+    } else {
+        Err(err(file, path, format!("must be finite and between {lo} and {hi}")))
+    }
+}
+fn probability(file: &str, path: &str, n: f64) -> Result<(), ContentError> {
+    range(file, path, n, 0., 1.)
+}
+fn nonnegative_range(file: &str, path: &str, a: f64, b: f64) -> Result<(), ContentError> {
+    nonnegative(file, path, a)?;
+    nonnegative(file, path, b)?;
+    if a <= b { Ok(()) } else { Err(err(file, path, "needs 0 <= min <= max")) }
+}
+
+fn check_stats(file: &str, v: &super::Stats) -> Result<(), ContentError> {
+    for (name, n) in [
+        ("runAccel", v.run_accel),
+        ("groundFriction", v.ground_friction),
+        ("airJumpDrift", v.air_jump_drift),
+        ("airAccel", v.air_accel),
+    ] {
+        nonnegative(file, &format!("stats.{name}"), n)?;
+    }
+    for (name, n) in [
+        ("weight", v.weight),
+        ("runSpeed", v.run_speed),
+        ("jumpSpeed", v.jump_speed),
+        ("shortHopSpeed", v.short_hop_speed),
+        ("airJumpSpeed", v.air_jump_speed),
+        ("airSpeed", v.air_speed),
+        ("gravity", v.gravity),
+        ("fallSpeed", v.fall_speed),
+        ("fastFallSpeed", v.fast_fall_speed),
+    ] {
+        positive(file, &format!("stats.{name}"), n)?;
+    }
+    Ok(())
+}
+
+fn check_movement(file: &str, v: &super::global::Movement) -> Result<(), ContentError> {
+    for (name, n) in [
+        ("airDrag", v.air_drag),
+        ("airDragHeld", v.air_drag_held),
+        ("fastFallKick", v.fast_fall_kick),
+        ("attackAirAccel", v.attack_air_accel),
+        ("aerialAccel", v.aerial_accel),
+        ("helplessAccel", v.helpless_accel),
+        ("upSpecialAccel", v.up_special_accel),
+        ("attackFriction", v.attack_friction),
+        ("attackSlideFriction", v.attack_slide_friction),
+        ("attackAirDrag", v.attack_air_drag),
+        ("pushRadius", v.push_radius),
+        ("pushStrength", v.push_strength),
+        ("dashAttackSpeed", v.dash_attack_speed),
+        ("dashGrabSpeed", v.dash_grab_speed),
+    ] {
+        nonnegative(file, &format!("movement.{name}"), n)?;
+    }
+    finite(file, "movement.fastFallMinVy", v.fast_fall_min_vy)?;
+    Ok(())
+}
+
+fn check_knockback(file: &str, v: &super::global::Knockback) -> Result<(), ContentError> {
+    for (name, n) in [
+        ("kbPercentScale", v.kb_percent_scale),
+        ("tumbleThreshold", v.tumble_threshold),
+        ("groundBounce", v.ground_bounce),
+        ("chargeKbRatio", v.charge_kb_ratio),
+    ] {
+        nonnegative(file, &format!("knockback.{name}"), n)?;
+    }
+    positive(file, "knockback.chargeDamageDivisor", v.charge_damage_divisor)?;
+    Ok(())
+}
+
+fn check_hitstun(file: &str, v: &super::global::Hitstun) -> Result<(), ContentError> {
+    for (name, n) in [
+        ("perKnockback", v.per_knockback),
+        ("base", v.base),
+        ("airDrag", v.air_drag),
+        ("groundDrag", v.ground_drag),
+        ("driftAccel", v.drift_accel),
+    ] {
+        nonnegative(file, &format!("hitstun.{name}"), n)?;
+    }
+    for (name, n) in [("gravity", v.gravity), ("maxFall", v.max_fall)] {
+        positive(file, &format!("hitstun.{name}"), n)?;
+    }
+    Ok(())
+}
+
+fn check_hitlag(file: &str, v: &super::global::Hitlag) -> Result<(), ContentError> {
+    for (name, n) in [("base", v.base), ("perDamage", v.per_damage), ("perKnockback", v.per_knockback), ("max", v.max)]
+    {
+        nonnegative(file, &format!("hitlag.{name}"), n)?;
+    }
+    Ok(())
+}
+
+fn check_shield(file: &str, v: &super::global::Shield) -> Result<(), ContentError> {
+    for (name, n) in [
+        ("decay", v.decay),
+        ("regen", v.regen),
+        ("damageMult", v.damage_mult),
+        ("stunPerDamage", v.stun_per_damage),
+        ("stunBase", v.stun_base),
+        ("hitlagBase", v.hitlag_base),
+        ("hitlagPerDamage", v.hitlag_per_damage),
+        ("pushPerDamage", v.push_per_damage),
+        ("pushBase", v.push_base),
+        ("attackerPushback", v.attacker_pushback),
+        ("breakLaunch", v.break_launch),
+        ("dizzyBase", v.dizzy_base),
+        ("dizzyMin", v.dizzy_min),
+        ("dizzyPerPercent", v.dizzy_per_percent),
+        ("dizzyMash", v.dizzy_mash),
+        ("dizzyRecoverHP", v.dizzy_recover_hp),
+    ] {
+        nonnegative(file, &format!("shield.{name}"), n)?;
+    }
+    for (name, n) in [("max", v.max), ("breakGravity", v.break_gravity), ("breakMaxFall", v.break_max_fall)] {
+        positive(file, &format!("shield.{name}"), n)?;
+    }
+    Ok(())
+}
+
+fn check_dodge(file: &str, v: &super::global::Dodge) -> Result<(), ContentError> {
+    for (name, n) in [
+        ("rollSpeed", v.roll_speed),
+        ("dirAirDodgeSpeed", v.dir_air_dodge_speed),
+        ("dirAirDodgeDecay", v.dir_air_dodge_decay),
+    ] {
+        nonnegative(file, &format!("dodge.{name}"), n)?;
+    }
+    Ok(())
+}
+
+fn check_landing(file: &str, v: &super::global::Landing) -> Result<(), ContentError> {
+    nonnegative(file, "landing.softLandSpeed", v.soft_land_speed)
+}
+
+fn check_grab(file: &str, v: &super::global::Grab) -> Result<(), ContentError> {
+    for (name, n) in [
+        ("holdBase", v.hold_base),
+        ("holdPerPercent", v.hold_per_percent),
+        ("mashPerPress", v.mash_per_press),
+        ("pummelDamage", v.pummel_damage),
+        ("heightTolerance", v.height_tolerance),
+    ] {
+        nonnegative(file, &format!("grab.{name}"), n)?;
+    }
+    Ok(())
+}
+
+fn check_sim(file: &str, v: &super::global::SimRules) -> Result<(), ContentError> {
+    for (name, n) in [
+        ("jumpsquatFriction", v.jumpsquat_friction),
+        ("landingFriction", v.landing_friction),
+        ("shieldFriction", v.shield_friction),
+        ("dodgeFriction", v.dodge_friction),
+        ("shieldbreakFriction", v.shieldbreak_friction),
+        ("knockdownFriction", v.knockdown_friction),
+        ("pushHeight", v.push_height),
+        ("mainPad", v.main_pad),
+        ("platformPad", v.platform_pad),
+        ("surfaceTolerance", v.surface_tolerance),
+        ("techMinSpeed", v.tech_min_speed),
+        ("hitstunParticleSpeed", v.hitstun_particle_speed),
+        ("knockdownDrag", v.knockdown_drag),
+        ("ledgeDropSpeed", v.ledge_drop_speed),
+        ("ledgeDropOffset", v.ledge_drop_offset),
+        ("ledgePullIn", v.ledge_pull_in),
+        ("ledgeJumpOffset", v.ledge_jump_offset),
+        ("ledgeJumpDrift", v.ledge_jump_drift),
+        ("grabOffset", v.grab_offset),
+        ("releaseVx", v.release_vx),
+        ("releaseVy", v.release_vy),
+        ("escapeAttackerVx", v.escape_attacker_vx),
+        ("escapeVx", v.escape_vx),
+        ("escapeVy", v.escape_vy),
+        ("throwForward", v.throw_forward),
+        ("throwBackHeight", v.throw_back_height),
+        ("throwUpHeight", v.throw_up_height),
+        ("throwDownOffset", v.throw_down_offset),
+        ("platformDropOffset", v.platform_drop_offset),
+        ("maxDamage", v.max_damage),
+        ("projectilePad", v.projectile_pad),
+        ("projectileWallTop", v.projectile_wall_top),
+    ] {
+        nonnegative(file, &format!("sim.{name}"), n)?;
+    }
+    Ok(())
+}
+
+fn check_hit_types(file: &str, v: &super::global::HitTypes) -> Result<(), ContentError> {
+    for (path, n) in [
+        ("hitTypes.trip.slide", v.trip.slide),
+        ("hitTypes.autolink.pull", v.autolink.pull),
+        ("hitTypes.autolink.momentum", v.autolink.momentum),
+        ("hitTypes.windbox.push", v.windbox.push),
+        ("hitTypes.electric.victimHitlagMult", v.electric.victim_hitlag_mult),
+    ] {
+        nonnegative(file, path, n)?;
+    }
+    for (name, n) in
+        [("groundLow", v.sakurai.ground_low), ("groundHigh", v.sakurai.ground_high), ("air", v.sakurai.air)]
+    {
+        finite(file, &format!("hitTypes.sakurai.{name}"), n)?;
+    }
+    Ok(())
+}
+
+fn check_ai(file: &str, v: &super::global::AiRules) -> Result<(), ContentError> {
+    nonnegative(file, "ai.initialCool", v.initial_cool)?;
+    for (name, values) in [("react", v.react), ("charge", v.charge)] {
+        for (i, n) in values.into_iter().enumerate() {
+            nonnegative(file, &format!("ai.{name}[{i}]"), n)?;
+        }
+    }
+    for (name, values) in [
+        ("aggression", v.aggression),
+        ("mash", v.mash),
+        ("tech", v.tech),
+        ("shieldResponse", v.shield_response),
+        ("defend", v.defend),
+        ("projectileDefend", v.projectile_defend),
+    ] {
+        for (i, n) in values.into_iter().enumerate() {
+            probability(file, &format!("ai.{name}[{i}]"), n)?;
+        }
+    }
+    check_ai_thresholds(file, &v.thresholds)
+}
+
+fn check_ai_thresholds(file: &str, v: &super::global::AiThresholds) -> Result<(), ContentError> {
+    for (name, n) in [
+        ("recoveryHeight", v.recovery_height),
+        ("recoveryEdge", v.recovery_edge),
+        ("knockdownWait", v.knockdown_wait),
+        ("knockdownRandom", v.knockdown_random),
+        ("ledgeWaitMin", v.ledge_wait_min),
+        ("ledgeWaitMax", v.ledge_wait_max),
+        ("holdMin", v.hold_min),
+        ("holdMax", v.hold_max),
+        ("pummelMax", v.pummel_max),
+        ("throwKillPercent", v.throw_kill_percent),
+        ("shieldClose", v.shield_close),
+        ("jumpHold", v.jump_hold),
+        ("shieldMin", v.shield_min),
+        ("underPad", v.under_pad),
+        ("underBottom", v.under_bottom),
+        ("offstagePad", v.offstage_pad),
+        ("recoverJumpHeight", v.recover_jump_height),
+        ("recoverSpecialHeight", v.recover_special_height),
+        ("recoverSpecialDistance", v.recover_special_distance),
+        ("recoverSpecialDepth", v.recover_special_depth),
+        ("centerDeadzone", v.center_deadzone),
+        ("targetPad", v.target_pad),
+        ("targetDeadzone", v.target_deadzone),
+        ("defendDistance", v.defend_distance),
+        ("defendHeight", v.defend_height),
+        ("shieldHoldMin", v.shield_hold_min),
+        ("shieldHoldMax", v.shield_hold_max),
+        ("projectileDistance", v.projectile_distance),
+        ("projectileHeight", v.projectile_height),
+        ("projectileShieldFrames", v.projectile_shield_frames),
+        ("jumpTargetHeight", v.jump_target_height),
+        ("jumpTargetDistance", v.jump_target_distance),
+        ("dropHeight", v.drop_height),
+        ("dropDistance", v.drop_distance),
+        ("attackHeight", v.attack_height),
+        ("punishDizzyCharge", v.punish_dizzy_charge),
+        ("punishCharge", v.punish_charge),
+        ("upAttackHeight", v.up_attack_height),
+        ("upAttackDistance", v.up_attack_distance),
+        ("downAttackHeight", v.down_attack_height),
+        ("downAttackDistance", v.down_attack_distance),
+        ("projectileTargetHeight", v.projectile_target_height),
+    ] {
+        nonnegative(file, &format!("ai.thresholds.{name}"), n)?;
+    }
+    for (name, n) in [("recoverJumpVy", v.recover_jump_vy), ("recoverSpecialVy", v.recover_special_vy)] {
+        finite(file, &format!("ai.thresholds.{name}"), n)?;
+    }
+    for (name, n) in [
+        ("centerChance", v.center_chance),
+        ("knockdownAttack", v.knockdown_attack),
+        ("knockdownCenter", v.knockdown_center),
+        ("ledgeJump", v.ledge_jump),
+        ("ledgeAttack", v.ledge_attack),
+        ("ledgeShield", v.ledge_shield),
+        ("pummelChance", v.pummel_chance),
+        ("throwDown", v.throw_down),
+        ("throwUp", v.throw_up),
+        ("throwForward", v.throw_forward),
+        ("shieldGrab", v.shield_grab),
+        ("shieldSpecial", v.shield_special),
+        ("projectileShieldChance", v.projectile_shield_chance),
+        ("jumpChance", v.jump_chance),
+        ("dropChance", v.drop_chance),
+        ("smashChance", v.smash_chance),
+        ("smashForward", v.smash_forward),
+        ("smashDown", v.smash_down),
+        ("grabChance", v.grab_chance),
+        ("tiltChance", v.tilt_chance),
+        ("downTiltChance", v.down_tilt_chance),
+        ("jabChance", v.jab_chance),
+    ] {
+        probability(file, &format!("ai.thresholds.{name}"), n)?;
+    }
+    for (name, a, b) in [
+        ("ledgeWaitMax", v.ledge_wait_min, v.ledge_wait_max),
+        ("holdMax", v.hold_min, v.hold_max),
+        ("shieldHoldMax", v.shield_hold_min, v.shield_hold_max),
+    ] {
+        nonnegative_range(file, &format!("ai.thresholds.{name}"), a, b)?;
+    }
+    if v.knockdown_attack > v.knockdown_center {
+        return Err(err(file, "ai.thresholds.knockdownCenter", "cumulative cutoff must not precede knockdownAttack"));
+    }
+    if v.ledge_jump > v.ledge_attack {
+        return Err(err(file, "ai.thresholds.ledgeAttack", "cumulative cutoff must not precede ledgeJump"));
+    }
+    if v.ledge_attack > v.ledge_shield {
+        return Err(err(file, "ai.thresholds.ledgeShield", "cumulative cutoff must not precede ledgeAttack"));
+    }
+    if v.throw_down > v.throw_up {
+        return Err(err(file, "ai.thresholds.throwUp", "cumulative cutoff must not precede throwDown"));
+    }
+    if v.throw_up > v.throw_forward {
+        return Err(err(file, "ai.thresholds.throwForward", "cumulative cutoff must not precede throwUp"));
+    }
+    if v.shield_grab > v.shield_special {
+        return Err(err(file, "ai.thresholds.shieldSpecial", "cumulative cutoff must not precede shieldGrab"));
+    }
+    if v.smash_forward > v.smash_down {
+        return Err(err(file, "ai.thresholds.smashDown", "cumulative cutoff must not precede smashForward"));
+    }
+    if v.smash_chance > v.grab_chance {
+        return Err(err(file, "ai.thresholds.grabChance", "cumulative cutoff must not precede smashChance"));
+    }
+    if v.grab_chance > v.tilt_chance {
+        return Err(err(file, "ai.thresholds.tiltChance", "cumulative cutoff must not precede grabChance"));
+    }
+    if v.tilt_chance > v.down_tilt_chance {
+        return Err(err(file, "ai.thresholds.downTiltChance", "cumulative cutoff must not precede tiltChance"));
+    }
+    if v.down_tilt_chance > v.jab_chance {
+        return Err(err(file, "ai.thresholds.jabChance", "cumulative cutoff must not precede downTiltChance"));
     }
     Ok(())
 }

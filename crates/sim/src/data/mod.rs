@@ -1,5 +1,5 @@
-//! Content: global tuning, stages and fighters, loaded from JSON. The sim only parses strings; the game crate
-//! does the file I/O. See `docs/FORMAT.md` for the format and the move phase semantics.
+//! Content: global tuning, stages and fighters, loaded from JSON strings. The optional `fs` feature adds
+//! `sources` for reading content roots outside the sim core. See `docs/FORMAT.md` for the format.
 
 pub mod audio;
 pub mod camera;
@@ -19,11 +19,13 @@ pub use common::{Color, Num, Pt, Rect};
 pub use fighter::{Fighter, Projectile, Stats};
 pub use global::Global;
 pub use hitbox::{HitType, Hitbox, LaunchDir};
-pub use load::{ContentError, Source, load};
+#[cfg(feature = "fs")]
+pub use load::sources;
+pub use load::{ContentError, ContentKind, Source, load, migrate_kind, validate};
 pub use moves::{Event, Move, Moves, Phase, Transition, Trigger};
 pub use stage::Stage;
 
-/// Newest `schemaVersion` this build reads. Older files are migrated on load.
+/// Current stage format version; fighter/global version histories are independent.
 pub const SCHEMA_VERSION: u32 = 2;
 
 /// Everything a match reads. `hash` identifies the exact content, so online peers can check they match.

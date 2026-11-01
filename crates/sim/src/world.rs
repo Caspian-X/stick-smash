@@ -34,6 +34,12 @@ impl MatchConfig {
             + self.players.iter().filter_map(|p| p.team).collect::<std::collections::BTreeSet<_>>().len()
     }
 }
+impl MatchConfig {
+    /// One-stock training world with the supplied stage, lineup and deterministic seed.
+    pub fn sandbox(stage: impl Into<String>, players: Vec<PlayerConfig>, seed: u32) -> Self {
+        Self { stage: stage.into(), players, seed, training: true, stocks: 1, friendly_fire: false }
+    }
+}
 impl Default for MatchConfig {
     fn default() -> Self {
         Self {

@@ -19,18 +19,25 @@ Living record of decisions made before/while porting from the TS version (`../st
 - **Strict JSON** (`.json`), one schema per content type, generated from the Rust types with `schemars` and saved to `assets/schema/`. Each file points to its schema via `"$schema"`, so VS Code etc. gives autocomplete, validation and hover docs (from the `///` comments on the Rust fields).
   - Why not RON/YAML/TOML/JSON5: RON is Rust-only, YAML has parsing footguns, and TOML handles deeply nested arrays of hitboxes badly. Comments wouldn't survive an editor save anyway, so docs live in the schema instead.
   - The writer uses a compact pretty-printer: small objects and number arrays (one hitbox, one keyframe) stay on one line, so files are readable and diffs are clean.
-- Every file has `"schemaVersion"`. The loader migrates old versions forward.
+- Every file has `"schemaVersion"`, versioned per content kind. The loader dispatches migrations by kind; see [FORMAT.md](FORMAT.md).
 - **Packages are folders:** `fighters/<id>/fighter.json`, `stages/<id>/stage.json`, so images and sounds can live next to them later. `"extends": "<id>"` inherits from another package. The merge copies objects key by key and replaces arrays whole. `fighters/base` holds shared stats, grabs, throws, state poses and hurtboxes.
 - Load order: built-in `assets/`, then a user content dir (platform data dir). Errors name the file and JSON path and skip that package instead of crashing.
 - A content hash of loaded data is kept so online play can later check that both sides use the same data.
 
 ### Moves: phase timelines (replaces `kind`)
-Every move is a list of **phases**. A phase has:
-- a frame timeline: hitboxes (same fields as the TS version, including per-frame `frames`), and frame events (`setVel`, `addVel`, `spawn` a projectile, `sfx`, `fx`, `invuln`, `armor`, `fallCap`…),
-- an end: `after` N frames, or `loop` (charge, hover),
-- **transitions**: `onLand`, `onHitReceived` (counter), `onRelease` / `whileHeld` (charge), `onTimeout`, `onHit`, each going to another phase or ending the move (`end`, `endHelpless`).
+Every move is a list of **phases**, starting at the first. A phase has:
+- a frame timeline: hitboxes (including per-frame `frames`), frame events (`setVel`, `addVel`, `spawn`, `sfx`,
+  `fx`, `invuln`), and phase properties such as `armorThreshold` and `fallCap`,
+- an optional duration, `frames`; omitting it makes a looping phase that needs a transition to leave,
+- optional `charge`, which freezes the phase at its charge frame while the button is held, up to its maximum,
+- ordered **transitions** with `on` triggers (`land`, `counter`, `release`, `timeout`, `hit`, `shieldPress`,
+  `grounded`, `airborne`, `falling`). A transition's `to` names a phase or an ending: `end`, `helpless`, or
+  `landing` with `lag`.
 
-The 5 TS kinds (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) are re-expressed in this format. Projectiles are data too: physics (gravity, bounce, friction, maxBounces), lifetime, hitbox, and flags like `batable`/`reflectable`. No scripting language for now. It can be added later as an extra event type if the data model hits a wall.
+The five TS kinds (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`) are expressed through these
+phases. Projectiles are data too: spawn velocity, gravity, optional `bounce`, lifetime, hitbox, optional `bat`,
+and `reflectVy` for counter reflections. No scripting language is needed; an extra event type can extend the
+model later. See [FORMAT.md](FORMAT.md#moves) for exact frame timing, events and transition semantics.
 
 ### Visuals
 - **Skeleton:** the current stick figure (head, shoulders, hips, elbows/hands, knees/feet, plus body rotation/pivot). Proportions are per fighter.

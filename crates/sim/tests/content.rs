@@ -4,6 +4,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use sim::MatchConfig;
 use sim::data::json::{merge, to_compact_string};
 use sim::data::schema::schemas;
 use sim::data::{Source, load};
@@ -16,32 +17,10 @@ fn bless() -> bool {
     std::env::var_os("BLESS").is_some()
 }
 
-fn json_files(dir: &Path, out: &mut Vec<PathBuf>) {
-    let Ok(rd) = fs::read_dir(dir) else { return };
-    let mut entries: Vec<_> = rd.flatten().map(|e| e.path()).collect();
-    entries.sort();
-    for p in entries {
-        if p.is_dir() {
-            if p.file_name().is_some_and(|n| n != "schema") {
-                json_files(&p, out);
-            }
-        } else if p.extension().is_some_and(|e| e == "json") {
-            out.push(p);
-        }
-    }
-}
-
 fn sources() -> Vec<Source> {
-    let root = assets();
-    let mut files = Vec::new();
-    json_files(&root, &mut files);
-    files
-        .into_iter()
-        .map(|p| Source {
-            path: p.strip_prefix(&root).unwrap().to_string_lossy().replace('\\', "/"),
-            text: fs::read_to_string(&p).unwrap(),
-        })
-        .collect()
+    let (sources, errors) = sim::data::sources(assets());
+    assert!(errors.is_empty(), "{errors:?}");
+    sources
 }
 
 #[test]
@@ -94,10 +73,9 @@ fn schemas_up_to_date() {
 #[test]
 fn assets_canonically_formatted() {
     let root = assets();
-    let mut files = Vec::new();
-    json_files(&root, &mut files);
-    for p in files {
-        let text = fs::read_to_string(&p).unwrap();
+    for source in sources() {
+        let p = root.join(source.path);
+        let text = source.text;
         let v: serde_json::Value = serde_json::from_str(&text).unwrap();
         let canon = to_compact_string(&v);
         if bless() {
@@ -435,7 +413,7 @@ fn version_one_offstage_spawn_keeps_original_ground_height() {
     let (data, errors) = load(src).unwrap();
     assert!(errors.is_empty(), "{errors:?}");
     let w = sim::World::new(
-        sim::MatchConfig { training: true, players: vec![sim::PlayerConfig::human("brawler")], ..Default::default() },
+        sim::MatchConfig::sandbox("arena", vec![sim::PlayerConfig::human("brawler")], MatchConfig::default().seed),
         &data,
     )
     .unwrap();
@@ -454,7 +432,7 @@ fn moving_platform_spawns_use_phase_and_validate_carried_clearance() {
             .unwrap();
     assert!(errors.is_empty(), "{errors:?}");
     let mut w = sim::World::new(
-        sim::MatchConfig { training: true, players: vec![sim::PlayerConfig::human("brawler")], ..Default::default() },
+        sim::MatchConfig::sandbox("arena", vec![sim::PlayerConfig::human("brawler")], MatchConfig::default().seed),
         &data,
     )
     .unwrap();
@@ -496,4 +474,122 @@ fn camera_globals_validate_zoom_scaling_and_limits() {
     }
     g.render.camera.min_height = g.render.camera.max_height + 1.;
     assert_eq!(sim::data::load::check_global("global", &g).unwrap_err().path, "render.camera");
+}
+
+#[test]
+fn resolved_validation_covers_packages_and_duplicate_ids() {
+    let mut data = load(sources()).unwrap().0;
+    assert!(sim::data::validate(&data).is_empty());
+    data.fighters[0].moves.jab.phases.clear();
+    data.stages[0].blocks.clear();
+    data.fighters.push(data.fighters[1].clone());
+    data.stages.push(data.stages[1].clone());
+    let errors = sim::data::validate(&data);
+    for (file, path) in [
+        ("fighters/archer/fighter.json", "moves.jab.phases"),
+        ("stages/arena/stage.json", "blocks"),
+        ("fighters/brawler/fighter.json", "id"),
+        ("stages/citadel/stage.json", "id"),
+    ] {
+        assert!(errors.iter().any(|e| e.file == file && e.path == path), "{errors:?}");
+    }
+    data.fighters.clear();
+    data.stages.clear();
+    let errors = sim::data::validate(&data);
+    assert!(errors.iter().any(|e| e.path == "fighters"));
+    assert!(errors.iter().any(|e| e.path == "stages"));
+}
+
+#[test]
+fn ai_scalar_probabilities_ranges_and_cutoffs_are_checked() {
+    use serde_json::json;
+    for (patch, path) in [
+        (json!({"initialCool": -1}), "ai.initialCool"),
+        (json!({"thresholds": {"jumpChance": 2}}), "ai.thresholds.jumpChance"),
+        (json!({"thresholds": {"centerChance": -0.1}}), "ai.thresholds.centerChance"),
+        (json!({"thresholds": {"projectileShieldChance": 2}}), "ai.thresholds.projectileShieldChance"),
+        (json!({"thresholds": {"defendHeight": -1}}), "ai.thresholds.defendHeight"),
+        (json!({"thresholds": {"holdMax": 5}}), "ai.thresholds.holdMax"),
+        (json!({"thresholds": {"knockdownCenter": 0.2}}), "ai.thresholds.knockdownCenter"),
+        (json!({"thresholds": {"ledgeAttack": 0.2}}), "ai.thresholds.ledgeAttack"),
+        (json!({"thresholds": {"ledgeShield": 0.4}}), "ai.thresholds.ledgeShield"),
+        (json!({"thresholds": {"throwUp": 0.2}}), "ai.thresholds.throwUp"),
+        (json!({"thresholds": {"throwForward": 0.5}}), "ai.thresholds.throwForward"),
+        (json!({"thresholds": {"shieldSpecial": 0.4}}), "ai.thresholds.shieldSpecial"),
+        (json!({"thresholds": {"smashDown": 0.4}}), "ai.thresholds.smashDown"),
+        (json!({"thresholds": {"grabChance": 0.1}}), "ai.thresholds.grabChance"),
+        (json!({"thresholds": {"tiltChance": 0.3}}), "ai.thresholds.tiltChance"),
+        (json!({"thresholds": {"downTiltChance": 0.5}}), "ai.thresholds.downTiltChance"),
+        (json!({"thresholds": {"jabChance": 0.7}}), "ai.thresholds.jabChance"),
+    ] {
+        let errors = load(patched("global.json", json!({"ai": patch}))).unwrap_err();
+        assert_eq!(errors[0].path, path, "{errors:?}");
+    }
+    let errors = load(patched("global.json", json!({"hitTypes": {"autolink": {"pull": -1}}}))).unwrap_err();
+    assert_eq!(errors[0].path, "hitTypes.autolink.pull");
+}
+
+#[test]
+fn resolved_nonfinite_values_report_json_paths_without_serializing() {
+    let data = load(sources()).unwrap().0;
+    for n in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+        let mut d = data.clone();
+        d.global.ai.thresholds.jump_chance = n;
+        assert_eq!(sim::data::validate(&d)[0].path, "ai.thresholds.jumpChance");
+        let mut d = data.clone();
+        d.global.ai.thresholds.hold_max = n;
+        assert_eq!(sim::data::validate(&d)[0].path, "ai.thresholds.holdMax");
+        let mut d = data.clone();
+        d.global.movement.fast_fall_min_vy = n;
+        assert_eq!(sim::data::validate(&d)[0].path, "movement.fastFallMinVy");
+        let mut d = data.clone();
+        d.fighters[0].stats.weight = n;
+        assert_eq!(sim::data::validate(&d)[0].path, "stats.weight");
+        let mut d = data.clone();
+        d.stages[0].blocks[0].left = n;
+        assert_eq!(sim::data::validate(&d)[0].path, "blocks[0].left");
+    }
+}
+
+#[test]
+fn migration_is_scoped_to_content_kind_and_accepts_legacy_aliases() {
+    use serde_json::json;
+    use sim::data::{ContentKind, migrate_kind};
+    for kind in [ContentKind::Fighter, ContentKind::Global] {
+        for version in [1, 2] {
+            let mut v = json!({"schemaVersion": version, "ground": {"left": 0, "right": 10, "top": 5}});
+            let ground = v["ground"].clone();
+            migrate_kind(kind, &mut v).unwrap();
+            assert_eq!(v["schemaVersion"], 1);
+            assert_eq!(v["ground"], ground);
+            assert!(v.get("blocks").is_none());
+        }
+    }
+    for kind in [ContentKind::Fighter, ContentKind::Global, ContentKind::Stage] {
+        for version in [0, 3] {
+            assert!(migrate_kind(kind, &mut json!({"schemaVersion": version})).is_err());
+        }
+    }
+    let data = load(sources()).unwrap().0;
+    let aliased = load(patched("fighters/archer/fighter.json", json!({"schemaVersion": 2}))).unwrap().0;
+    assert_eq!(data.fighters, aliased.fighters);
+    assert_eq!(data.hash, aliased.hash);
+}
+
+#[test]
+fn filesystem_sources_are_sorted_relative_and_skip_schemas() {
+    let root = std::env::temp_dir().join(format!("stick-smash-sources-{}", std::process::id()));
+    fs::create_dir_all(root.join("nested/schema")).unwrap();
+    fs::create_dir_all(root.join("schema")).unwrap();
+    for name in ["z.json", "a.json", "nested/c.json", "schema/skip.json", "nested/schema/skip.json", "ignore.txt"] {
+        fs::write(root.join(name), "{}").unwrap();
+    }
+    let (files, errors) = sim::data::sources(&root);
+    assert!(errors.is_empty(), "{errors:?}");
+    assert_eq!(files.iter().map(|s| s.path.as_str()).collect::<Vec<_>>(), ["a.json", "nested/c.json", "z.json"]);
+    assert!(files.iter().all(|s| s.text == "{}"));
+    fs::remove_dir_all(&root).unwrap();
+    let (files, errors) = sim::data::sources(&root);
+    assert!(files.is_empty());
+    assert_eq!(errors.len(), 1);
 }
