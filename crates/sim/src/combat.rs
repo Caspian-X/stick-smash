@@ -74,10 +74,11 @@ pub fn attack_label(d: &GameData, f: &Fighter) -> String {
         _ => f.state.name().into(),
     }
 }
-fn trace(w: &mut World, a: usize, v: usize, label: String, on_shield: bool, dmg: f64) {
+fn trace(w: &mut World, a: usize, v: usize, label: String, on_shield: bool, dmg: f64, armored: bool) {
     w.hits.push(crate::HitRecord { attacker: Some(a), victim: v, damage: dmg, shielded: on_shield });
     let p = w.trace.as_ref();
-    let chained = p.is_some_and(|p| !on_shield && !p.on_shield && p.defender == v && p.d_free < 0);
+    let chained =
+        p.is_some_and(|p| !armored && !p.armored && !on_shield && !p.on_shield && p.defender == v && p.d_free < 0);
     let (combo, combo_dmg) = if chained {
         let p = p.unwrap();
         (p.combo + 1, p.combo_dmg + dmg)
@@ -89,6 +90,7 @@ fn trace(w: &mut World, a: usize, v: usize, label: String, on_shield: bool, dmg:
         defender: v,
         label,
         on_shield,
+        armored,
         hit_frame: w.frame,
         a_free: -1,
         d_free: -1,
@@ -153,11 +155,15 @@ pub struct HitSource {
     pub projectile: bool,
     pub label: Option<String>,
 }
+fn armors_hit(d: &GameData, f: &Fighter, damage: f64) -> bool {
+    f.state == State::Attack && f.mov.is_some() && moves::phase(d, f).armor_threshold.is_some_and(|n| damage <= n)
+}
 pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitSource) {
     let HitSource { attacker, direction: sgn, point, projectile: proj, label } = source;
     let g = &d.global;
     let ht = &g.hit_types;
     let grounded = w.fighters[v].ground;
+    let armored = armors_hit(d, &w.fighters[v], b.damage);
     release_grab(w, d, v);
     let label = label.unwrap_or_else(|| attack_label(d, &w.fighters[attacker]));
     let (avx, avy) = (w.fighters[attacker].vx, w.fighters[attacker].vy);
@@ -173,17 +179,24 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     };
     vic.flash = vic.lag.saturating_add(2);
     vic.hud_shake = 12;
-    vic.ff = false;
-    vic.up_b = false;
-    vic.ad_used = false;
+    if !armored {
+        vic.ff = false;
+        vic.up_b = false;
+        vic.ad_used = false;
+    }
     if !proj {
         w.fighters[attacker].lag = hl;
     }
-    trace(w, attacker, v, label, false, b.damage);
+    trace(w, attacker, v, label, false, b.damage, armored);
     let vic = &mut w.fighters[v];
     let (px, py) = point;
     let hx = (px + vic.x) / 2.;
     let hy = (py + vic.y - 40.) / 2.;
+    if armored {
+        w.ring(hx, hy, 12., 2., 10);
+        w.fx.push(Fx::Sfx { name: "hit".into(), arg: Some(kb), x: Some(hx) });
+        return;
+    }
     if b.kind == HitType::Trip && grounded {
         vic.set_state(State::Knockdown);
         vic.vx = sgn * ht.trip.slide;
@@ -319,7 +332,7 @@ pub fn shield_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: Hit
             a.vx = -a.face * s.attacker_pushback;
         }
     }
-    trace(w, a, v, label, true, b.damage);
+    trace(w, a, v, label, true, b.damage, false);
     let f = &w.fighters[v];
     w.ring(f.x, f.y - 38., 20., 2.5, 10);
     w.fx.push(Fx::Sfx { name: "shieldHit".into(), arg: Some(b.damage), x: Some(w.fighters[v].x) });
@@ -459,7 +472,10 @@ pub fn hit_pass(w: &mut World, d: &GameData) {
                 }
                 break;
             }
-            if !hit && let Some(b) = wind {
+            if !hit
+                && let Some(b) = wind
+                && !armors_hit(d, &w.fighters[v], 0.)
+            {
                 let sgn = direction(&w.fighters[a], w.fighters[v].x, b.hit.dir);
                 let k = &d.global.hit_types.windbox;
                 let angle = b.hit.angle * std::f64::consts::PI / 180.;

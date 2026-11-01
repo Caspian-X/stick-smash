@@ -858,6 +858,7 @@ fn anim_keys(ui: &mut egui::Ui, p: &mut Phase, poses: &[String], t: Option<u32>)
 
 fn phase_more(ui: &mut egui::Ui, p: &mut Phase) {
     grid(ui, "phase-more", |ui| {
+        opt_num(ui, "armor threshold", &d("Phase", "armorThreshold"), &mut p.armor_threshold, 6., "none");
         check(ui, "hover", "Airborne: vertical speed held at 0", &mut p.hover);
         opt_num(ui, "fallCap", "Max fall speed in this phase", &mut p.fall_cap, 4., "fighter's");
         num(ui, "air accel ×", "0 = no drift control", &mut p.air_accel_mult, 0.01);

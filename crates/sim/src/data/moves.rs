@@ -120,6 +120,10 @@ pub struct Phase {
     /// Counter stance: hits received during the window are countered.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub counter: Option<Counter>,
+    /// Hits dealing at most this damage preserve the phase and velocity (damage and hitlag still apply).
+    /// Grabs bypass armor. Omit for normal hit reactions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub armor_threshold: Option<f64>,
     /// Airborne: vertical speed is held at 0 (hovering startup).
     #[serde(default, skip_serializing_if = "is_default")]
     pub hover: bool,

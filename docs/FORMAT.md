@@ -97,6 +97,14 @@ max(`minDamage`, incoming × `damageMult`). A projectile is reflected instead (s
 `counter` transition fires. Hitboxes with `counterDamage` use the stored damage and are inactive when it's 0. The
 `countered` condition is true when it's above 0.
 
+### Armor
+
+A phase may set `armorThreshold` to a nonnegative damage threshold. Incoming hits at or below it
+still deal damage, credit the attacker and apply hitlag/flash, but preserve the move, velocity, grounded
+state and recovery resources. Stronger hits react normally. Grabs bypass armor; counters take priority.
+Armor also blocks windbox pushes. Armored hits emit a small ring and never chain into or out of training combos.
+Use a separate startup phase to limit armor to wind-up (charge holds retain that phase).
+
 ## Projectiles
 
 Defined per fighter under `projectiles.<id>` and spawned by a `spawn` event. Each tick a projectile moves by its
