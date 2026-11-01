@@ -343,3 +343,213 @@ fn new_fighter_cpu_matchups() {
         }
     }
 }
+
+#[derive(Default, serde::Serialize)]
+struct MoveStats {
+    starts: usize,
+    hits: usize,
+    tips: usize,
+    blocked: usize,
+    whiffs: usize,
+    punished_whiffs: usize,
+    punish_starts: usize,
+    punish_hits: usize,
+    damage: f64,
+    kos: usize,
+    start_distance: f64,
+}
+
+#[derive(Default, serde::Serialize)]
+struct FighterStats {
+    wins: usize,
+    matches: usize,
+    unfinished: usize,
+    dealt: f64,
+    taken: f64,
+    deaths: usize,
+    self_kos: usize,
+    recovery_deaths: usize,
+    moves: std::collections::BTreeMap<String, MoveStats>,
+}
+
+#[derive(Default)]
+struct Attempt {
+    slot: String,
+    hit: bool,
+    punished: bool,
+    punish: bool,
+}
+
+fn diagnose_match(d: &GameData, stage: &str, ids: [&str; 2], seed: u32, stats: &mut FighterStats, own: usize) {
+    let mut w = World::new(
+        MatchConfig {
+            stage: stage.into(),
+            seed,
+            stocks: 2,
+            players: ids.iter().map(|id| PlayerConfig { cpu: Some(2), ..PlayerConfig::human(id) }).collect(),
+            ..Default::default()
+        },
+        d,
+    )
+    .unwrap();
+    let enemy = 1 - own;
+    let mut attempt: Option<Attempt> = None;
+    let mut last_hit = [None; 2];
+    let mut last_move = [String::new(), String::new()];
+    let mut recovery = None;
+    for tick in 0..30_000 {
+        let before = w.fighters.clone();
+        step_world(&mut w, d, &[]);
+        let f = &w.fighters[own];
+        let prev = &before[own];
+        let started = f.mov.as_ref().is_some_and(|m| {
+            f.state == State::Attack
+                && (prev.state != State::Attack || prev.mov.as_ref().is_none_or(|p| m.elapsed < p.elapsed))
+        });
+        let ended = attempt
+            .as_ref()
+            .is_some_and(|a| f.state != State::Attack || f.mov.as_ref().is_none_or(|m| m.slot != a.slot) || started);
+        if ended && let Some(a) = attempt.take() {
+            let m = stats.moves.entry(a.slot).or_default();
+            let contact = a.hit || f.state == State::Hold && f.sd.victim == Some(enemy);
+            m.whiffs += usize::from(!contact);
+            m.punished_whiffs +=
+                usize::from(!contact && (a.punished || w.hits.iter().any(|h| h.victim == own && !h.shielded)));
+        }
+        if started {
+            let slot = f.mov.as_ref().unwrap().slot.clone();
+            let o = &before[enemy];
+            let punish = o.state == State::Attack
+                && o.mov.as_ref().is_some_and(|m| {
+                    let p = sim::moves::phase(d, o);
+                    !p.hitboxes.is_empty() && p.hitboxes.iter().all(|h| h.end.is_some_and(|end| m.t > end))
+                });
+            let m = stats.moves.entry(slot.clone()).or_default();
+            m.starts += 1;
+            m.start_distance += (f.x - w.fighters[enemy].x).abs();
+            m.punish_starts += usize::from(punish);
+            attempt = Some(Attempt { slot, punish, ..Default::default() });
+        }
+        let offstage = !d.stages[w.stage]
+            .blocks
+            .iter()
+            .any(|b| f.x >= b.left && f.x <= b.right && f.y <= b.top + d.global.ai.thresholds.offstage_pad);
+        if f.ground || f.state == State::Ledge {
+            recovery = None;
+        } else if offstage
+            && (f.state == State::Helpless
+                || f.state == State::Attack && f.mov.as_ref().is_some_and(|m| m.slot == "uspec"))
+        {
+            recovery = Some(tick);
+        }
+        for h in &w.hits {
+            if h.shielded {
+                if h.attacker == Some(own)
+                    && let Some(a) = &mut attempt
+                {
+                    a.hit = true;
+                    stats.moves.entry(a.slot.clone()).or_default().blocked += 1;
+                }
+                continue;
+            }
+            last_hit[h.victim] = Some(tick);
+            let Some(a) = h.attacker else { continue };
+            let label = w
+                .trace
+                .as_ref()
+                .filter(|t| t.hit_frame == w.frame && t.attacker == a && t.defender == h.victim)
+                .map(|t| t.label.as_str());
+            let fighter = &d.fighters[w.fighters[a].data];
+            let slot = label
+                .and_then(|name| fighter.moves.iter().find(|(_, m)| m.name == name).map(|(s, _)| s.to_string()))
+                .or_else(|| before[a].mov.as_ref().map(|m| m.slot.clone()))
+                .unwrap_or_else(|| {
+                    if before[a].state == State::Hold {
+                        "Pummel".into()
+                    } else {
+                        sim::combat::attack_label(d, &before[a])
+                    }
+                });
+            last_move[h.victim] = slot.clone();
+            if a == own {
+                stats.dealt += h.damage;
+                let m = stats.moves.entry(slot.clone()).or_default();
+                m.hits += 1;
+                m.damage += h.damage;
+                // Tip damage is distinct from shaft/handle damage; include smash charge scaling.
+                if let Some((_, def)) = fighter.moves.iter().find(|(s, _)| *s == slot) {
+                    let charge = w.fighters[a].mov.as_ref().or(before[a].mov.as_ref()).map_or(0, |m| m.charge);
+                    let mult = 1. + f64::from(charge) / d.global.knockback.charge_damage_divisor;
+                    m.tips += usize::from(
+                        slot != "uspec"
+                            && slot != "dspec"
+                            && def
+                                .phases
+                                .iter()
+                                .any(|p| p.hitboxes.len() > 1 && (p.hitboxes[0].damage * mult - h.damage).abs() < 1e-6),
+                    );
+                }
+                if let Some(a) = &mut attempt {
+                    a.hit = true;
+                    m.punish_hits += usize::from(a.punish);
+                }
+            }
+            if h.victim == own {
+                stats.taken += h.damage;
+                if let Some(a) = &mut attempt {
+                    a.punished = true;
+                }
+            }
+        }
+        for (i, old) in before.iter().enumerate() {
+            if w.fighters[i].stocks >= old.stocks {
+                continue;
+            }
+            if i == own {
+                stats.deaths += 1;
+                stats.self_kos += usize::from(last_hit[i].is_none_or(|t| tick - t > 240));
+                stats.recovery_deaths += usize::from(recovery.is_some_and(|t| tick - t < 240));
+                recovery = None;
+            } else if last_hit[i].is_some_and(|t| tick - t <= 240) {
+                stats.moves.entry(last_move[i].clone()).or_default().kos += 1;
+            }
+        }
+        w.hits.clear();
+        w.fx.clear();
+        if w.over {
+            break;
+        }
+    }
+    if !w.over {
+        println!(
+            "TIMEOUT {stage} {ids:?} seed {seed}: {:?}",
+            w.fighters.iter().map(|f| (f.x, f.y, f.dmg)).collect::<Vec<_>>()
+        );
+        stats.unfinished += 1;
+    }
+    stats.matches += 1;
+    stats.wins += usize::from(w.fighters[own].state == State::Win);
+}
+
+/// Opt-in detailed balance log; `just balance 16` repeats the same seat-swapped seed set per matchup.
+#[test]
+#[ignore]
+fn fighter_balance_diagnostics() {
+    let d = common::data();
+    let seeds: u32 = std::env::var("BALANCE_SEEDS").ok().map_or(4, |v| v.parse().unwrap());
+    assert!(seeds > 0);
+    let only = std::env::var("BALANCE_FIGHTER").unwrap_or_default();
+    for id in ["lancer", "golem", "dancer"].into_iter().filter(|id| only.is_empty() || only == *id) {
+        let mut stats = FighterStats::default();
+        for stage in &d.stages {
+            for opponent in ["brawler", "king", "swordfighter"] {
+                for seed in 1..=seeds {
+                    let own = usize::from(seed % 2 == 0);
+                    let ids = if own == 0 { [id, opponent] } else { [opponent, id] };
+                    diagnose_match(&d, &stage.id, ids, seed, &mut stats, own);
+                }
+            }
+        }
+        println!("BALANCE {id} {}", serde_json::to_string(&stats).unwrap());
+    }
+}

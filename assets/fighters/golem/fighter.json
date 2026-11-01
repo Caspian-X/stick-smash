@@ -114,7 +114,7 @@
         },
         {
           "name": "strike",
-          "frames": 32,
+          "frames": 37,
           "hitboxes": [
             { "start": 0, "end": 4, "x": 58, "y": 43, "r": 30, "damage": 22, "bkb": 9, "kbg": 0.19, "angle": 35 }
           ],
@@ -145,7 +145,7 @@
         },
         {
           "name": "strike",
-          "frames": 32,
+          "frames": 37,
           "hitboxes": [
             { "start": 0, "end": 5, "x": 0, "y": 112, "r": 36, "damage": 19, "bkb": 8, "kbg": 0.18, "angle": 88 }
           ],
@@ -176,7 +176,7 @@
         },
         {
           "name": "strike",
-          "frames": 32,
+          "frames": 37,
           "hitboxes": [
             {
               "start": 0,
@@ -661,6 +661,16 @@
         "grounded": true,
         "noProjectile": false,
         "down": true,
+        "hold": null
+      },
+      {
+        "minDistance": 300,
+        "maxDistance": null,
+        "height": 80,
+        "chance": 0.05,
+        "grounded": true,
+        "noProjectile": false,
+        "down": false,
         "hold": null
       }
     ]
