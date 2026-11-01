@@ -354,6 +354,7 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
                     && t.max_distance.is_none_or(|max| adx < max)
                     && dy.abs() < t.height
                     && (!t.no_projectile || !w.projs.iter().any(|p| p.owner == i))
+                    && (!t.neutral || f.ground && st == State::Idle && f.lag == 0)
                     && w.rng.next_f64() < t.chance
                 {
                     toward(&mut inp, tdir);

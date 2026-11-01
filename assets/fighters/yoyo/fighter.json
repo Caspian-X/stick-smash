@@ -14,7 +14,7 @@
           "name": "main",
           "frames": 13,
           "hitboxes": [
-            { "start": 3, "end": 5, "x": 49, "y": 50, "r": 17, "damage": 3.4, "bkb": 6, "kbg": 0.09, "angle": 30 }
+            { "start": 3, "end": 5, "x": 49, "y": 50, "r": 17, "damage": 3.4, "bkb": 4, "kbg": 0.05, "angle": 30 }
           ],
           "events": [
             { "at": 3, "sfx": "swing" }
@@ -42,8 +42,8 @@
           "name": "main",
           "frames": 26,
           "hitboxes": [
-            { "start": 7, "end": 10, "x": 83, "y": 47, "r": 19, "damage": 9.2, "bkb": 6, "kbg": 0.09, "angle": 35 },
-            { "start": 7, "end": 10, "x": 37.35, "y": 47, "r": 27, "damage": 6.9, "bkb": 6, "kbg": 0.072, "angle": 35 }
+            { "start": 7, "end": 10, "x": 83, "y": 47, "r": 19, "damage": 9.2, "bkb": 6, "kbg": 0.11, "angle": 35 },
+            { "start": 7, "end": 10, "x": 37.35, "y": 47, "r": 27, "damage": 6.9, "bkb": 6, "kbg": 0.088, "angle": 35 }
           ],
           "events": [
             { "at": 7, "sfx": "swing" }
@@ -71,8 +71,8 @@
           "name": "main",
           "frames": 25,
           "hitboxes": [
-            { "start": 6, "end": 10, "x": 4, "y": 128, "r": 23, "damage": 9.2, "bkb": 6, "kbg": 0.09, "angle": 88 },
-            { "start": 6, "end": 10, "x": 5, "y": 88, "r": 32, "damage": 6.9, "bkb": 6, "kbg": 0.072, "angle": 88 }
+            { "start": 6, "end": 10, "x": 4, "y": 128, "r": 23, "damage": 9.2, "bkb": 5, "kbg": 0.1, "angle": 88 },
+            { "start": 6, "end": 10, "x": 5, "y": 88, "r": 32, "damage": 6.9, "bkb": 5, "kbg": 0.08, "angle": 88 }
           ],
           "events": [
             { "at": 6, "sfx": "swing" }
@@ -100,8 +100,8 @@
           "name": "main",
           "frames": 22,
           "hitboxes": [
-            { "start": 5, "end": 8, "x": 76, "y": 13, "r": 18, "damage": 8.0, "bkb": 6, "kbg": 0.09, "angle": 65 },
-            { "start": 5, "end": 8, "x": 34.2, "y": 13, "r": 27, "damage": 6.0, "bkb": 6, "kbg": 0.072, "angle": 65 }
+            { "start": 5, "end": 8, "x": 76, "y": 13, "r": 18, "damage": 8.0, "bkb": 5, "kbg": 0.08, "angle": 65 },
+            { "start": 5, "end": 8, "x": 34.2, "y": 13, "r": 27, "damage": 6.0, "bkb": 5, "kbg": 0.08, "angle": 65 }
           ],
           "events": [
             { "at": 5, "sfx": "swing" }
@@ -157,7 +157,7 @@
           "name": "main",
           "frames": 46,
           "hitboxes": [
-            { "start": 14, "end": 18, "x": 91, "y": 49, "r": 23, "damage": 17.2, "bkb": 7, "kbg": 0.16, "angle": 35 },
+            { "start": 14, "end": 18, "x": 91, "y": 49, "r": 23, "damage": 17.2, "bkb": 8, "kbg": 0.18, "angle": 35 },
             {
               "start": 14,
               "end": 18,
@@ -165,8 +165,8 @@
               "y": 49,
               "r": 27,
               "damage": 12.9,
-              "bkb": 7,
-              "kbg": 0.16,
+              "bkb": 8,
+              "kbg": 0.18,
               "angle": 35
             }
           ],
@@ -198,8 +198,8 @@
           "name": "main",
           "frames": 43,
           "hitboxes": [
-            { "start": 13, "end": 18, "x": 0, "y": 132, "r": 26, "damage": 16.1, "bkb": 7, "kbg": 0.16, "angle": 88 },
-            { "start": 13, "end": 18, "x": 5, "y": 88, "r": 32, "damage": 12.1, "bkb": 7, "kbg": 0.16, "angle": 88 }
+            { "start": 13, "end": 18, "x": 0, "y": 132, "r": 26, "damage": 16.1, "bkb": 8, "kbg": 0.17, "angle": 88 },
+            { "start": 13, "end": 18, "x": 5, "y": 88, "r": 32, "damage": 12.1, "bkb": 8, "kbg": 0.17, "angle": 88 }
           ],
           "events": [
             { "at": 13, "sfx": "swing" },
@@ -297,7 +297,7 @@
             { "at": 28, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 9 }
+            { "on": "land", "to": "landing", "lag": 7 }
           ],
           "attach": {
             "yoyo": {
@@ -330,7 +330,7 @@
             { "at": 28, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 9 }
+            { "on": "land", "to": "landing", "lag": 8 }
           ],
           "attach": {
             "yoyo": {
@@ -385,7 +385,7 @@
             { "at": 30, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 9 }
+            { "on": "land", "to": "landing", "lag": 10 }
           ],
           "attach": {
             "yoyo": {
@@ -418,7 +418,7 @@
             { "at": 24, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 9 }
+            { "on": "land", "to": "landing", "lag": 7 }
           ],
           "attach": {
             "yoyo": {
@@ -450,7 +450,7 @@
             { "at": 33, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 9 }
+            { "on": "land", "to": "landing", "lag": 14 }
           ],
           "attach": {
             "yoyo": {
@@ -688,7 +688,6 @@
           "events": [
             { "at": 8, "spawn": "sleeper" }
           ],
-          "charge": { "frame": 9, "max": 45, "button": "special" },
           "anim": [
             { "at": 0, "pose": "crouch" }
           ],
@@ -773,7 +772,7 @@
         "grounded": true,
         "noProjectile": false,
         "down": true,
-        "hold": [10, 30]
+        "hold": null
       }
     ]
   },

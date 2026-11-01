@@ -266,6 +266,7 @@ fn track(ui: &mut egui::Ui, ed: &mut Editor) {
         lbl(y, "EVENTS");
         for k in 0..n {
             if let Some(t) = in_phase(k)
+                && (k == 0 || run.marks[k].phase != run.marks[k - 1].phase)
                 && events.iter().any(|e| e.fires(t, run.frames[k].frame))
             {
                 let ranged = events.iter().any(|e| e.at.is_none() && e.fires(t, run.frames[k].frame));
@@ -284,6 +285,7 @@ fn track(ui: &mut egui::Ui, ed: &mut Editor) {
         lbl(y, "POSE KEYS");
         for k in 0..n {
             if let Some(t) = in_phase(k)
+                && (k == 0 || run.marks[k].phase != run.marks[k - 1].phase)
                 && keys.iter().any(|&a| a == f64::from(t))
             {
                 let c = egui::pos2(fx(k) + w / 2., y + 7.);

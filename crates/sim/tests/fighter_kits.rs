@@ -106,7 +106,7 @@ fn ninja_shadow_dash_crosses_an_opponent() {
 }
 
 #[test]
-fn ninja_substitution_crosses_and_strikes_back() {
+fn ninja_substitution_advances_and_strikes_back() {
     let (d, mut w) = setup("ninja", 40.);
     w.fighters[1].face = -1.;
     start(&mut w, &d, "dspec");
@@ -115,10 +115,92 @@ fn ninja_substitution_crosses_and_strikes_back() {
     moves::start_move(&mut w, &d, 1, &mut attacker, "jab");
     w.fighters[1] = attacker;
     let mut strike = false;
+    let mut furthest = w.fighters[0].x;
+    for _ in 0..40 {
+        step_world(&mut w, &d, &[Input::default(); 2]);
+        furthest = furthest.max(w.fighters[0].x);
+        strike |= w.hits.drain(..).any(|h| h.attacker == Some(0));
+    }
+    assert!(furthest > 450., "substitution must advance toward a melee attacker");
+    assert!(strike, "substitution must hit back after crossing");
+}
+
+#[test]
+fn neutral_cpu_tactics_never_turn_locked_or_airborne_fighters() {
+    use sim::world::State;
+    let (mut d, base) = setup("ninja", 250.);
+    d.global.ai.aggression = [1.; 3];
+    for state in [
+        State::Throw,
+        State::Attack,
+        State::Roll,
+        State::Landing,
+        State::Tech,
+        State::Getup,
+        State::Climb,
+        State::Air,
+        State::Idle,
+    ] {
+        let mut w = base.clone();
+        if state == State::Attack {
+            start(&mut w, &d, "nspec");
+        } else {
+            w.fighters[0].set_state(state);
+        }
+        w.fighters[0].face = -1.;
+        w.fighters[0].vx = 2.5;
+        w.fighters[0].ground = state != State::Air;
+        w.fighters[0].lag = u32::from(state == State::Idle);
+        w.fighters[0].ai.cool = 0.;
+        let mut without = w.clone();
+        let mut no_tactics = d.clone();
+        no_tactics.fighters[w.fighters[0].data].ai.specials.clear();
+        let intent = sim::ai::ai_input(&mut w, &d, 0, 2);
+        sim::ai::ai_input(&mut without, &no_tactics, 0, 2);
+        assert_eq!(w.fighters[0].face, -1., "{state:?}");
+        assert_eq!(w.fighters[0].vx, 2.5, "{state:?}");
+        assert!(!intent.sp, "{state:?}");
+        assert_eq!(w.rng.next_f64(), without.rng.next_f64(), "{state:?}: rolled a blocked tactic");
+    }
+}
+
+#[test]
+fn ninja_substitution_reaches_a_far_whip_attacker() {
+    let (d, mut w) = setup("ninja", 115.);
+    w.fighters[1].data = d.fighters.iter().position(|f| f.id == "wrangler").unwrap();
+    w.fighters[1].face = -1.;
+    start(&mut w, &d, "dspec");
+    w.fighters[0].mov.as_mut().unwrap().t = 5;
+    let mut attacker = w.fighters[1].clone();
+    moves::start_move(&mut w, &d, 1, &mut attacker, "fsmash");
+    attacker.mov.as_mut().unwrap().t = 15;
+    w.fighters[1] = attacker;
+    let mut strike = false;
     for _ in 0..40 {
         step_world(&mut w, &d, &[Input::default(); 2]);
         strike |= w.hits.drain(..).any(|h| h.attacker == Some(0));
     }
-    assert!(w.fighters[0].x > w.fighters[1].x, "substitution must cross the attacker");
-    assert!(strike, "substitution must hit back after crossing");
+    assert!(strike, "substitution must reach the whip's owner after countering its tip");
+}
+
+#[test]
+fn ninja_projectile_substitution_does_not_dash_off_a_ledge() {
+    let (d, mut w) = setup("ninja", 60.);
+    let x = d.stages[w.stage].blocks[0].left + 8.;
+    w.fighters[0].x = x;
+    w.fighters[0].face = -1.;
+    w.fighters[1].x = x + 60.;
+    w.fighters[1].face = -1.;
+    start(&mut w, &d, "dspec");
+    w.fighters[0].mov.as_mut().unwrap().t = 5;
+    let attacker = w.fighters[1].clone();
+    sim::projectiles::spawn(&mut w, &d, 1, &attacker, "energyBall");
+    let mut reflected = false;
+    for _ in 0..20 {
+        step_world(&mut w, &d, &[Input::default(); 2]);
+        reflected |= w.projs.iter().any(|p| p.owner == 0);
+    }
+    assert!(reflected);
+    assert_eq!(w.fighters[0].x, x);
+    assert!(w.fighters[0].ground);
 }

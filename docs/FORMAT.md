@@ -171,7 +171,8 @@ Each fighter's `ai` contains:
 - `specials`: ordered special tactics. Each requires distance strictly above `minDistance`, strictly below
   optional `maxDistance`, vertical separation strictly below `height`, optionally `grounded`, optionally
   `noProjectile` owned by this CPU. Only then is `chance` sampled. Success presses special toward the target;
-  `neutral: true` faces the target and clears directional input (so a CPU can use neutral special even with a side-special slot);
+  `neutral: true` requires grounded idle without hitlag before rolling chance, faces the target and clears
+  directional input (so a CPU can use neutral special even with a side-special slot);
   `down` then adds down, and optional `hold: [min,max]` samples/floors special-button hold duration. A failed chance
   continues to the next tactic, preserving random draw order. Input routing chooses the move slot.
 

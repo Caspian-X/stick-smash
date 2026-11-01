@@ -165,7 +165,7 @@
         },
         "neutral": {
           "type": "boolean",
-          "description": "Face the target and clear directional input before selecting the special (neutral, or down with `down`)."
+          "description": "Only while grounded and idle without hitlag: face the target and clear directional input (neutral, or down with `down`)."
         },
         "down": { "type": "boolean", "description": "Add down to the toward-target special input." },
         "hold": {
