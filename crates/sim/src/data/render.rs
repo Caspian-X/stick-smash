@@ -18,7 +18,6 @@ pub struct Render {
     pub fx: FxLook,
     pub hud: Hud,
     pub select: SelectLook,
-    #[serde(default = "interpolate_default")]
     pub interpolate: Interpolate,
 }
 
@@ -175,7 +174,6 @@ pub struct Hud {
     /// Results stats: a fall counts as a KO for the last hitter if they hit within this many ticks, otherwise
     /// as a self-destruct.
     pub ko_credit_ticks: u64,
-    #[serde(default = "hud_look_default")]
     pub look: HudLook,
 }
 
@@ -218,16 +216,12 @@ pub struct Camera {
     pub min_height: f64,
     pub max_height: f64,
     /// Reference play-area width before camera padding; the bundled value is Arena’s play area.
-    #[serde(default = "reference_play_width")]
     pub reference_play_width: f64,
     /// Reference play-area height (including block undersides), before camera padding; the bundled value is Arena’s play area.
-    #[serde(default = "reference_play_height")]
     pub reference_play_height: f64,
     /// Only stages smaller than this fraction of both reference dimensions zoom in tighter.
-    #[serde(default = "min_scale_start")]
     pub min_scale_start: f64,
     /// Smallest automatic minHeight multiplier; scaling below minScaleStart is linear.
-    #[serde(default = "min_scale_floor")]
     pub min_scale_floor: f64,
     /// 0..1: how far the framing center is pulled toward the stage's center (keeps the stage in view).
     pub stage_bias: f64,
@@ -239,31 +233,6 @@ pub struct Camera {
     /// Screen shake (stage pixels): multiplied by `shakeDecay` each tick, cut off below `shakeMin`.
     pub shake_decay: f64,
     pub shake_min: f64,
-}
-
-// Older replay payloads omit these presentation fields. Keep fallback tuning in the bundled JSON too.
-fn bundled<T: serde::de::DeserializeOwned>(pointer: &str) -> T {
-    let v: serde_json::Value =
-        serde_json::from_str(include_str!("../../../../assets/global.json")).expect("bundled global JSON");
-    serde_json::from_value(v.pointer(pointer).expect("bundled render tuning").clone()).expect("bundled render tuning")
-}
-fn reference_play_width() -> f64 {
-    bundled("/render/camera/referencePlayWidth")
-}
-fn reference_play_height() -> f64 {
-    bundled("/render/camera/referencePlayHeight")
-}
-fn min_scale_start() -> f64 {
-    bundled("/render/camera/minScaleStart")
-}
-fn min_scale_floor() -> f64 {
-    bundled("/render/camera/minScaleFloor")
-}
-fn hud_look_default() -> HudLook {
-    bundled("/render/hud/look")
-}
-fn interpolate_default() -> Interpolate {
-    bundled("/render/interpolate")
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
