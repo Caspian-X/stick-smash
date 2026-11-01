@@ -102,6 +102,7 @@ max(`minDamage`, incoming × `damageMult`). A projectile is reflected instead (s
 A phase may set `armorThreshold` to a nonnegative damage threshold. Incoming hits at or below it
 still deal damage, credit the attacker and apply hitlag/flash, but preserve the move, velocity, grounded
 state and recovery resources. Stronger hits react normally. Grabs bypass armor; counters take priority.
+Armor also blocks windbox pushes. Armored hits emit a small ring and never chain into or out of training combos.
 Use a separate startup phase to limit armor to wind-up (charge holds retain that phase).
 
 ## Projectiles

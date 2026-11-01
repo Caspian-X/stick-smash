@@ -418,12 +418,15 @@ fn fighter_kits() -> Vec<Step> {
         ("golem", "fsmash", 20, "18a-golem-smash"),
         ("golem", "nspec", 18, "18b-golem-pound"),
         ("golem", "dspec", 12, "18c-golem-skin"),
+        ("golem", "dspec", 22, "18d-golem-retaliation"),
         ("lancer", "ftilt", 9, "19a-lancer-thrust"),
         ("lancer", "uspec", 4, "19b-lancer-vault"),
         ("lancer", "dair", 11, "19c-lancer-pogo"),
+        ("lancer", "dtilt", 8, "19d-lancer-low-thrust"),
         ("dancer", "fsmash", 14, "20a-dancer-kick"),
         ("dancer", "usmash", 13, "20b-dancer-handstand"),
         ("dancer", "dspec", 9, "20c-dancer-sweep"),
+        ("dancer", "nspec", 10, "20d-dancer-travelling-spin"),
     ] {
         ed(&mut v, Cmd::Subject(Subject::Move(slot.into())));
         ed(&mut v, Cmd::Fighter(fighter.into()));
@@ -823,12 +826,15 @@ mod tests {
 18a-golem-smash
 18b-golem-pound
 18c-golem-skin
+18d-golem-retaliation
 19a-lancer-thrust
 19b-lancer-vault
 19c-lancer-pogo
+19d-lancer-low-thrust
 20a-dancer-kick
 20b-dancer-handstand
-20c-dancer-sweep";
+20c-dancer-sweep
+20d-dancer-travelling-spin";
         assert_eq!(names, expected.lines().collect::<Vec<_>>());
     }
 }

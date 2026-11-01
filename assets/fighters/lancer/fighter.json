@@ -13,28 +13,24 @@
           "name": "main",
           "frames": 17,
           "hitboxes": [
-            { "start": 4, "end": 8, "x": 100, "y": 50, "r": 13, "damage": 5.5, "bkb": 7, "kbg": 0.1625, "angle": 45 },
-            {
-              "start": 4,
-              "end": 8,
-              "x": 58.0,
-              "y": 50.0,
-              "r": 17,
-              "damage": 4.67,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 60
-            },
-            { "start": 4, "end": 8, "x": 32, "y": 48, "r": 20, "damage": 4.67, "bkb": 5.95, "kbg": 0.13, "angle": 60 }
+            { "start": 4, "end": 8, "x": 100, "y": 50, "r": 13, "damage": 6, "bkb": 4, "kbg": 0.05, "angle": 30 },
+            { "start": 4, "end": 8, "x": 58.0, "y": 50.0, "r": 17, "damage": 5, "bkb": 4, "kbg": 0.05, "angle": 30 },
+            { "start": 4, "end": 8, "x": 32, "y": 48, "r": 20, "damage": 5, "bkb": 4, "kbg": 0.06, "angle": 25 }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 4, "pose": "spearLunge", "lerp": true },
+            { "at": 8, "pose": "spearLunge" },
+            { "at": 16, "pose": "spearGuard", "lerp": true }
           ],
           "events": [
             { "at": 4, "sfx": "slash" }
           ],
           "attach": {
-            "spear": { "angle": [[0, -25], [4, 0], [8, 0], [20, 65]] }
+            "spear": {
+              "angle": [[0, -25], [4, 0], [8, 0], [16, 65]],
+              "offset": [[0, 0, 0], [4, -8, 0], [8, -8, 0], [16, 0, 0]]
+            }
           }
         }
       ]
@@ -46,28 +42,24 @@
           "name": "main",
           "frames": 28,
           "hitboxes": [
-            { "start": 8, "end": 12, "x": 113, "y": 50, "r": 13, "damage": 11.0, "bkb": 7, "kbg": 0.1625, "angle": 45 },
-            {
-              "start": 8,
-              "end": 12,
-              "x": 65.54,
-              "y": 50.0,
-              "r": 17,
-              "damage": 9.35,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 60
-            },
-            { "start": 8, "end": 12, "x": 32, "y": 48, "r": 20, "damage": 9.35, "bkb": 5.95, "kbg": 0.13, "angle": 60 }
+            { "start": 8, "end": 12, "x": 113, "y": 50, "r": 13, "damage": 12, "bkb": 7, "kbg": 0.15, "angle": 38 },
+            { "start": 8, "end": 12, "x": 65.54, "y": 50.0, "r": 17, "damage": 9, "bkb": 5, "kbg": 0.09, "angle": 38 },
+            { "start": 8, "end": 12, "x": 32, "y": 48, "r": 20, "damage": 9, "bkb": 4, "kbg": 0.06, "angle": 25 }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 8, "pose": "spearLunge", "lerp": true },
+            { "at": 12, "pose": "spearLunge" },
+            { "at": 27, "pose": "spearGuard", "lerp": true }
           ],
           "events": [
             { "at": 8, "sfx": "slash" }
           ],
           "attach": {
-            "spear": { "angle": [[0, -25], [8, 0], [12, 0], [31, 65]] }
+            "spear": {
+              "angle": [[0, -25], [8, 0], [12, 0], [27, 65]],
+              "offset": [[0, 0, 0], [8, -8, 0], [12, -8, 0], [27, 0, 0]]
+            }
           }
         }
       ]
@@ -79,21 +71,14 @@
           "name": "main",
           "frames": 27,
           "hitboxes": [
-            { "start": 8, "end": 12, "x": 0, "y": 157, "r": 13, "damage": 11.0, "bkb": 7, "kbg": 0.1625, "angle": 88 },
-            {
-              "start": 8,
-              "end": 12,
-              "x": 0.0,
-              "y": 112.06,
-              "r": 17,
-              "damage": 9.35,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 88
-            }
+            { "start": 8, "end": 12, "x": 0, "y": 157, "r": 13, "damage": 11, "bkb": 6, "kbg": 0.1, "angle": 88 },
+            { "start": 8, "end": 12, "x": 0.0, "y": 112.06, "r": 17, "damage": 9, "bkb": 5, "kbg": 0.09, "angle": 88 }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 8, "pose": "spearOverhead", "lerp": true },
+            { "at": 12, "pose": "spearOverhead" },
+            { "at": 26, "pose": "spearGuard", "lerp": true }
           ],
           "events": [
             { "at": 8, "sfx": "slash" }
@@ -111,27 +96,20 @@
           "name": "main",
           "frames": 25,
           "hitboxes": [
-            { "start": 7, "end": 11, "x": 108, "y": 13, "r": 13, "damage": 8.8, "bkb": 7, "kbg": 0.1625, "angle": 45 },
-            {
-              "start": 7,
-              "end": 11,
-              "x": 62.64,
-              "y": 28.54,
-              "r": 17,
-              "damage": 7.48,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 60
-            }
+            { "start": 7, "end": 11, "x": 116, "y": 13, "r": 13, "damage": 9, "bkb": 5, "kbg": 0.08, "angle": 25 },
+            { "start": 7, "end": 11, "x": 64, "y": 17, "r": 17, "damage": 7, "bkb": 5, "kbg": 0.09, "angle": 25 }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 7, "pose": "spearLow", "lerp": true },
+            { "at": 11, "pose": "spearLow" },
+            { "at": 24, "pose": "spearGuard", "lerp": true }
           ],
           "events": [
             { "at": 7, "sfx": "slash" }
           ],
           "attach": {
-            "spear": { "angle": [[0, -45], [7, -20], [11, -20], [28, 65]] }
+            "spear": { "angle": [[0, -45], [7, -6], [11, -6], [28, 65]] }
           }
         }
       ]
@@ -143,28 +121,24 @@
           "name": "main",
           "frames": 35,
           "hitboxes": [
-            { "start": 9, "end": 13, "x": 111, "y": 48, "r": 13, "damage": 10, "bkb": 7, "kbg": 0.1625, "angle": 45 },
-            {
-              "start": 9,
-              "end": 13,
-              "x": 64.38,
-              "y": 48.84,
-              "r": 17,
-              "damage": 8.5,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 60
-            },
-            { "start": 9, "end": 13, "x": 32, "y": 48, "r": 20, "damage": 8.5, "bkb": 5.95, "kbg": 0.13, "angle": 60 }
+            { "start": 9, "end": 13, "x": 111, "y": 48, "r": 13, "damage": 10, "bkb": 6, "kbg": 0.09, "angle": 50 },
+            { "start": 9, "end": 13, "x": 64.38, "y": 48.84, "r": 17, "damage": 8, "bkb": 5, "kbg": 0.09, "angle": 50 },
+            { "start": 9, "end": 13, "x": 32, "y": 48, "r": 20, "damage": 8, "bkb": 4, "kbg": 0.06, "angle": 25 }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 9, "pose": "spearLunge", "lerp": true },
+            { "at": 13, "pose": "spearLunge" },
+            { "at": 34, "pose": "spearGuard", "lerp": true }
           ],
           "events": [
             { "at": 9, "sfx": "slash" }
           ],
           "attach": {
-            "spear": { "angle": [[0, -25], [9, 0], [13, 0], [35, 65]] }
+            "spear": {
+              "angle": [[0, -25], [9, 0], [13, 0], [34, 65]],
+              "offset": [[0, 0, 0], [9, -8, 0], [13, -8, 0], [34, 0, 0]]
+            }
           }
         }
       ]
@@ -174,40 +148,40 @@
       "phases": [
         {
           "name": "main",
-          "frames": 49,
+          "frames": 47,
           "hitboxes": [
-            { "start": 15, "end": 19, "x": 118, "y": 50, "r": 13, "damage": 18, "bkb": 7, "kbg": 0.1625, "angle": 45 },
+            { "start": 15, "end": 19, "x": 118, "y": 50, "r": 13, "damage": 20, "bkb": 7, "kbg": 0.15, "angle": 36 },
             {
               "start": 15,
               "end": 19,
               "x": 68.44,
               "y": 50.0,
               "r": 17,
-              "damage": 13.5,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 60
+              "damage": 14,
+              "bkb": 5,
+              "kbg": 0.09,
+              "angle": 36
             },
-            {
-              "start": 15,
-              "end": 19,
-              "x": 32,
-              "y": 48,
-              "r": 20,
-              "damage": 13.5,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 60
-            }
+            { "start": 15, "end": 19, "x": 32, "y": 48, "r": 20, "damage": 14, "bkb": 4, "kbg": 0.06, "angle": 25 }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 15, "pose": "spearLunge", "lerp": true },
+            { "at": 19, "pose": "spearLunge" },
+            { "at": 46, "pose": "spearGuard", "lerp": true }
           ],
           "events": [
-            { "at": 15, "sfx": "slash" }
+            { "at": 15, "sfx": "slash" },
+            {
+              "at": 15,
+              "setVel": { "x": 3 }
+            }
           ],
           "attach": {
-            "spear": { "angle": [[0, -25], [15, 0], [19, 0], [49, 65]] }
+            "spear": {
+              "angle": [[0, -25], [15, 0], [19, 0], [46, 65]],
+              "offset": [[0, 0, 0], [15, -8, 0], [19, -8, 0], [46, 0, 0]]
+            }
           },
           "charge": { "frame": 6 }
         }
@@ -218,29 +192,32 @@
       "phases": [
         {
           "name": "main",
-          "frames": 46,
+          "frames": 44,
           "hitboxes": [
-            { "start": 13, "end": 17, "x": 0, "y": 162, "r": 13, "damage": 17, "bkb": 7, "kbg": 0.1625, "angle": 88 },
+            { "start": 13, "end": 17, "x": 0, "y": 162, "r": 13, "damage": 19, "bkb": 7, "kbg": 0.15, "angle": 88 },
             {
               "start": 13,
               "end": 17,
               "x": 0.0,
               "y": 114.96,
               "r": 17,
-              "damage": 12.75,
-              "bkb": 5.95,
-              "kbg": 0.13,
+              "damage": 13,
+              "bkb": 5,
+              "kbg": 0.09,
               "angle": 88
             }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 13, "pose": "spearOverhead", "lerp": true },
+            { "at": 17, "pose": "spearOverhead" },
+            { "at": 43, "pose": "spearGuard", "lerp": true }
           ],
           "events": [
             { "at": 13, "sfx": "slash" }
           ],
           "attach": {
-            "spear": { "angle": [[0, 65], [13, 90], [17, 90], [46, 65]] }
+            "spear": { "angle": [[0, 65], [13, 90], [17, 90], [43, 65]] }
           },
           "charge": { "frame": 6 }
         }
@@ -251,41 +228,34 @@
       "phases": [
         {
           "name": "main",
-          "frames": 43,
+          "frames": 42,
           "hitboxes": [
-            { "start": 12, "end": 16, "x": 111, "y": 12, "r": 13, "damage": 15, "bkb": 7, "kbg": 0.1625, "angle": 45 },
-            {
-              "start": 12,
-              "end": 16,
-              "x": 64.38,
-              "y": 27.96,
-              "r": 17,
-              "damage": 11.25,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 60
-            },
+            { "start": 12, "end": 16, "x": 116, "y": 12, "r": 13, "damage": 16, "bkb": 7, "kbg": 0.15, "angle": 28 },
+            { "start": 12, "end": 16, "x": 64, "y": 17, "r": 17, "damage": 11, "bkb": 5, "kbg": 0.09, "angle": 28 },
             {
               "start": 20,
               "end": 24,
-              "x": -100,
+              "x": -116,
               "y": 16,
               "r": 16,
-              "damage": 11.25,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 30,
+              "damage": 16,
+              "bkb": 7,
+              "kbg": 0.15,
+              "angle": 28,
               "dir": "away"
             }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 12, "pose": "spearLow", "lerp": true },
+            { "at": 16, "pose": "spearLow" },
+            { "at": 41, "pose": "spearGuard", "lerp": true }
           ],
           "events": [
             { "at": 12, "sfx": "slash" }
           ],
           "attach": {
-            "spear": { "angle": [[0, 20], [12, -20], [16, -20], [20, 195], [24, 195], [43, 65]] }
+            "spear": { "angle": [[0, 20], [12, -6], [16, -6], [20, 184], [24, 184], [41, 65]] }
           },
           "charge": { "frame": 6 }
         }
@@ -298,21 +268,14 @@
           "name": "main",
           "frames": 29,
           "hitboxes": [
-            { "start": 6, "end": 10, "x": 90, "y": 79, "r": 13, "damage": 8, "bkb": 7, "kbg": 0.1625, "angle": 45 },
-            {
-              "start": 6,
-              "end": 10,
-              "x": 52.2,
-              "y": 66.82,
-              "r": 17,
-              "damage": 6.8,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 60
-            }
+            { "start": 6, "end": 10, "x": 90, "y": 79, "r": 13, "damage": 8, "bkb": 5, "kbg": 0.09, "angle": 50 },
+            { "start": 6, "end": 10, "x": 52.2, "y": 66.82, "r": 17, "damage": 7, "bkb": 5, "kbg": 0.09, "angle": 50 }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearAir" },
+            { "at": 6, "pose": "spearAir", "lerp": true },
+            { "at": 10, "pose": "spearAir" },
+            { "at": 28, "pose": "spearAir", "lerp": true }
           ],
           "events": [
             { "at": 6, "sfx": "slash" }
@@ -321,7 +284,7 @@
             "spear": { "angle": [[0, -5], [6, 20], [10, 20], [29, 65]] }
           },
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 8 }
+            { "on": "land", "to": "landing", "lag": 7 }
           ]
         }
       ],
@@ -334,31 +297,27 @@
           "name": "main",
           "frames": 29,
           "hitboxes": [
-            { "start": 7, "end": 11, "x": 113, "y": 50, "r": 13, "damage": 10, "bkb": 7, "kbg": 0.1625, "angle": 45 },
-            {
-              "start": 7,
-              "end": 11,
-              "x": 65.54,
-              "y": 50.0,
-              "r": 17,
-              "damage": 8.5,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 60
-            },
-            { "start": 7, "end": 11, "x": 32, "y": 48, "r": 20, "damage": 8.5, "bkb": 5.95, "kbg": 0.13, "angle": 60 }
+            { "start": 7, "end": 11, "x": 113, "y": 50, "r": 13, "damage": 10, "bkb": 5, "kbg": 0.11, "angle": 42 },
+            { "start": 7, "end": 11, "x": 65.54, "y": 50.0, "r": 17, "damage": 8, "bkb": 5, "kbg": 0.09, "angle": 42 },
+            { "start": 7, "end": 11, "x": 32, "y": 48, "r": 20, "damage": 8, "bkb": 4, "kbg": 0.06, "angle": 25 }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearAir" },
+            { "at": 7, "pose": "spearLunge", "lerp": true },
+            { "at": 11, "pose": "spearLunge" },
+            { "at": 28, "pose": "spearAir", "lerp": true }
           ],
           "events": [
             { "at": 7, "sfx": "slash" }
           ],
           "attach": {
-            "spear": { "angle": [[0, -25], [7, 0], [11, 0], [29, 65]] }
+            "spear": {
+              "angle": [[0, -25], [7, 0], [11, 0], [28, 65]],
+              "offset": [[0, 0, 0], [7, -8, 0], [11, -8, 0], [28, 0, 0]]
+            }
           },
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 8 }
+            { "on": "land", "to": "landing", "lag": 9 }
           ]
         }
       ],
@@ -378,9 +337,9 @@
               "y": 60,
               "r": 13,
               "damage": 12,
-              "bkb": 7,
-              "kbg": 0.1625,
-              "angle": 45,
+              "bkb": 6,
+              "kbg": 0.13,
+              "angle": 40,
               "dir": "back"
             },
             {
@@ -389,15 +348,18 @@
               "x": -63.8,
               "y": 55.8,
               "r": 17,
-              "damage": 10.2,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 60,
+              "damage": 10,
+              "bkb": 5,
+              "kbg": 0.09,
+              "angle": 40,
               "dir": "back"
             }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearAir" },
+            { "at": 9, "pose": "spearAir", "lerp": true },
+            { "at": 13, "pose": "spearAir" },
+            { "at": 31, "pose": "spearAir", "lerp": true }
           ],
           "events": [
             { "at": 9, "sfx": "slash" }
@@ -406,7 +368,7 @@
             "spear": { "angle": [[0, 150], [9, 175], [13, 175], [32, 65]] }
           },
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 8 }
+            { "on": "land", "to": "landing", "lag": 10 }
           ]
         }
       ],
@@ -419,21 +381,14 @@
           "name": "main",
           "frames": 27,
           "hitboxes": [
-            { "start": 6, "end": 10, "x": 10, "y": 155, "r": 13, "damage": 10, "bkb": 7, "kbg": 0.1625, "angle": 88 },
-            {
-              "start": 6,
-              "end": 10,
-              "x": 5.8,
-              "y": 110.9,
-              "r": 17,
-              "damage": 8.5,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 88
-            }
+            { "start": 6, "end": 10, "x": 10, "y": 155, "r": 13, "damage": 10, "bkb": 5, "kbg": 0.1, "angle": 85 },
+            { "start": 6, "end": 10, "x": 5.8, "y": 110.9, "r": 17, "damage": 8, "bkb": 5, "kbg": 0.09, "angle": 85 }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearAir" },
+            { "at": 6, "pose": "spearOverhead", "lerp": true },
+            { "at": 10, "pose": "spearOverhead" },
+            { "at": 26, "pose": "spearAir", "lerp": true }
           ],
           "events": [
             { "at": 6, "sfx": "slash" }
@@ -442,7 +397,7 @@
             "spear": { "angle": [[0, 60], [6, 85], [10, 85], [27, 65]] }
           },
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 8 }
+            { "on": "land", "to": "landing", "lag": 7 }
           ]
         }
       ],
@@ -462,25 +417,18 @@
               "y": -63,
               "r": 13,
               "damage": 11,
-              "bkb": 7,
-              "kbg": 0.1625,
+              "bkb": 4,
+              "kbg": 0.1,
               "angle": -70,
               "type": "spike"
             },
-            {
-              "start": 10,
-              "end": 14,
-              "x": 0.0,
-              "y": -32,
-              "r": 17,
-              "damage": 9.35,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": -45
-            }
+            { "start": 10, "end": 14, "x": 0.0, "y": -32, "r": 17, "damage": 9, "bkb": 5, "kbg": 0.09, "angle": -70 }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearAir" },
+            { "at": 10, "pose": "pogo", "lerp": true },
+            { "at": 14, "pose": "pogo" },
+            { "at": 37, "pose": "spearAir", "lerp": true }
           ],
           "events": [
             { "at": 10, "sfx": "slash" }
@@ -490,7 +438,7 @@
           },
           "transitions": [
             { "on": "hit", "to": "bounce" },
-            { "on": "land", "to": "landing", "lag": 8 }
+            { "on": "land", "to": "landing", "lag": 13 }
           ]
         },
         {
@@ -509,7 +457,7 @@
             }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 8 }
+            { "on": "land", "to": "landing", "lag": 13 }
           ]
         }
       ],
@@ -522,38 +470,34 @@
           "name": "main",
           "frames": 45,
           "hitboxes": [
-            { "start": 14, "end": 18, "x": 119, "y": 50, "r": 13, "damage": 15, "bkb": 7, "kbg": 0.1625, "angle": 45 },
+            { "start": 14, "end": 18, "x": 119, "y": 50, "r": 13, "damage": 15, "bkb": 6, "kbg": 0.12, "angle": 38 },
             {
               "start": 14,
               "end": 18,
               "x": 69.02,
               "y": 50.0,
               "r": 17,
-              "damage": 12.75,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 60
+              "damage": 13,
+              "bkb": 5,
+              "kbg": 0.09,
+              "angle": 38
             },
-            {
-              "start": 14,
-              "end": 18,
-              "x": 32,
-              "y": 48,
-              "r": 20,
-              "damage": 12.75,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 60
-            }
+            { "start": 14, "end": 18, "x": 32, "y": 48, "r": 20, "damage": 13, "bkb": 4, "kbg": 0.06, "angle": 25 }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 14, "pose": "spearLunge", "lerp": true },
+            { "at": 18, "pose": "spearLunge" },
+            { "at": 44, "pose": "spearGuard", "lerp": true }
           ],
           "events": [
             { "at": 14, "sfx": "slash" }
           ],
           "attach": {
-            "spear": { "angle": [[0, -25], [14, 0], [18, 0], [45, 65]] }
+            "spear": {
+              "angle": [[0, -25], [14, 0], [18, 0], [44, 65]],
+              "offset": [[0, 0, 0], [14, -8, 0], [18, -8, 0], [44, 0, 0]]
+            }
           },
           "charge": { "frame": 8, "button": "special", "max": 50 }
         }
@@ -566,22 +510,15 @@
           "name": "main",
           "frames": 40,
           "hitboxes": [
-            { "start": 9, "end": 13, "x": 115, "y": 50, "r": 13, "damage": 11, "bkb": 7, "kbg": 0.1625, "angle": 45 },
-            {
-              "start": 9,
-              "end": 13,
-              "x": 66.7,
-              "y": 50.0,
-              "r": 17,
-              "damage": 9.35,
-              "bkb": 5.95,
-              "kbg": 0.13,
-              "angle": 60
-            },
-            { "start": 9, "end": 13, "x": 32, "y": 48, "r": 20, "damage": 9.35, "bkb": 5.95, "kbg": 0.13, "angle": 60 }
+            { "start": 9, "end": 13, "x": 115, "y": 50, "r": 13, "damage": 11, "bkb": 6, "kbg": 0.11, "angle": 35 },
+            { "start": 9, "end": 13, "x": 66.7, "y": 50.0, "r": 17, "damage": 9, "bkb": 5, "kbg": 0.09, "angle": 35 },
+            { "start": 9, "end": 13, "x": 32, "y": 48, "r": 20, "damage": 9, "bkb": 4, "kbg": 0.06, "angle": 25 }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 9, "pose": "spearLunge", "lerp": true },
+            { "at": 13, "pose": "spearLunge" },
+            { "at": 39, "pose": "spearGuard", "lerp": true }
           ],
           "events": [
             { "at": 9, "sfx": "slash" },
@@ -591,7 +528,10 @@
             }
           ],
           "attach": {
-            "spear": { "angle": [[0, -25], [9, 0], [13, 0], [40, 65]] }
+            "spear": {
+              "angle": [[0, -25], [9, 0], [13, 0], [39, 65]],
+              "offset": [[0, 0, 0], [9, -8, 0], [13, -8, 0], [39, 0, 0]]
+            }
           },
           "slide": 20
         }
@@ -618,12 +558,14 @@
             }
           ],
           "anim": [
-            { "at": 0, "pose": "rise" }
+            { "at": 0, "pose": "spearLow" },
+            { "at": 3, "pose": "spearOverhead", "lerp": true },
+            { "at": 12, "pose": "spearAir", "lerp": true }
           ],
           "events": [
             {
               "at": 3,
-              "setVel": { "x": 3, "y": 19.5 },
+              "setVel": { "x": 3.5, "y": 21 },
               "leaveGround": true,
               "sfx": "djump"
             }
@@ -635,7 +577,8 @@
           "transitions": [
             { "on": "land", "to": "landing", "lag": 12 },
             { "on": "timeout", "to": "helpless" }
-          ]
+          ],
+          "airAccelMult": 1.2
         }
       ],
       "air": "upSpecial"
@@ -672,10 +615,14 @@
           "name": "poke",
           "frames": 27,
           "hitboxes": [
-            { "start": 4, "end": 8, "x": 100, "y": 60, "r": 16, "damage": 7, "bkb": 6, "kbg": 0.125, "angle": 65 }
+            { "start": 4, "end": 8, "x": 100, "y": 60, "r": 16, "damage": 7, "bkb": 6, "kbg": 0.12, "angle": 65 },
+            { "start": 4, "end": 8, "x": 66, "y": 54, "r": 18, "damage": 6, "bkb": 5, "kbg": 0.09, "angle": 65 },
+            { "start": 4, "end": 8, "x": 32, "y": 48, "r": 20, "damage": 5, "bkb": 4, "kbg": 0.06, "angle": 25 }
           ],
           "anim": [
-            { "at": 0, "pose": "spearGuard" }
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 4, "pose": "spearLunge", "lerp": true },
+            { "at": 9, "pose": "spearAir", "lerp": true }
           ],
           "events": [
             {
@@ -694,12 +641,12 @@
   },
   "stats": { "weight": 0.98, "runSpeed": 5.6, "jumpSpeed": 15.3, "airSpeed": 4.7 },
   "ai": {
-    "reach": 104,
+    "reach": 130,
     "counterChance": 0.25,
     "specials": [
       {
         "minDistance": 105,
-        "maxDistance": 260,
+        "maxDistance": 200,
         "height": 55,
         "chance": 0.25,
         "grounded": true,
@@ -762,7 +709,61 @@
       "footF": [24, 0],
       "footB": [-25, 0]
     },
-    "pogo": { "from": "air", "kneeF": [17, 24], "footF": [23, 10], "kneeB": [-14, 29], "footB": [-19, 15] }
+    "pogo": { "from": "air", "kneeF": [17, 24], "footF": [23, 10], "kneeB": [-14, 29], "footB": [-19, 15] },
+    "spearCoil": {
+      "from": "spearGuard",
+      "head": [-7, 65],
+      "shoulder": [-5, 50],
+      "hip": [-9, 28],
+      "kneeF": [13, 15],
+      "footF": [25, 0],
+      "kneeB": [-23, 15],
+      "footB": [-33, 0]
+    },
+    "spearLunge": {
+      "from": "spearGuard",
+      "head": [14, 64],
+      "shoulder": [8, 50],
+      "hip": [-6, 29],
+      "elbowB": [-10, 41],
+      "handB": [14, 47],
+      "kneeF": [24, 17],
+      "footF": [39, 0],
+      "kneeB": [-24, 15],
+      "footB": [-35, 0]
+    },
+    "spearOverhead": {
+      "from": "spearGuard",
+      "head": [-8, 67],
+      "shoulder": [0, 50],
+      "hip": [0, 28],
+      "elbowB": [-18, 64],
+      "handB": [-4, 82],
+      "kneeF": [14, 15],
+      "footF": [24, 0],
+      "footB": [-24, 0]
+    },
+    "spearLow": {
+      "from": "crouch",
+      "head": [5, 37],
+      "shoulder": [0, 24],
+      "hip": [-9, 17],
+      "elbowB": [-16, 26],
+      "handB": [7, 27],
+      "kneeF": [19, 13],
+      "footF": [34, 0],
+      "kneeB": [-23, 10],
+      "footB": [-35, 0]
+    },
+    "spearAir": {
+      "from": "air",
+      "head": [-5, 65],
+      "shoulder": [0, 50],
+      "kneeF": [19, 24],
+      "footF": [31, 12],
+      "kneeB": [-20, 26],
+      "footB": [-27, 13]
+    }
   },
   "anims": {
     "idle": {

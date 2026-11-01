@@ -240,6 +240,8 @@ pub struct Trace {
     pub defender: usize,
     pub label: String,
     pub on_shield: bool,
+    #[serde(default)]
+    pub armored: bool,
     pub hit_frame: u64,
     pub a_free: i64,
     pub d_free: i64,

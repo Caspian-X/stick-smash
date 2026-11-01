@@ -13,7 +13,7 @@
           "name": "main",
           "frames": 21,
           "hitboxes": [
-            { "start": 6, "end": 10, "x": 38, "y": 45, "r": 22, "damage": 5.4, "bkb": 6, "kbg": 0.1357, "angle": 45 }
+            { "start": 6, "end": 10, "x": 38, "y": 45, "r": 22, "damage": 5, "bkb": 4, "kbg": 0.05, "angle": 30 }
           ],
           "anim": [
             { "at": 0, "pose": "stonePunch" }
@@ -31,7 +31,7 @@
           "name": "main",
           "frames": 33,
           "hitboxes": [
-            { "start": 8, "end": 12, "x": 52, "y": 45, "r": 25, "damage": 11.88, "bkb": 6, "kbg": 0.1357, "angle": 45 }
+            { "start": 8, "end": 12, "x": 52, "y": 45, "r": 25, "damage": 12, "bkb": 6, "kbg": 0.12, "angle": 38 }
           ],
           "anim": [
             { "at": 0, "pose": "stonePunch" }
@@ -49,7 +49,7 @@
           "name": "main",
           "frames": 32,
           "hitboxes": [
-            { "start": 8, "end": 12, "x": 4, "y": 99, "r": 30, "damage": 10.8, "bkb": 6, "kbg": 0.1357, "angle": 88 }
+            { "start": 8, "end": 12, "x": 4, "y": 99, "r": 30, "damage": 11, "bkb": 6, "kbg": 0.11, "angle": 88 }
           ],
           "anim": [
             { "at": 0, "pose": "stoneLift" }
@@ -67,7 +67,7 @@
           "name": "main",
           "frames": 29,
           "hitboxes": [
-            { "start": 7, "end": 11, "x": 39, "y": 12, "r": 25, "damage": 9.72, "bkb": 6, "kbg": 0.1357, "angle": 45 }
+            { "start": 7, "end": 11, "x": 39, "y": 12, "r": 25, "damage": 10, "bkb": 5, "kbg": 0.08, "angle": 25 }
           ],
           "anim": [
             { "at": 0, "pose": "crouch" }
@@ -85,7 +85,7 @@
           "name": "main",
           "frames": 40,
           "hitboxes": [
-            { "start": 8, "end": 12, "x": 35, "y": 43, "r": 32, "damage": 11.88, "bkb": 6, "kbg": 0.1357, "angle": 45 }
+            { "start": 8, "end": 12, "x": 35, "y": 43, "r": 32, "damage": 12, "bkb": 6, "kbg": 0.09, "angle": 55 }
           ],
           "anim": [
             { "at": 0, "pose": "lean" }
@@ -106,7 +106,7 @@
           "anim": [
             { "at": 0, "pose": "stoneBrace" }
           ],
-          "armorThreshold": 6,
+          "armorThreshold": 5,
           "charge": { "frame": 8 },
           "transitions": [
             { "on": "timeout", "to": "strike" }
@@ -116,7 +116,7 @@
           "name": "strike",
           "frames": 32,
           "hitboxes": [
-            { "start": 0, "end": 4, "x": 58, "y": 43, "r": 30, "damage": 21.6, "bkb": 8, "kbg": 0.2006, "angle": 35 }
+            { "start": 0, "end": 4, "x": 58, "y": 43, "r": 30, "damage": 22, "bkb": 9, "kbg": 0.19, "angle": 35 }
           ],
           "anim": [
             { "at": 0, "pose": "stonePunch" }
@@ -137,7 +137,7 @@
           "anim": [
             { "at": 0, "pose": "stoneBrace" }
           ],
-          "armorThreshold": 6,
+          "armorThreshold": 5,
           "charge": { "frame": 8 },
           "transitions": [
             { "on": "timeout", "to": "strike" }
@@ -147,7 +147,7 @@
           "name": "strike",
           "frames": 32,
           "hitboxes": [
-            { "start": 0, "end": 5, "x": 0, "y": 112, "r": 36, "damage": 19.44, "bkb": 8, "kbg": 0.1888, "angle": 88 }
+            { "start": 0, "end": 5, "x": 0, "y": 112, "r": 36, "damage": 19, "bkb": 8, "kbg": 0.18, "angle": 88 }
           ],
           "anim": [
             { "at": 0, "pose": "stoneLift" }
@@ -168,7 +168,7 @@
           "anim": [
             { "at": 0, "pose": "stoneBrace" }
           ],
-          "armorThreshold": 6,
+          "armorThreshold": 5,
           "charge": { "frame": 8 },
           "transitions": [
             { "on": "timeout", "to": "strike" }
@@ -184,9 +184,9 @@
               "x": 48,
               "y": 13,
               "r": 32,
-              "damage": 17.28,
+              "damage": 17,
               "bkb": 7,
-              "kbg": 0.177,
+              "kbg": 0.16,
               "angle": 28,
               "dir": "away"
             },
@@ -196,9 +196,9 @@
               "x": -48,
               "y": 13,
               "r": 32,
-              "damage": 17.28,
+              "damage": 17,
               "bkb": 7,
-              "kbg": 0.177,
+              "kbg": 0.16,
               "angle": 28,
               "dir": "away"
             }
@@ -219,7 +219,7 @@
           "name": "main",
           "frames": 38,
           "hitboxes": [
-            { "start": 10, "end": 15, "x": 0, "y": 43, "r": 43, "damage": 9.72, "bkb": 6, "kbg": 0.1416, "angle": 50 }
+            { "start": 10, "end": 15, "x": 0, "y": 43, "r": 43, "damage": 10, "bkb": 5, "kbg": 0.09, "angle": 50 }
           ],
           "anim": [
             { "at": 0, "pose": "curl" }
@@ -228,7 +228,7 @@
             { "at": 10, "sfx": "swing" }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 8 }
+            { "on": "land", "to": "landing", "lag": 7 }
           ]
         }
       ],
@@ -241,17 +241,7 @@
           "name": "main",
           "frames": 38,
           "hitboxes": [
-            {
-              "start": 10,
-              "end": 15,
-              "x": 46,
-              "y": 39,
-              "r": 29,
-              "damage": 14.04,
-              "bkb": 6,
-              "kbg": 0.1416,
-              "angle": 38
-            }
+            { "start": 10, "end": 15, "x": 46, "y": 39, "r": 29, "damage": 14, "bkb": 6, "kbg": 0.12, "angle": 38 }
           ],
           "anim": [
             { "at": 0, "pose": "stonePunch" }
@@ -260,7 +250,7 @@
             { "at": 10, "sfx": "swing" }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 8 }
+            { "on": "land", "to": "landing", "lag": 10 }
           ]
         }
       ],
@@ -279,9 +269,9 @@
               "x": -40,
               "y": 44,
               "r": 29,
-              "damage": 12.96,
+              "damage": 13,
               "bkb": 6,
-              "kbg": 0.1416,
+              "kbg": 0.13,
               "angle": 40,
               "dir": "back"
             }
@@ -293,7 +283,7 @@
             { "at": 10, "sfx": "swing" }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 8 }
+            { "on": "land", "to": "landing", "lag": 10 }
           ]
         }
       ],
@@ -306,17 +296,7 @@
           "name": "main",
           "frames": 38,
           "hitboxes": [
-            {
-              "start": 10,
-              "end": 15,
-              "x": 0,
-              "y": 102,
-              "r": 28,
-              "damage": 11.88,
-              "bkb": 6,
-              "kbg": 0.1416,
-              "angle": 85
-            }
+            { "start": 10, "end": 15, "x": 0, "y": 102, "r": 28, "damage": 12, "bkb": 6, "kbg": 0.1, "angle": 85 }
           ],
           "anim": [
             { "at": 0, "pose": "stoneLift" }
@@ -344,9 +324,9 @@
               "x": 0,
               "y": -7,
               "r": 27,
-              "damage": 14.04,
-              "bkb": 6,
-              "kbg": 0.1416,
+              "damage": 14,
+              "bkb": 4,
+              "kbg": 0.1,
               "angle": -90,
               "type": "spike"
             }
@@ -359,7 +339,7 @@
             { "at": 10, "sfx": "swing" }
           ],
           "transitions": [
-            { "on": "land", "to": "landing", "lag": 8 }
+            { "on": "land", "to": "landing", "lag": 14 }
           ]
         }
       ],
@@ -372,17 +352,7 @@
           "name": "main",
           "frames": 48,
           "hitboxes": [
-            {
-              "start": 12,
-              "end": 23,
-              "x": 32,
-              "y": 43,
-              "r": 32,
-              "damage": 12.96,
-              "bkb": 7,
-              "kbg": 0.1298,
-              "angle": 38
-            }
+            { "start": 12, "end": 23, "x": 32, "y": 43, "r": 32, "damage": 13, "bkb": 7, "kbg": 0.12, "angle": 38 }
           ],
           "anim": [
             { "at": 0, "pose": "lean" }
@@ -406,7 +376,7 @@
           "name": "rise",
           "frames": 42,
           "hitboxes": [
-            { "start": 5, "end": 16, "x": 0, "y": 64, "r": 33, "damage": 10, "bkb": 6, "kbg": 0.118, "angle": 80 }
+            { "start": 5, "end": 16, "x": 0, "y": 64, "r": 33, "damage": 10, "bkb": 6, "kbg": 0.08, "angle": 80 }
           ],
           "anim": [
             { "at": 0, "pose": "stoneLift" }
@@ -444,18 +414,18 @@
         },
         {
           "name": "skin",
-          "frames": 22,
+          "frames": 16,
           "hitboxes": [],
           "anim": [
             { "at": 0, "pose": "stoneBrace" }
           ],
-          "armorThreshold": 16,
+          "armorThreshold": 10,
           "events": [
             {
               "at": 0,
               "sfx": "counter",
               "fx": [
-                { "type": "ring", "x": 0, "y": 38, "r": 24, "grow": 1, "life": 22, "color": "#b3c5ce" }
+                { "type": "ring", "x": 0, "y": 38, "r": 24, "grow": 1, "life": 16, "color": "#b3c5ce" }
               ]
             }
           ],
@@ -466,9 +436,14 @@
         {
           "name": "recover",
           "frames": 17,
-          "hitboxes": [],
+          "hitboxes": [
+            { "start": 0, "end": 3, "x": 38, "y": 43, "r": 32, "damage": 10, "bkb": 7, "kbg": 0.15, "angle": 40 }
+          ],
           "anim": [
-            { "at": 0, "pose": "stoneBrace" }
+            { "at": 0, "pose": "stonePunch" }
+          ],
+          "events": [
+            { "at": 0, "sfx": "smash" }
           ]
         }
       ]
@@ -492,7 +467,7 @@
           "name": "fall",
           "frames": 65,
           "hitboxes": [
-            { "start": 0, "end": 64, "x": 0, "y": 8, "r": 31, "damage": 12, "bkb": 6, "kbg": 0.118, "angle": -65 }
+            { "start": 0, "end": 64, "x": 0, "y": 8, "r": 31, "damage": 12, "bkb": 5, "kbg": 0.08, "angle": -65 }
           ],
           "anim": [
             { "at": 0, "pose": "stoneBrace" }
@@ -514,7 +489,7 @@
           "name": "impact",
           "frames": 32,
           "hitboxes": [
-            { "start": 0, "end": 4, "x": 0, "y": 14, "r": 45, "damage": 11, "bkb": 6, "kbg": 0.1416, "angle": 65 }
+            { "start": 0, "end": 4, "x": 0, "y": 14, "r": 45, "damage": 11, "bkb": 6, "kbg": 0.11, "angle": 65 }
           ],
           "anim": [
             { "at": 0, "pose": "crouch" }
@@ -666,7 +641,7 @@
   },
   "ai": {
     "reach": 85,
-    "counterChance": 0.18,
+    "counterChance": 0,
     "specials": [
       {
         "minDistance": 50,
