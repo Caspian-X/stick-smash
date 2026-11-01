@@ -148,6 +148,8 @@ impl Vote {
             let before = c.key;
             for a in pointer::steer(ptr, &mut c, &st.nav, st.stick, spots, Some(g), cfg, dt, screen) {
                 match a {
+                    // Confirming your own vote again rolls, like Start.
+                    Action::Activate(k) if kind(k).0 == TILE && self.voters[v].vote == Some(kind(k).1) => go = true,
                     Action::Activate(k) if kind(k).0 == TILE && votable(kind(k).1) => {
                         self.voters[v].vote = Some(kind(k).1);
                         self.preview = kind(k).1;
@@ -580,13 +582,12 @@ fn preview(
                     // What this voter can do, in their device's controls.
                     let on = kind(x.cursor.key);
                     let mut hints = vec![];
-                    if on.0 == TILE && x.vote != Some(on.1) {
-                        hints.push((Ctl::Confirm, "vote"));
+                    if on.0 == TILE {
+                        hints.push((Ctl::Confirm, if x.vote == Some(on.1) { "roll" } else { "vote" }));
                     } else if on.0 == STOCKS {
                         hints.push((Ctl::Confirm, "change"));
                     }
                     hints.push(match x.vote {
-                        Some(_) if hints.is_empty() => (Ctl::Start, "roll"),
                         Some(_) => (Ctl::Back, "take back"),
                         None => (Ctl::Back, "to fighters"),
                     });
@@ -701,6 +702,14 @@ mod tests {
             (true, false)
         );
         assert_eq!(v.hops, [1]);
+        // Confirming your own vote again rolls too (keyboards have no Start here).
+        let mut v = Vote::new(&sel);
+        v.voters[0].cursor.key = key(TILE, 0);
+        v.frame(&mut sel, &devices([vec![Nav::Confirm], vec![]]), &spots, &d, &mut Pointers::default(), 0.016);
+        assert_eq!(
+            v.frame(&mut sel, &devices([vec![Nav::Confirm], vec![]]), &spots, &d, &mut Pointers::default(), 0.016),
+            (true, false)
+        );
         let mut v = Vote::new(&sel);
         v.voters[0].cursor.key = key(TILE, 0);
         v.voters[1].cursor.key = key(TILE, 1);

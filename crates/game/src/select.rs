@@ -192,7 +192,24 @@ impl Select {
                 carry: None,
             },
         );
+        self.inserted(at);
         true
+    }
+    /// A card was inserted at `at`: references to later cards (CPU rows being edited, carried chips) move along.
+    fn inserted(&mut self, at: usize) {
+        let up = |k: u32| match kind(k) {
+            (0 | TILE | STOCKS | STAGE | TEAMS | FF | ADD, _) => k,
+            (kd, si) if si >= at => key(kd, si + 1),
+            _ => k,
+        };
+        for (i, p) in self.slots.iter_mut().enumerate() {
+            if i != at {
+                p.cursor.key = up(p.cursor.key);
+                p.menu = p.menu.map(up);
+                p.carry = p.carry.map(|(c, f)| (c + usize::from(c >= at), f));
+            }
+            p.cursor.owner = Some(i);
+        }
     }
     fn add_cpu(&mut self, saved: &Saved, d: &sim::GameData) {
         if self.slots.len() >= self.max() || self.mode == Mode::Training {
@@ -410,14 +427,21 @@ impl Select {
                 start |= s.act(i, a, d, ptr, &mut remove, &mut adds);
             }
         }
-        let mut changed = !remove.is_empty() || adds > 0;
+        let changed = !remove.is_empty() || adds > 0;
         remove.sort_unstable();
         remove.dedup();
+        for &i in &remove {
+            s.drop_carry(i, false, d);
+        }
         for &i in remove.iter().rev() {
             s.slots.remove(i);
         }
         for _ in 0..adds {
             s.add_cpu(saved, d);
+        }
+        // Removals first, in old indices; each join then shifts what it displaces.
+        if changed {
+            s.renumber(&remove);
         }
         let mut leave = false;
         for (dev, st) in &devs.map {
@@ -429,12 +453,9 @@ impl Select {
                 leave |= s.humans().count() == 0;
                 continue;
             }
-            if st.any_press() && s.join(*dev, saved, d) {
-                changed = true;
+            if st.any_press() {
+                s.join(*dev, saved, d);
             }
-        }
-        if changed {
-            s.renumber(&remove);
         }
         s.fit_stage(d);
         ptrs.map.retain(|dev, _| s.slots.iter().any(|p| p.dev == Some(*dev)));
@@ -1853,6 +1874,27 @@ mod tests {
         t.navs([vec![Nav::Right], vec![]]).frame(&spots);
         t.navs([vec![Nav::Back], vec![]]).frame(&spots);
         assert_eq!((t.s.slots[2].fighter, t.s.slots[0].carry, t.s.humans().count()), (5, None, 2));
+    }
+    #[test]
+    fn a_carried_cpu_chip_follows_its_card_when_someone_joins_or_returns_when_the_carrier_leaves() {
+        let mut t = T::new();
+        let spots = t.spots(&[(key(FIGHTER, 2), true)]);
+        let f = t.s.slots[2].fighter;
+        t.s.slots[1].cursor.key = key(FIGHTER, 2);
+        t.navs([vec![], vec![Nav::Confirm]]).frame(&spots);
+        assert_eq!(t.s.slots[1].carry, Some((2, f)));
+        // A new human takes the CPU's place in line; the chip stays the CPU's.
+        assert!(t.s.join(Dev::Bot(2), &t.saved, &t.d));
+        assert_eq!((t.s.slots[2].dev, t.s.slots[1].carry), (Some(Dev::Bot(2)), Some((3, f))));
+        let p3 = t.s.slots[2].fighter;
+        t.s.hover(1, (f + 1) % t.d.fighters.len(), &t.d);
+        assert_eq!(t.s.slots[2].fighter, p3);
+        assert_ne!(t.s.slots[3].fighter, f);
+        // The unlocked carrier unplugs: the CPU gets its own fighter back.
+        t.devs.map.remove(&Dev::Bot(1));
+        t.devs.map.insert(Dev::Bot(2), default());
+        t.s.frame(&t.devs, &spots, &t.saved, &t.d, &mut t.ptrs, 1. / 60.);
+        assert_eq!((t.s.slots.len(), t.s.slots[2].dev, t.s.slots[2].fighter), (3, None, f));
     }
     #[test]
     fn options_popover_takes_the_pointer_until_closed() {
