@@ -129,6 +129,7 @@ fn main() {
         stage_select::StagePlugin,
         hud::HudPlugin,
         results::ResultsPlugin,
+        replay::ReplayPlugin,
         training::TrainingPlugin,
     ))
     .insert_resource(ClearColor(ui::NIGHT))
@@ -139,21 +140,14 @@ fn main() {
     .insert_resource(saved)
     .insert_resource(persist)
     .init_resource::<input::Devices>()
-    .init_resource::<replay::Library>()
     .add_systems(Startup, move |mut commands: Commands, mut fonts: ResMut<Assets<Font>>| {
         commands.insert_resource(ui::Fonts::load(&assets, &mut fonts));
     })
     .add_systems(PreUpdate, input::poll.after(InputSystems))
     .add_systems(FixedUpdate, play::tick.run_if(resource_exists::<play::Match>))
-    .add_systems(OnEnter(Screen::Replays), replay::enter)
     .add_systems(
         Update,
-        (
-            replay::library.in_set(UiSystems::Input).run_if(in_state(Screen::Replays)),
-            replay::controls.in_set(UiSystems::Input).run_if(in_state(Screen::Playback)),
-            play::interpolate.before(RenderSystems).run_if(resource_exists::<play::Match>),
-            settings::save,
-        ),
+        (play::interpolate.before(RenderSystems).run_if(resource_exists::<play::Match>), settings::save),
     )
     .add_systems(EguiPrimaryContextPass, toast);
     editing::setup(&mut app, assets_root, if shot_dir.is_some() { None } else { settings::user_content_dir() });

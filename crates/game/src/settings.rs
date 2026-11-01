@@ -10,6 +10,10 @@ use serde::{Deserialize, Serialize};
 
 const APP: &str = "stick-smash";
 
+pub(crate) fn replays_dir() -> Option<PathBuf> {
+    dirs::data_dir().map(|p| p.join(APP).join("replays"))
+}
+
 #[derive(Resource, Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Saved {

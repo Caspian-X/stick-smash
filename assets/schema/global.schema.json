@@ -1096,12 +1096,9 @@
         "fx": { "$ref": "#/$defs/FxLook" },
         "hud": { "$ref": "#/$defs/Hud" },
         "select": { "$ref": "#/$defs/SelectLook" },
-        "interpolate": {
-          "$ref": "#/$defs/Interpolate",
-          "default": { "fighterJump": 150.0, "projectileJump": 80.0 }
-        }
+        "interpolate": { "$ref": "#/$defs/Interpolate" }
       },
-      "required": ["alphaGamma", "camera", "overlays", "fx", "hud", "select"]
+      "required": ["alphaGamma", "camera", "overlays", "fx", "hud", "select", "interpolate"]
     },
     "Camera": {
       "type": "object",
@@ -1123,26 +1120,22 @@
         "referencePlayWidth": {
           "type": "number",
           "format": "double",
-          "description": "Reference play-area width before camera padding; the bundled value is Arena’s play area.",
-          "default": 680.0
+          "description": "Reference play-area width before camera padding; the bundled value is Arena’s play area."
         },
         "referencePlayHeight": {
           "type": "number",
           "format": "double",
-          "description": "Reference play-area height (including block undersides), before camera padding; the bundled value is Arena’s play area.",
-          "default": 395.0
+          "description": "Reference play-area height (including block undersides), before camera padding; the bundled value is Arena’s play area."
         },
         "minScaleStart": {
           "type": "number",
           "format": "double",
-          "description": "Only stages smaller than this fraction of both reference dimensions zoom in tighter.",
-          "default": 0.8
+          "description": "Only stages smaller than this fraction of both reference dimensions zoom in tighter."
         },
         "minScaleFloor": {
           "type": "number",
           "format": "double",
-          "description": "Smallest automatic minHeight multiplier; scaling below minScaleStart is linear.",
-          "default": 0.5
+          "description": "Smallest automatic minHeight multiplier; scaling below minScaleStart is linear."
         },
         "stageBias": {
           "type": "number",
@@ -1173,6 +1166,10 @@
         "padBottom",
         "minHeight",
         "maxHeight",
+        "referencePlayWidth",
+        "referencePlayHeight",
+        "minScaleStart",
+        "minScaleFloor",
         "stageBias",
         "blastMargin",
         "follow",
@@ -1474,20 +1471,9 @@
           "minimum": 0,
           "description": "Results stats: a fall counts as a KO for the last hitter if they hit within this many ticks, otherwise\nas a self-destruct."
         },
-        "look": {
-          "$ref": "#/$defs/HudLook",
-          "default": {
-            "shakeSpeed": 91.0,
-            "tagHeight": 96.0,
-            "anchorHeight": 40.0,
-            "bubbleShrink": 900.0,
-            "bubbleMinScale": 0.699999988079071,
-            "popScale": 1.5,
-            "popSpeed": 6.0
-          }
-        }
+        "look": { "$ref": "#/$defs/HudLook" }
       },
-      "required": ["damageRamp", "shake", "endSlowmo", "resultsDelay", "koCreditTicks"],
+      "required": ["damageRamp", "shake", "endSlowmo", "resultsDelay", "koCreditTicks", "look"],
       "description": "In-match HUD and match-flow presentation (the game crate reads this; the sim never does)."
     },
     "Slowmo": {
