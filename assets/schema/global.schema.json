@@ -386,6 +386,13 @@
         "centerDeadzone": { "type": "number", "format": "double" },
         "targetPad": { "type": "number", "format": "double" },
         "targetDeadzone": { "type": "number", "format": "double" },
+        "surfaceChaseTicks": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "No-progress ticks before committing to a jump across surfaces. Zero disables it for reference traces.",
+          "default": 0
+        },
         "defendDistance": { "type": "number", "format": "double" },
         "defendHeight": { "type": "number", "format": "double" },
         "shieldHoldMin": { "type": "number", "format": "double" },

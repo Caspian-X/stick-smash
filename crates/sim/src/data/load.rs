@@ -504,6 +504,16 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
                 return Err(err(file, format!("{path}.{name}"), "exceeds i32::MAX"));
             }
         }
+        if let Some(c) = &p.charge_scale {
+            nonnegative(file, &format!("{path}.chargeScale.speed"), c.speed)?;
+            nonnegative(file, &format!("{path}.chargeScale.damage"), c.damage)?;
+        }
+        if let Some(e) = &p.explosion {
+            positive(file, &format!("{path}.explosion.radius"), e.radius)?;
+            if let Some(r) = e.proximity {
+                positive(file, &format!("{path}.explosion.proximity"), r)?;
+            }
+        }
         if let Some(b) = &p.bat {
             positive(file, &format!("{path}.bat.speed"), b.speed)?;
             check_life(file, &format!("{path}.bat.life"), b.life)?;

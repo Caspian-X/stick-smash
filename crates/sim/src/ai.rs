@@ -37,9 +37,45 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
     let cfg = &d.global.ai;
     let v = &cfg.thresholds;
     let s = &d.stages[w.stage];
+    if v.surface_chase_ticks > 0 {
+        let separated = o.as_ref().is_some_and(|o| {
+            o.surf.is_some()
+                && o.surf != f.surf
+                && ((o.x - f.x).abs() > d.fighters[f.data].ai.reach || (o.y - f.y).abs() > v.attack_height)
+        });
+        if !separated || matches!(st, State::Dead | State::Respawn | State::Out) {
+            f.ai.pursuit = false;
+            f.ai.pursuit_ticks = 0;
+        } else if f.ground {
+            if (f.x - f.ai.pursuit_x).abs() < v.target_deadzone {
+                f.ai.pursuit_ticks = f.ai.pursuit_ticks.saturating_add(1);
+                f.ai.pursuit |= f.ai.pursuit_ticks >= v.surface_chase_ticks;
+            } else {
+                f.ai.pursuit_x = f.x;
+                f.ai.pursuit_ticks = 0;
+            }
+        }
+    }
     let support = if matches!(st, State::Ledge | State::Climb) { Some(f.sd.ledge_block) } else { f.surf };
     let support = if !f.ground && matches!(st, State::Air | State::Helpless) {
-        o.as_ref().and_then(|o| o.surf).filter(|&id| id < s.blocks.len()).or(support)
+        let target = o.as_ref().and_then(|o| {
+            o.surf.filter(|&id| id < s.blocks.len()).or_else(|| {
+                f.ai.pursuit
+                    .then(|| {
+                        s.blocks
+                            .iter()
+                            .enumerate()
+                            .min_by(|(_, a), (_, b)| {
+                                (o.x - o.x.clamp(a.left, a.right))
+                                    .abs()
+                                    .total_cmp(&(o.x - o.x.clamp(b.left, b.right)).abs())
+                            })
+                            .map(|(id, _)| id)
+                    })
+                    .flatten()
+            })
+        });
+        target.or(support)
     } else {
         support
     };
@@ -223,16 +259,54 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
             }
             return inp;
         };
+        if ai.pursuit {
+            let destination = o.surf.unwrap();
+            let (left, right, top) = crate::physics::surface(d, w, destination);
+            let tx = o.x.clamp(left, right);
+            toward(&mut inp, tx - f.x);
+            if f.ground {
+                if let Some(id) = f.surf {
+                    let (x1, x2, _) = crate::physics::surface(d, w, id);
+                    let edge = if tx > f.x { x2 } else { x1 };
+                    if (f.x - edge).abs() <= v.target_pad || f.x >= left && f.x <= right {
+                        inp.jump = true;
+                        inp.jump_held = true;
+                        ai.up_t = v.jump_hold;
+                    }
+                }
+            } else if f.vy > v.recover_jump_vy && f.jumps > 0 && f.y > top - v.recover_jump_height {
+                inp.jump = true;
+                inp.jump_held = true;
+                ai.up_t = v.jump_hold;
+            }
+            return inp;
+        }
         let dx = o.x - f.x;
         let dy = o.y - f.y;
         let adx = dx.abs();
         let tdir = if dx == 0. { 1. } else { sign(dx) };
         let stage = &d.stages[w.stage];
-        let destination = o.surf.filter(|&id| id < stage.blocks.len()).filter(|&id| Some(id) != f.surf);
-        let chase = destination.map_or(s, |id| &stage.blocks[id]);
-        let pad = v.target_pad.min((chase.right - chase.left) / 2.);
-        let tx = o.x.clamp(chase.left + pad, chase.right - pad);
-        if destination.is_some() && f.ground && (f.x - if dx > 0. { s.right } else { s.left }).abs() <= v.target_pad {
+        let destination =
+            o.surf.filter(|&id| (v.surface_chase_ticks > 0 || id < stage.blocks.len()) && Some(id) != f.surf);
+        let (left, right, _) = if v.surface_chase_ticks > 0 {
+            o.surf.map_or((s.left, s.right, s.top), |id| crate::physics::surface(d, w, id))
+        } else {
+            destination.map_or((s.left, s.right, s.top), |id| {
+                let b = &stage.blocks[id];
+                (b.left, b.right, b.top)
+            })
+        };
+        let pad = v.target_pad.min((right - left) / 2.);
+        let tx = o.x.clamp(left + pad, right - pad);
+        let edge = if v.surface_chase_ticks > 0 {
+            let (left, right, _) = f.surf.map_or((s.left, s.right, s.top), |id| crate::physics::surface(d, w, id));
+            if dx > 0. { right } else { left }
+        } else if dx > 0. {
+            s.right
+        } else {
+            s.left
+        };
+        if destination.is_some() && f.ground && (f.x - edge).abs() <= v.target_pad {
             inp.jump = true;
             ai.up_t = v.jump_hold;
         }

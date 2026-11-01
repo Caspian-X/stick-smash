@@ -28,7 +28,7 @@ check: lint test
 
 # Regenerate schemas and reformat content files after changing data types
 bless:
-    BLESS=1 cargo test -p sim --test content
+    BLESS=1 cargo test -p sim --test content -- --test-threads=1
 
 # Save all screenshot sections, or a comma-separated subset
 shots dir="/tmp/stick-smash-shots" sections="":

@@ -158,6 +158,12 @@ pub struct Projectile {
     /// Effects emitted while flying (in projectile-local space, x along its travel direction).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub trail: Vec<super::moves::Event>,
+    /// Per held charge tick, add these fractions to launch speed and damage (1 + ticks × value).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub charge_scale: Option<ProjectileCharge>,
+    /// Suppress contact hits until armed, then explode on proximity or lifetime expiry.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub explosion: Option<Explosion>,
     /// Drawing: `shapes` rotate by `spin` degrees per pixel traveled, `overlay` doesn't rotate.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub shapes: Vec<Shape>,
@@ -165,6 +171,28 @@ pub struct Projectile {
     pub overlay: Vec<Shape>,
     #[serde(default, skip_serializing_if = "is_default")]
     pub spin: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ProjectileCharge {
+    pub speed: f64,
+    pub damage: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Explosion {
+    /// Ticks before proximity can trigger. The fuse still expires at projectile life zero.
+    pub arm_ticks: u32,
+    /// Distance to an opponent's hurtbox that triggers; omit for fuse only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proximity: Option<f64>,
+    pub radius: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sfx: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub fx: Vec<Fx>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -213,7 +241,8 @@ pub struct SpecialTactic {
     pub no_projectile: bool,
     /// Success probability, sampled after geometry and ownership checks pass.
     pub chance: f64,
-    /// Only while grounded and idle without hitlag: face the target and clear directional input (neutral, or down with `down`).
+    /// Grounded idle without hitlag only: face the target and clear stick directions to select neutral
+    /// instead of side special (or down special with `down`).
     #[serde(default, skip_serializing_if = "is_default")]
     pub neutral: bool,
     /// Add down to the toward-target special input.

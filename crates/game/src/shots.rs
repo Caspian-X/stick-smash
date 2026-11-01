@@ -25,6 +25,7 @@ pub enum Step {
     OpenEditor,
     Select(Mode, usize),
     Match(i32),
+    Training(&'static str),
     /// Simulate recorded game ticks in bounded batches, stopping at the exact predicate.
     Fast(Pred, u32),
     Set(u8, Act, bool),
@@ -444,6 +445,24 @@ fn training() -> Vec<Step> {
         60,
     ));
     shot(&mut v, "14-training");
+    for (id, idle, special, recovery) in [
+        ("archer", "14a-archer", "14b-archer-draw", "14c-archer-kite"),
+        ("wizard", "14d-wizard", "14e-wizard-orb", "14f-wizard-levitate"),
+        ("tinker", "14g-tinker", "14h-tinker-bomb", "14i-tinker-jetpack"),
+    ] {
+        v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training(id), Step::Wait(30)]);
+        shot(&mut v, idle);
+        v.push(Step::Set(0, Special, true));
+        v.push(Step::Until(
+            |m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.charge >= 24 || mv.elapsed >= 24),
+            100,
+        ));
+        shot(&mut v, special);
+        v.extend([Step::Set(0, Special, false), Step::Wait(70)]);
+        v.extend([Step::Set(0, Up, true), Step::Set(0, Special, true), Step::Wait(8)]);
+        shot(&mut v, recovery);
+        v.extend([Step::Set(0, Up, false), Step::Set(0, Special, false)]);
+    }
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Wait(4), Step::OpenEditor, Step::Wait(20)]);
     for (id, slot, frame, name) in [
         ("ninja", "fsmash", 14, "14b-ninja-heel"),
@@ -729,6 +748,28 @@ pub fn run(
             }
             s.at += 1;
         }
+        Step::Training(id) => {
+            let slots = [*id, "brawler"]
+                .into_iter()
+                .enumerate()
+                .map(|(i, id)| Slot {
+                    dev: Some(Dev::Bot(i as u8)),
+                    fighter: data.0.fighters.iter().position(|f| f.id == id).unwrap(),
+                    cpu: None,
+                    team: None,
+                    tap_jump: false,
+                    tag: String::new(),
+                    color: i,
+                })
+                .collect();
+            let rules = Rules { stocks: 3, stage: "arena".into(), friendly_fire: false };
+            let mut m = Match::new(&data.0, Mode::Training, slots, rules, 7).unwrap();
+            m.world.count = 0;
+            commands.remove_resource::<Select>();
+            play::install(&mut commands, &mut scene, m);
+            next.set(Screen::Match);
+            s.at += 1;
+        }
         Step::Versus(_) | Step::Match(_) => {
             let (id, stocks) = match step {
                 Step::Versus(id) => (*id, 3),
@@ -921,6 +962,15 @@ mod tests {
 14h-wrangler-tip
 14i-wrangler-pull
 14j-wrangler-hitch
+14a-archer
+14b-archer-draw
+14c-archer-kite
+14d-wizard
+14e-wizard-orb
+14f-wizard-levitate
+14g-tinker
+14h-tinker-bomb
+14i-tinker-jetpack
 15-select-eight
 15b-select-teams
 15c-select-roster-30

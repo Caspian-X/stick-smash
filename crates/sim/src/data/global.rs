@@ -448,6 +448,9 @@ pub struct AiThresholds {
     pub center_deadzone: f64,
     pub target_pad: f64,
     pub target_deadzone: f64,
+    /// No-progress ticks before committing to a jump across surfaces. Zero disables it for reference traces.
+    #[serde(default)]
+    pub surface_chase_ticks: u32,
     pub defend_distance: f64,
     pub defend_height: f64,
     pub shield_hold_min: f64,
