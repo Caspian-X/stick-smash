@@ -24,6 +24,11 @@ dirs = "7.0.0"
 [workspace.lints.rust]
 unsafe_code = "forbid"
 
+# Bevy systems take many params and nested query types by design.
+[workspace.lints.clippy]
+too_many_arguments = "allow"
+type_complexity = "allow"
+
 # Bevy is unusably slow at opt-level 0; optimize deps fully and our code a little.
 [profile.dev]
 opt-level = 1

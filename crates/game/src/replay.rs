@@ -479,7 +479,6 @@ fn date(seconds: u64) -> String {
         seconds / 60 % 60
     )
 }
-#[allow(clippy::too_many_arguments)]
 pub fn library(
     mut commands: Commands,
     mut lib: ResMut<Library>,
@@ -610,7 +609,6 @@ pub struct SeekFill;
 #[derive(Component)]
 pub struct PositionText;
 
-#[allow(clippy::too_many_arguments, clippy::type_complexity)]
 pub fn controls(
     mut commands: Commands,
     mut m: ResMut<Match>,

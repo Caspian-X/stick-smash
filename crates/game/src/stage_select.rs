@@ -202,7 +202,6 @@ pub fn exit(mut commands: Commands, mut thumbs: ResMut<StageThumbs>, mut ptrs: R
     ptrs.mouse = None;
 }
 
-#[allow(clippy::too_many_arguments)]
 pub fn update(
     mut commands: Commands,
     (vote, sel): (Option<ResMut<Vote>>, Option<ResMut<Select>>),
@@ -342,7 +341,6 @@ fn info(d: &GameData, i: usize) -> String {
     out + &format!(" · up to {} players", s.max_players())
 }
 
-#[allow(clippy::too_many_arguments)]
 pub fn draw(
     mut commands: Commands,
     (vote, sel): (Option<Res<Vote>>, Option<Res<Select>>),
@@ -481,7 +479,6 @@ pub fn draw(
 }
 
 /// The big preview, its info line, and everyone's votes (or the roulette's result).
-#[allow(clippy::too_many_arguments)]
 fn preview(
     p: &mut ChildSpawnerCommands,
     f: &Fonts,

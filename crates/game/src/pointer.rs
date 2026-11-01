@@ -266,7 +266,6 @@ pub fn mouse(
 /// spinner spin it), then the slide. `stick` is analog, y up; while it is tilted, the direction presses it made are
 /// ignored. `spots` are the targets this pointer may use (none: it stays put). Confirm activates the target under
 /// the pointer (`NONE` over nothing); the caller decides what that means.
-#[allow(clippy::too_many_arguments)]
 pub fn steer(
     p: &mut Pointer,
     c: &mut Cursor,
@@ -380,7 +379,6 @@ pub struct PointerNode(Dev, Look);
 pub struct PointerChip(Dev);
 
 /// Keeps one arrow per pointer, above all select UI: rebuilt when its look changes, animated every frame.
-#[allow(clippy::too_many_arguments)]
 pub fn draw(
     mut commands: Commands,
     mut ptrs: ResMut<Pointers>,

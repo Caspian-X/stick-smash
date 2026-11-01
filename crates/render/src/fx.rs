@@ -62,11 +62,9 @@ impl FxLayer {
         self.beams.clear();
         self.shake = 0.;
     }
-    #[allow(clippy::too_many_arguments)]
     fn part(&mut self, x: f64, y: f64, vx: f64, vy: f64, life: f64, col: Rgba, size: f64, g: f64) {
         self.parts.push(Particle { x, y, px: x, py: y, vx, vy, life, max: life.max(1.), col, size, g });
     }
-    #[allow(clippy::too_many_arguments)]
     fn burst(&mut self, x: f64, y: f64, col: Rgba, n: f64, speed: f64, life: f64, size: f64, g: f64) {
         for _ in 0..n as u32 {
             let a = self.rng.unit() * TAU;

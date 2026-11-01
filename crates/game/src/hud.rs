@@ -237,7 +237,6 @@ fn to_ui(fr: &Framing, size: Vec2, x: f64, y: f64) -> Vec2 {
     Vec2::new(((x - x0) / (x1 - x0)) as f32 * size.x, ((y - y0) / (y1 - y0)) as f32 * size.y)
 }
 
-#[allow(clippy::too_many_arguments, clippy::type_complexity)]
 pub fn update(
     m: Res<Match>,
     fr: Res<Framing>,
@@ -377,7 +376,6 @@ const HITBOXES: u32 = 6;
 const TO_SELECT: u32 = 7;
 const TO_MENU: u32 = 8;
 
-#[allow(clippy::too_many_arguments)]
 pub fn pause(
     testing: Option<Res<crate::editing::Testing>>,
     mut m: ResMut<Match>,

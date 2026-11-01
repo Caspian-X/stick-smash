@@ -23,8 +23,12 @@ lint:
 fmt:
     cargo fmt --all
 
+# Fail on unformatted code
+fmt-check:
+    cargo fmt --all -- --check
+
 # Everything CI should check
-check: lint test
+check: fmt-check lint test
 
 # Regenerate schemas and reformat content files after changing data types
 bless:

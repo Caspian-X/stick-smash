@@ -605,7 +605,6 @@ impl Script {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 pub fn run(
     mut commands: Commands,
     mut s: ResMut<Script>,

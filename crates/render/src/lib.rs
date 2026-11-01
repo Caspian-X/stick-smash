@@ -262,7 +262,6 @@ fn fighter_views<'a>(
     views
 }
 
-#[allow(clippy::too_many_arguments)]
 fn draw(
     scene: Res<Scene>,
     mut st: ResMut<Drawn>,

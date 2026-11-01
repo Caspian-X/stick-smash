@@ -38,7 +38,6 @@ pub fn enter(mut rm: ResMut<ResultsMenu>, mut m: ResMut<Match>, shots: Option<Re
     rm.cursor = Cursor { key: REMATCH, owner: None };
 }
 
-#[allow(clippy::too_many_arguments)]
 pub fn update(
     testing: Option<Res<crate::editing::Testing>>,
     mut m: ResMut<Match>,

@@ -56,7 +56,6 @@ fn profiles(saved: &Saved, devs: &Devices) -> Vec<(Dev, String)> {
     v.into_iter().map(|d| (d, devs.profile(d))).collect()
 }
 
-#[allow(clippy::too_many_arguments)]
 pub fn update(
     screen: Res<State<Screen>>,
     data: Res<Data>,
@@ -181,7 +180,6 @@ pub fn window_mode(full: bool) -> WindowMode {
 #[derive(Component)]
 pub struct MenuRoot(String);
 
-#[allow(clippy::too_many_arguments)]
 pub fn draw(
     mut commands: Commands,
     screen: Res<State<Screen>>,

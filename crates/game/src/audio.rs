@@ -192,7 +192,6 @@ fn voting(
     *prev = Some(now);
 }
 
-#[allow(clippy::too_many_arguments, clippy::type_complexity)]
 fn playback(
     mut commands: Commands,
     mut bank: ResMut<Bank>,

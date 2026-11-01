@@ -585,7 +585,6 @@ fn exit(mut scene: ResMut<render::Scene>, mut ctx: EguiContexts, ed: Option<ResM
 #[derive(Resource, Default)]
 struct SavedStyle(Option<Arc<egui::Style>>);
 
-#[allow(clippy::too_many_arguments)]
 fn frame(
     mut ctx: EguiContexts,
     ed: Option<ResMut<Editor>>,

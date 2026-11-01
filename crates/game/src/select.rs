@@ -639,7 +639,6 @@ pub fn exit(mut portraits: ResMut<Portraits>, mut ptrs: ResMut<Pointers>) {
 
 /// Keeps each player's hint opacity: shown for a while after joining, after idling, while pointing at their own
 /// card, and once everyone is ready.
-#[allow(clippy::too_many_arguments)]
 fn hint_clock(
     s: &Select,
     devs: &Devices,
@@ -682,7 +681,6 @@ fn hint_clock(
 #[derive(Component)]
 pub struct CardArea(usize);
 
-#[allow(clippy::too_many_arguments)]
 pub fn update(
     mut commands: Commands,
     sel: Option<ResMut<Select>>,
@@ -879,7 +877,6 @@ fn ease(t: f32) -> f32 {
     1. + 2.7 * t * t * t + 1.7 * t * t
 }
 
-#[allow(clippy::type_complexity)]
 pub fn animate(
     time: Res<Time>,
     moments: Option<Res<Moments>>,
@@ -935,7 +932,6 @@ pub fn animate(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 pub fn draw(
     mut commands: Commands,
     sel: Option<Res<Select>>,
@@ -1191,7 +1187,6 @@ fn device_glyph(p: &mut ChildSpawnerCommands, f: &Fonts, dev: Dev, ink: Color) {
     });
 }
 
-#[allow(clippy::too_many_arguments)]
 fn card(
     p: &mut ChildSpawnerCommands,
     f: &Fonts,
@@ -1544,7 +1539,6 @@ fn hovered_by(s: &Select, k: u32) -> Option<usize> {
     s.humans().find(|(_, p)| p.cursor.key == k).map(|(i, _)| i)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn spin_row(
     p: &mut ChildSpawnerCommands,
     f: &Fonts,
