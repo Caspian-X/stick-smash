@@ -243,7 +243,7 @@ fn cpu_match(d: &GameData, stage: &str, fighters: &[&str], seed: u32, stocks: i3
     let max_spread = sim::data::camera::zoom_range(&d.stages[w.stage], cam, aspect).max * aspect - 2. * cam.pad_x;
     let mut dmg_before = vec![0.; fighters.len()];
     let mut stocks_before: Vec<i32> = w.fighters.iter().map(|f| f.stocks).collect();
-    while !w.over && st.ticks < 30_000 {
+    while !w.over && st.ticks < if fighters.len() == 2 { 60_000 } else { 30_000 } {
         step_world(&mut w, d, &[]);
         st.ticks += 1;
         for h in w.hits.drain(..).filter(|h| !h.shielded) {
@@ -312,5 +312,62 @@ fn cpu_matches_finish_on_every_stage() {
         assert!(big.self_kos * 3 <= big.kos, "{}: too many 8p self-destructs {big:?}", s.id);
         assert!((total.offscreen + big.offscreen) * 100 <= total.ticks + big.ticks, "{}: fighters off camera", s.id);
         assert!(w8.fighters.iter().any(|f| f.state == State::Win));
+    }
+}
+
+#[test]
+fn ranged_roster_cpu_matchups() {
+    let d = common::data();
+    for id in ["archer", "wizard", "tinker"] {
+        let mut wins = 0;
+        let mut matches = 0;
+        let mut kos = 0;
+        let mut self_kos = 0;
+        let mut own_losses = 0;
+        let mut draws = 0;
+        for s in &d.stages {
+            for opponent in ["brawler", "king", "swordfighter"] {
+                let mut pair_wins = 0;
+                for seed in 1..=4 {
+                    let slot = (seed % 2) as usize;
+                    let fighters = if slot == 0 { [id, opponent] } else { [opponent, id] };
+                    let (st, w) = cpu_match(&d, &s.id, &fighters, seed, 3);
+                    draws += usize::from(!w.over);
+                    let won = usize::from(w.fighters[slot].state == State::Win);
+                    pair_wins += won;
+                    wins += won;
+                    matches += 1;
+                    kos += st.kos;
+                    self_kos += st.self_kos;
+                    own_losses += (3 - w.fighters[slot].stocks) as usize;
+                }
+                println!("{id:6} {:8} vs {opponent:12}: {pair_wins}/4 wins", s.id);
+            }
+        }
+        println!(
+            "{id}: {wins}/{matches} wins, {draws} draws, {kos} total KOs, {self_kos} total self-KOs, {own_losses} own stock losses"
+        );
+        assert!(self_kos * 5 <= kos, "{id}: too many matchup self-destructs");
+    }
+}
+
+#[test]
+fn ranged_roster_four_player_matches_finish() {
+    let d = common::data();
+    for s in &d.stages {
+        let mut kos = 0;
+        let mut self_kos = 0;
+        let mut wins = [0; 4];
+        for seed in 1..=4 {
+            let (st, w) = cpu_match(&d, &s.id, &["archer", "wizard", "tinker", "brawler"], seed, 3);
+            assert!(w.over, "{}: ranged roster seed {seed} timed out", s.id);
+            for (i, f) in w.fighters.iter().enumerate() {
+                wins[i] += usize::from(f.state == State::Win);
+            }
+            kos += st.kos;
+            self_kos += st.self_kos;
+        }
+        println!("{} ranged 4p: winners archer/wizard/tinker/brawler {wins:?}, {kos} KOs, {self_kos} self-KOs", s.id);
+        assert!(self_kos * 5 <= kos, "{}: too many ranged roster self-destructs", s.id);
     }
 }

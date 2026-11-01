@@ -49,7 +49,11 @@ fn all_assets_load() {
     let (data, errors) = load(sources()).unwrap_or_else(|e| panic!("content failed to load:\n{}", fmt_errors(&e)));
     assert!(errors.is_empty(), "content errors:\n{}", fmt_errors(&errors));
     let ids: Vec<&str> = data.fighters.iter().map(|f| f.id.as_str()).collect();
-    assert_eq!(ids, ["brawler", "king", "swordfighter"]);
+    for id in ["archer", "brawler", "king", "swordfighter", "tinker", "wizard"] {
+        assert!(ids.contains(&id), "missing built-in fighter {id}");
+    }
+    assert!(!ids.contains(&"base"));
+    assert!(ids.windows(2).all(|pair| pair[0] < pair[1]));
     let ids: Vec<&str> = data.stages.iter().map(|s| s.id.as_str()).collect();
     assert_eq!(ids, ["arena", "citadel", "foundry", "isles"]);
     assert!(data.stages.iter().all(|s| s.max_players() >= 8));
@@ -173,6 +177,18 @@ fn invalid_fighter_numbers_skip_package_with_path() {
     for (patch, path) in [
         (json!({"stats":{"runSpeed":-1}}), "stats.runSpeed"),
         (json!({"stats":{"weight":0}}), "stats.weight"),
+        (
+            json!({"projectiles":{"gordo":{"chargeScale":{"speed":-1,"damage":0}}}}),
+            "projectiles.gordo.chargeScale.speed",
+        ),
+        (
+            json!({"projectiles":{"gordo":{"explosion":{"armTicks":0,"radius":0}}}}),
+            "projectiles.gordo.explosion.radius",
+        ),
+        (
+            json!({"projectiles":{"gordo":{"explosion":{"armTicks":0,"radius":20,"proximity":-1}}}}),
+            "projectiles.gordo.explosion.proximity",
+        ),
         (json!({"stats":{"gravity":0}}), "stats.gravity"),
         (json!({"stats":{"fallSpeed":-1}}), "stats.fallSpeed"),
         (json!({"hurtboxes":{"default":{"x1":16,"x2":-16}}}), "hurtboxes.default"),

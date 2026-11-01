@@ -12,17 +12,21 @@ pub fn spawn(w: &mut World, d: &GameData, i: usize, f: &Fighter, id: &str) {
         }
         return;
     }
+    let charge = f.mov.as_ref().map_or(0., |m| f64::from(m.charge));
+    let speed = p.charge_scale.as_ref().map_or(1., |c| 1. + charge * c.speed);
+    let mut hit = p.hit.clone();
+    hit.damage *= p.charge_scale.as_ref().map_or(1., |c| 1. + charge * c.damage);
     w.projs.push(Projectile {
         owner: i,
         fighter_data: f.data,
         id: id.into(),
         x: f.x + f.face * p.spawn[0],
         y: f.y - p.spawn[1],
-        vx: f.face * p.vel[0],
-        vy: -p.vel[1],
+        vx: f.face * p.vel[0] * speed,
+        vy: -p.vel[1] * speed,
         life: p.life as i32,
         r: p.r,
-        hit: p.hit.clone(),
+        hit,
         bounces: 0,
         cooldown: 0,
     });
@@ -75,6 +79,9 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
     for pi in 0..w.projs.len() {
         let mut p = w.projs[pi].clone();
         let def = &d.fighters[p.fighter_data].projectiles[&p.id];
+        if def.explosion.is_some() && p.life <= 0 {
+            continue;
+        }
         p.x += p.vx;
         p.life -= 1;
         p.cooldown = p.cooldown.saturating_sub(1);
@@ -92,13 +99,16 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                     {
                         continue;
                     }
+                    let impact = p.vy > def.gravity || b.min_speed > 0.;
                     p.y = y - p.r;
                     p.vy = -b.min_speed.max(p.vy * b.restitution);
                     p.vx *= b.friction;
                     p.bounces += 1;
-                    w.dust(p.x, y, 3);
-                    if let Some(s) = &b.sfx {
-                        w.sfx(s.clone());
+                    if impact {
+                        w.dust(p.x, y, 3);
+                        if let Some(s) = &b.sfx {
+                            w.sfx(s.clone());
+                        }
                     }
                     if p.bounces > b.max_bounces {
                         p.life = p.life.min(b.fizzle_life as i32);
@@ -125,15 +135,36 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                 crate::moves::effects(w, &e.fx, (p.x, p.y), sign(p.vx), (p.vx, p.vy), p.owner);
             }
         }
+        let detonate = def.explosion.as_ref().is_some_and(|e| {
+            p.life <= 0
+                || def.life.saturating_sub(p.life.max(0) as u32) >= e.arm_ticks
+                    && e.proximity.is_some_and(|r| {
+                        w.fighters.iter().enumerate().any(|(v, f)| {
+                            w.opponents(p.owner, v)
+                                && f.hittable()
+                                && combat::circ_rect(p.x, p.y, r, combat::hurt(d, f))
+                        })
+                    })
+        });
+        if let Some(e) = &def.explosion
+            && detonate
+        {
+            p.r = e.radius;
+            crate::moves::effects(w, &e.fx, (p.x, p.y), sign(p.vx), (p.vx, p.vy), p.owner);
+            if let Some(s) = &e.sfx {
+                w.sfx(s.clone());
+            }
+        }
         for v in 0..w.fighters.len() {
-            if !w.opponents(p.owner, v)
+            if def.explosion.is_some() && !detonate
+                || !w.opponents(p.owner, v)
                 || !w.fighters[v].hittable()
-                || p.life <= 0
+                || p.life <= 0 && !detonate
                 || !combat::circ_rect(p.x, p.y, p.r, combat::hurt(d, &w.fighters[v]))
             {
                 continue;
             }
-            if let Some(c) = combat::countering(d, &w.fighters[v]) {
+            if let Some(c) = combat::countering(d, &w.fighters[v]).filter(|_| !detonate) {
                 p.owner = v;
                 p.vx = -p.vx * c.reflect_speed;
                 p.life = c.reflect_life as i32;
@@ -173,6 +204,11 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                     },
                 );
             }
+            if !detonate {
+                p.life = 0;
+            }
+        }
+        if detonate {
             p.life = 0;
         }
         for qi in 0..w.projs.len() {

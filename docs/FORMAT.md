@@ -105,6 +105,18 @@ stage's sides. With `bat`, attacks knock it back and the attacker becomes its ow
 owners destroy each other on contact. `trail` events run every tick in projectile-local space (x along its travel
 direction).
 
+Optional `chargeScale: { "speed": 0.024, "damage": 0.035 }` multiplies spawn velocity and damage
+by `1 + held charge ticks × coefficient`. It reads the spawning move's charge; it does not change lifetime,
+gravity, or radius. Omit it for unscaled projectiles.
+
+Optional `explosion: { "armTicks": 30, "proximity": 42, "radius": 52, "sfx": "quake", "fx": [...] }`
+suppresses contact hits. After `armTicks` elapsed ticks, an opposing hittable hurtbox within `proximity`
+triggers a blast; omit proximity for a fuse-only bomb. Lifetime expiry always detonates. The blast uses `hit`
+and `radius`, hits every eligible opponent once (shields still work), emits projectile-local FX/SFX and removes
+the projectile. Blasts cannot be reflected; unexploded gadgets can clash with opposing projectiles. `max`
+also limits planted gadgets; a second spawn at the limit fails without replacing the first. Bounce physics
+can settle a mine with zero restitution, minimum speed and friction. No additional rollback state is needed.
+
 ## Visuals
 
 - **Poses** (`poses.<name>`): joints `head, shoulder, hip, elbowF, handF, elbowB, handB, kneeF, footF, kneeB,
@@ -168,7 +180,8 @@ Each fighter's `ai` contains:
 - `counterChance`: chance of countering instead of shielding; 0 skips this random draw.
 - `recoveryShieldCancel`: optional phase name in `uspec` where an offstage recovery can shield-cancel.
   Recovery steering is selected by the move's `air: "upSpecial"`, independent of its identity.
-- `specials`: ordered special tactics. Each requires distance strictly above `minDistance`, strictly below
+- `specials`: ordered special tactics. Optional `neutral: true` clears stick directions to choose neutral special
+  even when a separate side special exists (before applying `down`). Each requires distance strictly above `minDistance`, strictly below
   optional `maxDistance`, vertical separation strictly below `height`, optionally `grounded`, optionally
   `noProjectile` owned by this CPU. Only then is `chance` sampled. Success presses special toward the target;
   `down` adds down, and optional `hold: [min,max]` samples/floors special-button hold duration. A failed chance

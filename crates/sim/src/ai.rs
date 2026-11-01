@@ -357,6 +357,12 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
                     && w.rng.next_f64() < t.chance
                 {
                     toward(&mut inp, tdir);
+                    if t.neutral {
+                        inp.left = false;
+                        inp.right = false;
+                        inp.up = false;
+                        inp.down = false;
+                    }
                     inp.down = t.down || inp.down;
                     inp.sp = true;
                     if let Some([a, b]) = t.hold {

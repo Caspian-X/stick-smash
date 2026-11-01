@@ -1,0 +1,1082 @@
+{
+  "$schema": "../../schema/fighter.schema.json",
+  "schemaVersion": 2,
+  "extends": "base",
+  "name": "Tinker",
+  "tagline": "A solution with a short fuse",
+  "blurb": "A gadgeteer with bouncing fuse bombs, one proximity mine, a wind-up wrench and a sputtering jetpack. Build space before swinging.",
+  "stats": {
+    "weight": 0.9,
+    "runSpeed": 5.2,
+    "airSpeed": 4.3,
+    "gravity": 0.72,
+    "jumpSpeed": 15.2,
+    "airJumpSpeed": 13.8
+  },
+  "ai": {
+    "reach": 85,
+    "counterChance": 0,
+    "specials": [
+      {
+        "minDistance": 150,
+        "maxDistance": 430,
+        "height": 100,
+        "chance": 0.38,
+        "grounded": false,
+        "noProjectile": true,
+        "down": false,
+        "hold": [0, 8],
+        "neutral": true
+      },
+      {
+        "minDistance": 95,
+        "maxDistance": 170,
+        "height": 60,
+        "chance": 0.16,
+        "grounded": true,
+        "noProjectile": false,
+        "down": false,
+        "hold": [8, 24]
+      },
+      {
+        "minDistance": 50,
+        "maxDistance": 150,
+        "height": 50,
+        "chance": 0.16,
+        "grounded": true,
+        "noProjectile": true,
+        "down": true,
+        "hold": null
+      }
+    ]
+  },
+  "poses": {
+    "draw": { "elbowF": [18, 48], "handF": [34, 50], "elbowB": [-15, 52], "handB": [-5, 51] },
+    "release": { "elbowF": [19, 48], "handF": [36, 50], "elbowB": [-14, 46], "handB": [-24, 42] },
+    "lift": {
+      "elbowF": [10, 69],
+      "handF": [14, 90],
+      "elbowB": [-10, 60],
+      "handB": [-15, 72],
+      "kneeF": [8, 15],
+      "footF": [12, 4],
+      "kneeB": [-5, 18],
+      "footB": [-12, 10]
+    },
+    "stand": { "head": [3, 62], "elbowF": [12, 42], "handF": [21, 30], "elbowB": [-10, 40], "handB": [-15, 28] }
+  },
+  "moves": {
+    "jab": {
+      "name": "Spanner Tap",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 17,
+          "hitboxes": [
+            { "x": 34, "y": 44, "r": 19, "damage": 4, "bkb": 5, "kbg": 0.11, "angle": 40, "start": 3, "end": 8 }
+          ],
+          "events": [
+            { "at": 0, "sfx": "swing" },
+            { "at": 3, "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            {
+              "at": 2,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [6.5280000000000005, 46.4],
+                "handF": [13.600000000000001, 44],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            {
+              "at": 3,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [16.32, 46.4],
+                "handF": [34, 44],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            { "at": 8, "pose": "stand", "lerp": true }
+          ],
+          "attach": {
+            "wrench": { "angle": [[0, 120], [2, 110], [5, 0]] }
+          }
+        }
+      ]
+    },
+    "ftilt": {
+      "name": "Bolt Driver",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 28,
+          "hitboxes": [
+            { "x": 49, "y": 43, "r": 23, "damage": 10, "bkb": 5, "kbg": 0.11, "angle": 40, "start": 8, "end": 13 }
+          ],
+          "events": [
+            { "at": 0, "sfx": "swing" },
+            { "at": 8, "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            {
+              "at": 7,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [9.408, 46.0],
+                "handF": [19.6, 43],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            {
+              "at": 8,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [23.52, 46.0],
+                "handF": [49, 43],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            { "at": 13, "pose": "stand", "lerp": true }
+          ],
+          "attach": {
+            "wrench": { "angle": [[0, 120], [7, 110], [10, 0]] }
+          }
+        }
+      ]
+    },
+    "utilt": {
+      "name": "Overhead Ratchet",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 27,
+          "hitboxes": [
+            { "x": 9, "y": 88, "r": 26, "damage": 8, "bkb": 5, "kbg": 0.11, "angle": 82, "start": 7, "end": 12 }
+          ],
+          "events": [
+            { "at": 0, "sfx": "swing" },
+            { "at": 7, "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            {
+              "at": 6,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [1.728, 64.0],
+                "handF": [3.6, 88],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            {
+              "at": 7,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [4.32, 64.0],
+                "handF": [9, 88],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            { "at": 12, "pose": "stand", "lerp": true }
+          ],
+          "attach": {
+            "wrench": { "angle": [[0, 120], [6, 110], [9, 90]] }
+          }
+        }
+      ]
+    },
+    "dtilt": {
+      "name": "Toe Tightener",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 23,
+          "hitboxes": [
+            { "x": 40, "y": 14, "r": 22, "damage": 6, "bkb": 5, "kbg": 0.11, "angle": 40, "start": 5, "end": 10 }
+          ],
+          "events": [
+            { "at": 0, "sfx": "swing" },
+            { "at": 5, "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            {
+              "at": 4,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [7.68, 34.4],
+                "handF": [16.0, 14],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            {
+              "at": 5,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [19.2, 34.4],
+                "handF": [40, 14],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            { "at": 10, "pose": "stand", "lerp": true }
+          ],
+          "attach": {
+            "wrench": { "angle": [[0, 120], [4, 110], [7, 0]] }
+          }
+        }
+      ]
+    },
+    "dashatk": {
+      "name": "Shoulder Rig",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 31,
+          "hitboxes": [
+            { "x": 30, "y": 43, "r": 28, "damage": 9, "bkb": 5, "kbg": 0.11, "angle": 40, "start": 8, "end": 13 }
+          ],
+          "events": [
+            { "at": 0, "sfx": "swing" },
+            { "at": 8, "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            {
+              "at": 7,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [5.76, 46.0],
+                "handF": [12.0, 43],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            {
+              "at": 8,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [14.399999999999999, 46.0],
+                "handF": [30, 43],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            { "at": 13, "pose": "stand", "lerp": true }
+          ],
+          "attach": {
+            "wrench": { "angle": [[0, 120], [7, 110], [10, 0]] }
+          }
+        }
+      ]
+    },
+    "fsmash": {
+      "name": "Torque Test",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 49,
+          "hitboxes": [
+            { "x": 62, "y": 46, "r": 29, "damage": 18, "bkb": 7, "kbg": 0.16, "angle": 40, "start": 19, "end": 24 }
+          ],
+          "events": [
+            { "at": 0, "sfx": "swing" },
+            { "at": 19, "sfx": "smash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "back" },
+            {
+              "at": 18,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [11.904, 47.2],
+                "handF": [24.8, 46],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            {
+              "at": 19,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [29.759999999999998, 47.2],
+                "handF": [62, 46],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            { "at": 24, "pose": "stand", "lerp": true }
+          ],
+          "charge": { "frame": 14 },
+          "attach": {
+            "wrench": { "angle": [[0, 120], [18, 110], [21, 0]] }
+          }
+        }
+      ]
+    },
+    "usmash": {
+      "name": "Pressure Release",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 43,
+          "hitboxes": [
+            { "x": 0, "y": 91, "r": 32, "damage": 14, "bkb": 7, "kbg": 0.16, "angle": 82, "start": 16, "end": 21 }
+          ],
+          "events": [
+            { "at": 0, "sfx": "swing" },
+            { "at": 16, "sfx": "smash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "back" },
+            {
+              "at": 15,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [0.0, 65.2],
+                "handF": [0.0, 91],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            {
+              "at": 16,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [0.0, 65.2],
+                "handF": [0, 91],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            { "at": 21, "pose": "stand", "lerp": true }
+          ],
+          "charge": { "frame": 11 },
+          "attach": {
+            "wrench": { "angle": [[0, 120], [15, 110], [18, 90]] }
+          }
+        }
+      ]
+    },
+    "dsmash": {
+      "name": "Workshop Sweep",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 42,
+          "hitboxes": [
+            {
+              "x": 48,
+              "y": 16,
+              "r": 28,
+              "damage": 13,
+              "bkb": 7,
+              "kbg": 0.16,
+              "angle": 40,
+              "start": 15,
+              "end": 20,
+              "dir": "away"
+            },
+            {
+              "x": -45,
+              "y": 16,
+              "r": 26,
+              "damage": 11,
+              "bkb": 7,
+              "kbg": 0.16,
+              "angle": 40,
+              "start": 19,
+              "end": 24,
+              "dir": "away"
+            }
+          ],
+          "events": [
+            { "at": 0, "sfx": "swing" },
+            { "at": 15, "sfx": "smash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "back" },
+            {
+              "at": 14,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [9.216000000000001, 35.2],
+                "handF": [19.200000000000003, 16],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            {
+              "at": 15,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [23.04, 35.2],
+                "handF": [48, 16],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            { "at": 20, "pose": "stand", "lerp": true }
+          ],
+          "charge": { "frame": 10 },
+          "attach": {
+            "wrench": { "angle": [[0, 120], [14, 110], [17, 0]] }
+          }
+        }
+      ]
+    },
+    "nair": {
+      "name": "Loose Parts",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 27,
+          "hitboxes": [
+            {
+              "x": 0,
+              "y": 40,
+              "r": 42,
+              "damage": 7,
+              "bkb": 5,
+              "kbg": 0.11,
+              "angle": 40,
+              "start": 5,
+              "end": 12,
+              "dir": "away"
+            }
+          ],
+          "events": [
+            { "at": 0, "sfx": "swing" },
+            { "at": 5, "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            {
+              "at": 4,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [0.0, 44.8],
+                "handF": [0.0, 40],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            {
+              "at": 5,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [0.0, 44.8],
+                "handF": [0, 40],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            { "at": 10, "pose": "air", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 10 }
+          ],
+          "attach": {
+            "wrench": { "angle": [[0, 120], [4, 110], [7, 0]] }
+          }
+        }
+      ]
+    },
+    "fair": {
+      "name": "Air Ratchet",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 33,
+          "hitboxes": [
+            { "x": 48, "y": 44, "r": 26, "damage": 12, "bkb": 5, "kbg": 0.11, "angle": 40, "start": 10, "end": 17 }
+          ],
+          "events": [
+            { "at": 0, "sfx": "swing" },
+            { "at": 10, "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            {
+              "at": 9,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [9.216000000000001, 46.4],
+                "handF": [19.200000000000003, 44],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            {
+              "at": 10,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [23.04, 46.4],
+                "handF": [48, 44],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            { "at": 15, "pose": "air", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 10 }
+          ],
+          "attach": {
+            "wrench": { "angle": [[0, 120], [9, 110], [12, 0]] }
+          }
+        }
+      ]
+    },
+    "bair": {
+      "name": "Exhaust Kick",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 28,
+          "hitboxes": [
+            {
+              "x": -37,
+              "y": 39,
+              "r": 26,
+              "damage": 11,
+              "bkb": 5,
+              "kbg": 0.11,
+              "angle": 40,
+              "start": 7,
+              "end": 14,
+              "dir": "back"
+            }
+          ],
+          "events": [
+            { "at": 0, "sfx": "swing" },
+            { "at": 7, "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            {
+              "at": 6,
+              "pose": {
+                "head": [-4, 62],
+                "elbowF": [-7.104, 44.4],
+                "handF": [-14.8, 39],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            {
+              "at": 7,
+              "pose": {
+                "head": [-4, 62],
+                "elbowF": [-17.759999999999998, 44.4],
+                "handF": [-37, 39],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            { "at": 12, "pose": "air", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 10 }
+          ],
+          "attach": {
+            "wrench": { "angle": [[0, 120], [6, 110], [9, 0]] }
+          }
+        }
+      ]
+    },
+    "uair": {
+      "name": "Ceiling Wrench",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 27,
+          "hitboxes": [
+            { "x": 4, "y": 91, "r": 26, "damage": 8, "bkb": 5, "kbg": 0.11, "angle": 82, "start": 7, "end": 14 }
+          ],
+          "events": [
+            { "at": 0, "sfx": "swing" },
+            { "at": 7, "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            {
+              "at": 6,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [0.768, 65.2],
+                "handF": [1.6, 91],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            {
+              "at": 7,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [1.92, 65.2],
+                "handF": [4, 91],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            { "at": 12, "pose": "air", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 10 }
+          ],
+          "attach": {
+            "wrench": { "angle": [[0, 120], [6, 110], [9, 90]] }
+          }
+        }
+      ]
+    },
+    "dair": {
+      "name": "Drop Tool",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 36,
+          "hitboxes": [
+            {
+              "x": 6,
+              "y": 0,
+              "r": 25,
+              "damage": 10,
+              "bkb": 5,
+              "kbg": 0.11,
+              "angle": -75,
+              "start": 12,
+              "end": 19,
+              "type": "spike"
+            }
+          ],
+          "events": [
+            { "at": 0, "sfx": "swing" },
+            { "at": 12, "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            {
+              "at": 11,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [1.1520000000000001, 28.799999999999997],
+                "handF": [2.4000000000000004, 0],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            {
+              "at": 12,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [2.88, 28.799999999999997],
+                "handF": [6, 0],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            { "at": 17, "pose": "air", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 10 }
+          ],
+          "attach": {
+            "wrench": { "angle": [[0, 120], [11, 110], [14, 0]] }
+          }
+        }
+      ]
+    },
+    "nspec": {
+      "name": "Fuse Bomb",
+      "bReverse": true,
+      "phases": [
+        {
+          "name": "main",
+          "frames": 39,
+          "events": [
+            { "at": 14, "spawn": "bomb" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "draw" },
+            { "at": 14, "pose": "release" },
+            { "at": 20, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    },
+    "sspec": {
+      "name": "Wind-up Wrench",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 56,
+          "hitboxes": [
+            { "x": 65, "y": 46, "r": 30, "damage": 16, "bkb": 7, "kbg": 0.145, "angle": 40, "start": 23, "end": 26 }
+          ],
+          "events": [
+            { "at": 0, "sfx": "swing" },
+            { "at": 23, "sfx": "slash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            {
+              "at": 22,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [12.48, 47.2],
+                "handF": [26.0, 46],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            {
+              "at": 23,
+              "pose": {
+                "head": [4, 62],
+                "elbowF": [31.2, 47.2],
+                "handF": [65, 46],
+                "elbowB": [-12, 40],
+                "handB": [-18, 34],
+                "kneeF": [12, 14],
+                "footF": [20, 0],
+                "kneeB": [-9, 14],
+                "footB": [-17, 0]
+              }
+            },
+            { "at": 28, "pose": "stand", "lerp": true }
+          ],
+          "attach": {
+            "wrench": { "angle": [[0, 120], [22, 110], [25, 0]] }
+          },
+          "charge": { "frame": 12, "max": 36, "button": "special", "jet": true }
+        }
+      ]
+    },
+    "uspec": {
+      "name": "Jetpack",
+      "air": "upSpecial",
+      "phases": [
+        {
+          "name": "startup",
+          "frames": 4,
+          "hover": true,
+          "events": [
+            {
+              "at": 0,
+              "mulVel": { "x": 0.5 }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "rise" }
+          ]
+        },
+        {
+          "name": "rise",
+          "frames": 38,
+          "ledgeGrab": 2,
+          "hitboxes": [
+            { "x": 0, "y": 48, "r": 25, "damage": 5, "bkb": 5, "kbg": 0.06, "angle": 85, "start": 0, "end": 10 }
+          ],
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "x": 2.5, "y": 19 },
+              "leaveGround": true,
+              "sfx": "djump"
+            },
+            {
+              "from": 1,
+              "to": 18,
+              "every": 3,
+              "fx": [
+                { "type": "part", "x": -8, "y": 16, "vx": 0, "vy": -3, "life": 14, "color": "player", "size": 5 }
+              ]
+            }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 12, "from": 3 },
+            { "on": "timeout", "to": "helpless" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "lift" }
+          ],
+          "attach": {
+            "flame": { "show": [0, 24] },
+            "wrench": { "angle": [[0, 20]] }
+          }
+        }
+      ]
+    },
+    "dspec": {
+      "name": "Pocket Mine",
+      "bReverse": true,
+      "phases": [
+        {
+          "name": "main",
+          "frames": 38,
+          "events": [
+            { "at": 12, "spawn": "mine" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 12, "pose": "release" },
+            { "at": 18, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    }
+  },
+  "projectiles": {
+    "bomb": {
+      "name": "Fuse Bomb",
+      "spawn": [30, 48],
+      "vel": [5.5, 6],
+      "r": 10,
+      "life": 75,
+      "max": 2,
+      "hit": { "x": 0, "y": 0, "r": 10, "damage": 11, "bkb": 6, "kbg": 0.1, "angle": 65, "start": 0, "end": 0 },
+      "spawnSfx": "shoot",
+      "shapes": [
+        { "shape": "circle", "at": [0, 0], "r": 10, "fill": "#788aa3", "stroke": "#e2e8f0", "width": 1.5 },
+        { "shape": "rect", "x": -3, "y": 8, "w": 6, "h": 6, "fill": "#b6c9d8" },
+        { "shape": "line", "from": [0, 13], "to": [5, 18], "width": 2, "color": "#ffc36b" }
+      ],
+      "gravity": 0.38,
+      "maxFall": 10,
+      "bounce": {
+        "restitution": 0.48,
+        "minSpeed": 0,
+        "friction": 0.65,
+        "maxBounces": 100,
+        "fizzleLife": 1,
+        "wallRestitution": 0.55,
+        "sfx": "bonk"
+      },
+      "explosion": {
+        "radius": 64,
+        "armTicks": 0,
+        "sfx": "quake",
+        "fx": [
+          { "type": "ring", "x": 0, "y": 0, "r": 10, "grow": 5, "life": 12, "color": "#ffc36b" },
+          { "type": "burst", "x": 0, "y": 0, "color": "#ffe6a0", "n": 16, "speed": 5, "life": 17, "size": 4 },
+          { "type": "shake", "k": 3 }
+        ]
+      }
+    },
+    "mine": {
+      "name": "Pocket Mine",
+      "spawn": [18, 12],
+      "vel": [0.6, 1],
+      "r": 9,
+      "life": 300,
+      "max": 1,
+      "hit": { "x": 0, "y": 0, "r": 9, "damage": 9, "bkb": 6, "kbg": 0.095, "angle": 75, "start": 0, "end": 0 },
+      "spawnSfx": "shoot",
+      "shapes": [
+        { "shape": "rect", "x": -12, "y": -5, "w": 24, "h": 10, "fill": "#6f7f89" },
+        { "shape": "circle", "at": [0, 5], "r": 4, "fill": "#ffae61" }
+      ],
+      "gravity": 0.4,
+      "maxFall": 8,
+      "bounce": {
+        "restitution": 0,
+        "minSpeed": 0,
+        "friction": 0,
+        "maxBounces": 1000,
+        "fizzleLife": 1,
+        "wallRestitution": 0.55,
+        "sfx": null
+      },
+      "explosion": {
+        "radius": 52,
+        "armTicks": 30,
+        "proximity": 42,
+        "sfx": "quake",
+        "fx": [
+          { "type": "ring", "x": 0, "y": 0, "r": 10, "grow": 5, "life": 12, "color": "#ffc36b" },
+          { "type": "burst", "x": 0, "y": 0, "color": "#ffe6a0", "n": 16, "speed": 5, "life": 17, "size": 4 },
+          { "type": "shake", "k": 3 }
+        ]
+      }
+    }
+  },
+  "attachments": [
+    {
+      "id": "wrench",
+      "joint": "handF",
+      "angle": 30,
+      "trail": { "inner": 25, "outer": 65 },
+      "glow": "active",
+      "shapes": [
+        { "shape": "line", "from": [-8, 0], "to": [28, 0], "width": 6, "color": "#c0cbda" },
+        {
+          "shape": "poly",
+          "points": [[24, -4], [30, -11], [40, -11], [35, -4], [35, 4], [40, 11], [30, 11], [24, 4]],
+          "fill": "#dce8f2"
+        },
+        { "shape": "circle", "at": [0, 0], "r": 3, "fill": "#5a6978" }
+      ]
+    },
+    {
+      "id": "goggles",
+      "joint": "head",
+      "shapes": [
+        { "shape": "line", "from": [-12, 1], "to": [12, 1], "width": 5, "color": "#705339" },
+        { "shape": "rect", "x": -11, "y": -3, "w": 10, "h": 9, "fill": "#f0ce7b" },
+        { "shape": "rect", "x": 1, "y": -3, "w": 10, "h": 9, "fill": "#f0ce7b" },
+        { "shape": "rect", "x": -8, "y": -1, "w": 5, "h": 5, "fill": "#a9ecff" },
+        { "shape": "rect", "x": 4, "y": -1, "w": 5, "h": 5, "fill": "#a9ecff" }
+      ]
+    },
+    {
+      "id": "pack",
+      "joint": "shoulder",
+      "behind": true,
+      "shapes": [
+        { "shape": "rect", "x": -25, "y": -28, "w": 18, "h": 32, "fill": "#75858d" },
+        { "shape": "rect", "x": -27, "y": -29, "w": 6, "h": 13, "fill": "#c7d4d6" },
+        { "shape": "line", "from": [-20, 2], "to": [-13, 13], "width": 3, "color": "#e2ac57" },
+        { "shape": "circle", "at": [-17, -11], "r": 5, "fill": "player" }
+      ]
+    },
+    {
+      "id": "flame",
+      "joint": "shoulder",
+      "behind": true,
+      "hidden": true,
+      "shapes": [
+        { "shape": "poly", "points": [[-26, -28], [-18, -55], [-11, -28]], "fill": "#ffbc55" },
+        { "shape": "poly", "points": [[-23, -28], [-18, -44], [-14, -28]], "fill": "#fff2bd" }
+      ]
+    }
+  ]
+}
