@@ -165,7 +165,7 @@
         },
         "neutral": {
           "type": "boolean",
-          "description": "Only while grounded and idle without hitlag: face the target and clear directional input (neutral, or down with `down`)."
+          "description": "Grounded idle without hitlag only: face the target and clear stick directions to select neutral\ninstead of side special (or down special with `down`)."
         },
         "down": { "type": "boolean", "description": "Add down to the toward-target special input." },
         "hold": {
@@ -981,6 +981,20 @@
           "items": { "$ref": "#/$defs/Event" },
           "description": "Effects emitted while flying (in projectile-local space, x along its travel direction)."
         },
+        "chargeScale": {
+          "anyOf": [
+            { "$ref": "#/$defs/ProjectileCharge" },
+            { "type": "null" }
+          ],
+          "description": "Per held charge tick, add these fractions to launch speed and damage (1 + ticks × value)."
+        },
+        "explosion": {
+          "anyOf": [
+            { "$ref": "#/$defs/Explosion" },
+            { "type": "null" }
+          ],
+          "description": "Suppress contact hits until armed, then explode on proximity or lifetime expiry."
+        },
         "shapes": {
           "type": "array",
           "items": { "$ref": "#/$defs/Shape" },
@@ -1046,6 +1060,39 @@
         "hitlag": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Hitlag for the batter." }
       },
       "required": ["speed", "vy", "life", "cooldown", "hitlag"]
+    },
+    "ProjectileCharge": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "speed": { "type": "number", "format": "double" },
+        "damage": { "type": "number", "format": "double" }
+      },
+      "required": ["speed", "damage"]
+    },
+    "Explosion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "armTicks": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks before proximity can trigger. The fuse still expires at projectile life zero."
+        },
+        "proximity": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Distance to an opponent's hurtbox that triggers; omit for fuse only."
+        },
+        "radius": { "type": "number", "format": "double" },
+        "sfx": { "type": ["string", "null"] },
+        "fx": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Fx" }
+        }
+      },
+      "required": ["armTicks", "radius"]
     },
     "Shape": {
       "oneOf": [
@@ -1685,6 +1732,20 @@
           "items": { "$ref": "#/$defs/Event" },
           "description": "Effects emitted while flying (in projectile-local space, x along its travel direction)."
         },
+        "chargeScale": {
+          "anyOf": [
+            { "$ref": "#/$defs/ProjectileChargePartial" },
+            { "type": "null" }
+          ],
+          "description": "Per held charge tick, add these fractions to launch speed and damage (1 + ticks × value)."
+        },
+        "explosion": {
+          "anyOf": [
+            { "$ref": "#/$defs/ExplosionPartial" },
+            { "type": "null" }
+          ],
+          "description": "Suppress contact hits until armed, then explode on proximity or lifetime expiry."
+        },
         "shapes": {
           "type": "array",
           "items": { "$ref": "#/$defs/Shape" },
@@ -1746,6 +1807,37 @@
           "description": "Frames before it can be batted again."
         },
         "hitlag": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Hitlag for the batter." }
+      }
+    },
+    "ProjectileChargePartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "speed": { "type": "number", "format": "double" },
+        "damage": { "type": "number", "format": "double" }
+      }
+    },
+    "ExplosionPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "armTicks": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks before proximity can trigger. The fuse still expires at projectile life zero."
+        },
+        "proximity": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Distance to an opponent's hurtbox that triggers; omit for fuse only."
+        },
+        "radius": { "type": "number", "format": "double" },
+        "sfx": { "type": ["string", "null"] },
+        "fx": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Fx" }
+        }
       }
     },
     "FighterFxPartial": {

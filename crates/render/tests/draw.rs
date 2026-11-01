@@ -32,53 +32,56 @@ fn data() -> GameData {
 #[test]
 fn cpu_matches_draw_cleanly() {
     let d = data();
-    let anims: Vec<String> = d.fighters[0].anims.keys().cloned().collect();
-    for seed in [1, 2] {
-        let players = d.fighters.iter().map(|f| PlayerConfig { cpu: Some(2), ..PlayerConfig::human(&f.id) }).collect();
-        let mut w = World::new(MatchConfig { seed, stocks: 2, players, ..Default::default() }, &d).unwrap();
-        let (mut fx, mut cam, mut rng, mut cv) =
-            (FxLayer::default(), CameraRig::default(), Rand::default(), Canvas::new(1.));
-        let s = &d.stages[w.stage];
-        let inputs = vec![Input::default(); w.fighters.len()];
-        for _ in 0..60 * 90 {
-            step_world(&mut w, &d, &inputs);
-            fx.consume(&d, &w, &w.fx.clone(), [0., 0., 1280., 720.]);
-            fx.tick(&d);
-            w.fx.clear();
-            cam.tick(&d, &w, 16. / 9.);
-            let c = cam.at(1.).unwrap();
-            let v = c.view(16. / 9.);
-            assert!(
-                v[0] >= s.camera.left - 1e-6
-                    && v[2] <= s.camera.right + 1e-6
-                    && v[1] >= s.camera.top - 1e-6
-                    && v[3] <= s.camera.bottom + 1e-6
-            );
-            cv.clear(1., d.global.render.alpha_gamma);
-            for p in &w.projs {
-                draw_projectile(&mut cv, &d, p, p.x, p.y, w.frame);
-            }
-            for (i, f) in w.fighters.iter().enumerate() {
-                if !matches!(f.state, sim::world::State::Attack) {
-                    let (name, _) = pose::state_anim(&d, f);
-                    assert!(
-                        anims.contains(&name) || matches!(f.state, sim::world::State::Dead | sim::world::State::Out),
-                        "no anim {name}"
-                    );
+    let capacity = d.stages.iter().find(|s| s.id == MatchConfig::default().stage).unwrap().max_players();
+    for roster in d.fighters.chunks(capacity) {
+        for seed in [1, 2] {
+            let players = roster.iter().map(|f| PlayerConfig { cpu: Some(2), ..PlayerConfig::human(&f.id) }).collect();
+            let mut w = World::new(MatchConfig { seed, stocks: 2, players, ..Default::default() }, &d).unwrap();
+            let (mut fx, mut cam, mut rng, mut cv) =
+                (FxLayer::default(), CameraRig::default(), Rand::default(), Canvas::new(1.));
+            let s = &d.stages[w.stage];
+            let inputs = vec![Input::default(); w.fighters.len()];
+            for _ in 0..60 * 90 {
+                step_world(&mut w, &d, &inputs);
+                fx.consume(&d, &w, &w.fx.clone(), [0., 0., 1280., 720.]);
+                fx.tick(&d);
+                w.fx.clear();
+                cam.tick(&d, &w, 16. / 9.);
+                let c = cam.at(1.).unwrap();
+                let v = c.view(16. / 9.);
+                assert!(
+                    v[0] >= s.camera.left - 1e-6
+                        && v[2] <= s.camera.right + 1e-6
+                        && v[1] >= s.camera.top - 1e-6
+                        && v[3] <= s.camera.bottom + 1e-6
+                );
+                cv.clear(1., d.global.render.alpha_gamma);
+                for p in &w.projs {
+                    draw_projectile(&mut cv, &d, p, p.x, p.y, w.frame);
                 }
-                let skel = pose::fighter_pose(&d, f, w.frame);
-                draw_fighter(&mut cv, &d, w.frame, &FighterView { i, f, x: f.x, y: f.y, skel }, &mut rng);
-                let _ = debug::info(&d, f);
+                for (i, f) in w.fighters.iter().enumerate() {
+                    if !matches!(f.state, sim::world::State::Attack) {
+                        let (name, _) = pose::state_anim(&d, f);
+                        assert!(
+                            d.fighters[f.data].anims.contains_key(&name)
+                                || matches!(f.state, sim::world::State::Dead | sim::world::State::Out),
+                            "no anim {name}"
+                        );
+                    }
+                    let skel = pose::fighter_pose(&d, f, w.frame);
+                    draw_fighter(&mut cv, &d, w.frame, &FighterView { i, f, x: f.x, y: f.y, skel }, &mut rng);
+                    let _ = debug::info(&d, f);
+                }
+                fx.draw(&mut cv, &d, 1.);
+                debug::draw_debug(&mut cv, &d, &w, &[]);
+                assert!(cv.pos.iter().flatten().all(|v| v.is_finite()));
+                assert!(cv.idx.iter().all(|&i| (i as usize) < cv.pos.len()));
             }
-            fx.draw(&mut cv, &d, 1.);
-            debug::draw_debug(&mut cv, &d, &w, &[]);
-            assert!(cv.pos.iter().flatten().all(|v| v.is_finite()));
-            assert!(cv.idx.iter().all(|&i| (i as usize) < cv.pos.len()));
+            cv.clear(1., 1.);
+            stage::draw_backdrop(&mut cv, &d, s);
+            stage::draw_stage(&mut cv, &d, s, 0.);
+            assert!(!cv.idx.is_empty());
         }
-        cv.clear(1., 1.);
-        stage::draw_backdrop(&mut cv, &d, s);
-        stage::draw_stage(&mut cv, &d, s, 0.);
-        assert!(!cv.idx.is_empty());
     }
 }
 

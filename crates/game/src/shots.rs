@@ -24,6 +24,8 @@ pub enum Step {
     Reset,
     OpenEditor,
     Select(Mode, usize),
+    /// Navigate through every roster row and out to the neighboring controls using bot input.
+    LeaveRoster(u8, Act),
     Match(i32),
     Training(&'static str),
     /// Simulate recorded game ticks in bounded batches, stopping at the exact predicate.
@@ -48,7 +50,7 @@ pub enum Step {
 type Entry = (&'static str, fn() -> Vec<Step>);
 
 /// Every section in full-tour order; `--shots` picks a subset in the order given.
-const TOUR: [Entry; 9] = [
+const TOUR: [Entry; 10] = [
     ("menus", menus),
     ("fighter-editor", fighter_editor),
     ("stage-editor", stage_editor),
@@ -316,16 +318,16 @@ fn select() -> Vec<Step> {
     press(&mut v, 0, Attack);
     press(&mut v, 1, Attack);
     // Bot 0: down to "Add CPU", add two, then Special takes its chip home to the roster.
-    press(&mut v, 0, Down);
+    v.push(Step::LeaveRoster(0, Down));
     press(&mut v, 0, Attack);
     press(&mut v, 0, Attack);
     press(&mut v, 0, Special);
-    // Both chips on one tile; bot 1 opens its card options.
+    // Bot 0 previews another tile; bot 1 opens its card options.
     press(&mut v, 0, Right);
     press(&mut v, 1, Grab);
     press(&mut v, 1, Down);
     shot(&mut v, "04-select-choosing");
-    // Bot 1 closes the options, locks in on the random tile; bot 0 locks in its tile.
+    // Bot 1 closes the options and changes its pick; both players lock in.
     press(&mut v, 1, Special);
     press(&mut v, 1, Right);
     press(&mut v, 1, Right);
@@ -352,7 +354,7 @@ fn select() -> Vec<Step> {
     v.extend([Step::Select(Mode::Versus, 8), Step::Wait(20)]);
     shot(&mut v, "15-select-eight");
     // Up from the roster reaches the rules: CPU cards gain a Team row.
-    press(&mut v, 0, Up);
+    v.push(Step::LeaveRoster(0, Up));
     press(&mut v, 0, Attack);
     shot(&mut v, "15b-select-teams");
     v
@@ -686,6 +688,23 @@ pub fn run(
             next.set(Screen::Select);
             s.at += 1;
         }
+        Step::LeaveRoster(b, act) => {
+            let on_roster = sel.as_ref().is_some_and(|s| {
+                s.slots.iter().any(|p| p.dev == Some(Dev::Bot(*b)) && crate::grid::kind(p.cursor.key).0 == 1)
+            });
+            devs.bot(*b)[*act as usize] = on_roster && s.budget.is_multiple_of(2);
+            if on_roster && s.budget < 60 {
+                s.budget += 1;
+                s.wait = 4;
+            } else {
+                if on_roster {
+                    error!("screenshot section {name}: could not leave roster");
+                    s.failures.push(name);
+                }
+                s.budget = 0;
+                s.at += 1;
+            }
+        }
         Step::Set(b, act, on) => {
             devs.bot(*b)[*act as usize] = *on;
             s.at += 1;
@@ -953,24 +972,24 @@ mod tests {
 12d-results-return
 13-training-select
 14-training
-14b-ninja-heel
-14c-ninja-stars
-14d-ninja-smoke
-14e-yoyo-world
-14f-yoyo-out
-14g-yoyo-return
-14h-wrangler-tip
-14i-wrangler-pull
-14j-wrangler-hitch
 14a-archer
 14b-archer-draw
+14b-ninja-heel
 14c-archer-kite
+14c-ninja-stars
+14d-ninja-smoke
 14d-wizard
 14e-wizard-orb
+14e-yoyo-world
 14f-wizard-levitate
+14f-yoyo-out
 14g-tinker
+14g-yoyo-return
 14h-tinker-bomb
+14h-wrangler-tip
 14i-tinker-jetpack
+14i-wrangler-pull
+14j-wrangler-hitch
 15-select-eight
 15b-select-teams
 15c-select-roster-30
