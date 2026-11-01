@@ -808,8 +808,18 @@ mod content {
         )
             .serialize(s)
     }
+    /// Select-screen looks never affect playback, so a recording takes this build's instead of the one it carries
+    /// (which older builds lack or shaped differently).
+    static SELECT: std::sync::LazyLock<serde_json::Value> = std::sync::LazyLock::new(|| {
+        let g: serde_json::Value = serde_json::from_str(include_str!("../../../assets/global.json")).unwrap();
+        g["render"]["select"].clone()
+    });
     pub fn deserialize<'de, D: serde::Deserializer<'de>>(d: D) -> Result<GameData, D::Error> {
-        let (mut data, fighters, stages): (GameData, Vec<String>, Vec<String>) = Deserialize::deserialize(d)?;
+        let (mut v, fighters, stages): (serde_json::Value, Vec<String>, Vec<String>) = Deserialize::deserialize(d)?;
+        if let Some(r) = v.pointer_mut("/global/render").and_then(|r| r.as_object_mut()) {
+            r.insert("select".into(), SELECT.clone());
+        }
+        let mut data: GameData = serde_json::from_value(v).map_err(serde::de::Error::custom)?;
         sim::data::load::check_global("replay global", &data.global).map_err(serde::de::Error::custom)?;
         if data.fighters.len() != fighters.len() || data.stages.len() != stages.len() {
             return Err(serde::de::Error::custom("invalid content ids"));
@@ -859,6 +869,15 @@ mod tests {
         assert!(error.to_string().contains("render.camera.minScaleFloor"));
     }
 
+    #[test]
+    fn recordings_with_other_select_looks_still_load() {
+        let (r, _) = recorded();
+        let mut v = serde_json::to_value(&r).unwrap();
+        let select = v.pointer_mut("/data/0/global/render/select").expect("select look in payload");
+        select.as_object_mut().unwrap().remove("pointer");
+        let back: Replay = serde_json::from_value(v).unwrap();
+        assert_eq!(back.data.global.render.select, r.data.global.render.select);
+    }
     #[test]
     fn cpu_match_round_trip_checksums_outcome_and_seek() {
         let (r, expected) = recorded();

@@ -169,10 +169,13 @@ impl Pointer {
     /// Where the tip rests on a target: a little above its centre, fanned out per player (closer on small targets).
     pub fn snap(&self, s: &Spot, cfg: &PointerLook) -> Vec2 {
         // A stair up to the right, so every chip (down-right of its tip) shows at least its number.
+        // The whole fan (x from -1 to 2 steps, y from -1.5 to 0.5) fits inside; it slides down rather than squash.
         let (i, k) = (self.fan % 8, (self.fan % 4) as f32);
-        let off = Vec2::new(k - 1., -0.5 * k + if i >= 4 { 0.5 } else { 0. }) * cfg.fan.min(s.size.x * 0.2);
         let lim = s.size * 0.42;
-        (s.center + off - Vec2::new(0., s.size.y * cfg.rest)).clamp(s.center - lim, s.center + lim)
+        let f = cfg.fan.min(s.size.x * 0.2).min(lim.y);
+        let off = Vec2::new(k - 1., -0.5 * k + if i >= 4 { 0.5 } else { 0. }) * f;
+        let y = (s.center.y - s.size.y * cfg.rest).max(s.center.y - lim.y + 1.5 * f).min(s.center.y + lim.y - 0.5 * f);
+        Vec2::new(s.center.x, y) + off
     }
     /// Steps the motion springs by `dt` real seconds, in slices short enough that any frame rate moves alike.
     pub fn animate(&mut self, m: &PointerMotion, dt: f32) {
@@ -624,10 +627,17 @@ mod tests {
     #[test]
     fn pointers_on_one_target_fan_out() {
         let cfg = cfg();
-        let s = spot(1, 100., 100.);
-        let at: Vec<Vec2> = (0..4).map(|i| Pointer::new(Vec2::ZERO, i).snap(&s, &cfg)).collect();
-        assert!(at.windows(2).all(|w| w[0].distance(w[1]) >= cfg.fan.min(12.) * 0.9), "{at:?}");
-        assert!(at.iter().all(|a| s.dist(*a) == 0.));
+        for (w, h) in [(60., 60.), (100., 100.), (200., 240.)] {
+            let s = Spot { size: Vec2::new(w, h), ..spot(1, 100., 100.) };
+            let at: Vec<Vec2> = (0..8).map(|i| Pointer::new(Vec2::ZERO, i).snap(&s, &cfg)).collect();
+            let gap = cfg.fan.min(w * 0.2) * 0.45;
+            for a in 0..8 {
+                assert_eq!(s.dist(at[a]), 0., "{w}x{h} P{} {at:?}", a + 1);
+                for b in a + 1..8 {
+                    assert!(at[a].distance(at[b]) >= gap, "{w}x{h}: P{} and P{} {at:?}", a + 1, b + 1);
+                }
+            }
+        }
     }
 
     #[test]
