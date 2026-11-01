@@ -10,10 +10,11 @@ use serde::{Deserialize, Serialize};
 
 const APP: &str = "stick-smash";
 
-#[derive(Resource, Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Resource, Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Saved {
-    /// The keyboard is two devices (left and right halves) instead of one.
+    /// The keyboard is two devices (left and right halves) instead of one. Off by default: one keyboard player with
+    /// WASD and the arrows both moving.
     pub split_keyboard: bool,
     pub fullscreen: bool,
     /// None uses the content defaults; old settings files remain compatible.
@@ -24,20 +25,6 @@ pub struct Saved {
     pub bindings: BTreeMap<String, BTreeMap<String, Vec<String>>>,
     pub versus: VersusPrefs,
     pub training: TrainingPrefs,
-}
-
-impl Default for Saved {
-    fn default() -> Self {
-        Self {
-            split_keyboard: true,
-            fullscreen: false,
-            volume: None,
-            versus_hitboxes: false,
-            bindings: BTreeMap::new(),
-            versus: VersusPrefs::default(),
-            training: TrainingPrefs::default(),
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

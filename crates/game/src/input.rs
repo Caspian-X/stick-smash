@@ -129,6 +129,8 @@ pub struct Devices {
     pad_profiles: BTreeMap<Dev, String>,
     /// Actions each bot holds, set by the script.
     pub bots: BTreeMap<u8, [bool; 10]>,
+    /// Each bot's analog stick (y up).
+    pub bot_sticks: BTreeMap<u8, Vec2>,
 }
 
 impl Devices {
@@ -479,7 +481,7 @@ pub fn poll(
                 if enter && d != Dev::KeysL {
                     extra.push(Nav::Confirm);
                 }
-                if jp(&[KeyCode::Escape]) && d != Dev::KeysR || jp(&[KeyCode::Backspace]) && d != Dev::KeysL {
+                if jp(&[KeyCode::Escape]) && d != Dev::KeysR || jp(&[KeyCode::Backspace]) {
                     extra.push(Nav::Back);
                 }
             }
@@ -494,7 +496,10 @@ pub fn poll(
                 stick = pad.left_stick();
                 raw = BUTTONS.iter().find(|(k, _)| pad.just_pressed(*k)).map(|(_, n)| n.to_string());
             }
-            Dev::Bot(n) => held = devs.bots[&n],
+            Dev::Bot(n) => {
+                held = devs.bots[&n];
+                stick = devs.bot_sticks.get(&n).copied().unwrap_or_default();
+            }
         }
         let s = devs.map.entry(d).or_default();
         let pressed = s.sample(held);
@@ -586,7 +591,7 @@ mod tests {
     }
     #[test]
     fn split_keyboard_conflicts_include_defaults() {
-        let saved = Saved::default();
+        let saved = Saved { split_keyboard: true, ..Saved::default() };
         assert!(keyboard_conflict(&saved, "keyboard-left", "Period"));
         assert!(!keyboard_conflict(&saved, "keyboard-left", "KeyJ"));
     }

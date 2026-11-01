@@ -45,6 +45,12 @@ pub enum Step {
     Big(usize),
     /// Wait until the stage roulette has run this many seconds.
     Spin(f32),
+    /// Tilt a bot's analog stick (y up; zero releases it).
+    Stick(u8, Vec2),
+    /// Let a bot's pointer go just off this target, as if its stick stopped there (the magnet pulls it on).
+    PointAt(u8, u32),
+    /// Put a bot's pointer at this screen position like a mouse (no magnet).
+    Mouse(u8, Vec2),
 }
 
 type Entry = (&'static str, fn() -> Vec<Step>);
@@ -313,28 +319,41 @@ fn stage_editor() -> Vec<Step> {
 }
 
 fn select() -> Vec<Step> {
+    use crate::grid::key;
+    use crate::select::{FIGHTER, TILE};
     let mut v = Vec::new();
-    // Versus: bot 0 opens it (and joins), bot 1 joins. Chips start on their fighters' roster tiles.
+    // Versus: bot 0 opens it (and joins); its pointer starts on its fighter's tile, hints showing.
     press(&mut v, 0, Attack);
+    v.push(Step::Wait(20));
+    shot(&mut v, "04a-select-solo");
+    // Bot 1 joins. Bot 0 hops down to "Add CPU", adds two, then Special slides it home to the roster.
     press(&mut v, 1, Attack);
-    // Bot 0: down to "Add CPU", add two, then Special takes its chip home to the roster.
     v.push(Step::LeaveRoster(0, Down));
     press(&mut v, 0, Attack);
     press(&mut v, 0, Attack);
     press(&mut v, 0, Special);
-    // Bot 0 previews another tile; bot 1 opens its card options.
+    // Bot 0 previews the next tile and drops its chip there; bot 1 opens its card options.
     press(&mut v, 0, Right);
+    press(&mut v, 0, Attack);
     press(&mut v, 1, Grab);
     press(&mut v, 1, Down);
+    // Bot 0's free pointer glides off toward the cards.
+    v.extend([Step::Stick(0, Vec2::new(0.45, -0.85)), Step::Wait(8)]);
     shot(&mut v, "04-select-choosing");
-    // Bot 1 closes the options and changes its pick; both players lock in.
+    v.extend([Step::Stick(0, Vec2::ZERO), Step::Wait(30)]);
+    // Bot 0 picks up the first CPU's chip and carries it over the roster, then drops it.
+    v.extend([Step::PointAt(0, key(FIGHTER, 2)), Step::Wait(20)]);
+    press(&mut v, 0, Attack);
+    v.extend([Step::PointAt(0, key(TILE, 6)), Step::Wait(20)]);
+    shot(&mut v, "04b-select-carry-cpu");
+    press(&mut v, 0, Attack);
+    // Bot 1 closes the options, changes its pick and locks in. Bot 0's pointer rests mouse-like on the stage strip.
     press(&mut v, 1, Special);
     press(&mut v, 1, Right);
     press(&mut v, 1, Right);
     press(&mut v, 1, Attack);
+    v.push(Step::Mouse(0, Vec2::new(700., 430.)));
     v.push(Step::Wait(40));
-    press(&mut v, 0, Attack);
-    v.push(Step::Wait(14));
     shot(&mut v, "05-select-ready");
     // Start: on to the stage vote. Bot 0 votes for the stage its chip starts on, bot 1 moves on.
     press(&mut v, 0, Start);
@@ -362,12 +381,27 @@ fn select() -> Vec<Step> {
 
 /// A thirty-fighter, thirty-stage roster (the built-ins repeated): the grids shrink and wrap into rows.
 fn roster() -> Vec<Step> {
-    let mut v = vec![Step::Big(30), Step::Wait(2), Step::Select(Mode::Versus, 4), Step::Wait(20)];
+    use crate::grid::key;
+    use crate::select::TILE;
+    let mut v = vec![Step::Big(30), Step::Wait(2), Step::Select(Mode::Versus, 2), Step::Wait(20)];
+    // Four players: everyone gathers on one tile (the pointers fan out), bot 0 hops in from below.
+    for b in 1..4 {
+        press(&mut v, b, Attack);
+    }
+    for b in 1..4 {
+        v.push(Step::PointAt(b, key(TILE, 9)));
+    }
+    v.push(Step::Wait(10));
     press(&mut v, 0, Down);
     press(&mut v, 0, Down);
     press(&mut v, 0, Left);
+    v.push(Step::Wait(20));
     shot(&mut v, "15c-select-roster-30");
-    press(&mut v, 0, Attack);
+    for b in 0..4 {
+        press(&mut v, b, Attack);
+    }
+    v.push(Step::Wait(20));
+    shot(&mut v, "15e-select-four-ready");
     press(&mut v, 0, Start);
     v.push(Step::Until(screen_is(Screen::Stages), 10));
     v.push(Step::Wait(10));
@@ -584,6 +618,7 @@ pub fn run(
     mut scene: ResMut<render::Scene>,
     mut next: ResMut<NextState<Screen>>,
     mut egui: Query<&mut bevy_egui::EguiContext>,
+    (mut ptrs, q): (ResMut<crate::pointer::Pointers>, crate::ui::FocusQuery),
 ) {
     for b in 0..2 {
         devs.bot(b);
@@ -639,6 +674,7 @@ pub fn run(
     match step {
         Step::Home => {
             devs.bots.clear();
+            devs.bot_sticks.clear();
             devs.clear();
             next.set(Screen::Title);
             s.at += 1;
@@ -704,6 +740,25 @@ pub fn run(
                 s.budget = 0;
                 s.at += 1;
             }
+        }
+        Step::Stick(b, at) => {
+            devs.bot_sticks.insert(*b, *at);
+            s.at += 1;
+        }
+        Step::PointAt(b, k) => {
+            let spot = crate::ui::spots(&q).into_iter().find(|sp| sp.f.key == *k);
+            if let (Some(sp), Some(p)) = (spot, ptrs.map.get_mut(&Dev::Bot(*b))) {
+                p.release(sp.center + Vec2::new(24., 14.));
+            } else {
+                error!("screenshot section {name}: nothing to point at");
+            }
+            s.at += 1;
+        }
+        Step::Mouse(b, at) => {
+            if let Some(p) = ptrs.map.get_mut(&Dev::Bot(*b)) {
+                p.point(*at);
+            }
+            s.at += 1;
         }
         Step::Set(b, act, on) => {
             devs.bot(*b)[*act as usize] = *on;
@@ -907,6 +962,7 @@ mod tests {
             .insert_resource(State::new(Screen::Title))
             .insert_resource(NextState::<Screen>::default())
             .init_resource::<Devices>()
+            .init_resource::<crate::pointer::Pointers>()
             .init_resource::<Framing>()
             .init_resource::<editor::Inbox>()
             .add_systems(Update, run);
@@ -956,6 +1012,8 @@ mod tests {
 03p-stage-moving
 03q-stage-moving-sandbox
 04-select-choosing
+04a-select-solo
+04b-select-carry-cpu
 05-select-ready
 05b-stage-votes
 05c-stage-roulette
@@ -994,6 +1052,7 @@ mod tests {
 15b-select-teams
 15c-select-roster-30
 15d-stage-select-30
+15e-select-four-ready
 16a-select-citadel
 16b-select-isles
 16c-select-foundry

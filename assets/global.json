@@ -352,7 +352,26 @@
       },
       "sizeSmall": 0.85,
       "sizeLarge": 1.25,
-      "thumbCrop": [1.3, 1.5]
+      "thumbCrop": [1.3, 1.5],
+      "pointer": {
+        "speed": 1050,
+        "curve": 1.7,
+        "accel": 11,
+        "deadzone": 0.2,
+        "magnetRadius": 80,
+        "magnetStrength": 16,
+        "magnetSpeed": 0.4,
+        "reach": 18,
+        "slideSecs": 0.13,
+        "fan": 15,
+        "land": 0.12,
+        "drop": 0.32,
+        "bounceSecs": 0.4,
+        "bounceWobble": 22,
+        "stroke": 5.5,
+        "scale": 1
+      },
+      "hints": { "showSecs": 6, "idleSecs": 4, "fadeSecs": 0.25 }
     }
   },
   "audio": {

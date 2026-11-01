@@ -1509,7 +1509,9 @@
           "minItems": 2,
           "maxItems": 2,
           "description": "Stage thumbnails show the play area scaled by `[width, height]` (then widened to the tile's aspect)."
-        }
+        },
+        "pointer": { "$ref": "#/$defs/PointerLook" },
+        "hints": { "$ref": "#/$defs/HintLook" }
       },
       "required": [
         "flourish",
@@ -1519,7 +1521,9 @@
         "roulette",
         "sizeSmall",
         "sizeLarge",
-        "thumbCrop"
+        "thumbCrop",
+        "pointer",
+        "hints"
       ],
       "description": "Character select presentation (the game crate reads this; the sim never does)."
     },
@@ -1554,6 +1558,86 @@
       },
       "required": ["secs", "hops", "curve", "pause", "landScale", "landBounce", "landWobble"],
       "description": "Stage select vote roulette: a highlight hops over the voted stages, slowing down, and lands on the winner."
+    },
+    "PointerLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "speed": {
+          "type": "number",
+          "format": "float",
+          "description": "Analog stick: top speed at full tilt, stick response exponent (above 1 is finer near the centre), and how\nfast the velocity follows the stick (per second; also how fast it brakes on release)."
+        },
+        "curve": { "type": "number", "format": "float" },
+        "accel": { "type": "number", "format": "float" },
+        "deadzone": { "type": "number", "format": "float", "description": "Stick tilt below this is released." },
+        "magnetRadius": {
+          "type": "number",
+          "format": "float",
+          "description": "The magnet pulls a slow pointer onto the nearest target within `magnetRadius` of its centre (any distance once\nthe stick is released), at `magnetStrength` per second. It starts below `magnetSpeed` of the top speed and is\nfull strength at rest."
+        },
+        "magnetStrength": { "type": "number", "format": "float" },
+        "magnetSpeed": { "type": "number", "format": "float" },
+        "reach": {
+          "type": "number",
+          "format": "float",
+          "description": "A gliding pointer hovers targets up to this far outside their edges."
+        },
+        "slideSecs": {
+          "type": "number",
+          "format": "float",
+          "description": "Digital presses hop to the neighbouring target, sliding there in this many seconds."
+        },
+        "fan": {
+          "type": "number",
+          "format": "float",
+          "description": "Pointers resting on one target fan out by this much per player."
+        },
+        "land": {
+          "type": "number",
+          "format": "float",
+          "description": "Squash and bounce when a pointer lands (`land`) or drops a chip (`drop`): scale amplitude, fading out over\n`bounceSecs` while wobbling `bounceWobble` radians per second."
+        },
+        "drop": { "type": "number", "format": "float" },
+        "bounceSecs": { "type": "number", "format": "float" },
+        "bounceWobble": { "type": "number", "format": "float" },
+        "stroke": {
+          "type": "number",
+          "format": "float",
+          "description": "Stroke thickness and size scale of the arrow."
+        },
+        "scale": { "type": "number", "format": "float" }
+      },
+      "required": [
+        "speed",
+        "curve",
+        "accel",
+        "deadzone",
+        "magnetRadius",
+        "magnetStrength",
+        "magnetSpeed",
+        "reach",
+        "slideSecs",
+        "fan",
+        "land",
+        "drop",
+        "bounceSecs",
+        "bounceWobble",
+        "stroke",
+        "scale"
+      ],
+      "description": "Select screens' player pointers. Units are logical UI pixels (the screen is 720 high) and seconds."
+    },
+    "HintLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "showSecs": { "type": "number", "format": "float" },
+        "idleSecs": { "type": "number", "format": "float" },
+        "fadeSecs": { "type": "number", "format": "float" }
+      },
+      "required": ["showSecs", "idleSecs", "fadeSecs"],
+      "description": "Per-card control hints: shown for `showSecs` after joining, after `idleSecs` without input, and while the\nplayer points at their own card; fading in and out over `fadeSecs`."
     },
     "Audio": {
       "type": "object",

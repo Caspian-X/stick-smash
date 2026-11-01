@@ -17,6 +17,7 @@ mod hud;
 mod input;
 mod menu;
 mod play;
+mod pointer;
 mod replay;
 mod results;
 mod select;
@@ -126,6 +127,7 @@ fn main() {
     .insert_resource(saved)
     .insert_resource(persist)
     .init_resource::<input::Devices>()
+    .init_resource::<pointer::Pointers>()
     .init_resource::<menu::MenuState>()
     .init_resource::<hud::PauseMenu>()
     .init_resource::<results::ResultsMenu>()
@@ -157,6 +159,7 @@ fn main() {
                 .run_if(|s: Res<State<Screen>>| matches!(s.get(), Screen::Title | Screen::Settings | Screen::Controls)),
             (select::update, select::draw, select::animate).chain().run_if(in_state(Screen::Select)),
             (stage_select::update, stage_select::draw, stage_select::animate).chain().run_if(in_state(Screen::Stages)),
+            pointer::draw.after(select::animate).after(stage_select::animate),
             (play::match_flow, hud::pause, hud::draw_pause, hud::update).chain().run_if(in_state(Screen::Match)),
             (results::update, results::draw).chain().run_if(in_state(Screen::Results)),
             replay::library.run_if(in_state(Screen::Replays)),

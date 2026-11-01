@@ -131,10 +131,19 @@ pub enum Action {
     Start,
 }
 
-#[derive(Clone, Copy)]
+/// A focusable node's box in logical UI pixels (the 720-high layout).
+#[derive(Clone, Copy, Debug)]
 pub struct Spot {
     pub f: Focusable,
     pub center: Vec2,
+    pub size: Vec2,
+}
+
+impl Spot {
+    /// Distance from `p` to the box (0 inside).
+    pub fn dist(&self, p: Vec2) -> f32 {
+        ((p - self.center).abs() - self.size / 2.).max(Vec2::ZERO).length()
+    }
 }
 
 pub type FocusQuery<'w, 's> = Query<'w, 's, (&'static Focusable, &'static ComputedNode, &'static UiGlobalTransform)>;
@@ -143,7 +152,10 @@ pub fn spots(q: &FocusQuery) -> Vec<Spot> {
     let mut v: Vec<Spot> = q
         .iter()
         .filter(|(_, n, _)| n.size().x > 0.)
-        .map(|(f, _, t)| Spot { f: *f, center: t.affine().translation })
+        .map(|(f, n, t)| {
+            let k = n.inverse_scale_factor();
+            Spot { f: *f, center: t.affine().translation * k, size: n.size() * k }
+        })
         .collect();
     v.sort_by_key(|s| s.f.key);
     v
@@ -213,26 +225,24 @@ pub enum Safe {
     Bottom,
 }
 
-/// The mouse, for clicking on focusable controls.
+/// The mouse, in logical UI pixels like [`Spot`]s.
 #[derive(SystemParam)]
 pub struct Mouse<'w, 's> {
     win: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
     mouse: Res<'w, ButtonInput<MouseButton>>,
+    scale: Res<'w, UiScale>,
 }
 
 impl Mouse<'_, '_> {
     pub fn clicked(&self) -> bool {
         self.mouse.just_pressed(MouseButton::Left)
     }
-    /// The focusable under the pointer.
-    pub fn hit(&self, q: &FocusQuery) -> Option<Focusable> {
-        let at = self.win.single().ok().and_then(|w| Some(w.cursor_position()? * w.scale_factor()))?;
-        q.iter()
-            .find(|(_, n, t)| {
-                let d = (at - t.affine().translation).abs() * 2.;
-                d.x <= n.size().x && d.y <= n.size().y
-            })
-            .map(|(f, _, _)| *f)
+    pub fn pos(&self) -> Option<Vec2> {
+        Some(self.win.single().ok()?.cursor_position()? / self.scale.0)
+    }
+    /// The screen's size.
+    pub fn screen(&self) -> Vec2 {
+        self.win.single().map_or(Vec2::new(1280., 720.), |w| w.size() / self.scale.0)
     }
 }
 
@@ -376,7 +386,7 @@ mod tests {
     use super::*;
 
     fn spot(key: u32, x: f32, y: f32, spin: bool, owner: Option<usize>) -> Spot {
-        Spot { f: Focusable { key, owner, spin }, center: Vec2::new(x, y) }
+        Spot { f: Focusable { key, owner, spin }, center: Vec2::new(x, y), size: Vec2::splat(20.) }
     }
 
     #[test]

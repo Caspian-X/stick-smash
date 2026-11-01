@@ -38,6 +38,52 @@ pub struct SelectLook {
     pub size_large: f64,
     /// Stage thumbnails show the play area scaled by `[width, height]` (then widened to the tile's aspect).
     pub thumb_crop: [f64; 2],
+    pub pointer: PointerLook,
+    pub hints: HintLook,
+}
+
+/// Select screens' player pointers. Units are logical UI pixels (the screen is 720 high) and seconds.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PointerLook {
+    /// Analog stick: top speed at full tilt, stick response exponent (above 1 is finer near the centre), and how
+    /// fast the velocity follows the stick (per second; also how fast it brakes on release).
+    pub speed: f32,
+    pub curve: f32,
+    pub accel: f32,
+    /// Stick tilt below this is released.
+    pub deadzone: f32,
+    /// The magnet pulls a slow pointer onto the nearest target within `magnetRadius` of its centre (any distance once
+    /// the stick is released), at `magnetStrength` per second. It starts below `magnetSpeed` of the top speed and is
+    /// full strength at rest.
+    pub magnet_radius: f32,
+    pub magnet_strength: f32,
+    pub magnet_speed: f32,
+    /// A gliding pointer hovers targets up to this far outside their edges.
+    pub reach: f32,
+    /// Digital presses hop to the neighbouring target, sliding there in this many seconds.
+    pub slide_secs: f32,
+    /// Pointers resting on one target fan out by this much per player.
+    pub fan: f32,
+    /// Squash and bounce when a pointer lands (`land`) or drops a chip (`drop`): scale amplitude, fading out over
+    /// `bounceSecs` while wobbling `bounceWobble` radians per second.
+    pub land: f32,
+    pub drop: f32,
+    pub bounce_secs: f32,
+    pub bounce_wobble: f32,
+    /// Stroke thickness and size scale of the arrow.
+    pub stroke: f32,
+    pub scale: f32,
+}
+
+/// Per-card control hints: shown for `showSecs` after joining, after `idleSecs` without input, and while the
+/// player points at their own card; fading in and out over `fadeSecs`.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct HintLook {
+    pub show_secs: f32,
+    pub idle_secs: f32,
+    pub fade_secs: f32,
 }
 
 /// Stage select vote roulette: a highlight hops over the voted stages, slowing down, and lands on the winner.

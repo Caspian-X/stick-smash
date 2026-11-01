@@ -1,11 +1,11 @@
-//! Auto-sizing tile grids with player chips, shared by the fighter roster and stage select. Tiles fill an area row by
-//! row (the last row may be shorter) at the largest size that fits the count. Chips move in 2D: rows wrap sideways,
-//! moving down into the ragged last row lands on its last tile, and up / down off the grid leave it geometrically
-//! (or wrap to the other edge when nothing is there).
+//! Auto-sizing tile grids with dropped player chips, shared by the fighter roster and stage select. Tiles fill an area
+//! row by row (the last row may be shorter) at the largest size that fits the count. Digital pointer hops move in 2D:
+//! rows wrap sideways, moving down into the ragged last row lands on its last tile, and up / down off the grid leave
+//! it geometrically (or wrap to the other edge when nothing is there).
 
 use bevy::prelude::*;
 
-use crate::input::Nav;
+use crate::input::{Dev, Nav};
 use crate::ui::*;
 
 pub fn key(kind: u32, slot: usize) -> u32 {
@@ -97,24 +97,32 @@ pub fn drive(c: &mut Cursor, nav: Nav, spots: &[Spot], tile: u32, n: usize, cols
     a
 }
 
-/// A player's marker on a tile.
+/// A chip dropped on a tile (a pick or a vote).
 pub struct Chip {
     pub label: String,
     pub color: Color,
     pub light: Color,
-    /// Locked in (picked / voted): a light outline.
-    pub locked: bool,
+    /// A CPU's: smaller, and it doesn't light the tile.
+    pub cpu: bool,
+    /// Drops in with [`DropIn`] (when this device locked in).
+    pub drop: Option<Dev>,
 }
 
+/// A freshly dropped chip's fall, animated by the screen.
+#[derive(Component)]
+pub struct DropIn(pub Dev);
+
 /// One tile of a grid: chips fan out along its top edge, the name sits in a band at the bottom (on small tiles only
-/// while a chip or the highlight is on it).
+/// while it is pointed at, lit or has a chip).
 pub struct Tile<'a> {
     pub key: u32,
     pub w: f32,
     pub h: f32,
     pub name: &'a str,
     pub chips: Vec<Chip>,
-    /// Border / glow color overriding the lead chip's (the roulette).
+    /// The colour of a pointer on it.
+    pub hover: Option<Color>,
+    /// Border / glow color overriding the others (the roulette).
     pub highlight: Option<Color>,
     /// Not pickable: dimmed, with this note instead of the name.
     pub off: Option<String>,
@@ -149,8 +157,8 @@ pub fn panel(
 }
 
 pub fn tile(p: &mut ChildSpawnerCommands, f: &Fonts, t: Tile, content: impl FnOnce(&mut ChildSpawnerCommands)) {
-    let lead = t.highlight.or(t.chips.first().map(|c| c.color));
-    let locked = t.highlight.is_some() || t.chips.iter().any(|c| c.locked);
+    let lead = t.highlight.or(t.hover).or(t.chips.iter().find(|c| !c.cpu).map(|c| c.color));
+    let locked = t.highlight.is_some() || t.chips.iter().any(|c| !c.cpu);
     let small = t.w < 84.;
     p.spawn((
         node(|n| {
@@ -176,7 +184,7 @@ pub fn tile(p: &mut ChildSpawnerCommands, f: &Fonts, t: Tile, content: impl FnOn
             p.spawn((node(fill), BackgroundColor(alpha(NIGHT, 0.6))));
         }
         let label = t.off.as_deref().unwrap_or(t.name);
-        if !small || lead.is_some() || t.off.is_some() {
+        if !small || lead.is_some() || !t.chips.is_empty() || t.off.is_some() {
             p.spawn((
                 node(|n| {
                     n.position_type = PositionType::Absolute;
@@ -235,10 +243,12 @@ fn chip(p: &mut ChildSpawnerCommands, f: &Fonts, c: &Chip, left: f32, size: f32)
             n.border_radius = BorderRadius::all(Val::Px(5.));
         }),
         BackgroundColor(c.color),
-        BorderColor::all(if c.locked { c.light } else { NIGHT }),
+        BorderColor::all(if c.cpu { NIGHT } else { c.light }),
         BoxShadow::new(alpha(NIGHT, 0.6), Val::Px(1.), Val::Px(2.), Val::Px(0.), Val::Px(3.)),
+        UiTransform::default(),
     ))
-    .with_child(txt(&f.display, size, NIGHT, c.label.clone()));
+    .insert_if(DropIn(c.drop.unwrap_or(Dev::Keys)), || c.drop.is_some())
+    .with_child(txt(&f.display, if c.cpu { size * 0.8 } else { size }, NIGHT, c.label.clone()));
 }
 
 #[cfg(test)]
@@ -278,7 +288,11 @@ mod tests {
 
     #[test]
     fn leaving_the_grid_falls_back_to_geometry_or_wraps() {
-        let spot = |key, x, y| Spot { f: Focusable { key, owner: None, spin: false }, center: Vec2::new(x, y) };
+        let spot = |key, x, y| Spot {
+            f: Focusable { key, owner: None, spin: false },
+            center: Vec2::new(x, y),
+            size: Vec2::splat(50.),
+        };
         let below = 99;
         let spots = [spot(key(1, 0), 0., 0.), spot(key(1, 1), 100., 0.), spot(below, 0., 300.)];
         let mut c = Cursor { key: key(1, 1), owner: None };
