@@ -11,6 +11,7 @@ pub mod canvas;
 pub mod debug;
 pub mod draw;
 pub mod fx;
+pub mod portrait;
 pub mod pose;
 pub mod stage;
 
@@ -116,8 +117,10 @@ impl Plugin for RenderPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Drawn>()
             .init_resource::<Framing>()
-            .add_systems(Startup, setup)
-            .add_systems(Update, (advance, draw).chain().in_set(RenderSystems))
+            .init_resource::<portrait::Portraits>()
+            // The portrait camera comes second, so the window camera stays egui's primary context.
+            .add_systems(Startup, (setup, portrait::setup).chain())
+            .add_systems(Update, ((advance, draw).chain(), portrait::draw).in_set(RenderSystems))
             .add_systems(EguiPrimaryContextPass, debug_labels);
     }
 }
@@ -198,7 +201,7 @@ fn advance(mut scene: ResMut<Scene>, mut st: ResMut<Drawn>, win: Option<Single<&
     }
 }
 
-fn upload(mesh: &mut Mesh, cv: &Canvas) {
+pub(crate) fn upload(mesh: &mut Mesh, cv: &Canvas) {
     let (mut pos, mut col, mut idx) = (cv.pos.clone(), cv.col.clone(), cv.idx.clone());
     if idx.is_empty() {
         pos = vec![[0.; 3]; 3];

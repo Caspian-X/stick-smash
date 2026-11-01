@@ -1,38 +1,45 @@
-//! Join + character select (versus and training). Any free device presses a button to claim the next slot; each
-//! player then has their own cursor: their card (fighter, team, tap jump), CPU cards and the rules bar. Attack on
-//! your card locks in; Start (or attack while locked in) starts once everyone is ready. The picked fighters stand
-//! on the stage behind the cards.
+//! Join + character select (versus and training). Any free device presses a button to claim the next slot. Each
+//! player moves a colored chip over the roster tiles (hovering previews the fighter, attack locks it in, the "?"
+//! tile rolls a random one), CPU cards, and the rules panel. Grab / Shield opens a player's card options (team,
+//! up to jump). Start (or attack while locked in) starts once everyone is ready. The picked fighters stand on the
+//! stage behind the cards, and a locked-in fighter plays `render.select.flourish` before its win pose.
 
+use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
+use render::portrait::{Portrait, Portraits};
 use sim::world::State as FState;
 
-use crate::input::{Dev, Devices, Nav};
+use crate::input::{self, Act, Dev, Devices, Nav};
 use crate::play::{self, Match, Mode, Rules, Slot};
 use crate::settings::{DummyMode, PlayerPref, Saved};
 use crate::ui::{self, *};
 use crate::{Data, Screen};
 
-const FIGHTER: u32 = 1;
-const LEVEL: u32 = 2;
-const TEAM: u32 = 3;
-const TAP: u32 = 4;
+/// Roster tile `t` (a fighter index; one past the last is the random tile).
+const TILE: u32 = 1;
+/// CPU / dummy card controls.
+const FIGHTER: u32 = 2;
+const LEVEL: u32 = 3;
 const REMOVE: u32 = 5;
+const BEHAVIOR: u32 = 12;
 const ADD: u32 = 6;
+/// Rules panel.
 const STOCKS: u32 = 7;
 const STAGE: u32 = 8;
 const TEAMS: u32 = 9;
 const FF: u32 = 10;
-/// Card footers: lock in (your card), dummy behavior (training).
-const LOCK: u32 = 11;
-const BEHAVIOR: u32 = 12;
+/// Options popover rows (not focusable; the popover takes over that player's presses).
+const TEAM: u32 = 13;
+const TAP: u32 = 14;
 const N_TEAMS: u8 = 4;
 const LEVELS: [&str; 3] = ["Easy", "Normal", "Hard"];
 
 fn key(kind: u32, slot: usize) -> u32 {
-    kind * 16 + slot as u32
+    kind << 8 | slot as u32
 }
 fn kind(key: u32) -> (u32, usize) {
-    (key / 16, (key % 16) as usize)
+    (key >> 8, (key & 255) as usize)
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -41,11 +48,15 @@ pub struct Pick {
     pub dev: Option<Dev>,
     pub disconnected: bool,
     pub fighter: usize,
+    /// Hovering the random tile; a fighter is rolled on lock-in.
+    pub random: bool,
     pub level: u8,
     pub team: u8,
     pub tap_jump: bool,
     pub ready: bool,
     pub cursor: Cursor,
+    /// Options popover open, at this row.
+    pub menu: Option<usize>,
 }
 
 #[derive(Resource, Clone, Debug, PartialEq)]
@@ -57,6 +68,8 @@ pub struct Select {
     pub teams: bool,
     pub ff: bool,
     pub dummy: DummyMode,
+    /// Random tile state.
+    pub roll: u32,
 }
 
 /// Set before entering the select screen to start fresh; `dev` joins right away.
@@ -66,12 +79,21 @@ pub struct SelectInit {
     pub dev: Option<Dev>,
 }
 
+/// When things happened, for the lock-in flip, the ready banner and the stage flourish.
+#[derive(Resource, Default)]
+pub struct Moments {
+    /// Device → seconds when it locked in.
+    locked: Vec<(Dev, f32)>,
+    banner: Option<f32>,
+    /// Slots whose fighter should play the flourish on the stage.
+    flourish: Vec<usize>,
+}
+
 impl Select {
     fn humans(&self) -> impl Iterator<Item = (usize, &Pick)> {
         self.slots.iter().enumerate().filter(|(_, p)| p.dev.is_some())
     }
-    fn max(&self, d: &sim::GameData) -> usize {
-        let _ = d;
+    fn max(&self) -> usize {
         if self.mode == Mode::Training { 2 } else { 8 }
     }
     pub fn ready(&self) -> bool {
@@ -104,14 +126,19 @@ impl Select {
         if self.teams { self.slots[i].team as usize } else { i }
     }
     fn tag(&self, i: usize) -> String {
-        if self.slots[i].disconnected {
-            return format!("P{}", i + 1);
+        match (self.slots[i].dev.is_some() || self.slots[i].disconnected, self.mode) {
+            (true, _) => format!("P{}", i + 1),
+            (false, Mode::Training) => "Dummy".into(),
+            (false, _) => "CPU".into(),
         }
-        match (self.slots[i].dev, self.mode) {
-            (Some(_), _) => format!("P{}", i + 1),
-            (None, Mode::Training) => "Dummy".into(),
-            (None, _) => "CPU".into(),
-        }
+    }
+    /// The roster tile a player's chip rests on.
+    fn home(p: &Pick, d: &sim::GameData) -> u32 {
+        key(TILE, if p.random { d.fighters.len() } else { p.fighter })
+    }
+    /// Options popover rows for slot `i`.
+    fn options(&self) -> Vec<u32> {
+        if self.teams { vec![TEAM, TAP] } else { vec![TAP] }
     }
     fn join(&mut self, dev: Dev, saved: &Saved, d: &sim::GameData) -> bool {
         if let Some(p) = self.slots.iter_mut().find(|p| p.disconnected) {
@@ -120,7 +147,7 @@ impl Select {
             p.ready = false;
             return true;
         }
-        if self.slots.len() >= self.max(d) || self.mode == Mode::Training && self.humans().count() > 0 {
+        if self.slots.len() >= self.max() || self.mode == Mode::Training && self.humans().count() > 0 {
             return false;
         }
         let n = self.humans().count();
@@ -137,17 +164,19 @@ impl Select {
                 dev: Some(dev),
                 disconnected: false,
                 fighter,
+                random: false,
                 level: 1,
                 team: if self.teams { (at % 2) as u8 } else { pref.team },
                 tap_jump: pref.tap_jump,
                 ready: false,
-                cursor: Cursor { key: key(FIGHTER, at), owner: Some(at) },
+                cursor: Cursor { key: key(TILE, fighter), owner: Some(at) },
+                menu: None,
             },
         );
         true
     }
     fn add_cpu(&mut self, saved: &Saved, d: &sim::GameData) {
-        if self.slots.len() >= self.max(d) || self.mode == Mode::Training {
+        if self.slots.len() >= self.max() || self.mode == Mode::Training {
             return;
         }
         let n = self.slots.iter().filter(|p| p.dev.is_none()).count();
@@ -157,12 +186,27 @@ impl Select {
             dev: None,
             disconnected: false,
             fighter: d.fighters.iter().position(|f| f.id == pref.fighter).unwrap_or((i + 1) % d.fighters.len()),
+            random: false,
             level: pref.level.min(2),
             team: (i % 2) as u8,
             tap_jump: true,
             ready: true,
             cursor: Cursor::default(),
+            menu: None,
         });
+    }
+    fn lock(&mut self, i: usize, d: &sim::GameData) {
+        let p = &mut self.slots[i];
+        if p.random {
+            self.roll ^= self.roll << 13;
+            self.roll ^= self.roll >> 17;
+            self.roll ^= self.roll << 5;
+            p.fighter = self.roll as usize % d.fighters.len();
+            p.random = false;
+        }
+        p.ready = true;
+        p.menu = None;
+        p.cursor.key = Self::home(p, d);
     }
     fn spin(&mut self, k: u32, by: i32, d: &sim::GameData) {
         let (kd, s) = kind(k);
@@ -220,19 +264,20 @@ impl Select {
     }
     /// Fix cursor owners and keys after slots moved. `removed` (sorted, old indices) shifts keys that point at a
     /// later card (a CPU row being edited); a cursor on a removed card or a gone control goes home.
-    fn renumber(&mut self, removed: &[usize]) {
+    fn renumber(&mut self, removed: &[usize], d: &sim::GameData) {
         let (n, add) = (self.slots.len(), self.mode == Mode::Versus && self.slots.len() < 8);
         for (i, p) in self.slots.iter_mut().enumerate() {
             p.cursor.owner = Some(i);
+            let home = Self::home(p, d);
             let (kd, si) = kind(p.cursor.key);
             p.cursor.key = match kd {
-                STOCKS | STAGE | TEAMS | FF => continue,
+                TILE | STOCKS | STAGE | TEAMS | FF => continue,
                 ADD if add => continue,
-                ADD => key(FIGHTER, i),
-                _ if removed.contains(&si) => key(FIGHTER, i),
+                ADD => home,
+                _ if removed.contains(&si) => home,
                 _ => match si - removed.iter().filter(|&&r| r < si).count() {
                     s if s < n => key(kd, s),
-                    _ => key(FIGHTER, i),
+                    _ => home,
                 },
             };
         }
@@ -243,13 +288,17 @@ impl Select {
         let mut remove = Vec::new();
         let mut adds = 0;
         for (i, p) in s.slots.iter_mut().enumerate() {
-            if p.dev.is_some_and(|dev| !devs.map.contains_key(&dev)) {
-                if p.ready {
+            match p.dev.map(|dev| devs.map.get(&dev)) {
+                Some(None) if p.ready => {
                     p.dev = None;
                     p.disconnected = true;
-                } else {
-                    remove.push(i);
                 }
+                Some(None) => remove.push(i),
+                // Grab / Shield toggles the options popover.
+                Some(Some(st)) if !p.ready && (st.pressed[Act::Grab as usize] || st.pressed[Act::Shield as usize]) => {
+                    p.menu = if p.menu.is_some() { None } else { Some(0) };
+                }
+                _ => {}
             }
         }
         let navs: Vec<(Dev, Nav)> = devs.navs().collect();
@@ -260,10 +309,19 @@ impl Select {
             if remove.contains(&i) {
                 continue;
             }
-            let own = |k: u32| {
-                let (kd, si) = kind(k);
-                matches!(kd, FIGHTER | TEAM | TAP | LOCK) && si == i
-            };
+            if let Some(r) = s.slots[i].menu {
+                let rows = s.options();
+                let r = r.min(rows.len() - 1);
+                let by = |n: i32| (r as i32 + n).rem_euclid(rows.len() as i32) as usize;
+                match nav {
+                    Nav::Up => s.slots[i].menu = Some(by(-1)),
+                    Nav::Down => s.slots[i].menu = Some(by(1)),
+                    Nav::Left => s.spin(key(rows[r], i), -1, d),
+                    Nav::Right | Nav::Confirm => s.spin(key(rows[r], i), 1, d),
+                    Nav::Back | Nav::Start => s.slots[i].menu = None,
+                }
+                continue;
+            }
             if s.slots[i].ready {
                 match nav {
                     Nav::Back => s.slots[i].ready = false,
@@ -272,36 +330,47 @@ impl Select {
                 }
                 continue;
             }
-            if nav == Nav::Confirm && own(s.slots[i].cursor.key) {
-                s.slots[i].ready = true;
-                continue;
-            }
             if nav == Nav::Start {
                 if s.ready() {
                     start = true;
                 } else {
-                    s.slots[i].ready = true;
+                    s.lock(i, d);
                 }
                 continue;
             }
             let mut c = s.slots[i].cursor;
+            let before = c.key;
             match c.drive(nav, spots) {
                 Some(Action::Spin(k, by)) => s.spin(k, by, d),
                 Some(Action::Activate(k)) => match kind(k) {
-                    (LOCK, _) => s.slots[i].ready = true,
+                    (TILE, _) => {
+                        s.slots[i].cursor = c;
+                        s.lock(i, d);
+                        continue;
+                    }
                     (ADD, _) => adds += 1,
                     (REMOVE, si) if s.slots.get(si).is_some_and(|p| p.dev.is_none()) => {
                         remove.push(si);
-                        c.key = key(FIGHTER, i);
+                        c.key = Select::home(&s.slots[i], d);
                     }
                     _ => {}
                 },
-                Some(Action::Back) if own(c.key) => {
+                Some(Action::Back) if kind(c.key).0 == TILE => {
                     remove.push(i);
                     continue;
                 }
-                Some(Action::Back) => c.key = key(FIGHTER, i),
+                Some(Action::Back) => c.key = Select::home(&s.slots[i], d),
                 _ => {}
+            }
+            // Hovering a tile previews that fighter.
+            if let (TILE, t) = kind(c.key)
+                && c.key != before
+            {
+                let p = &mut s.slots[i];
+                p.random = t >= d.fighters.len();
+                if !p.random {
+                    p.fighter = t;
+                }
             }
             s.slots[i].cursor = c;
         }
@@ -329,7 +398,7 @@ impl Select {
             }
         }
         if changed {
-            s.renumber(&remove);
+            s.renumber(&remove, d);
         }
         s.fit_stage(d);
         (start && s.ready() && d.stages[s.stage].max_players() >= s.slots.len(), leave && s.humans().count() == 0)
@@ -360,6 +429,7 @@ pub fn enter(
     data: Res<Data>,
 ) {
     let d = &data.0;
+    commands.insert_resource(Moments::default());
     if let (None, Some(mut sel)) = (&init, sel) {
         for p in sel.slots.iter_mut().filter(|p| p.dev.is_some()) {
             p.ready = false;
@@ -378,6 +448,7 @@ pub fn enter(
         teams: v.teams && init.mode == Mode::Versus,
         ff: v.friendly_fire,
         dummy: saved.training.mode,
+        roll: play::seed() | 1,
     };
     if init.mode == Mode::Training {
         let t = &saved.training;
@@ -385,14 +456,16 @@ pub fn enter(
             dev: None,
             disconnected: false,
             fighter: d.fighters.iter().position(|f| f.id == t.dummy_fighter).unwrap_or(1 % d.fighters.len()),
+            random: false,
             level: t.level,
             team: 1,
             tap_jump: true,
             ready: true,
             cursor: Cursor::default(),
+            menu: None,
         });
     } else {
-        for _ in 0..v.cpus.len().min(sel.max(d).saturating_sub(1)) {
+        for _ in 0..v.cpus.len().min(sel.max().saturating_sub(1)) {
             sel.add_cpu(&saved, d);
         }
         for (i, p) in sel.slots.iter_mut().enumerate() {
@@ -402,9 +475,52 @@ pub fn enter(
     if let Some(dev) = init.dev {
         sel.join(dev, &saved, d);
     }
-    sel.renumber(&[]);
+    sel.renumber(&[], d);
     sel.fit_stage(d);
     commands.insert_resource(sel);
+}
+
+pub fn exit(mut portraits: ResMut<Portraits>) {
+    portraits.cells.clear();
+}
+
+#[derive(SystemParam)]
+pub struct Pointer<'w, 's> {
+    win: Query<'w, 's, &'static Window, With<PrimaryWindow>>,
+    mouse: Res<'w, ButtonInput<MouseButton>>,
+}
+
+/// A left click acts as the keyboard's confirm press on the control under the pointer.
+fn click(sel: &mut Select, devs: &mut Devices, q: &FocusQuery, pointer: &Pointer, fighters: usize) {
+    if !pointer.mouse.just_pressed(MouseButton::Left) {
+        return;
+    }
+    let Some(at) = pointer.win.single().ok().and_then(|w| Some(w.cursor_position()? * w.scale_factor())) else {
+        return;
+    };
+    let Some(dev) = [Dev::Keys, Dev::KeysL, Dev::KeysR].into_iter().find(|d| devs.map.contains_key(d)) else {
+        return;
+    };
+    let hit = q.iter().find(|(_, n, t)| {
+        let d = (at - t.affine().translation).abs() * 2.;
+        d.x <= n.size().x && d.y <= n.size().y
+    });
+    if let Some(p) = sel.slots.iter_mut().find(|p| p.dev == Some(dev)) {
+        let Some((f, _, _)) = hit.filter(|(f, _, _)| p.cursor.allowed(f)) else { return };
+        if p.ready || p.menu.is_some() {
+            return;
+        }
+        p.cursor.key = f.key;
+        if let (TILE, t) = kind(f.key) {
+            p.random = t >= fighters;
+            p.fighter = if p.random { p.fighter } else { t };
+        }
+    } else if hit.is_none() {
+        return;
+    }
+    if let Some(st) = devs.map.get_mut(&dev) {
+        st.nav.push(Nav::Confirm);
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -413,16 +529,19 @@ pub fn update(
     sel: Option<ResMut<Select>>,
     mut devs: ResMut<Devices>,
     q: FocusQuery,
+    pointer: Pointer,
+    time: Res<Time>,
     mut saved: ResMut<Saved>,
     data: Res<Data>,
     mut next: ResMut<NextState<Screen>>,
     mut scene: ResMut<render::Scene>,
-    m: Option<ResMut<Match>>,
+    (m, mut moments, mut portraits): (Option<ResMut<Match>>, ResMut<Moments>, ResMut<Portraits>),
 ) {
     let Some(mut sel) = sel else { return };
     let d = &data.0;
     let spots = ui::spots(&q);
     let mut s = sel.clone();
+    click(&mut s, &mut devs, &q, &pointer, d.fighters.len());
     let (start, leave) = s.frame(&devs, &spots, &saved, d);
     if leave {
         next.set(Screen::Title);
@@ -431,9 +550,32 @@ pub fn update(
     if s.slots.iter().map(|p| p.dev).ne(sel.slots.iter().map(|p| p.dev)) {
         devs.clear();
     }
+    let now = time.elapsed_secs();
+    for (i, p) in s.slots.iter().enumerate() {
+        if let Some(dev) = p.dev.filter(|_| p.ready)
+            && !sel.slots.iter().any(|o| o.dev == Some(dev) && o.ready)
+        {
+            moments.locked.retain(|(d, _)| *d != dev);
+            moments.locked.push((dev, now));
+            moments.flourish.push(i);
+        }
+    }
+    moments.locked.retain(|(dev, _)| s.slots.iter().any(|p| p.dev == Some(*dev) && p.ready));
+    moments.flourish.retain(|i| s.slots.get(*i).is_some_and(|p| p.ready && p.dev.is_some()));
+    moments.banner = s.ready().then(|| moments.banner.unwrap_or(now));
     if s != *sel {
         *sel = s;
     }
+    portraits.cells = (0..d.fighters.len().min(Portraits::MAX))
+        .map(|t| {
+            let on = sel.humans().find(|(_, p)| p.cursor.key == key(TILE, t));
+            Portrait {
+                fighter: t,
+                color: on.map(|(i, _)| sel.color(i)),
+                win: sel.humans().any(|(_, p)| p.cursor.key == key(TILE, t) && p.ready),
+            }
+        })
+        .collect();
     let mslots = sel.match_slots();
     let rules = Rules { stocks: sel.stocks, stage: d.stages[sel.stage].id.clone(), friendly_fire: sel.ff };
     if start {
@@ -454,7 +596,7 @@ pub fn update(
     if mslots.is_empty() || d.stages[sel.stage].max_players() < mslots.len() {
         return;
     }
-    // Showcase: rebuild when the lineup changes; ready fighters strike their win pose.
+    // Showcase: rebuild when the lineup changes. Everyone is on one team so flourishes never hit anybody.
     let showcase = m.as_ref().is_some_and(|m| {
         m.mode == Mode::Showcase
             && m.slots.iter().map(|s| (s.fighter, s.color)).eq(mslots.iter().map(|s| (s.fighter, s.color)))
@@ -465,14 +607,28 @@ pub fn update(
         for s in &mut slots {
             s.cpu = None;
             s.dev = None;
+            s.team = Some(0);
         }
-        if let Ok(m) = Match::new(&data.0, Mode::Showcase, slots, rules, 1) {
+        if let Ok(m) = Match::new(&data.0, Mode::Showcase, slots, Rules { friendly_fire: false, ..rules }, 1) {
             play::install(&mut commands, &mut scene, m);
         }
     } else if let Some(mut m) = m {
-        for (i, f) in m.world.fighters.iter_mut().enumerate() {
+        let m = &mut *m;
+        let slot = &m.data.global.render.select.flourish;
+        for i in 0..m.world.fighters.len() {
             let ready = sel.slots.get(i).is_some_and(|p| p.ready && p.dev.is_some());
-            if ready && f.state != FState::Win {
+            let f = &mut m.world.fighters[i];
+            let has = m.data.fighters[f.data].moves.iter().any(|(s, _)| s == slot.as_str());
+            if ready && f.state == FState::Idle && moments.flourish.contains(&i) {
+                moments.flourish.retain(|j| *j != i);
+                if has && f.ground {
+                    let mut f = f.clone();
+                    sim::moves::start_move(&mut m.world, &m.data, i, &mut f, slot);
+                    m.world.fighters[i] = f;
+                } else {
+                    f.set_state(FState::Win);
+                }
+            } else if ready && f.state == FState::Idle {
                 f.set_state(FState::Win);
             } else if !ready && f.state == FState::Win {
                 f.set_state(FState::Idle);
@@ -512,6 +668,48 @@ fn remember(sel: &Select, saved: &mut Saved, d: &sim::GameData) {
 #[derive(Component)]
 pub struct SelectRoot(Select);
 
+/// Animated by [`animate`]: a card flipping to READY, the sliding ready banner.
+#[derive(Component)]
+pub enum Motion {
+    Flip(Dev),
+    Banner,
+}
+
+fn ease(t: f32) -> f32 {
+    let t = t.clamp(0., 1.) - 1.;
+    1. + 2.7 * t * t * t + 1.7 * t * t
+}
+
+pub fn animate(
+    time: Res<Time>,
+    moments: Option<Res<Moments>>,
+    data: Res<Data>,
+    mut q: Query<(&Motion, &mut UiTransform)>,
+) {
+    let Some(mo) = moments else { return };
+    let look = &data.0.global.render.select;
+    let now = time.elapsed_secs();
+    for (m, mut tf) in &mut q {
+        match m {
+            Motion::Flip(dev) => {
+                let t = mo.locked.iter().find(|(d, _)| d == dev).map_or(1., |(_, at)| (now - at) / look.flip_secs);
+                let sx = ease(t).max(0.02);
+                if tf.scale.x != sx {
+                    tf.scale.x = sx;
+                }
+            }
+            Motion::Banner => {
+                let t = mo.banner.map_or(1., |at| (now - at) / look.banner_secs);
+                let x = Val::Vw((1. - ease(t)) * -110.);
+                if tf.translation.x != x {
+                    tf.translation.x = x;
+                }
+            }
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
 pub fn draw(
     mut commands: Commands,
     sel: Option<Res<Select>>,
@@ -519,6 +717,8 @@ pub fn draw(
     fonts: Res<Fonts>,
     data: Res<Data>,
     devs: Res<Devices>,
+    saved: Res<Saved>,
+    portraits: Res<Portraits>,
 ) {
     let Some(sel) = sel else { return };
     if roots.iter().any(|(_, r)| r.0 == *sel) {
@@ -541,7 +741,7 @@ pub fn draw(
                     n.right = Val::Px(0.);
                     n.padding = UiRect::new(Val::Px(40.), Val::Px(40.), Val::Px(26.), Val::Px(30.));
                     n.flex_direction = FlexDirection::Row;
-                    n.align_items = AlignItems::FlexEnd;
+                    n.align_items = AlignItems::FlexStart;
                     n.justify_content = JustifyContent::SpaceBetween;
                 }),
                 BackgroundGradient::from(LinearGradient::to_bottom(vec![
@@ -558,7 +758,7 @@ pub fn draw(
                 p.spawn((
                     node(|n| {
                         n.flex_direction = FlexDirection::Column;
-                        n.width = Val::Px(300.);
+                        n.width = Val::Px(250.);
                         n.padding = UiRect::all(Val::Px(8.));
                         n.border_radius = BorderRadius::all(Val::Px(10.));
                     }),
@@ -575,39 +775,41 @@ pub fn draw(
                         }
                     }
                     for (k, label, value) in rules {
-                        spin_row(p, f, d, s, key(k, 0), None, label, value, None, 17.);
+                        spin_row(p, f, d, s, key(k, 0), label, value, None, 17.);
                     }
                 });
             });
+            roster(p, f, d, s, &portraits);
+            if s.ready() {
+                ready_banner(p, f);
+            }
             // Bottom: cards and hints.
             p.spawn(node(|n| {
                 n.position_type = PositionType::Absolute;
-                n.bottom = Val::Px(18.);
+                n.bottom = Val::Px(14.);
                 n.left = Val::Px(0.);
                 n.right = Val::Px(0.);
                 n.flex_direction = FlexDirection::Column;
                 n.align_items = AlignItems::Center;
-                n.row_gap = Val::Px(14.);
+                n.row_gap = Val::Px(10.);
             }))
             .with_children(|p| {
                 if !d.stages.iter().any(|stage| stage.max_players() >= s.slots.len()) {
-                    p.spawn(txt(&f.heavy, 24., GOLD, "No stage fits this lineup. Remove a player."));
-                } else if s.ready() {
-                    ready_banner(p, f);
+                    p.spawn(txt(&f.heavy, 22., GOLD, "No stage fits this lineup. Remove a player."));
                 } else if let Some(reason) = s.start_reason() {
-                    p.spawn(txt(&f.heavy, 24., GOLD, reason));
+                    p.spawn(txt(&f.heavy, 22., GOLD, reason));
                 }
-                let free = s.slots.len() < s.max(d) && !(s.mode == Mode::Training && s.humans().count() > 0);
+                let free = s.slots.len() < s.max() && !(s.mode == Mode::Training && s.humans().count() > 0);
                 let n = s.slots.len() + usize::from(free);
-                let w = (1240. / n as f32 - 12.).min(272.);
+                let w = (1240. / n as f32 - 10.).min(230.);
                 p.spawn(node(|n| {
                     n.flex_direction = FlexDirection::Row;
-                    n.column_gap = Val::Px(12.);
+                    n.column_gap = Val::Px(10.);
                     n.align_items = AlignItems::Stretch;
                 }))
                 .with_children(|p| {
                     for i in 0..s.slots.len() {
-                        card(p, f, d, s, i, w, &devs);
+                        card(p, f, d, s, i, w, &devs, &saved);
                     }
                     if free {
                         join_card(p, f, d, s, w);
@@ -618,8 +820,9 @@ pub fn draw(
                     n.column_gap = Val::Px(22.);
                 }))
                 .with_children(|p| {
-                    hint(p, f, "Attack / Enter", "lock in");
+                    hint(p, f, "Attack / Enter", "pick & lock in");
                     hint(p, f, "Special / Esc", "back out");
+                    hint(p, f, "Grab / Shield", "card options");
                     hint(p, f, "Start", "fight when everyone's ready");
                 });
             });
@@ -627,149 +830,338 @@ pub fn draw(
     );
 }
 
-/// Chips of the cursors (other than the owner's own card focus) sitting on `k`.
-fn cursor_chips(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, k: u32) {
-    for (i, pk) in s.humans() {
-        if pk.cursor.key == k && !pk.ready {
-            p.spawn((
-                node(|n| {
-                    n.padding = UiRect::axes(Val::Px(5.), Val::Px(0.));
-                    n.border_radius = BorderRadius::all(Val::Px(3.));
-                }),
-                BackgroundColor(pal(d, s.color(i)).0),
-            ))
-            .with_child(txt(&f.heavy, 14., NIGHT, format!("P{}", i + 1)));
-        }
-    }
+/// The fighter tiles and the random tile, with every player's chip on the tile it points at.
+fn roster(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, portraits: &Portraits) {
+    let n = d.fighters.len() + 1;
+    let cols = n.min(8);
+    let w = ((560. - 10. * (cols - 1) as f32) / cols as f32).min(116.);
+    p.spawn(node(|n| {
+        n.position_type = PositionType::Absolute;
+        n.top = Val::Px(18.);
+        n.left = Val::Px(0.);
+        n.right = Val::Px(0.);
+        n.justify_content = JustifyContent::Center;
+    }))
+    .with_children(|p| {
+        p.spawn((
+            node(|n| {
+                n.flex_direction = FlexDirection::Row;
+                n.flex_wrap = FlexWrap::Wrap;
+                n.justify_content = JustifyContent::Center;
+                n.max_width = Val::Px(600.);
+                n.padding = UiRect::all(Val::Px(8.));
+                n.row_gap = Val::Px(10.);
+                n.column_gap = Val::Px(10.);
+                n.border_radius = BorderRadius::all(Val::Px(14.));
+            }),
+            BackgroundColor(alpha(NIGHT, 0.94)),
+        ))
+        .with_children(|p| {
+            for t in 0..n {
+                tile(p, f, d, s, t, w, portraits);
+            }
+        });
+    });
 }
 
-fn focused_by(s: &Select, k: u32) -> Option<usize> {
-    s.humans().find(|(_, p)| p.cursor.key == k && !p.ready).map(|(i, _)| i)
+fn tile(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, t: usize, w: f32, pt: &Portraits) {
+    let k = key(TILE, t);
+    let chips: Vec<usize> = s.humans().filter(|(_, p)| p.cursor.key == k).map(|(i, _)| i).collect();
+    let lead = chips.first().map(|&i| pal(d, s.color(i)).0);
+    let locked = chips.iter().any(|&i| s.slots[i].ready);
+    let h = w * Portraits::ASPECT;
+    let random = t >= d.fighters.len();
+    p.spawn((
+        node(|n| {
+            n.width = Val::Px(w);
+            n.height = Val::Px(h);
+            n.border = UiRect::all(Val::Px(if lead.is_some() { 3. } else { 1.5 }));
+            n.border_radius = BorderRadius::all(Val::Px(10.));
+            n.overflow = Overflow::clip();
+        }),
+        BackgroundGradient::from(LinearGradient::to_bottom(vec![
+            ColorStop::auto(lead.unwrap_or(LINE).mix(&NIGHT, if locked { 0.45 } else { 0.75 })),
+            ColorStop::auto(NIGHT),
+        ])),
+        BorderColor::all(lead.unwrap_or(alpha(LINE, 0.9))),
+        BoxShadow::new(alpha(lead.unwrap_or(NIGHT), 0.55), Val::Px(0.), Val::Px(0.), Val::Px(1.), Val::Px(14.)),
+        UiTransform::from_scale(Vec2::splat(if lead.is_some() { 1.05 } else { 1. })),
+        Focusable { key: k, owner: None, spin: false },
+    ))
+    .with_children(|p| {
+        let full = |n: &mut Node| {
+            n.position_type = PositionType::Absolute;
+            n.left = Val::Px(0.);
+            n.right = Val::Px(0.);
+            n.top = Val::Px(0.);
+            n.bottom = Val::Px(0.);
+        };
+        if random {
+            p.spawn((node(|n| {
+                full(n);
+                n.justify_content = JustifyContent::Center;
+                n.align_items = AlignItems::Center;
+                n.padding.bottom = Val::Px(14.);
+            }),))
+                .with_child(txt(&f.display, w * 0.62, lead.unwrap_or(GOLD), "?"));
+        } else if t < Portraits::MAX {
+            p.spawn((node(full), ImageNode { rect: Some(Portraits::rect(t)), ..ImageNode::new(pt.image.clone()) }));
+        }
+        let name = if random { "Random" } else { &d.fighters[t].name };
+        p.spawn((
+            node(|n| {
+                n.position_type = PositionType::Absolute;
+                n.left = Val::Px(0.);
+                n.right = Val::Px(0.);
+                n.bottom = Val::Px(0.);
+                n.justify_content = JustifyContent::Center;
+                n.padding = UiRect::new(Val::Px(4.), Val::Px(4.), Val::Px(10.), Val::Px(3.));
+            }),
+            BackgroundGradient::from(LinearGradient::to_bottom(vec![
+                ColorStop::auto(alpha(NIGHT, 0.)),
+                ColorStop::auto(alpha(NIGHT, 0.92)),
+            ])),
+        ))
+        .with_child((
+            txt(&f.heavy, (w * 0.17).clamp(13., 19.), if lead.is_some() { STAR } else { DIM }, name),
+            TextLayout::new(Justify::Center, LineBreak::NoWrap),
+        ));
+        // Chips fan out along the top edge; later ones overlap earlier ones but every label start stays visible.
+        let cw = 30.;
+        let step = if chips.len() > 1 { ((w - 10. - cw) / (chips.len() - 1) as f32).min(cw + 3.) } else { 0. };
+        for (n, &i) in chips.iter().enumerate() {
+            chip(p, f, d, s, i, 5. + n as f32 * step);
+        }
+    });
+}
+
+fn chip(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, i: usize, left: f32) {
+    let (main, _, light) = pal(d, s.color(i));
+    let ready = s.slots[i].ready;
+    p.spawn((
+        node(|n| {
+            n.position_type = PositionType::Absolute;
+            n.top = Val::Px(5.);
+            n.left = Val::Px(left);
+            n.padding = UiRect::axes(Val::Px(5.), Val::Px(0.));
+            n.border = UiRect::all(Val::Px(1.5));
+            n.border_radius = BorderRadius::all(Val::Px(5.));
+        }),
+        BackgroundColor(main),
+        BorderColor::all(if ready { light } else { NIGHT }),
+        BoxShadow::new(alpha(NIGHT, 0.6), Val::Px(1.), Val::Px(2.), Val::Px(0.), Val::Px(3.)),
+    ))
+    .with_child(txt(&f.display, 15., NIGHT, format!("P{}", i + 1)));
 }
 
 fn ready_banner(p: &mut ChildSpawnerCommands, f: &Fonts) {
     p.spawn((
         node(|n| {
-            n.padding = UiRect::axes(Val::Px(60.), Val::Px(2.));
-            n.flex_direction = FlexDirection::Row;
-            n.align_items = AlignItems::Center;
-            n.column_gap = Val::Px(24.);
+            n.position_type = PositionType::Absolute;
+            n.top = Val::Px(232.);
+            n.left = Val::Px(0.);
+            n.right = Val::Px(0.);
+            n.justify_content = JustifyContent::Center;
         }),
-        BackgroundGradient::from(LinearGradient::to_right(vec![
-            ColorStop::auto(Color::NONE),
-            ColorStop::auto(alpha(GOLD, 0.95)),
-            ColorStop::auto(alpha(GOLD, 0.95)),
-            ColorStop::auto(Color::NONE),
-        ])),
-        UiTransform::from_rotation(Rot2::degrees(-2.)),
+        UiTransform::from_translation(Val2::new(Val::Vw(-110.), Val::Px(0.))),
+        Motion::Banner,
     ))
     .with_children(|p| {
-        p.spawn(txt(&f.display, 46., NIGHT, "Ready to fight"));
-        p.spawn(txt(&f.heavy, 22., alpha(NIGHT, 0.75), "press start"));
+        p.spawn((
+            node(|n| {
+                n.width = Val::Percent(100.);
+                n.padding = UiRect::axes(Val::Px(60.), Val::Px(4.));
+                n.flex_direction = FlexDirection::Row;
+                n.justify_content = JustifyContent::Center;
+                n.align_items = AlignItems::Center;
+                n.column_gap = Val::Px(24.);
+            }),
+            BackgroundGradient::from(LinearGradient::to_right(vec![
+                ColorStop::auto(alpha(GOLD, 0.)),
+                ColorStop::auto(alpha(GOLD, 0.96)),
+                ColorStop::auto(alpha(GOLD, 0.96)),
+                ColorStop::auto(alpha(GOLD, 0.)),
+            ])),
+            UiTransform::from_rotation(Rot2::degrees(-2.)),
+        ))
+        .with_children(|p| {
+            p.spawn(txt(&f.display, 54., NIGHT, "Ready to fight"));
+            p.spawn((
+                node(|n| {
+                    n.padding = UiRect::axes(Val::Px(10.), Val::Px(1.));
+                    n.border_radius = BorderRadius::all(Val::Px(6.));
+                }),
+                BackgroundColor(NIGHT),
+            ))
+            .with_child(txt(&f.heavy, 22., GOLD, "press Start"));
+        });
     });
 }
 
-fn card(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, i: usize, w: f32, devs: &Devices) {
+/// Keyboard (L / R marks a split half) or gamepad outline for a card header.
+fn device_glyph(p: &mut ChildSpawnerCommands, f: &Fonts, dev: Dev, ink: Color) {
+    let (pad, half) = match dev {
+        Dev::Pad(_) => (true, None),
+        Dev::Keys => (false, None),
+        Dev::KeysL => (false, Some("L")),
+        Dev::KeysR => (false, Some("R")),
+        // Scripted bots stand in for a gamepad and the right keyboard half.
+        Dev::Bot(n) => (n % 2 == 0, (n % 2 == 1).then_some("R")),
+    };
+    let rect = |p: &mut ChildSpawnerCommands, x: f32, y: f32, w: f32, h: f32, r: f32, c: Color| {
+        p.spawn((
+            node(|n| {
+                n.position_type = PositionType::Absolute;
+                n.left = Val::Px(x);
+                n.top = Val::Px(y);
+                n.width = Val::Px(w);
+                n.height = Val::Px(h);
+                n.border_radius = BorderRadius::all(Val::Px(r));
+            }),
+            BackgroundColor(c),
+        ));
+    };
+    p.spawn(row()).with_children(|p| {
+        if let Some(h) = half {
+            p.spawn((txt(&f.display, 17., ink, h), node(|n| n.margin.right = Val::Px(4.))));
+        }
+        p.spawn(node(|n| {
+            n.width = Val::Px(30.);
+            n.height = Val::Px(19.);
+        }))
+        .with_children(|p| {
+            if pad {
+                rect(p, 0., 1., 30., 17., 8.5, ink);
+                rect(p, 5., 7.5, 8., 2.5, 0.5, Color::WHITE.with_alpha(0.9));
+                rect(p, 7.75, 4.75, 2.5, 8., 0.5, Color::WHITE.with_alpha(0.9));
+                rect(p, 19., 5., 3.5, 3.5, 2., Color::WHITE.with_alpha(0.9));
+                rect(p, 22.5, 9., 3.5, 3.5, 2., Color::WHITE.with_alpha(0.9));
+            } else {
+                rect(p, 0., 1., 30., 17., 3., ink);
+                for (r, n) in [(0, 6), (1, 5)] {
+                    for c in 0..n {
+                        let x = 2.5 + c as f32 * 4.3 + r as f32 * 2.;
+                        rect(p, x, 3.5 + r as f32 * 4.5, 3., 3., 0.5, Color::WHITE.with_alpha(0.9));
+                    }
+                }
+                rect(p, 8., 12.5, 14., 3., 0.5, Color::WHITE.with_alpha(0.9));
+            }
+        });
+    });
+}
+
+#[allow(clippy::too_many_arguments)]
+fn card(
+    p: &mut ChildSpawnerCommands,
+    f: &Fonts,
+    d: &sim::GameData,
+    s: &Select,
+    i: usize,
+    w: f32,
+    devs: &Devices,
+    saved: &Saved,
+) {
     let pk = &s.slots[i];
     let (main, dark, _) = pal(d, s.color(i));
     let human = pk.dev.is_some() || pk.disconnected;
-    let narrow = w < 200.;
+    let ready = pk.ready && pk.dev.is_some();
+    let narrow = w < 170.;
     let fighter = &d.fighters[pk.fighter];
-    p.spawn((
+    let mut card = p.spawn((
         node(|n| {
             n.width = Val::Px(w);
+            n.min_height = Val::Px(118.);
             n.flex_direction = FlexDirection::Column;
             n.border = UiRect::all(Val::Px(2.));
             n.border_radius = BorderRadius::all(Val::Px(10.));
-            n.overflow = Overflow::clip();
         }),
-        BackgroundColor(INK),
-        BorderColor::all(if pk.ready && human { main } else { alpha(main, 0.35) }),
-        BoxShadow::new(
-            alpha(main, if pk.ready && human { 0.45 } else { 0. }),
-            Val::Px(0.),
-            Val::Px(0.),
-            Val::Px(2.),
-            Val::Px(18.),
-        ),
-    ))
-    .with_children(|p| {
-        // Header band.
+        BackgroundColor(if ready { dark.mix(&NIGHT, 0.55) } else { INK }),
+        BorderColor::all(if ready { main } else { alpha(main, 0.35) }),
+        BoxShadow::new(alpha(main, if ready { 0.5 } else { 0. }), Val::Px(0.), Val::Px(0.), Val::Px(2.), Val::Px(18.)),
+    ));
+    if let Some(dev) = pk.dev.filter(|_| ready) {
+        card.insert((UiTransform::default(), Motion::Flip(dev)));
+    }
+    card.with_children(|p| {
+        // Header band: tag and device (or CPU level).
         p.spawn((
             node(|n| {
                 n.flex_direction = FlexDirection::Row;
                 n.align_items = AlignItems::Center;
                 n.justify_content = JustifyContent::SpaceBetween;
-                n.padding = UiRect::axes(Val::Px(12.), Val::Px(2.));
+                n.padding = UiRect::axes(Val::Px(10.), Val::Px(1.));
+                n.border_radius = BorderRadius::top(Val::Px(8.));
             }),
             BackgroundGradient::from(LinearGradient::to_right(vec![ColorStop::auto(main), ColorStop::auto(dark)])),
         ))
         .with_children(|p| {
-            p.spawn(txt(&f.display, 26., NIGHT, s.tag(i)));
-            let who = match pk.dev {
-                Some(dv) => devs.name(dv),
-                None if s.mode == Mode::Training => "Training dummy".into(),
-                None => LEVELS[pk.level as usize].into(),
-            };
-            p.spawn(txt(&f.body_bold, 12., alpha(NIGHT, 0.8), who));
+            p.spawn(txt(&f.display, 24., NIGHT, s.tag(i)));
+            match pk.dev {
+                Some(dv) => device_glyph(p, f, dv, alpha(NIGHT, 0.85)),
+                None if pk.disconnected => {
+                    p.spawn(txt(&f.body_bold, 11., alpha(NIGHT, 0.8), "Disconnected"));
+                }
+                None if s.mode == Mode::Versus => {
+                    p.spawn(txt(&f.body_bold, 12., alpha(NIGHT, 0.8), LEVELS[pk.level as usize]));
+                }
+                None => {}
+            }
         });
         p.spawn(node(|n| {
             n.flex_direction = FlexDirection::Column;
-            n.padding = UiRect::new(Val::Px(12.), Val::Px(12.), Val::Px(8.), Val::Px(10.));
-            n.row_gap = Val::Px(2.);
+            n.padding = UiRect::new(Val::Px(10.), Val::Px(10.), Val::Px(4.), Val::Px(6.));
             n.flex_grow = 1.;
         }))
         .with_children(|p| {
-            let k = key(FIGHTER, i);
-            let on = focused_by(s, k);
-            p.spawn((
-                node(|n| {
-                    n.flex_direction = FlexDirection::Row;
-                    n.align_items = AlignItems::Center;
-                    n.column_gap = Val::Px(6.);
-                    n.min_height = Val::Px(44.);
-                }),
-                Focusable { key: k, owner: human.then_some(i), spin: true },
-            ))
-            .with_children(|p| {
-                let arrows = on.is_some();
-                if arrows {
-                    p.spawn(txt(&f.display, 30., GOLD, "‹"));
-                }
-                p.spawn(txt(&f.display, if narrow { 25. } else { 38. }, STAR, fighter.name.clone()));
-                if arrows {
-                    p.spawn(txt(&f.display, 30., GOLD, "›"));
-                }
-                if !human {
-                    cursor_chips(p, f, d, s, k);
-                }
-            });
-            if !narrow {
-                p.spawn((
-                    txt(&f.body, 12.5, DIM, fighter.blurb.clone()),
-                    node(|n| {
-                        n.height = Val::Px(52.);
-                        n.overflow = Overflow::clip();
-                        n.margin.bottom = Val::Px(6.);
-                    }),
-                ));
-            }
-            let mut rows: Vec<(u32, &str, String, Option<Color>)> = vec![];
-            if !human && s.mode == Mode::Versus {
-                rows.push((LEVEL, "Level", LEVELS[pk.level as usize].into(), None));
-            }
-            if s.teams {
-                let tc = pal(d, pk.team as usize).0;
-                rows.push((TEAM, "Team", team_name(pk.team).into(), Some(tc)));
-            }
+            let name_size = if narrow { 22. } else { 28. };
+            let (name, line) = if pk.random && !ready {
+                ("Random".to_string(), "Rolled when you lock in".to_string())
+            } else {
+                (fighter.name.clone(), fighter.tagline.clone())
+            };
             if human {
-                rows.push((TAP, "Up to jump", if pk.tap_jump { "On" } else { "Off" }.into(), None));
+                p.spawn((txt(&f.display, name_size, STAR, name), TextLayout::new(Justify::Left, LineBreak::NoWrap)));
+            } else {
+                let k = key(FIGHTER, i);
+                let on = focused_by(s, k);
+                p.spawn((
+                    node(|n| {
+                        n.flex_direction = FlexDirection::Row;
+                        n.align_items = AlignItems::Center;
+                        n.column_gap = Val::Px(4.);
+                        n.padding = UiRect::horizontal(Val::Px(4.));
+                        n.margin = UiRect::horizontal(Val::Px(-4.));
+                        n.border_radius = BorderRadius::all(Val::Px(5.));
+                    }),
+                    BackgroundColor(on.map_or(Color::NONE, |j| alpha(pal(d, s.color(j)).0, 0.16))),
+                    Focusable { key: k, owner: None, spin: true },
+                ))
+                .with_children(|p| {
+                    if on.is_some() {
+                        p.spawn(txt(&f.display, name_size * 0.8, GOLD, "‹"));
+                    }
+                    p.spawn((
+                        txt(&f.display, name_size, STAR, name),
+                        TextLayout::new(Justify::Left, LineBreak::NoWrap),
+                    ));
+                    if on.is_some() {
+                        p.spawn(txt(&f.display, name_size * 0.8, GOLD, "›"));
+                    }
+                    cursor_chips(p, f, d, s, k);
+                });
             }
-            for (kd, label, value, color) in rows {
-                spin_row(p, f, d, s, key(kd, i), human.then_some(i), label, value, color, 17.);
+            // Narrow cards wrap the tagline to two lines; anything longer is cut.
+            p.spawn(node(|n| {
+                n.height = Val::Px(if narrow { 28. } else { 15. });
+                n.overflow = Overflow::clip();
+                n.margin.bottom = Val::Px(4.);
+            }))
+            .with_child((txt(&f.body, 11., DIM, line), TextLayout::new(Justify::Left, LineBreak::WordBoundary)));
+            if !human && s.mode == Mode::Versus {
+                spin_row(p, f, d, s, key(LEVEL, i), "Level", LEVELS[pk.level as usize].into(), None, 16.);
             }
             if s.mode == Mode::Training && !human {
-                spin_row(p, f, d, s, key(BEHAVIOR, i), None, "Behavior", s.dummy.label().into(), None, 17.);
+                spin_row(p, f, d, s, key(BEHAVIOR, i), "Behavior", s.dummy.label().into(), None, 16.);
             }
             if pk.disconnected || !human && s.mode == Mode::Versus {
                 let k = key(REMOVE, i);
@@ -779,48 +1171,130 @@ fn card(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, 
                         n.flex_direction = FlexDirection::Row;
                         n.column_gap = Val::Px(6.);
                         n.margin.top = Val::Auto;
-                        n.padding = UiRect::axes(Val::Px(8.), Val::Px(3.));
+                        n.padding = UiRect::axes(Val::Px(6.), Val::Px(1.));
                         n.border_radius = BorderRadius::all(Val::Px(5.));
                     }),
-                    BackgroundColor(if on.is_some() { alpha(main, 0.16) } else { Color::NONE }),
+                    BackgroundColor(on.map_or(Color::NONE, |j| alpha(pal(d, s.color(j)).0, 0.16))),
                     Focusable { key: k, owner: None, spin: false },
                 ))
                 .with_children(|p| {
-                    p.spawn(txt(
-                        &f.label,
-                        17.,
-                        if on.is_some() { STAR } else { FAINT },
-                        if pk.disconnected { "Remove disconnected player" } else { "Remove CPU" },
-                    ));
+                    p.spawn(txt(&f.label, 15., if on.is_some() { STAR } else { FAINT }, "Remove"));
                     cursor_chips(p, f, d, s, k);
                 });
             }
-            if human {
-                let k = key(LOCK, i);
-                let on = focused_by(s, k).is_some();
-                let (label, color) = if pk.ready {
-                    (if pk.disconnected { "Disconnected" } else { "Ready!" }, main)
-                } else if on {
-                    ("Lock in", GOLD)
+            if let (Some(dev), true) = (pk.dev, human) {
+                if ready {
+                    p.spawn((
+                        node(|n| {
+                            n.margin = UiRect::new(Val::Px(-10.), Val::Px(-10.), Val::Auto, Val::Px(-6.));
+                            n.justify_content = JustifyContent::Center;
+                            n.border_radius = BorderRadius::bottom(Val::Px(8.));
+                        }),
+                        BackgroundColor(main),
+                    ))
+                    .with_child(txt(&f.display, 28., NIGHT, "READY!"));
                 } else {
-                    ("Choosing…", FAINT)
-                };
-                p.spawn((
-                    node(|n| {
+                    // Which of this device's controls opens the options.
+                    let b = input::binds(saved, &devs.profile(dev));
+                    let grab = b[Act::Grab as usize].first().map_or("Grab".into(), |c| input::control_label(c));
+                    p.spawn(node(|n| {
                         n.margin.top = Val::Auto;
-                        n.justify_content = JustifyContent::Center;
-                        n.padding = UiRect::axes(Val::Px(0.), Val::Px(2.));
-                        n.border = UiRect::all(Val::Px(1.5));
-                        n.border_radius = BorderRadius::all(Val::Px(6.));
-                    }),
-                    BackgroundColor(if pk.ready { alpha(main, 0.2) } else { Color::NONE }),
-                    BorderColor::all(if on && !pk.ready { GOLD } else { Color::NONE }),
-                    Focusable { key: k, owner: Some(i), spin: false },
-                ))
-                .with_child(txt(&f.display, 24., color, label));
+                        n.flex_direction = FlexDirection::Row;
+                        n.align_items = AlignItems::Center;
+                        n.column_gap = Val::Px(5.);
+                    }))
+                    .with_children(|p| {
+                        p.spawn((
+                            node(|n| {
+                                n.padding = UiRect::axes(Val::Px(5.), Val::Px(0.));
+                                n.border = UiRect::all(Val::Px(1.));
+                                n.border_radius = BorderRadius::all(Val::Px(4.));
+                            }),
+                            BorderColor::all(FAINT),
+                        ))
+                        .with_child(txt(&f.body_bold, 11., DIM, grab));
+                        p.spawn(txt(&f.body, 11., FAINT, "options"));
+                    });
+                }
             }
         });
+        if let Some(r) = pk.menu {
+            options(p, f, d, s, i, r);
+        }
     });
+}
+
+/// A player's options popover, above their card.
+fn options(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, i: usize, r: usize) {
+    let pk = &s.slots[i];
+    let (main, _, _) = pal(d, s.color(i));
+    p.spawn((
+        node(|n| {
+            n.position_type = PositionType::Absolute;
+            n.bottom = Val::Percent(100.);
+            n.left = Val::Px(-2.);
+            n.min_width = Val::Px(190.);
+            n.margin.bottom = Val::Px(8.);
+            n.flex_direction = FlexDirection::Column;
+            n.padding = UiRect::all(Val::Px(8.));
+            n.row_gap = Val::Px(2.);
+            n.border = UiRect::all(Val::Px(2.));
+            n.border_radius = BorderRadius::all(Val::Px(10.));
+        }),
+        BackgroundColor(NIGHT.with_alpha(0.97)),
+        BorderColor::all(main),
+        BoxShadow::new(alpha(NIGHT, 0.7), Val::Px(0.), Val::Px(4.), Val::Px(0.), Val::Px(14.)),
+        GlobalZIndex(8),
+    ))
+    .with_children(|p| {
+        p.spawn(txt(&f.heavy, 15., main, format!("P{} options", i + 1)));
+        for (n, kd) in s.options().into_iter().enumerate() {
+            let on = n == r;
+            let (label, value, color) = match kd {
+                TEAM => ("Team", team_name(pk.team).to_string(), Some(pal(d, pk.team as usize).0)),
+                _ => ("Up to jump", if pk.tap_jump { "On" } else { "Off" }.to_string(), None),
+            };
+            p.spawn((
+                node(|n| {
+                    n.flex_direction = FlexDirection::Row;
+                    n.justify_content = JustifyContent::SpaceBetween;
+                    n.column_gap = Val::Px(14.);
+                    n.padding = UiRect::axes(Val::Px(8.), Val::Px(2.));
+                    n.border_radius = BorderRadius::all(Val::Px(5.));
+                }),
+                BackgroundColor(if on { alpha(main, 0.2) } else { Color::NONE }),
+            ))
+            .with_children(|p| {
+                p.spawn(txt(&f.label, 17., if on { STAR } else { DIM }, label));
+                let v = if on { format!("‹ {value} ›") } else { value };
+                p.spawn(txt(&f.label, 18., color.unwrap_or(STAR), v));
+            });
+        }
+        p.spawn((
+            txt(&f.body, 11., FAINT, "↑↓ choose · ←→ change · Special close"),
+            node(|n| n.margin.top = Val::Px(4.)),
+        ));
+    });
+}
+
+/// Chips of the cursors sitting on the control `k`.
+fn cursor_chips(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Select, k: u32) {
+    for (i, pk) in s.humans() {
+        if pk.cursor.key == k && !pk.ready {
+            p.spawn((
+                node(|n| {
+                    n.padding = UiRect::axes(Val::Px(5.), Val::Px(0.));
+                    n.border_radius = BorderRadius::all(Val::Px(4.));
+                }),
+                BackgroundColor(pal(d, s.color(i)).0),
+            ))
+            .with_child(txt(&f.display, 13., NIGHT, format!("P{}", i + 1)));
+        }
+    }
+}
+
+fn focused_by(s: &Select, k: u32) -> Option<usize> {
+    s.humans().find(|(_, p)| p.cursor.key == k && !p.ready).map(|(i, _)| i)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -830,7 +1304,6 @@ fn spin_row(
     d: &sim::GameData,
     s: &Select,
     k: u32,
-    owner: Option<usize>,
     label: &str,
     value: String,
     color: Option<Color>,
@@ -843,18 +1316,17 @@ fn spin_row(
             n.flex_direction = FlexDirection::Row;
             n.align_items = AlignItems::Center;
             n.justify_content = JustifyContent::SpaceBetween;
-            n.padding = UiRect::axes(Val::Px(8.), Val::Px(3.));
+            n.padding = UiRect::axes(Val::Px(6.), Val::Px(2.));
+            n.margin = UiRect::horizontal(Val::Px(-4.));
             n.border_radius = BorderRadius::all(Val::Px(5.));
         }),
         BackgroundColor(tint),
-        Focusable { key: k, owner, spin: true },
+        Focusable { key: k, owner: None, spin: true },
     ))
     .with_children(|p| {
         p.spawn(row()).with_children(|p| {
             p.spawn((txt(&f.label, size, DIM, label), node(|n| n.margin.right = Val::Px(6.))));
-            if owner.is_none() {
-                cursor_chips(p, f, d, s, k);
-            }
+            cursor_chips(p, f, d, s, k);
         });
         let v = if on.is_some() { format!("‹ {value} ›") } else { value };
         p.spawn(txt(&f.label, size + 1., color.unwrap_or(STAR), v));
@@ -865,21 +1337,21 @@ fn join_card(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Sel
     p.spawn((
         node(|n| {
             n.width = Val::Px(w);
-            n.min_height = Val::Px(150.);
+            n.min_height = Val::Px(118.);
             n.flex_direction = FlexDirection::Column;
             n.justify_content = JustifyContent::Center;
             n.align_items = AlignItems::Center;
-            n.row_gap = Val::Px(14.);
+            n.row_gap = Val::Px(10.);
             n.border = UiRect::all(Val::Px(2.));
             n.border_radius = BorderRadius::all(Val::Px(10.));
-            n.padding = UiRect::all(Val::Px(12.));
+            n.padding = UiRect::all(Val::Px(10.));
         }),
         BackgroundColor(INK_SOFT),
         BorderColor::all(alpha(FAINT, 0.6)),
     ))
     .with_children(|p| {
         p.spawn((
-            txt(&f.heavy, 22., DIM, "Press any button to join"),
+            txt(&f.heavy, 20., DIM, "Press any button to join"),
             TextLayout::new(Justify::Center, LineBreak::WordBoundary),
         ));
         if s.mode == Mode::Versus && s.humans().count() > 0 {
@@ -889,7 +1361,7 @@ fn join_card(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Sel
                 node(|n| {
                     n.flex_direction = FlexDirection::Row;
                     n.column_gap = Val::Px(6.);
-                    n.padding = UiRect::axes(Val::Px(14.), Val::Px(4.));
+                    n.padding = UiRect::axes(Val::Px(12.), Val::Px(3.));
                     n.border = UiRect::all(Val::Px(1.5));
                     n.border_radius = BorderRadius::all(Val::Px(6.));
                 }),
@@ -897,7 +1369,7 @@ fn join_card(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &Sel
                 Focusable { key: k, owner: None, spin: false },
             ))
             .with_children(|p| {
-                p.spawn(txt(&f.label, 18., if on { GOLD } else { DIM }, "+ Add CPU"));
+                p.spawn(txt(&f.label, 17., if on { GOLD } else { DIM }, "+ Add CPU"));
                 cursor_chips(p, f, d, s, k);
             });
         }
@@ -923,6 +1395,7 @@ mod tests {
             teams: false,
             ff: false,
             dummy: DummyMode::Stand,
+            roll: 1,
         };
         s.join(Dev::Bot(0), &saved, &data);
         s.join(Dev::Bot(1), &saved, &data);
@@ -946,7 +1419,7 @@ mod tests {
         s.frame(&devs, &spots, &saved, &d);
         assert_eq!(s.slots.len(), 2);
         for (i, p) in s.slots.iter().enumerate() {
-            assert_eq!(p.cursor, Cursor { owner: Some(i), key: key(FIGHTER, i) });
+            assert_eq!(p.cursor, Cursor { owner: Some(i), key: key(TILE, p.fighter) });
         }
         s.spin(key(LEVEL, 7), 1, &d); // stale layout is harmless
     }
@@ -978,10 +1451,10 @@ mod tests {
     fn simultaneous_leave_and_join_keeps_new_player() {
         let (mut s, mut devs, d, saved) = setup();
         s.slots.truncate(1);
-        s.slots[0].cursor.key = key(FIGHTER, 0);
+        s.slots[0].cursor.key = key(TILE, 0);
         devs.map.get_mut(&Dev::Bot(0)).unwrap().nav = vec![Nav::Back];
         devs.map.get_mut(&Dev::Bot(1)).unwrap().nav = vec![Nav::Confirm];
-        let (_, leave) = s.frame(&devs, &[spot(key(FIGHTER, 0), true)], &saved, &d);
+        let (_, leave) = s.frame(&devs, &[spot(key(TILE, 0), false)], &saved, &d);
         assert!(!leave);
         assert_eq!(s.slots.len(), 1);
         assert_eq!(s.slots[0].dev, Some(Dev::Bot(1)));
@@ -1037,5 +1510,47 @@ mod tests {
             s.add_cpu(&saved, &d);
         }
         assert_eq!(s.slots.len(), 8);
+    }
+    #[test]
+    fn chips_preview_on_hover_lock_on_attack_and_random_rolls() {
+        let (mut s, mut devs, d, saved) = setup();
+        let n = d.fighters.len();
+        let spots: Vec<Spot> = (0..=n)
+            .map(|t| Spot {
+                f: Focusable { key: key(TILE, t), owner: None, spin: false },
+                center: Vec2::new(t as f32 * 100., 0.),
+            })
+            .collect();
+        s.slots[0].cursor.key = key(TILE, 0);
+        devs.map.get_mut(&Dev::Bot(0)).unwrap().nav = vec![Nav::Right];
+        s.frame(&devs, &spots, &saved, &d);
+        assert_eq!((s.slots[0].fighter, s.slots[0].ready), (1, false));
+        devs.map.get_mut(&Dev::Bot(0)).unwrap().nav = vec![Nav::Confirm];
+        s.frame(&devs, &spots, &saved, &d);
+        assert!(s.slots[0].ready);
+        s.slots[1].cursor.key = key(TILE, n - 1);
+        devs.map.get_mut(&Dev::Bot(0)).unwrap().nav = vec![];
+        devs.map.get_mut(&Dev::Bot(1)).unwrap().nav = vec![Nav::Right];
+        s.frame(&devs, &spots, &saved, &d);
+        assert!(s.slots[1].random);
+        devs.map.get_mut(&Dev::Bot(1)).unwrap().nav = vec![Nav::Confirm];
+        s.frame(&devs, &spots, &saved, &d);
+        assert!(s.slots[1].ready && !s.slots[1].random && s.slots[1].fighter < n);
+    }
+    #[test]
+    fn options_popover_takes_presses_until_closed() {
+        let (mut s, mut devs, d, saved) = setup();
+        s.teams = true;
+        let tap = s.slots[0].tap_jump;
+        let st = devs.map.get_mut(&Dev::Bot(0)).unwrap();
+        st.pressed[Act::Grab as usize] = true;
+        st.nav = vec![Nav::Down, Nav::Right];
+        s.frame(&devs, &[], &saved, &d);
+        assert_eq!((s.slots[0].menu, s.slots[0].tap_jump), (Some(1), !tap));
+        let st = devs.map.get_mut(&Dev::Bot(0)).unwrap();
+        st.pressed = [false; 10];
+        st.nav = vec![Nav::Back];
+        s.frame(&devs, &[], &saved, &d);
+        assert_eq!((s.slots.len(), s.slots[0].menu), (3, None));
     }
 }

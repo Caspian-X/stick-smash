@@ -334,6 +334,12 @@
       "endSlowmo": { "speed": 0.25, "ticks": 50 },
       "resultsDelay": 100,
       "koCreditTicks": 480
+    },
+    "select": {
+      "flourish": "usmash",
+      "rosterColor": { "main": "#d9dcf5", "dark": "#8a8fb8", "light": "#ffffff" },
+      "flipSecs": 0.22,
+      "bannerSecs": 0.35
     }
   },
   "audio": {

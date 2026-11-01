@@ -29,6 +29,9 @@ pub struct Fighter {
     /// Menu help line.
     #[serde(default)]
     pub blurb: String,
+    /// One-line pitch on the character select card.
+    #[serde(default)]
+    pub tagline: String,
     pub stats: Stats,
     /// Collision body for stage geometry.
     pub body: Body,

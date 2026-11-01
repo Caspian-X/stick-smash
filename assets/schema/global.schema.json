@@ -1082,9 +1082,10 @@
         "camera": { "$ref": "#/$defs/Camera" },
         "overlays": { "$ref": "#/$defs/Overlays" },
         "fx": { "$ref": "#/$defs/FxLook" },
-        "hud": { "$ref": "#/$defs/Hud" }
+        "hud": { "$ref": "#/$defs/Hud" },
+        "select": { "$ref": "#/$defs/SelectLook" }
       },
-      "required": ["alphaGamma", "camera", "overlays", "fx", "hud"]
+      "required": ["alphaGamma", "camera", "overlays", "fx", "hud", "select"]
     },
     "Camera": {
       "type": "object",
@@ -1469,6 +1470,28 @@
         "ticks": { "type": "integer", "format": "uint32", "minimum": 0 }
       },
       "required": ["speed", "ticks"]
+    },
+    "SelectLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "flourish": {
+          "type": "string",
+          "description": "Move slot a fighter plays on the stage when its player locks in, before its `win` pose."
+        },
+        "rosterColor": {
+          "$ref": "#/$defs/PlayerColors",
+          "description": "Roster tile figures no player is pointing at."
+        },
+        "flipSecs": {
+          "type": "number",
+          "format": "float",
+          "description": "Seconds for a card's READY flip and the ready banner's slide-in."
+        },
+        "bannerSecs": { "type": "number", "format": "float" }
+      },
+      "required": ["flourish", "rosterColor", "flipSecs", "bannerSecs"],
+      "description": "Character select presentation (the game crate reads this; the sim never does)."
     },
     "Audio": {
       "type": "object",

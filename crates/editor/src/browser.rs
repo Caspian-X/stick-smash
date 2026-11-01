@@ -189,7 +189,8 @@ pub fn browser(ui: &mut egui::Ui, ed: &mut Editor) {
                     || f.body != saved.body
                     || f.hurtboxes != saved.hurtboxes
                     || f.name != saved.name
-                    || f.blurb != saved.blurb;
+                    || f.blurb != saved.blurb
+                    || f.tagline != saved.tagline;
                 let b = bad("stats") || bad("body") || bad("hurtboxes");
                 if item(ui, ed.subject == Subject::Fighter, "stats", "body · hurtboxes", dirty, b).clicked() {
                     pick = Some(Subject::Fighter);

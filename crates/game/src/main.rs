@@ -136,6 +136,7 @@ fn main() {
     .add_systems(OnEnter(Screen::Settings), menu::enter_settings)
     .add_systems(OnEnter(Screen::Controls), menu::enter_controls)
     .add_systems(OnEnter(Screen::Select), select::enter)
+    .add_systems(OnExit(Screen::Select), select::exit)
     .add_systems(OnEnter(Screen::Match), (input::clear, hud::spawn))
     .add_systems(OnEnter(Screen::Select), input::clear)
     .add_systems(OnEnter(Screen::Title), input::clear)
@@ -148,7 +149,7 @@ fn main() {
             (play::attract, (menu::update, menu::draw).chain().run_if(resource_exists::<ui::Fonts>))
                 .chain()
                 .run_if(|s: Res<State<Screen>>| matches!(s.get(), Screen::Title | Screen::Settings | Screen::Controls)),
-            (select::update, select::draw).chain().run_if(in_state(Screen::Select)),
+            (select::update, select::draw, select::animate).chain().run_if(in_state(Screen::Select)),
             (play::match_flow, hud::pause, hud::draw_pause, hud::update).chain().run_if(in_state(Screen::Match)),
             (results::update, results::draw).chain().run_if(in_state(Screen::Results)),
             replay::library.run_if(in_state(Screen::Replays)),

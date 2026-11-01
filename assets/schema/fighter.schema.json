@@ -11,6 +11,7 @@
     },
     "name": { "type": "string" },
     "blurb": { "type": "string", "description": "Menu help line.", "default": "" },
+    "tagline": { "type": "string", "description": "One-line pitch on the character select card.", "default": "" },
     "stats": { "$ref": "#/$defs/StatsPartial" },
     "body": { "$ref": "#/$defs/BodyPartial", "description": "Collision body for stage geometry." },
     "hurtboxes": { "$ref": "#/$defs/HurtboxesPartial" },

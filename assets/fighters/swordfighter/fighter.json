@@ -4,6 +4,7 @@
   "extends": "base",
   "name": "Swordfighter",
   "blurb": "Swordfighter: longer reach, forward smash tip hits hardest · special: hold for Flare Blade · → lunge stab · ↑ rising slash · ↓ counter",
+  "tagline": "Long reach, tipper smashes, a counter",
   "ai": {
     "reach": 95,
     "counterChance": 0.35,

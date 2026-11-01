@@ -17,6 +17,20 @@ pub struct Render {
     pub overlays: Overlays,
     pub fx: FxLook,
     pub hud: Hud,
+    pub select: SelectLook,
+}
+
+/// Character select presentation (the game crate reads this; the sim never does).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SelectLook {
+    /// Move slot a fighter plays on the stage when its player locks in, before its `win` pose.
+    pub flourish: String,
+    /// Roster tile figures no player is pointing at.
+    pub roster_color: super::global::PlayerColors,
+    /// Seconds for a card's READY flip and the ready banner's slide-in.
+    pub flip_secs: f32,
+    pub banner_secs: f32,
 }
 
 /// In-match HUD and match-flow presentation (the game crate reads this; the sim never does).

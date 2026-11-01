@@ -302,26 +302,27 @@ fn stage_editor() -> Vec<Step> {
 
 fn select() -> Vec<Step> {
     let mut v = Vec::new();
-    // Versus: bot 0 opens it (and joins), bot 1 joins.
+    // Versus: bot 0 opens it (and joins), bot 1 joins. Chips start on their fighters' roster tiles.
     press(&mut v, 0, Attack);
     press(&mut v, 1, Attack);
-    press(&mut v, 0, Right);
-    press(&mut v, 1, Right);
-    press(&mut v, 1, Right);
-    // Bot 0: down to its footer, over to "Add CPU", add two.
+    // Bot 0: down to "Add CPU", add two, then Special takes its chip home to the roster.
     press(&mut v, 0, Down);
-    press(&mut v, 0, Down);
-    press(&mut v, 0, Right);
     press(&mut v, 0, Attack);
     press(&mut v, 0, Attack);
-    // Left lands on the newest CPU's level: make it hard.
-    press(&mut v, 0, Left);
-    press(&mut v, 0, Right);
-    shot(&mut v, "04-select-choosing");
-    // Back to its own card, then stocks: up into the rules.
     press(&mut v, 0, Special);
+    // Both chips on one tile; bot 1 opens its card options.
+    press(&mut v, 0, Right);
+    press(&mut v, 1, Grab);
+    press(&mut v, 1, Down);
+    shot(&mut v, "04-select-choosing");
+    // Bot 1 closes the options, locks in on the random tile; bot 0 locks in its tile.
+    press(&mut v, 1, Special);
+    press(&mut v, 1, Right);
+    press(&mut v, 1, Right);
     press(&mut v, 1, Attack);
+    v.push(Step::Wait(40));
     press(&mut v, 0, Attack);
+    v.push(Step::Wait(14));
     shot(&mut v, "05-select-ready");
     press(&mut v, 0, Start);
     v.push(Step::Until(screen_is(Screen::Match), 10));

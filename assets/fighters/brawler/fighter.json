@@ -4,6 +4,7 @@
   "extends": "base",
   "name": "Brawler",
   "blurb": "Brawler special: energy ball · ↑ rising uppercut (recovery) · ↓ ground slam",
+  "tagline": "Fists, energy balls and a rising uppercut",
   "moves": {
     "jab": {
       "name": "Jab",

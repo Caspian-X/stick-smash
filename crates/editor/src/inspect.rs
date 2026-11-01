@@ -1009,7 +1009,7 @@ fn fighter_panel(ui: &mut egui::Ui, ed: &mut Editor, errors: &[ContentError]) {
         f.extends.as_ref().map_or(String::new(), |e| format!(" · extends {e}")),
         if fresh { " · new, not saved yet" } else { "" }
     )));
-    for k in ["name", "blurb", "stats", "body", "hurtboxes"] {
+    for k in ["name", "blurb", "tagline", "stats", "body", "hurtboxes"] {
         errs(ui, errors, k);
     }
     section(ui, "Identity", true, |ui| {
@@ -1019,6 +1019,9 @@ fn fighter_panel(ui: &mut egui::Ui, ed: &mut Editor, errors: &[ContentError]) {
             });
             row(ui, "blurb", &d("Fighter", "blurb"), |ui| {
                 ui.text_edit_singleline(&mut f.blurb);
+            });
+            row(ui, "tagline", &d("Fighter", "tagline"), |ui| {
+                ui.text_edit_singleline(&mut f.tagline);
             });
         });
     });

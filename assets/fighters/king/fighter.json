@@ -4,6 +4,7 @@
   "extends": "base",
   "name": "King",
   "blurb": "King: heavy, 3 air jumps · special: throw a Gordo (any attack bats it back) · ↑ super jump · ↓ hold for Jet Hammer",
+  "tagline": "Heavy hammer royalty with three air jumps",
   "stats": { "weight": 0.9, "runSpeed": 5, "jumpSpeed": 14, "airJumpSpeed": 11.5, "airJumps": 3 },
   "ai": {
     "reach": 100,
