@@ -2,6 +2,7 @@
 //! symmetry), slot labels, the overlay, and the floating toolbars (view, add, sandbox).
 
 use bevy_egui::egui::{self, Align2, Color32, Rect, RichText, Sense, UiBuilder};
+use sim::data::render::CPU_LEVELS;
 
 use crate::Editor;
 use crate::stage_ed::{self, Drag, GRIDS, SANDBOX_MAX};
@@ -315,8 +316,6 @@ fn add_pill(ui: &mut egui::Ui, ed: &mut Editor) {
     });
 }
 
-const LEVELS: [&str; 3] = ["Easy", "Normal", "Hard"];
-
 /// Play / scrub the moving platforms' clock (shown when the stage has any).
 fn clock_bar(ui: &mut egui::Ui, ed: &mut Editor, stage: &sim::data::Stage) {
     let cycle = stage.platforms.iter().filter_map(|p| p.motion.as_ref()).map(stage_view::cycle).max().unwrap_or(0);
@@ -354,11 +353,14 @@ fn sandbox_bar(ui: &mut egui::Ui, ed: &mut Editor) {
     ed.st.set_sandbox(n);
     if n > 0 {
         let mut lv = ed.st.level;
-        egui::ComboBox::from_id_salt("st-level").selected_text(LEVELS[lv as usize % 3]).width(64.).show_ui(ui, |ui| {
-            for (i, l) in LEVELS.iter().enumerate() {
-                ui.selectable_value(&mut lv, i as u8, *l);
-            }
-        });
+        egui::ComboBox::from_id_salt("st-level")
+            .selected_text(CPU_LEVELS[lv as usize % CPU_LEVELS.len()])
+            .width(64.)
+            .show_ui(ui, |ui| {
+                for (i, l) in CPU_LEVELS.iter().enumerate() {
+                    ui.selectable_value(&mut lv, i as u8, *l);
+                }
+            });
         if lv != ed.st.level {
             ed.st.level = lv;
             ed.st.world = None;

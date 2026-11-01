@@ -54,7 +54,7 @@ pub(crate) fn setup(
 /// The stage cropped to its play area (padded, at the cell's aspect): the backdrop, stars and moon are trimmed to the
 /// crop so nothing spills into the neighboring cells.
 fn cropped(s: &Stage, aspect: f64, crop: [f64; 2]) -> Stage {
-    let [l, t, r, b] = sim::data::camera::play_area(s);
+    let [l, t, r, b] = crate::camera::play_area(s);
     let (cx, cy) = ((l + r) / 2., (t + b) / 2.);
     let (mut w, mut h) = ((r - l) * crop[0], (b - t) * crop[1]);
     if w / h < aspect {

@@ -19,6 +19,13 @@ pub enum Dev {
     Bot(u8),
 }
 
+impl Dev {
+    /// The keyboard, whole or either half.
+    pub fn is_keyboard(self) -> bool {
+        matches!(self, Dev::Keys | Dev::KeysL | Dev::KeysR)
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Act {
     Left,

@@ -572,8 +572,7 @@ pub fn library(
                             Item::button(u32::MAX - 4, "Cancel"),
                         ],
                         lib.cursor.key,
-                        1150.,
-                        24.,
+                        List::new(1150., 24.),
                     );
                     return;
                 }
@@ -592,7 +591,7 @@ pub fn library(
                     items.push(Item::button(u32::MAX - 1, "Next page"));
                 }
                 items.push(Item::button(0, "Back"));
-                menu_list(p, &fonts, &items, lib.cursor.key, 1150., 22.);
+                menu_list(p, &fonts, &items, lib.cursor.key, List::new(1150., 22.));
             });
         });
 }
@@ -745,10 +744,10 @@ pub fn controls(
                     Item::button(4, if p.hide_hud { "Show HUD" } else { "Hide HUD" }),
                     Item::button(5, if returning { "Results" } else { "Replays" }),
                 ] {
-                    menu_list(row, &fonts, &[item], p.cursor.key, 182., 21.);
+                    menu_list(row, &fonts, &[item], p.cursor.key, List::new(182., 21.));
                 }
                 if p.replay.saved_path.is_none() {
-                    menu_list(row, &fonts, &[Item::button(7, "Save replay")], p.cursor.key, 182., 21.);
+                    menu_list(row, &fonts, &[Item::button(7, "Save replay")], p.cursor.key, List::new(182., 21.));
                 }
             });
             if !p.message.is_empty() {

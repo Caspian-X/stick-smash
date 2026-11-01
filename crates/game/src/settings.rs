@@ -73,6 +73,11 @@ pub enum DummyMode {
 
 impl DummyMode {
     pub const ALL: [DummyMode; 5] = [Self::Stand, Self::Shield, Self::Jump, Self::Cpu, Self::Human];
+    /// `by` places along [`Self::ALL`], wrapping.
+    pub fn cycle(self, by: i32) -> Self {
+        let i = Self::ALL.iter().position(|m| *m == self).unwrap_or(0) as i32;
+        Self::ALL[(i + by).rem_euclid(Self::ALL.len() as i32) as usize]
+    }
     pub fn label(self) -> &'static str {
         match self {
             Self::Stand => "Stand",

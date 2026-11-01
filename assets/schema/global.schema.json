@@ -1095,7 +1095,11 @@
         "overlays": { "$ref": "#/$defs/Overlays" },
         "fx": { "$ref": "#/$defs/FxLook" },
         "hud": { "$ref": "#/$defs/Hud" },
-        "select": { "$ref": "#/$defs/SelectLook" }
+        "select": { "$ref": "#/$defs/SelectLook" },
+        "interpolate": {
+          "$ref": "#/$defs/Interpolate",
+          "default": { "fighterJump": 150.0, "projectileJump": 80.0 }
+        }
       },
       "required": ["alphaGamma", "camera", "overlays", "fx", "hud", "select"]
     },
@@ -1469,6 +1473,18 @@
           "format": "uint64",
           "minimum": 0,
           "description": "Results stats: a fall counts as a KO for the last hitter if they hit within this many ticks, otherwise\nas a self-destruct."
+        },
+        "look": {
+          "$ref": "#/$defs/HudLook",
+          "default": {
+            "shakeSpeed": 91.0,
+            "tagHeight": 96.0,
+            "anchorHeight": 40.0,
+            "bubbleShrink": 900.0,
+            "bubbleMinScale": 0.699999988079071,
+            "popScale": 1.5,
+            "popSpeed": 6.0
+          }
         }
       },
       "required": ["damageRamp", "shake", "endSlowmo", "resultsDelay", "koCreditTicks"],
@@ -1482,6 +1498,37 @@
         "ticks": { "type": "integer", "format": "uint32", "minimum": 0 }
       },
       "required": ["speed", "ticks"]
+    },
+    "HudLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "shakeSpeed": {
+          "type": "number",
+          "format": "float",
+          "description": "Percent shake speed, radians per second."
+        },
+        "tagHeight": {
+          "type": "number",
+          "format": "double",
+          "description": "Name tags float `tagHeight` stage pixels above the feet and show while the point `anchorHeight` above the\nfeet is on screen; offscreen bubbles point at that anchor."
+        },
+        "anchorHeight": { "type": "number", "format": "double" },
+        "bubbleShrink": {
+          "type": "number",
+          "format": "float",
+          "description": "Offscreen bubbles shrink with distance, down to `bubbleMinScale` at `bubbleShrink` pixels away."
+        },
+        "bubbleMinScale": { "type": "number", "format": "float" },
+        "popScale": {
+          "type": "number",
+          "format": "float",
+          "description": "Countdown / GO! / GAME! text pops in from `popScale`, settling in the first 1 / `popSpeed` of its time."
+        },
+        "popSpeed": { "type": "number", "format": "float" }
+      },
+      "required": ["shakeSpeed", "tagHeight", "anchorHeight", "bubbleShrink", "bubbleMinScale", "popScale", "popSpeed"],
+      "description": "Where name tags and offscreen bubbles sit and how HUD text moves. Logical UI pixels unless noted."
     },
     "SelectLook": {
       "type": "object",
@@ -1501,6 +1548,22 @@
           "description": "Seconds for a card's READY flip and the ready banner's slide-in."
         },
         "bannerSecs": { "type": "number", "format": "float" },
+        "overshoot": {
+          "type": "number",
+          "format": "float",
+          "description": "Overshoot of the flip, chip drop and banner ease (back-out; 0 is none)."
+        },
+        "dropScale": {
+          "type": "number",
+          "format": "float",
+          "description": "A dropped chip falls in from `dropHeight` pixels above, `dropScale` bigger."
+        },
+        "dropHeight": { "type": "number", "format": "float" },
+        "bannerFrom": {
+          "type": "number",
+          "format": "float",
+          "description": "The ready banner slides in from this far left (percent of the window width)."
+        },
         "roulette": { "$ref": "#/$defs/Roulette" },
         "sizeSmall": {
           "type": "number",
@@ -1523,6 +1586,10 @@
         "rosterColor",
         "flipSecs",
         "bannerSecs",
+        "overshoot",
+        "dropScale",
+        "dropHeight",
+        "bannerFrom",
         "roulette",
         "sizeSmall",
         "sizeLarge",
@@ -1591,8 +1658,9 @@
         "slideSecs": {
           "type": "number",
           "format": "float",
-          "description": "Digital presses hop to the neighbouring target, sliding there in this many seconds."
+          "description": "Digital presses hop to the neighbouring target, sliding there in this many seconds with a back-out ease of\nthis overshoot."
         },
+        "slideOvershoot": { "type": "number", "format": "float" },
         "fan": {
           "type": "number",
           "format": "float",
@@ -1625,6 +1693,7 @@
         "magnetSpeed",
         "reach",
         "slideSecs",
+        "slideOvershoot",
         "fan",
         "rest",
         "land",
@@ -1682,7 +1751,12 @@
         "breathAfter": { "type": "number", "format": "float" },
         "breathSecs": { "type": "number", "format": "float" },
         "breathBob": { "type": "number", "format": "float" },
-        "breathScale": { "type": "number", "format": "float" }
+        "breathScale": { "type": "number", "format": "float" },
+        "substeps": {
+          "type": "number",
+          "format": "float",
+          "description": "Springs step in slices of at most 1 / `substeps` seconds, so any frame rate moves alike."
+        }
       },
       "required": [
         "lean",
@@ -1698,7 +1772,8 @@
         "breathAfter",
         "breathSecs",
         "breathBob",
-        "breathScale"
+        "breathScale",
+        "substeps"
       ],
       "description": "How a pointer reacts to its motion. Springs have a stiffness (per second squared) and a damping ratio (1 is\ncritical, lower swings)."
     },
@@ -1712,6 +1787,16 @@
       },
       "required": ["showSecs", "idleSecs", "fadeSecs"],
       "description": "Per-card control hints: shown for `showSecs` after joining, after `idleSecs` without input, and while the\nplayer points at their own card; fading in and out over `fadeSecs`."
+    },
+    "Interpolate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fighterJump": { "type": "number", "format": "double" },
+        "projectileJump": { "type": "number", "format": "double" }
+      },
+      "required": ["fighterJump", "projectileJump"],
+      "description": "Drawing between ticks: something that moved further than this (stage pixels) in one tick teleported and is\ndrawn where it is now instead of sliding there."
     },
     "Audio": {
       "type": "object",

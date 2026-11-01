@@ -73,6 +73,7 @@ fn wav(a: &Audio, sound: &Sound, strength: f64) -> Vec<u8> {
     let stretch = 1. + strength * (sound.strength_duration - 1.);
     let duration = sound.layers.iter().map(|l| l.duration * stretch).fold(0., f64::max);
     let mut samples = vec![0.; (duration * f64::from(a.sample_rate)).ceil() as usize];
+    // Deliberately its own fixed noise sequence (not `render::Rand` or the UI rolls), so sounds never change.
     let mut rng = 0x79ab_cdef_u32;
     for l in &sound.layers {
         let duration = l.duration * stretch;

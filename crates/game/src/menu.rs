@@ -5,12 +5,30 @@ use bevy::prelude::*;
 use bevy::text::LineHeight;
 use bevy::window::{MonitorSelection, PrimaryWindow, WindowMode};
 
+use crate::hints::hint;
 use crate::input::{self, ACTS, Dev, Devices};
-use crate::play::Mode;
+use crate::play::{self, Mode};
 use crate::select::SelectInit;
 use crate::settings::{self, Saved};
 use crate::ui::{self, *};
 use crate::{ContentErrors, Data, Screen};
+
+pub struct MenuPlugin;
+
+impl Plugin for MenuPlugin {
+    fn build(&self, app: &mut App) {
+        let menus = in_state(Screen::Title).or_else(in_state(Screen::Settings)).or_else(in_state(Screen::Controls));
+        app.init_resource::<MenuState>()
+            .add_systems(OnEnter(Screen::Title), enter_title)
+            .add_systems(OnEnter(Screen::Settings), enter_settings)
+            .add_systems(OnEnter(Screen::Controls), enter_controls)
+            .add_systems(
+                Update,
+                (play::attract.before(UiSystems::Input), update.in_set(UiSystems::Input), draw.in_set(UiSystems::Draw))
+                    .run_if(menus),
+            );
+    }
+}
 
 #[derive(Resource, Default, Clone, Debug, PartialEq)]
 pub struct MenuState {
@@ -56,7 +74,7 @@ fn profiles(saved: &Saved, devs: &Devices) -> Vec<(Dev, String)> {
     v.into_iter().map(|d| (d, devs.profile(d))).collect()
 }
 
-pub fn update(
+fn update(
     screen: Res<State<Screen>>,
     data: Res<Data>,
     mut st: ResMut<MenuState>,
@@ -75,16 +93,13 @@ pub fn update(
     s.profile = s.profile.min(profs.len().saturating_sub(1));
     if let Some(a) = s.capture {
         let (pd, prof) = &profs[s.profile];
-        let kb = matches!(pd, Dev::Keys | Dev::KeysL | Dev::KeysR);
+        let kb = pd.is_keyboard();
         let raw = devs
             .map
             .iter()
-            .filter(|(d, _)| if kb { matches!(d, Dev::Keys | Dev::KeysL | Dev::KeysR) } else { *d == pd })
+            .filter(|(d, _)| if kb { d.is_keyboard() } else { *d == pd })
             .find_map(|(_, s)| s.raw.clone());
-        let cancel = devs
-            .map
-            .iter()
-            .any(|(d, s)| matches!(d, Dev::Keys | Dev::KeysL | Dev::KeysR) && s.raw.as_deref() == Some("Escape"))
+        let cancel = devs.map.iter().any(|(d, s)| d.is_keyboard() && s.raw.as_deref() == Some("Escape"))
             || devs.map.get(pd).is_some_and(|s| s.raw.as_deref() == Some("Select") || s.raw.as_deref() == Some("East"));
         match raw {
             _ if cancel => s.capture = None,
@@ -177,260 +192,210 @@ pub fn window_mode(full: bool) -> WindowMode {
     if full { WindowMode::BorderlessFullscreen(MonitorSelection::Current) } else { WindowMode::Windowed }
 }
 
-#[derive(Component)]
-pub struct MenuRoot(String);
+/// What a menu screen shows.
+#[derive(Clone, PartialEq)]
+pub struct MenuKey {
+    screen: Screen,
+    st: MenuState,
+    saved: Saved,
+    devices: Vec<String>,
+    profiles: Vec<(Dev, String)>,
+    errors: usize,
+}
 
-pub fn draw(
+fn draw(
     mut commands: Commands,
     screen: Res<State<Screen>>,
     st: Res<MenuState>,
     saved: Res<Saved>,
     devs: Res<Devices>,
-    roots: Query<(Entity, &MenuRoot)>,
+    roots: Roots<MenuKey>,
     fonts: Res<Fonts>,
     data: Res<Data>,
     errors: Res<ContentErrors>,
 ) {
     let scr = *screen.get();
-    let profs = profiles(&saved, &devs);
-    let names: Vec<String> = devs.map.keys().filter(|d| !matches!(d, Dev::Bot(_))).map(|d| devs.name(*d)).collect();
-    let sig = format!("{scr:?}{:?}{:?}{names:?}{profs:?}{}", *st, *saved, errors.0.len());
-    if roots.iter().any(|(_, r)| r.0 == sig) {
-        return;
-    }
-    for (e, _) in &roots {
-        commands.entity(e).despawn();
-    }
+    let key = MenuKey {
+        screen: scr,
+        st: st.clone(),
+        saved: saved.clone(),
+        devices: devs.map.keys().filter(|d| !matches!(d, Dev::Bot(_))).map(|d| devs.name(*d)).collect(),
+        profiles: profiles(&saved, &devs),
+        errors: errors.0.len(),
+    };
+    let Some(mut root) = ui::rebuild(&mut commands, &roots, &key, scr, z::SCREEN) else { return };
+    let (names, profs) = (&key.devices, &key.profiles);
     let f = &*fonts;
     let d = &data.0;
     let focus = st.cursor.key;
-    commands
-        .spawn((
-            root(),
-            MenuRoot(sig),
-            DespawnOnExit(scr),
-            GlobalZIndex(5),
-            BackgroundGradient::from(LinearGradient::to_right(vec![
-                ColorStop::new(alpha(NIGHT, 0.95), Val::Percent(0.)),
-                ColorStop::new(alpha(NIGHT, 0.9), Val::Percent(if scr == Screen::Title { 30. } else { 55. })),
-                ColorStop::new(alpha(NIGHT, 0.2), Val::Percent(if scr == Screen::Title { 70. } else { 90. })),
-            ])),
-        ))
-        .with_children(|p| {
-            p.spawn(node(|n| {
-                n.flex_direction = FlexDirection::Column;
-                n.justify_content = JustifyContent::Center;
-                n.padding = UiRect::left(Val::Px(84.));
-                n.height = Val::Percent(100.);
-                n.row_gap = Val::Px(8.);
-            }))
-            .with_children(|p| match scr {
-                Screen::Title => {
-                    p.spawn((
-                        txt(&f.display, 132., STAR, "Stick\nSmash"),
-                        TextLayout::new(Justify::Left, LineBreak::NoWrap),
-                        LineHeight::RelativeToFont(0.82),
-                    ));
-                    p.spawn(node(|n| n.margin = UiRect::new(Val::Px(6.), Val::Px(0.), Val::Px(10.), Val::Px(6.))))
-                        .with_children(|p| palette_strip(p, d, 36., 6.));
-                    p.spawn((
-                        txt(&f.body, 18., DIM, "A tiny platform fighter for up to eight friends."),
-                        node(|n| n.margin.bottom = Val::Px(28.)),
-                    ));
-                    let items = [
-                        Item::button(VERSUS, "Versus"),
-                        Item::button(TRAINING, "Training"),
-                        Item::button(EDITOR, "Editor"),
-                        Item::button(CONTROLS, "Controls"),
-                        Item::button(SETTINGS, "Settings"),
-                        Item::button(REPLAYS, "Replays"),
-                        Item::button(QUIT, "Quit"),
-                    ];
-                    menu_list(p, f, &items, focus, 380., 32.);
+    root.insert(BackgroundGradient::from(LinearGradient::to_right(vec![
+        ColorStop::new(NIGHT.with_alpha(0.95), Val::Percent(0.)),
+        ColorStop::new(NIGHT.with_alpha(0.9), Val::Percent(if scr == Screen::Title { 30. } else { 55. })),
+        ColorStop::new(NIGHT.with_alpha(0.2), Val::Percent(if scr == Screen::Title { 70. } else { 90. })),
+    ])))
+    .with_children(|p| {
+        p.spawn(node(|n| {
+            n.flex_direction = FlexDirection::Column;
+            n.justify_content = JustifyContent::Center;
+            n.padding = UiRect::left(Val::Px(84.));
+            n.height = Val::Percent(100.);
+            n.row_gap = Val::Px(8.);
+        }))
+        .with_children(|p| match scr {
+            Screen::Title => {
+                p.spawn((
+                    txt(&f.display, 132., STAR, "Stick\nSmash"),
+                    TextLayout::new(Justify::Left, LineBreak::NoWrap),
+                    LineHeight::RelativeToFont(0.82),
+                ));
+                p.spawn(node(|n| n.margin = UiRect::new(Val::Px(6.), Val::Px(0.), Val::Px(10.), Val::Px(6.))))
+                    .with_children(|p| palette_strip(p, d, 36., 6.));
+                p.spawn((
+                    txt(&f.body, 18., DIM, "A tiny platform fighter for up to eight friends."),
+                    node(|n| n.margin.bottom = Val::Px(28.)),
+                ));
+                let items = [
+                    Item::button(VERSUS, "Versus"),
+                    Item::button(TRAINING, "Training"),
+                    Item::button(EDITOR, "Editor"),
+                    Item::button(CONTROLS, "Controls"),
+                    Item::button(SETTINGS, "Settings"),
+                    Item::button(REPLAYS, "Replays"),
+                    Item::button(QUIT, "Quit"),
+                ];
+                menu_list(p, f, &items, focus, List::new(380., 32.));
+            }
+            Screen::Settings => {
+                heading(p, f, d, "Settings");
+                let volume = saved.volume.as_ref().unwrap_or(&d.global.audio.defaults);
+                let meter = |v: f64| {
+                    let filled = (v.clamp(0., 1.) * 10.).round() as usize;
+                    format!("{}{} {:3.0}%", "━".repeat(filled), "─".repeat(10 - filled), v * 100.)
+                };
+                let items = [
+                    Item::spin(MASTER, "Master volume", meter(volume.master)),
+                    Item::spin(SFX, "SFX volume", meter(volume.sfx)),
+                    Item::spin(MUSIC, "Music (reserved)", meter(volume.music)),
+                    Item::spin(
+                        KEYBOARD,
+                        "Keyboard",
+                        if saved.split_keyboard { "Two players (split)" } else { "One player" },
+                    ),
+                    Item::spin(HITBOXES, "Hitboxes in versus", on_off(saved.versus_hitboxes)),
+                    Item::spin(WINDOW, "Window", if saved.fullscreen { "Fullscreen" } else { "Windowed" }),
+                    Item::button(BACK, "Back"),
+                ];
+                menu_list(p, f, &items, focus, List::new(560., 28.));
+                p.spawn(node(|n| {
+                    n.flex_direction = FlexDirection::Column;
+                    n.margin.top = Val::Px(30.);
+                    n.row_gap = Val::Px(6.);
+                    n.max_width = Val::Px(620.);
+                }))
+                .with_children(|p| {
+                    let path =
+                        |o: Option<std::path::PathBuf>| o.map_or("unavailable".into(), |p| p.display().to_string());
+                    p.spawn(txt(&f.body_bold, 14., DIM, "Settings are saved to"));
+                    p.spawn(txt(&f.body, 14., FAINT, path(settings::config_file())));
+                    p.spawn(txt(&f.body_bold, 14., DIM, "Your fighters and stages go in (same layout as assets/)"));
+                    p.spawn(txt(&f.body, 14., FAINT, path(settings::user_content_dir())));
+                    if !errors.0.is_empty() {
+                        p.spawn(txt(
+                            &f.body_bold,
+                            14.,
+                            Color::srgb(1., 0.55, 0.5),
+                            format!("{} content problem(s) at startup; see the log", errors.0.len()),
+                        ));
+                    }
+                });
+            }
+            Screen::Controls => {
+                heading(p, f, d, "Controls");
+                if let Some(warning) = &st.warning {
+                    p.spawn(txt(&f.body, 16., GOLD, warning));
                 }
-                Screen::Settings => {
-                    heading(p, f, d, "Settings");
-                    let onoff = |b: bool| if b { "On" } else { "Off" };
-                    let volume = saved.volume.as_ref().unwrap_or(&d.global.audio.defaults);
-                    let meter = |v: f64| {
-                        let filled = (v.clamp(0., 1.) * 10.).round() as usize;
-                        format!("{}{} {:3.0}%", "━".repeat(filled), "─".repeat(10 - filled), v * 100.)
+                let Some((_, prof)) = profs.get(st.profile) else { return };
+                let pname = profs.get(st.profile).map_or_else(String::new, |(dv, _)| devs.name(*dv));
+                let b = input::binds(&saved, prof);
+                let mut items = vec![Item::spin(PROFILE, "Device", pname)];
+                for (i, act) in ACTS.iter().enumerate() {
+                    let hot = st.capture == Some(i);
+                    let v = if hot {
+                        "Press a control…  (Esc / B / Back cancels)".to_string()
+                    } else {
+                        b[i].iter().map(|c| input::control_label(c)).collect::<Vec<_>>().join("  or  ")
                     };
-                    let items = [
-                        Item::spin(MASTER, "Master volume", meter(volume.master)),
-                        Item::spin(SFX, "SFX volume", meter(volume.sfx)),
-                        Item::spin(MUSIC, "Music (reserved)", meter(volume.music)),
-                        Item::spin(
-                            KEYBOARD,
-                            "Keyboard",
-                            if saved.split_keyboard { "Two players (split)" } else { "One player" },
-                        ),
-                        Item::spin(HITBOXES, "Hitboxes in versus", onoff(saved.versus_hitboxes)),
-                        Item::spin(WINDOW, "Window", if saved.fullscreen { "Fullscreen" } else { "Windowed" }),
-                        Item::button(BACK, "Back"),
-                    ];
-                    menu_list(p, f, &items, focus, 560., 28.);
+                    items.push(Item { hot, ..Item::info(ACT0 + i as u32, act.label(), v) });
+                }
+                items.push(Item::button(RESET, "Reset to defaults"));
+                items.push(Item::button(BACK, "Back"));
+                p.spawn(node(|n| n.column_gap = Val::Px(40.))).with_children(|p| {
+                    // Two columns: action, then its controls.
+                    let list = List { gap: 0., label_width: Some(170.), ..List::new(560., 21.) };
+                    menu_list(p, f, &items, focus, list);
                     p.spawn(node(|n| {
                         n.flex_direction = FlexDirection::Column;
-                        n.margin.top = Val::Px(30.);
-                        n.row_gap = Val::Px(6.);
-                        n.max_width = Val::Px(620.);
+                        n.row_gap = Val::Px(8.);
+                        n.width = Val::Px(300.);
+                        n.margin.top = Val::Px(8.);
                     }))
                     .with_children(|p| {
-                        let path =
-                            |o: Option<std::path::PathBuf>| o.map_or("unavailable".into(), |p| p.display().to_string());
-                        p.spawn(txt(&f.body_bold, 14., DIM, "Settings are saved to"));
-                        p.spawn(txt(&f.body, 14., FAINT, path(settings::config_file())));
-                        p.spawn(txt(&f.body_bold, 14., DIM, "Your fighters and stages go in (same layout as assets/)"));
-                        p.spawn(txt(&f.body, 14., FAINT, path(settings::user_content_dir())));
-                        if !errors.0.is_empty() {
-                            p.spawn(txt(
-                                &f.body_bold,
-                                14.,
-                                Color::srgb(1., 0.55, 0.5),
-                                format!("{} content problem(s) at startup; see the log", errors.0.len()),
-                            ));
+                        for line in [
+                            "Tap a direction with attack for a smash attack; hold attack to charge it.",
+                            "Shield + left/right rolls, shield + down dodges, shield in the air air-dodges.",
+                            "Grab, then attack to pummel or a direction to throw.",
+                            "Gamepad sticks always move; Esc or a gamepad's B backs out of menus.",
+                        ] {
+                            p.spawn(txt(&f.body, 14., DIM, line));
                         }
                     });
-                }
-                Screen::Controls => {
-                    heading(p, f, d, "Controls");
-                    if let Some(warning) = &st.warning {
-                        p.spawn(txt(&f.body, 16., GOLD, warning));
-                    }
-                    let Some((_, prof)) = profs.get(st.profile) else { return };
-                    let pname = profs.get(st.profile).map_or_else(String::new, |(dv, _)| devs.name(*dv));
-                    let b = input::binds(&saved, prof);
-                    let mut items = vec![Item::spin(PROFILE, "Device", pname)];
-                    for (i, act) in ACTS.iter().enumerate() {
-                        let v = if st.capture == Some(i) {
-                            "Press a control…  (Esc / B / Back cancels)".to_string()
-                        } else {
-                            b[i].iter().map(|c| input::control_label(c)).collect::<Vec<_>>().join("  or  ")
-                        };
-                        items.push(Item { key: ACT0 + i as u32, label: act.label().into(), value: Some(v) });
-                    }
-                    items.push(Item::button(RESET, "Reset to defaults"));
-                    items.push(Item::button(BACK, "Back"));
-                    p.spawn(node(|n| n.column_gap = Val::Px(40.))).with_children(|p| {
-                        controls_list(p, f, &items, focus, st.capture.map(|c| ACT0 + c as u32));
-                        p.spawn(node(|n| {
-                            n.flex_direction = FlexDirection::Column;
-                            n.row_gap = Val::Px(8.);
-                            n.width = Val::Px(300.);
-                            n.margin.top = Val::Px(8.);
-                        }))
-                        .with_children(|p| {
-                            for line in [
-                                "Tap a direction with attack for a smash attack; hold attack to charge it.",
-                                "Shield + left/right rolls, shield + down dodges, shield in the air air-dodges.",
-                                "Grab, then attack to pummel or a direction to throw.",
-                                "Gamepad sticks always move; Esc or a gamepad's B backs out of menus.",
-                            ] {
-                                p.spawn(txt(&f.body, 14., DIM, line));
-                            }
-                        });
-                    });
-                }
-                _ => {}
-            });
-            // Connected devices, bottom left.
-            p.spawn(node(|n| {
-                n.position_type = PositionType::Absolute;
-                n.left = Val::Px(84.);
-                n.bottom = Val::Px(28.);
-                n.flex_direction = FlexDirection::Row;
-                n.column_gap = Val::Px(8.);
-                n.align_items = AlignItems::Center;
-            }))
-            .with_children(|p| {
-                p.spawn(txt(&f.body, 13., FAINT, "Connected"));
-                for n in &names {
-                    p.spawn((
-                        node(|n| {
-                            n.padding = UiRect::axes(Val::Px(8.), Val::Px(1.));
-                            n.border_radius = BorderRadius::all(Val::Px(10.));
-                        }),
-                        BackgroundColor(INK),
-                    ))
-                    .with_child(txt(&f.body_bold, 13., DIM, n.clone()));
-                }
-            });
-            p.spawn(node(|n| {
-                n.position_type = PositionType::Absolute;
-                n.right = Val::Px(40.);
-                n.bottom = Val::Px(28.);
-                n.flex_direction = FlexDirection::Row;
-                n.column_gap = Val::Px(20.);
-            }))
-            .with_children(|p| {
-                if scr == Screen::Title && focus == EDITOR {
-                    hint(p, f, "Keyboard + mouse", "fighter & stage editor");
-                }
-                hint(p, f, "Attack / Enter", "select");
-                if scr != Screen::Title {
-                    hint(p, f, "Special / Esc", "back");
-                }
-            });
+                });
+            }
+            _ => {}
         });
+        // Connected devices, bottom left.
+        p.spawn(node(|n| {
+            n.position_type = PositionType::Absolute;
+            n.left = Val::Px(84.);
+            n.bottom = Val::Px(28.);
+            n.flex_direction = FlexDirection::Row;
+            n.column_gap = Val::Px(8.);
+            n.align_items = AlignItems::Center;
+        }))
+        .with_children(|p| {
+            p.spawn(txt(&f.body, 13., FAINT, "Connected"));
+            for n in names {
+                p.spawn((
+                    node(|n| {
+                        n.padding = UiRect::axes(Val::Px(8.), Val::Px(1.));
+                        n.border_radius = BorderRadius::all(Val::Px(10.));
+                    }),
+                    BackgroundColor(INK),
+                ))
+                .with_child(txt(&f.body_bold, 13., DIM, n.clone()));
+            }
+        });
+        p.spawn(node(|n| {
+            n.position_type = PositionType::Absolute;
+            n.right = Val::Px(40.);
+            n.bottom = Val::Px(28.);
+            n.flex_direction = FlexDirection::Row;
+            n.column_gap = Val::Px(20.);
+        }))
+        .with_children(|p| {
+            if scr == Screen::Title && focus == EDITOR {
+                hint(p, f, "Keyboard + mouse", "fighter & stage editor");
+            }
+            hint(p, f, "Attack / Enter", "select");
+            if scr != Screen::Title {
+                hint(p, f, "Special / Esc", "back");
+            }
+        });
+    });
 }
 
 fn heading(p: &mut ChildSpawnerCommands, f: &Fonts, d: &sim::GameData, s: &str) {
     p.spawn(txt(&f.display, 64., STAR, s));
     p.spawn(node(|n| n.margin = UiRect::new(Val::Px(4.), Val::Px(0.), Val::Px(4.), Val::Px(22.))))
         .with_children(|p| palette_strip(p, d, 22., 4.));
-}
-
-/// Two-column list for bindings: action, then its controls.
-fn controls_list(p: &mut ChildSpawnerCommands, f: &Fonts, items: &[Item], focus: u32, capture: Option<u32>) {
-    p.spawn(node(|n| {
-        n.flex_direction = FlexDirection::Column;
-        n.width = Val::Px(560.);
-    }))
-    .with_children(|p| {
-        for it in items {
-            let on = it.key == focus;
-            let cap = capture == Some(it.key);
-            p.spawn((
-                node(|n| {
-                    n.flex_direction = FlexDirection::Row;
-                    n.align_items = AlignItems::Center;
-                    n.height = Val::Px(33.);
-                    n.padding = UiRect::horizontal(Val::Px(14.));
-                    n.column_gap = Val::Px(12.);
-                }),
-                BackgroundColor(if on { Color::srgba(1., 0.83, 0.35, 0.08) } else { Color::NONE }),
-                Focusable { key: it.key, owner: None, spin: it.key == PROFILE },
-            ))
-            .with_children(|p| {
-                p.spawn((
-                    node(|n| {
-                        n.width = Val::Px(4.);
-                        n.height = Val::Px(20.);
-                    }),
-                    BackgroundColor(if on { GOLD } else { Color::NONE }),
-                    UiTransform::from_rotation(Rot2::degrees(14.)),
-                ));
-                p.spawn((
-                    txt(&f.label, 21., if on { GOLD } else { STAR }, it.label.clone()),
-                    node(|n| n.width = Val::Px(170.)),
-                ));
-                if let Some(v) = &it.value {
-                    let v = if on && it.key == PROFILE { format!("‹  {v}  ›") } else { v.clone() };
-                    p.spawn(txt(
-                        &f.label,
-                        20.,
-                        if cap {
-                            GOLD
-                        } else if on {
-                            STAR
-                        } else {
-                            DIM
-                        },
-                        v,
-                    ));
-                }
-            });
-        }
-    });
 }

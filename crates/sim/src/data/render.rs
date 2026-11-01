@@ -18,7 +18,21 @@ pub struct Render {
     pub fx: FxLook,
     pub hud: Hud,
     pub select: SelectLook,
+    #[serde(default = "interpolate_default")]
+    pub interpolate: Interpolate,
 }
+
+/// Drawing between ticks: something that moved further than this (stage pixels) in one tick teleported and is
+/// drawn where it is now instead of sliding there.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Interpolate {
+    pub fighter_jump: f64,
+    pub projectile_jump: f64,
+}
+
+/// Names of the CPU levels (`PlayerConfig::cpu`), for menus.
+pub const CPU_LEVELS: [&str; 3] = ["Easy", "Normal", "Hard"];
 
 /// Character select presentation (the game crate reads this; the sim never does).
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -31,6 +45,13 @@ pub struct SelectLook {
     /// Seconds for a card's READY flip and the ready banner's slide-in.
     pub flip_secs: f32,
     pub banner_secs: f32,
+    /// Overshoot of the flip, chip drop and banner ease (back-out; 0 is none).
+    pub overshoot: f32,
+    /// A dropped chip falls in from `dropHeight` pixels above, `dropScale` bigger.
+    pub drop_scale: f32,
+    pub drop_height: f32,
+    /// The ready banner slides in from this far left (percent of the window width).
+    pub banner_from: f32,
     pub roulette: Roulette,
     /// Stage size labels: play area relative to `camera.referencePlayWidth` / `referencePlayHeight` (the larger
     /// ratio); below `sizeSmall` reads "Small", above `sizeLarge` "Large", otherwise "Medium".
@@ -61,8 +82,10 @@ pub struct PointerLook {
     pub magnet_speed: f32,
     /// A gliding pointer hovers targets up to this far outside their edges.
     pub reach: f32,
-    /// Digital presses hop to the neighbouring target, sliding there in this many seconds.
+    /// Digital presses hop to the neighbouring target, sliding there in this many seconds with a back-out ease of
+    /// this overshoot.
     pub slide_secs: f32,
+    pub slide_overshoot: f32,
     /// Pointers resting on one target fan out by this much per player (at most a fifth of its width), from `rest` of
     /// its height above its centre (so the chip riding on the arrow stays clear of a tile's name).
     pub fan: f32,
@@ -105,6 +128,8 @@ pub struct PointerMotion {
     pub breath_secs: f32,
     pub breath_bob: f32,
     pub breath_scale: f32,
+    /// Springs step in slices of at most 1 / `substeps` seconds, so any frame rate moves alike.
+    pub substeps: f32,
 }
 
 /// Per-card control hints: shown for `showSecs` after joining, after `idleSecs` without input, and while the
@@ -150,6 +175,26 @@ pub struct Hud {
     /// Results stats: a fall counts as a KO for the last hitter if they hit within this many ticks, otherwise
     /// as a self-destruct.
     pub ko_credit_ticks: u64,
+    #[serde(default = "hud_look_default")]
+    pub look: HudLook,
+}
+
+/// Where name tags and offscreen bubbles sit and how HUD text moves. Logical UI pixels unless noted.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct HudLook {
+    /// Percent shake speed, radians per second.
+    pub shake_speed: f32,
+    /// Name tags float `tagHeight` stage pixels above the feet and show while the point `anchorHeight` above the
+    /// feet is on screen; offscreen bubbles point at that anchor.
+    pub tag_height: f64,
+    pub anchor_height: f64,
+    /// Offscreen bubbles shrink with distance, down to `bubbleMinScale` at `bubbleShrink` pixels away.
+    pub bubble_shrink: f32,
+    pub bubble_min_scale: f32,
+    /// Countdown / GO! / GAME! text pops in from `popScale`, settling in the first 1 / `popSpeed` of its time.
+    pub pop_scale: f32,
+    pub pop_speed: f32,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -197,22 +242,28 @@ pub struct Camera {
 }
 
 // Older replay payloads omit these presentation fields. Keep fallback tuning in the bundled JSON too.
-fn camera_default(key: &str) -> f64 {
+fn bundled<T: serde::de::DeserializeOwned>(pointer: &str) -> T {
     let v: serde_json::Value =
         serde_json::from_str(include_str!("../../../../assets/global.json")).expect("bundled global JSON");
-    v["render"]["camera"][key].as_f64().expect("bundled camera tuning")
+    serde_json::from_value(v.pointer(pointer).expect("bundled render tuning").clone()).expect("bundled render tuning")
 }
 fn reference_play_width() -> f64 {
-    camera_default("referencePlayWidth")
+    bundled("/render/camera/referencePlayWidth")
 }
 fn reference_play_height() -> f64 {
-    camera_default("referencePlayHeight")
+    bundled("/render/camera/referencePlayHeight")
 }
 fn min_scale_start() -> f64 {
-    camera_default("minScaleStart")
+    bundled("/render/camera/minScaleStart")
 }
 fn min_scale_floor() -> f64 {
-    camera_default("minScaleFloor")
+    bundled("/render/camera/minScaleFloor")
+}
+fn hud_look_default() -> HudLook {
+    bundled("/render/hud/look")
+}
+fn interpolate_default() -> Interpolate {
+    bundled("/render/interpolate")
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]

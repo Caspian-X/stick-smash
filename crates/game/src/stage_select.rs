@@ -9,13 +9,15 @@ use bevy::prelude::*;
 use render::thumb::StageThumbs;
 use sim::GameData;
 
-use crate::grid::{self, Area, Chip, key, kind};
+use crate::grid::{self, Area, Chip};
+use crate::hints::{self, Ctl};
 use crate::input::{Dev, Devices};
-use crate::play::{self, Match, Mode, Rules};
-use crate::pointer::{self, Grid, Look, Pointer, Pointers};
-use crate::select::{self, Ctl, FromStages, STOCKS, Select};
+use crate::play::Match;
+use crate::pointer::{self, Grid, Look, Pointers};
+use crate::select::{self, FromStages, STOCKS, Select, Step};
 use crate::settings::Saved;
-use crate::ui::*;
+use crate::showcase;
+use crate::ui::{self, *};
 use crate::{Data, Screen};
 
 const TILE: u32 = 1;
@@ -24,6 +26,27 @@ const GRID: Area = Area { w: 740., h: 500., aspect: StageThumbs::ASPECT, extra: 
 const NAME: f32 = 20.;
 const GRID_TOP: f32 = 128.;
 const PANEL_W: f32 = 404.;
+
+pub struct StagePlugin;
+
+impl Plugin for StagePlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(OnEnter(Screen::Stages), enter).add_systems(OnExit(Screen::Stages), exit).add_systems(
+            Update,
+            (
+                (input, (roulette_clock, thumbs, stage).run_if(ui::staying)).chain().in_set(UiSystems::Input),
+                draw.in_set(UiSystems::Draw),
+                animate.in_set(UiSystems::Animate),
+            )
+                .run_if(
+                    in_state(Screen::Stages)
+                        .and_then(resource_exists::<Vote>)
+                        .and_then(resource_exists::<Select>)
+                        .and_then(resource_exists::<Clock>),
+                ),
+        );
+    }
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Voter {
@@ -57,27 +80,15 @@ impl Clock {
     }
 }
 
-fn next(roll: &mut u32) -> u32 {
-    *roll ^= *roll << 13;
-    *roll ^= *roll >> 17;
-    *roll ^= *roll << 5;
-    *roll
-}
-
-/// Stages that fit `players`.
-fn fitting(d: &GameData, players: usize) -> Vec<usize> {
-    (0..d.stages.len()).filter(|&i| d.stages[i].max_players() >= players).collect()
-}
-
 /// Each vote's stage: a vote past the last stage (the random tile) draws one of `fit`.
 pub fn resolve(votes: &[usize], stages: usize, fit: &[usize], roll: &mut u32) -> Vec<usize> {
-    votes.iter().map(|&t| if t < stages { t } else { fit[next(roll) as usize % fit.len()] }).collect()
+    votes.iter().map(|&t| if t < stages { t } else { fit[select::roll(roll) as usize % fit.len()] }).collect()
 }
 
 /// The roulette: a winner drawn from `pool` (each vote one ticket), and `hops + 1` stops cycling through the distinct
 /// voted stages in order, ending on it. A single distinct stage just lands.
 pub fn roulette(pool: &[usize], hops: u32, roll: &mut u32) -> Vec<usize> {
-    let winner = pool[next(roll) as usize % pool.len()];
+    let winner = pool[select::roll(roll) as usize % pool.len()];
     let mut distinct = pool.to_vec();
     distinct.sort_unstable();
     distinct.dedup();
@@ -114,7 +125,7 @@ impl Vote {
             .collect();
         Vote { voters, preview: sel.stage, roll: sel.roll | 1, hops: vec![], hop: 0, landed: false }
     }
-    /// One frame of input. Returns (roulette started, back to character select).
+    /// One frame of input: [`Step::Start`] when the roulette starts, [`Step::Leave`] back to character select.
     fn frame(
         &mut self,
         sel: &mut Select,
@@ -123,191 +134,209 @@ impl Vote {
         d: &GameData,
         ptrs: &mut Pointers,
         dt: f32,
-    ) -> (bool, bool) {
+    ) -> Step {
         let n = d.stages.len() + 1;
         let g = Grid { tile: TILE, n, cols: GRID.layout(n).cols };
         let cfg = &d.global.render.select.pointer;
-        let fit = fitting(d, sel.slots.len());
+        let fit = sel.fitting(d);
         let votable = |t: usize| fit.contains(&t) || t == d.stages.len() && !fit.is_empty();
         // A dropped controller sends everyone back to character select, which holds its slot for reconnecting.
         if self.voters.iter().any(|v| !devs.map.contains_key(&v.dev)) {
-            return (false, true);
+            return Step::Leave;
         }
         if !self.hops.is_empty() {
-            return (false, false);
+            return Step::Stay;
         }
         let (mut go, mut leave) = (false, false);
         let screen = ptrs.screen;
-        for v in 0..self.voters.len() {
-            let (dev, slot) = (self.voters[v].dev, self.voters[v].slot);
-            let Some(st) = devs.map.get(&dev) else { continue };
-            let at = spots.iter().find(|s| s.f.key == self.voters[v].cursor.key).map_or(screen / 2., |s| s.center);
-            let ptr = ptrs.map.entry(dev).or_insert_with(|| Pointer::new(at, slot));
-            ptr.fan = v;
-            let mut c = self.voters[v].cursor;
-            let before = c.key;
-            for a in pointer::steer(ptr, &mut c, &st.nav, st.stick, spots, Some(g), cfg, dt, screen) {
+        for (v, x) in self.voters.iter_mut().enumerate() {
+            let Some(st) = devs.map.get(&x.dev) else { continue };
+            let ptr = ptrs.of(x.dev, v, &x.cursor, spots);
+            let (acts, moved) = pointer::drive(ptr, &mut x.cursor, st, spots, Some(g), cfg, dt, screen);
+            for a in acts {
                 match a {
                     // Confirming your own vote again rolls, like Start.
-                    Action::Activate(k) if kind(k).0 == TILE && self.voters[v].vote == Some(kind(k).1) => go = true,
+                    Action::Activate(k) if kind(k).0 == TILE && x.vote == Some(kind(k).1) => go = true,
                     Action::Activate(k) if kind(k).0 == TILE && votable(kind(k).1) => {
-                        self.voters[v].vote = Some(kind(k).1);
+                        x.vote = Some(kind(k).1);
                         self.preview = kind(k).1;
                         ptr.bump(cfg.drop);
                     }
-                    Action::Activate(k) if kind(k).0 == STOCKS => sel.spin(k, 1, d),
+                    Action::Activate(k) | Action::Spin(k, _) if kind(k).0 != STOCKS => {}
+                    Action::Activate(k) => sel.spin(k, 1, d),
                     Action::Spin(k, by) => sel.spin(k, by, d),
-                    Action::Back if self.voters[v].vote.is_some() => {
-                        self.voters[v].vote = None;
+                    Action::Back if x.vote.is_some() => {
+                        x.vote = None;
                         ptr.bump(cfg.land);
                     }
                     Action::Back => leave = true,
                     Action::Start => go = true,
-                    Action::Activate(_) => {}
                 }
             }
-            if c.key != before
-                && let (TILE, t) = kind(c.key)
-            {
+            if let Some((TILE, t)) = moved.map(kind) {
                 self.preview = t;
             }
-            self.voters[v].cursor = c;
-            ptr.look = Look::new(pal(d, sel.color(slot)).0, slot, self.voters[v].vote.is_none(), None);
+            ptr.look = Look::new(pal(d, sel.color(x.slot)).0, x.slot, x.vote.is_none(), None);
         }
         let votes: Vec<usize> = self.voters.iter().filter_map(|v| v.vote).collect();
-        if leave || votes.is_empty() || !go && votes.len() < self.voters.len() {
-            return (false, leave);
+        if leave {
+            return Step::Leave;
+        }
+        if votes.is_empty() || !go && votes.len() < self.voters.len() {
+            return Step::Stay;
         }
         let pool = resolve(&votes, d.stages.len(), &fit, &mut self.roll);
         self.hops = roulette(&pool, d.global.render.select.roulette.hops, &mut self.roll);
         self.preview = self.hops[0];
-        (true, false)
+        Step::Start
+    }
+    /// What voter `x` can do right now.
+    fn hints(&self, x: &Voter) -> Vec<(Ctl, &'static str)> {
+        let on = kind(x.cursor.key);
+        let mut hints = vec![];
+        if on.0 == TILE {
+            hints.push((Ctl::Confirm, if x.vote == Some(on.1) { "roll" } else { "vote" }));
+        } else if on.0 == STOCKS {
+            hints.push((Ctl::Confirm, "change"));
+        }
+        hints.push(match x.vote {
+            Some(_) => (Ctl::Back, "take back"),
+            None => (Ctl::Back, "to fighters"),
+        });
+        hints
     }
     fn winner(&self) -> Option<usize> {
         self.hops.last().copied()
     }
 }
 
-pub fn enter(mut commands: Commands, sel: Option<Res<Select>>) {
+pub fn enter(mut commands: Commands, sel: Option<Res<Select>>, data: Res<Data>, mut thumbs: ResMut<StageThumbs>) {
     if let Some(sel) = sel {
         commands.insert_resource(Vote::new(&sel));
     }
     commands.insert_resource(Clock::default());
+    thumbs.data = Some(data.0.clone());
+    thumbs.cells = (0..data.0.stages.len()).collect();
 }
 
 pub fn exit(mut commands: Commands, mut thumbs: ResMut<StageThumbs>, mut ptrs: ResMut<Pointers>) {
     thumbs.cells.clear();
     commands.remove_resource::<Vote>();
-    ptrs.map.clear();
-    ptrs.mouse = None;
+    commands.remove_resource::<Clock>();
+    ptrs.reset();
 }
 
-pub fn update(
+/// Moves pointers and takes votes (the mouse too, until the roulette starts); back to character select keeping
+/// everyone locked in.
+fn input(
     mut commands: Commands,
-    (vote, sel): (Option<ResMut<Vote>>, Option<ResMut<Select>>),
+    (mut vote, mut sel): (ResMut<Vote>, ResMut<Select>),
     mut devs: ResMut<Devices>,
     q: FocusQuery,
     (mouse, mut ptrs): (Mouse, ResMut<Pointers>),
     (time, mut clock): (Res<Time>, ResMut<Clock>),
-    mut saved: ResMut<Saved>,
     data: Res<Data>,
     mut next: ResMut<NextState<Screen>>,
-    mut scene: ResMut<render::Scene>,
-    (mut m, mut thumbs): (Option<ResMut<Match>>, ResMut<StageThumbs>),
 ) {
-    let (Some(mut vote), Some(mut sel)) = (vote, sel) else { return };
-    let d = &data.0;
-    let spots = spots(&q);
+    let spots = ui::spots(&q);
     let (mut v, mut s) = (vote.clone(), sel.clone());
     ptrs.screen = mouse.screen();
     if v.hops.is_empty() {
         pointer::mouse(&mut devs, &mut ptrs, &spots, &mouse, |dv| v.voters.iter().any(|x| x.dev == dv));
     }
-    let (spin, leave) = v.frame(&mut s, &devs, &spots, d, &mut ptrs, time.delta_secs());
+    let step = v.frame(&mut s, &devs, &spots, &data.0, &mut ptrs, time.delta_secs());
     // Successive votes keep drawing from the same sequence.
     s.roll = v.roll;
-    if leave {
-        *sel = s;
-        clock.0 = None;
-        commands.insert_resource(FromStages);
-        next.set(Screen::Select);
-        return;
-    }
-    if spin {
-        clock.0 = Some(0.);
-    }
-    let r = &d.global.render.select.roulette;
-    if let Some(t) = clock.0 {
-        // Frame hitches don't skip hops.
-        let t = t + time.delta_secs().min(0.05);
-        clock.0 = Some(t);
-        let n = v.hops.len() - 1;
-        v.hop = hop_at(t, n, r);
-        v.preview = v.hops[v.hop];
-        let land = if n == 0 { 0. } else { r.secs };
-        v.landed = t >= land;
-        if t >= land + r.pause
-            && let Some(w) = v.winner()
-        {
-            s.stage = w;
-            *sel = s;
-            select::remember(&sel, &mut saved, d);
-            let rules = Rules { stocks: sel.stocks, stage: d.stages[w].id.clone(), friendly_fire: sel.ff };
-            if let Ok(mut m) = Match::new(&data.0, Mode::Versus, sel.match_slots(), rules, play::seed()) {
-                m.debug = saved.versus_hitboxes;
-                play::install(&mut commands, &mut scene, m);
-                next.set(Screen::Match);
-            }
+    vote.set_if_neq(v);
+    sel.set_if_neq(s);
+    match step {
+        Step::Leave => {
             clock.0 = None;
-            return;
+            commands.insert_resource(FromStages);
+            next.set(Screen::Select);
         }
-    }
-    if v != *vote {
-        *vote = v;
-    }
-    if s != *sel {
-        *sel = s;
-    }
-    if !thumbs.data.as_ref().is_some_and(|p| std::sync::Arc::ptr_eq(p, &data.0)) {
-        thumbs.data = Some(data.0.clone());
-    }
-    let cells: Vec<usize> = (0..d.stages.len()).collect();
-    if thumbs.cells != cells {
-        thumbs.cells = cells;
-    }
-    thumbs.preview = (vote.preview < d.stages.len()).then_some(vote.preview);
-    thumbs.colors = (0..sel.slots.len()).map(|i| sel.color(i)).collect();
-    // The lineup stands on the previewed stage behind the screen, everyone in their win pose (it stays put while the
-    // roulette runs).
-    if !vote.hops.is_empty() {
-        return;
-    }
-    let stage = if fitting(d, sel.slots.len()).contains(&vote.preview) { vote.preview } else { sel.stage };
-    let rules = Rules { stocks: sel.stocks, stage: d.stages[stage].id.clone(), friendly_fire: sel.ff };
-    if let Some(m) = select::showcase(&mut commands, &mut scene, m.as_deref_mut(), &data.0, &sel.match_slots(), &rules)
-    {
-        for f in &mut m.world.fighters {
-            if f.state == sim::world::State::Idle {
-                f.set_state(sim::world::State::Win);
-            }
-        }
+        Step::Start => clock.0 = Some(0.),
+        Step::Stay => {}
     }
 }
 
-#[derive(Component)]
-pub struct VoteRoot(Vote, i32);
+/// Steps the roulette's hops; after the landing and a pause, the match starts on the winner.
+fn roulette_clock(
+    mut commands: Commands,
+    (mut vote, mut sel): (ResMut<Vote>, ResMut<Select>),
+    (time, mut clock): (Res<Time>, ResMut<Clock>),
+    mut saved: ResMut<Saved>,
+    data: Res<Data>,
+    mut next: ResMut<NextState<Screen>>,
+    mut scene: ResMut<render::Scene>,
+) {
+    let Some(t) = clock.0 else { return };
+    let r = &data.0.global.render.select.roulette;
+    // Frame hitches don't skip hops.
+    let t = t + time.delta_secs().min(0.05);
+    clock.0 = Some(t);
+    let n = vote.hops.len() - 1;
+    let hop = hop_at(t, n, r);
+    let land = if n == 0 { 0. } else { r.secs };
+    let landed = t >= land;
+    if (vote.hop, vote.landed) != (hop, landed) {
+        vote.hop = hop;
+        vote.preview = vote.hops[hop];
+        vote.landed = landed;
+    }
+    if t >= land + r.pause
+        && let Some(w) = vote.winner()
+    {
+        sel.stage = w;
+        sel.start(&data.0, &mut saved, &mut commands, &mut scene, &mut next);
+        clock.0 = None;
+    }
+}
+
+/// The live thumbnails: the preview and the lineup's spawn colors.
+fn thumbs(vote: Res<Vote>, sel: Res<Select>, data: Res<Data>, mut thumbs: ResMut<StageThumbs>) {
+    let preview = (vote.preview < data.0.stages.len()).then_some(vote.preview);
+    let colors: Vec<usize> = (0..sel.slots.len()).map(|i| sel.color(i)).collect();
+    if thumbs.preview != preview || thumbs.colors != colors {
+        (thumbs.preview, thumbs.colors) = (preview, colors);
+    }
+}
+
+/// The lineup stands on the previewed stage behind the screen, everyone in their win pose (it stays put while the
+/// roulette runs).
+fn stage(
+    mut commands: Commands,
+    (vote, sel): (Res<Vote>, Res<Select>),
+    data: Res<Data>,
+    mut scene: ResMut<render::Scene>,
+    mut m: Option<ResMut<Match>>,
+) {
+    let d = &data.0;
+    if !vote.hops.is_empty() {
+        return;
+    }
+    let stage = if sel.fits(d, vote.preview) { vote.preview } else { sel.stage };
+    if !sel.fits(d, stage) {
+        return;
+    }
+    let (slots, rules) = (sel.match_slots(), sel.rules(d, stage));
+    if let Some(m) = showcase::showcase(&mut commands, &mut scene, m.as_deref_mut(), d, &slots, &rules) {
+        showcase::pose(m, |_| true, &mut vec![]);
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub struct VoteKey {
+    vote: Vote,
+    stocks: i32,
+}
 
 /// The landed tile's bounce.
 #[derive(Component)]
 pub struct Landed;
 
-pub fn animate(
-    clock: Res<Clock>,
-    data: Res<Data>,
-    vote: Option<Res<Vote>>,
-    mut q: Query<&mut UiTransform, With<Landed>>,
-) {
-    let (Some(t), Some(v)) = (clock.0, vote) else { return };
+fn animate(clock: Res<Clock>, data: Res<Data>, v: Res<Vote>, mut q: Query<&mut UiTransform, With<Landed>>) {
+    let Some(t) = clock.0 else { return };
     let r = &data.0.global.render.select.roulette;
     let land = if v.hops.len() > 1 { r.secs } else { 0. };
     let k = ((t - land) / r.pause.max(0.01)).clamp(0., 1.);
@@ -324,7 +353,7 @@ fn info(d: &GameData, i: usize) -> String {
     let s = &d.stages[i];
     let look = &d.global.render.select;
     let c = &d.global.render.camera;
-    let [l, t, r, b] = sim::data::camera::play_area(s);
+    let [l, t, r, b] = render::camera::play_area(s);
     let size = ((r - l) / c.reference_play_width).max((b - t) / c.reference_play_height);
     let label = if size < look.size_small {
         "Small"
@@ -341,141 +370,93 @@ fn info(d: &GameData, i: usize) -> String {
     out + &format!(" · up to {} players", s.max_players())
 }
 
-pub fn draw(
+fn draw(
     mut commands: Commands,
-    (vote, sel): (Option<Res<Vote>>, Option<Res<Select>>),
-    roots: Query<(Entity, &VoteRoot)>,
+    (vote, sel): (Res<Vote>, Res<Select>),
+    roots: Roots<VoteKey>,
     fonts: Res<Fonts>,
     data: Res<Data>,
     thumbs: Res<StageThumbs>,
     (devs, saved): (Res<Devices>, Res<Saved>),
 ) {
-    let (Some(v), Some(s)) = (vote, sel) else { return };
-    if roots.iter().any(|(_, r)| r.0 == *v && r.1 == s.stocks) {
-        return;
-    }
-    for (e, _) in &roots {
-        commands.entity(e).despawn();
-    }
-    let (d, f, v, s) = (&data.0, &*fonts, &*v, &*s);
-    let fit = fitting(d, s.slots.len());
+    let shown = VoteKey { vote: vote.clone(), stocks: sel.stocks };
+    let Some(mut root) = ui::rebuild(&mut commands, &roots, &shown, Screen::Stages, z::SCREEN) else { return };
+    let (d, f, v, s) = (&data.0, &*fonts, &*vote, &*sel);
+    let fit = s.fitting(d);
     let color = |voter: &Voter| pal(d, s.color(voter.slot));
     let chip = |voter: &Voter| {
         let (c, _, light) = color(voter);
         Chip { label: format!("P{}", voter.slot + 1), color: c, light, cpu: false, drop: None }
     };
-    commands
-        .spawn((
-            root(),
-            VoteRoot(v.clone(), s.stocks),
-            DespawnOnExit(Screen::Stages),
-            GlobalZIndex(5),
-            BackgroundColor(alpha(NIGHT, 0.8)),
-        ))
-        .with_children(|p| {
-            // Top: title and rules.
+    root.insert(BackgroundColor(NIGHT.with_alpha(0.8))).with_children(|p| {
+        title_band(p, f, d, "Stage", |p| {
+            let k = key(STOCKS, 0);
+            let on = v.voters.iter().find(|x| x.cursor.key == k);
             p.spawn((
                 node(|n| {
-                    n.position_type = PositionType::Absolute;
-                    n.top = Val::Px(0.);
-                    n.left = Val::Px(0.);
-                    n.right = Val::Px(0.);
-                    n.padding = UiRect::new(Val::Px(40.), Val::Px(40.), Val::Px(26.), Val::Px(30.));
                     n.flex_direction = FlexDirection::Row;
-                    n.align_items = AlignItems::FlexStart;
+                    n.align_items = AlignItems::Center;
                     n.justify_content = JustifyContent::SpaceBetween;
+                    n.width = Val::Px(PANEL_W);
+                    n.padding = UiRect::axes(Val::Px(14.), Val::Px(6.));
+                    n.border_radius = BorderRadius::all(Val::Px(10.));
                 }),
-                BackgroundGradient::from(LinearGradient::to_bottom(vec![
-                    ColorStop::auto(alpha(NIGHT, 0.92)),
-                    ColorStop::auto(alpha(NIGHT, 0.0)),
-                ])),
+                BackgroundColor(on.map_or(INK.with_alpha(1.), |x| color(x).0.mix(&NIGHT, 0.75))),
+                Focusable { key: k, owner: None, spin: true },
             ))
             .with_children(|p| {
-                p.spawn(col()).with_children(|p| {
-                    p.spawn(txt(&f.display, 58., STAR, "Stage"));
-                    palette_strip(p, d, 22., 4.);
-                });
-                let k = key(STOCKS, 0);
-                let on = v.voters.iter().find(|x| x.cursor.key == k);
-                p.spawn((
-                    node(|n| {
-                        n.flex_direction = FlexDirection::Row;
-                        n.align_items = AlignItems::Center;
-                        n.justify_content = JustifyContent::SpaceBetween;
-                        n.width = Val::Px(PANEL_W);
-                        n.padding = UiRect::axes(Val::Px(14.), Val::Px(6.));
-                        n.border_radius = BorderRadius::all(Val::Px(10.));
-                    }),
-                    BackgroundColor(on.map_or(INK.with_alpha(1.), |x| color(x).0.mix(&NIGHT, 0.75))),
-                    Focusable { key: k, owner: None, spin: true },
-                ))
-                .with_children(|p| {
-                    p.spawn(txt(&f.label, 20., DIM, "Stocks"));
-                    let value = if on.is_some() { format!("‹ {} ›", s.stocks) } else { s.stocks.to_string() };
-                    p.spawn(txt(&f.display, 26., STAR, value));
-                });
+                p.spawn(txt(&f.label, 20., DIM, "Stocks"));
+                let value = if on.is_some() { format!("‹ {} ›", s.stocks) } else { s.stocks.to_string() };
+                p.spawn(txt(&f.display, 26., STAR, value));
             });
-            // The stage grid.
-            let n = d.stages.len() + 1;
-            let l = GRID.layout(n);
-            let place = |n: &mut Node| {
-                n.top = Val::Px(GRID_TOP);
-                n.left = Val::Px(32.);
-            };
-            let roll = v.hops.get(v.hop).copied().filter(|_| !v.hops.is_empty());
-            grid::panel(p, l, GRID.gap, place, (), |p| {
-                for t in 0..n {
-                    let k = key(TILE, t);
-                    let chips = v.voters.iter().filter(|x| x.vote == Some(t)).map(chip).collect();
-                    let hover = v.voters.iter().find(|x| x.cursor.key == k).map(|x| color(x).0);
-                    let random = t == d.stages.len();
-                    let name = if random { "Random" } else { &d.stages[t].name };
-                    let off = (!random && !fit.contains(&t)).then(|| format!("Up to {}", d.stages[t].max_players()));
-                    let highlight = (roll == Some(t)).then_some(GOLD);
-                    let tile = grid::Tile { key: k, w: l.w, h: l.h, name, chips, hover, highlight, off };
-                    let lead = tile.hover.or(tile.chips.first().map(|c| c.color));
-                    let mut wrap = p.spawn(node(|n| {
-                        n.width = Val::Px(l.w);
-                        n.height = Val::Px(l.h);
-                    }));
-                    if v.landed && roll == Some(t) {
-                        wrap.insert((UiTransform::default(), Landed, ZIndex(2)));
-                    } else if highlight.is_some() || lead.is_some() {
-                        wrap.insert(ZIndex(1));
-                    }
-                    wrap.with_children(|p| {
-                        grid::tile(p, f, tile, |p| {
-                            if random {
-                                p.spawn(node(|n| {
-                                    grid::fill(n);
-                                    n.justify_content = JustifyContent::Center;
-                                    n.align_items = AlignItems::Center;
-                                    n.padding.bottom = Val::Px(l.h * 0.12);
-                                }))
-                                .with_child(txt(
-                                    &f.display,
-                                    l.h * 0.6,
-                                    lead.unwrap_or(GOLD),
-                                    "?",
-                                ));
-                            } else {
-                                p.spawn((
-                                    node(|n| {
-                                        grid::fill(n);
-                                        n.bottom = Val::Px(NAME);
-                                    }),
-                                    ImageNode {
-                                        rect: Some(StageThumbs::rect(t)),
-                                        ..ImageNode::new(thumbs.image.clone())
-                                    },
-                                ));
-                            }
-                        });
-                    });
-                }
-            });
-            preview(p, f, d, s, v, &thumbs.preview_image, &devs, &saved);
         });
+        // The stage grid.
+        let n = d.stages.len() + 1;
+        let l = GRID.layout(n);
+        let place = |n: &mut Node| {
+            n.top = Val::Px(GRID_TOP);
+            n.left = Val::Px(32.);
+        };
+        let roll = v.hops.get(v.hop).copied().filter(|_| !v.hops.is_empty());
+        grid::panel(p, l, GRID.gap, place, (), |p| {
+            for t in 0..n {
+                let k = key(TILE, t);
+                let chips = v.voters.iter().filter(|x| x.vote == Some(t)).map(chip).collect();
+                let hover = v.voters.iter().find(|x| x.cursor.key == k).map(|x| color(x).0);
+                let random = t == d.stages.len();
+                let name = if random { "Random" } else { &d.stages[t].name };
+                let off = (!random && !fit.contains(&t)).then(|| format!("Up to {}", d.stages[t].max_players()));
+                let highlight = (roll == Some(t)).then_some(GOLD);
+                let tile = grid::Tile { key: k, w: l.w, h: l.h, name, chips, hover, highlight, off };
+                let lead = tile.hover.or(tile.chips.first().map(|c| c.color));
+                let mut wrap = p.spawn(node(|n| {
+                    n.width = Val::Px(l.w);
+                    n.height = Val::Px(l.h);
+                }));
+                if v.landed && roll == Some(t) {
+                    wrap.insert((UiTransform::default(), Landed, ZIndex(2)));
+                } else if highlight.is_some() || lead.is_some() {
+                    wrap.insert(ZIndex(1));
+                }
+                wrap.with_children(|p| {
+                    grid::tile(p, f, tile, |p| {
+                        if random {
+                            grid::random_face(p, f, l.h * 0.6, l.h * 0.12, lead.unwrap_or(GOLD));
+                        } else {
+                            p.spawn((
+                                node(|n| {
+                                    grid::fill(n);
+                                    n.bottom = Val::Px(NAME);
+                                }),
+                                ImageNode { rect: Some(StageThumbs::rect(t)), ..ImageNode::new(thumbs.image.clone()) },
+                            ));
+                        }
+                    });
+                });
+            }
+        });
+        preview(p, f, d, s, v, &thumbs.preview_image, &devs, &saved);
+    });
 }
 
 /// The big preview, its info line, and everyone's votes (or the roulette's result).
@@ -501,7 +482,7 @@ fn preview(
             n.padding = UiRect::all(Val::Px(10.));
             n.border_radius = BorderRadius::all(Val::Px(14.));
         }),
-        BackgroundColor(alpha(NIGHT, 0.94)),
+        BackgroundColor(NIGHT.with_alpha(0.94)),
     ))
     .with_children(|p| {
         let h = (PANEL_W - 20.) * StageThumbs::ASPECT;
@@ -518,7 +499,7 @@ fn preview(
             BackgroundColor(INK),
             BorderColor::all(if v.landed { GOLD } else { LINE }),
             BoxShadow::new(
-                alpha(GOLD, if v.landed { 0.6 } else { 0. }),
+                GOLD.with_alpha(if v.landed { 0.6 } else { 0. }),
                 Val::Px(0.),
                 Val::Px(0.),
                 Val::Px(2.),
@@ -571,22 +552,7 @@ fn preview(
                 };
                 p.spawn((txt(&f.label, 18., col, label), node(|n| n.flex_grow = 1.)));
                 if v.hops.is_empty() {
-                    // What this voter can do, in their device's controls.
-                    let on = kind(x.cursor.key);
-                    let mut hints = vec![];
-                    if on.0 == TILE {
-                        hints.push((Ctl::Confirm, if x.vote == Some(on.1) { "roll" } else { "vote" }));
-                    } else if on.0 == STOCKS {
-                        hints.push((Ctl::Confirm, "change"));
-                    }
-                    hints.push(match x.vote {
-                        Some(_) => (Ctl::Back, "take back"),
-                        None => (Ctl::Back, "to fighters"),
-                    });
-                    for (c, what) in hints {
-                        let (label, pad) = select::cap(c, x.dev, saved, devs);
-                        select::key_cap(p, f, &label, pad, what, None, DIM);
-                    }
+                    hints::hint_row(p, f, x.dev, &v.hints(x), DIM, false, (saved, devs));
                 }
             });
         }
@@ -597,6 +563,7 @@ fn preview(
 mod tests {
     use super::*;
     use crate::input::Nav;
+    use crate::play::Mode;
     use crate::select::SelectInit;
 
     fn data() -> std::sync::Arc<GameData> {
@@ -609,6 +576,7 @@ mod tests {
     fn lobby(d: &std::sync::Arc<GameData>) -> App {
         let mut app = App::new();
         app.insert_resource(Data(d.clone()))
+            .init_resource::<render::portrait::Portraits>()
             .insert_resource(Saved::default())
             .insert_resource(SelectInit { mode: Mode::Versus, dev: Some(Dev::Bot(0)) })
             .add_systems(Update, select::enter);
@@ -670,7 +638,7 @@ mod tests {
         v.voters[1].cursor.key = key(TILE, 0);
         assert_eq!(
             v.frame(&mut sel, &devices([vec![Nav::Confirm], vec![]]), &spots, &d, &mut Pointers::default(), 0.016),
-            (false, false)
+            Step::Stay
         );
         assert_eq!(v.voters[0].vote, Some(0));
         // Voting again elsewhere moves the chip.
@@ -680,18 +648,18 @@ mod tests {
         // Special with a vote takes it back; without one it leaves.
         assert_eq!(
             v.frame(&mut sel, &devices([vec![Nav::Back], vec![]]), &spots, &d, &mut Pointers::default(), 0.016),
-            (false, false)
+            Step::Stay
         );
         assert_eq!(v.voters[0].vote, None);
         assert_eq!(
             v.frame(&mut sel, &devices([vec![Nav::Back], vec![]]), &spots, &d, &mut Pointers::default(), 0.016),
-            (false, true)
+            Step::Leave
         );
         // Start after one vote rolls; all votes in rolls too.
         v.frame(&mut sel, &devices([vec![Nav::Confirm], vec![]]), &spots, &d, &mut Pointers::default(), 0.016);
         assert_eq!(
             v.frame(&mut sel, &devices([vec![], vec![Nav::Start]]), &spots, &d, &mut Pointers::default(), 0.016),
-            (true, false)
+            Step::Start
         );
         assert_eq!(v.hops, [1]);
         // Confirming your own vote again rolls too (keyboards have no Start here).
@@ -700,7 +668,7 @@ mod tests {
         v.frame(&mut sel, &devices([vec![Nav::Confirm], vec![]]), &spots, &d, &mut Pointers::default(), 0.016);
         assert_eq!(
             v.frame(&mut sel, &devices([vec![Nav::Confirm], vec![]]), &spots, &d, &mut Pointers::default(), 0.016),
-            (true, false)
+            Step::Start
         );
         let mut v = Vote::new(&sel);
         v.voters[0].cursor.key = key(TILE, 0);
@@ -713,7 +681,7 @@ mod tests {
             &mut Pointers::default(),
             0.016,
         );
-        assert_eq!(r, (true, false));
+        assert_eq!(r, Step::Start);
         assert_eq!(v.hops.len(), d.global.render.select.roulette.hops as usize + 1);
         assert!([0, 1].contains(v.hops.last().unwrap()));
     }
@@ -731,11 +699,11 @@ mod tests {
         gone.map.remove(&Dev::Bot(1));
         assert_eq!(
             v.frame(&mut sel, &gone, &spots, &d, &mut Pointers::default(), 0.016),
-            (false, true),
+            Step::Leave,
             "not counted as everyone voted"
         );
         v.hops = vec![0, 1];
-        assert_eq!(v.frame(&mut sel, &gone, &spots, &d, &mut Pointers::default(), 0.016), (false, true));
+        assert_eq!(v.frame(&mut sel, &gone, &spots, &d, &mut Pointers::default(), 0.016), Step::Leave);
     }
 
     #[test]
@@ -750,7 +718,7 @@ mod tests {
             for x in &mut v.voters {
                 x.cursor.key = key(TILE, d.stages.len());
             }
-            let (spin, _) = v.frame(
+            let step = v.frame(
                 &mut sel,
                 &devices([vec![Nav::Confirm], vec![Nav::Confirm]]),
                 &spots,
@@ -758,7 +726,7 @@ mod tests {
                 &mut Pointers::default(),
                 0.016,
             );
-            assert!(spin);
+            assert_eq!(step, Step::Start);
             sel.roll = v.roll;
             rolls.push(v.roll);
         }
