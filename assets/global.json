@@ -334,13 +334,26 @@
       "shake": 6,
       "endSlowmo": { "speed": 0.25, "ticks": 50 },
       "resultsDelay": 100,
-      "koCreditTicks": 480
+      "koCreditTicks": 480,
+      "look": {
+        "shakeSpeed": 91,
+        "tagHeight": 96,
+        "anchorHeight": 40,
+        "bubbleShrink": 900,
+        "bubbleMinScale": 0.7,
+        "popScale": 1.5,
+        "popSpeed": 6
+      }
     },
     "select": {
       "flourish": "usmash",
       "rosterColor": { "main": "#d9dcf5", "dark": "#8a8fb8", "light": "#ffffff" },
       "flipSecs": 0.22,
       "bannerSecs": 0.35,
+      "overshoot": 1.7,
+      "dropScale": 0.9,
+      "dropHeight": 26,
+      "bannerFrom": 110,
       "roulette": {
         "secs": 2.2,
         "hops": 14,
@@ -363,6 +376,7 @@
         "magnetSpeed": 0.4,
         "reach": 18,
         "slideSecs": 0.13,
+        "slideOvershoot": 1.2,
         "fan": 17,
         "rest": 0.3,
         "land": 0.12,
@@ -385,11 +399,13 @@
           "breathAfter": 1.2,
           "breathSecs": 2.8,
           "breathBob": 1.6,
-          "breathScale": 0.03
+          "breathScale": 0.03,
+          "substeps": 240
         }
       },
       "hints": { "showSecs": 6, "idleSecs": 4, "fadeSecs": 0.25 }
-    }
+    },
+    "interpolate": { "fighterJump": 150, "projectileJump": 80 }
   },
   "audio": {
     "sampleRate": 24000,

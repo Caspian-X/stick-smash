@@ -114,7 +114,9 @@ impl Scene {
 pub struct Framing {
     pub view: [f64; 4],
     pub fighters: Vec<(f64, f64)>,
+    /// Window fractions reserved below / above gameplay this frame.
     pub bottom_safe_area: f64,
+    pub top_safe_area: f64,
 }
 
 /// Run after the game's sim step so this frame shows the newest tick.
@@ -233,6 +235,7 @@ fn fighter_views<'a>(
     t: f64,
     over: Option<(usize, pose::Skel)>,
 ) -> Vec<FighterView<'a>> {
+    let jump = d.global.render.interpolate.fighter_jump;
     let mut views: Vec<FighterView<'a>> = cur
         .fighters
         .iter()
@@ -240,7 +243,7 @@ fn fighter_views<'a>(
         .map(|(i, f)| {
             let skel = pose::fighter_pose(d, f, cur.frame);
             let p = prev.and_then(|w| w.fighters.get(i)).filter(|p| {
-                p.data == f.data && p.face == f.face && p.state == f.state && (p.x - f.x).hypot(p.y - f.y) < 150.
+                p.data == f.data && p.face == f.face && p.state == f.state && (p.x - f.x).hypot(p.y - f.y) < jump
             });
             match p {
                 Some(p) => FighterView {
@@ -281,7 +284,7 @@ fn draw(
     let full_height = c.h / (1. - safe - top);
     c.y += (safe - top) / 2. * full_height;
     c.h = full_height;
-    framing.bottom_safe_area = safe;
+    (framing.bottom_safe_area, framing.top_safe_area) = (safe, top);
     let (sx, sy) = if scene.fixed_view.is_some() { (0., 0.) } else { st.fx.shake_offset() };
     st.shake = (sx, sy);
     let s = &d.stages[cur.stage];
@@ -328,12 +331,13 @@ fn draw(
                 }
             }
             Layer::World => {
+                let jump = d.global.render.interpolate.projectile_jump;
                 for (k, p) in cur.projs.iter().enumerate() {
                     let pp = st
                         .prev
                         .as_ref()
                         .and_then(|w| w.projs.get(k))
-                        .filter(|q| q.owner == p.owner && q.id == p.id && (q.x - p.x).hypot(q.y - p.y) < 80.);
+                        .filter(|q| q.owner == p.owner && q.id == p.id && (q.x - p.x).hypot(q.y - p.y) < jump);
                     let (x, y) = pp.map_or((p.x, p.y), |q| (q.x + (p.x - q.x) * t, q.y + (p.y - q.y) * t));
                     draw::draw_projectile(cv, d, p, x, y, cur.frame);
                 }
