@@ -15,7 +15,10 @@ mod browser;
 pub mod doc;
 mod form;
 mod inspect;
+mod overlay;
+mod pane;
 pub mod preview;
+mod section;
 pub mod stage_ed;
 mod stage_panels;
 mod stage_port;
@@ -29,6 +32,7 @@ mod viewport;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use bevy_egui::{EguiContexts, EguiPrimaryContextPass, egui};
 use sim::GameData;
@@ -36,6 +40,7 @@ use sim::data::moves::{Move, Moves, Throw, Throws};
 use sim::data::stage::Stage;
 
 use doc::{Content, Files, Kind, Workspace};
+pub use pane::Pane;
 use preview::{Run, Setup, Subject};
 use view::{Cam, Hit, Port};
 
@@ -231,6 +236,15 @@ pub fn move_mut(m: &mut Moves, slot: impl AsRef<str>) -> Option<&mut Move> {
         _ => return None,
     })
 }
+pub fn throw_ref<'a>(t: &'a Throws, k: &str) -> &'a Throw {
+    match k {
+        "b" => &t.b,
+        "u" => &t.u,
+        "d" => &t.d,
+        _ => &t.f,
+    }
+}
+
 pub fn throw_mut<'a>(t: &'a mut Throws, k: &str) -> &'a mut Throw {
     match k {
         "b" => &mut t.b,
@@ -241,9 +255,15 @@ pub fn throw_mut<'a>(t: &'a mut Throws, k: &str) -> &'a mut Throw {
 }
 
 /// An in-progress viewport drag.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub(crate) enum Drag {
     Pan,
+    Part {
+        h: stage_view::Handle,
+        orig: Box<Stage>,
+        grab: [f64; 2],
+        partner: Option<stage_view::Part>,
+    },
     /// Hitbox `i` of phase `phase`: move, resize or aim, from the fighter as it was on the dragged frame.
     Box {
         kind: Hit,
@@ -278,19 +298,13 @@ pub struct Editor {
     pub phase: usize,
     pub hitbox: Option<usize>,
     pub run: Option<Run>,
-    stale: bool,
+    pub pane: Pane<Hit, (usize, u32)>,
     pub frame: usize,
     followed: usize,
     pub playing: bool,
     pub speed: f64,
-    acc: f64,
-    shown: Option<(usize, u32)>,
     run_gen: u32,
-    pub cam: Cam,
     pub port: Port,
-    reframe: bool,
-    drag: Option<Drag>,
-    hover: Option<Hit>,
     pub show_hurt: bool,
     pub show_inactive: bool,
     pub onion: bool,
@@ -325,19 +339,13 @@ impl Editor {
             phase: 0,
             hitbox: None,
             run: None,
-            stale: true,
+            pane: Pane::new(Cam { center: [0., 0.], zoom: 3. }),
             frame: 0,
             followed: usize::MAX,
             playing: false,
             speed: 1.,
-            acc: 0.,
-            shown: None,
             run_gen: 0,
-            cam: Cam { center: [0., 0.], zoom: 3. },
             port: Port::default(),
-            reframe: true,
-            drag: None,
-            hover: None,
             show_hurt: true,
             show_inactive: true,
             onion: false,
@@ -368,11 +376,11 @@ impl Editor {
         if self.st.cur != id {
             self.toasts.retain(|t| t.error);
             self.st.sel = None;
-            self.st.reframe = true;
+            self.st.pane.reframe = true;
             self.problems.clear();
         }
         self.st.cur = id.into();
-        self.st.stale = true;
+        self.st.pane.stale = true;
     }
 
     /// The kind and id of the document being edited.
@@ -389,11 +397,17 @@ impl Editor {
             self.problems.clear();
             self.toasts.retain(|t| t.error);
             self.dialog = None;
-            self.stale = true;
-            self.st.stale = true;
-            self.shown = None;
-            self.st.shown = false;
+            self.invalidate();
         }
+    }
+
+    pub fn fighter(&mut self) -> &mut sim::data::Fighter {
+        &mut self.doc().item
+    }
+
+    fn invalidate(&mut self) {
+        self.pane.invalidate();
+        self.st.pane.invalidate();
     }
 
     pub fn doc(&mut self) -> &mut doc::Doc {
@@ -411,7 +425,7 @@ impl Editor {
         }
         self.cur = id.into();
         self.select(self.subject.clone());
-        self.reframe = true;
+        self.pane.reframe = true;
     }
 
     pub fn select(&mut self, s: Subject) {
@@ -425,7 +439,7 @@ impl Editor {
         }
         self.playing = s.idle();
         self.subject = s;
-        self.stale = true;
+        self.pane.stale = true;
         self.followed = usize::MAX;
     }
 
@@ -441,10 +455,10 @@ impl Editor {
 
     /// Re-simulate if anything changed. Invalid data keeps the last good preview.
     fn refresh(&mut self) {
-        if !self.stale {
+        if !self.pane.stale {
             return;
         }
-        self.stale = false;
+        self.pane.stale = false;
         if !self.doc().errors.is_empty() && self.run.is_some() {
             return;
         }
@@ -530,6 +544,7 @@ impl Editor {
                 match res {
                     Ok(()) => {
                         self.ws.saved::<T>(&id, text, data);
+                        self.invalidate();
                         self.problems.clear();
                         self.say(format!("✔ Saved {}", path.display()), false);
                         true
@@ -554,10 +569,7 @@ fn enter(mut commands: Commands, ed: Option<ResMut<Editor>>, config: Option<Res<
     }
     match ed {
         Some(mut ed) => {
-            ed.stale = true;
-            ed.shown = None;
-            ed.st.stale = true;
-            ed.st.shown = false;
+            ed.invalidate();
         }
         None => match Editor::new(config.clone()) {
             Ok(ed) => commands.insert_resource(ed),
@@ -574,8 +586,8 @@ fn exit(mut scene: ResMut<render::Scene>, mut ctx: EguiContexts, ed: Option<ResM
         ctx.set_global_style(s.clone());
     }
     if let Some(mut ed) = ed {
-        ed.shown = None;
-        ed.st.shown = false;
+        ed.pane.shown = None;
+        ed.st.pane.shown = None;
         ed.playing = false;
         ed.dialog = None;
     }
@@ -585,16 +597,20 @@ fn exit(mut scene: ResMut<render::Scene>, mut ctx: EguiContexts, ed: Option<ResM
 #[derive(Resource, Default)]
 struct SavedStyle(Option<Arc<egui::Style>>);
 
-fn frame(
-    mut ctx: EguiContexts,
-    ed: Option<ResMut<Editor>>,
-    mut scene: ResMut<render::Scene>,
-    time: Res<Time>,
-    mut out: ResMut<Outbox>,
-    mut inbox: ResMut<Inbox>,
-    mut saved_style: Local<Option<Arc<egui::Style>>>,
-    mut commands: Commands,
-) -> Result {
+#[derive(SystemParam)]
+struct Frame<'w, 's> {
+    ctx: EguiContexts<'w, 's>,
+    ed: Option<ResMut<'w, Editor>>,
+    scene: ResMut<'w, render::Scene>,
+    time: Res<'w, Time>,
+    out: ResMut<'w, Outbox>,
+    inbox: ResMut<'w, Inbox>,
+    saved_style: Local<'s, Option<Arc<egui::Style>>>,
+    commands: Commands<'w, 's>,
+}
+
+fn frame(params: Frame) -> Result {
+    let Frame { mut ctx, ed, mut scene, time, mut out, mut inbox, mut saved_style, mut commands } = params;
     let ctx = ctx.ctx_mut()?;
     let Some(mut ed) = ed else {
         // Content didn't load: say so and offer the way out.
@@ -628,7 +644,7 @@ fn frame(
             Cmd::Hitbox(h) => ed.hitbox = h,
             Cmd::Dummy(on) => {
                 ed.setup.dummy = on;
-                ed.stale = true;
+                ed.pane.stale = true;
             }
             Cmd::Back => ed.leave(false, &mut out),
             Cmd::Help(on) => ed.help = on,
@@ -636,7 +652,7 @@ fn frame(
             Cmd::Onion(on) => ed.onion = on,
             Cmd::Edit(f) => {
                 ed.doc().edit(f);
-                ed.stale = true;
+                ed.pane.stale = true;
             }
             Cmd::Dialog(d) => ed.dialog = Some(d),
             Cmd::Dismiss => ed.dialog = None,
@@ -647,12 +663,12 @@ fn frame(
             Cmd::Section(s) => ed.st.section = s,
             Cmd::EditStage(f) => {
                 ed.stage_doc().edit(f);
-                ed.st.stale = true;
+                ed.st.pane.stale = true;
             }
             Cmd::Sandbox(n) => ed.st.set_sandbox(n),
             Cmd::Grid(on) => ed.st.grid = on,
             Cmd::Symmetry(on) => ed.st.symmetry = on,
-            Cmd::Reframe => ed.st.reframe = true,
+            Cmd::Reframe => ed.st.pane.reframe = true,
         }
     }
     ui::run(ctx, &mut ed, &mut scene, time.delta_secs(), &mut out);
@@ -819,15 +835,33 @@ mod tests {
     }
 
     #[test]
+    fn dragging_reports_changes_to_only_the_mirror_partner() {
+        let mut ed = editor();
+        ed.open_stage("arena");
+        let orig = ed.stage_doc().item.clone();
+        let p = &orig.platforms[0];
+        let grab = [(p.x1 + p.x2) / 2., p.y];
+        let drag = Drag::Part {
+            h: stage_view::Handle { part: Part::Platform(0), grip: stage_view::Grip::Move },
+            orig: Box::new(orig),
+            grab,
+            partner: Some(Part::Platform(1)),
+        };
+        ed.stage_doc().item.platforms[1].y += 10.;
+        let snap = stage_view::Snap { grid: None, fine: false };
+        assert!(stage_ed::drag_to(&mut ed, &drag, grab, snap));
+        assert!(!stage_ed::drag_to(&mut ed, &drag, grab, snap));
+    }
+
+    #[test]
     fn toolbar_undo_isnt_recorded_as_an_edit() {
         let mut ed = editor();
         ed.set_mode(Mode::Stages);
         ed.stage_doc().edit(|s| s.blocks[0].top -= 10.);
         // As in a frame: snapshots, then the toolbar's undo, then recording.
-        let (fid, sid) = (ed.cur.clone(), ed.st.cur.clone());
-        let (before, before_stage) = (ed.doc().item.clone(), ed.stage_doc().item.clone());
+        let before = ui::Snapshot::take(&mut ed);
         ui::undo(&mut ed, false);
-        ui::record(&mut ed, (&fid, before), (&sid, before_stage), false);
+        ui::record(&mut ed, before, false);
         let d = ed.stage_doc();
         assert!(d.can_redo() && !d.can_undo() && !d.dirty(), "undo stays undone and redo stays available");
     }
@@ -856,7 +890,7 @@ mod tests {
             s.platforms.clear();
             s.respawns.truncate(1);
         });
-        ed.st.stale = true;
+        ed.st.pane.stale = true;
         step(&mut ed, &mut scene, 120);
         let w = ed.st.world.as_ref().unwrap();
         assert!(w.fighters.iter().all(|f| f.surf.is_none_or(|i| i < 1)), "the world was rebuilt on the new geometry");
@@ -891,7 +925,7 @@ mod tests {
         stage_ed::sync_scene(&mut ed, &mut scene, 0.);
         assert!(ed.st.world.as_ref().unwrap().frame < f + 100);
         ed.stage_doc().edit(|s| s.platforms[0].y -= 10.);
-        ed.st.stale = true;
+        ed.st.pane.stale = true;
         stage_ed::sync_scene(&mut ed, &mut scene, 0.);
         assert_eq!(ed.st.world.as_ref().unwrap().frame, 0);
     }

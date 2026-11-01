@@ -45,13 +45,20 @@ impl Section {
     }
     /// The fighter JSON key it edits.
     pub fn key(self) -> &'static str {
+        <Self as crate::section::Section>::keys(self)[0]
+    }
+}
+
+impl crate::section::Section for Section {
+    const ALL: &'static [Self] = &Self::ALL;
+    fn keys(self) -> &'static [&'static str] {
         match self {
-            Section::Style => "style",
-            Section::Attachments => "attachments",
-            Section::Projectiles => "projectiles",
-            Section::Effects => "fx",
-            Section::Anims => "anims",
-            Section::Ai => "ai",
+            Self::Style => &["style"],
+            Self::Attachments => &["attachments"],
+            Self::Projectiles => &["projectiles"],
+            Self::Effects => &["fx"],
+            Self::Anims => &["anims"],
+            Self::Ai => &["ai"],
         }
     }
 }

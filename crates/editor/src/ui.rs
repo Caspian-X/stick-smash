@@ -2,6 +2,8 @@
 //! saving, test, status), keyboard shortcuts, dialogs, toasts and the shortcut sheet. Panels live in `browser`,
 //! `viewport`, `timeline` and `inspect` (fighters) and `stage_panels` and `stage_port` (stages).
 
+mod dialogs;
+
 use bevy_egui::egui::{self, Align2, Color32, Key, LayerId, RichText, UiBuilder};
 use render::pose::{Skel, resolve};
 use sim::data::visual::{Pose, PoseRef};
@@ -35,15 +37,16 @@ pub fn pose_mut<'a>(f: &'a mut sim::data::Fighter, t: &PoseTarget) -> Option<&'a
     }
 }
 
-pub(crate) fn fighter(ed: &mut Editor) -> &mut sim::data::Fighter {
-    &mut ed.ws.docs.get_mut(&ed.cur).expect("current fighter is open").item
+/// The fighter on the playhead frame, and its phase/phase frame if it's in the move.
+pub(crate) struct Playhead {
+    pub fighter: Fighter,
+    pub phase: Option<(usize, u32)>,
 }
 
-/// The fighter on the playhead frame, and its phase/phase frame if it's in the move.
-pub(crate) fn at_playhead(ed: &Editor) -> Option<(Fighter, Option<(usize, u32)>)> {
+pub(crate) fn at_playhead(ed: &Editor) -> Option<Playhead> {
     let r = ed.run.as_ref()?;
     let k = ed.frame.min(r.frames.len() - 1);
-    Some((r.frames[k].fighters[0].clone(), r.marks[k].phase))
+    Some(Playhead { fighter: r.frames[k].fighters[0].clone(), phase: r.marks[k].phase })
 }
 
 /// The pose shown on the playhead, if it's exactly a key (not mid-blend), and its skeleton.
@@ -52,7 +55,7 @@ pub(crate) fn pose_target(ed: &Editor) -> Option<(PoseTarget, Skel)> {
     match &ed.subject {
         Subject::Pose(n) => fd.poses.get(n).map(|p| (PoseTarget::Named(n.clone()), resolve(fd, p))),
         Subject::Move(slot) => {
-            let (f, Some((p, t))) = at_playhead(ed)? else { return None };
+            let Playhead { fighter: f, phase: Some((p, t)) } = at_playhead(ed)? else { return None };
             let anim = &move_ref(&fd.moves, slot)?.phases.get(p)?.anim;
             let live: Vec<usize> = (0..anim.len()).filter(|&i| sim::moves::cond(&f, anim[i].cond)).collect();
             let t = f64::from(t);
@@ -88,17 +91,28 @@ pub(crate) fn problems(ed: &Editor) -> Vec<sim::data::ContentError> {
     list
 }
 
+pub(crate) fn problem_panel(ui: &mut egui::Ui, list: &[sim::data::ContentError]) -> Option<String> {
+    if list.is_empty() {
+        return None;
+    }
+    ui.add_space(10.);
+    let mut go = None;
+    egui::Frame::new().fill(style::ERR_BG).corner_radius(8).inner_margin(10).show(ui, |ui| {
+        ui.label(RichText::new("Problems (fix before saving)").color(RED).strong());
+        for e in list {
+            let txt = format!("{}: {}", if e.path.is_empty() { &e.file } else { &e.path }, e.msg);
+            if ui.link(RichText::new(txt).color(style::ERR_TEXT)).on_hover_text("Go there").clicked() {
+                go = Some(e.path.clone());
+            }
+        }
+    });
+    go
+}
+
 pub(crate) fn run(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::Scene, dt: f32, out: &mut Outbox) {
     if ed.dialog.is_none() {
-        match ed.mode {
-            Mode::Fighters => shortcuts(ctx, ed, out),
-            Mode::Stages => stage_shortcuts(ctx, ed, out),
-        }
+        shortcuts(ctx, ed, out);
     }
-    // Snapshots of both current documents, to turn this frame's widget edits into undo steps.
-    let (fid, sid) = (ed.cur.clone(), ed.st.cur.clone());
-    let before = ed.doc().item.clone();
-    let before_stage = ed.stage_doc().item.clone();
     let setup = ed.setup.clone();
     let mut root = egui::Ui::new(
         ctx.clone(),
@@ -106,6 +120,7 @@ pub(crate) fn run(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::Scen
         UiBuilder::new().layer_id(LayerId::background()).max_rect(ctx.viewport_rect()),
     );
     top_bar(&mut root, ed, out);
+    let before = Snapshot::take(ed);
     let browser_panel = egui::Panel::left("ed-browser")
         .default_size(style::BROWSER_W)
         .size_range(style::BROWSER_MIN..=style::BROWSER_MAX);
@@ -126,12 +141,12 @@ pub(crate) fn run(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::Scen
     if ed.help {
         help(ctx, ed);
     }
-    dialogs(ctx, ed, out);
+    dialogs::show(ctx, ed, out);
     toasts(ctx, ed, dt);
     let ongoing = ctx.input(|i| i.pointer.any_down()) || ctx.egui_wants_keyboard_input();
-    record(ed, (&fid, before), (&sid, before_stage), ongoing);
+    record(ed, before, ongoing);
     if ed.setup != setup {
-        ed.stale = true;
+        ed.pane.stale = true;
     }
     match ed.mode {
         Mode::Fighters => {
@@ -146,36 +161,50 @@ pub(crate) fn run(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::Scen
     }
 }
 
-/// Turns this frame's widget edits of the current documents into undo steps (`ongoing`: a drag or typing that
-/// later frames join). Snapshots of a document that was switched away from mid-frame don't apply.
-pub(crate) fn record(
-    ed: &mut Editor,
-    (fid, before): (&str, sim::data::Fighter),
-    (sid, before_stage): (&str, sim::data::Stage),
-    ongoing: bool,
-) {
-    // Undo / redo from the toolbar ran after the snapshots: their change is history, not a new edit.
-    let history = std::mem::take(&mut ed.moved_history);
-    if history {
-        ed.stale = true;
-        ed.st.stale = true;
-    } else if ed.cur == *fid {
-        let doc = ed.doc();
-        if doc.item != before {
-            doc.changed(before, ongoing);
-            ed.stale = true;
-        } else if !ongoing {
-            doc.close_step();
+/// Records this frame's active-document edits (`ongoing`: a drag or typing that later frames join).
+/// A snapshot of a document switched away from mid-frame doesn't apply.
+pub(crate) enum Snapshot {
+    Fighter(String, Box<sim::data::Fighter>),
+    Stage(String, Box<sim::data::Stage>),
+}
+
+impl Snapshot {
+    pub(crate) fn take(ed: &mut Editor) -> Self {
+        match ed.mode {
+            Mode::Fighters => Self::Fighter(ed.cur.clone(), Box::new(ed.doc().item.clone())),
+            Mode::Stages => Self::Stage(ed.st.cur.clone(), Box::new(ed.stage_doc().item.clone())),
         }
     }
-    if !history && ed.st.cur == *sid {
-        let doc = ed.stage_doc();
-        if doc.item != before_stage {
-            doc.changed(before_stage, ongoing);
-            ed.st.stale = true;
-        } else if !ongoing {
-            doc.close_step();
+}
+
+pub(crate) fn record(ed: &mut Editor, before: Snapshot, ongoing: bool) {
+    fn record_doc<T: doc::Content>(d: &mut doc::Doc<T>, before: T, ongoing: bool) -> bool {
+        if d.item != before {
+            d.changed(before, ongoing);
+            true
+        } else {
+            if !ongoing {
+                d.close_step();
+            }
+            false
         }
+    }
+    if std::mem::take(&mut ed.moved_history) {
+        ed.invalidate();
+        return;
+    }
+    match before {
+        Snapshot::Fighter(id, before) if ed.cur == id => {
+            if record_doc(ed.doc(), *before, ongoing) {
+                ed.pane.stale = true;
+            }
+        }
+        Snapshot::Stage(id, before) if ed.st.cur == id => {
+            if record_doc(ed.stage_doc(), *before, ongoing) {
+                ed.st.pane.stale = true;
+            }
+        }
+        _ => {}
     }
 }
 
@@ -197,7 +226,7 @@ pub(crate) fn undo(ed: &mut Editor, redo: bool) {
             } else {
                 d.undo()
             }
-            ed.stale = true;
+            ed.pane.stale = true;
             can
         }
         Mode::Stages => {
@@ -208,8 +237,8 @@ pub(crate) fn undo(ed: &mut Editor, redo: bool) {
             } else {
                 d.undo()
             }
-            ed.st.stale = true;
-            ed.st.drag = None;
+            ed.st.pane.stale = true;
+            ed.st.pane.drag = None;
             can
         }
     };
@@ -249,7 +278,6 @@ fn step_subject(ed: &mut Editor, by: isize) {
 fn shortcuts(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
     let (cmd, shift, alt) = ctx.input(|i| (i.modifiers.command, i.modifiers.shift, i.modifiers.alt));
     let k = |key: Key| ctx.input(|i| i.key_pressed(key));
-    // These work even while typing in a field.
     if cmd && k(Key::S) {
         if shift {
             ed.save_all()
@@ -258,53 +286,83 @@ fn shortcuts(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
         };
         return;
     }
-    if cmd && k(Key::F) {
+    if cmd && k(Key::F) && ed.mode == Mode::Fighters {
         ed.focus_search = true;
         return;
     }
     if ctx.egui_wants_keyboard_input() {
         return;
     }
-    let n = ed.frames();
-    if cmd && k(Key::Z) {
-        undo(ed, shift);
-        return;
-    }
-    if cmd && k(Key::Y) {
-        undo(ed, true);
-        return;
-    }
-    if cmd && k(Key::D) {
-        inspect::duplicate_hitbox(ed);
-        return;
-    }
-    if cmd && k(Key::Enter) {
-        test(ed, out, false);
-        return;
-    }
-    if cmd && k(Key::Num2) {
-        ed.set_mode(Mode::Stages);
-        return;
-    }
     if cmd {
+        if k(Key::Z) {
+            undo(ed, shift);
+        } else if k(Key::Y) {
+            undo(ed, true);
+        } else if k(Key::D) {
+            match ed.mode {
+                Mode::Fighters => inspect::duplicate_hitbox(ed),
+                Mode::Stages => stage_ed::duplicate_selected(ed),
+            }
+        } else if k(Key::Enter) {
+            test(ed, out, ed.mode == Mode::Stages && shift);
+        } else if k(Key::Num1) {
+            ed.set_mode(Mode::Fighters);
+        } else if k(Key::Num2) {
+            ed.set_mode(Mode::Stages);
+        }
         return;
     }
-    if alt && ed.hitbox.is_some() {
-        // Nudge the selected hitbox (Shift: ×10).
-        let s = if shift { 5. } else { 0.5 };
-        let d = [
-            (Key::ArrowLeft, [-s, 0.]),
-            (Key::ArrowRight, [s, 0.]),
-            (Key::ArrowUp, [0., s]),
-            (Key::ArrowDown, [0., -s]),
-        ];
-        for (key, [dx, dy]) in d {
+    let selected = match ed.mode {
+        Mode::Fighters => ed.hitbox.is_some(),
+        Mode::Stages => ed.st.sel.is_some(),
+    };
+    if alt && selected {
+        let (step, y) = match ed.mode {
+            Mode::Fighters => (if shift { 5. } else { 0.5 }, -1.),
+            Mode::Stages => (if shift { 10. } else { 1. }, 1.),
+        };
+        for (key, [dx, dy]) in [
+            (Key::ArrowLeft, [-step, 0.]),
+            (Key::ArrowRight, [step, 0.]),
+            (Key::ArrowUp, [0., -step * y]),
+            (Key::ArrowDown, [0., step * y]),
+        ] {
             if k(key) {
-                inspect::nudge_hitbox(ed, dx, dy);
+                match ed.mode {
+                    Mode::Fighters => inspect::nudge_hitbox(ed, dx, dy),
+                    Mode::Stages => stage_ed::nudge(ed, [dx, dy]),
+                }
             }
         }
         return;
     }
+    match ed.mode {
+        Mode::Fighters => fighter_shortcuts(ed, shift, &k),
+        Mode::Stages => stage_shortcuts(ed, shift, &k),
+    }
+    if k(Key::Slash) || k(Key::Questionmark) || k(Key::F1) {
+        ed.help = !ed.help;
+    }
+    let selected = match ed.mode {
+        Mode::Fighters => ed.hitbox.is_some(),
+        Mode::Stages => ed.st.sel.is_some(),
+    };
+    if k(Key::Escape) {
+        if ed.help {
+            ed.help = false;
+        } else if selected {
+            match ed.mode {
+                Mode::Fighters => ed.hitbox = None,
+                Mode::Stages => ed.st.sel = None,
+            }
+        } else {
+            ed.leave(false, out);
+        }
+    }
+}
+
+fn fighter_shortcuts(ed: &mut Editor, shift: bool, k: &impl Fn(Key) -> bool) {
+    let n = ed.frames();
     if k(Key::Space) {
         toggle_play(ed);
     }
@@ -340,13 +398,13 @@ fn shortcuts(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
         inspect::delete_hitbox(ed);
     }
     if k(Key::Tab)
-        && let Some((_, _, _, b)) = viewport::playhead_boxes(ed)
+        && let Some(viewport::PlayheadBoxes { boxes: b, .. }) = viewport::playhead_boxes(ed)
         && !b.is_empty()
     {
         ed.hitbox = Some(ed.hitbox.map_or(0, |h| (h + if shift { b.len() - 1 } else { 1 }) % b.len()));
     }
     if k(Key::F) {
-        ed.reframe = true;
+        ed.pane.reframe = true;
     }
     if k(Key::H) {
         ed.show_hurt = !ed.show_hurt;
@@ -360,71 +418,9 @@ fn shortcuts(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
     if k(Key::L) {
         ed.looping = !ed.looping;
     }
-    if k(Key::Slash) || k(Key::Questionmark) || k(Key::F1) {
-        ed.help = !ed.help;
-    }
-    if k(Key::Escape) {
-        if ed.help {
-            ed.help = false;
-        } else if ed.hitbox.is_some() {
-            ed.hitbox = None;
-        } else {
-            ed.leave(false, out);
-        }
-    }
 }
 
-fn stage_shortcuts(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
-    let (cmd, shift, alt) = ctx.input(|i| (i.modifiers.command, i.modifiers.shift, i.modifiers.alt));
-    let k = |key: Key| ctx.input(|i| i.key_pressed(key));
-    if cmd && k(Key::S) {
-        if shift {
-            ed.save_all()
-        } else {
-            ed.save()
-        };
-        return;
-    }
-    if ctx.egui_wants_keyboard_input() {
-        return;
-    }
-    if cmd && k(Key::Z) {
-        undo(ed, shift);
-        return;
-    }
-    if cmd && k(Key::Y) {
-        undo(ed, true);
-        return;
-    }
-    if cmd && k(Key::D) {
-        stage_ed::duplicate_selected(ed);
-        return;
-    }
-    if cmd && k(Key::Enter) {
-        test(ed, out, shift);
-        return;
-    }
-    if cmd && k(Key::Num1) {
-        ed.set_mode(Mode::Fighters);
-        return;
-    }
-    if cmd {
-        return;
-    }
-    if alt && ed.st.sel.is_some() {
-        let s = if shift { 10. } else { 1. };
-        for (key, d) in [
-            (Key::ArrowLeft, [-s, 0.]),
-            (Key::ArrowRight, [s, 0.]),
-            (Key::ArrowUp, [0., -s]),
-            (Key::ArrowDown, [0., s]),
-        ] {
-            if k(key) {
-                stage_ed::nudge(ed, d);
-            }
-        }
-        return;
-    }
+fn stage_shortcuts(ed: &mut Editor, shift: bool, k: &impl Fn(Key) -> bool) {
     let st = &mut ed.st;
     if k(Key::G) {
         st.grid = !st.grid;
@@ -439,7 +435,7 @@ fn stage_shortcuts(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
         st.show_spawns = !st.show_spawns;
     }
     if k(Key::F) {
-        st.reframe = true;
+        st.pane.reframe = true;
     }
     if k(Key::C) {
         st.set_sandbox((st.sandbox + 1) % (SANDBOX_MAX + 1));
@@ -472,18 +468,6 @@ fn stage_shortcuts(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
     }
     if k(Key::Delete) || k(Key::Backspace) {
         stage_ed::delete_selected(ed);
-    }
-    if k(Key::Slash) || k(Key::Questionmark) || k(Key::F1) {
-        ed.help = !ed.help;
-    }
-    if k(Key::Escape) {
-        if ed.help {
-            ed.help = false;
-        } else if ed.st.sel.is_some() {
-            ed.st.sel = None;
-        } else {
-            ed.leave(false, out);
-        }
     }
 }
 
@@ -580,11 +564,11 @@ fn top_bar(root: &mut egui::Ui, ed: &mut Editor, out: &mut Outbox) {
                 match ed.mode {
                     Mode::Fighters => {
                         ed.doc().revert();
-                        ed.stale = true;
+                        ed.pane.stale = true;
                     }
                     Mode::Stages => {
                         ed.stage_doc().revert();
-                        ed.st.stale = true;
+                        ed.st.pane.stale = true;
                     }
                 }
                 ed.say(format!("Reverted to the saved {noun} · ⌘Z to undo"), false);
@@ -742,283 +726,6 @@ fn modal(id: &'static str) -> egui::Modal {
         .area(egui::Modal::default_area(id.into()).fade_in(false))
         .backdrop_color(style::BACKDROP)
         .frame(dialog_frame())
-}
-
-fn dialogs(ctx: &egui::Context, ed: &mut Editor, out: &mut Outbox) {
-    let Some(mut d) = ed.dialog.clone() else { return };
-    let mut close = false;
-    let esc = ctx.input(|i| i.key_pressed(Key::Escape));
-    let enter = ctx.input(|i| i.key_pressed(Key::Enter));
-    modal("ed-dialog").show(ctx, |ui| {
-        ui.set_width(380.);
-        match &mut d {
-            Dialog::Leave { quit } => {
-                let names = ed.unsaved();
-                ui.label(style::heading("Unsaved changes"));
-                ui.add_space(4.);
-                ui.label(format!(
-                    "{} {} unsaved edits.",
-                    names.join(", "),
-                    if names.len() == 1 { "has" } else { "have" }
-                ));
-                ui.label(faint(if *quit {
-                    "Quitting discards them."
-                } else {
-                    "They stay open in the editor until you quit, but matches play the saved versions."
-                }));
-                ui.add_space(10.);
-                ui.horizontal(|ui| {
-                    let save = egui::Button::new(RichText::new("Save all").color(NIGHT)).fill(GOLD);
-                    if ui.add(save).clicked() || enter {
-                        if ed.save_all() {
-                            out.request = Some(if *quit { Request::Quit } else { Request::Back });
-                        }
-                        close = true;
-                    }
-                    let go = if *quit { "Quit without saving" } else { "Leave (keep edits open)" };
-                    if ui.button(go).clicked() {
-                        out.request = Some(if *quit { Request::Quit } else { Request::Back });
-                        close = true;
-                    }
-                    if ui.button("Cancel").clicked() || esc {
-                        close = true;
-                    }
-                });
-            }
-            Dialog::NewFighter { id, name, extends, error } => {
-                ui.label(style::heading("New fighter"));
-                ui.label(faint("Starts as a copy of its parent; your edits save as overrides on top of it."));
-                ui.add_space(6.);
-                let packages = doc::package_ids(&ed.ws.files);
-                egui::Grid::new("nf").num_columns(2).spacing([10., 6.]).show(ui, |ui| {
-                    ui.label(RichText::new("name").color(DIM));
-                    let r = ui.add(egui::TextEdit::singleline(name).hint_text("Ninja"));
-                    if r.changed() {
-                        *id = doc::slug(name);
-                    }
-                    r.request_focus_once(ui);
-                    ui.end_row();
-                    ui.label(RichText::new("id").color(DIM)).on_hover_text("Folder name: fighters/<id>/");
-                    ui.add(egui::TextEdit::singleline(id).hint_text("ninja"));
-                    ui.end_row();
-                    ui.label(RichText::new("extends").color(DIM))
-                        .on_hover_text("Everything not overridden comes from this fighter");
-                    egui::ComboBox::from_id_salt("nf-ext").selected_text(extends.as_str()).show_ui(ui, |ui| {
-                        for p in &packages {
-                            ui.selectable_value(extends, p.clone(), p);
-                        }
-                    });
-                    ui.end_row();
-                });
-                if let Some(e) = error {
-                    ui.label(RichText::new(e.as_str()).color(RED));
-                }
-                ui.add_space(8.);
-                ui.horizontal(|ui| {
-                    let create = egui::Button::new(RichText::new("Create").color(NIGHT)).fill(GOLD);
-                    if ui.add_enabled(!id.is_empty(), create).clicked() || (enter && !id.is_empty()) {
-                        match ed.ws.new_fighter(id, name, extends) {
-                            Ok(()) => {
-                                let id = id.clone();
-                                ed.open(&id);
-                                ed.select(Subject::Fighter);
-                                ed.say(format!("Created {id} (unsaved) · ⌘S to write it"), false);
-                                close = true;
-                            }
-                            Err(e) => *error = Some(e),
-                        }
-                    }
-                    if ui.button("Cancel").clicked() || esc {
-                        close = true;
-                    }
-                });
-            }
-            Dialog::RenamePose { old, new } => {
-                ui.label(style::heading(format!("Rename pose {old}")));
-                let uses = doc::pose_uses(&ed.ws.docs[&ed.cur].item, old);
-                ui.label(faint(format!(
-                    "Updates {uses} reference{} in moves, animations and poses.",
-                    if uses == 1 { "" } else { "s" }
-                )));
-                ui.add_space(6.);
-                ui.add(egui::TextEdit::singleline(new)).request_focus_once(ui);
-                let taken = new != old && ed.ws.docs[&ed.cur].item.poses.contains_key(new.as_str());
-                if taken {
-                    ui.label(RichText::new("That name is taken").color(RED));
-                }
-                ui.add_space(8.);
-                ui.horizontal(|ui| {
-                    let ok = !new.is_empty() && !taken;
-                    if ui.add_enabled(ok, egui::Button::new(RichText::new("Rename").color(NIGHT)).fill(GOLD)).clicked()
-                        || (enter && ok)
-                    {
-                        let (o, n) = (old.clone(), new.clone());
-                        if o != n {
-                            ed.doc().edit(|f| {
-                                doc::rename_pose(f, &o, &n);
-                            });
-                            if ed.subject == Subject::Pose(o) {
-                                ed.subject = Subject::Pose(n.clone());
-                            }
-                            ed.stale = true;
-                            ed.say(format!("Renamed to {n}"), false);
-                        }
-                        close = true;
-                    }
-                    if ui.button("Cancel").clicked() || esc {
-                        close = true;
-                    }
-                });
-            }
-            Dialog::CopyMove { from, to } => {
-                ui.label(style::heading(format!("Copy {from} to…")));
-                ui.label(faint("Replaces the target move with a copy of this one (undoable)."));
-                ui.add_space(6.);
-                let f = &ed.ws.docs[&ed.cur].item;
-                ui.horizontal_wrapped(|ui| {
-                    for slot in crate::SLOTS.iter().filter(|s| **s != from.as_str()) {
-                        let exists = move_ref(&f.moves, slot).is_some();
-                        let txt = if exists { slot.to_string() } else { format!("{slot} (new)") };
-                        if ui.selectable_label(to.as_deref() == Some(slot), txt).clicked() {
-                            *to = Some(slot.to_string());
-                        }
-                    }
-                });
-                ui.add_space(8.);
-                ui.horizontal(|ui| {
-                    if ui
-                        .add_enabled(to.is_some(), egui::Button::new(RichText::new("Copy").color(NIGHT)).fill(GOLD))
-                        .clicked()
-                        && let Some(t) = to.clone()
-                    {
-                        let src = from.clone();
-                        ed.doc().edit(|f| {
-                            doc::copy_move(f, &src, &t);
-                        });
-                        ed.select(Subject::Move(t.clone()));
-                        ed.say(format!("Copied {src} → {t} · ⌘Z to undo"), false);
-                        close = true;
-                    }
-                    if ui.button("Cancel").clicked() || esc {
-                        close = true;
-                    }
-                });
-            }
-            Dialog::NewStage { id, name, from, error } => {
-                let dup = !name.is_empty() && name.ends_with(" copy");
-                ui.label(style::heading(if dup { "Duplicate stage" } else { "New stage" }));
-                ui.label(faint(
-                    "A copy of the template stage (with its unsaved edits) to reshape. Saved as a new package.",
-                ));
-                ui.add_space(6.);
-                let list = ed.ws.stage_list();
-                egui::Grid::new("ns").num_columns(2).spacing([10., 6.]).show(ui, |ui| {
-                    ui.label(RichText::new("name").color(DIM));
-                    let r = ui.add(egui::TextEdit::singleline(name).hint_text("Sky Fortress"));
-                    if r.changed() {
-                        *id = doc::slug(name);
-                    }
-                    r.request_focus_once(ui);
-                    ui.end_row();
-                    ui.label(RichText::new("id").color(DIM)).on_hover_text("Folder name: stages/<id>/");
-                    ui.add(egui::TextEdit::singleline(id).hint_text("sky-fortress"));
-                    ui.end_row();
-                    ui.label(RichText::new("template").color(DIM)).on_hover_text("The stage it starts as a copy of");
-                    let shown = list.iter().find(|x| x.0 == *from).map_or(from.clone(), |x| x.1.clone());
-                    egui::ComboBox::from_id_salt("ns-from").selected_text(shown).show_ui(ui, |ui| {
-                        for (sid, sname, _) in &list {
-                            ui.selectable_value(from, sid.clone(), sname);
-                        }
-                    });
-                    ui.end_row();
-                });
-                if let Some(e) = error {
-                    ui.label(RichText::new(e.as_str()).color(RED));
-                }
-                ui.add_space(8.);
-                ui.horizontal(|ui| {
-                    let create = egui::Button::new(RichText::new("Create").color(NIGHT)).fill(GOLD);
-                    if ui.add_enabled(!id.is_empty(), create).clicked() || (enter && !id.is_empty()) {
-                        match ed.ws.new_stage(id, name, from) {
-                            Ok(()) => {
-                                let id = id.clone();
-                                ed.open_stage(&id);
-                                ed.st.section = stage_ed::Section::Overview;
-                                ed.say(format!("Created {id} (unsaved) · ⌘S to write it"), false);
-                                close = true;
-                            }
-                            Err(e) => *error = Some(e),
-                        }
-                    }
-                    if ui.button("Cancel").clicked() || esc {
-                        close = true;
-                    }
-                });
-            }
-            Dialog::RenameStage { id, new_id, name, error } => {
-                ui.label(style::heading("Rename stage"));
-                let fresh = ed.ws.stages.get(id.as_str()).is_some_and(|d| d.fresh);
-                ui.label(faint(if fresh {
-                    "Not saved yet, so the id (its folder) can change too."
-                } else {
-                    "The id is its folder and stays; duplicate the stage for a new one."
-                }));
-                ui.add_space(6.);
-                egui::Grid::new("rs").num_columns(2).spacing([10., 6.]).show(ui, |ui| {
-                    ui.label(RichText::new("name").color(DIM));
-                    let r = ui.add(egui::TextEdit::singleline(name));
-                    if r.changed() && fresh {
-                        *new_id = doc::slug(name);
-                    }
-                    r.request_focus_once(ui);
-                    ui.end_row();
-                    ui.label(RichText::new("id").color(DIM));
-                    ui.add_enabled(fresh, egui::TextEdit::singleline(new_id));
-                    ui.end_row();
-                });
-                if let Some(e) = error {
-                    ui.label(RichText::new(e.as_str()).color(RED));
-                }
-                ui.add_space(8.);
-                ui.horizontal(|ui| {
-                    let ok = !name.is_empty() && !new_id.is_empty();
-                    if ui.add_enabled(ok, egui::Button::new(RichText::new("Rename").color(NIGHT)).fill(GOLD)).clicked()
-                        || (enter && ok)
-                    {
-                        match ed.ws.rename_stage(id, new_id, name) {
-                            Ok(()) => {
-                                let nid = new_id.clone();
-                                ed.st.cur = nid.clone();
-                                ed.st.stale = true;
-                                ed.st.world = None;
-                                ed.say(format!("Renamed to {name} · ⌘Z to undo the name"), false);
-                                close = true;
-                            }
-                            Err(e) => *error = Some(e),
-                        }
-                    }
-                    if ui.button("Cancel").clicked() || esc {
-                        close = true;
-                    }
-                });
-            }
-        }
-    });
-    ed.dialog = if close { None } else { ed.dialog.as_ref().map(|_| d) };
-}
-
-trait FocusOnce {
-    fn request_focus_once(&self, ui: &egui::Ui);
-}
-impl FocusOnce for egui::Response {
-    /// Focuses the field when its dialog opens.
-    fn request_focus_once(&self, ui: &egui::Ui) {
-        let id = self.id.with("focused");
-        if !ui.data(|d| d.get_temp::<bool>(id).unwrap_or(false)) {
-            self.request_focus();
-            ui.data_mut(|d| d.insert_temp(id, true));
-        }
-    }
 }
 
 /// Toasts stack at the viewport's bottom right, above the hint line, clear of the fighter.
@@ -1215,4 +922,43 @@ pub(crate) fn badge(ui: &mut egui::Ui, text: &str, color: Color32) {
 pub(crate) fn hint(ui: &mut egui::Ui, keys: &str, what: &str) {
     ui.label(key(keys));
     ui.label(RichText::new(what).color(FAINT));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn command_number_selects_either_mode_from_both_modes() {
+        let assets = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets");
+        let mut ed =
+            Editor::new(crate::EditorConfig { roots: vec![assets.clone()], assets, user_dir: None, dev: false })
+                .unwrap();
+        let ctx = egui::Context::default();
+        let mut out = Outbox::default();
+        for (from, key, to) in [
+            (Mode::Fighters, Key::Num1, Mode::Fighters),
+            (Mode::Fighters, Key::Num2, Mode::Stages),
+            (Mode::Stages, Key::Num1, Mode::Fighters),
+            (Mode::Stages, Key::Num2, Mode::Stages),
+        ] {
+            ed.set_mode(from);
+            let modifiers = egui::Modifiers { command: true, mac_cmd: true, ..Default::default() };
+            ctx.begin_pass(egui::RawInput {
+                events: vec![
+                    egui::Event::ModifiersChanged(modifiers),
+                    egui::Event::Key { key, physical_key: None, pressed: true, repeat: false, modifiers },
+                ],
+                ..Default::default()
+            });
+            shortcuts(&ctx, &mut ed, &mut out);
+            ctx.end_pass().textures_delta.clear();
+            assert_eq!(ed.mode, to);
+            ctx.begin_pass(egui::RawInput {
+                events: vec![egui::Event::Key { key, physical_key: None, pressed: false, repeat: false, modifiers }],
+                ..Default::default()
+            });
+            ctx.end_pass().textures_delta.clear();
+        }
+    }
 }

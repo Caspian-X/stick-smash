@@ -6,6 +6,12 @@
 //! a point (waypoints, spawns, respawns), and drags edit the shape. New kinds of geometry add a [`Part`] variant
 //! and its `shape` / `set_shape` arms; hit-testing, dragging, mirroring and drawing come for free.
 
+use crate::overlay::{dashed, dashed_rect, knob, square};
+use crate::style::{
+    OVERLAY_BLAST as BLAST, OVERLAY_CAMERA as CAMERA, OVERLAY_GOLD as SEL, OVERLAY_INK as INK, OVERLAY_PATH as PATH,
+    OVERLAY_TEAL as TEAL,
+};
+
 use std::f64::consts::PI;
 
 use render::canvas::{Canvas, P, Rgba};
@@ -178,9 +184,12 @@ pub struct Snap {
 }
 
 impl Snap {
+    pub(crate) fn fighter(coarse: bool, fine: bool) -> Self {
+        Self { grid: Some(if coarse { 1. } else { 0.5 }), fine }
+    }
     pub fn v(self, v: f64) -> f64 {
         match (self.fine, self.grid) {
-            (true, _) => (v * 10.).round() / 10.,
+            (true, _) => (v * (1. / crate::style::FINE_STEP)).round() / (1. / crate::style::FINE_STEP),
             (false, Some(g)) if g > 0. => (v / g).round() * g,
             _ => v.round(),
         }
@@ -790,13 +799,6 @@ pub fn notes(s: &Stage, path: &str) -> Vec<ContentError> {
 
 // --- Overlay ---
 
-const TEAL: u32 = 0x66ffcc;
-const BLAST: u32 = 0xff5577;
-const CAMERA: u32 = 0x7fb2ff;
-const SEL: u32 = 0xffd35a;
-const INK: u32 = 0x0b0d2a;
-const PATH: u32 = 0xc9d4ff;
-
 pub struct Overlay<'a> {
     pub s: &'a Stage,
     pub sel: Option<Part>,
@@ -809,40 +811,6 @@ pub struct Overlay<'a> {
     /// Player colors, for spawn markers.
     pub colors: &'a [u32],
     pub zoom_view: Option<[f64; 4]>,
-}
-
-pub fn dashed(cv: &mut Canvas, a: P, b: P, w: f64, col: Rgba, dash: f64) {
-    let len = dist(a, b);
-    let n = ((len / dash).ceil() as usize).max(1);
-    for k in (0..n).step_by(2) {
-        let t0 = k as f64 / n as f64;
-        let t1 = ((k + 1) as f64 / n as f64).min(1.);
-        cv.line(
-            [a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0],
-            [a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1],
-            w,
-            col,
-        );
-    }
-}
-
-fn dashed_rect(cv: &mut Canvas, [l, t, r, b]: [f64; 4], w: f64, col: Rgba, dash: f64) {
-    for (a, z) in [([l, t], [r, t]), ([r, t], [r, b]), ([r, b], [l, b]), ([l, b], [l, t])] {
-        dashed(cv, a, z, w, col, dash);
-    }
-}
-
-fn knob(cv: &mut Canvas, p: P, px: f64, hot: bool, col: u32) {
-    let r = if hot { 6. } else { 4.5 } * px;
-    cv.fill_circle(p, r, Rgba::hex(INK, 0.9));
-    cv.stroke_circle(p, r, 2. * px, Rgba::hex(if hot { SEL } else { col }, 1.));
-}
-
-fn square(cv: &mut Canvas, p: P, px: f64, hot: bool, col: u32) {
-    let r = if hot { 5.5 } else { 4. } * px;
-    let pts = [[p[0] - r, p[1] - r], [p[0] + r, p[1] - r], [p[0] + r, p[1] + r], [p[0] - r, p[1] + r]];
-    cv.fill_convex(&pts, Rgba::hex(INK, 0.9));
-    cv.stroke_closed(&pts, 2. * px, Rgba::hex(if hot { SEL } else { col }, 1.));
 }
 
 /// Draws the overlay; `px` = stage pixels per screen point, so strokes keep a constant screen width.
@@ -890,6 +858,19 @@ pub fn draw(cv: &mut Canvas, o: &Overlay, px: f64) {
             }
         }
     }
+    draw_ledges(cv, o, px);
+    draw_blocks(cv, o, px);
+    draw_platforms(cv, o, px);
+    if o.layers.spawns {
+        draw_respawns(cv, o, px);
+        draw_spawns(cv, o, px);
+    }
+}
+
+fn draw_ledges(cv: &mut Canvas, o: &Overlay, px: f64) {
+    let s = o.s;
+    let hov = |p: Part| o.hover.is_some_and(|h| h.part == p);
+    let hot = |p: Part, g: Grip| o.hover == Some(Handle { part: p, grip: g });
     // Ledge grab zones, only on enabled corners.
     let l = &s.ledge;
     let lsel = o.sel == Some(Part::Ledge) || hov(Part::Ledge);
@@ -914,6 +895,12 @@ pub fn draw(cv: &mut Canvas, o: &Overlay, px: f64) {
             knob(cv, [c[0] + side * l.r, c[1]], px, hot(Part::Ledge, Grip::Rim), TEAL);
         }
     }
+}
+
+fn draw_blocks(cv: &mut Canvas, o: &Overlay, px: f64) {
+    let s = o.s;
+    let hov = |p: Part| o.hover.is_some_and(|h| h.part == p);
+    let hot = |p: Part, g: Grip| o.hover == Some(Handle { part: p, grip: g });
     // Block outlines, handles and the selected block's ledge toggles.
     for (i, b) in s.blocks.iter().enumerate() {
         let p = Part::Block(i);
@@ -940,6 +927,12 @@ pub fn draw(cv: &mut Canvas, o: &Overlay, px: f64) {
             }
         }
     }
+}
+
+fn draw_platforms(cv: &mut Canvas, o: &Overlay, px: f64) {
+    let s = o.s;
+    let hov = |p: Part| o.hover.is_some_and(|h| h.part == p);
+    let hot = |p: Part, g: Grip| o.hover == Some(Handle { part: p, grip: g });
     // Platforms, with paths for moving ones.
     let th = s.art.platform_thickness;
     for (i, q) in s.platforms.iter().enumerate() {
@@ -980,9 +973,12 @@ pub fn draw(cv: &mut Canvas, o: &Overlay, px: f64) {
             }
         }
     }
-    if !o.layers.spawns {
-        return;
-    }
+}
+
+fn draw_respawns(cv: &mut Canvas, o: &Overlay, px: f64) {
+    let s = o.s;
+    let hov = |p: Part| o.hover.is_some_and(|h| h.part == p);
+    let hot = |p: Part, g: Grip| o.hover == Some(Handle { part: p, grip: g });
     // Respawn points: the descent and the platform it ends on.
     for (i, r) in s.respawns.iter().enumerate() {
         let p = Part::Respawn(i);
@@ -1016,6 +1012,12 @@ pub fn draw(cv: &mut Canvas, o: &Overlay, px: f64) {
             knob(cv, [r.x, r.start_y], px, hot(p, Grip::Start), col);
         }
     }
+}
+
+fn draw_spawns(cv: &mut Canvas, o: &Overlay, px: f64) {
+    let s = o.s;
+    let hov = |p: Part| o.hover.is_some_and(|h| h.part == p);
+    let hot = |p: Part, g: Grip| o.hover == Some(Handle { part: p, grip: g });
     // Spawns: a stand-in figure outline, feet mark and facing arrow.
     for (i, sp) in s.spawns.iter().enumerate() {
         let p = Part::Spawn(i);

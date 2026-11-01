@@ -76,7 +76,7 @@ pub fn doc(def_name: &str, key: &str) -> String {
     prop(s, key).map(describe).unwrap_or_default()
 }
 
-fn describe(s: &Value) -> String {
+pub(crate) fn describe(s: &Value) -> String {
     let d = s.get("description").or_else(|| deref(s).get("description"));
     d.and_then(Value::as_str).unwrap_or_default().replace('`', "")
 }

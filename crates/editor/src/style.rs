@@ -6,6 +6,20 @@ use std::sync::Arc;
 
 use bevy_egui::egui::{self, Color32, CornerRadius, FontData, FontFamily, FontId, Stroke, Style, TextStyle};
 
+pub const OVERLAY_INK: u32 = 0x0b0d2a;
+pub const OVERLAY_GOLD: u32 = 0xffd35a;
+pub const OVERLAY_TEAL: u32 = 0x66ffcc;
+pub const OVERLAY_BLAST: u32 = 0xff5577;
+pub const OVERLAY_CAMERA: u32 = 0x7fb2ff;
+pub const OVERLAY_PATH: u32 = 0xc9d4ff;
+pub const FINE_STEP: f64 = 0.1;
+pub const FRAME_TOP: f64 = 90.;
+pub const FRAME_PAD: f64 = 140.;
+pub const BOUND_PAD_RATIO: f64 = 0.04;
+pub const FRAME_OFFSET: f64 = FRAME_TOP / 2.;
+pub const SANDBOX_BOTTOM: f32 = 68.;
+pub const HINT_BOTTOM: f32 = 28.;
+
 pub const PREVIEW_ASPECT: f64 = 16. / 9.;
 
 pub const NIGHT: Color32 = Color32::from_rgb(11, 13, 42);

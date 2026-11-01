@@ -1,6 +1,9 @@
 //! Viewport geometry: pan/zoom camera, fighter-local ↔ stage transforms, hit-testing handles, and the overlay
 //! (hurtboxes, hitboxes, launch arrows, joint handles) drawn through `render::Scene::overlay`.
 
+use crate::overlay::dashed_circle;
+use crate::style::{OVERLAY_GOLD as GOLD, OVERLAY_INK};
+
 use render::canvas::{Canvas, P, Rgba};
 use render::debug::{hit_type_color, launch_arrow, launch_tip};
 use render::pose::Skel;
@@ -30,6 +33,9 @@ impl Port {
 }
 
 impl Cam {
+    pub const MIN_ZOOM: f64 = 0.1;
+    pub const MAX_ZOOM: f64 = 12.;
+
     pub fn to_stage(&self, port: &Port, s: P) -> P {
         let m = port.mid();
         [self.center[0] + (s[0] - m[0]) / self.zoom, self.center[1] + (s[1] - m[1]) / self.zoom]
@@ -51,7 +57,7 @@ impl Cam {
     /// Zoom by `k` keeping the stage point under screen point `at` fixed.
     pub fn zoom_at(&mut self, port: &Port, at: P, k: f64) {
         let before = self.to_stage(port, at);
-        self.zoom = (self.zoom * k).clamp(0.4, 12.);
+        self.zoom = (self.zoom * k).clamp(Self::MIN_ZOOM, Self::MAX_ZOOM);
         let after = self.to_stage(port, at);
         self.center = [self.center[0] + before[0] - after[0], self.center[1] + before[1] - after[1]];
     }
@@ -188,8 +194,6 @@ pub fn hit_test(
         .map(|b| Hit::Body(b.i))
 }
 
-pub const GOLD: u32 = 0xffd35a;
-
 pub struct Overlay<'a> {
     pub f: &'a Fighter,
     pub hurt: sim::data::Rect,
@@ -258,34 +262,31 @@ pub fn draw(cv: &mut Canvas, o: &Overlay, px: f64) {
                 let tip = launch_tip(b.c, h, f.face);
                 let hot = matches!(o.hover, Some(Hit::Angle(_)));
                 cv.fill_circle(tip, if hot { 7. } else { 5.5 } * px, Rgba::hex(GOLD, 1.));
-                cv.fill_circle(tip, 2.5 * px, Rgba::hex(0x0b0d2a, 1.));
+                cv.fill_circle(tip, 2.5 * px, Rgba::hex(OVERLAY_INK, 1.));
             }
         }
     }
     for (j, p) in o.joints.iter().enumerate() {
         let hot = o.hover == Some(Hit::Joint(j));
-        cv.fill_circle(*p, if hot { 6. } else { 4.5 } * px, Rgba::hex(0x0b0d2a, 0.9));
-        cv.stroke_circle(
-            *p,
-            if hot { 6. } else { 4.5 } * px,
-            2. * px,
-            Rgba::hex(if hot { GOLD } else { 0xe8ecff }, 1.),
-        );
-    }
-}
-
-fn dashed_circle(cv: &mut Canvas, c: P, r: f64, w: f64, col: Rgba, px: f64) {
-    let n = ((std::f64::consts::TAU * r / (6. * px)).ceil() as usize).clamp(8, 96) & !1;
-    for k in (0..n).step_by(2) {
-        let a0 = std::f64::consts::TAU * k as f64 / n as f64;
-        let a1 = std::f64::consts::TAU * (k + 1) as f64 / n as f64;
-        cv.line([c[0] + r * a0.cos(), c[1] + r * a0.sin()], [c[0] + r * a1.cos(), c[1] + r * a1.sin()], w, col);
+        crate::overlay::knob(cv, *p, px, hot, 0xe8ecff);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn zooming_a_large_framed_stage_does_not_jump_to_a_higher_minimum() {
+        let port = Port { rect: [0., 0., 800., 600.], window: [800., 600.] };
+        let mut cam = Cam { center: [640., 400.], zoom: 0.15 };
+        let at = [300., 200.];
+        let before = cam.to_stage(&port, at);
+        cam.zoom_at(&port, at, 1.01);
+        assert!((cam.zoom - 0.1515).abs() < 1e-12);
+        let after = cam.to_stage(&port, at);
+        assert!((before[0] - after[0]).abs() < 1e-9 && (before[1] - after[1]).abs() < 1e-9);
+    }
 
     #[test]
     fn joint_transforms_round_trip() {

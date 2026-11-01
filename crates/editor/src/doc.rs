@@ -2,7 +2,7 @@
 //! stages) with undo, validation through the real loader, and saving that patches only the changed paths into the
 //! package's own JSON, so `extends` and untouched values stay intact (see docs/DESIGN.md "Editor").
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::sync::Arc;
 
 use serde::Serialize;
@@ -262,8 +262,8 @@ pub struct Doc<T: Content = Fighter> {
     pub fresh: bool,
     /// The content checks run against (fighters for stage clearance).
     pub ctx: Arc<GameData>,
-    undo: Vec<T>,
-    redo: Vec<T>,
+    undo: VecDeque<T>,
+    redo: VecDeque<T>,
     /// The last undo step is still growing (a drag or typing in progress).
     open: bool,
 }
@@ -286,8 +286,8 @@ impl<T: Content> Doc<T> {
             errors: vec![],
             fresh: false,
             ctx,
-            undo: vec![],
-            redo: vec![],
+            undo: VecDeque::new(),
+            redo: VecDeque::new(),
             open: false,
         }
     }
@@ -306,10 +306,10 @@ impl<T: Content> Doc<T> {
     /// [`Doc::close_step`] (one undo step per drag or text edit).
     pub fn changed(&mut self, before: T, ongoing: bool) {
         // A discrete `edit` inside the frame already recorded this step.
-        if !(self.open && ongoing) && self.undo.last() != Some(&before) {
-            self.undo.push(before);
+        if !(self.open && ongoing) && self.undo.back() != Some(&before) {
+            self.undo.push_back(before);
             if self.undo.len() > UNDO_LIMIT {
-                self.undo.remove(0);
+                self.undo.pop_front();
             }
         }
         self.redo.clear();
@@ -331,15 +331,15 @@ impl<T: Content> Doc<T> {
     }
 
     pub fn undo(&mut self) {
-        if let Some(f) = self.undo.pop() {
-            self.redo.push(std::mem::replace(&mut self.item, f));
-            self.open = false;
-            self.check();
-        }
+        self.history(false);
     }
     pub fn redo(&mut self) {
-        if let Some(f) = self.redo.pop() {
-            self.undo.push(std::mem::replace(&mut self.item, f));
+        self.history(true);
+    }
+    fn history(&mut self, redo: bool) {
+        let (from, to) = if redo { (&mut self.redo, &mut self.undo) } else { (&mut self.undo, &mut self.redo) };
+        if let Some(item) = from.pop_back() {
+            to.push_back(std::mem::replace(&mut self.item, item));
             self.open = false;
             self.check();
         }
@@ -527,8 +527,13 @@ impl Workspace {
 
     /// Names of packages with unsaved changes.
     pub fn unsaved(&self) -> Vec<String> {
-        let f = self.docs.values().filter(|d| d.dirty()).map(|d| d.item.name.clone());
-        f.chain(self.stages.values().filter(|d| d.dirty()).map(|d| format!("{} (stage)", d.item.name))).collect()
+        self.dirty()
+            .into_iter()
+            .map(|(kind, id)| match kind {
+                Kind::Fighter => self.docs[&id].item.name.clone(),
+                Kind::Stage => format!("{} (stage)", self.stages[&id].item.name),
+            })
+            .collect()
     }
     /// Every document with unsaved changes.
     pub fn dirty(&self) -> Vec<(Kind, String)> {
@@ -643,25 +648,73 @@ impl Workspace {
     /// After the file was written: it's now the package's document and the new baseline.
     pub fn saved<T: Content>(&mut self, id: &str, text: String, data: Box<GameData>) {
         let Some(doc) = T::docs_mut(self).get_mut(id) else { return };
-        let path = doc.path.clone();
-        self.files.0.insert(path.clone(), text);
-        let raw = self.files.raw(&path).unwrap_or(Value::Null);
-        let doc = T::docs_mut(self).get_mut(id).expect("open");
-        doc.raw = raw;
+        doc.raw = serde_json::from_str(&text).unwrap_or(Value::Null);
         doc.saved = doc.item.clone();
         doc.fresh = false;
+        let path = doc.path.clone();
+        self.files.0.insert(path, text);
         self.data = Arc::new(*data);
         // Children of this package see the new parent; checks see the saved content.
         let files = &self.files;
         for d in self.docs.values_mut() {
             d.parent = d.raw.get("extends").and_then(Value::as_str).and_then(|p| files.resolved(p));
             d.ctx = self.data.clone();
+            d.check();
         }
         for d in self.stages.values_mut() {
             d.ctx = self.data.clone();
+            d.check();
         }
         self.saves += 1;
     }
+}
+
+/// Changed JSON paths, shared by the browsers' section and item markers.
+pub fn dirty_paths<T: Content>(doc: &Doc<T>) -> BTreeSet<String> {
+    if doc.item == doc.saved {
+        return BTreeSet::new();
+    }
+    fn diff(a: &Value, b: &Value, path: String, out: &mut BTreeSet<String>) {
+        if a == b {
+            return;
+        }
+        match (a, b) {
+            (Value::Object(a), Value::Object(b)) => {
+                let keys: BTreeSet<_> = a.keys().chain(b.keys()).collect();
+                for k in keys {
+                    let p = if path.is_empty() { k.clone() } else { format!("{path}.{k}") };
+                    match (a.get(k), b.get(k)) {
+                        (Some(a), Some(b)) => diff(a, b, p, out),
+                        _ => {
+                            out.insert(p);
+                        }
+                    }
+                }
+            }
+            (Value::Array(a), Value::Array(b)) => {
+                for i in 0..a.len().max(b.len()) {
+                    let p = format!("{path}[{i}]");
+                    match (a.get(i), b.get(i)) {
+                        (Some(a), Some(b)) => diff(a, b, p, out),
+                        _ => {
+                            out.insert(p);
+                        }
+                    }
+                }
+            }
+            _ => {
+                out.insert(path);
+            }
+        }
+    }
+    let mut paths = BTreeSet::new();
+    diff(
+        &serde_json::to_value(&doc.item).unwrap_or_default(),
+        &serde_json::to_value(&doc.saved).unwrap_or_default(),
+        String::new(),
+        &mut paths,
+    );
+    paths
 }
 
 /// The built-in assets, for tests.
@@ -678,6 +731,51 @@ mod tests {
 
     fn files() -> Files {
         tests_files()
+    }
+
+    #[test]
+    fn saving_rechecks_every_open_document_against_new_content() {
+        let mut files = files();
+        let path = fighter_path("brawler");
+        let mut raw = files.raw(&path).unwrap();
+        raw["body"] = json!({ "height": 80. });
+        files.0.insert(path, to_compact_string(&raw));
+        let (mut ws, errors) = Workspace::new(files).unwrap();
+        assert!(errors.is_empty(), "{errors:?}");
+        ws.doc("brawler").unwrap();
+        ws.doc("ninja").unwrap();
+        ws.stage("arena").unwrap().edit(|s| {
+            s.name = "Edited arena".into();
+            s.spawns[0].x = 640.;
+            s.spawns[0].y = Some(755.);
+        });
+        assert!(!ws.stages["arena"].errors.is_empty());
+        assert_ne!(ws.live_data().stage("arena").unwrap().name, "Edited arena");
+        ws.doc("brawler").unwrap().edit(|f| f.body.height = 74.);
+        let Saved::Ok { text, data } = ws.prepare_save::<Fighter>("brawler") else { panic!("save refused") };
+        ws.saved::<Fighter>("brawler", text, data);
+        assert!(ws.stages["arena"].errors.is_empty());
+        assert_eq!(ws.live_data().stage("arena").unwrap().name, "Edited arena");
+        assert!(ws.docs.values().all(|d| Arc::ptr_eq(&d.ctx, &ws.data)));
+    }
+
+    #[test]
+    fn dirty_paths_include_nested_edits_additions_and_removals() {
+        let (mut ws, _) = Workspace::new(files()).unwrap();
+        let d = ws.stage("arena").unwrap();
+        assert!(dirty_paths(d).is_empty());
+        d.edit(|s| {
+            s.platforms[0].y -= 1.;
+            s.platforms.pop();
+            s.art.background = None;
+        });
+        assert_eq!(
+            dirty_paths(d),
+            BTreeSet::from(["platforms[0].y".into(), "platforms[2]".into(), "art.background".into()])
+        );
+        d.item = d.saved.clone();
+        d.item.platforms.push(d.item.platforms[0].clone());
+        assert_eq!(dirty_paths(d), BTreeSet::from(["platforms[3]".into()]));
     }
 
     #[test]
