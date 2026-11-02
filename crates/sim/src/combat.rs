@@ -42,10 +42,13 @@ pub fn active_boxes(d: &GameData, f: &Fighter) -> Vec<ActiveBox> {
     } else {
         return vec![];
     };
-    let mult = 1. + f64::from(charge) / g.knockback.charge_damage_divisor;
+    let scale = (f.state == State::Attack && f.mov.is_some()).then(|| moves::definition(d, f).charge_damage).flatten();
+    let mult = 1.
+        + scale
+            .map_or_else(|| f64::from(charge) / g.knockback.charge_damage_divisor, |scale| f64::from(charge) * scale);
     boxes
         .iter()
-        .filter(|b| b.active(t) && (!b.counter_damage || cd > 0.))
+        .filter(|b| b.active(t) && charge >= b.min_charge && (!b.counter_damage || cd > 0.))
         .map(|b| {
             let (x, y, r) = b.geom_at(t);
             let mut hit = b.clone();
@@ -417,7 +420,7 @@ pub fn hit_pass(w: &mut World, d: &GameData) {
             let mut wind = None;
             let mut hit = false;
             for b in &bx {
-                if !circ_rect(b.x, b.y, b.hit.r, hb) {
+                if !b.hit.targets(w.fighters[v].ground) || !circ_rect(b.x, b.y, b.hit.r, hb) {
                     continue;
                 }
                 if b.hit.kind == HitType::Windbox {

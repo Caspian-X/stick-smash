@@ -118,6 +118,9 @@ pub struct Move {
     /// (and flips air momentum).
     #[serde(default, skip_serializing_if = "is_default")]
     pub b_reverse: bool,
+    /// Damage bonus per held charge tick. Omit to use the global smash-charge divisor.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub charge_damage: Option<f64>,
     /// Runs from the first phase. A move must have at least one phase.
     pub phases: Vec<Phase>,
 }
@@ -163,6 +166,9 @@ pub struct Phase {
     /// Multiplies the move's air acceleration (0 = no drift control).
     #[serde(default = "one", skip_serializing_if = "is_one")]
     pub air_accel_mult: f64,
+    /// Fighter-local rectangle that detects a hittable opponent for `targetNear` transitions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detection: Option<super::common::Rect>,
     /// Grounded: phase frames below this use `attackSlideFriction` instead of `attackFriction` (dash attacks).
     #[serde(default, skip_serializing_if = "is_default")]
     pub slide: u32,
@@ -253,6 +259,12 @@ pub struct Event {
     pub set_vel: Option<Vel>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub add_vel: Option<Vel>,
+    /// Scale `setVel` and `addVel` by (1 + held charge ticks × this); never scales `mulVel`.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub charge_velocity: f64,
+    /// Skip this event below this many held charge ticks.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub min_charge: u32,
     /// Cap downward speed at this (before gravity is applied this tick).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cap_fall: Option<f64>,
@@ -316,6 +328,10 @@ pub enum Trigger {
     Falling,
     /// The charge button (or attack, without `charge`) isn't held.
     Release,
+    /// Attack is held (jab follow-ups).
+    AttackHeld,
+    /// A hittable opponent overlaps the phase's fighter-local `detection` rectangle.
+    TargetNear,
     /// Shield was pressed this tick.
     ShieldPress,
     /// A hit was countered in the phase's `counter` window.

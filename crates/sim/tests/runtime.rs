@@ -270,5 +270,5 @@ fn cpu_match_golden_world_hash() {
         w.fx.clear();
         w.hits.clear();
     }
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x5466_fe51_1e75_75a6);
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xbe68_7d93_f603_0ecb);
 }

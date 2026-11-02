@@ -58,7 +58,8 @@ next phase's frame 0 is that same tick. A one-phase move with `frames: N` lasts 
 3. **Advance** the phase frame.
 4. **Events** matching this frame, in list order (see below).
 5. **Step transitions**, in list order, first match wins: `timeout`, `grounded`, `airborne`, `falling`,
-   `release`, `shieldPress`. A phase with `frames` and no `timeout` transition ends the move on timeout.
+   `release`, `attackHeld`, `targetNear`, `shieldPress`. A phase with `frames` and no `timeout` transition ends
+   the move on timeout.
 6. **Movement** with the current phase (after any transition). Grounded: attack friction (`slide` frames use slide
    friction), gravity, ground snap with edge stop. Airborne: drift with the move's `air` accel × `airAccelMult`,
    fast-fall if `air: "aerial"`, gravity capped by `fallCap` (else fast-fall or fall speed), `hover` zeroes vertical
@@ -91,7 +92,20 @@ gameplay RNG unchanged. Set it false to share the gameplay RNG for TS compatibil
 
 `{ "on": <trigger>, "if": <cond>, "from": <min phase frame>, "to": <phase|end|helpless|landing>, "lag": <frames> }`.
 Triggers: `timeout`, `land`, `grounded`, `airborne`, `falling` (vertical speed ≥ 0, y down), `release` (charge
-button, else attack, not held), `shieldPress`, `counter`, `hit`.
+button, else attack, not held), `attackHeld` (attack held), `targetNear`, `shieldPress`, `counter`, `hit`.
+
+`targetNear` needs a phase `detection` rectangle (`x1 < x2`, `y1 < y2`), in fighter-local space
+(x forward, y up). It fires when a hittable opponent's hurtbox overlaps that rectangle; facing, teams,
+friendly fire and invulnerability use normal combat rules. It does not hit or push the opponent.
+
+A move may override the global charge damage bonus with `chargeDamage`: damage × (1 + held ticks × value).
+The global charge knockback ratio still applies. Events may set `chargeVelocity` to scale their `setVel`
+and `addVel` by (1 + held ticks × value); `mulVel` is unchanged. Events and move hitboxes may set
+`minCharge` to require that many held ticks (default 0). Charge persists across phases.
+These fields default to existing behavior; projectile damage still uses its own `chargeScale`.
+Hitboxes also accept `situation: "both" | "ground" | "air"` (default `both`), filtering victims by
+whether they are grounded. This applies to melee, grabs, windboxes and projectile contact/explosion hits;
+geometry and collision priority are otherwise unchanged.
 
 ### Counter
 

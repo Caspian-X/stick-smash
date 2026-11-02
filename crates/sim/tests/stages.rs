@@ -724,3 +724,25 @@ fn blocked_surface_pursuit_waits_for_timeout_then_jumps_at_the_edge() {
     sim::ai::ai_input(&mut w, &d, 0, 2);
     assert!(!w.fighters[0].ai.pursuit);
 }
+
+#[test]
+fn mike_cpu_matchups_finish_on_every_stage() {
+    let d = common::data();
+    for s in &d.stages {
+        let (mut finished, mut wins, mut kos, mut self_kos) = (0, 0, 0, 0);
+        for opponent in d.fighters.iter().filter(|f| f.id != "mike") {
+            for seed in 1..=2 {
+                let own = usize::from(seed == 2);
+                let pair = if own == 0 { ["mike", opponent.id.as_str()] } else { [opponent.id.as_str(), "mike"] };
+                let (st, w) = cpu_match(&d, &s.id, &pair, seed, 3);
+                assert!(w.over, "Mike vs {} on {} seed {seed} timed out", opponent.id, s.id);
+                finished += 1;
+                wins += usize::from(w.fighters[own].state == State::Win);
+                kos += st.kos;
+                self_kos += st.self_kos;
+            }
+        }
+        println!("Mike on {}: {wins}/{finished} wins, {kos} KOs, {self_kos} self-KOs", s.id);
+        assert!(self_kos * 3 <= kos, "Mike matchups on {}: excessive self-KOs", s.id);
+    }
+}

@@ -853,6 +853,10 @@
         },
         "dir": { "$ref": "#/$defs/LaunchDir" },
         "type": { "$ref": "#/$defs/HitType" },
+        "situation": {
+          "$ref": "#/$defs/Situation",
+          "description": "Grounded, airborne, or either kind of victim. Also applies to projectile contact hits."
+        },
         "setKb": {
           "type": "boolean",
           "description": "Fixed knockback: ignores the victim's percent (knockback = bkb × weight)."
@@ -879,6 +883,12 @@
         "counterDamage": {
           "type": "boolean",
           "description": "Counter strike: damage comes from the countered hit (see `Counter`). Inactive if nothing was countered."
+        },
+        "minCharge": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "In a move, inactive below this many held charge ticks."
         },
         "frames": {
           "type": "array",
@@ -938,6 +948,11 @@
         { "type": "string", "const": "grab", "description": "Grabs instead of hitting." }
       ],
       "description": "Hitbox behavior, modeled on Smash."
+    },
+    "Situation": {
+      "type": "string",
+      "enum": ["both", "ground", "air"],
+      "description": "Which victim positions a hitbox can hit."
     },
     "Ledge": {
       "type": "object",

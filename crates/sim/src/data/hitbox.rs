@@ -38,6 +38,16 @@ pub enum LaunchDir {
     Back,
 }
 
+/// Which victim positions a hitbox can hit.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum Situation {
+    #[default]
+    Both,
+    Ground,
+    Air,
+}
+
 /// Per-frame geometry override: `[frame, x, y, r]`.
 pub type HitboxFrame = [f64; 4];
 
@@ -70,6 +80,9 @@ pub struct Hitbox {
     pub dir: LaunchDir,
     #[serde(default, skip_serializing_if = "is_default", rename = "type")]
     pub kind: HitType,
+    /// Grounded, airborne, or either kind of victim. Also applies to projectile contact hits.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub situation: Situation,
     /// Fixed knockback: ignores the victim's percent (knockback = bkb × weight).
     #[serde(default, skip_serializing_if = "is_default")]
     pub set_kb: bool,
@@ -94,6 +107,9 @@ pub struct Hitbox {
     /// Counter strike: damage comes from the countered hit (see `Counter`). Inactive if nothing was countered.
     #[serde(default, skip_serializing_if = "is_default")]
     pub counter_damage: bool,
+    /// In a move, inactive below this many held charge ticks.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub min_charge: u32,
     /// Per-frame position/size `[frame, x, y, r]`. A frame without an entry uses the closest earlier entry, or
     /// x/y/r before the first entry. Omit for a box that stays put.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -101,6 +117,13 @@ pub struct Hitbox {
 }
 
 impl Hitbox {
+    pub fn targets(&self, grounded: bool) -> bool {
+        match self.situation {
+            Situation::Both => true,
+            Situation::Ground => grounded,
+            Situation::Air => !grounded,
+        }
+    }
     /// Active on phase frame `t`?
     pub fn active(&self, t: u32) -> bool {
         t >= self.start && self.end.is_none_or(|e| t <= e)

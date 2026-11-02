@@ -19,13 +19,15 @@ use crate::style::{self, DIM, FAINT, GOLD, RED, STAR, caps, faint, heading};
 use crate::ui::at_playhead;
 use crate::{Dialog, Editor, doc, form, throw_mut};
 
-const TRIGGERS: [(Trigger, &str); 9] = [
+const TRIGGERS: [(Trigger, &str); 11] = [
     (Trigger::Timeout, "timeout"),
     (Trigger::Land, "land"),
     (Trigger::Grounded, "grounded"),
     (Trigger::Airborne, "airborne"),
     (Trigger::Falling, "falling"),
     (Trigger::Release, "release"),
+    (Trigger::AttackHeld, "attackHeld"),
+    (Trigger::TargetNear, "targetNear"),
     (Trigger::ShieldPress, "shieldPress"),
     (Trigger::Counter, "counter"),
     (Trigger::Hit, "hit"),
@@ -561,6 +563,7 @@ fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<G
         grid(ui, "move", |ui| {
             row(ui, "air control", &d("Move", "air"), |ui| combo(ui, "air", &mut mv.air, &AIRS));
             check(ui, "b-reverse", &d("Move", "bReverse"), &mut mv.b_reverse);
+            opt_num(ui, "charge damage", &d("Move", "chargeDamage"), &mut mv.charge_damage, 0.01, "global");
         });
     });
     ed.phase = ph;
@@ -651,6 +654,18 @@ fn hit_fields(ui: &mut egui::Ui, b: &mut Hitbox, geometry: bool, data: Option<&G
         );
         check(ui, "fixed kb", &d("Hitbox", "setKb"), &mut b.set_kb);
         opt_int(ui, "rehit", &d("Hitbox", "rehit"), &mut b.rehit, 4, "hits once");
+        row(ui, "victims", &d("Hitbox", "situation"), |ui| {
+            use sim::data::hitbox::Situation;
+            combo(
+                ui,
+                "situation",
+                &mut b.situation,
+                &[(Situation::Both, "both"), (Situation::Ground, "ground"), (Situation::Air, "air")],
+            );
+        });
+        if geometry {
+            int(ui, "min charge", &d("Hitbox", "minCharge"), &mut b.min_charge);
+        }
     });
     section(ui, "Multipliers", false, |ui| {
         grid(ui, "mult", |ui| {
@@ -864,6 +879,8 @@ fn events(ui: &mut egui::Ui, p: &mut Phase, projectiles: &[String], t: Option<u3
             vel(ui, "mulVel", &mut e.mul_vel);
             grid(ui, ("ev-g", i), |ui| {
                 opt_num(ui, "capFall", "Cap downward speed", &mut e.cap_fall, 2., "no cap");
+                num(ui, "charge velocity", &d("Event", "chargeVelocity"), &mut e.charge_velocity, 0.001);
+                int(ui, "min charge", &d("Event", "minCharge"), &mut e.min_charge);
                 check(ui, "leaveGround", "Needed for upward launches from the ground", &mut e.leave_ground);
                 opt_int(ui, "invuln", "Invulnerable frames", &mut e.invuln, 5, "none");
                 opt_int(ui, "every", "Only on world frames divisible by this", &mut e.every, 2, "every frame");
@@ -962,6 +979,8 @@ fn phase_more(ui: &mut egui::Ui, p: &mut Phase) {
             }
         });
     });
+    ui.label(caps("Target detection"));
+    form::edit(ui, egui::Id::new("phase-detection"), &form::def("Phase")["properties"]["detection"], &mut p.detection);
     if let Some(c) = &mut p.charge {
         grid(ui, "charge", |ui| {
             int(ui, "  frame", "Phase frame that freezes while held", &mut c.frame);

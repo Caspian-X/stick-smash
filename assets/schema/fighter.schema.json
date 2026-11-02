@@ -239,6 +239,11 @@
           "type": "boolean",
           "description": "Pressing the other direction within `global.movement.bReverseWindow` frames turns the fighter around\n(and flips air momentum)."
         },
+        "chargeDamage": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Damage bonus per held charge tick. Omit to use the global smash-charge divisor."
+        },
         "phases": {
           "type": "array",
           "items": { "$ref": "#/$defs/Phase" },
@@ -312,6 +317,13 @@
           "format": "double",
           "description": "Multiplies the move's air acceleration (0 = no drift control)."
         },
+        "detection": {
+          "anyOf": [
+            { "$ref": "#/$defs/Rect" },
+            { "type": "null" }
+          ],
+          "description": "Fighter-local rectangle that detects a hittable opponent for `targetNear` transitions."
+        },
         "slide": {
           "type": "integer",
           "format": "uint32",
@@ -370,6 +382,10 @@
         },
         "dir": { "$ref": "#/$defs/LaunchDir" },
         "type": { "$ref": "#/$defs/HitType" },
+        "situation": {
+          "$ref": "#/$defs/Situation",
+          "description": "Grounded, airborne, or either kind of victim. Also applies to projectile contact hits."
+        },
         "setKb": {
           "type": "boolean",
           "description": "Fixed knockback: ignores the victim's percent (knockback = bkb × weight)."
@@ -396,6 +412,12 @@
         "counterDamage": {
           "type": "boolean",
           "description": "Counter strike: damage comes from the countered hit (see `Counter`). Inactive if nothing was countered."
+        },
+        "minCharge": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "In a move, inactive below this many held charge ticks."
         },
         "frames": {
           "type": "array",
@@ -456,6 +478,11 @@
       ],
       "description": "Hitbox behavior, modeled on Smash."
     },
+    "Situation": {
+      "type": "string",
+      "enum": ["both", "ground", "air"],
+      "description": "Which victim positions a hitbox can hit."
+    },
     "Event": {
       "type": "object",
       "additionalProperties": false,
@@ -494,6 +521,17 @@
             { "$ref": "#/$defs/Vel" },
             { "type": "null" }
           ]
+        },
+        "chargeVelocity": {
+          "type": "number",
+          "format": "double",
+          "description": "Scale `setVel` and `addVel` by (1 + held charge ticks × this); never scales `mulVel`."
+        },
+        "minCharge": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Skip this event below this many held charge ticks."
         },
         "capFall": {
           "type": ["number", "null"],
@@ -678,6 +716,12 @@
           "type": "string",
           "const": "release",
           "description": "The charge button (or attack, without `charge`) isn't held."
+        },
+        { "type": "string", "const": "attackHeld", "description": "Attack is held (jab follow-ups)." },
+        {
+          "type": "string",
+          "const": "targetNear",
+          "description": "A hittable opponent overlaps the phase's fighter-local `detection` rectangle."
         },
         { "type": "string", "const": "shieldPress", "description": "Shield was pressed this tick." },
         { "type": "string", "const": "counter", "description": "A hit was countered in the phase's `counter` window." },
@@ -1516,6 +1560,11 @@
           "type": "boolean",
           "description": "Pressing the other direction within `global.movement.bReverseWindow` frames turns the fighter around\n(and flips air momentum)."
         },
+        "chargeDamage": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Damage bonus per held charge tick. Omit to use the global smash-charge divisor."
+        },
         "phases": {
           "type": "array",
           "items": { "$ref": "#/$defs/Phase" },
@@ -1588,6 +1637,10 @@
         },
         "dir": { "$ref": "#/$defs/LaunchDirPartial" },
         "type": { "$ref": "#/$defs/HitTypePartial" },
+        "situation": {
+          "$ref": "#/$defs/SituationPartial",
+          "description": "Grounded, airborne, or either kind of victim. Also applies to projectile contact hits."
+        },
         "setKb": {
           "type": "boolean",
           "description": "Fixed knockback: ignores the victim's percent (knockback = bkb × weight)."
@@ -1614,6 +1667,12 @@
         "counterDamage": {
           "type": "boolean",
           "description": "Counter strike: damage comes from the countered hit (see `Counter`). Inactive if nothing was countered."
+        },
+        "minCharge": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "In a move, inactive below this many held charge ticks."
         },
         "frames": {
           "type": "array",
@@ -1672,6 +1731,11 @@
         { "type": "string", "const": "grab", "description": "Grabs instead of hitting." }
       ],
       "description": "Hitbox behavior, modeled on Smash."
+    },
+    "SituationPartial": {
+      "type": "string",
+      "enum": ["both", "ground", "air"],
+      "description": "Which victim positions a hitbox can hit."
     },
     "ProjectilePartial": {
       "type": "object",

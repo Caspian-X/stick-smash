@@ -81,9 +81,11 @@ fn events(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) {
     let p = phase(d, f);
     let t = f.mov.as_ref().unwrap().t;
     for e in &p.events {
-        if !e.fires(t, w.frame) || !cond(f, e.cond) {
+        let charge = f.mov.as_ref().unwrap().charge;
+        if !e.fires(t, w.frame) || !cond(f, e.cond) || charge < e.min_charge {
             continue;
         }
+        let speed = 1. + f64::from(charge) * e.charge_velocity;
         if let Some(v) = e.mul_vel {
             if let Some(x) = v.x {
                 f.vx *= x;
@@ -94,18 +96,18 @@ fn events(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) {
         }
         if let Some(v) = e.set_vel {
             if let Some(x) = v.x {
-                f.vx = x * f.face;
+                f.vx = x * f.face * speed;
             }
             if let Some(y) = v.y {
-                f.vy = -y;
+                f.vy = -y * speed;
             }
         }
         if let Some(v) = e.add_vel {
             if let Some(x) = v.x {
-                f.vx += x * f.face;
+                f.vx += x * f.face * speed;
             }
             if let Some(y) = v.y {
-                f.vy -= y;
+                f.vy -= y * speed;
             }
         }
         if let Some(cap) = e.cap_fall {
@@ -307,6 +309,19 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
                     Trigger::Airborne => !f.ground,
                     Trigger::Falling => f.vy >= 0.,
                     Trigger::Release => !held,
+                    Trigger::AttackHeld => inp.atk_held,
+                    Trigger::TargetNear => p.detection.is_some_and(|r| {
+                        let (x1, x2) = (f.x + r.x1 * f.face, f.x + r.x2 * f.face);
+                        w.fighters.iter().enumerate().any(|(v, other)| {
+                            let h = crate::combat::hurt(d, other);
+                            w.opponents(i, v)
+                                && other.hittable()
+                                && h.x2 >= x1.min(x2)
+                                && h.x1 <= x1.max(x2)
+                                && h.y2 >= f.y - r.y2
+                                && h.y1 <= f.y - r.y1
+                        })
+                    }),
                     Trigger::ShieldPress => inp.shield_p,
                     _ => false,
                 }

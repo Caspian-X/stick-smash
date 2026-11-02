@@ -37,6 +37,7 @@ fn all_assets_load() {
             "golem",
             "king",
             "lancer",
+            "mike",
             "ninja",
             "swordfighter",
             "tinker",
@@ -171,6 +172,19 @@ fn invalid_fighter_numbers_skip_package_with_path() {
             "moves.jab.phases[0].armorThreshold",
         ),
         (json!({"stats":{"weight":0}}), "stats.weight"),
+        (json!({"moves":{"jab":{"chargeDamage":-1}}}), "moves.jab.chargeDamage"),
+        (
+            json!({"moves":{"jab":{"phases":[{"name":"main","frames":5,"events":[{"at":0,"chargeVelocity":-1}]}]}}}),
+            "moves.jab.phases[0].events[0].chargeVelocity",
+        ),
+        (
+            json!({"moves":{"jab":{"phases":[{"name":"main","frames":5,"transitions":[{"on":"targetNear","to":"end"}]}]}}}),
+            "moves.jab.phases[0].transitions[0].on",
+        ),
+        (
+            json!({"moves":{"jab":{"phases":[{"name":"main","frames":5,"detection":{"x1":5,"x2":0,"y1":0,"y2":80}}]}}}),
+            "moves.jab.phases[0].detection",
+        ),
         (
             json!({"projectiles":{"gordo":{"chargeScale":{"speed":-1,"damage":0}}}}),
             "projectiles.gordo.chargeScale.speed",

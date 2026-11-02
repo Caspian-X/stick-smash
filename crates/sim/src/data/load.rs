@@ -691,6 +691,9 @@ fn check_move(
     if m.phases.is_empty() {
         return Err(e(format!("{path}.phases"), "needs at least one phase".into()));
     }
+    if let Some(n) = m.charge_damage {
+        nonnegative(file, &format!("{path}.chargeDamage"), n)?;
+    }
     let names: BTreeSet<&str> = m.phases.iter().map(|p| p.name.as_str()).collect();
     if names.len() != m.phases.len() {
         return Err(e(format!("{path}.phases"), "phase names must be unique".into()));
@@ -710,6 +713,14 @@ fn check_move(
             positive(file, &format!("{pp}.fallCap"), n)?;
         }
         nonnegative(file, &format!("{pp}.airAccelMult"), p.air_accel_mult)?;
+        if let Some(r) = p.detection {
+            for (field, n) in [("x1", r.x1), ("x2", r.x2), ("y1", r.y1), ("y2", r.y2)] {
+                finite(file, &format!("{pp}.detection.{field}"), n)?;
+            }
+            if r.x1 >= r.x2 || r.y1 >= r.y2 {
+                return Err(e(format!("{pp}.detection"), "needs x1 < x2 and y1 < y2".into()));
+            }
+        }
         if let Some(c) = &p.counter {
             for (name, n) in
                 [("damageMult", c.damage_mult), ("minDamage", c.min_damage), ("reflectSpeed", c.reflect_speed)]
@@ -758,6 +769,9 @@ fn check_phase(
         }
         if t.on == Trigger::Counter && p.counter.is_none() {
             return Err(e(format!("{tp}.on"), "counter needs the phase to have a `counter` window".into()));
+        }
+        if t.on == Trigger::TargetNear && p.detection.is_none() {
+            return Err(e(format!("{tp}.on"), "targetNear needs a detection rectangle".into()));
         }
     }
     if p.frames.is_none() && p.transitions.is_empty() {
@@ -818,6 +832,7 @@ fn check_hitbox(file: &str, path: &str, h: &super::Hitbox, geometry: bool) -> Re
     Ok(())
 }
 fn check_event(file: &str, path: &str, ev: &super::Event) -> Result<(), ContentError> {
+    nonnegative(file, &format!("{path}.chargeVelocity"), ev.charge_velocity)?;
     for (name, vel) in [("mulVel", &ev.mul_vel), ("setVel", &ev.set_vel), ("addVel", &ev.add_vel)] {
         if let Some(vel) = vel {
             for (axis, n) in [("x", vel.x), ("y", vel.y)] {

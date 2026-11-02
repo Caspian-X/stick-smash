@@ -178,6 +178,7 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
             if def.explosion.is_some() && !detonate
                 || !w.opponents(p.owner, v)
                 || !w.fighters[v].hittable()
+                || !p.hit.targets(w.fighters[v].ground)
                 || p.life <= 0 && !detonate
                 || !combat::circ_rect(p.x, p.y, p.r, combat::hurt(d, &w.fighters[v]))
             {
