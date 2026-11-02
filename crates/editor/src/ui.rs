@@ -465,6 +465,12 @@ fn stage_shortcuts(ed: &mut Editor, shift: bool, k: &impl Fn(Key) -> bool) {
     if k(Key::N) {
         stage_ed::add_platform(ed);
     }
+    if k(Key::W) && ed.st.sel.and_then(stage_view::Part::platform).is_some() {
+        stage_ed::add_waypoint(ed);
+    }
+    if k(Key::T) && ed.st.sandbox == 0 {
+        ed.st.clock_play = !ed.st.clock_play;
+    }
     if k(Key::Delete) || k(Key::Backspace) {
         stage_ed::delete_selected(ed);
     }
@@ -822,6 +828,7 @@ pub(crate) const STAGE_SHORTCUTS: [(&str, &[(&str, &str)]); 4] = [
             ("drag + Alt", "fine: 0.1 px"),
             ("Alt ← → ↑ ↓", "nudge 1 px (⇧ ×10)"),
             ("N", "new platform"),
+            ("W", "path stop on the selected platform"),
             ("⌘D  Del", "duplicate, delete"),
             ("click arrow", "flip a spawn's facing"),
         ],
@@ -841,6 +848,7 @@ pub(crate) const STAGE_SHORTCUTS: [(&str, &[(&str, &str)]); 4] = [
             ("Wheel  pinch", "zoom at cursor"),
             ("Right drag", "pan (or drag empty space)"),
             ("F", "frame the stage"),
+            ("T", "play the moving platforms"),
             ("Space", "CPUs on / pause"),
             ("C", "cycle the CPU count"),
         ],

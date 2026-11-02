@@ -295,7 +295,7 @@ fn chrome(ui: &mut egui::Ui, ed: &mut Editor, rect: Rect, stage: &sim::data::Sta
 fn add_pill(ui: &mut egui::Ui, ed: &mut Editor) {
     pill(ui, |ui| {
         ui.label(caps("Add"));
-        if ui.button("Block").on_hover_text("A solid block in the middle of the view  B").clicked() {
+        if ui.button("Block").on_hover_text("A solid block in the middle of the view").clicked() {
             stage_ed::add_block(ed);
         }
         if ui.button("Platform").on_hover_text("A platform in the middle of the view  N").clicked() {
