@@ -81,6 +81,10 @@ freeze / frame step. See [PLAYTESTING.md](docs/PLAYTESTING.md#training).
 - **Rebinding**: title → **Controls**, per device. Pick an action, then press the new key or button (Esc or the
   gamepad's B / Back cancels).
 - "Up to jump" can be turned off per player on character select.
+- **Controllers**: any gamepad Bevy supports. Joy-Cons and the Pro Controller work on macOS too (pair them in
+  System Settings; a Joy-Con pair joined there is one player). GameCube controllers work through Nintendo's adapter
+  or a clone in **Wii U** mode on macOS and Windows: plug in the black cable (the gray one only powers rumble).
+  On GameCube pads, Z grabs and L / R shield.
 
 ### Settings and save files
 

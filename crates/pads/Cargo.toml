@@ -1,0 +1,36 @@
+[package]
+name = "pads"
+description = "Stick Smash native gamepad backends Bevy's gilrs can't read (Switch controllers on macOS, GameCube adapters)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+bevy.workspace = true
+
+[target.'cfg(any(target_os = "macos", target_os = "windows"))'.dependencies]
+hidapi = "2.6"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6.5"
+objc2-game-controller = { version = "0.3.2", default-features = false, features = [
+    "std",
+    "GCController",
+    "GCControllerAxisInput",
+    "GCControllerButtonInput",
+    "GCControllerDirectionPad",
+    "GCControllerElement",
+    "GCDevice",
+    "GCExtendedGamepad",
+    "GCMicroGamepad",
+    "GCPhysicalInputProfile",
+] }
+
+# The workspace forbids unsafe code; the macOS bindings need it, confined to `mac.rs`.
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+too_many_arguments = "allow"
+type_complexity = "allow"

@@ -451,14 +451,14 @@ const MENU_STICK: f32 = 0.55;
 /// Reads every device into [`Devices`]. Runs in `PreUpdate` after Bevy's input systems.
 pub fn poll(
     keys: Res<ButtonInput<KeyCode>>,
-    pads: Query<(Entity, &Gamepad, Option<&Name>)>,
+    pads: Query<(Entity, &Gamepad, Option<&Name>, Has<pads::Native>)>,
     saved: Res<Saved>,
     time: Res<Time>,
     mut devs: ResMut<Devices>,
 ) {
     let devs = &mut *devs;
     let mut live: Vec<Dev> = if saved.split_keyboard { vec![Dev::KeysL, Dev::KeysR] } else { vec![Dev::Keys] };
-    for (n, (e, _, name)) in pads.iter().enumerate() {
+    for (n, (e, _, name, _)) in pads.iter().filter(|(_, pad, _, native)| !pads::shadowed(pad, *native)).enumerate() {
         let label = name.map_or_else(|| format!("Gamepad {}", n + 1), |nm| nm.as_str().to_string());
         if !devs.pad_profiles.contains_key(&Dev::Pad(e)) {
             let index = devs.names.iter().filter(|(dev, name)| matches!(dev, Dev::Pad(_)) && **name == label).count();
@@ -493,7 +493,7 @@ pub fn poll(
                 }
             }
             Dev::Pad(e) => {
-                let Ok((_, pad, _)) = pads.get(e) else {
+                let Ok((_, pad, ..)) = pads.get(e) else {
                     continue;
                 };
                 let b = binds(&saved, &prof);

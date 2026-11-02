@@ -237,7 +237,8 @@ fn draw(
         p.spawn(node(|n| {
             n.flex_direction = FlexDirection::Column;
             n.justify_content = JustifyContent::Center;
-            n.padding = UiRect::left(Val::Px(84.));
+            // The bottom padding keeps centred menus clear of the device strip.
+            n.padding = UiRect::new(Val::Px(84.), Val::Px(0.), Val::Px(16.), Val::Px(60.));
             n.height = Val::Percent(100.);
             n.row_gap = Val::Px(8.);
         }))

@@ -134,7 +134,7 @@ fn main() {
                 ..default()
             }),
     )
-    .add_plugins((EguiPlugin::default(), RenderPlugin, audio::SoundPlugin))
+    .add_plugins((EguiPlugin::default(), RenderPlugin, audio::SoundPlugin, pads::PadsPlugin))
     .init_state::<Screen>()
     .add_plugins((
         ui::UiPlugin,

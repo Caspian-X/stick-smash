@@ -12,6 +12,7 @@ The workspace has four crates:
 | `render` | Read-only drawing of sim worlds: stick figures, attachments, stages, effects, camera and debug overlay; portrait and stage-thumbnail sheets | `crates/render/src/{lib,draw,pose,stage,fx,sheet,portrait,thumb}.rs` |
 | `editor` | Fighter and stage documents, undo/save, real-sim previews and egui editing | `crates/editor/src/{lib,doc,ui}.rs` |
 | `game` | Executable: content roots, devices/settings, screens, match stepping, audio and replays | `crates/game/src/{main,input,settings,play}.rs` |
+| `pads` | Native gamepad backends for controllers gilrs can't read: Switch controllers on macOS (GameController framework) and GameCube adapters (hidapi); the only crate allowed `unsafe` | `crates/pads/src/{lib,mac,gcn}.rs` |
 
 ```text
 assets/ + user content root
