@@ -158,8 +158,17 @@ fn input_resets_round_trip_and_survive_snapshot_seeks() {
             r.clear_inputs();
             clear_world_inputs(&mut w);
         }
-        let input =
-            Input { stick: (if tick % 20 < 10 { 127 } else { -127 }, 0), buttons: if tick % 9 == 0 { 2 } else { 0 } };
+        let input = Input {
+            stick: (if tick % 20 < 10 { 127 } else { -127 }, 0),
+            buttons: if tick % 75 == 0 {
+                3
+            } else if tick % 9 == 0 {
+                2
+            } else {
+                0
+            },
+            attack_stick: if tick % 30 < 12 { (0, 127) } else { (0, 0) },
+        };
         let inputs = vec![input, Input::default()];
         step_world(&mut w, &data, &inputs);
         drain(&mut w);

@@ -88,6 +88,7 @@ fn requests(
                 cpu,
                 team: None,
                 tap_jump: true,
+                controls: Default::default(),
                 tag: tag.into(),
                 color,
             };

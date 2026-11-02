@@ -72,7 +72,17 @@
           "name": "main",
           "frames": 17,
           "hitboxes": [
-            { "x": 34, "y": 44, "r": 19, "damage": 4, "bkb": 4, "kbg": 0.05, "angle": 40, "start": 3, "end": 8 }
+            {
+              "x": 34,
+              "y": 44,
+              "r": 19,
+              "damage": 4,
+              "bkb": 9.5238095238,
+              "kbg": 1.5873015873,
+              "angle": 40,
+              "start": 3,
+              "end": 8
+            }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -123,7 +133,17 @@
           "name": "main",
           "frames": 28,
           "hitboxes": [
-            { "x": 49, "y": 43, "r": 23, "damage": 10, "bkb": 5, "kbg": 0.12, "angle": 40, "start": 8, "end": 13 }
+            {
+              "x": 49,
+              "y": 43,
+              "r": 23,
+              "damage": 10,
+              "bkb": 13.3333333333,
+              "kbg": 1.9047619048,
+              "angle": 40,
+              "start": 8,
+              "end": 13
+            }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -174,7 +194,17 @@
           "name": "main",
           "frames": 27,
           "hitboxes": [
-            { "x": 9, "y": 88, "r": 26, "damage": 8, "bkb": 6, "kbg": 0.1, "angle": 82, "start": 7, "end": 12 }
+            {
+              "x": 9,
+              "y": 88,
+              "r": 26,
+              "damage": 8,
+              "bkb": 22.8571428571,
+              "kbg": 1.9047619048,
+              "angle": 82,
+              "start": 7,
+              "end": 12
+            }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -225,7 +255,17 @@
           "name": "main",
           "frames": 23,
           "hitboxes": [
-            { "x": 40, "y": 14, "r": 22, "damage": 6, "bkb": 5, "kbg": 0.08, "angle": 40, "start": 5, "end": 10 }
+            {
+              "x": 40,
+              "y": 14,
+              "r": 22,
+              "damage": 6,
+              "bkb": 13.3333333333,
+              "kbg": 1.9047619048,
+              "angle": 40,
+              "start": 5,
+              "end": 10
+            }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -276,7 +316,17 @@
           "name": "main",
           "frames": 31,
           "hitboxes": [
-            { "x": 30, "y": 43, "r": 28, "damage": 9, "bkb": 6, "kbg": 0.11, "angle": 40, "start": 8, "end": 13 }
+            {
+              "x": 30,
+              "y": 43,
+              "r": 28,
+              "damage": 9,
+              "bkb": 22.8571428571,
+              "kbg": 1.9047619048,
+              "angle": 40,
+              "start": 8,
+              "end": 13
+            }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -327,7 +377,17 @@
           "name": "main",
           "frames": 49,
           "hitboxes": [
-            { "x": 62, "y": 46, "r": 29, "damage": 18, "bkb": 7, "kbg": 0.16, "angle": 40, "start": 19, "end": 24 }
+            {
+              "x": 62,
+              "y": 46,
+              "r": 29,
+              "damage": 18,
+              "bkb": 39.2380952381,
+              "kbg": 1.5238095238,
+              "angle": 40,
+              "start": 19,
+              "end": 24
+            }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -379,7 +439,17 @@
           "name": "main",
           "frames": 43,
           "hitboxes": [
-            { "x": 0, "y": 91, "r": 32, "damage": 14, "bkb": 7, "kbg": 0.16, "angle": 82, "start": 16, "end": 21 }
+            {
+              "x": 0,
+              "y": 91,
+              "r": 32,
+              "damage": 14,
+              "bkb": 32.380952381,
+              "kbg": 1.9047619048,
+              "angle": 82,
+              "start": 16,
+              "end": 21
+            }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -436,8 +506,8 @@
               "y": 16,
               "r": 28,
               "damage": 13,
-              "bkb": 7,
-              "kbg": 0.16,
+              "bkb": 30.0952380952,
+              "kbg": 2.0317460317,
               "angle": 40,
               "start": 15,
               "end": 20,
@@ -448,8 +518,8 @@
               "y": 16,
               "r": 26,
               "damage": 11,
-              "bkb": 7,
-              "kbg": 0.16,
+              "bkb": 24.4688644689,
+              "kbg": 2.3443223443,
               "angle": 40,
               "start": 19,
               "end": 24,
@@ -512,8 +582,8 @@
               "y": 40,
               "r": 42,
               "damage": 7,
-              "bkb": 4,
-              "kbg": 0.085,
+              "bkb": 5.7142857143,
+              "kbg": 1.7989417989,
               "angle": 40,
               "start": 5,
               "end": 12,
@@ -573,7 +643,17 @@
           "name": "main",
           "frames": 33,
           "hitboxes": [
-            { "x": 48, "y": 44, "r": 26, "damage": 12, "bkb": 5, "kbg": 0.12, "angle": 40, "start": 10, "end": 17 }
+            {
+              "x": 48,
+              "y": 44,
+              "r": 26,
+              "damage": 12,
+              "bkb": 18.231292517,
+              "kbg": 1.6326530612,
+              "angle": 40,
+              "start": 10,
+              "end": 17
+            }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -633,8 +713,8 @@
               "y": 39,
               "r": 26,
               "damage": 11,
-              "bkb": 6,
-              "kbg": 0.13,
+              "bkb": 22.8571428571,
+              "kbg": 1.9047619048,
               "angle": 40,
               "start": 7,
               "end": 14,
@@ -694,7 +774,17 @@
           "name": "main",
           "frames": 27,
           "hitboxes": [
-            { "x": 4, "y": 91, "r": 26, "damage": 8, "bkb": 5, "kbg": 0.1, "angle": 82, "start": 7, "end": 14 }
+            {
+              "x": 4,
+              "y": 91,
+              "r": 26,
+              "damage": 8,
+              "bkb": 13.3333333333,
+              "kbg": 1.9047619048,
+              "angle": 82,
+              "start": 7,
+              "end": 14
+            }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -754,8 +844,8 @@
               "y": 0,
               "r": 25,
               "damage": 10,
-              "bkb": 4,
-              "kbg": 0.1,
+              "bkb": 9.5238095238,
+              "kbg": 1.5873015873,
               "angle": -75,
               "start": 12,
               "end": 19,
@@ -832,7 +922,17 @@
           "name": "main",
           "frames": 56,
           "hitboxes": [
-            { "x": 65, "y": 46, "r": 30, "damage": 16, "bkb": 7, "kbg": 0.145, "angle": 40, "start": 23, "end": 26 }
+            {
+              "x": 65,
+              "y": 46,
+              "r": 30,
+              "damage": 16,
+              "bkb": 39.0476190476,
+              "kbg": 1.5343915344,
+              "angle": 40,
+              "start": 23,
+              "end": 26
+            }
           ],
           "events": [
             { "at": 0, "sfx": "swing" },
@@ -903,7 +1003,17 @@
           "frames": 12,
           "ledgeGrab": 2,
           "hitboxes": [
-            { "x": 0, "y": 48, "r": 25, "damage": 7, "bkb": 6, "kbg": 0.08, "angle": 85, "start": 0, "end": 7 }
+            {
+              "x": 0,
+              "y": 48,
+              "r": 25,
+              "damage": 7,
+              "bkb": 26.6666666667,
+              "kbg": 1.6931216931,
+              "angle": 85,
+              "start": 0,
+              "end": 7
+            }
           ],
           "events": [
             {
@@ -979,7 +1089,17 @@
       "r": 10,
       "life": 60,
       "max": 2,
-      "hit": { "x": 0, "y": 0, "r": 10, "damage": 11, "bkb": 6, "kbg": 0.1, "angle": 65, "start": 0, "end": 0 },
+      "hit": {
+        "x": 0,
+        "y": 0,
+        "r": 10,
+        "damage": 11,
+        "bkb": 30.7692307692,
+        "kbg": 1.4652014652,
+        "angle": 65,
+        "start": 0,
+        "end": 0
+      },
       "spawnSfx": "shoot",
       "shapes": [
         { "shape": "circle", "at": [0, 0], "r": 10, "fill": "#788aa3", "stroke": "#e2e8f0", "width": 1.5 },
@@ -1016,7 +1136,17 @@
       "r": 9,
       "life": 300,
       "max": 1,
-      "hit": { "x": 0, "y": 0, "r": 9, "damage": 9, "bkb": 6, "kbg": 0.095, "angle": 75, "start": 0, "end": 0 },
+      "hit": {
+        "x": 0,
+        "y": 0,
+        "r": 9,
+        "damage": 9,
+        "bkb": 27.5324675325,
+        "kbg": 1.645021645,
+        "angle": 75,
+        "start": 0,
+        "end": 0
+      },
       "spawnSfx": "shoot",
       "shapes": [
         { "shape": "rect", "x": -12, "y": -5, "w": 24, "h": 10, "fill": "#6f7f89" },

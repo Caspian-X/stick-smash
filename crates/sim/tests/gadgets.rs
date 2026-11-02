@@ -141,10 +141,10 @@ fn blasts_push_hits_and_shields_away_with_motion_and_facing_fallbacks() {
 }
 
 #[test]
-fn ward_counters_a_blast_without_reflecting_or_protecting_other_victims() {
+fn counter_catches_a_blast_without_reflecting_or_protecting_other_victims() {
     let d = common::data();
     let mut w = world(&d, "tinker", 2);
-    w.fighters[1].data = d.fighters.iter().position(|f| f.id == "wizard").unwrap();
+    w.fighters[1].data = d.fighters.iter().position(|f| f.id == "swordfighter").unwrap();
     let mut f = w.fighters[1].clone();
     sim::moves::start_move(&mut w, &d, 1, &mut f, "dspec");
     f.mov.as_mut().unwrap().t = 5;

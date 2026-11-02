@@ -62,25 +62,46 @@ freeze / frame step. See [PLAYTESTING.md](docs/PLAYTESTING.md#training).
 
 ### Controls
 
-| | Keyboard | Gamepad |
+| | Keyboard | Controller (Nintendo names) |
 |---|---|---|
-| Move | WASD or arrow keys | Left stick or d-pad |
+| Move | WASD or arrow keys | Left stick |
 | Jump | Space, Right Shift (or up) | X or Y (or up) |
 | Attack | J or . | A |
 | Special | K or / | B |
-| Grab | I or ; | RB |
-| Shield | L or ' | LB, LT, RT |
+| Grab | I or ; | L / R (GameCube: Z) |
+| Shield | L or ' | ZL / ZR (GameCube: L / R) |
 | Pause | Esc | Start |
 
-- **Smash attacks**: tap a direction together with attack; hold attack to charge.
+- **Moving**: tilt the left stick to walk; push farther to run, or flick it for an initial dash. Ease off to walk again. Flick
+  back during a dash to dash the other way. Holding the other way while running turns around with a skid that keeps
+  your speed: jump out of it and attack the way you were running for a back air that carries you forward.
+- **Smash attacks**: flick a direction together with attack, flick the right stick, or press attack + special
+  together (toward the held direction); hold to charge. A held (not flicked) direction + attack is a tilt; attack
+  while dashing or running is a dash attack. Standing tilts, forward/down smashes and shield wait for the initial
+  dash to finish (within the input buffer window); dash attack, up smash, jump, grab and specials can cancel it.
+- **Jumps**: hold jump for a full hop, tap it for a short hop, or press both jump buttons (or jump twice during
+  startup) for a short hop every time. Press down as you start falling to fast fall.
+- **Aerials**: press jump + attack together (or a frame apart) for a short-hop aerial, or press attack during jump startup to queue it for takeoff. The right stick selects an aerial independently of left-stick movement; return it to centre before another attack.
+- **Out of shield**: jump, grab (or attack), up + attack for an up smash, up + special, rolls and spot dodge.
+  Let go of shield just before a hit lands to **parry** it (white flash).
+- **Getting hit**: hold a direction as you're launched to bend the launch (directional influence).
+- **Platforms**: flick down to drop through; a slow press crouches, so down + attack stays a down tilt.
+- **Ledges**: grabbing a ledge someone is hanging on knocks them off. Ledge-grab invulnerability only comes back
+  after you land or get hit.
+- **D-pad**: menu navigation; taunts are not implemented.
 - **Dodges**: shield + left / right rolls, shield + down spot-dodges, shield in the air air-dodges.
 - **Two keyboard players**: Settings → Keyboard → *Two players (split)*. The left player uses WASD, Space, J K I L
   and Esc; the right player the arrows, Right Shift, . / ; ' and Enter, or the numpad (4 jump, 1 attack, 2 special,
   3 grab, 0 shield, Enter pause).
 - **Menus**: attack or Enter confirms, special or Esc goes back. The mouse works on the select screens.
-- **Rebinding**: title → **Controls**, per device. Pick an action, then press the new key or button (Esc or the
-  gamepad's B / Back cancels).
-- "Up to jump" can be turned off per player on character select.
+- **Rebinding**: title → **Controls**, per device. Devices are tabs across the top; LB / RB cycles them.
+  Physical A selects and B goes back on this screen, independent of gameplay bindings.
+  Pick an action, then press the new key or button (Esc or the
+  gamepad's Back / View button cancels). All face buttons can be rebound, including B.
+- "Up to jump" can be turned off per player on character select. **Controls** also has per-device options: right
+  stick smashes or tilts, attack + special smash on / off, and stick sensitivity.
+- **Training**: the panel's **Inputs** list shows your controls and what your fighter actually did (marking
+  buffered actions), to compare what you meant with what happened.
 - **Controllers**: any gamepad Bevy supports. Joy-Cons and the Pro Controller work on macOS too (pair them in
   System Settings; a Joy-Con pair joined there is one player). GameCube controllers work through Nintendo's adapter
   or a clone in **Wii U** mode on macOS and Windows: plug in the black cable (the gray one only powers rumble).
@@ -104,6 +125,7 @@ The Settings screen shows the exact settings and content paths on your machine.
 - [Playtesting](docs/PLAYTESTING.md): running sessions, training tools, replays, balance runs and the tuning loop.
 - [Modding](docs/MODDING.md): your content folder, packages and `extends`, and the fighter and stage editors.
 - [Content format](docs/FORMAT.md): every field of fighters, stages and global tuning.
+- [Character imports](docs/CHARACTER_IMPORTS.md): repeatable source gathering, conversion, authoring and validation, with a reference-record template.
 - [Development](docs/DEVELOPMENT.md): architecture, determinism rules, tests and how to add things.
 - [Design decisions](docs/DESIGN.md): why things are the way they are.
 

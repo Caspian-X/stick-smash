@@ -49,7 +49,7 @@ fn jump_to(d: &GameData, start: &World, target: usize) -> Option<World> {
         } else {
             -127
         };
-        tick(&mut w, d, Input { stick: (stick, 0), buttons: 1 });
+        tick(&mut w, d, Input { stick: (stick, 0), buttons: 1, ..Default::default() });
         let f = &w.fighters[0];
         airborne |= !f.ground;
         if matches!(f.state, State::Dead | State::Respawn | State::Ledge) {
@@ -179,7 +179,9 @@ fn every_ledge_is_recoverable() {
                         // Start before falling can grab the ledge without using up-special.
                         let sp = t > 1 && w.fighters[0].vy >= -2. && !special;
                         special |= sp;
-                        let stick = ((-side * 127.) as i8, if sp { 127 } else { 0 });
+                        let aiming = fighter.moves.uspec.phases.iter().any(|p| p.travel_speed.is_some())
+                            && w.fighters[0].mov.as_ref().is_some_and(|m| m.slot == "uspec" && m.phase == 0);
+                        let stick = ((-side * 127.) as i8, if sp || aiming { 127 } else { 0 });
                         tick(
                             &mut w,
                             &d,
@@ -192,6 +194,7 @@ fn every_ledge_is_recoverable() {
                                 } else {
                                     0
                                 },
+                                ..Default::default()
                             },
                         );
                         let f = &w.fighters[0];

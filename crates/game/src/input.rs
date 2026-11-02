@@ -80,6 +80,10 @@ pub struct DevState {
     pub pressed: [bool; 10],
     /// Analog stick (gamepads), y up, used when no direction button is held.
     pub stick: Vec2,
+    pub attack_stick: (i8, i8),
+    attack_blocked: bool,
+    /// A second jump control held alongside the first (two-button short hop).
+    pub jump2: bool,
     pub latch: Input,
     /// Menu presses this frame (directions repeat while held).
     pub nav: Vec<Nav>,
@@ -99,8 +103,16 @@ impl DevState {
         };
         Input {
             stick: (ax(h[0], h[1], self.stick.x), ax(h[3], h[2], self.stick.y)),
-            buttons: (0..5).filter(|b| h[4 + b]).fold(0, |a, b| a | 1 << b),
+            attack_stick: if self.attack_blocked { (0, 0) } else { self.attack_stick },
+            buttons: (0..5).filter(|b| h[4 + b]).fold(0, |a, b| a | 1 << b)
+                | if self.jump2 && h[4] { sim::input::JUMP2 } else { 0 },
         }
+    }
+    fn sample_jump2(&mut self, held: bool) {
+        if held && !self.jump2 && !self.blocked[4] {
+            self.latch.buttons |= sim::input::JUMP2;
+        }
+        self.jump2 = held;
     }
     fn sample(&mut self, held: [bool; 10]) -> [bool; 10] {
         for (i, h) in held.iter().enumerate() {
@@ -123,6 +135,13 @@ impl DevState {
         }
         self.latch.buttons |= (0..5).filter(|b| pressed[4 + b]).fold(0, |a, b| a | 1 << b);
         pressed
+    }
+    fn sample_attack(&mut self, stick: (i8, i8)) {
+        self.attack_blocked &= stick != (0, 0);
+        if stick != (0, 0) && self.attack_stick == (0, 0) && !self.attack_blocked {
+            self.latch.attack_stick = stick;
+        }
+        self.attack_stick = stick;
     }
     pub fn any_press(&self) -> bool {
         self.pressed[4..].iter().any(|p| *p) || self.nav.iter().any(|n| matches!(n, Nav::Confirm | Nav::Start))
@@ -161,6 +180,7 @@ impl Devices {
         Input {
             stick: (pick(held.stick.0, l.stick.0), pick(held.stick.1, l.stick.1)),
             buttons: held.buttons | l.buttons,
+            attack_stick: if l.attack_stick != (0, 0) { l.attack_stick } else { held.attack_stick },
         }
     }
     /// Discard menu presses and suppress held controls until release.
@@ -169,6 +189,8 @@ impl Devices {
             s.latch = Input::default();
             s.pressed = [false; 10];
             s.blocked = s.held;
+            s.attack_blocked = s.attack_stick != (0, 0);
+            s.jump2 = false;
             s.nav.clear();
             s.raw = None;
             s.rep = None;
@@ -244,15 +266,15 @@ pub fn default_binds(profile: &str) -> [Vec<&'static str>; 10] {
             v
         }),
         _ => [
-            vec!["DPadLeft"],
-            vec!["DPadRight"],
-            vec!["DPadUp"],
-            vec!["DPadDown"],
+            vec![],
+            vec![],
+            vec![],
+            vec![],
             vec!["North", "West"],
             vec!["South"],
             vec!["East"],
-            vec!["RightTrigger"],
-            vec!["LeftTrigger", "LeftTrigger2", "RightTrigger2"],
+            if profile.contains("GameCube") { vec!["RightTrigger"] } else { vec!["LeftTrigger", "RightTrigger"] },
+            vec!["LeftTrigger2", "RightTrigger2"],
             vec!["Start"],
         ],
     }
@@ -453,6 +475,7 @@ pub fn poll(
     keys: Res<ButtonInput<KeyCode>>,
     pads: Query<(Entity, &Gamepad, Option<&Name>, Has<pads::Native>)>,
     saved: Res<Saved>,
+    data: Res<crate::Data>,
     time: Res<Time>,
     mut devs: ResMut<Devices>,
 ) {
@@ -473,6 +496,9 @@ pub fn poll(
     for d in live {
         let mut held = [false; 10];
         let mut stick = Vec2::ZERO;
+        let mut attack_stick = (0, 0);
+        let mut jumps = 0;
+        let mut menu_pad = Vec2::ZERO;
         let mut raw = None;
         let mut extra: Vec<Nav> = vec![];
         let prof = devs.profile(d);
@@ -482,6 +508,7 @@ pub fn poll(
                 for (i, ctl) in b.iter().enumerate() {
                     held[i] = ctl.iter().any(|c| KEYS.iter().any(|(k, n)| n == c && keys.pressed(*k)));
                 }
+                jumps = b[4].iter().filter(|c| KEYS.iter().any(|(k, n)| n == *c && keys.pressed(*k))).count();
                 raw.clone_from(&raw_key);
                 let jp = |ks: &[KeyCode]| ks.iter().any(|k| keys.just_pressed(*k));
                 let enter = jp(&[KeyCode::Enter, KeyCode::NumpadEnter]);
@@ -500,7 +527,14 @@ pub fn poll(
                 for (i, ctl) in b.iter().enumerate() {
                     held[i] = ctl.iter().any(|c| BUTTONS.iter().any(|(k, n)| n == c && pad.pressed(*k)));
                 }
-                stick = pad.left_stick();
+                jumps = b[4].iter().filter(|c| BUTTONS.iter().any(|(k, n)| n == *c && pad.pressed(*k))).count();
+                stick = full_tilt(pad.left_stick(), crate::settings::control_prefs(&saved, &prof).stick_range);
+                menu_pad = pad.dpad();
+                let r = pad.right_stick();
+                let quantize = |v: f32| (v * 127.).round().clamp(-127., 127.) as i8;
+                let (x, y) = (quantize(r.x), quantize(r.y));
+                let threshold = data.0.global.input.stick_threshold as u8;
+                attack_stick = if x.unsigned_abs().max(y.unsigned_abs()) >= threshold { (x, y) } else { (0, 0) };
                 raw = BUTTONS.iter().find(|(k, _)| pad.just_pressed(*k)).map(|(_, n)| n.to_string());
             }
             Dev::Bot(n) => {
@@ -510,9 +544,18 @@ pub fn poll(
         }
         let s = devs.map.entry(d).or_default();
         let pressed = s.sample(held);
+        s.sample_jump2(jumps >= 2);
+        s.sample_attack(attack_stick);
         s.stick = stick;
         s.raw = raw;
-        let now = s.input();
+        let mut now = s.input();
+        // The d-pad always navigates menus; gameplay movement uses the configured bindings.
+        if menu_pad.x != 0. {
+            now.stick.0 = (menu_pad.x * 127.) as i8;
+        }
+        if menu_pad.y != 0. {
+            now.stick.1 = (menu_pad.y * 127.) as i8;
+        }
         s.nav = extra;
         if pressed[4] || pressed[5] {
             s.nav.push(Nav::Confirm);
@@ -552,6 +595,13 @@ pub fn poll(
     }
 }
 
+/// Stick travel `range` (0.5–1) or more counts as a full tilt; direction is kept.
+pub fn full_tilt(v: Vec2, range: f32) -> Vec2 {
+    let r = range.clamp(0.5, 1.);
+    let scaled = v / r;
+    if scaled.length() > 1. { scaled.normalize() } else { scaled }
+}
+
 /// Clear input when screens or ownership change.
 pub fn clear(mut devs: ResMut<Devices>) {
     devs.clear();
@@ -569,6 +619,81 @@ pub fn keyboard_conflict(saved: &Saved, profile: &str, control: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn controller_defaults_match_ultimate_shoulders() {
+        let b = default_binds("gamepad:Joy-Con (L/R)#0");
+        assert_eq!(b[Act::Attack as usize], ["South"]);
+        assert_eq!(b[Act::Special as usize], ["East"]);
+        assert_eq!(b[Act::Jump as usize], ["North", "West"]);
+        assert_eq!(b[Act::Grab as usize], ["LeftTrigger", "RightTrigger"]);
+        assert_eq!(b[Act::Shield as usize], ["LeftTrigger2", "RightTrigger2"]);
+        let b = default_binds("gamepad:GameCube 1#0");
+        assert_eq!(b[Act::Grab as usize], ["RightTrigger"]);
+        assert_eq!(b[Act::Shield as usize], ["LeftTrigger2", "RightTrigger2"]);
+    }
+
+    #[test]
+    fn right_stick_taps_latch_and_clear_blocks_until_neutral() {
+        let mut d = Devices::default();
+        let s = d.map.entry(Dev::Keys).or_default();
+        s.sample_attack((0, 127));
+        s.sample_attack((0, 0));
+        assert_eq!(d.take(Dev::Keys).attack_stick, (0, 127));
+        assert_eq!(d.take(Dev::Keys).attack_stick, (0, 0));
+        d.map.get_mut(&Dev::Keys).unwrap().sample_attack((127, 0));
+        d.clear();
+        assert_eq!(d.take(Dev::Keys).attack_stick, (0, 0));
+        d.map.get_mut(&Dev::Keys).unwrap().sample_attack((0, -127));
+        assert_eq!(d.take(Dev::Keys).attack_stick, (0, 0));
+        let s = d.map.get_mut(&Dev::Keys).unwrap();
+        s.sample_attack((0, 0));
+        s.sample_attack((-127, 0));
+        assert_eq!(d.take(Dev::Keys).attack_stick, (-127, 0));
+    }
+
+    #[test]
+    fn controller_poll_passes_both_sticks_and_keeps_dpad_in_menus() {
+        use bevy::input::{
+            InputPlugin, InputSystems,
+            gamepad::{GamepadAxis, RawGamepadAxisChangedEvent, RawGamepadButtonChangedEvent, RawGamepadEvent},
+        };
+        let mut app = App::new();
+        app.add_plugins((MinimalPlugins, InputPlugin))
+            .insert_resource(crate::Data(crate::test_data()))
+            .init_resource::<Saved>()
+            .init_resource::<Devices>()
+            .add_systems(PreUpdate, poll.after(InputSystems));
+        let e = app.world_mut().spawn((Gamepad::default(), Name::new("Joy-Con (L/R)"), pads::Native)).id();
+        for (axis, value) in [(GamepadAxis::LeftStickX, -1.), (GamepadAxis::RightStickY, 1.)] {
+            app.world_mut().write_message(RawGamepadEvent::Axis(RawGamepadAxisChangedEvent::new(e, axis, value)));
+        }
+        for b in [GamepadButton::LeftTrigger, GamepadButton::DPadRight] {
+            app.world_mut().write_message(RawGamepadEvent::Button(RawGamepadButtonChangedEvent::new(e, b, 1.)));
+        }
+        app.update();
+        let mut devs = app.world_mut().resource_mut::<Devices>();
+        assert!(devs.map[&Dev::Pad(e)].nav.contains(&Nav::Right));
+        let input = devs.take(Dev::Pad(e));
+        assert_eq!(input.stick, (-127, 0));
+        assert_eq!(input.attack_stick, (0, 127));
+        assert_eq!(input.buttons, 8, "L grabs without shielding");
+    }
+
+    #[test]
+    fn two_jump_controls_set_the_second_jump_bit_even_between_ticks() {
+        let mut d = Devices::default();
+        let s = d.map.entry(Dev::Keys).or_default();
+        let mut held = [false; 10];
+        held[4] = true;
+        s.sample(held);
+        s.sample_jump2(true);
+        s.sample_jump2(false);
+        let i = d.take(Dev::Keys);
+        assert_eq!(i.buttons & (sim::input::JUMP | sim::input::JUMP2), sim::input::JUMP | sim::input::JUMP2);
+        assert_eq!(d.take(Dev::Keys).buttons, sim::input::JUMP);
+        assert_eq!(full_tilt(Vec2::new(0.8, 0.), 0.8), Vec2::new(1., 0.));
+        assert_eq!(full_tilt(Vec2::new(0.4, 0.), 0.8), Vec2::new(0.5, 0.));
+    }
     #[test]
     fn clearing_drops_taps_and_blocks_held_buttons_until_release() {
         let mut d = Devices::default();

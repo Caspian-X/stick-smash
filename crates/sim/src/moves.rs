@@ -1,8 +1,9 @@
+use crate::actions::{Action, accept};
 use crate::physics::*;
 use crate::{
     GameData, World,
     data::{self, Color, Move, Num, Phase, Transition, Trigger},
-    input::Intent,
+    input::{Intent, Strike},
     world::{Fighter, MoveState, State},
 };
 use data::moves::{AirControl, Button, Cond};
@@ -133,14 +134,28 @@ pub fn start_move(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, slot: 
     f.set_state(State::Attack);
     f.mov = Some(MoveState {
         slot: slot.into(),
+        started: w.frame,
         phase: 0,
         t: 0,
         elapsed: 0,
         charge: 0,
         counter_damage: 0.,
         reversed: false,
+        stick: false,
     });
     events(w, d, i, f);
+}
+/// A move chosen by a player's press: recorded as accepted, held by the control that started it.
+pub fn start_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, slot: &str, inp: Intent) {
+    accept(w, i, Action::Move(slot.into()));
+    start_move(w, d, i, f, slot);
+    if let (Some(m), Strike::Stick { .. }) = (f.mov.as_mut(), inp.strike) {
+        m.stick = true;
+    }
+}
+/// The attack control holding the current move: the attack stick or the attack button.
+pub fn attack_held(f: &Fighter, inp: &Intent) -> bool {
+    if f.mov.as_ref().is_some_and(|m| m.stick) { inp.stick_held } else { inp.atk_held }
 }
 fn transition(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, tr: &Transition) {
     match tr.to.as_str() {
@@ -182,6 +197,7 @@ fn reverse(f: &mut Fighter, dir: f64) {
 pub fn up_special(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, dir: f64) {
     f.up_b = true;
     reverse(f, dir);
+    accept(w, i, Action::Move("uspec".into()));
     start_move(w, d, i, f, "uspec");
 }
 pub fn special(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, dir: f64) {
@@ -190,62 +206,135 @@ pub fn special(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Inte
         return;
     }
     reverse(f, dir);
-    start_move(
-        w,
-        d,
-        i,
-        f,
-        if inp.down {
-            "dspec"
-        } else if dir != 0. && d.fighters[f.data].moves.sspec.is_some() {
-            "sspec"
-        } else {
-            "nspec"
-        },
-    );
+    let slot = if inp.down {
+        "dspec"
+    } else if dir != 0. && d.fighters[f.data].moves.sspec.is_some() {
+        "sspec"
+    } else {
+        "nspec"
+    };
+    accept(w, i, Action::Move(slot.into()));
+    start_move(w, d, i, f, slot);
+}
+pub fn aerial_slot(f: &Fighter, inp: Intent) -> &'static str {
+    let (ax, ay) = if let Strike::Stick { x, y, .. } = inp.strike { (x, y) } else { (0, 0) };
+    let stick = (ax, ay) != (0, 0);
+    let dir = if stick { f64::from(ax) } else { inp.dir() };
+    if ay > 0 || !stick && inp.up {
+        "uair"
+    } else if ay < 0 || !stick && inp.down {
+        "dair"
+    } else if dir != 0. && dir == -f.face {
+        "bair"
+    } else if dir != 0. {
+        "fair"
+    } else {
+        "nair"
+    }
+}
+pub fn start_jump(w: &mut World, i: usize, f: &mut Fighter, inp: Intent, aerials: bool) {
+    accept(w, i, Action::Jump);
+    let aerial = (aerials && inp.jump_attack).then(|| aerial_slot(f, inp).to_string());
+    f.set_state(State::Jumpsquat);
+    f.sd.jump_aerial = aerial;
+    f.sd.short = aerials && inp.short_hop;
+}
+/// Ground attack for a press. The attack stick and attack + special pick a fixed smash / tilt; the button picks
+/// by the movement stick: a recent flick smashes, a held direction tilts, neutral jabs, and dashing / running
+/// dash attacks (an up flick still up smashes; a forward flick early in a dash still forward smashes).
+fn ground_attack(d: &GameData, f: &mut Fighter, inp: Intent, dir: f64) -> &'static str {
+    let mv = &d.global.movement;
+    let tap = if inp.tap_r {
+        1.
+    } else if inp.tap_l {
+        -1.
+    } else {
+        0.
+    };
+    match inp.strike {
+        Strike::Stick { x, y, smash } => {
+            if x != 0 {
+                f.face = f64::from(x);
+            }
+            match (x != 0, y > 0, smash) {
+                (true, _, true) => "fsmash",
+                (true, _, false) => "ftilt",
+                (_, true, true) => "usmash",
+                (_, true, false) => "utilt",
+                (_, _, true) => "dsmash",
+                _ => "dtilt",
+            }
+        }
+        Strike::Combo => {
+            if inp.up {
+                "usmash"
+            } else if inp.down {
+                "dsmash"
+            } else {
+                if dir != 0. {
+                    f.face = dir;
+                }
+                "fsmash"
+            }
+        }
+        Strike::Button if crate::gait::dashing(d, f) => {
+            if inp.tap_u {
+                "usmash"
+            } else {
+                "dashatk"
+            }
+        }
+        Strike::Button => {
+            if tap != 0. {
+                f.face = tap;
+                "fsmash"
+            } else if inp.tap_u {
+                "usmash"
+            } else if inp.tap_d {
+                "dsmash"
+            } else if inp.up {
+                "utilt"
+            } else if inp.down {
+                "dtilt"
+            } else if !d.global.gait.enabled && dir != 0. && dir == f.face && f.vx.abs() > mv.dash_attack_speed {
+                "dashatk"
+            } else if dir != 0. {
+                f.face = dir;
+                "ftilt"
+            } else {
+                "jab"
+            }
+        }
+    }
 }
 pub fn ground_actions(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, dir: f64) -> bool {
     let mv = &d.global.movement;
     if inp.grab {
-        if dir != 0. {
+        let gait = d.global.gait.enabled;
+        let dash = if gait { crate::gait::dashing(d, f) } else { f.vx.abs() > mv.dash_grab_speed };
+        if dir != 0. && !(gait && dash) {
             f.face = dir;
         }
-        start_move(w, d, i, f, if f.vx.abs() > mv.dash_grab_speed { "dashgrab" } else { "grab" });
-    } else if inp.shield {
+        start_attack(w, d, i, f, if dash { "dashgrab" } else { "grab" }, inp);
+    } else if inp.shield || inp.shield_p {
+        accept(w, i, Action::Shield);
         f.set_state(State::Shield);
     } else if inp.sp {
         special(w, d, i, f, inp, dir);
+    } else if inp.jump_attack && d.global.input.jump_aerials {
+        start_jump(w, i, f, inp, true);
     } else if inp.atk {
-        let tap = if inp.tap_r {
-            1.
-        } else if inp.tap_l {
-            -1.
-        } else {
-            0.
-        };
-        let slot = if tap != 0. {
-            f.face = tap;
-            "fsmash"
-        } else if inp.tap_u {
-            "usmash"
-        } else if inp.tap_d {
-            "dsmash"
-        } else if inp.up {
-            "utilt"
-        } else if inp.down {
-            "dtilt"
-        } else if dir != 0. && dir == f.face && f.vx.abs() > mv.dash_attack_speed {
-            "dashatk"
-        } else if dir != 0. {
-            f.face = dir;
-            "ftilt"
-        } else {
-            "jab"
-        };
-        start_move(w, d, i, f, slot);
+        let slot = ground_attack(d, f, inp, dir);
+        start_attack(w, d, i, f, slot, inp);
     } else if inp.jump {
-        f.set_state(State::Jumpsquat);
-    } else if inp.down_p && f.surf.is_some_and(|n| n >= d.stages[w.stage].blocks.len()) {
+        start_jump(w, i, f, inp, d.global.input.jump_aerials);
+    } else if inp.flick_d && f.surf.is_some_and(|n| n >= d.stages[w.stage].blocks.len()) {
+        // A down flick drops through; a slow press crouches, so down + attack stays a down tilt.
+        accept(w, i, Action::PlatformDrop);
+        if mv.platform_pass {
+            // The drop's down press must not become an airborne fast-fall command.
+            f.history.last_press[3] = -99;
+        }
         f.drop = mv.platform_drop;
         f.ground = false;
         f.surf = None;
@@ -261,7 +350,9 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
     let mv = &d.global.movement;
     let charge = phase(d, f).charge.as_ref().filter(|c| {
         let m = f.mov.as_ref().unwrap();
-        m.t == c.frame && m.charge < c.max && if c.button == Button::Special { inp.sp_held } else { inp.atk_held }
+        m.t == c.frame
+            && m.charge < c.max
+            && if c.button == Button::Special { inp.sp_held } else { attack_held(f, &inp) }
     });
     if let Some(c) = charge {
         let m = f.mov.as_mut().unwrap();
@@ -298,8 +389,11 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
         events(w, d, i, f);
         let p = phase(d, f);
         let t = f.mov.as_ref().unwrap().t;
-        let held =
-            if p.charge.as_ref().is_some_and(|c| c.button == Button::Special) { inp.sp_held } else { inp.atk_held };
+        let held = if p.charge.as_ref().is_some_and(|c| c.button == Button::Special) {
+            inp.sp_held
+        } else {
+            attack_held(f, &inp)
+        };
         let tr = p.transitions.iter().find(|tr| {
             tr.from.is_none_or(|n| t >= n)
                 && cond(f, tr.cond)
@@ -309,7 +403,7 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
                     Trigger::Airborne => !f.ground,
                     Trigger::Falling => f.vy >= 0.,
                     Trigger::Release => !held,
-                    Trigger::AttackHeld => inp.atk_held,
+                    Trigger::AttackHeld => attack_held(f, &inp),
                     Trigger::TargetNear => p.detection.is_some_and(|r| {
                         let (x1, x2) = (f.x + r.x1 * f.face, f.x + r.x2 * f.face);
                         w.fighters.iter().enumerate().any(|(v, other)| {
@@ -342,8 +436,22 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
     movement(w, d, i, f, inp, (def, p, t));
 }
 fn movement(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, (def, p, t): (&Move, &Phase, u32)) {
-    let dir = inp.dir();
     let mv = &d.global.movement;
+    if let Some(speed) = p.travel_speed {
+        if t == 0 {
+            let (x, y) = if inp.x == 0. && inp.y == 0. { (0., 1.) } else { (inp.x, inp.y) };
+            let len = libm::hypot(x, y);
+            f.sd.dx = x / len;
+            f.sd.dy = -y / len;
+        }
+        f.vx = f.sd.dx * speed;
+        f.vy = f.sd.dy * speed;
+        integrate(w, d, i, f, false);
+        if f.state == State::Attack && p.ledge_grab.is_some_and(|n| t >= n) {
+            try_ledge(w, d, i, f, inp, true);
+        }
+        return;
+    }
     if f.ground {
         f.vx *= if t < p.slide { mv.attack_slide_friction } else { mv.attack_friction };
         fall(w, d, i, f, true, None);
@@ -354,9 +462,9 @@ fn movement(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent,
         AirControl::Aerial => mv.aerial_accel,
         AirControl::UpSpecial => mv.up_special_accel,
     } * p.air_accel_mult;
-    air_drift(d, f, dir, acc, mv.attack_air_drag);
-    if def.air == AirControl::Aerial {
-        fast_fall(d, f, inp);
+    air_drift(d, f, inp.x, acc, mv.attack_air_drag);
+    if def.air == AirControl::Aerial && fast_fall(d, f, inp) {
+        accept(w, i, Action::FastFall);
     }
     let s = &d.fighters[f.data].stats;
     let cap = p.fall_cap.unwrap_or(if f.ff { s.fast_fall_speed } else { s.fall_speed });

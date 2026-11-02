@@ -52,10 +52,26 @@ fn mismatch(a: &Value, b: &Value, path: &str) -> Option<String> {
 }
 #[test]
 fn matches_typescript_traces() {
-    let mut d = common::data();
+    let mut d = common::linear_data();
     d.global.input.buffer_frames = 0;
+    d.global.input.jump_aerials = false;
+    d.global.input.fast_fall_buffer = 0;
+    d.global.movement.platform_pass = false;
+    d.global.movement.fast_fall_min_vy = -3.;
+    d.global.gait.enabled = false;
+    d.global.shield.up_smash = false;
+    d.global.parry.window = 0;
+    d.global.di.max_angle = 0.;
+    d.global.ledge.trump = None;
+    d.global.ledge.fresh_invuln = false;
     d.global.sim.separate_cosmetic_rng = false;
     d.global.ai.thresholds.surface_chase_ticks = 0;
+    // Reference traces predate the larger side/bottom zones and lower ceiling.
+    for s in &mut d.stages {
+        if s.id == "arena" {
+            s.blast = sim::data::stage::Bounds { left: -220., right: 1500., top: -380., bottom: 940. };
+        }
+    }
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/ts");
     let mut paths: Vec<_> = fs::read_dir(dir)
         .into_iter()
@@ -87,6 +103,7 @@ fn matches_typescript_traces() {
                 cpu: if p["cpu"] == true { Some(cfg["cpuLevel"].as_u64().unwrap_or(2) as u8) } else { None },
                 team: None,
                 tap_jump: p["tapJump"].as_bool().unwrap_or(false),
+                controls: Default::default(),
             })
             .collect();
         let mut w = World::new(
@@ -139,6 +156,7 @@ fn matches_typescript_traces() {
                 .map(|v| Input {
                     stick: (v[0].as_i64().unwrap() as i8, v[1].as_i64().unwrap() as i8),
                     buttons: v[2].as_u64().unwrap() as u8,
+                    ..Default::default()
                 })
                 .collect();
             step_world(&mut w, &d, &ins);

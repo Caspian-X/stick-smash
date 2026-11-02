@@ -24,6 +24,76 @@ fn tick(w: &mut World, d: &GameData, input: Intent) {
 }
 
 #[test]
+fn imported_knockback_uses_damage_percent_and_reference_weight_formula() {
+    let d = common::data();
+    // Independent fixtures from the no-staleness/no-rage Ultimate equation, converted at .03 × 3.5.
+    let b = sim::data::Hitbox { damage: 19., bkb: 40., kbg: 0.85, ..Default::default() };
+    for (after, expected) in [(19., 8.2992525), (69., 14.8591275), (119., 21.4190025), (169., 27.9788775)] {
+        assert!((combat::knockback(&d, &b, after, 1.) - expected).abs() < 1e-9);
+    }
+    let light = combat::knockback(&d, &b, 119., 100. / 80.);
+    let heavy = combat::knockback(&d, &b, 119., 100. / 120.);
+    assert!(light > heavy);
+    let mut weaker = b.clone();
+    weaker.damage = 5.;
+    assert!(combat::knockback(&d, &weaker, 119., 1.) < combat::knockback(&d, &b, 119., 1.));
+    let f = d.fighter("mike").unwrap();
+    assert_eq!((f.moves.fsmash.phases[0].hitboxes[0].bkb, f.moves.fsmash.phases[0].hitboxes[0].kbg), (40., 0.9));
+    let mut w = common::fighters(&d, "mike", &["brawler"]);
+    w.fighters[1].dmg = 100.;
+    combat::apply_hit(
+        &mut w,
+        &d,
+        1,
+        &b,
+        combat::HitSource { attacker: 0, direction: 1., point: (0., 0.), projectile: false, label: None },
+    );
+    assert_eq!(w.fighters[1].dmg, 119.);
+    assert!((w.fighters[1].vx - 21.4190025).abs() < 1e-9);
+}
+
+#[test]
+fn quickdraw_charge_falls_and_horizontal_rush_hovers() {
+    let (d, mut w) = setup("sspec");
+    let f = &mut w.fighters[0];
+    (f.x, f.y, f.ground, f.surf, f.vy) = (100., -1000., false, None, 0.);
+    let gravity = d.fighters[f.data].stats.gravity;
+    let terminal = d.fighters[f.data].stats.fall_speed;
+    for n in 1..=40 {
+        let y = w.fighters[0].y;
+        tick(&mut w, &d, Intent { sp_held: true, ..Default::default() });
+        assert!((w.fighters[0].vy - (gravity * f64::from(n)).min(terminal)).abs() < 1e-9);
+        assert!(w.fighters[0].y > y);
+    }
+    assert_eq!(w.fighters[0].mov.as_ref().unwrap().charge, 25);
+    let mut restored = w.clone();
+    for _ in 0..4 {
+        tick(&mut w, &d, Intent { sp_held: true, ..Default::default() });
+        tick(&mut restored, &d, Intent { sp_held: true, ..Default::default() });
+    }
+    assert_eq!(format!("{w:?}"), format!("{restored:?}"));
+    tick(&mut w, &d, Intent::default());
+    assert_eq!(moves::phase(&d, &w.fighters[0]).name, "rush");
+    assert_eq!(w.fighters[0].vy, 0.);
+}
+
+#[test]
+fn smash_charge_scales_damage_without_double_counting_base_knockback() {
+    let (d, mut w) = setup("fsmash");
+    let m = w.fighters[0].mov.as_mut().unwrap();
+    m.t = 31;
+    let normal = combat::active_boxes(&d, &w.fighters[0])[0].hit.clone();
+    w.fighters[0].mov.as_mut().unwrap().charge = 60;
+    let charged = combat::active_boxes(&d, &w.fighters[0])[0].hit.clone();
+    assert!((charged.damage - normal.damage * 1.4).abs() < 1e-9);
+    assert_eq!(charged.bkb, normal.bkb);
+    assert!(
+        combat::knockback(&d, &charged, 100. + charged.damage, 1.)
+            > combat::knockback(&d, &normal, 100. + normal.damage, 1.)
+    );
+}
+
+#[test]
 fn normal_attack_windows_and_damage_follow_the_reference() {
     // Absolute move frames, including initial aerial autocancel phases and both down-smash swings.
     for (slot, total, windows) in [

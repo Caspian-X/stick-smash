@@ -36,6 +36,33 @@ fits in 120 columns and contains no objects stays on one line (a hitbox, a keyfr
   (positive `rot` pitches the body forward).
 - Event velocities (`setVel`, `addVel`) are fighter-local too: `{"y": 17.5}` launches upward.
 
+## Knockback models
+
+Every fighter, throw, projectile and shared attack uses `global.knockback.ultimate`:
+`((postHitPercent × (percentScale + hitDamage × damageScale) × weightScale × 2w/(1+w) + base) × kbg + bkb) × launchSpeed`.
+`bkb` is in source reference units; `kbg` is source growth divided by 100 (90 → 0.9).
+`w` is the existing reciprocal weight multiplier (100 / source weight). The built-in coefficients reproduce
+the no-staleness/no-rage Ultimate equation and convert launch speed to this world's pixels. Charge changes
+hitDamage without separately inflating bkb. There is no per-character or per-hitbox formula selector.
+Fixed-knockback (`setKb`) hits ignore damage/percent: `bkb × launchSpeed × w`; their BKB uses the same
+reference units. This is a fixed-launch adaptation, not the full source WBKB equation. Windboxes remain
+pixel-space forces and bypass launch calculation; grabs do not launch. Autolinks use their separate pull
+velocity, with the shared formula supplying hitstun strength.
+
+Original roster estimates preserve uncharged launch speed against a middleweight. Given old base B,
+old growth G, old percent coefficient P and launch conversion L, new growth is
+`G × P / (L × (percentScale + damage × damageScale) × weightScale)`, and new BKB is
+`B/L - base × newGrowth`. Fixed BKB becomes `B/L`. Dynamic counters are fitted at their minimum damage;
+their launch now also grows with the damage countered. Mike's imported ordinary-hit values are retained.
+The pre-migration baseline in `crates/sim/tests/fixtures/knockback-linear.json` stores
+`[authoredDamage, oldBKB, oldKBG, fittingDamage]` by source file and JSON pointer. Regression tests compare
+actual launches at multiple percentages; TS traces restore these values and omit `ultimate` to exercise
+the original linear compatibility formula. This compatibility path is not a fighter option.
+
+Hitstun, launch decay, stage dimensions and DI remain shared game rules, so matching launch magnitude
+alone does not promise matching SSBU KO percentages. Weight interactions and charge strength deliberately
+follow the new shared equation and still need human playtesting.
+
 ## Moves
 
 Moves sit in fixed slots (`jab` … `dspec`, optional `sspec`). A move is a list of **phases**, starting with the
@@ -99,7 +126,7 @@ button, else attack, not held), `attackHeld` (attack held), `targetNear`, `shiel
 friendly fire and invulnerability use normal combat rules. It does not hit or push the opponent.
 
 A move may override the global charge damage bonus with `chargeDamage`: damage × (1 + held ticks × value).
-The global charge knockback ratio still applies. Events may set `chargeVelocity` to scale their `setVel`
+Charge knockback derives from charged damage; `chargeKbRatio` applies only in legacy TS compatibility mode. Events may set `chargeVelocity` to scale their `setVel`
 and `addVel` by (1 + held ticks × value); `mulVel` is unchanged. Events and move hitboxes may set
 `minCharge` to require that many held ticks (default 0). Charge persists across phases.
 These fields default to existing behavior; projectile damage still uses its own `chargeScale`.
@@ -160,13 +187,19 @@ this age; fuse expiry still detonates even before arming.
   cycle degrees), or `spin` (tumble spin degrees, signed), and may `loop`. Exceptions: `air.flip` counts frames
   since the flip started, `pummel` frames since the pummel started. `idle` above `render.overlays.runSpeed`
   shows `run`.
-- **State animation names**: `idle`, `run`, `jumpsquat`, `landing`, `air.rise`, `air.fall`, `air.flip`, `helpless`,
+- **State animation names**: `idle`, `crouch`, `run`, `jumpsquat`, `landing`, `air.rise`, `air.fall`, `air.flip`, `helpless`,
   `shield`, `shieldDrop`, `roll`, `spot`, `airdodge`, `hold`, `pummel`, `throw.f`, `throw.b`, `throw.u`,
   `throw.d`, `grabbed`, `hitstun`, `tumble`, `shieldbreak`, `knockdown`, `getup`, `getupAttack`, `tech`, `ledge`,
   `climb`, `ledgeAttack`, `ledgeRoll`, `ledgeJump`, `dizzy`, `win`, `respawn`.
+  Holding down without horizontal movement while grounded selects `crouch` through the ground gait. Its
+  animation blends with `idle` over `global.gait.crouchFrames` on entry and release; reversing the input
+  reverses the blend from its current depth. The base fighter supplies a breathing loop inherited by the roster.
+  Override `anims.crouch` and `poses.crouch` to customize it. Attacks, jumps and platform drops interrupt it normally.
 - **Attachments**: vector `shapes` (line, circle, poly, rect) hung on a joint at an angle. On a hand the angle is
   relative to the forearm. A phase's `attach.<id>` can key `angle`, `offset` and `scale`, and `show` a hidden
-  attachment. While a phase keys the angle, the angle is absolute, `hold` poses the front arm to grip it, and a
+  attachment. Angle keys interpolate linearly without wrapping: use 350 → 430 to continue forward through 360°
+  to 70°; 350 → 70 rotates backward by 280°. Keep subsequent keys on the same turn for continuous trails and
+  recovery. While a phase keys the angle, the angle is absolute, `hold` poses the front arm to grip it, and a
   `trail` sweeps a ring sector around the shoulder over the last `render.overlays.trail.frames` ticks of each
   hitbox window. `glow` swaps shapes marked `when: "glow"` / `"noGlow"`. `sway` swings the angle ±`deg` over
   `period` world ticks. Shapes: `line`, `circle`, `poly` (any simple polygon), `rect`, `star` (four-pointed,
@@ -187,10 +220,31 @@ drag/shrink, ring width, dust and KO-beam looks). Cosmetic only: the sim never r
 
 ## Simulation tuning and CPU data
 
-`global.input.stickThreshold` is the inclusive digital stick threshold (1..127, currently 64).
+`global.input.stickThreshold` is the inclusive digital stick threshold (1..127, currently 64): tilts, aerial and
+throw directions, rolls. `deadzone` (18) zeroes analog movement (walk speed, air drift, DI) below it.
+`flickThreshold` (100) and `flickFrames` (3): reaching the flick threshold within that many ticks of leaving the
+deadzone is a flick (dash, smash, platform drop; it stays a "tap" for `movement.tapWindow`). `comboFrames` (2)
+combines buffered presses that far apart. `fastFallBuffer` (6) lets a down press that early still fast fall once
+descending (`fastFallMinVy: 0` requires actual descent). With `movement.platformPass`, a platform
+drop consumes its down gesture, so a fresh down press is needed to fast fall afterward. Holding down
+during ordinary fall or helpless fall passes through platforms without a new press; attacks, airdodges,
+hitstun and tumble still collide with them. Solid blocks always collide. `global.gait` (walk / dash / run / turnaround / brake fractions and frames; per-fighter
+`stats.walkSpeed` overrides the walk fraction), `global.parry`, `global.di`, `global.shield.upSmash`,
+`global.ledge.trump` and `global.ledge.freshInvuln` tune the Smash-style feel features; DESIGN.md describes each.
+`global.gait.runThreshold` is the deadzoned horizontal tilt that promotes a walk to a run (0..1;
+0 retains flick-only running and ignores `walkThreshold`). `walkThreshold` is the lower return-to-walk
+threshold, no greater than a nonzero `runThreshold`. Between them the current gait is retained to avoid jitter. `dashLock` restricts standing
+attacks and shield during initial dash: tilts and forward/down smashes queue within `bufferFrames`, while
+jump, dash attack, up smash, grab and specials can cancel. Opposite flicks still dash back. Crouching can
+cancel a run after initial dash. The settings affect all fighters; they are not per-character speed fixes.
 `global.input.bufferFrames` is the human press buffer lifetime in ticks (u32, currently 5); age equal to
 the lifetime is still live, and 0 disables buffering for TS fidelity. Press-time directions and taps are
 replayed once at the next buffer-actionable update, while held buttons use current input (see DESIGN.md).
+`global.input.jumpAerials` (default true) enables the jump-button + attack short-hop aerial shortcut.
+The combination stays one buffered action during recovery. An attack pressed during jumpsquat is saved
+until takeoff and also forces a short hop, retaining its press-time aerial direction (including the right
+stick). Tap-up + attack still selects up smash. Empty jumps still use the jump hold at takeoff. Set false
+alongside `bufferFrames: 0` for the original TS jump/attack routing.
 `global.sim` holds the reference simulation's shared state friction, collision padding/tolerance, push height,
 tech landing speed, knockdown drag, flip duration, ledge offsets/speeds/cooldown, grab hold/release offsets and
 speeds, throw motion dimensions, platform-drop offset, maximum percent, and projectile collision padding.
@@ -365,6 +419,17 @@ Internally, surface ids are block indices followed by platform indices offset by
 
 ### Stage follow-camera zoom
 
+`blast` sets the KO boundaries independently of the visible `camera` bounds. To keep fighters offscreen
+before a KO, place the camera bounds inside the blast rectangle with enough clearance for their bodies
+(the built-in stages use 80 pixels on each side). Increasing blast distances alone does not ensure offscreen
+KOs: the follow camera can chase a fighter to the boundary if its own bounds extend beyond it. Stage coordinates
+increase downward, so a larger `blast.bottom` gives more room to fall and a larger `blast.top` lowers the ceiling.
+
+When a blast boundary is visible during gameplay, `global.render.blastZone` draws a dashed danger line there,
+independently of debug overlays. Its `color`, `alpha`, `width`, `dash` and `gap` tune the indicator; sizes are
+screen pixels and stay constant while zooming. Omit it or set `alpha` to zero to hide it. The editor keeps its
+own bounds overlay.
+
 The presentation-only `zoom` object optionally overrides either visible-height limit:
 `"zoom": { "minHeight": 480, "maxHeight": 1600 }`. Omitted bounds are automatic; an empty `zoom` object is invalid. Both values must be
 positive and `minHeight ≤ maxHeight`; stage `camera` bounds always cap the final view. This is an optional
@@ -374,7 +439,37 @@ The automatic play area unions block rectangles (including undersides) and platf
 At the current aspect ratio, its padded fit height is compared with the padded reference dimensions in
 `global.render.camera.referencePlayWidth/Height`. The automatic maximum is `maxHeight` times that ratio
 (with a minimum multiplier of 1), enlarged if necessary to accommodate the follow camera's stage bias.
-Arena retains the global range at landscape aspects; portrait framing may widen to fit its padded play area. The automatic minimum is `minHeight` times
+Arena retains the global range at 16:9; camera bounds cap ultrawide framing, and portrait framing may widen to fit its padded play area. The automatic minimum is `minHeight` times
 `clamp(max(width/referencePlayWidth, height/referencePlayHeight) / minScaleStart, minScaleFloor, 1)`.
 Thus only clearly smaller stages zoom in tighter. The editor displays both automatic and effective ranges
 at 16:9 and draws the effective maximum view with stage bias and camera-bound clamping when bounds are visible.
+
+## Controlled articles and directional travel
+
+`Projectile.article` adds a construction/travel phase followed by an independent release timeline. Its
+`slot` identifies the controlling move, `minRelease` bounds manual release and `autoRelease` ends standby.
+`releaseOnUp` uses release of special (guided shots); otherwise a fresh special press releases (summons).
+`steer` selects vertical travel speed from live stick Y before release. The last `stages[].from` reached is
+selected and frozen on release. The birth tick is age 0; later projectile steps advance age by one.
+The controlling fighter's `articleRelease` transition starts its own release animation. A summon may remain
+in standby after its caster becomes actionable. Losing control of a guided shot releases that shot without
+accepting an action or consuming the interrupted fighter's buffered command.
+
+Each stage supplies `startup`, `frames`, `vel`, frame-windowed `hitboxes`, `shapes` and optional
+`attackShapes`; optional `stroke` connects active tracked damaging centers so a summoned blade follows its
+collision sweep. Velocity applies throughout the released stage; geometry uses the projectile's local forward/up coordinates,
+mirrored by its captured facing. `autoStartup` optionally shortens automatic standby release: attack windows
+and ending shift earlier by the same amount. Overlapping hitboxes share contact history; first-listed damage
+wins, `rehit` controls repeats, and windboxes retain separate non-damaging force semantics. Reflectors/counters
+can change article ownership. Optional `hurtbox` plus stage `health` makes an article destructible; health 0
+means indestructible. Melee, direct projectiles and explosions damage that body separately from the caster.
+Owner stock loss removes an article. These timelines cannot combine with legacy `explosion`, `bounce`, `bat`
+or `chargeScale`; ordinary projectiles keep their existing behavior.
+
+`Phase.reflector` is an inclusive frame window with radius/height, projectile speed and damage multipliers.
+It operates during invulnerability and preserves the phase, unlike a counter stance. `Phase.travelSpeed`
+captures a normalized movement-stick direction once on phase entry (neutral means up), then travels at that
+speed without gravity or drift until the phase changes. Normal stage collision still applies; `ledgeGrab`
+controls whether travel can catch a ledge. `hidden` affects only rendering; author invulnerability separately.
+Optional `stats.dashSpeed` / `dashFrames` override the shared initial dash, independently of run speed.
+`Throw.ticks` are damage-only contacts with the held victim before the release hit, each with `at` and `damage`.

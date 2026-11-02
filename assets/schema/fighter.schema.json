@@ -54,6 +54,13 @@
         },
         "runSpeed": { "type": "number", "format": "double" },
         "runAccel": { "type": "number", "format": "double" },
+        "dashSpeed": { "type": ["number", "null"], "format": "double" },
+        "dashFrames": { "type": ["integer", "null"], "format": "uint32", "minimum": 0 },
+        "walkSpeed": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Full-tilt walk speed; defaults to runSpeed × gait.walkSpeed."
+        },
         "groundFriction": { "type": "number", "format": "double" },
         "jumpSpeed": { "type": "number", "format": "double", "description": "Full hop launch speed (upward)." },
         "shortHopSpeed": { "type": "number", "format": "double" },
@@ -301,6 +308,22 @@
           ],
           "description": "Counter stance: hits received during the window are countered."
         },
+        "reflector": {
+          "anyOf": [
+            { "$ref": "#/$defs/Reflector" },
+            { "type": "null" }
+          ],
+          "description": "Reflect projectiles throughout this window without interrupting the move."
+        },
+        "travelSpeed": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Constant-speed directional travel, aimed once on phase entry; neutral aims upward."
+        },
+        "hidden": {
+          "type": "boolean",
+          "description": "Hide the figure during teleport travel; collision and invulnerability remain separate."
+        },
         "armorThreshold": {
           "type": ["number", "null"],
           "format": "double",
@@ -369,11 +392,15 @@
         "y": { "type": "number", "format": "double", "description": "Offset up from the feet." },
         "r": { "type": "number", "format": "double", "description": "Radius." },
         "damage": { "type": "number", "format": "double", "description": "Percent dealt." },
-        "bkb": { "type": "number", "format": "double", "description": "Base knockback." },
+        "bkb": {
+          "type": "number",
+          "format": "double",
+          "description": "Base knockback in reference units (converted by global.knockback.ultimate.launchSpeed).\nWindboxes use this as pixel-space force instead."
+        },
         "kbg": {
           "type": "number",
           "format": "double",
-          "description": "Knockback growth: knockback added per victim percent."
+          "description": "Knockback growth as a fraction (100% reference growth = 1)."
         },
         "angle": {
           "type": "number",
@@ -388,7 +415,7 @@
         },
         "setKb": {
           "type": "boolean",
-          "description": "Fixed knockback: ignores the victim's percent (knockback = bkb × weight)."
+          "description": "Fixed knockback: ignores damage/percent (launch speed = bkb × launchSpeed × victim weight multiplier)."
         },
         "rehit": {
           "type": ["integer", "null"],
@@ -724,6 +751,11 @@
           "description": "A hittable opponent overlaps the phase's fighter-local `detection` rectangle."
         },
         { "type": "string", "const": "shieldPress", "description": "Shield was pressed this tick." },
+        {
+          "type": "string",
+          "const": "articleRelease",
+          "description": "An owned controlled projectile was manually released."
+        },
         { "type": "string", "const": "counter", "description": "A hit was countered in the phase's `counter` window." },
         { "type": "string", "const": "hit", "description": "A hitbox of this phase connected (hit or shield)." }
       ]
@@ -782,6 +814,19 @@
       },
       "required": ["from", "to", "damageMult", "minDamage", "attackerFreeze", "invuln", "reflectSpeed", "reflectLife"],
       "description": "Counter window. A hit received in it fires the phase's `counter` transition: the attacker freezes, and\nprojectiles are reflected."
+    },
+    "Reflector": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "to": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "speed": { "type": "number", "format": "double" },
+        "damage": { "type": "number", "format": "double" },
+        "radius": { "type": "number", "format": "double" },
+        "height": { "type": "number", "format": "double" }
+      },
+      "required": ["from", "to", "speed", "damage", "radius", "height"]
     },
     "AnimKey": {
       "type": "object",
@@ -907,7 +952,7 @@
             "minItems": 2,
             "maxItems": 2
           },
-          "description": "`[frame, degrees]`."
+          "description": "`[frame, degrees]`, interpolated without wrapping. Use 350 → 430 to rotate forward through 360° to 70°;\n350 → 70 rotates backward by 280°. Keep subsequent keys on the same turn for continuous trails."
         },
         "offset": {
           "type": "array",
@@ -962,9 +1007,23 @@
           "description": "Frame the victim is released and hit."
         },
         "total": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "hit": { "$ref": "#/$defs/Hitbox", "description": "Geometry and window fields are ignored." }
+        "hit": { "$ref": "#/$defs/Hitbox", "description": "Geometry and window fields are ignored." },
+        "ticks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ThrowTick" },
+          "description": "Damage-only hits applied to the held victim before release."
+        }
       },
       "required": ["release", "total", "hit"]
+    },
+    "ThrowTick": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "at": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "damage": { "type": "number", "format": "double" }
+      },
+      "required": ["at", "damage"]
     },
     "Projectile": {
       "type": "object",
@@ -1038,6 +1097,13 @@
             { "type": "null" }
           ],
           "description": "Suppress contact hits until armed, then explode on proximity or lifetime expiry."
+        },
+        "article": {
+          "anyOf": [
+            { "$ref": "#/$defs/Article" },
+            { "type": "null" }
+          ],
+          "description": "Independently controlled construction / travel followed by a staged attack timeline."
         },
         "shapes": {
           "type": "array",
@@ -1137,6 +1203,86 @@
         }
       },
       "required": ["armTicks", "radius"]
+    },
+    "Article": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slot": { "type": "string" },
+        "minRelease": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "autoRelease": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "releaseOnUp": {
+          "type": "boolean",
+          "description": "Release the special button to launch; otherwise a second special press launches.",
+          "default": false
+        },
+        "steer": {
+          "type": "number",
+          "format": "double",
+          "description": "Vertical speed selected by the live stick during travel, zero for stationary construction.",
+          "default": 0.0
+        },
+        "hurtbox": {
+          "anyOf": [
+            { "$ref": "#/$defs/Rect" },
+            { "type": "null" }
+          ],
+          "description": "Optional destructible body, relative to the projectile origin."
+        },
+        "stages": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ArticleStage" }
+        }
+      },
+      "required": ["slot", "minRelease", "autoRelease", "stages"]
+    },
+    "ArticleStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Select the last stage whose construction age has been reached, frozen at release."
+        },
+        "startup": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "autoStartup": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Optional shorter windup for automatic release from standby. Hit windows shift by the same amount."
+        },
+        "frames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "vel": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "health": { "type": "number", "format": "double", "description": "Zero means indestructible.", "default": 0.0 },
+        "hitboxes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Hitbox" }
+        },
+        "shapes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Shape" },
+          "default": []
+        },
+        "attackShapes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Shape" }
+        },
+        "stroke": {
+          "anyOf": [
+            { "$ref": "#/$defs/ArticleStroke" },
+            { "type": "null" }
+          ],
+          "description": "Connect active tracked damaging hitbox centers, following their per-frame tracks (e.g. a summoned blade)."
+        }
+      },
+      "required": ["from", "startup", "frames", "vel", "hitboxes"]
     },
     "Shape": {
       "oneOf": [
@@ -1279,6 +1425,15 @@
       "description": "Vector shape. Coordinates are in the owner's local space."
     },
     "ShapeWhen": { "type": "string", "enum": ["always", "glow", "noGlow"] },
+    "ArticleStroke": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "width": { "type": "number", "format": "double" },
+        "color": { "$ref": "#/$defs/Color" }
+      },
+      "required": ["width", "color"]
+    },
     "FighterFx": {
       "type": "object",
       "additionalProperties": false,
@@ -1456,6 +1611,13 @@
         },
         "runSpeed": { "type": "number", "format": "double" },
         "runAccel": { "type": "number", "format": "double" },
+        "dashSpeed": { "type": ["number", "null"], "format": "double" },
+        "dashFrames": { "type": ["integer", "null"], "format": "uint32", "minimum": 0 },
+        "walkSpeed": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Full-tilt walk speed; defaults to runSpeed × gait.walkSpeed."
+        },
         "groundFriction": { "type": "number", "format": "double" },
         "jumpSpeed": { "type": "number", "format": "double", "description": "Full hop launch speed (upward)." },
         "shortHopSpeed": { "type": "number", "format": "double" },
@@ -1602,7 +1764,12 @@
           "description": "Frame the victim is released and hit."
         },
         "total": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "hit": { "$ref": "#/$defs/HitboxPartial", "description": "Geometry and window fields are ignored." }
+        "hit": { "$ref": "#/$defs/HitboxPartial", "description": "Geometry and window fields are ignored." },
+        "ticks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ThrowTick" },
+          "description": "Damage-only hits applied to the held victim before release."
+        }
       }
     },
     "HitboxPartial": {
@@ -1624,11 +1791,15 @@
         "y": { "type": "number", "format": "double", "description": "Offset up from the feet." },
         "r": { "type": "number", "format": "double", "description": "Radius." },
         "damage": { "type": "number", "format": "double", "description": "Percent dealt." },
-        "bkb": { "type": "number", "format": "double", "description": "Base knockback." },
+        "bkb": {
+          "type": "number",
+          "format": "double",
+          "description": "Base knockback in reference units (converted by global.knockback.ultimate.launchSpeed).\nWindboxes use this as pixel-space force instead."
+        },
         "kbg": {
           "type": "number",
           "format": "double",
-          "description": "Knockback growth: knockback added per victim percent."
+          "description": "Knockback growth as a fraction (100% reference growth = 1)."
         },
         "angle": {
           "type": "number",
@@ -1643,7 +1814,7 @@
         },
         "setKb": {
           "type": "boolean",
-          "description": "Fixed knockback: ignores the victim's percent (knockback = bkb × weight)."
+          "description": "Fixed knockback: ignores damage/percent (launch speed = bkb × launchSpeed × victim weight multiplier)."
         },
         "rehit": {
           "type": ["integer", "null"],
@@ -1810,6 +1981,13 @@
           ],
           "description": "Suppress contact hits until armed, then explode on proximity or lifetime expiry."
         },
+        "article": {
+          "anyOf": [
+            { "$ref": "#/$defs/ArticlePartial" },
+            { "type": "null" }
+          ],
+          "description": "Independently controlled construction / travel followed by a staged attack timeline."
+        },
         "shapes": {
           "type": "array",
           "items": { "$ref": "#/$defs/Shape" },
@@ -1901,6 +2079,37 @@
         "fx": {
           "type": "array",
           "items": { "$ref": "#/$defs/Fx" }
+        }
+      }
+    },
+    "ArticlePartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slot": { "type": "string" },
+        "minRelease": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "autoRelease": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "releaseOnUp": {
+          "type": "boolean",
+          "description": "Release the special button to launch; otherwise a second special press launches.",
+          "default": false
+        },
+        "steer": {
+          "type": "number",
+          "format": "double",
+          "description": "Vertical speed selected by the live stick during travel, zero for stationary construction.",
+          "default": 0.0
+        },
+        "hurtbox": {
+          "anyOf": [
+            { "$ref": "#/$defs/RectPartial" },
+            { "type": "null" }
+          ],
+          "description": "Optional destructible body, relative to the projectile origin."
+        },
+        "stages": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ArticleStage" }
         }
       }
     },

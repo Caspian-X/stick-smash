@@ -269,6 +269,7 @@ fn roulette_clock(
     data: Res<Data>,
     mut next: ResMut<NextState<Screen>>,
     mut scene: ResMut<render::Scene>,
+    devs: Res<crate::input::Devices>,
 ) {
     let Some(t) = clock.0 else { return };
     let r = &data.0.global.render.select.roulette;
@@ -288,7 +289,7 @@ fn roulette_clock(
         && let Some(w) = vote.winner()
     {
         sel.stage = w;
-        sel.start(&data.0, &mut saved, &mut commands, &mut scene, &mut next);
+        sel.start(&data.0, &mut saved, &mut commands, &mut scene, &mut next, &devs);
         clock.0 = None;
     }
 }

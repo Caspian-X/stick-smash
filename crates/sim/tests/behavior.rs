@@ -5,7 +5,7 @@ fn world(d: &GameData, id: &str) -> World {
     common::fighters(d, id, &[id])
 }
 fn press(w: &mut World, d: &GameData, stick: (i8, i8), buttons: u8) {
-    run(w, d, 1, &[Input { stick, buttons }]);
+    run(w, d, 1, &[Input { stick, buttons, ..Default::default() }]);
 }
 #[test]
 fn jab_hits_dummy_and_records_advantage() {
@@ -49,7 +49,7 @@ fn charge_scales_active_damage() {
     w.fighters[1].x = 2000.;
     press(&mut w, &d, (127, 0), 2);
     assert_eq!(w.fighters[0].mov.as_ref().unwrap().slot, "fsmash");
-    run(&mut w, &d, 40, &[Input { stick: (0, 0), buttons: 2 }]);
+    run(&mut w, &d, 40, &[Input { stick: (0, 0), buttons: 2, ..Default::default() }]);
     assert!(w.fighters[0].mov.as_ref().unwrap().charge > 25);
     let mut max: f64 = 0.;
     for _ in 0..20 {
@@ -337,7 +337,7 @@ fn human_history_consumes_frozen_presses() {
     let d = common::data();
     let mut w = world(&d, "brawler");
     w.count = 3;
-    run(&mut w, &d, 3, &[Input { stick: (0, 0), buttons: 2 }]);
+    run(&mut w, &d, 3, &[Input { stick: (0, 0), buttons: 2, ..Default::default() }]);
     assert_eq!(w.count, 0);
     assert_eq!(w.fighters[0].state, State::Idle);
     run(&mut w, &d, 1, &[]);
@@ -635,4 +635,55 @@ fn narrow_stage_ai_target_padding_is_safe() {
     }
     run(&mut w, &d, 300, &[]);
     assert!(w.fighters.iter().all(|f| f.x.is_finite() && f.y.is_finite()));
+}
+
+#[test]
+fn right_stick_selects_smashes_and_aerials_without_steering() {
+    let d = common::data();
+    for (stick, ground, slot) in [
+        ((127, 0), true, "fsmash"),
+        ((-127, 0), true, "fsmash"),
+        ((0, 127), true, "usmash"),
+        ((0, -127), true, "dsmash"),
+        ((127, 0), false, "fair"),
+        ((-127, 0), false, "bair"),
+        ((0, 127), false, "uair"),
+        ((0, -127), false, "dair"),
+    ] {
+        let mut w = common::fighters(&d, "brawler", &[]);
+        let f = &mut w.fighters[0];
+        f.face = 1.;
+        if !ground {
+            f.set_state(State::Air);
+            f.ground = false;
+            f.surf = None;
+            f.y -= 200.;
+        }
+        let raw = Input { stick: (-127, 0), attack_stick: stick, ..Default::default() };
+        common::step_draining(&mut w, &d, &[raw]);
+        let f = &w.fighters[0];
+        assert_eq!(f.mov.as_ref().unwrap().slot, slot, "{stick:?}, ground={ground}");
+        assert_eq!(f.in_dir, -1.);
+        if !ground {
+            assert_eq!(f.face, 1.);
+            assert!(f.vx < 0., "left-stick air drift survives a right-stick attack");
+        }
+    }
+}
+
+#[test]
+fn right_stick_charges_then_releases_without_repeating() {
+    let d = common::data();
+    let mut w = common::fighters(&d, "brawler", &[]);
+    let raw = Input { attack_stick: (127, 0), ..Default::default() };
+    run(&mut w, &d, 40, &[raw]);
+    assert!(w.fighters[0].mov.as_ref().unwrap().charge > 25);
+    // A held stick never starts a second attack once the charged attack finishes.
+    run(&mut w, &d, 180, &[raw]);
+    assert_eq!(w.fighters[0].state, State::Idle);
+    run(&mut w, &d, 1, &[Input::default()]);
+    run(&mut w, &d, 1, &[raw]);
+    assert_eq!(w.fighters[0].mov.as_ref().unwrap().slot, "fsmash");
+    run(&mut w, &d, 80, &[Input::default()]);
+    assert_eq!(w.fighters[0].state, State::Idle);
 }

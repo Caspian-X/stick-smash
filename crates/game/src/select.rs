@@ -611,6 +611,7 @@ impl Select {
                     cpu: (p.dev.is_none() && !p.disconnected && self.mode == Mode::Versus).then_some(p.level),
                     team: self.teams.then_some(p.team),
                     tap_jump: p.tap_jump,
+                    controls: Default::default(),
                     tag: self.tag(i),
                     color: self.color(i),
                 }
@@ -629,10 +630,17 @@ impl Select {
         commands: &mut Commands,
         scene: &mut render::Scene,
         next: &mut NextState<Screen>,
+        devs: &Devices,
     ) {
         remember(self, saved, data);
         let rules = self.rules(data, self.stage);
-        let Ok(mut m) = Match::new(data, self.mode, self.match_slots(), rules, play::seed()) else { return };
+        let mut slots = self.match_slots();
+        for s in &mut slots {
+            if let Some(dv) = s.dev {
+                s.controls = crate::settings::control_prefs(saved, &devs.profile(dv)).controls();
+            }
+        }
+        let Ok(mut m) = Match::new(data, self.mode, slots, rules, play::seed()) else { return };
         if self.mode == Mode::Training {
             m.dummy.mode = self.dummy;
             m.dummy.level = saved.training.level;
@@ -737,7 +745,7 @@ fn input(
     match step {
         Step::Leave => next.set(Screen::Title),
         Step::Start if sel.mode == Mode::Versus => next.set(Screen::Stages),
-        Step::Start => sel.start(d, &mut saved, &mut commands, &mut scene, &mut next),
+        Step::Start => sel.start(d, &mut saved, &mut commands, &mut scene, &mut next, &devs),
         Step::Stay => {}
     }
 }

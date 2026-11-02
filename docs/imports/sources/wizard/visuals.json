@@ -1,0 +1,252 @@
+{
+  "page": "https://ultimateframedata.com/zelda",
+  "accessed": "2026-11-02",
+  "pageSha256": "faabf7faedfc7de0c88dde7130b7938a585a4ef8e768508a5222c0f246fd719b",
+  "indexConvention": "GIF indices are zero-based; do not derive gameplay timing from GIF duration metadata. For the normal attack GIFs inspected here, first pictured frame is source frame 1. Phantom GIFs include construction.",
+  "animations": [
+    {
+      "filename": "PhantomKick.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/PhantomKick.gif",
+      "sha256": "dc8a7ec205ed40f67d53e4d6a0bfe7942a846d35da3d36915dacdb2b566864c2",
+      "frames": 49,
+      "inspect": [
+        0,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "filename": "PhantomSwing3.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/PhantomSwing3.gif",
+      "sha256": "44d44ae3488f322b99a4513ab5502d48dfaf28753e17162e6287b45e5b413164",
+      "frames": 120,
+      "inspect": [
+        0,
+        5,
+        6,
+        10,
+        16
+      ]
+    },
+    {
+      "filename": "ZeldaBAir.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaBAir.gif",
+      "sha256": "5f8692aa391dcd69e1541c9c445359097e92299f14bc2a2075c8dc6f73c6ef0e",
+      "frames": 49,
+      "inspect": [
+        0,
+        4,
+        5,
+        6,
+        9,
+        44
+      ]
+    },
+    {
+      "filename": "ZeldaDAir.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaDAir.gif",
+      "sha256": "84290f37bec806fd7782886a099f486559228df5303f6d0d9a2223f7c3487a03",
+      "frames": 44,
+      "inspect": [
+        0,
+        13,
+        14,
+        20,
+        23
+      ]
+    },
+    {
+      "filename": "ZeldaDSmash.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaDSmash.gif",
+      "sha256": "49ab3553c8b4393d261e40d3b360b9199e6b510da0fae4ccddee949240a2312c",
+      "frames": 37,
+      "inspect": [
+        0,
+        4,
+        5,
+        12,
+        13
+      ]
+    },
+    {
+      "filename": "ZeldaDTilt.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaDTilt.gif",
+      "sha256": "260873aa464426060f694dc9b083e0392621c584a5df183ffdc3961b1b7fc42f",
+      "frames": 21,
+      "inspect": [
+        0,
+        4,
+        7,
+        10,
+        11
+      ]
+    },
+    {
+      "filename": "ZeldaDashAttack.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaDashAttack.gif",
+      "sha256": "5e9c498444b24497d2f619b8b56a2ad34e803e39b00a1129cb5e4cdaa970aae1",
+      "frames": 35,
+      "inspect": [
+        0,
+        5,
+        6,
+        7,
+        11
+      ]
+    },
+    {
+      "filename": "ZeldaDinsFireMin.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaDinsFireMin.gif",
+      "sha256": "1563dab3f0007de9d15bb0197c4ec54ca709f659bcd13acf7ad26bc9a2911b3d",
+      "frames": 69,
+      "inspect": [
+        0,
+        20,
+        29,
+        43,
+        48,
+        68
+      ]
+    },
+    {
+      "filename": "ZeldaFAir.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaFAir.gif",
+      "sha256": "2fc29d7229289785ec569e2d45822a9971484eac3e004603f3e6edbf1acacb8d",
+      "frames": 49,
+      "inspect": [
+        0,
+        4,
+        5,
+        6,
+        9,
+        42
+      ]
+    },
+    {
+      "filename": "ZeldaFSmash.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaFSmash.gif",
+      "sha256": "117177c74572bca702d4f6b7bf4291ead7f63308fb0d6e282140f75b7964113d",
+      "frames": 49,
+      "inspect": [
+        0,
+        15,
+        17,
+        19,
+        21,
+        23
+      ]
+    },
+    {
+      "filename": "ZeldaFTilt.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaFTilt.gif",
+      "sha256": "2be0593cc0cdd3ea42eb13852d080a65b6826781dca7703070474f49a759abbb",
+      "frames": 36,
+      "inspect": [
+        0,
+        10,
+        11,
+        12,
+        13,
+        35
+      ]
+    },
+    {
+      "filename": "ZeldaFaroresWindA.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaFaroresWindA.gif",
+      "sha256": "2032d97fe7dd4a63dffe44b37ca81b626f78699dca6b20efdf61ab852ceeddba",
+      "frames": 76,
+      "inspect": [
+        0,
+        5,
+        16,
+        33,
+        34,
+        35
+      ]
+    },
+    {
+      "filename": "ZeldaJab.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaJab.gif",
+      "sha256": "d301e562481beab652117af0473cfc8fdbd87d1a5555966da99728fe37092439",
+      "frames": 23,
+      "inspect": [
+        0,
+        3,
+        4,
+        6,
+        7
+      ]
+    },
+    {
+      "filename": "ZeldaNAir.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaNAir.gif",
+      "sha256": "db17520f31eb4934f4966900d70fc6b8d5e09788e06cd7534c7c423e443527d6",
+      "frames": 50,
+      "inspect": [
+        5,
+        9,
+        13,
+        17,
+        21
+      ]
+    },
+    {
+      "filename": "ZeldaNayrusLove.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaNayrusLove.gif",
+      "sha256": "a1b51f9f03f63bb7f58b3a131d567d140768803a993a44d6f520ea5e96fda3d7",
+      "frames": 57,
+      "inspect": [
+        0,
+        3,
+        10,
+        13,
+        21,
+        25,
+        39
+      ]
+    },
+    {
+      "filename": "ZeldaUAir.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaUAir.gif",
+      "sha256": "79a8f58e265fba4387ccacbd189b8e77ea20f71d5b2f02896bb835a6407648de",
+      "frames": 54,
+      "inspect": [
+        0,
+        13,
+        15,
+        16,
+        18
+      ]
+    },
+    {
+      "filename": "ZeldaUSmash.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaUSmash.gif",
+      "sha256": "497f7e938eedf35f47550e4fd316fac82d6a2bfd257ef06476beca7acd1213d1",
+      "frames": 63,
+      "inspect": [
+        0,
+        8,
+        12,
+        24,
+        28,
+        33
+      ]
+    },
+    {
+      "filename": "ZeldaUTilt.gif",
+      "url": "https://ultimateframedata.com/hitboxes/zelda/ZeldaUTilt.gif",
+      "sha256": "958b2cede6f1a0b50f276bb5e516330d44dd4ece0f143b62bdca2bc3e2867b85",
+      "frames": 29,
+      "inspect": [
+        0,
+        6,
+        7,
+        10,
+        16,
+        19
+      ]
+    }
+  ]
+}

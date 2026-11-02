@@ -155,11 +155,33 @@ pub(crate) fn viewport(ui: &mut egui::Ui, ed: &mut Editor) {
     let rect = ui.max_rect();
     ed.port = crate::pane::port(ui);
     if ed.pane.reframe
-        && let Some(f) = ed.run.as_ref().map(|r| r.frames[0].fighters[0].clone())
+        && let Some(run) = &ed.run
     {
         ed.pane.reframe = false;
-        ed.pane.cam.zoom = view::Zoom::FIGHTER_FRAME.clamp(f64::from(rect.height()) / 240.);
-        ed.pane.cam.center = [f.x + 30., f.y - 60.];
+        let f = &run.frames[0].fighters[0];
+        let (mut left, mut right, mut top, mut bottom) = (f.x - 80., f.x + 140., f.y - 180., f.y + 60.);
+        for w in &run.frames {
+            let f = &w.fighters[0];
+            left = left.min(f.x - 40.);
+            right = right.max(f.x + 40.);
+            top = top.min(f.y - 150.);
+            bottom = bottom.max(f.y + 20.);
+            for p in w.projs.iter().filter(|p| p.owner == 0) {
+                let mut radius = p.r;
+                if let Some(a) = &run.data.fighters[p.fighter_data].projectiles[&p.id].article {
+                    for b in &a.stages[p.stage].hitboxes {
+                        radius = radius.max(b.x.abs() + b.r).max(b.y.abs() + b.r);
+                    }
+                }
+                left = left.min(p.x - radius - 20.);
+                right = right.max(p.x + radius + 20.);
+                top = top.min(p.y - radius - 20.);
+                bottom = bottom.max(p.y + radius + 20.);
+            }
+        }
+        ed.pane.cam.zoom = view::Zoom::FIGHTER_FRAME
+            .clamp((f64::from(rect.height()) / (bottom - top)).min(f64::from(rect.width()) / (right - left)));
+        ed.pane.cam.center = [(left + right) / 2., (top + bottom) / 2.];
     }
     crate::pane::interact(ui, ed, FighterInteraction { boxes: playhead_boxes(ed) });
     chrome(ui, ed, rect);

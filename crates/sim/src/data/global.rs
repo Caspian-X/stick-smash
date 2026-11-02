@@ -19,6 +19,9 @@ pub struct Global {
     pub schema_version: u32,
     pub movement: Movement,
     pub input: InputRules,
+    /// Walk / dash / run on the ground. Off = the reference single accelerate-to-run gait.
+    #[serde(default)]
+    pub gait: Gait,
     pub sim: SimRules,
     pub ai: AiRules,
     pub knockback: Knockback,
@@ -31,6 +34,11 @@ pub struct Global {
     pub tech: Tech,
     pub knockdown: Knockdown,
     pub ledge: Ledge,
+    #[serde(default)]
+    pub parry: Parry,
+    /// Directional influence: bend a launch toward the stick held when hitlag ends.
+    #[serde(default)]
+    pub di: Di,
     pub grab: Grab,
     pub respawn: Respawn,
     #[serde(rename = "match")]
@@ -73,6 +81,9 @@ pub struct Movement {
     pub attack_air_drag: f64,
     /// Frames platforms are ignored after dropping through.
     pub platform_drop: u32,
+    /// Held down passes through platforms in ordinary fall; a platform drop consumes its down gesture.
+    #[serde(default)]
+    pub platform_pass: bool,
     /// Fighters overlapping closer than this push apart.
     pub push_radius: f64,
     pub push_strength: f64,
@@ -85,10 +96,13 @@ pub struct Movement {
     pub b_reverse_window: u32,
 }
 
-/// Knockback = (bkb + victimPercent × kbg × kbPercentScale) × victimWeight.
+/// Shared damage-dependent knockback. Omitting ultimate retains the original TS compatibility formula.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Knockback {
+    /// Shared by every fighter, throw and projectile. None is the legacy TS compatibility mode.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ultimate: Option<UltimateKnockback>,
     pub kb_percent_scale: f64,
     /// Knockback above this sends the victim tumbling (can tech, lands in knockdown).
     pub tumble_threshold: f64,
@@ -98,6 +112,17 @@ pub struct Knockback {
     pub charge_damage_divisor: f64,
     /// Fraction of the charge damage bonus that also applies to base knockback.
     pub charge_kb_ratio: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct UltimateKnockback {
+    pub percent_scale: f64,
+    pub damage_scale: f64,
+    pub weight_scale: f64,
+    pub base: f64,
+    /// Reference knockback to pixels/tick (reference launch speed × world scale).
+    pub launch_speed: f64,
 }
 
 /// Hitstun = floor(knockback × perKnockback) + base, then per-hitbox hitstunMult/hitstunAdd.
@@ -197,6 +222,9 @@ pub struct Shield {
     pub attacker_pushback: f64,
     /// Frames of lag after releasing shield.
     pub drop_lag: u32,
+    /// Shield + up attack (or attack with up held) is an up smash rather than a grab. Off for TS fidelity.
+    #[serde(default)]
+    pub up_smash: bool,
     pub break_launch: f64,
     pub break_gravity: f64,
     pub break_max_fall: f64,
@@ -283,6 +311,76 @@ pub struct Ledge {
     /// Ledge attack active frames (inclusive).
     pub attack_active: [u32; 2],
     pub attack_hit: Vec<Hitbox>,
+    /// Grabbing an occupied hanging ledge knocks its holder off. Absent = occupied ledges can't be grabbed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trump: Option<Trump>,
+    /// Ledge grab invulnerability only after landing, being hit or respawning since the last grab.
+    #[serde(default)]
+    pub fresh_invuln: bool,
+}
+
+/// The fighter knocked off a ledge: pushed away from the stage (and up), unable to regrab for a moment.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Trump {
+    pub push_x: f64,
+    pub push_y: f64,
+    pub regrab_cooldown: u32,
+    /// The holder must have hung at least this many frames, so simultaneous arrivals don't trade.
+    pub min_hang: u32,
+}
+
+/// Releasing shield opens a parry window: a hit landing in it does nothing, freezes the attacker and frees the
+/// defender. `window` 0 disables it.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+pub struct Parry {
+    /// Frames after releasing shield (the release frame is the first).
+    pub window: u32,
+    /// Freeze for the defender (attacker gets this plus attackerFreeze).
+    pub freeze: u32,
+    pub attacker_freeze: u32,
+    /// Invulnerability after a parry, so the rest of a multi-hit move whiffs.
+    pub invuln: u32,
+}
+
+/// The launch is rotated toward the stick by up to maxAngle degrees, scaled by how perpendicular the stick is;
+/// speed is unchanged. 0 disables it.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+pub struct Di {
+    pub max_angle: f64,
+    /// Minimum stick magnitude (0–1) that counts.
+    pub min_stick: f64,
+}
+
+/// Ground gait. Speeds are fractions of the fighter's runSpeed (walkSpeed may be overridden per fighter).
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+pub struct Gait {
+    pub enabled: bool,
+    /// Full-tilt walk speed; a partial tilt walks proportionally slower.
+    pub walk_speed: f64,
+    /// Walk acceleration as a fraction of runAccel.
+    pub walk_accel: f64,
+    /// Walking promotes to running at this deadzoned horizontal tilt (0..1); zero requires a flick.
+    pub run_threshold: f64,
+    /// Running returns to walking below this tilt (hysteresis; <= runThreshold).
+    pub walk_threshold: f64,
+    /// Initial dash restricts standing attacks and shield until it ends; jump, dash attack, up smash,
+    /// grab and specials can cancel it.
+    pub dash_lock: bool,
+    /// A flick starts a dash at this speed, held for dashFrames; flick back to dash the other way.
+    pub dash_speed: f64,
+    pub dash_frames: u32,
+    /// Holding the other way while running turns around: facing flips at once and speed skids with turnFriction.
+    pub turn_frames: u32,
+    pub turn_friction: f64,
+    /// Letting go while running skids for brakeFrames with brakeFriction.
+    pub brake_frames: u32,
+    pub brake_friction: f64,
+    /// Frames to lower into a crouch or rise back to idle. Zero switches immediately.
+    pub crouch_frames: u32,
 }
 
 /// Ledge getup timing.
@@ -345,13 +443,38 @@ pub struct PlayerColors {
     pub light: Color,
 }
 
-/// Digital stick interpretation; history is part of the rollback snapshot.
+/// Stick interpretation (stick units are -127..127); history is part of the rollback snapshot.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct InputRules {
+    /// A direction counts as held (tilts, aerial directions, rolls) from here.
     pub stick_threshold: i8,
+    /// Analog movement (walking, air drift, DI) ignores the stick below this.
+    #[serde(default)]
+    pub deadzone: i8,
+    /// A flick (dash, smash, platform drop) reaches this within flickFrames of leaving the deadzone.
+    #[serde(default = "default_flick")]
+    pub flick_threshold: i8,
+    #[serde(default = "default_flick_frames")]
+    pub flick_frames: u32,
     /// Human press buffer lifetime in ticks (inclusive); 0 disables re-delivery.
     pub buffer_frames: u32,
+    /// Buffered presses this many ticks apart combine (jump + attack, two jumps, attack + special).
+    #[serde(default)]
+    pub combo_frames: u32,
+    /// Down pressed up to this many ticks before falling still fast-falls once descending (0 = same tick only).
+    #[serde(default)]
+    pub fast_fall_buffer: u32,
+    /// Jump + attack and attacks during jumpsquat queue a short-hop aerial; a second jump press during
+    /// jumpsquat short hops. Off for TS fidelity.
+    #[serde(default = "default_true")]
+    pub jump_aerials: bool,
+}
+fn default_flick() -> i8 {
+    64
+}
+fn default_flick_frames() -> u32 {
+    99
 }
 /// Shared simulation constants retained from the reference implementation.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]

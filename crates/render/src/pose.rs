@@ -4,7 +4,7 @@
 use sim::GameData;
 use sim::data::Fighter as FighterData;
 use sim::data::visual::{Anim, AnimKey, Clock, Pose, PoseRef};
-use sim::world::{Fighter, State};
+use sim::world::{Fighter, Gait, State};
 
 use crate::canvas::P;
 
@@ -135,6 +135,7 @@ pub fn sample(fd: &FighterData, keys: &[AnimKey], t: f64, period: Option<f64>, f
 pub fn state_anim(d: &GameData, f: &Fighter) -> (String, Option<f64>) {
     let g = &d.global;
     let name: String = match f.state {
+        State::Idle if f.ground && matches!(f.gait, Gait::Crouch | Gait::Rise) => "crouch".into(),
         State::Idle if f.vx.abs() > g.render.overlays.run_speed => "run".into(),
         State::Air if f.flip_t > 0 => {
             return ("air.flip".into(), Some(f64::from(g.sim.flip_frames.saturating_sub(f.flip_t))));
@@ -177,8 +178,61 @@ pub fn fighter_pose(d: &GameData, f: &Fighter, frame: u64) -> Skel {
         return sample(fd, &ph.anim, t, None, f);
     }
     let (name, clock) = state_anim(d, f);
-    match fd.anims.get(&name) {
+    let pose = match fd.anims.get(&name) {
         Some(a) => sample(fd, &a.keys, clock.unwrap_or_else(|| clock_value(a, f, frame)), a.period, f),
         None => resolve(fd, &Pose::default()),
+    };
+    if name == "crouch" {
+        let frames = d.global.gait.crouch_frames;
+        let t = if frames == 0 { 1. } else { (f64::from(f.gait_t) / f64::from(frames)).min(1.) };
+        let amount = if f.gait == Gait::Rise { 1. - t } else { t };
+        let idle = fd.anims.get("idle").map_or_else(
+            || resolve(fd, &Pose::default()),
+            |a| sample(fd, &a.keys, clock_value(a, f, frame), a.period, f),
+        );
+        idle.lerp(&pose, amount)
+    } else {
+        pose
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn crouch_blends_in_and_out_and_keeps_feet_planted() {
+        let sources = [
+            ("global.json", include_str!("../../../assets/global.json")),
+            ("stages/arena/stage.json", include_str!("../../../assets/stages/arena/stage.json")),
+            ("fighters/base/fighter.json", include_str!("../../../assets/fighters/base/fighter.json")),
+            ("fighters/brawler/fighter.json", include_str!("../../../assets/fighters/brawler/fighter.json")),
+            ("fighters/mike/fighter.json", include_str!("../../../assets/fighters/mike/fighter.json")),
+        ]
+        .map(|(path, text)| sim::data::Source { path: path.into(), text: text.into() });
+        let (d, errors) = sim::data::load(sources).unwrap();
+        assert!(errors.is_empty(), "{errors:?}");
+        for fd in &d.fighters {
+            let w = sim::World::new(sim::MatchConfig::sandbox("arena", vec![sim::PlayerConfig::human(&fd.id)], 1), &d)
+                .unwrap();
+            let mut f = w.fighters[0].clone();
+            let idle = fighter_pose(&d, &f, 0);
+            f.gait = Gait::Crouch;
+            assert_eq!(fighter_pose(&d, &f, 0), idle);
+            f.gait_t = d.global.gait.crouch_frames;
+            let crouch = fighter_pose(&d, &f, 0);
+            assert!(crouch.head[1] < idle.head[1]);
+            assert_eq!((crouch.foot_f[1], crouch.foot_b[1]), (0., 0.));
+            assert_ne!(fighter_pose(&d, &f, 30).head, crouch.head);
+            f.gait_t /= 2;
+            let halfway = fighter_pose(&d, &f, 0);
+            assert!(halfway.head[1] > crouch.head[1] && halfway.head[1] < idle.head[1]);
+            f.gait = Gait::Rise;
+            assert_eq!(fighter_pose(&d, &f, 0), halfway);
+            f.gait_t = d.global.gait.crouch_frames;
+            assert_eq!(fighter_pose(&d, &f, 0), idle);
+            f.state = State::Air;
+            assert_ne!(state_anim(&d, &f).0, "crouch");
+        }
     }
 }

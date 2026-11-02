@@ -782,9 +782,9 @@ pub fn notes(s: &Stage, path: &str) -> Vec<ContentError> {
             v.push(n(format!("platforms[{i}]"), "reaches past the blast zone".into()));
         }
     }
-    let b = &s.blast;
-    if !inside(&s.camera, [b.left, b.top, b.right, b.bottom]) {
-        v.push(n("camera".into(), "should contain the blast zone, or KOs happen off camera".into()));
+    let b = &s.camera;
+    if !inside(&s.blast, [b.left, b.top, b.right, b.bottom]) {
+        v.push(n("camera".into(), "extends past the blast zone; fighters may KO on camera".into()));
     }
     for (i, r) in s.respawns.iter().enumerate() {
         if r.start_y > r.end_y {

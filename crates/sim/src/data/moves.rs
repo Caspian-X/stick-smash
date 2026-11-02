@@ -153,6 +153,15 @@ pub struct Phase {
     /// Counter stance: hits received during the window are countered.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub counter: Option<Counter>,
+    /// Reflect projectiles throughout this window without interrupting the move.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reflector: Option<Reflector>,
+    /// Constant-speed directional travel, aimed once on phase entry; neutral aims upward.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub travel_speed: Option<f64>,
+    /// Hide the figure during teleport travel; collision and invulnerability remain separate.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub hidden: bool,
     /// Hits dealing at most this damage preserve the phase and velocity (damage and hitlag still apply).
     /// Grabs bypass armor. Omit for normal hit reactions.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -232,6 +241,17 @@ pub struct Counter {
     /// Reflected projectile: speed multiplier and new lifetime.
     pub reflect_speed: f64,
     pub reflect_life: u32,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Reflector {
+    pub from: u32,
+    pub to: u32,
+    pub speed: f64,
+    pub damage: f64,
+    pub radius: f64,
+    pub height: f64,
 }
 
 /// Frame-scoped actions. Use `at` for one frame, or `from`/`to` (inclusive) for a range. `from` alone means
@@ -334,6 +354,8 @@ pub enum Trigger {
     TargetNear,
     /// Shield was pressed this tick.
     ShieldPress,
+    /// An owned controlled projectile was manually released.
+    ArticleRelease,
     /// A hit was countered in the phase's `counter` window.
     Counter,
     /// A hitbox of this phase connected (hit or shield).
@@ -446,4 +468,14 @@ pub struct Throw {
     pub total: u32,
     /// Geometry and window fields are ignored.
     pub hit: Hitbox,
+    /// Damage-only hits applied to the held victim before release.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub ticks: Vec<ThrowTick>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ThrowTick {
+    pub at: u32,
+    pub damage: f64,
 }

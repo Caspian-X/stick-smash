@@ -129,22 +129,22 @@
     "f": {
       "release": 8,
       "total": 24,
-      "hit": { "x": 0, "y": 0, "r": 0, "damage": 7, "bkb": 7, "kbg": 0.09, "angle": 40 }
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 7, "bkb": 32.380952381, "kbg": 1.9047619048, "angle": 40 }
     },
     "b": {
       "release": 12,
       "total": 28,
-      "hit": { "x": 0, "y": 0, "r": 0, "damage": 9, "bkb": 7, "kbg": 0.13, "angle": 40 }
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 9, "bkb": 26.1471861472, "kbg": 2.2510822511, "angle": 40 }
     },
     "u": {
       "release": 12,
       "total": 28,
-      "hit": { "x": 0, "y": 0, "r": 0, "damage": 6, "bkb": 8, "kbg": 0.085, "angle": 90 }
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 6, "bkb": 39.7619047619, "kbg": 2.0238095238, "angle": 90 }
     },
     "d": {
       "release": 10,
       "total": 26,
-      "hit": { "x": 0, "y": 0, "r": 0, "damage": 5, "bkb": 6, "kbg": 0.045, "angle": 75 }
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 5, "bkb": 35.1020408163, "kbg": 1.2244897959, "angle": 75 }
     }
   },
   "style": {
@@ -313,6 +313,19 @@
     }
   },
   "anims": {
+    "crouch": {
+      "clock": "world",
+      "loop": 60,
+      "keys": [
+        { "at": 0, "pose": "crouch" },
+        {
+          "at": 30,
+          "pose": { "from": "crouch", "head": [6, 49], "shoulder": [3, 37] },
+          "lerp": true
+        },
+        { "at": 60, "pose": "crouch", "lerp": true }
+      ]
+    },
     "idle": {
       "clock": "world",
       "loop": 78.54,

@@ -83,10 +83,11 @@ mod tests {
     }
 
     #[test]
-    fn arena_keeps_reference_range_at_landscape_aspects() {
+    fn arena_keeps_reference_range_until_camera_bounds_cap_it() {
         let (s, c) = data();
         for aspect in [1.2, 4. / 3., 16. / 9., 21. / 9., 3.] {
-            assert_eq!(automatic_range(&s, &c, aspect), ZoomRange { min: c.min_height, max: c.max_height });
+            let max = c.max_height.min(s.camera.bottom - s.camera.top).min((s.camera.right - s.camera.left) / aspect);
+            assert_eq!(automatic_range(&s, &c, aspect), ZoomRange { min: c.min_height.min(max), max });
         }
     }
 
@@ -125,6 +126,7 @@ mod tests {
     #[test]
     fn overrides_win_and_mixed_bounds_stay_ordered() {
         let (mut s, c) = data();
+        s.camera = super::super::stage::Bounds { left: -2000., right: 3000., top: -1000., bottom: 2000. };
         s.zoom = Some(crate::data::stage::Zoom { min_height: Some(600.), max_height: Some(1300.) });
         assert_eq!(zoom_range(&s, &c, 16. / 9.), ZoomRange { min: 600., max: 1300. });
         s.zoom.as_mut().unwrap().min_height = None;

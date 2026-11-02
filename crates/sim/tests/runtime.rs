@@ -269,6 +269,7 @@ fn cpu_match_golden_world_hash() {
         step_world(&mut w, &d, &[]);
         w.fx.clear();
         w.hits.clear();
+        w.acts.clear();
     }
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xbe68_7d93_f603_0ecb);
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x6e6f62d1001c1ba7);
 }

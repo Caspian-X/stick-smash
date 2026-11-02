@@ -556,6 +556,13 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
             return Err(err(file, format!("throws.{name}"), "needs 0 < release <= total"));
         }
         check_hitbox(file, &format!("throws.{name}.hit"), &t.hit, false)?;
+        for (i, tick) in t.ticks.iter().enumerate() {
+            let p = format!("throws.{name}.ticks[{i}]");
+            nonnegative(file, &format!("{p}.damage"), tick.damage)?;
+            if tick.at >= t.release {
+                return Err(err(file, p, "must precede release"));
+            }
+        }
     }
     probability(file, "ai.counterChance", f.ai.counter_chance)?;
     if let Some(name) = &f.ai.recovery_shield_cancel
@@ -669,6 +676,52 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
             check_life(file, &format!("{path}.bounce.fizzleLife"), b.fizzle_life)?;
         }
         check_hitbox(file, &format!("{path}.hit"), &p.hit, false)?;
+        if let Some(a) = &p.article {
+            if p.explosion.is_some() || p.bounce.is_some() || p.bat.is_some() || p.charge_scale.is_some() {
+                return Err(err(
+                    file,
+                    format!("{path}.article"),
+                    "article timeline cannot combine with explosion/bounce/bat/chargeScale",
+                ));
+            }
+            if f.moves.get(&a.slot).is_none() {
+                return Err(err(file, format!("{path}.article.slot"), "unknown move"));
+            }
+            if a.stages.is_empty() || a.stages[0].from != 0 || a.stages.windows(2).any(|s| s[0].from >= s[1].from) {
+                return Err(err(file, format!("{path}.article.stages"), "needs increasing ages starting at zero"));
+            }
+            if a.auto_release < a.min_release || a.auto_release >= p.life {
+                return Err(err(file, format!("{path}.article.autoRelease"), "needs minRelease <= autoRelease < life"));
+            }
+            nonnegative(file, &format!("{path}.article.steer"), a.steer)?;
+            if let Some(r) = a.hurtbox {
+                for n in [r.x1, r.x2, r.y1, r.y2] {
+                    finite(file, &format!("{path}.article.hurtbox"), n)?;
+                }
+                if r.x1 >= r.x2 || r.y1 >= r.y2 {
+                    return Err(err(file, format!("{path}.article.hurtbox"), "needs positive extents"));
+                }
+            }
+            for (i, s) in a.stages.iter().enumerate() {
+                let sp = format!("{path}.article.stages[{i}]");
+                if s.startup >= s.frames {
+                    return Err(err(file, &sp, "startup must precede frames"));
+                }
+                if s.auto_startup.is_some_and(|n| n > s.startup) {
+                    return Err(err(file, &sp, "autoStartup must not exceed startup"));
+                }
+                nonnegative(file, &format!("{sp}.health"), s.health)?;
+                if let Some(stroke) = &s.stroke {
+                    positive(file, &format!("{sp}.stroke.width"), stroke.width)?;
+                }
+                for n in s.vel {
+                    finite(file, &format!("{sp}.vel"), n)?;
+                }
+                for (j, b) in s.hitboxes.iter().enumerate() {
+                    check_hitbox(file, &format!("{sp}.hitboxes[{j}]"), b, true)?;
+                }
+            }
+        }
         for (i, ev) in p.trail.iter().enumerate() {
             check_event(file, &format!("{path}.trail[{i}]"), ev)?;
             if ev.at.is_some() && (ev.from.is_some() || ev.to.is_some()) {
@@ -711,6 +764,18 @@ fn check_move(
         }
         if let Some(n) = p.fall_cap {
             positive(file, &format!("{pp}.fallCap"), n)?;
+        }
+        if let Some(n) = p.travel_speed {
+            positive(file, &format!("{pp}.travelSpeed"), n)?;
+        }
+        if let Some(r) = &p.reflector {
+            if r.from > r.to {
+                return Err(err(file, format!("{pp}.reflector"), "from is after to"));
+            }
+            for (name, n) in [("speed", r.speed), ("damage", r.damage), ("radius", r.radius)] {
+                positive(file, &format!("{pp}.reflector.{name}"), n)?;
+            }
+            finite(file, &format!("{pp}.reflector.height"), r.height)?;
         }
         nonnegative(file, &format!("{pp}.airAccelMult"), p.air_accel_mult)?;
         if let Some(r) = p.detection {
@@ -856,6 +921,11 @@ fn check_event(file: &str, path: &str, ev: &super::Event) -> Result<(), ContentE
 /// Validates global content, including presentation tuning in embedded replay payloads.
 pub fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
     check_audio(file, &g.audio)?;
+    range(file, "gait.runThreshold", g.gait.run_threshold, 0., 1.)?;
+    range(file, "gait.walkThreshold", g.gait.walk_threshold, 0., 1.)?;
+    if g.gait.run_threshold > 0. && g.gait.walk_threshold > g.gait.run_threshold {
+        return Err(err(file, "gait.walkThreshold", "must not exceed runThreshold"));
+    }
     if g.input.stick_threshold <= 0 {
         return Err(err(file, "input.stickThreshold", "must be between 1 and 127"));
     }
@@ -932,6 +1002,12 @@ pub fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
 }
 
 fn check_render(file: &str, r: &super::render::Render) -> Result<(), ContentError> {
+    if let Some(b) = &r.blast_zone {
+        range(file, "render.blastZone.alpha", b.alpha, 0., 1.)?;
+        positive(file, "render.blastZone.width", b.width)?;
+        positive(file, "render.blastZone.dash", b.dash)?;
+        nonnegative(file, "render.blastZone.gap", b.gap)?;
+    }
     for (name, n) in [
         ("interpolate.fighterJump", r.interpolate.fighter_jump),
         ("interpolate.projectileJump", r.interpolate.projectile_jump),
@@ -1091,6 +1167,14 @@ fn nonnegative_range(file: &str, path: &str, a: f64, b: f64) -> Result<(), Conte
 }
 
 fn check_stats(file: &str, v: &super::Stats) -> Result<(), ContentError> {
+    for (name, n) in [("walkSpeed", v.walk_speed), ("dashSpeed", v.dash_speed)] {
+        if let Some(n) = n {
+            positive(file, &format!("stats.{name}"), n)?;
+        }
+    }
+    if v.dash_frames == Some(0) {
+        return Err(err(file, "stats.dashFrames", "must be positive"));
+    }
     for (name, n) in [
         ("runAccel", v.run_accel),
         ("groundFriction", v.ground_friction),
@@ -1139,6 +1223,17 @@ fn check_movement(file: &str, v: &super::global::Movement) -> Result<(), Content
 }
 
 fn check_knockback(file: &str, v: &super::global::Knockback) -> Result<(), ContentError> {
+    if let Some(k) = &v.ultimate {
+        for (name, n) in [
+            ("percentScale", k.percent_scale),
+            ("damageScale", k.damage_scale),
+            ("weightScale", k.weight_scale),
+            ("base", k.base),
+        ] {
+            nonnegative(file, &format!("knockback.ultimate.{name}"), n)?;
+        }
+        positive(file, "knockback.ultimate.launchSpeed", k.launch_speed)?;
+    }
     for (name, n) in [
         ("kbPercentScale", v.kb_percent_scale),
         ("tumbleThreshold", v.tumble_threshold),

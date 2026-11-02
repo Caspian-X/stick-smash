@@ -1,3 +1,4 @@
+use crate::actions::{Action, accept};
 use crate::{
     Fx, GameData, World,
     data::Color,
@@ -5,14 +6,16 @@ use crate::{
     world::{Fighter, State},
 };
 use crate::{combat, moves, physics::*};
-pub fn roll(w: &mut World, d: &GameData, f: &mut Fighter, dir: f64) {
+pub fn roll(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, dir: f64) {
+    accept(w, i, Action::Roll);
     f.set_state(State::Roll);
     f.sd.dir = dir;
     f.face = dir;
     f.inv = d.global.dodge.roll_invuln;
     w.sfx("roll");
 }
-fn airdodge(w: &mut World, d: &GameData, f: &mut Fighter, inp: Intent, dir: f64) {
+fn airdodge(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, dir: f64) {
+    accept(w, i, Action::AirDodge);
     let g = &d.global.dodge;
     let dy = f64::from(inp.down as i8 - inp.up as i8);
     f.ad_used = true;
@@ -29,19 +32,66 @@ fn airdodge(w: &mut World, d: &GameData, f: &mut Fighter, inp: Intent, dir: f64)
         f.vy = f.sd.dy * g.dir_air_dodge_speed;
     }
 }
-pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
-    let mut f = w.fighters[i].clone();
-    if w.cfg.players[i].cpu.is_none() {
-        let actionable = f.lag == 0
-            && match f.state {
-                State::Idle | State::Air => true,
-                State::Shield => f.sd.stun <= 0,
-                State::Ledge => f.t.saturating_add(1) >= d.global.ledge.min_hang,
-                State::Knockdown => f.t >= d.global.knockdown.min_frames,
-                _ => false,
-            };
-        f.buffer.deliver(&mut inp, w.frame, d.global.input.buffer_frames, actionable && w.count == 0 && w.end_t == 0);
+fn air_jump(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, dir: f64) {
+    accept(w, i, Action::AirJump);
+    let fighter = &d.fighters[f.data];
+    f.jumps -= 1;
+    f.vy = -fighter.stats.air_jump_speed;
+    if dir != 0. {
+        f.vx = dir * fighter.stats.air_jump_drift;
     }
+    f.ff = false;
+    f.flip_t = d.global.sim.flip_frames;
+    w.sfx("djump");
+    moves::effects(w, &fighter.fx.air_jump, (f.x, f.y), f.face, (f.vx, f.vy), i);
+}
+/// One fighter's tick: jumpsquat shortcuts, the press buffer, the state machine, then buffer acceptance.
+pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
+    let g = &d.global;
+    let f = &mut w.fighters[i];
+    if g.input.jump_aerials && f.state == State::Jumpsquat && f.lag == 0 {
+        // Presses during jumpsquat shape the jump instead of queueing: attack picks a short-hop aerial, a second
+        // jump press short hops.
+        if inp.atk {
+            f.sd.jump_aerial = Some(moves::aerial_slot(f, inp).into());
+            inp.atk = false;
+            if inp.jump_attack {
+                inp.jump = false;
+                inp.jump_attack = false;
+            }
+        }
+        if inp.jump {
+            f.sd.short = true;
+            inp.jump = false;
+            inp.short_hop = false;
+        }
+    }
+    let mut delivered = None;
+    if w.cfg.players[i].cpu.is_none() {
+        let actionable = f.actionable(g) && w.count == 0 && w.end_t == 0;
+        let ab = w.cfg.players[i].controls.ab_smash;
+        delivered = f.buffer.deliver(&mut inp, w.frame, &g.input, actionable, ab);
+    }
+    if !crate::gait::can_cancel(d, &w.fighters[i], &inp) {
+        if delivered.is_none() && w.cfg.players[i].cpu.is_none() {
+            let ab = w.cfg.players[i].controls.ab_smash;
+            w.fighters[i].buffer.deliver(&mut inp, w.frame, &g.input, false, ab);
+        }
+        inp = inp.movement_only();
+    }
+    let start = w.acts.len();
+    step(w, d, i, inp);
+    let mut accepted = false;
+    for a in w.acts[start..].iter_mut().filter(|a| a.player == i && a.action.command()) {
+        a.pressed = delivered;
+        accepted = true;
+    }
+    if accepted {
+        w.fighters[i].buffer.accept();
+    }
+}
+fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
+    let mut f = w.fighters[i].clone();
     if matches!(f.state, State::Out | State::Win) {
         w.fighters[i] = f;
         return;
@@ -61,6 +111,9 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
         w.fighters[i] = f;
         return;
     }
+    if std::mem::take(&mut f.di) && f.state == State::Hitstun {
+        combat::influence(w, d, i, &mut f, (inp.x, inp.y));
+    }
     let g = &d.global;
     let s = &d.fighters[f.data].stats;
     let r = &g.sim;
@@ -78,6 +131,7 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
     f.t += 1;
     let dir = inp.dir();
     f.in_dir = dir;
+    f.in_down = inp.down;
     let sd = f.sd.clone();
     match f.state {
         State::Respawn => {
@@ -101,7 +155,9 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
         }
         State::Idle => {
             if !moves::ground_actions(w, d, i, &mut f, inp, dir) {
-                if dir != 0. {
+                if g.gait.enabled {
+                    crate::gait::step(w, d, i, &mut f, inp);
+                } else if dir != 0. {
                     if dir != f.face && f.vx.abs() > 3. {
                         w.dust(f.x, f.y, 3);
                     }
@@ -119,21 +175,28 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
         }
         State::Jumpsquat => {
             if inp.atk {
-                moves::start_move(w, d, i, &mut f, "usmash");
+                moves::start_attack(w, d, i, &mut f, "usmash", inp);
             } else if inp.sp && inp.up && !f.up_b {
                 moves::up_special(w, d, i, &mut f, dir);
             } else if inp.grab {
-                moves::start_move(w, d, i, &mut f, "grab");
+                moves::start_attack(w, d, i, &mut f, "grab", inp);
             } else {
                 f.vx *= r.jumpsquat_friction;
                 if f.t >= g.movement.jumpsquat {
-                    f.vy = if inp.jump_held { -s.jump_speed } else { -s.short_hop_speed };
+                    let aerial = f.sd.jump_aerial.take();
+                    let full = inp.jump_held && aerial.is_none() && !f.sd.short;
+                    f.vy = if full { -s.jump_speed } else { -s.short_hop_speed };
+                    accept(w, i, if full { Action::FullHop } else { Action::ShortHop });
                     f.ground = false;
                     f.surf = None;
                     f.ff = false;
                     f.set_state(State::Air);
                     w.dust(f.x, f.y, 4);
                     w.sfx("jump");
+                    if let Some(slot) = aerial {
+                        accept(w, i, Action::Move(slot.clone()));
+                        moves::start_move(w, d, i, &mut f, &slot);
+                    }
                     integrate(w, d, i, &mut f, false);
                 } else {
                     fall(w, d, i, &mut f, true, None);
@@ -142,36 +205,21 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
         }
         State::Air => {
             if inp.shield_p && !f.ad_used {
-                airdodge(w, d, &mut f, inp, dir);
+                airdodge(w, d, i, &mut f, inp, dir);
                 integrate(w, d, i, &mut f, false);
             } else {
                 if inp.sp {
                     moves::special(w, d, i, &mut f, inp, dir);
                 } else if inp.atk {
-                    let slot = if inp.up {
-                        "uair"
-                    } else if inp.down {
-                        "dair"
-                    } else if dir != 0. && dir == -f.face {
-                        "bair"
-                    } else if dir != 0. {
-                        "fair"
-                    } else {
-                        "nair"
-                    };
-                    moves::start_move(w, d, i, &mut f, slot);
-                } else if inp.jump && f.jumps > 0 {
-                    f.jumps -= 1;
-                    f.vy = -s.air_jump_speed;
-                    if dir != 0. {
-                        f.vx = dir * s.air_jump_drift;
+                    if g.input.jump_aerials && inp.jump_attack && f.jumps > 0 {
+                        air_jump(w, d, i, &mut f, dir);
                     }
-                    f.ff = false;
-                    f.flip_t = r.flip_frames;
-                    w.sfx("djump");
-                    moves::effects(w, &d.fighters[f.data].fx.air_jump, (f.x, f.y), f.face, (f.vx, f.vy), i);
+                    let slot = moves::aerial_slot(&f, inp);
+                    moves::start_attack(w, d, i, &mut f, slot, inp);
+                } else if inp.jump && f.jumps > 0 {
+                    air_jump(w, d, i, &mut f, dir);
                 }
-                air_phys(w, d, i, &mut f, inp, dir, s.air_accel);
+                air_phys(w, d, i, &mut f, inp, inp.x, s.air_accel);
                 if f.state == State::Air {
                     try_ledge(w, d, i, &mut f, inp, false);
                 }
@@ -179,7 +227,7 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
         }
         State::Attack => moves::st_attack(w, d, i, &mut f, inp, dir),
         State::Helpless => {
-            air_phys(w, d, i, &mut f, inp, dir, g.movement.helpless_accel);
+            air_phys(w, d, i, &mut f, inp, inp.x, g.movement.helpless_accel);
             if f.state == State::Helpless {
                 try_ledge(w, d, i, &mut f, inp, false);
             }
@@ -205,19 +253,26 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
                 return;
             } else if sd.stun > 0 {
                 f.sd.stun -= 1;
+            } else if inp.jump_attack && g.input.jump_aerials {
+                moves::start_jump(w, i, &mut f, inp, true);
+            } else if inp.atk && g.shield.up_smash && inp.strike.up(&inp) {
+                // Up smash out of shield comes before shield + attack = grab.
+                moves::start_attack(w, d, i, &mut f, "usmash", inp);
             } else if inp.jump {
-                f.set_state(State::Jumpsquat);
+                moves::start_jump(w, i, &mut f, inp, g.input.jump_aerials);
             } else if inp.grab || inp.atk {
-                moves::start_move(w, d, i, &mut f, "grab");
+                moves::start_attack(w, d, i, &mut f, "grab", inp);
             } else if inp.sp && inp.up && !f.up_b {
                 moves::up_special(w, d, i, &mut f, dir);
             } else if inp.tap_r || inp.tap_l {
-                roll(w, d, &mut f, if inp.tap_r { 1. } else { -1. });
+                roll(w, d, i, &mut f, if inp.tap_r { 1. } else { -1. });
             } else if inp.tap_d {
+                accept(w, i, Action::SpotDodge);
                 f.set_state(State::Spot);
                 f.inv = g.dodge.spot_invuln;
                 w.sfx("roll");
             } else if !inp.shield {
+                accept(w, i, Action::ShieldDrop);
                 landing(&mut f, g.shield.drop_lag);
                 f.sd.kind = "shield".into();
             }
@@ -251,7 +306,7 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
                 f.vy *= dd.dir_air_dodge_decay;
                 integrate(w, d, i, &mut f, false);
             } else {
-                air_phys(w, d, i, &mut f, inp, dir, g.movement.helpless_accel);
+                air_phys(w, d, i, &mut f, inp, inp.x, g.movement.helpless_accel);
             }
             if f.state == State::Airdodge {
                 try_ledge(w, d, i, &mut f, inp, false);
@@ -266,7 +321,7 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
             let h = &g.hitstun;
             f.hitstun = f.hitstun.saturating_sub(1);
             f.vx *= if f.ground { h.ground_drag } else { h.air_drag };
-            f.vx += dir * h.drift_accel;
+            f.vx += inp.x * h.drift_accel;
             if f.tumble {
                 f.spin += 0.3 * if f.vx >= 0. { 1. } else { -1. };
             }
@@ -289,12 +344,14 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
             } else {
                 if f.t > k.min_frames {
                     if inp.atk {
+                        accept(w, i, Action::GetupAttack);
                         f.set_state(State::Getup);
                         f.sd.kind = "atk".into();
                         f.inv = k.attack_invuln;
                     } else if dir != 0. {
-                        roll(w, d, &mut f, dir);
+                        roll(w, d, i, &mut f, dir);
                     } else if inp.jump || inp.up || inp.shield_p || inp.sp || inp.grab {
+                        accept(w, i, Action::Getup);
                         f.set_state(State::Getup);
                         f.sd.kind = "stand".into();
                         f.inv = k.getup_invuln;
@@ -325,7 +382,7 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
                 f.set_state(State::Idle);
             }
         }
-        State::Ledge => st_ledge(w, d, &mut f, inp, dir),
+        State::Ledge => st_ledge(w, d, i, &mut f, inp, dir),
         State::Climb => st_climb(w, d, &mut f),
         State::Hold => st_hold(w, d, i, &mut f, inp, dir),
         State::Throw => st_throw(w, d, i, &mut f),
@@ -363,7 +420,7 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
 fn ease(k: f64) -> f64 {
     1. - (1. - k) * (1. - k)
 }
-fn st_ledge(w: &World, d: &GameData, f: &mut Fighter, inp: Intent, dir: f64) {
+fn st_ledge(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, dir: f64) {
     let g = &d.global.ledge;
     let s = &d.stages[w.stage];
     let block = &s.blocks[f.sd.ledge_block];
@@ -388,6 +445,7 @@ fn st_ledge(w: &World, d: &GameData, f: &mut Fighter, inp: Intent, dir: f64) {
         None
     };
     if let Some((kind, inv)) = kind {
+        accept(w, i, Action::Ledge(kind.into()));
         let block = f.sd.ledge_block;
         f.set_state(State::Climb);
         f.sd.ledge_block = block;
@@ -395,6 +453,9 @@ fn st_ledge(w: &World, d: &GameData, f: &mut Fighter, inp: Intent, dir: f64) {
         f.sd.kind = kind.into();
         f.inv = f.inv.max(inv);
     } else if inp.down || dir == side || f.t > g.max_hang {
+        if f.t <= g.max_hang {
+            accept(w, i, Action::LedgeDrop);
+        }
         f.set_state(State::Air);
         f.ledge_cd = g.regrab_cooldown;
         f.vy = d.global.sim.ledge_drop_speed;
@@ -454,6 +515,7 @@ fn st_climb(w: &mut World, d: &GameData, f: &mut Fighter) {
     }
     if f.t >= c.end {
         f.face = fx;
+        f.ledge_inv = true;
         f.set_state(State::Idle);
     }
 }
@@ -512,6 +574,7 @@ fn st_hold(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, 
         return;
     }
     if inp.atk {
+        accept(w, i, Action::Pummel);
         f.sd.pt = g.pummel_frames;
         return;
     }
@@ -527,6 +590,7 @@ fn st_hold(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, 
         None
     };
     if let Some(kind) = kind {
+        accept(w, i, Action::Throw(kind.into()));
         f.set_state(State::Throw);
         f.sd.victim = Some(v);
         f.sd.kind = kind.into();
@@ -571,6 +635,10 @@ fn st_throw(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) {
                 vic.y = f.y;
             }
         }
+        for hit in tt.ticks.iter().filter(|h| h.at == f.t) {
+            combat::credit_damage(w, d, i, v, hit.damage);
+        }
+        let vic = &mut w.fighters[v];
         if f.t == tt.release {
             vic.set_state(State::Air);
             vic.ground = false;
@@ -620,6 +688,8 @@ pub fn respawn(w: &World, d: &GameData, i: usize, f: &mut Fighter) {
     f.sh = d.global.shield.max;
     f.inv = 0;
     f.blink = 0;
+    f.di = false;
+    f.ledge_inv = true;
     f.set_state(State::Respawn);
 }
 pub fn ko(w: &mut World, d: &GameData, i: usize) {
@@ -633,6 +703,7 @@ pub fn ko(w: &mut World, d: &GameData, i: usize) {
     f.hitstun = 0;
     f.lag = 0;
     f.tumble = false;
+    f.di = false;
     if w.cfg.training {
         f.stocks = f.stocks.max(1);
         f.set_state(State::Dead);

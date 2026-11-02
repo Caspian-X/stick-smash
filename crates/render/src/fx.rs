@@ -269,8 +269,12 @@ pub fn max_zoom_view(s: &sim::data::Stage, c: &sim::data::render::Camera, aspect
 fn clamp_to(mut cam: Cam, b: &sim::data::stage::Bounds, aspect: f64) -> Cam {
     cam.h = cam.h.min(b.bottom - b.top).min((b.right - b.left) / aspect);
     let (hw, hh) = (cam.h * aspect / 2., cam.h / 2.);
-    cam.x = cam.x.clamp(b.left + hw, b.right - hw);
-    cam.y = cam.y.clamp(b.top + hh, b.bottom - hh);
+    let (cx, cy) = ((b.left + b.right) / 2., (b.top + b.bottom) / 2.);
+    // A view filling the bounds can exceed them by rounding error; its centre has no travel.
+    let dx = ((b.right - b.left) / 2. - hw).max(0.);
+    let dy = ((b.bottom - b.top) / 2. - hh).max(0.);
+    cam.x = cam.x.clamp(cx - dx, cx + dx);
+    cam.y = cam.y.clamp(cy - dy, cy + dy);
     cam
 }
 
@@ -306,6 +310,37 @@ impl CameraRig {
 #[cfg(test)]
 mod camera_tests {
     use super::*;
+
+    #[test]
+    fn built_in_camera_views_keep_ko_boundaries_offscreen() {
+        let g: sim::data::Global = serde_json::from_str(include_str!("../../../assets/global.json")).unwrap();
+        for text in [
+            include_str!("../../../assets/stages/arena/stage.json"),
+            include_str!("../../../assets/stages/citadel/stage.json"),
+            include_str!("../../../assets/stages/isles/stage.json"),
+            include_str!("../../../assets/stages/foundry/stage.json"),
+        ] {
+            let s: sim::data::Stage = serde_json::from_str(text).unwrap();
+            for aspect in [0.75, 4. / 3., 16. / 9., 21. / 9.] {
+                let h = crate::camera::zoom_range(&s, &g.render.camera, aspect).max;
+                for x in [s.blast.left, s.blast.right] {
+                    for y in [s.blast.top, s.blast.bottom] {
+                        let [l, t, r, b] = clamp_to(Cam { x, y, h }, &s.camera, aspect).view(aspect);
+                        assert!(
+                            l >= s.blast.left + 80. - 1e-9 && r <= s.blast.right - 80. + 1e-9,
+                            "{}: horizontal KO clearance",
+                            s.name
+                        );
+                        assert!(
+                            t >= s.blast.top + 80. - 1e-9 && b <= s.blast.bottom - 80. + 1e-9,
+                            "{}: vertical KO clearance",
+                            s.name
+                        );
+                    }
+                }
+            }
+        }
+    }
 
     fn old_target(d: &GameData, w: &World, aspect: f64) -> Cam {
         let s = &d.stages[w.stage];

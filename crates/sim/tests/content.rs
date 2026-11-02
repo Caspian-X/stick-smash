@@ -224,12 +224,21 @@ fn invalid_global_numbers_are_fatal() {
     use serde_json::json;
     for (patch, path) in [
         (json!({"audio":{"sampleRate":0}}), "audio.sampleRate"),
+        (json!({"gait":{"runThreshold":1.1}}), "gait.runThreshold"),
+        (json!({"gait":{"walkThreshold":-0.1}}), "gait.walkThreshold"),
+        (json!({"gait":{"runThreshold":0.6,"walkThreshold":0.7}}), "gait.walkThreshold"),
         (json!({"audio":{"strengthLevels":0}}), "audio.strengthLevels"),
         (json!({"audio":{"maxVoices":10000}}), "audio.maxVoices"),
         (json!({"audio":{"sounds":{"hit":{"layers":[]}}}}), "audio.sounds.hit.layers"),
+        (json!({"knockback":{"ultimate":{"launchSpeed":0}}}), "knockback.ultimate.launchSpeed"),
+        (json!({"knockback":{"ultimate":{"damageScale":-1}}}), "knockback.ultimate.damageScale"),
         (json!({"knockback":{"chargeDamageDivisor":0}}), "knockback.chargeDamageDivisor"),
         (json!({"respawn":{"descendFrames":0}}), "respawn.descendFrames"),
         (json!({"hitTypes":{"windbox":{"maxSpeed":-1}}}), "hitTypes.windbox.maxSpeed"),
+        (json!({"render":{"blastZone":{"dash":0}}}), "render.blastZone.dash"),
+        (json!({"render":{"blastZone":{"width":0}}}), "render.blastZone.width"),
+        (json!({"render":{"blastZone":{"gap":-1}}}), "render.blastZone.gap"),
+        (json!({"render":{"blastZone":{"alpha":1.5}}}), "render.blastZone.alpha"),
         (json!({"ledge":{"climb":{"a":0}}}), "ledge.climb"),
         (json!({"ledge":{"roll":{"a":10,"b":10}}}), "ledge.roll"),
     ] {
@@ -244,6 +253,8 @@ fn presentation_values_that_disable_an_effect_still_load() {
     use serde_json::json;
     for patch in [
         json!({"render":{"select":{"dropScale":0}}}),
+        json!({"render":{"blastZone":null}}),
+        json!({"render":{"blastZone":{"alpha":0}}}),
         json!({"render":{"hud":{"look":{"tagHeight":0,"anchorHeight":-10}}}}),
         json!({"render":{"select":{"pointer":{"slideSecs":0,"bounceSecs":0}}}}),
     ] {
@@ -256,7 +267,7 @@ fn invalid_stage_numbers_skip_package_with_path() {
     use serde_json::json;
     let file = "stages/arena/stage.json";
     for (patch, path) in [
-        (json!({"blast":{"left":1600}}), "blast"),
+        (json!({"blast":{"left":2000,"right":1000}}), "blast"),
         (json!({"camera":{"bottom":-1000}}), "camera"),
         (
             json!({"blocks":[{"left":300,"right":980,"top":520,"bottom":580,"underDepth":100,"underInset":0,"leftLedge":true,"rightLedge":true}]}),

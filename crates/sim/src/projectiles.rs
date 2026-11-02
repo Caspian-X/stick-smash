@@ -30,7 +30,17 @@ pub fn spawn(w: &mut World, d: &GameData, i: usize, f: &Fighter, id: &str) {
         bounces: 0,
         cooldown: 0,
         age: 0,
+        born: w.frame,
         surf: None,
+        released: None,
+        automatic: false,
+        stage: 0,
+        face: f.face,
+        damage: 0.,
+        hits: vec![],
+        damage_hits: vec![],
+        power: 1.,
+        speed: 1.,
     });
     if let Some(s) = &p.spawn_sfx {
         w.sfx(s.clone());
@@ -80,6 +90,10 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
     let s = &d.stages[w.stage];
     let g = &d.global.sim;
     for pi in 0..w.projs.len() {
+        if d.fighters[w.projs[pi].fighter_data].projectiles[&w.projs[pi].id].article.is_some() {
+            crate::articles::step(w, d, pi);
+            continue;
+        }
         let mut p = w.projs[pi].clone();
         let def = &d.fighters[p.fighter_data].projectiles[&p.id];
         if def.explosion.is_some() && p.life <= 0 {
@@ -174,7 +188,21 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                 w.sfx(s.clone());
             }
         }
+        if detonate || def.explosion.is_none() && p.life > 0 {
+            crate::articles::projectile_contacts(w, d, &mut p, detonate);
+        }
         for v in 0..w.fighters.len() {
+            if !detonate
+                && w.opponents(p.owner, v)
+                && let Some(c) = combat::reflecting(d, &w.fighters[v])
+                && libm::hypot(p.x - w.fighters[v].x, p.y - (w.fighters[v].y - c.height)) < p.r + c.radius
+            {
+                p.owner = v;
+                p.face = -p.face;
+                p.vx = -p.vx * c.speed;
+                p.hit.damage *= c.damage;
+                continue;
+            }
             if def.explosion.is_some() && !detonate
                 || !w.opponents(p.owner, v)
                 || !w.fighters[v].hittable()
@@ -212,7 +240,9 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                 sign(p.vx)
             };
             let label = Some(def.name.clone());
-            if w.fighters[v].state == State::Shield {
+            if combat::parrying(d, &w.fighters[v]) {
+                combat::parry(w, d, v, None);
+            } else if w.fighters[v].state == State::Shield {
                 combat::shield_hit(
                     w,
                     d,
@@ -241,6 +271,7 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
             if qi != pi
                 && w.opponents(p.owner, q.owner)
                 && q.life > 0
+                && d.fighters[q.fighter_data].projectiles[&q.id].article.is_none()
                 && p.life > 0
                 && libm::hypot(q.x - p.x, q.y - p.y) < p.r + q.r
             {

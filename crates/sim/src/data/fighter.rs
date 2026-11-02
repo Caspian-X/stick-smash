@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::common::{Pt, Rect, is_default};
+use super::common::{Color, Pt, Rect, is_default};
 use super::hitbox::Hitbox;
 use super::moves::{Fx, Moves, Throws};
 use super::visual::{Anim, Attachment, Pose, Shape, Style};
@@ -60,6 +60,13 @@ pub struct Stats {
     pub weight: f64,
     pub run_speed: f64,
     pub run_accel: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dash_speed: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dash_frames: Option<u32>,
+    /// Full-tilt walk speed; defaults to runSpeed × gait.walkSpeed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub walk_speed: Option<f64>,
     pub ground_friction: f64,
     /// Full hop launch speed (upward).
     pub jump_speed: f64,
@@ -164,6 +171,9 @@ pub struct Projectile {
     /// Suppress contact hits until armed, then explode on proximity or lifetime expiry.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub explosion: Option<Explosion>,
+    /// Independently controlled construction / travel followed by a staged attack timeline.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub article: Option<Article>,
     /// Drawing: `shapes` rotate by `spin` degrees per pixel traveled, `overlay` doesn't rotate.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub shapes: Vec<Shape>,
@@ -171,6 +181,55 @@ pub struct Projectile {
     pub overlay: Vec<Shape>,
     #[serde(default, skip_serializing_if = "is_default")]
     pub spin: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Article {
+    pub slot: String,
+    pub min_release: u32,
+    pub auto_release: u32,
+    /// Release the special button to launch; otherwise a second special press launches.
+    #[serde(default)]
+    pub release_on_up: bool,
+    /// Vertical speed selected by the live stick during travel, zero for stationary construction.
+    #[serde(default)]
+    pub steer: f64,
+    /// Optional destructible body, relative to the projectile origin.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hurtbox: Option<Rect>,
+    pub stages: Vec<ArticleStage>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ArticleStage {
+    /// Select the last stage whose construction age has been reached, frozen at release.
+    pub from: u32,
+    pub startup: u32,
+    /// Optional shorter windup for automatic release from standby. Hit windows shift by the same amount.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub auto_startup: Option<u32>,
+    pub frames: u32,
+    pub vel: Pt,
+    /// Zero means indestructible.
+    #[serde(default)]
+    pub health: f64,
+    pub hitboxes: Vec<Hitbox>,
+    #[serde(default)]
+    pub shapes: Vec<Shape>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub attack_shapes: Vec<Shape>,
+    /// Connect active tracked damaging hitbox centers, following their per-frame tracks (e.g. a summoned blade).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stroke: Option<ArticleStroke>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ArticleStroke {
+    pub width: f64,
+    pub color: Color,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]

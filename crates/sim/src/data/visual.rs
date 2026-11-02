@@ -200,7 +200,8 @@ pub struct Trail {
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct AttachAnim {
-    /// `[frame, degrees]`.
+    /// `[frame, degrees]`, interpolated without wrapping. Use 350 → 430 to rotate forward through 360° to 70°;
+    /// 350 → 70 rotates backward by 280°. Keep subsequent keys on the same turn for continuous trails.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub angle: Vec<[f64; 2]>,
     /// `[frame, x, y]` offset from the joint.

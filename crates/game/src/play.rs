@@ -32,6 +32,8 @@ pub struct Slot {
     pub cpu: Option<u8>,
     pub team: Option<u8>,
     pub tap_jump: bool,
+    /// Control options of the device playing it (copied into the match config).
+    pub controls: sim::input::Controls,
     /// "P1", "CPU", "Dummy".
     pub tag: String,
     /// Palette index the fighter is drawn with (its slot, or its team's color).
@@ -93,6 +95,8 @@ pub struct Match {
     /// Never record (editor test matches, rematches included), so tests don't evict real auto-saves.
     pub unrecorded: bool,
     pub playback: Option<crate::replay::Playback>,
+    /// Training: P1's recent controls and accepted actions.
+    pub log: crate::training::InputLog,
 }
 
 /// Nonzero: every new match uses this seed (screenshot mode, so shots reproduce).
@@ -130,6 +134,7 @@ impl Match {
                     cpu: s.cpu,
                     team: s.team,
                     tap_jump: s.tap_jump,
+                    controls: s.controls,
                 })
                 .collect(),
         };
@@ -160,6 +165,7 @@ impl Match {
             recording_done: false,
             unrecorded: false,
             playback: None,
+            log: Default::default(),
         })
     }
 
@@ -210,6 +216,7 @@ impl Match {
                 cpu: Some(2),
                 team: None,
                 tap_jump: true,
+                controls: Default::default(),
                 tag: "CPU".into(),
                 color: i,
             })
@@ -225,8 +232,10 @@ impl Match {
                 if self.mode == Mode::Training && i == 1 {
                     let f = &w.fighters[1];
                     return match self.dummy.mode {
-                        DummyMode::Shield => Input { stick: (0, 0), buttons: 16 },
-                        DummyMode::Jump if f.state == FState::Idle && f.t > 20 => Input { stick: (0, 0), buttons: 1 },
+                        DummyMode::Shield => Input { stick: (0, 0), buttons: 16, ..Default::default() },
+                        DummyMode::Jump if f.state == FState::Idle && f.t > 20 => {
+                            Input { stick: (0, 0), buttons: 1, ..Default::default() }
+                        }
                         DummyMode::Human => self.dummy.dev.map_or_else(Input::default, |d| devs.take(d)),
                         _ => Input::default(),
                     };
@@ -264,8 +273,12 @@ impl Match {
             self.sounds.extend(self.world.fx.iter().filter(|fx| matches!(fx, sim::Fx::Sfx { .. })).cloned());
         }
         scene.push(&self.world);
+        if self.mode == Mode::Training {
+            self.log.record(self.world.frame, inputs[0], &self.world.acts);
+        }
         self.world.fx.clear();
         self.world.hits.clear();
+        self.world.acts.clear();
         if !self.recording_done
             && let Some(r) = &mut self.recording
         {
@@ -510,6 +523,7 @@ mod tests {
             cpu: Some(1),
             team: Some((i % 2) as u8),
             tap_jump: true,
+            controls: Default::default(),
             tag: "CPU".into(),
             color: i,
         };
@@ -529,6 +543,7 @@ mod tests {
             cpu: Some(2),
             team: None,
             tap_jump: true,
+            controls: Default::default(),
             tag: "CPU".into(),
             color: i,
         };
@@ -573,7 +588,7 @@ mod tests {
         assert_eq!(m.recording.as_ref().unwrap().ticks, ticks);
         m.world.fighters[0].history.held[0] = true;
         m.world.fighters[0].history.last_press[0] = m.world.frame as i64;
-        m.world.fighters[0].buffer.entries.push(sim::input::BufferedPress {
+        m.world.fighters[0].buffer.cmd = Some(sim::input::BufferedPress {
             tick: m.world.frame,
             intent: sim::input::Intent { atk: true, ..default() },
         });

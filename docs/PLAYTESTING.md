@@ -109,10 +109,18 @@ just verify-replays "$HOME/Library/Application Support/stick-smash/replays"
 
 ## Session checklist
 
-- **Movement and feel**: walk, dash, turnaround, jump heights (short hop, full hop, air jumps), fast fall, landing
-  lag, platforms (land, drop through), ledge grab and getup options, shield, roll, spot-dodge, air-dodge, techs.
+- **Movement and feel**: walk (partial tilts), dash, dash back, run turnaround into a back air, braking, jump heights
+  (short hop, full hop, two-button short hop, air jumps), fast fall just after the peak, landing lag, platforms
+  (flick to drop, slow press to crouch and down tilt), ledge grab, trump and getup options, shield, up smash and
+  parry out of shield, DI on launches, roll, spot-dodge, air-dodge, techs. Watch training's **Inputs** list to see
+  which press became which action (and when it was buffered).
 - **Every fighter's kit**: Archer, Brawler, Dancer, Golem, King, Lancer, Ninja, Swordfighter, Tinker, Wizard,
   Wrangler, Yo-yo. Tilts, smashes (charged), aerials, specials, grab and throws, and their recovery from far away.
+- **Wizard (Zelda adaptation)**: test the one-frame lightning sweet spots against late 4% sour hits; rapid jab
+  hold/release; shield up-smash; reflect several shots during Nayru's Love; guide Din's Fire up/down, release
+  early and at maximum; hold the intended warp direction through Farore's Wind disappearance (neutral aims
+  up); press special again to release each Phantom level, or wait until Wizard is free and attack alongside
+  the waiting Phantom. Test both recovery sides and destruction of the summon. See [source/approximations](imports/wizard.md).
 - **Every stage**: Arena, Citadel, Tidebreak Isles, Foundry Lifts (moving platforms). Blast zones, camera framing
   with players far apart, respawn platforms.
 - **CPUs** at Easy, Normal and Hard: do they recover, approach, shield, and finish matches?

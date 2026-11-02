@@ -19,7 +19,7 @@ use crate::style::{self, DIM, FAINT, GOLD, RED, STAR, caps, faint, heading};
 use crate::ui::at_playhead;
 use crate::{Dialog, Editor, doc, form, throw_mut};
 
-const TRIGGERS: [(Trigger, &str); 11] = [
+const TRIGGERS: [(Trigger, &str); 12] = [
     (Trigger::Timeout, "timeout"),
     (Trigger::Land, "land"),
     (Trigger::Grounded, "grounded"),
@@ -29,6 +29,7 @@ const TRIGGERS: [(Trigger, &str); 11] = [
     (Trigger::AttackHeld, "attackHeld"),
     (Trigger::TargetNear, "targetNear"),
     (Trigger::ShieldPress, "shieldPress"),
+    (Trigger::ArticleRelease, "articleRelease"),
     (Trigger::Counter, "counter"),
     (Trigger::Hit, "hit"),
 ];
@@ -231,6 +232,14 @@ pub fn inspector(ui: &mut egui::Ui, ed: &mut Editor) {
                     int(ui, "total", "Throw length in frames", &mut t.total);
                 });
                 section(ui, "Hit", true, |ui| hit_fields(ui, &mut t.hit, false, data.as_deref(), w));
+                section(ui, "Pre-release damage", false, |ui| {
+                    form::edit(
+                        ui,
+                        egui::Id::new("throw-ticks"),
+                        &form::def("Throw")["properties"]["ticks"],
+                        &mut t.ticks,
+                    );
+                });
             }
             Subject::Pose(name) => pose_panel(ui, ed, &name, &errors),
             Subject::Fighter => fighter_panel(ui, ed, &errors),
@@ -598,8 +607,8 @@ pub fn new_hitbox(t: u32) -> Hitbox {
         y: 40.,
         r: 14.,
         damage: 6.,
-        bkb: 5.,
-        kbg: 0.1,
+        bkb: 35.,
+        kbg: 1.,
         angle: 40.,
         hitstun_mult: 1.,
         hitlag_mult: 1.,
@@ -680,10 +689,10 @@ fn hit_fields(ui: &mut egui::Ui, b: &mut Hitbox, geometry: bool, data: Option<&G
     if let Some(gd) = data
         && !matches!(b.kind, HitType::Grab | HitType::Windbox)
     {
-        let kb = |pct: f64| sim::combat::knockback(gd, b, pct, weight);
+        let kb = |pct: f64| sim::combat::knockback(gd, b, pct + b.damage, weight);
         ui.add_space(4.);
         ui.label(caps("Knockback vs. this fighter"))
-            .on_hover_text("Knockback and hitstun frames at a few victim percents, with this fighter's weight");
+            .on_hover_text("Knockback and hitstun at a few pre-hit victim percents, including this hit's damage, with this fighter's weight");
         egui::Grid::new("kb").num_columns(5).spacing([12., 2.]).show(ui, |ui| {
             ui.label(faint("victim %"));
             for p in [0., 50., 100., 150.] {
@@ -969,6 +978,8 @@ fn phase_more(ui: &mut egui::Ui, p: &mut Phase) {
         opt_num(ui, "armor threshold", &d("Phase", "armorThreshold"), &mut p.armor_threshold, 6., "none");
         check(ui, "hover", "Airborne: vertical speed held at 0", &mut p.hover);
         opt_num(ui, "fallCap", "Max fall speed in this phase", &mut p.fall_cap, 4., "fighter's");
+        opt_num(ui, "travel speed", &d("Phase", "travelSpeed"), &mut p.travel_speed, 20., "none");
+        check(ui, "hidden", &d("Phase", "hidden"), &mut p.hidden);
         num(ui, "air accel ×", "0 = no drift control", &mut p.air_accel_mult, 0.01);
         int(ui, "slide", "Grounded: frames below this use slide friction", &mut p.slide);
         opt_int(ui, "ledgeGrab", "Can grab ledges from this phase frame on", &mut p.ledge_grab, 1, "never");
@@ -981,6 +992,8 @@ fn phase_more(ui: &mut egui::Ui, p: &mut Phase) {
     });
     ui.label(caps("Target detection"));
     form::edit(ui, egui::Id::new("phase-detection"), &form::def("Phase")["properties"]["detection"], &mut p.detection);
+    ui.label(caps("Reflector"));
+    form::edit(ui, egui::Id::new("phase-reflector"), &form::def("Phase")["properties"]["reflector"], &mut p.reflector);
     if let Some(c) = &mut p.charge {
         grid(ui, "charge", |ui| {
             int(ui, "  frame", "Phase frame that freezes while held", &mut c.frame);
@@ -1142,6 +1155,9 @@ fn fighter_panel(ui: &mut egui::Ui, ed: &mut Editor, errors: &[ContentError]) {
             num(ui, "weight", &stat_tip("weight"), &mut s.weight, 0.005);
             num(ui, "run speed", &stat_tip("runSpeed"), &mut s.run_speed, 0.05);
             num(ui, "run accel", &stat_tip("runAccel"), &mut s.run_accel, 0.01);
+            opt_num(ui, "walk speed", &d("Stats", "walkSpeed"), &mut s.walk_speed, 3., "global ratio");
+            opt_num(ui, "dash speed", &d("Stats", "dashSpeed"), &mut s.dash_speed, 6., "global ratio");
+            opt_int(ui, "dash frames", &d("Stats", "dashFrames"), &mut s.dash_frames, 16, "global");
             num(ui, "ground friction", &stat_tip("groundFriction"), &mut s.ground_friction, 0.005);
             num(ui, "jump speed", &stat_tip("jumpSpeed"), &mut s.jump_speed, 0.05);
             num(ui, "short hop", &stat_tip("shortHopSpeed"), &mut s.short_hop_speed, 0.05);

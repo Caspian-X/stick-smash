@@ -184,6 +184,7 @@ pub fn simulate(data: Arc<GameData>, fighter: &str, subj: &Subject, setup: &Setu
     let mut marks = vec![mark(&w)];
     w.fx.clear();
     w.hits.clear();
+    w.acts.clear();
     let limit = match subj {
         Subject::Pose(_) => 1,
         Subject::Fighter | Subject::Data(_) => 120,
@@ -210,13 +211,16 @@ pub fn simulate(data: Arc<GameData>, fighter: &str, subj: &Subject, setup: &Setu
         marks.push(mark(&w));
         w.fx.clear();
         w.hits.clear();
+        w.acts.clear();
         if subj.idle() {
             continue;
         }
         let f = &w.fighters[0];
         started |= !matches!(f.state, State::Idle | State::Air);
         let dummy_busy = dummy && matches!(w.fighters[1].state, State::Hitstun | State::Grabbed | State::Shieldbreak);
-        if started && f.actionable() && f.lag == 0 && !dummy_busy {
+        let article_busy =
+            w.projs.iter().any(|p| p.owner == 0 && d.fighters[p.fighter_data].projectiles[&p.id].article.is_some());
+        if started && f.actionable(&d.global) && !dummy_busy && !article_busy {
             let at = *free_since.get_or_insert(frames.len());
             if frames.len() >= at + TAIL {
                 break;

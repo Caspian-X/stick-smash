@@ -1,7 +1,7 @@
 use crate::{
     GameData,
     data::{Color, Hitbox},
-    input::{Buffer, History},
+    input::{Buffer, Controls, History},
     rng::Rng,
 };
 use serde::{Deserialize, Serialize};
@@ -12,10 +12,12 @@ pub struct PlayerConfig {
     pub cpu: Option<u8>,
     pub team: Option<u8>,
     pub tap_jump: bool,
+    #[serde(default)]
+    pub controls: Controls,
 }
 impl PlayerConfig {
     pub fn human(fighter: &str) -> Self {
-        Self { fighter: fighter.into(), cpu: None, team: None, tap_jump: true }
+        Self { fighter: fighter.into(), cpu: None, team: None, tap_jump: true, controls: Controls::default() }
     }
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -140,6 +142,11 @@ pub struct StateData {
     pub timer: f64,
     pub pt: u32,
     pub stun: i32,
+    pub jump_aerial: Option<String>,
+    /// Jumpsquat ends in a short hop regardless of the jump button (second jump press).
+    pub short: bool,
+    /// World frame the state was entered (ledge hang, for trump timing).
+    pub entered: u64,
 }
 impl StateData {
     pub(crate) fn can_hit(&self, victim: usize, tick: u32, rehit: Option<u32>) -> bool {
@@ -159,12 +166,17 @@ impl StateData {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MoveState {
     pub slot: String,
+    #[serde(default)]
+    pub started: u64,
     pub phase: usize,
     pub t: u32,
     pub elapsed: u32,
     pub charge: u32,
     pub counter_damage: f64,
     pub reversed: bool,
+    /// The attack stick (not the button) started it, so only the stick holds its charge.
+    #[serde(default)]
+    pub stick: bool,
 }
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct AiState {
@@ -219,15 +231,38 @@ pub struct Fighter {
     pub sh: f64,
     pub last_sp: i64,
     pub in_dir: f64,
+    pub in_down: bool,
     pub ai: AiState,
     pub history: History,
     pub buffer: Buffer,
+    /// Ground gait while idle (reset by every state change).
+    pub gait: Gait,
+    pub gait_t: u32,
+    /// A launch waiting for directional influence when hitlag ends.
+    pub di: bool,
+    /// The next ledge grab grants invulnerability (see `ledge.freshInvuln`).
+    pub ledge_inv: bool,
+}
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Gait {
+    #[default]
+    Stand,
+    Walk,
+    Dash,
+    Run,
+    Turn,
+    Brake,
+    Crouch,
+    Rise,
 }
 impl Fighter {
     pub fn set_state(&mut self, state: State) {
         self.state = state;
         self.t = 0;
         self.sd = StateData::default();
+        self.gait = Gait::Stand;
+        self.gait_t = 0;
         if state != State::Attack {
             self.mov = None;
         }
@@ -237,10 +272,17 @@ impl Fighter {
             && self.inv == 0
             && self.blink == 0
     }
-    pub fn actionable(&self) -> bool {
+    /// Can take a new action this tick (before the state clock advances). Shared by buffering, frame advantage
+    /// and the editor sandbox.
+    pub fn actionable(&self, g: &crate::data::global::Global) -> bool {
         self.lag == 0
-            && (matches!(self.state, State::Idle | State::Air | State::Ledge)
-                || self.state == State::Shield && self.sd.stun <= 0)
+            && match self.state {
+                State::Idle | State::Air => true,
+                State::Shield => self.sd.stun <= 0,
+                State::Ledge => self.t.saturating_add(1) >= g.ledge.min_hang,
+                State::Knockdown => self.t >= g.knockdown.min_frames,
+                _ => false,
+            }
     }
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -261,7 +303,31 @@ pub struct Projectile {
     #[serde(default)]
     pub age: u32,
     #[serde(default)]
+    pub born: u64,
+    #[serde(default)]
     pub surf: Option<usize>,
+    #[serde(default)]
+    pub released: Option<u32>,
+    #[serde(default)]
+    pub automatic: bool,
+    #[serde(default)]
+    pub stage: usize,
+    #[serde(default)]
+    pub face: f64,
+    #[serde(default)]
+    pub damage: f64,
+    /// Victim and projectile age of the last contact, shared by overlapping article hitboxes.
+    #[serde(default)]
+    pub hits: Vec<(usize, u32)>,
+    #[serde(default)]
+    pub damage_hits: Vec<(usize, u64, usize, u32)>,
+    #[serde(default = "unit_multiplier")]
+    pub power: f64,
+    #[serde(default = "unit_multiplier")]
+    pub speed: f64,
+}
+fn unit_multiplier() -> f64 {
+    1.
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Trace {
@@ -295,6 +361,9 @@ pub struct World {
     pub fx: Vec<Fx>,
     /// Per-victim hits; the caller drains these after each tick, like `fx`.
     pub hits: Vec<HitRecord>,
+    /// Actions accepted this tick (input display); drained like `fx`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub acts: Vec<crate::actions::Accepted>,
     pub cfg: MatchConfig,
     pub stage: usize,
     pub fighters: Vec<Fighter>,
@@ -386,9 +455,14 @@ impl World {
                     sh: data.global.shield.max,
                     last_sp: -99,
                     in_dir: 0.,
+                    in_down: false,
                     ai: AiState { cool: data.global.ai.initial_cool, ..Default::default() },
                     history: History::default(),
                     buffer: Buffer::default(),
+                    gait: Gait::Stand,
+                    gait_t: 0,
+                    di: false,
+                    ledge_inv: true,
                 }
             })
             .collect();
@@ -398,6 +472,7 @@ impl World {
             cosmetic_rng: data.global.sim.separate_cosmetic_rng.then_some(Rng(cfg.seed ^ 0x9e37_79b9)),
             fx: vec![],
             hits: vec![],
+            acts: vec![],
             stage,
             fighters,
             projs: vec![],

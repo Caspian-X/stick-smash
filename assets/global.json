@@ -5,7 +5,7 @@
     "jumpsquat": 4,
     "airDrag": 0.96,
     "airDragHeld": 0.99,
-    "fastFallMinVy": -3,
+    "fastFallMinVy": 0,
     "fastFallKick": 14,
     "attackAirAccel": 0.25,
     "aerialAccel": 0.45,
@@ -15,6 +15,7 @@
     "attackSlideFriction": 0.95,
     "attackAirDrag": 0.98,
     "platformDrop": 10,
+    "platformPass": true,
     "pushRadius": 26,
     "pushStrength": 0.15,
     "dashAttackSpeed": 4.3,
@@ -24,6 +25,7 @@
   },
   "knockback": {
     "kbPercentScale": 1.4,
+    "ultimate": { "percentScale": 0.1, "damageScale": 0.05, "weightScale": 1.4, "base": 18, "launchSpeed": 0.105 },
     "tumbleThreshold": 13,
     "groundBounce": 0.6,
     "chargeDamageDivisor": 150,
@@ -59,6 +61,7 @@
     "pushBase": 1.2,
     "attackerPushback": 1.5,
     "dropLag": 7,
+    "upSmash": true,
     "breakLaunch": 15,
     "breakGravity": 0.55,
     "breakMaxFall": 10,
@@ -97,8 +100,17 @@
     "attackInvuln": 14,
     "attackActive": [14, 17],
     "attack": [
-      { "x": 38, "y": 14, "r": 24, "damage": 6, "bkb": 6, "kbg": 0.05, "angle": 30, "dir": "away" },
-      { "x": -38, "y": 14, "r": 24, "damage": 6, "bkb": 6, "kbg": 0.05, "angle": 30, "dir": "away" }
+      { "x": 38, "y": 14, "r": 24, "damage": 6, "bkb": 35.7142857143, "kbg": 1.1904761905, "angle": 30, "dir": "away" },
+      {
+        "x": -38,
+        "y": 14,
+        "r": 24,
+        "damage": 6,
+        "bkb": 35.7142857143,
+        "kbg": 1.1904761905,
+        "angle": 30,
+        "dir": "away"
+      }
     ]
   },
   "ledge": {
@@ -113,9 +125,13 @@
     "jump": { "a": 7, "b": 7, "end": 7, "dist": 0, "inv": 8 },
     "attackActive": [22, 26],
     "attackHit": [
-      { "x": 38, "y": 30, "r": 26, "damage": 7, "bkb": 6, "kbg": 0.06, "angle": 35 }
-    ]
+      { "x": 38, "y": 30, "r": 26, "damage": 7, "bkb": 34.2857142857, "kbg": 1.2698412698, "angle": 35 }
+    ],
+    "trump": { "pushX": 4, "pushY": 6, "regrabCooldown": 30, "minHang": 2 },
+    "freshInvuln": true
   },
+  "parry": { "window": 5, "freeze": 6, "attackerFreeze": 12, "invuln": 8 },
+  "di": { "maxAngle": 15, "minStick": 0.3 },
   "grab": {
     "holdBase": 90,
     "holdPerPercent": 0.9,
@@ -140,7 +156,31 @@
     { "main": "#50dce3", "dark": "#2e8990", "light": "#c9fbff" },
     { "main": "#f77fbc", "dark": "#a64878", "light": "#ffd5eb" }
   ],
-  "input": { "stickThreshold": 64, "bufferFrames": 5 },
+  "input": {
+    "stickThreshold": 64,
+    "deadzone": 18,
+    "flickThreshold": 100,
+    "flickFrames": 3,
+    "bufferFrames": 5,
+    "comboFrames": 2,
+    "fastFallBuffer": 6,
+    "jumpAerials": true
+  },
+  "gait": {
+    "enabled": true,
+    "walkSpeed": 0.55,
+    "walkAccel": 0.7,
+    "runThreshold": 0.75,
+    "walkThreshold": 0.6,
+    "dashLock": true,
+    "dashSpeed": 1,
+    "dashFrames": 10,
+    "turnFrames": 9,
+    "turnFriction": 0.9,
+    "brakeFrames": 8,
+    "brakeFriction": 0.86,
+    "crouchFrames": 6
+  },
   "sim": {
     "separateCosmeticRng": true,
     "jumpsquatFriction": 0.9,
@@ -260,6 +300,7 @@
   },
   "render": {
     "alphaGamma": 1.6,
+    "blastZone": { "color": "#ff5d78", "alpha": 0.55, "width": 2, "dash": 10, "gap": 12 },
     "camera": {
       "padX": 110,
       "padTop": 150,

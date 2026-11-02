@@ -55,6 +55,15 @@ convert-ts:
     node tools/convert-ts/convert.mjs
     just bless
 
+# Rebuild the Zelda-based Wizard from pinned source scripts and fitted authoring rules
+import-wizard:
+    python3 tools/import-zelda/import.py
+    just bless
+
+# Download and inspect the pinned Zelda reference animations (requires Pillow)
+wizard-visuals dir="/tmp/wizard-reference":
+    python3 tools/import-zelda/visuals.py "{{dir}}"
+
 # Re-simulate every replay and verify checksums and completion
 verify-replays dir:
     cargo run -p game -- --verify-replays "{{dir}}"

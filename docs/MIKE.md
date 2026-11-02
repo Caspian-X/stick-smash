@@ -1,5 +1,7 @@
 # Mike tuning reference
 
+This is the worked character record for the [shared import workflow](CHARACTER_IMPORTS.md).
+
 Mike is a playable starting point for an Ike-like heavy sword fighter. His package is
 [`assets/fighters/mike/fighter.json`](../assets/fighters/mike/fighter.json), inheriting only the shared
 abstract `base`. Timings and damage reference [Ultimate Frame Data: Ike](https://ultimateframedata.com/ike)
@@ -50,8 +52,16 @@ Script launch angles are preserved where supported: 361 maps to `sakurai`, 270 t
 and 367 to `autolink`. Ground/air collision masks distinguish the late up-smash ground hit, the falling
 Aether ground launch versus air spike, and smaller aerial grab volumes. Normal down air keeps the
 upper launching sphere ahead of the lower spike spheres in collision priority. Hitlag multipliers are
-imported; base hitlag and knockback formulas remain shared. Normal-attack base knockback is scaled by
-0.1 and growth by 0.001 from the script; this is a starting conversion, not Smash's knockback equation.
+imported; base hitlag remains shared. Every fighter now uses the shared Ultimate-style knockback
+formula: source base knockback is unscaled, and source growth is divided by 100 (90 → 0.9).
+The no-staleness/no-rage Ultimate equation includes the hit's damage and post-hit victim percent;
+reference launch speed is converted at 0.03 × 3.5 pixels per unit. This replaces the original rough
+linear conversion, which ignored damage-dependent growth. Fixed-knockback hits retain their adapted
+launch strengths in the shared reference units; autolinks retain their separate pull velocity. Launch
+decay, hitstun, blast zones, rage, staleness and the 1v1 damage bonus are not a full Ultimate trajectory simulation.
+The equation is cross-checked against the primary implementation in
+[Rubendal's Ultimate calculator](https://github.com/rubendal/SSBU-Calculator/blob/master/js/formulas.js)
+(`VSKB`, with staleness and rage disabled).
 Special travel, charge-column thresholds, counter scaling and flame-zone damage remain adaptations.
 All of these choices live in the fighter's editable data.
 
@@ -61,8 +71,12 @@ speeds use 6, so run speed is 5.2745, air speed is 3.969, gravity is 0.552, and 
 built-in platforms. Weight is the reciprocal multiplier 100/107 because this sim represents heavier
 fighters with smaller knockback multipliers.
 
-The shared movement system has one run speed/acceleration and a global jumpsquat, rather than separate
-walk/initial-dash states and per-fighter jumpsquat. Shared shield, dodge, hitlag, knockback, input buffering
+The shared movement system now supplies analog walking, initial dash, running and turnarounds, with an
+optional per-fighter `walkSpeed` and a global jumpsquat. The movement ratios above describe the original
+import; later tuning should be recorded separately. A gradual push now promotes walking to running,
+and easing off returns to walking. These gait rules address input-dependent speed differences without
+changing Mike's imported movement stats. Initial dash uses the shared command restrictions documented in
+[FORMAT.md](FORMAT.md#simulation-tuning-and-cpu-data). Shared shield, dodge, hitlag, knockback, input buffering
 and ledge rules remain this game's rules. Hurtboxes remain the base fighter's rectangles; the original
 per-bone 3D hurt volumes are not imported. Autocancels remove the attack's landing penalty; the landing
 state still follows the sim's normal next-tick exit. Throws combine the listed preliminary and release
@@ -71,8 +85,11 @@ shared grab rules. Counter reflects projectiles through the existing counter sys
 
 Aether's tossed sword is a short-lived ballistic projectile: it disappears on contact, and the held
 sword reappears on ascent. It does not simulate a separately caught weapon. Armor uses a high damage
-threshold. Eruption uses the shared charge knockback bonus and does not model self-damage or terrain-following
+threshold. Eruption derives charge knockback from charged damage and does not model self-damage or terrain-following
 flame pillars. Ground attacks, including Quickdraw's grounded rush, retain the sim's edge stop.
+Quickdraw charging now uses normal gravity instead of hovering; its horizontal rush still hovers.
+Gravity during startup is documented for [Quick Draw](https://www.ssbwiki.com/Quick_Draw), but exact
+special-specific gravity coefficients have not been extracted, so ordinary fall speed here remains an adaptation.
 
 ## Checking changes
 

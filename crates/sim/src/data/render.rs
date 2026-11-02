@@ -19,6 +19,20 @@ pub struct Render {
     pub hud: Hud,
     pub select: SelectLook,
     pub interpolate: Interpolate,
+    /// Visible KO boundaries during gameplay. Omit to hide them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub blast_zone: Option<BlastZoneLook>,
+}
+
+/// Dashed KO boundary. Width, dash and gap are in screen pixels, independent of camera zoom.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BlastZoneLook {
+    pub color: Color,
+    pub alpha: f64,
+    pub width: f64,
+    pub dash: f64,
+    pub gap: f64,
 }
 
 /// Drawing between ticks: something that moved further than this (stage pixels) in one tick teleported and is

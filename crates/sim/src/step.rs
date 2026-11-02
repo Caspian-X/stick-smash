@@ -43,20 +43,24 @@ pub fn step_world(w: &mut World, d: &GameData, inputs: &[Input]) {
     for i in 0..w.fighters.len() {
         let p = &w.cfg.players[i];
         let inp = if let Some(level) = p.cpu {
-            if frozen { Intent::default() } else { crate::ai::ai_input(w, d, i, level) }
+            if frozen { Intent::default() } else { crate::ai::ai_input(w, d, i, level).digital() }
         } else {
             let intent = w.fighters[i].history.derive(
                 inputs.get(i).copied().unwrap_or_default(),
                 w.frame,
-                g.input.stick_threshold,
+                &g.input,
                 g.movement.tap_window,
                 p.tap_jump,
+                p.controls,
             );
             if frozen { Intent::default() } else { intent }
         };
         ins.push(inp);
     }
-    for (i, inp) in ins.into_iter().enumerate() {
+    for (i, mut inp) in ins.into_iter().enumerate() {
+        if !frozen && crate::articles::control(w, d, i, inp) {
+            inp.sp = false;
+        }
         crate::states::update_fighter(w, d, i, inp);
     }
     crate::combat::hit_pass(w, d);
@@ -121,10 +125,10 @@ pub fn step_world(w: &mut World, d: &GameData, inputs: &[Input]) {
     if let Some(tr) = &mut w.trace
         && !tr.done
     {
-        if tr.a_free < 0 && w.fighters[tr.attacker].actionable() {
+        if tr.a_free < 0 && w.fighters[tr.attacker].actionable(g) {
             tr.a_free = w.frame as i64;
         }
-        if tr.d_free < 0 && w.fighters[tr.defender].actionable() {
+        if tr.d_free < 0 && w.fighters[tr.defender].actionable(g) {
             tr.d_free = w.frame as i64;
         }
         if tr.a_free >= 0 && tr.d_free >= 0 {

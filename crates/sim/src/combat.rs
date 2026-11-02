@@ -56,7 +56,9 @@ pub fn active_boxes(d: &GameData, f: &Fighter) -> Vec<ActiveBox> {
             hit.y = y;
             hit.r = r;
             hit.damage = (if b.counter_damage { cd } else { b.damage }) * mult;
-            hit.bkb *= 1. + (mult - 1.) * g.knockback.charge_kb_ratio;
+            if g.knockback.ultimate.is_none() {
+                hit.bkb *= 1. + (mult - 1.) * g.knockback.charge_kb_ratio;
+            }
             ActiveBox { hit, x: f.x + x * f.face, y: f.y - y }
         })
         .collect()
@@ -67,6 +69,13 @@ pub fn countering<'a>(d: &'a GameData, f: &Fighter) -> Option<&'a crate::data::m
     }
     let m = f.mov.as_ref()?;
     moves::phase(d, f).counter.as_ref().filter(|c| m.t >= c.from && m.t <= c.to)
+}
+pub fn reflecting<'a>(d: &'a GameData, f: &Fighter) -> Option<&'a crate::data::moves::Reflector> {
+    if f.state != State::Attack {
+        return None;
+    }
+    let m = f.mov.as_ref()?;
+    moves::phase(d, f).reflector.as_ref().filter(|c| m.t >= c.from && m.t <= c.to)
 }
 pub fn attack_label(d: &GameData, f: &Fighter) -> String {
     match f.state {
@@ -124,6 +133,15 @@ pub fn release_grab(w: &mut World, d: &GameData, i: usize) {
     }
 }
 pub fn knockback(d: &GameData, b: &Hitbox, pct: f64, weight: f64) -> f64 {
+    if let Some(k) = &d.global.knockback.ultimate {
+        if b.set_kb {
+            return b.bkb * k.launch_speed * weight;
+        }
+        // pct already includes this hit. Reciprocal weight stores 100 / reference weight.
+        let weighted =
+            pct * (k.percent_scale + b.damage * k.damage_scale) * k.weight_scale * 2. * weight / (1. + weight);
+        return ((weighted + k.base) * b.kbg + b.bkb) * k.launch_speed;
+    }
     (if b.set_kb { b.bkb } else { b.bkb + pct * b.kbg * d.global.knockback.kb_percent_scale }) * weight
 }
 pub fn hitstun_of(d: &GameData, b: &Hitbox, kb: f64) -> i32 {
@@ -190,6 +208,8 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
         vic.ff = false;
         vic.up_b = false;
         vic.ad_used = false;
+        vic.ledge_inv = true;
+        vic.di = false;
     }
     if !proj {
         w.fighters[attacker].lag = hl;
@@ -240,6 +260,7 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
         if grounded && vic.vy > 0. {
             vic.vy = -vic.vy * g.knockback.ground_bounce;
         }
+        vic.di = g.di.max_angle > 0.;
     }
     vic.ground = false;
     vic.surf = None;
@@ -297,6 +318,48 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     w.ring(hx, hy, 6., 3. + kb * 0.15, 14);
     w.fx.push(Fx::Shake { k: kb * 0.45 });
     w.fx.push(Fx::Sfx { name: "hit".into(), arg: Some(kb), x: Some(hx) });
+}
+/// Directional influence, read once when the victim's hitlag ends: rotate the launch toward the stick by up to
+/// `di.maxAngle`, scaled by how perpendicular the stick is to the launch. Speed is unchanged.
+pub fn influence(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, (x, y): (f64, f64)) {
+    let di = &d.global.di;
+    let (speed, m) = (libm::hypot(f.vx, f.vy), libm::hypot(x, y));
+    if speed == 0. || m < di.min_stick.max(1e-9) {
+        return;
+    }
+    // Stick y is up, world y is down.
+    let cross = (f.vx * -y - f.vy * x) / (speed * m);
+    let a = cross * di.max_angle * std::f64::consts::PI / 180.;
+    let (c, s) = (libm::cos(a), libm::sin(a));
+    (f.vx, f.vy) = (f.vx * c - f.vy * s, f.vx * s + f.vy * c);
+    let deg = libm::round(a * 180. / std::f64::consts::PI) as i32;
+    if deg != 0 {
+        crate::actions::accept(w, i, crate::actions::Action::Influence(deg));
+    }
+}
+/// In the parry window: the first `parry.window` frames after releasing shield.
+pub fn parrying(d: &GameData, f: &Fighter) -> bool {
+    f.state == State::Landing && f.sd.kind == "shield" && f.t < d.global.parry.window
+}
+/// A hit landing in the parry window does nothing to the defender, who is freed after a short freeze; a melee
+/// attacker is frozen longer.
+pub fn parry(w: &mut World, d: &GameData, v: usize, attacker: Option<usize>) {
+    let p = &d.global.parry;
+    let f = &mut w.fighters[v];
+    f.set_state(State::Idle);
+    f.vx = 0.;
+    f.lag = p.freeze;
+    f.inv = f.inv.max(p.freeze + p.invuln);
+    f.flash = p.freeze + 4;
+    let (x, y) = (f.x, f.y - 40.);
+    if let Some(a) = attacker {
+        w.fighters[a].lag = p.freeze + p.attacker_freeze;
+    }
+    w.fx.push(Fx::Ring { x, y, r: 26., grow: 5., life: 16, color: Color::Rgb(0xffffff), player: 0 });
+    w.fx.push(Fx::Burst { x, y, color: Color::Player, player: v, n: 12., speed: 5., life: 16., size: 3., gravity: 0. });
+    w.fx.push(Fx::Shake { k: 4. });
+    w.fx.push(Fx::Sfx { name: "tech".into(), arg: None, x: Some(x) });
+    crate::actions::accept(w, v, crate::actions::Action::Parry);
 }
 pub fn shield_break(w: &mut World, d: &GameData, i: usize) {
     let f = &mut w.fighters[i];
@@ -444,6 +507,8 @@ pub fn hit_pass(w: &mut World, d: &GameData) {
                     }
                 } else if countering(d, &w.fighters[v]).is_some() {
                     counter(w, d, v, Some(a), b.hit.damage);
+                } else if parrying(d, &w.fighters[v]) {
+                    parry(w, d, v, Some(a));
                 } else if w.fighters[v].state == State::Shield {
                     shield_hit(
                         w,

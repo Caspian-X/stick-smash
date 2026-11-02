@@ -7,6 +7,7 @@
 //! for the debug text.
 
 pub use sim::data::camera;
+mod blast;
 pub mod canvas;
 pub mod debug;
 pub mod draw;
@@ -26,7 +27,7 @@ use bevy::camera::visibility::NoFrustumCulling;
 use bevy::mesh::{Indices, PrimitiveTopology};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
-use bevy_egui::{EguiContexts, EguiPrimaryContextPass, egui};
+use bevy_egui::{EguiContexts, EguiGlobalSettings, EguiPrimaryContextPass, PrimaryEguiContext, egui};
 use sim::world::State;
 use sim::{GameData, World};
 
@@ -131,7 +132,6 @@ impl Plugin for RenderPlugin {
             .init_resource::<Framing>()
             .init_resource::<portrait::Portraits>()
             .init_resource::<thumb::StageThumbs>()
-            // The portrait camera comes second, so the window camera stays egui's primary context.
             .add_systems(Startup, (setup, portrait::setup, thumb::setup).chain())
             .add_systems(Update, ((advance, draw).chain(), portrait::draw, thumb::draw).in_set(RenderSystems))
             .add_systems(EguiPrimaryContextPass, debug_labels);
@@ -166,8 +166,15 @@ struct Drawn {
     shake: (f64, f64),
 }
 
-fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut mats: ResMut<Assets<ColorMaterial>>) {
-    commands.spawn((Camera2d, RenderCamera, Msaa::Sample4));
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut mats: ResMut<Assets<ColorMaterial>>,
+    mut egui: ResMut<EguiGlobalSettings>,
+) {
+    // Camera query order need not match spawn order; keep egui off the tile-sheet cameras.
+    egui.auto_create_primary_context = false;
+    commands.spawn((Camera2d, RenderCamera, PrimaryEguiContext, Msaa::Sample4));
     let mat = mats.add(ColorMaterial::default());
     for (layer, z) in [
         (Layer::Backdrop, -40.),
@@ -331,6 +338,9 @@ fn draw(
                 }
             }
             Layer::World => {
+                if scene.fixed_view.is_none() {
+                    blast::draw(cv, d, s, framing.view);
+                }
                 let jump = d.global.render.interpolate.projectile_jump;
                 for (k, p) in cur.projs.iter().enumerate() {
                     let pp = st

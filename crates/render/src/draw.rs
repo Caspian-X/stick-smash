@@ -119,6 +119,9 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
     let o = &d.global.render.overlays;
     let st = &fd.style;
     let mc = move_ctx(d, f);
+    if mc.phase.is_some_and(|p| p.hidden) {
+        return;
+    }
     let dodge = dodging(f);
     let mut p = v.skel;
     let fr = frame as f64;
@@ -408,6 +411,29 @@ pub fn draw_projectile(cv: &mut Canvas, d: &GameData, p: &Projectile, x: f64, y:
     cv.save();
     cv.translate(x, y);
     cv.scale(1., -1.);
+    if let Some(a) = &pd.article {
+        cv.scale(p.face, 1.);
+        let stage = &a.stages[p.stage];
+        let startup = if p.automatic { stage.auto_startup.unwrap_or(stage.startup) } else { stage.startup };
+        let attacking = p.released.is_some_and(|age| p.age - age >= startup);
+        let shapes = if attacking && !stage.attack_shapes.is_empty() { &stage.attack_shapes } else { &stage.shapes };
+        for s in shapes {
+            draw_shape(cv, d, p.owner, s, 1., false, frame);
+        }
+        if let (Some(stroke), Some(age)) = (&stage.stroke, p.released) {
+            let t = p.age - age + if p.automatic { stage.startup - startup } else { 0 };
+            let mut previous = None;
+            for b in stage.hitboxes.iter().filter(|b| b.damage > 0. && !b.frames.is_empty() && b.active(t)) {
+                let (x, y, _) = b.geom_at(t);
+                if let Some(point) = previous {
+                    cv.line(point, [x, y], stroke.width, color(d, stroke.color, p.owner, 1.));
+                }
+                previous = Some([x, y]);
+            }
+        }
+        cv.restore();
+        return;
+    }
     cv.save();
     cv.rotate((pd.spin * x).to_radians());
     for s in &pd.shapes {
@@ -418,4 +444,29 @@ pub fn draw_projectile(cv: &mut Canvas, d: &GameData, p: &Projectile, x: f64, y:
         draw_shape(cv, d, p.owner, s, 1., false, frame);
     }
     cv.restore();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mike_up_smash_keeps_swinging_forward_through_zero() {
+        let fighter: serde_json::Value =
+            serde_json::from_str(include_str!("../../../assets/fighters/mike/fighter.json")).unwrap();
+        let anim: sim::data::visual::AttachAnim =
+            serde_json::from_value(fighter["moves"]["usmash"]["phases"][0]["attach"]["sword"].clone()).unwrap();
+        let mut previous = keyed(&anim.angle, 25.);
+        for step in 1..=40 {
+            let t = 25. + f64::from(step) / 10.;
+            let angle = keyed(&anim.angle, t);
+            assert!(angle > previous, "swing reversed at frame {t}: {previous} → {angle}");
+            previous = angle;
+        }
+        assert_eq!(keyed(&anim.angle, 26.5), 390.);
+        // Trail endpoints must stay on the same turn, even across several keyframes.
+        assert_eq!(keyed(&anim.angle, 28.) - keyed(&anim.angle, 25.), 220.);
+        assert_eq!(keyed(&anim.angle, 31.), 540.);
+        assert_eq!(keyed(&anim.angle, 62.), 415.);
+    }
 }

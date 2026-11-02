@@ -45,6 +45,7 @@ pub(super) fn watching(mut r: Replay) -> Result<Match, String> {
             cpu: c.cpu,
             team: c.team,
             tap_jump: c.tap_jump,
+            controls: c.controls,
             tag: format!("P{}", i + 1),
             color: i,
         })

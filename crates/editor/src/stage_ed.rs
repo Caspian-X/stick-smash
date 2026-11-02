@@ -245,6 +245,7 @@ pub(crate) fn sync_scene(ed: &mut Editor, scene: &mut render::Scene, dt: f32) {
             scene.push(w);
             w.fx.clear();
             w.hits.clear();
+            w.acts.clear();
         }
         ed.st.pane.acc = ed.st.pane.acc.min(1.);
         scene.alpha = ed.st.pane.acc;

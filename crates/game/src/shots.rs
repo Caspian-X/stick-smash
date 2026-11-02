@@ -28,6 +28,9 @@ pub enum Step {
     LeaveRoster(u8, Act),
     Match(i32),
     Training(&'static str),
+    /// Expand Arena's camera to expose all four KO boundaries.
+    WideCamera,
+    Debug(bool),
     /// Simulate recorded game ticks in bounded batches, stopping at the exact predicate.
     Fast(Pred, u32),
     Set(u8, Act, bool),
@@ -56,7 +59,7 @@ pub enum Step {
 type Entry = (&'static str, fn() -> Vec<Step>);
 
 /// Every section in full-tour order; `--shots` picks a subset in the order given.
-const TOUR: [Entry; 10] = [
+const TOUR: [Entry; 12] = [
     ("menus", menus),
     ("fighter-editor", fighter_editor),
     ("stage-editor", stage_editor),
@@ -65,6 +68,8 @@ const TOUR: [Entry; 10] = [
     ("match", match_shots),
     ("results-replay", results_replay),
     ("training", training),
+    ("crouch", crouch),
+    ("blast-zones", blast_zones),
     ("fighter-kits", fighter_kits),
     ("stages", stages),
 ];
@@ -463,6 +468,25 @@ fn results_replay() -> Vec<Step> {
     v
 }
 
+fn crouch() -> Vec<Step> {
+    let mut v = vec![Step::Training("mike"), Step::Wait(120)];
+    shot(&mut v, "14k-crouch-standing");
+    v.push(Step::Set(0, Down, true));
+    v.push(Step::Until(|m, _, _| m.world.fighters[0].gait == sim::world::Gait::Crouch, 30));
+    shot(&mut v, "14l-crouch-held");
+    v.push(Step::Set(0, Down, false));
+    v.push(Step::Until(|m, _, _| m.world.fighters[0].gait == sim::world::Gait::Stand, 30));
+    shot(&mut v, "14m-crouch-released");
+    v
+}
+
+fn blast_zones() -> Vec<Step> {
+    let mut v = vec![Step::WideCamera, Step::Wait(4), Step::Training("mike"), Step::Wait(120)];
+    v.push(Step::Debug(false));
+    shot(&mut v, "14n-blast-zones");
+    v
+}
+
 fn training() -> Vec<Step> {
     let mut v = Vec::new();
     v.extend([Step::Select(Mode::Training, 2), Step::Wait(20)]);
@@ -486,7 +510,7 @@ fn training() -> Vec<Step> {
     shot(&mut v, "14-training");
     for (id, idle, special, recovery) in [
         ("archer", "14a-archer", "14b-archer-draw", "14c-archer-kite"),
-        ("wizard", "14d-wizard", "14e-wizard-orb", "14f-wizard-levitate"),
+        ("wizard", "14d-wizard", "14e-wizard-love", "14f-wizard-wind"),
         ("tinker", "14g-tinker", "14h-tinker-bomb", "14i-tinker-jetpack"),
     ] {
         v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training(id), Step::Wait(30)]);
@@ -545,6 +569,13 @@ fn fighter_kits() -> Vec<Step> {
         ("mike", "nair", 18, "21b-mike-aerial"),
         ("mike", "nspec", 30, "21c-mike-eruption"),
         ("mike", "uspec", 35, "21d-mike-aether"),
+        ("wizard", "fair", 6, "22a-wizard-lightning"),
+        ("wizard", "usmash", 17, "22b-wizard-storm"),
+        ("wizard", "nspec", 11, "22c-wizard-love"),
+        ("wizard", "uspec", 35, "22d-wizard-wind"),
+        ("wizard", "dspec", 52, "22e-wizard-phantom"),
+        ("wizard", "dspec", 127, "22g-wizard-phantom-strike"),
+        ("wizard", "sspec", 44, "22f-wizard-fire"),
     ] {
         ed(&mut v, Cmd::Subject(Subject::Move(slot.into())));
         ed(&mut v, Cmd::Fighter(fighter.into()));
@@ -838,6 +869,7 @@ pub fn run(
                     cpu: None,
                     team: None,
                     tap_jump: false,
+                    controls: Default::default(),
                     tag: String::new(),
                     color: i,
                 })
@@ -863,6 +895,7 @@ pub fn run(
                     cpu: Some(2),
                     team: None,
                     tap_jump: true,
+                    controls: Default::default(),
                     tag: "CPU".into(),
                     color: i,
                 })
@@ -888,6 +921,21 @@ pub fn run(
             let n = *n;
             let base = s.original.get_or_insert_with(|| data.0.clone()).clone();
             commands.insert_resource(Data(std::sync::Arc::new(big(&base, n))));
+            s.at += 1;
+        }
+        Step::WideCamera => {
+            let mut wide = (**s.original.get_or_insert_with(|| data.0.clone())).clone();
+            let st = wide.stages.iter_mut().find(|st| st.id == "arena").unwrap();
+            st.camera = sim::data::stage::Bounds { left: -1400., right: 2700., top: -900., bottom: 1800. };
+            st.zoom = Some(sim::data::stage::Zoom { min_height: Some(2100.), max_height: Some(2100.) });
+            commands.insert_resource(Data(std::sync::Arc::new(wide)));
+            s.at += 1;
+        }
+        Step::Debug(on) => {
+            if let Some(mut m) = m {
+                m.debug = *on;
+            }
+            scene.debug = *on;
             s.at += 1;
         }
         Step::Spin(secs) => {
@@ -1042,9 +1090,9 @@ mod tests {
 14c-ninja-stars
 14d-ninja-smoke
 14d-wizard
-14e-wizard-orb
+14e-wizard-love
 14e-yoyo-world
-14f-wizard-levitate
+14f-wizard-wind
 14f-yoyo-out
 14g-tinker
 14g-yoyo-return
@@ -1053,6 +1101,10 @@ mod tests {
 14i-tinker-jetpack
 14i-wrangler-pull
 14j-wrangler-hitch
+14k-crouch-standing
+14l-crouch-held
+14m-crouch-released
+14n-blast-zones
 15-select-eight
 15b-select-teams
 15c-select-roster-30
@@ -1080,7 +1132,14 @@ mod tests {
 21a-mike-smash
 21b-mike-aerial
 21c-mike-eruption
-21d-mike-aether";
+21d-mike-aether
+22a-wizard-lightning
+22b-wizard-storm
+22c-wizard-love
+22d-wizard-wind
+22e-wizard-phantom
+22f-wizard-fire
+22g-wizard-phantom-strike";
         assert_eq!(names, expected.lines().collect::<Vec<_>>());
     }
 }

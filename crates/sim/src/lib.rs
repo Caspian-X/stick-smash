@@ -7,9 +7,12 @@
 //! - Transcendental math goes through `libm` so results match across platforms (rollback netcode).
 //! - Visual/audio side effects are emitted as [`Fx`] events for the game crate to consume.
 
+pub mod actions;
 pub mod ai;
+pub mod articles;
 pub mod combat;
 pub mod data;
+pub mod gait;
 pub mod input;
 pub mod moves;
 pub mod physics;

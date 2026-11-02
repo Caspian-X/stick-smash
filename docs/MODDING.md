@@ -4,6 +4,7 @@ Fighters, stages and the game's tuning are plain JSON files. You can edit them b
 the built-in editor (**Editor** on the title screen; global tuning is hand-edited only), and you never have to touch
 the game's own `assets/` folder to do it.
 For the full field-by-field format, see [FORMAT.md](FORMAT.md).
+For adapting a character from another game, see [Character imports](CHARACTER_IMPORTS.md) for source gathering, conversion and verification.
 
 ## Your content folder
 
@@ -131,6 +132,11 @@ Pick a fighter in the top bar (or **+ New fighter…**: an id, a name and which 
   generated from the schema, with the field docs as hover help. A value that doesn't parse stays red and doesn't
   reach the fighter.
 - **▶ Test** (⌘↵) opens training with your fighter against the dummy you last set up in training.
+
+Attachment angle keys control rotation direction through their numeric values. To swing forward from 350°
+through 0° to 70°, enter 430° for the second key, then keep later keys on that turn (for example, 505° for
+145°). Entering 70° directly instead rotates backward by 280°. Negative angles and multiple full turns work
+the same way; the weapon and its trail follow the authored rotation.
 
 ### Stages
 

@@ -2,9 +2,44 @@
 use sim::{GameData, Input, MatchConfig, PlayerConfig, World, data::load, step_world};
 
 pub fn data() -> GameData {
+    load_data(false)
+}
+
+/// Authored pre-migration damage/BKB/growth and the damage used to fit dynamic counters.
+pub fn knockback_baseline() -> std::collections::BTreeMap<String, std::collections::BTreeMap<String, [f64; 4]>> {
+    serde_json::from_str(include_str!("../fixtures/knockback-linear.json")).unwrap()
+}
+
+pub fn linear_data() -> GameData {
+    load_data(true)
+}
+
+fn load_data(linear: bool) -> GameData {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets");
-    let (sources, errors) = sim::data::sources(root);
+    let (mut sources, errors) = sim::data::sources(root);
     assert!(errors.is_empty(), "{errors:?}");
+    if linear {
+        let baseline = knockback_baseline();
+        for s in &mut sources {
+            let text = if s.path == "fighters/wizard/fighter.json" {
+                include_str!("../fixtures/wizard-linear.json")
+            } else {
+                &s.text
+            };
+            let mut json: serde_json::Value = serde_json::from_str(text).unwrap();
+            if let Some(hits) = baseline.get(&s.path) {
+                for (path, values) in hits {
+                    let h = json.pointer_mut(path).unwrap();
+                    h["bkb"] = values[1].into();
+                    h["kbg"] = values[2].into();
+                }
+            }
+            if s.path == "global.json" {
+                json["knockback"].as_object_mut().unwrap().remove("ultimate");
+            }
+            s.text = serde_json::to_string(&json).unwrap();
+        }
+    }
     let (data, errors) = load(sources).unwrap();
     assert!(errors.is_empty(), "{errors:?}");
     data
@@ -29,6 +64,7 @@ pub fn step_draining(w: &mut World, data: &GameData, inputs: &[Input]) {
     step_world(w, data, inputs);
     w.fx.clear();
     w.hits.clear();
+    w.acts.clear();
 }
 
 pub fn run_preserving(w: &mut World, data: &GameData, ticks: usize, inputs: &[Input]) {

@@ -70,9 +70,10 @@ pub struct Hitbox {
     pub r: f64,
     /// Percent dealt.
     pub damage: f64,
-    /// Base knockback.
+    /// Base knockback in reference units (converted by global.knockback.ultimate.launchSpeed).
+    /// Windboxes use this as pixel-space force instead.
     pub bkb: f64,
-    /// Knockback growth: knockback added per victim percent.
+    /// Knockback growth as a fraction (100% reference growth = 1).
     pub kbg: f64,
     /// Launch angle in degrees. 0 = forward, 90 = straight up, negative = down.
     pub angle: f64,
@@ -83,7 +84,7 @@ pub struct Hitbox {
     /// Grounded, airborne, or either kind of victim. Also applies to projectile contact hits.
     #[serde(default, skip_serializing_if = "is_default")]
     pub situation: Situation,
-    /// Fixed knockback: ignores the victim's percent (knockback = bkb × weight).
+    /// Fixed knockback: ignores damage/percent (launch speed = bkb × launchSpeed × victim weight multiplier).
     #[serde(default, skip_serializing_if = "is_default")]
     pub set_kb: bool,
     /// Multi-hit: can hit the same victim again every this many frames (default: once per phase).

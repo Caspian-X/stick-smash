@@ -1,8 +1,9 @@
+use crate::actions::{Action, accept};
 use crate::data::Trigger;
 use crate::{
     GameData, World,
     input::Intent,
-    world::{Fighter, State},
+    world::{Fighter, State, sign},
 };
 
 pub fn surface(data: &GameData, w: &World, id: usize) -> (f64, f64, f64) {
@@ -47,7 +48,11 @@ pub fn integrate(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, edge_st
         f.y += f.vy;
         f.ground = false;
         f.surf = None;
-        if f.drop == 0 {
+        let passing = d.global.movement.platform_pass
+            && f.in_down
+            && matches!(f.state, State::Air | State::Helpless)
+            && !f.tumble;
+        if f.drop == 0 && !passing {
             // Choose the first surface crossed in relative motion, rather than array order.
             let mut landing: Option<(usize, f64, f64)> = None;
             for (n, p) in s.platforms.iter().enumerate() {
@@ -184,30 +189,39 @@ pub fn fall(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, edge: bool, 
     f.vy = (f.vy + s.gravity).min(cap.unwrap_or(s.fall_speed));
     integrate(w, d, i, f, edge);
 }
-pub fn fast_fall(d: &GameData, f: &mut Fighter, inp: Intent) {
+/// Fast fall on a fresh down press (or one within `fastFallBuffer` ticks, still held) once falling. True when it
+/// starts.
+pub fn fast_fall(d: &GameData, f: &mut Fighter, inp: Intent) -> bool {
     let m = &d.global.movement;
-    if inp.down_p && f.vy > m.fast_fall_min_vy {
+    if !f.tumble && (inp.down_p || inp.down_recent) && f.vy > m.fast_fall_min_vy {
+        let started = !f.ff;
         f.ff = true;
         f.vy = f.vy.max(m.fast_fall_kick);
+        return started;
     }
+    false
 }
-pub fn air_drift(d: &GameData, f: &mut Fighter, dir: f64, acc: f64, drag: f64) {
-    let max = d.fighters[f.data].stats.air_speed;
+/// Analog drift: a partial tilt accelerates and tops out proportionally. Never changes facing.
+pub fn air_drift(d: &GameData, f: &mut Fighter, x: f64, acc: f64, drag: f64) {
+    let (dir, k) = (sign(x), x.abs().min(1.));
+    let max = d.fighters[f.data].stats.air_speed * k;
     if dir != 0. && acc != 0. && f.vx * dir < max {
-        f.vx = (f.vx * dir + acc).min(max) * dir;
+        f.vx = (f.vx * dir + acc * k).min(max) * dir;
     } else {
         f.vx *= drag;
     }
 }
-pub fn air_phys(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, dir: f64, acc: f64) {
+pub fn air_phys(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, x: f64, acc: f64) {
     let m = &d.global.movement;
     let s = &d.fighters[f.data].stats;
-    if dir != 0. && acc != 0. && f.vx * dir < s.air_speed {
-        air_drift(d, f, dir, acc, 1.);
+    if x != 0. && acc != 0. && f.vx * sign(x) < s.air_speed * x.abs().min(1.) {
+        air_drift(d, f, x, acc, 1.);
     } else {
-        f.vx *= if dir != 0. { m.air_drag_held } else { m.air_drag };
+        f.vx *= if x != 0. { m.air_drag_held } else { m.air_drag };
     }
-    fast_fall(d, f, inp);
+    if fast_fall(d, f, inp) {
+        accept(w, i, Action::FastFall);
+    }
     fall(w, d, i, f, false, Some(if f.ff { s.fast_fall_speed } else { s.fall_speed }));
 }
 pub fn landing(f: &mut Fighter, n: u32) {
@@ -221,6 +235,7 @@ pub fn on_land(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, vy: f64) 
     f.ad_used = false;
     f.ff = false;
     f.flip_t = 0;
+    f.ledge_inv = true;
     match f.state {
         State::Air => {
             if vy > g.landing.soft_land_speed {
@@ -241,8 +256,9 @@ pub fn on_land(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, vy: f64) 
             f.tumble = false;
             if w.frame as i64 - f.last_sp <= i64::from(g.tech.window) {
                 if f.in_dir != 0. {
-                    crate::states::roll(w, d, f, f.in_dir);
+                    crate::states::roll(w, d, i, f, f.in_dir);
                 } else {
+                    accept(w, i, Action::Tech);
                     f.set_state(State::Tech);
                     f.inv = g.tech.invuln;
                 }
@@ -268,12 +284,26 @@ pub fn on_land(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, vy: f64) 
         w.sfx("land");
     }
 }
+/// Whoever holds or is climbing a ledge, and whether the grabber may knock them off (only a holder who has hung
+/// for `trump.minHang` frames).
+fn occupant(w: &World, d: &GameData, i: usize, block: usize, side: f64) -> Option<(usize, bool)> {
+    let trump = d.global.ledge.trump.as_ref();
+    w.fighters.iter().enumerate().find_map(|(j, g)| {
+        (j != i && matches!(g.state, State::Ledge | State::Climb) && g.sd.side == side && g.sd.ledge_block == block)
+            .then(|| {
+                let ok =
+                    g.state == State::Ledge && trump.is_some_and(|t| w.frame >= g.sd.entered + u64::from(t.min_hang));
+                (j, ok)
+            })
+    })
+}
 pub fn try_ledge(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, rising: bool) {
     if f.ground || f.ledge_cd > 0 || f.vy < 0. && !rising || inp.down {
         return;
     }
     let s = &d.stages[w.stage];
     let l = &s.ledge;
+    let g = &d.global.ledge;
     for (block, b) in s.blocks.iter().enumerate() {
         for side in [-1., 1.] {
             if !(if side < 0. { b.left_ledge } else { b.right_ledge }) {
@@ -282,20 +312,31 @@ pub fn try_ledge(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
             let ex = if side < 0. { b.left } else { b.right };
             let dx = f.x - ex;
             let dy = f.y - l.hand_y - (b.top + l.cy);
-            if dx * side < -l.reach_in
-                || dx * dx + dy * dy > l.r * l.r
-                || w.fighters.iter().enumerate().any(|(j, g)| {
-                    j != i
-                        && matches!(g.state, State::Ledge | State::Climb)
-                        && g.sd.side == side
-                        && g.sd.ledge_block == block
-                })
-            {
+            if dx * side < -l.reach_in || dx * dx + dy * dy > l.r * l.r {
                 continue;
+            }
+            let held = occupant(w, d, i, block, side);
+            if held.is_some_and(|(_, ok)| !ok) {
+                continue;
+            }
+            if let (Some((j, _)), Some(t)) = (held, &g.trump) {
+                // The holder is pushed off (keeping its jumps) and loses its ledge invulnerability.
+                let o = &mut w.fighters[j];
+                o.set_state(State::Air);
+                o.x += side * d.global.sim.ledge_drop_offset;
+                o.vx = side * t.push_x;
+                o.vy = -t.push_y;
+                o.inv = 0;
+                o.ledge_cd = t.regrab_cooldown;
+                accept(w, j, Action::Trumped);
+                accept(w, i, Action::LedgeTrump);
+            } else {
+                accept(w, i, Action::LedgeGrab);
             }
             f.set_state(State::Ledge);
             f.sd.side = side;
             f.sd.ledge_block = block;
+            f.sd.entered = w.frame;
             f.jumps = d.fighters[f.data].stats.air_jumps;
             f.up_b = false;
             f.ad_used = false;
@@ -305,7 +346,10 @@ pub fn try_ledge(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
             f.x = ex + side * l.hang_x;
             f.y = b.top + l.hang_y;
             f.face = -side;
-            f.inv = f.inv.max(d.global.ledge.invuln);
+            if f.ledge_inv || !g.fresh_invuln {
+                f.inv = f.inv.max(g.invuln);
+            }
+            f.ledge_inv = !g.fresh_invuln;
             w.sfx("land");
             return;
         }

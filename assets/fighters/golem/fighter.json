@@ -13,7 +13,17 @@
           "name": "main",
           "frames": 21,
           "hitboxes": [
-            { "start": 6, "end": 10, "x": 38, "y": 45, "r": 22, "damage": 5, "bkb": 4, "kbg": 0.05, "angle": 30 }
+            {
+              "start": 6,
+              "end": 10,
+              "x": 38,
+              "y": 45,
+              "r": 22,
+              "damage": 5,
+              "bkb": 13.6054421769,
+              "kbg": 1.3605442177,
+              "angle": 30
+            }
           ],
           "anim": [
             { "at": 0, "pose": "stonePunch" }
@@ -31,7 +41,17 @@
           "name": "main",
           "frames": 33,
           "hitboxes": [
-            { "start": 8, "end": 12, "x": 52, "y": 45, "r": 25, "damage": 12, "bkb": 6, "kbg": 0.12, "angle": 38 }
+            {
+              "start": 8,
+              "end": 12,
+              "x": 52,
+              "y": 45,
+              "r": 25,
+              "damage": 12,
+              "bkb": 27.7551020408,
+              "kbg": 1.6326530612,
+              "angle": 38
+            }
           ],
           "anim": [
             { "at": 0, "pose": "stonePunch" }
@@ -49,7 +69,17 @@
           "name": "main",
           "frames": 32,
           "hitboxes": [
-            { "start": 8, "end": 12, "x": 4, "y": 99, "r": 30, "damage": 11, "bkb": 6, "kbg": 0.11, "angle": 88 }
+            {
+              "start": 8,
+              "end": 12,
+              "x": 4,
+              "y": 99,
+              "r": 30,
+              "damage": 11,
+              "bkb": 28.1318681319,
+              "kbg": 1.6117216117,
+              "angle": 88
+            }
           ],
           "anim": [
             { "at": 0, "pose": "stoneLift" }
@@ -67,7 +97,17 @@
           "name": "main",
           "frames": 29,
           "hitboxes": [
-            { "start": 7, "end": 11, "x": 39, "y": 12, "r": 25, "damage": 10, "bkb": 5, "kbg": 0.08, "angle": 25 }
+            {
+              "start": 7,
+              "end": 11,
+              "x": 39,
+              "y": 12,
+              "r": 25,
+              "damage": 10,
+              "bkb": 24.7619047619,
+              "kbg": 1.2698412698,
+              "angle": 25
+            }
           ],
           "anim": [
             { "at": 0, "pose": "crouch" }
@@ -85,7 +125,17 @@
           "name": "main",
           "frames": 40,
           "hitboxes": [
-            { "start": 8, "end": 12, "x": 35, "y": 43, "r": 32, "damage": 12, "bkb": 6, "kbg": 0.09, "angle": 55 }
+            {
+              "start": 8,
+              "end": 12,
+              "x": 35,
+              "y": 43,
+              "r": 32,
+              "damage": 12,
+              "bkb": 35.1020408163,
+              "kbg": 1.2244897959,
+              "angle": 55
+            }
           ],
           "anim": [
             { "at": 0, "pose": "lean" }
@@ -116,7 +166,17 @@
           "name": "strike",
           "frames": 37,
           "hitboxes": [
-            { "start": 0, "end": 4, "x": 58, "y": 43, "r": 30, "damage": 22, "bkb": 9, "kbg": 0.19, "angle": 35 }
+            {
+              "start": 0,
+              "end": 4,
+              "x": 58,
+              "y": 43,
+              "r": 30,
+              "damage": 22,
+              "bkb": 58.5714285714,
+              "kbg": 1.5079365079,
+              "angle": 35
+            }
           ],
           "anim": [
             { "at": 0, "pose": "stonePunch" }
@@ -147,7 +207,17 @@
           "name": "strike",
           "frames": 37,
           "hitboxes": [
-            { "start": 0, "end": 5, "x": 0, "y": 112, "r": 36, "damage": 19, "bkb": 8, "kbg": 0.18, "angle": 88 }
+            {
+              "start": 0,
+              "end": 5,
+              "x": 0,
+              "y": 112,
+              "r": 36,
+              "damage": 19,
+              "bkb": 46.8027210884,
+              "kbg": 1.6326530612,
+              "angle": 88
+            }
           ],
           "anim": [
             { "at": 0, "pose": "stoneLift" }
@@ -185,8 +255,8 @@
               "y": 13,
               "r": 32,
               "damage": 17,
-              "bkb": 7,
-              "kbg": 0.16,
+              "bkb": 37.7944862155,
+              "kbg": 1.6040100251,
               "angle": 28,
               "dir": "away"
             },
@@ -197,8 +267,8 @@
               "y": 13,
               "r": 32,
               "damage": 17,
-              "bkb": 7,
-              "kbg": 0.16,
+              "bkb": 37.7944862155,
+              "kbg": 1.6040100251,
               "angle": 28,
               "dir": "away"
             }
@@ -219,7 +289,17 @@
           "name": "main",
           "frames": 38,
           "hitboxes": [
-            { "start": 10, "end": 15, "x": 0, "y": 43, "r": 43, "damage": 10, "bkb": 5, "kbg": 0.09, "angle": 50 }
+            {
+              "start": 10,
+              "end": 15,
+              "x": 0,
+              "y": 43,
+              "r": 43,
+              "damage": 10,
+              "bkb": 21.9047619048,
+              "kbg": 1.4285714286,
+              "angle": 50
+            }
           ],
           "anim": [
             { "at": 0, "pose": "curl" }
@@ -241,7 +321,17 @@
           "name": "main",
           "frames": 38,
           "hitboxes": [
-            { "start": 10, "end": 15, "x": 46, "y": 39, "r": 29, "damage": 14, "bkb": 6, "kbg": 0.12, "angle": 38 }
+            {
+              "start": 10,
+              "end": 15,
+              "x": 46,
+              "y": 39,
+              "r": 29,
+              "damage": 14,
+              "bkb": 31.4285714286,
+              "kbg": 1.4285714286,
+              "angle": 38
+            }
           ],
           "anim": [
             { "at": 0, "pose": "stonePunch" }
@@ -270,8 +360,8 @@
               "y": 44,
               "r": 29,
               "damage": 13,
-              "bkb": 6,
-              "kbg": 0.13,
+              "bkb": 27.4285714286,
+              "kbg": 1.6507936508,
               "angle": 40,
               "dir": "back"
             }
@@ -296,7 +386,17 @@
           "name": "main",
           "frames": 38,
           "hitboxes": [
-            { "start": 10, "end": 15, "x": 0, "y": 102, "r": 28, "damage": 12, "bkb": 6, "kbg": 0.1, "angle": 85 }
+            {
+              "start": 10,
+              "end": 15,
+              "x": 0,
+              "y": 102,
+              "r": 28,
+              "damage": 12,
+              "bkb": 32.6530612245,
+              "kbg": 1.3605442177,
+              "angle": 85
+            }
           ],
           "anim": [
             { "at": 0, "pose": "stoneLift" }
@@ -325,8 +425,8 @@
               "y": -7,
               "r": 27,
               "damage": 14,
-              "bkb": 4,
-              "kbg": 0.1,
+              "bkb": 16.6666666667,
+              "kbg": 1.1904761905,
               "angle": -90,
               "type": "spike"
             }
@@ -352,7 +452,17 @@
           "name": "main",
           "frames": 48,
           "hitboxes": [
-            { "start": 12, "end": 23, "x": 32, "y": 43, "r": 32, "damage": 13, "bkb": 7, "kbg": 0.12, "angle": 38 }
+            {
+              "start": 12,
+              "end": 23,
+              "x": 32,
+              "y": 43,
+              "r": 32,
+              "damage": 13,
+              "bkb": 39.2380952381,
+              "kbg": 1.5238095238,
+              "angle": 38
+            }
           ],
           "anim": [
             { "at": 0, "pose": "lean" }
@@ -376,7 +486,17 @@
           "name": "rise",
           "frames": 42,
           "hitboxes": [
-            { "start": 5, "end": 16, "x": 0, "y": 64, "r": 33, "damage": 10, "bkb": 6, "kbg": 0.08, "angle": 80 }
+            {
+              "start": 5,
+              "end": 16,
+              "x": 0,
+              "y": 64,
+              "r": 33,
+              "damage": 10,
+              "bkb": 34.2857142857,
+              "kbg": 1.2698412698,
+              "angle": 80
+            }
           ],
           "anim": [
             { "at": 0, "pose": "stoneLift" }
@@ -437,7 +557,17 @@
           "name": "recover",
           "frames": 17,
           "hitboxes": [
-            { "start": 0, "end": 3, "x": 38, "y": 43, "r": 32, "damage": 10, "bkb": 7, "kbg": 0.15, "angle": 40 }
+            {
+              "start": 0,
+              "end": 3,
+              "x": 38,
+              "y": 43,
+              "r": 32,
+              "damage": 10,
+              "bkb": 23.8095238095,
+              "kbg": 2.380952381,
+              "angle": 40
+            }
           ],
           "anim": [
             { "at": 0, "pose": "stonePunch" }
@@ -467,7 +597,17 @@
           "name": "fall",
           "frames": 65,
           "hitboxes": [
-            { "start": 0, "end": 64, "x": 0, "y": 8, "r": 31, "damage": 12, "bkb": 5, "kbg": 0.08, "angle": -65 }
+            {
+              "start": 0,
+              "end": 64,
+              "x": 0,
+              "y": 8,
+              "r": 31,
+              "damage": 12,
+              "bkb": 28.0272108844,
+              "kbg": 1.0884353741,
+              "angle": -65
+            }
           ],
           "anim": [
             { "at": 0, "pose": "stoneBrace" }
@@ -489,7 +629,17 @@
           "name": "impact",
           "frames": 32,
           "hitboxes": [
-            { "start": 0, "end": 4, "x": 0, "y": 14, "r": 45, "damage": 11, "bkb": 6, "kbg": 0.11, "angle": 65 }
+            {
+              "start": 0,
+              "end": 4,
+              "x": 0,
+              "y": 14,
+              "r": 45,
+              "damage": 11,
+              "bkb": 28.1318681319,
+              "kbg": 1.6117216117,
+              "angle": 65
+            }
           ],
           "anim": [
             { "at": 0, "pose": "crouch" }
@@ -609,7 +759,17 @@
       "r": 16,
       "life": 22,
       "max": 2,
-      "hit": { "start": 6, "end": 10, "x": 0, "y": 0, "r": 16, "damage": 6, "bkb": 4, "kbg": 0.08, "angle": 55 },
+      "hit": {
+        "start": 6,
+        "end": 10,
+        "x": 0,
+        "y": 0,
+        "r": 16,
+        "damage": 6,
+        "bkb": 3.8095238095,
+        "kbg": 1.9047619048,
+        "angle": 55
+      },
       "shapes": [
         {
           "shape": "poly",
@@ -627,7 +787,17 @@
       "r": 16,
       "life": 22,
       "max": 2,
-      "hit": { "start": 6, "end": 10, "x": 0, "y": 0, "r": 16, "damage": 6, "bkb": 4, "kbg": 0.08, "angle": 55 },
+      "hit": {
+        "start": 6,
+        "end": 10,
+        "x": 0,
+        "y": 0,
+        "r": 16,
+        "damage": 6,
+        "bkb": 3.8095238095,
+        "kbg": 1.9047619048,
+        "angle": 55
+      },
       "shapes": [
         {
           "shape": "poly",

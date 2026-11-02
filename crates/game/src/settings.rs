@@ -27,8 +27,37 @@ pub struct Saved {
     pub versus_hitboxes: bool,
     /// Control profile (`keyboard`, `keyboard-left`, `keyboard-right`, `gamepad:<name>`) → action → controls.
     pub bindings: BTreeMap<String, BTreeMap<String, Vec<String>>>,
+    /// Control profile → control options (right stick, attack + special, stick range).
+    pub controls: BTreeMap<String, ControlPrefs>,
     pub versus: VersusPrefs,
     pub training: TrainingPrefs,
+}
+
+/// Per-device control options. The gameplay ones are copied into the match config (and so into replays).
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
+#[serde(default, rename_all = "camelCase")]
+pub struct ControlPrefs {
+    /// The right stick does tilts instead of smashes.
+    pub stick_tilts: bool,
+    /// Attack + special together is a smash attack.
+    pub ab_smash: bool,
+    /// Left-stick travel (0.5–1) that counts as a full tilt; lower is more sensitive.
+    pub stick_range: f32,
+}
+impl Default for ControlPrefs {
+    fn default() -> Self {
+        Self { stick_tilts: false, ab_smash: true, stick_range: 1. }
+    }
+}
+impl ControlPrefs {
+    pub fn controls(self) -> sim::input::Controls {
+        sim::input::Controls { stick_tilts: self.stick_tilts, ab_smash: self.ab_smash }
+    }
+}
+/// A profile's control options (its own, else its model's, else defaults).
+pub fn control_prefs(saved: &Saved, profile: &str) -> ControlPrefs {
+    let model = profile.rsplit_once('#').map_or(profile, |(model, _)| model);
+    saved.controls.get(profile).or_else(|| saved.controls.get(model)).copied().unwrap_or_default()
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
