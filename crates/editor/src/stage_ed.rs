@@ -10,7 +10,7 @@ use sim::{GameData, Input, MatchConfig, PlayerConfig, World, step_world};
 use crate::Editor;
 use crate::pane::Pane;
 use crate::stage_view::{self, Grip, Part, Shape, Snap};
-use crate::view::Cam;
+use crate::view::{Cam, Zoom};
 
 /// Inspector / browser sections.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -289,7 +289,7 @@ pub(crate) fn frame_rect(ed: &mut Editor, [l, t, r, b]: [f64; 4]) {
 fn frame_bbox(cam: &mut Cam, port: &crate::view::Port, [l, t, r, b]: [f64; 4]) {
     let [pl, pt, pr, pb] = port.rect;
     let (w, h) = ((pr - pl).max(1.), (pb - pt - crate::style::FRAME_TOP).max(1.));
-    cam.zoom = (w / (r - l)).min(h / (b - t)).clamp(Cam::MIN_ZOOM, Cam::MAX_ZOOM);
+    cam.zoom = Zoom::STAGE.clamp((w / (r - l)).min(h / (b - t)));
     cam.center = [(l + r) / 2., (t + b) / 2. - crate::style::FRAME_OFFSET / cam.zoom];
 }
 

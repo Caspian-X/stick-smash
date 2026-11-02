@@ -57,7 +57,9 @@ impl Plugin for SelectPlugin {
         app.add_systems(OnEnter(Screen::Select), enter).add_systems(OnExit(Screen::Select), exit).add_systems(
             Update,
             (
-                (input, (hint_clock, moments, portraits, stage).run_if(ui::staying)).chain().in_set(UiSystems::Input),
+                (input, (hint_clock, moments, portraits, stage).chain().run_if(ui::staying))
+                    .chain()
+                    .in_set(UiSystems::Input),
                 draw.in_set(UiSystems::Draw),
                 (animate, hints::fade).in_set(UiSystems::Animate),
             )
@@ -293,7 +295,7 @@ impl Select {
         let pref = saved.versus.cpus.get(n).cloned().unwrap_or_default();
         let i = self.slots.len();
         let fighter = d.fighters.iter().position(|f| f.id == pref.fighter).unwrap_or((i + 1) % d.fighters.len());
-        self.slots.push(Pick::cpu(fighter, pref.level.min(2), (i % 2) as u8));
+        self.slots.push(Pick::cpu(fighter, pref.level.min(CPU_LEVELS.len() as u8 - 1), (i % 2) as u8));
     }
     fn roll_random(&mut self, i: usize, d: &GameData) {
         let p = &mut self.slots[i];
@@ -1177,7 +1179,7 @@ fn card(
                     p.spawn(txt(&f.body_bold, 11., NIGHT.with_alpha(0.8), "Disconnected"));
                 }
                 None if s.mode == Mode::Versus => {
-                    p.spawn(txt(&f.body_bold, 12., NIGHT.with_alpha(0.8), CPU_LEVELS[pk.level as usize]));
+                    p.spawn(txt(&f.body_bold, 12., NIGHT.with_alpha(0.8), level_name(pk.level)));
                 }
                 None => {}
             }
@@ -1237,7 +1239,7 @@ fn card(
             }))
             .with_child((txt(&f.body, 11., DIM, line), TextLayout::new(Justify::Left, LineBreak::WordBoundary)));
             if !human && s.mode == Mode::Versus {
-                spin_row(p, f, d, s, key(LEVEL, i), "Level", CPU_LEVELS[pk.level as usize].into(), None, 16.);
+                spin_row(p, f, d, s, key(LEVEL, i), "Level", level_name(pk.level).into(), None, 16.);
             }
             if !human && s.teams {
                 let short = team_name(pk.team).trim_end_matches(" team").into();
@@ -1463,6 +1465,11 @@ pub fn team_name(t: u8) -> &'static str {
     ["Red team", "Blue team", "Green team", "Yellow team"][t as usize % 4]
 }
 
+/// The name of a saved CPU level, clamped to [`CPU_LEVELS`] in case settings were edited by hand.
+fn level_name(level: u8) -> &'static str {
+    CPU_LEVELS[(level as usize).min(CPU_LEVELS.len() - 1)]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1598,6 +1605,17 @@ mod tests {
         assert_eq!(t.s.slots.len(), 2);
         assert_eq!(t.s.slots[0].dev, Some(Dev::Bot(1)));
         assert!(!t.s.slots.iter().any(|p| p.disconnected));
+    }
+    #[test]
+    fn hand_edited_cpu_levels_are_clamped() {
+        let T { mut s, mut saved, d, .. } = T::new();
+        saved.versus.cpus = vec![PlayerPref { level: 3, ..default() }, PlayerPref { level: 250, ..default() }];
+        s.slots.retain(|p| p.dev.is_some());
+        s.add_cpu(&saved, &d);
+        s.add_cpu(&saved, &d);
+        let levels: Vec<u8> = s.slots.iter().filter(|p| p.dev.is_none()).map(|p| p.level).collect();
+        assert_eq!(levels, vec![CPU_LEVELS.len() as u8 - 1; 2]);
+        assert_eq!(level_name(250), CPU_LEVELS[CPU_LEVELS.len() - 1]);
     }
     #[test]
     fn teams_need_opposition_and_stages_fit_lineup() {

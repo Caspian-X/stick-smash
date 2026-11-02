@@ -189,7 +189,7 @@ impl Snap {
     }
     pub fn v(self, v: f64) -> f64 {
         match (self.fine, self.grid) {
-            (true, _) => (v * (1. / crate::style::FINE_STEP)).round() / (1. / crate::style::FINE_STEP),
+            (true, _) => crate::view::round_to(v, crate::style::FINE_STEP),
             (false, Some(g)) if g > 0. => (v / g).round() * g,
             _ => v.round(),
         }

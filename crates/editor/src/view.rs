@@ -33,9 +33,6 @@ impl Port {
 }
 
 impl Cam {
-    pub const MIN_ZOOM: f64 = 0.1;
-    pub const MAX_ZOOM: f64 = 12.;
-
     pub fn to_stage(&self, port: &Port, s: P) -> P {
         let m = port.mid();
         [self.center[0] + (s[0] - m[0]) / self.zoom, self.center[1] + (s[1] - m[1]) / self.zoom]
@@ -54,13 +51,37 @@ impl Cam {
             h: h / self.zoom,
         }
     }
-    /// Zoom by `k` keeping the stage point under screen point `at` fixed.
-    pub fn zoom_at(&mut self, port: &Port, at: P, k: f64) {
+    /// Zoom by `k` keeping the stage point under screen point `at` fixed, within `zoom`'s limits.
+    pub fn zoom_at(&mut self, port: &Port, at: P, k: f64, zoom: Zoom) {
         let before = self.to_stage(port, at);
-        self.zoom = (self.zoom * k).clamp(Self::MIN_ZOOM, Self::MAX_ZOOM);
+        self.zoom = zoom.clamp(self.zoom * k);
         let after = self.to_stage(port, at);
         self.center = [self.center[0] + before[0] - after[0], self.center[1] + before[1] - after[1]];
     }
+}
+
+/// Zoom limits (screen points per stage pixel) for a pane; the two modes frame and zoom differently.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Zoom {
+    pub min: f64,
+    pub max: f64,
+}
+
+impl Zoom {
+    /// Fighter pane: reframing keeps the figure readable, the wheel may go a little wider.
+    pub const FIGHTER_FRAME: Zoom = Zoom { min: 0.5, max: 8. };
+    pub const FIGHTER_WHEEL: Zoom = Zoom { min: 0.4, max: 12. };
+    /// Stage pane: large stages down to small ones.
+    pub const STAGE: Zoom = Zoom { min: 0.1, max: 12. };
+
+    pub fn clamp(self, zoom: f64) -> f64 {
+        zoom.clamp(self.min, self.max)
+    }
+}
+
+/// `v` rounded to the nearest multiple of `step` (the reciprocal form keeps `0.3`, not `0.30000000000000004`).
+pub fn round_to(v: f64, step: f64) -> f64 {
+    (v * (1. / step)).round() / (1. / step)
 }
 
 /// Hitbox-local (x forward, y up from the feet) to stage pixels.
@@ -282,10 +303,34 @@ mod tests {
         let mut cam = Cam { center: [640., 400.], zoom: 0.15 };
         let at = [300., 200.];
         let before = cam.to_stage(&port, at);
-        cam.zoom_at(&port, at, 1.01);
+        cam.zoom_at(&port, at, 1.01, Zoom::STAGE);
         assert!((cam.zoom - 0.1515).abs() < 1e-12);
         let after = cam.to_stage(&port, at);
         assert!((before[0] - after[0]).abs() < 1e-9 && (before[1] - after[1]).abs() < 1e-9);
+    }
+
+    #[test]
+    fn fine_rounding_keeps_clean_decimals() {
+        assert_eq!(round_to(0.30000000000000004, 0.1), 0.3);
+        assert_eq!(round_to(0.04, 0.1), 0.);
+        assert_eq!(round_to(-1.26, 0.1), -1.3);
+        assert!((round_to(12.6, 15.) - 15.).abs() < 1e-9);
+    }
+
+    #[test]
+    fn each_pane_clamps_its_own_zoom() {
+        let port = Port { rect: [0., 0., 800., 600.], window: [800., 600.] };
+        let mut cam = Cam { center: [640., 400.], zoom: 1. };
+        for _ in 0..100 {
+            cam.zoom_at(&port, [300., 200.], 0.9, Zoom::FIGHTER_WHEEL);
+        }
+        assert!((cam.zoom - 0.4).abs() < 1e-12);
+        cam.zoom = 1.;
+        for _ in 0..100 {
+            cam.zoom_at(&port, [300., 200.], 0.9, Zoom::STAGE);
+        }
+        assert!((cam.zoom - 0.1).abs() < 1e-12);
+        assert_eq!((Zoom::FIGHTER_FRAME.clamp(0.1), Zoom::FIGHTER_FRAME.clamp(99.)), (0.5, 8.));
     }
 
     #[test]
@@ -308,7 +353,7 @@ mod tests {
         let s = [700., 300.];
         let p = cam.to_stage(&port, s);
         assert_eq!(cam.to_screen(&port, p), s);
-        cam.zoom_at(&port, s, 1.5);
+        cam.zoom_at(&port, s, 1.5, Zoom::STAGE);
         let q = cam.to_stage(&port, s);
         assert!((q[0] - p[0]).abs() < 1e-9 && (q[1] - p[1]).abs() < 1e-9);
     }

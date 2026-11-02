@@ -23,6 +23,9 @@ pub fn showcase<'a>(
     if mslots.is_empty() {
         return None;
     }
+    if !data.stage(&rules.stage).is_some_and(|s| s.max_players() >= mslots.len()) {
+        return None;
+    }
     let m = m.filter(|m| {
         m.mode == Mode::Showcase
             && m.slots.iter().map(|s| s.color).eq(mslots.iter().map(|s| s.color))

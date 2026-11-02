@@ -220,3 +220,73 @@ pub(crate) fn test_data() -> Arc<GameData> {
     })
     .clone()
 }
+
+#[cfg(test)]
+mod screens {
+    use super::*;
+    use bevy::input::ButtonInput;
+    use bevy::input::mouse::MouseButton;
+    use bevy::state::app::StatesPlugin;
+    use bevy::text::Font;
+    use bevy::ui::UiScale;
+    use render::portrait::Portraits;
+    use render::thumb::StageThumbs;
+
+    /// The app without rendering, audio or windows: enough to drive `Screen` through its plugins' enters and exits.
+    fn app() -> App {
+        let data = test_data();
+        let font = || Handle::<Font>::default();
+        let mut app = App::new();
+        app.add_plugins((MinimalPlugins, StatesPlugin))
+            .init_state::<Screen>()
+            .insert_resource(Data(data.clone()))
+            .insert_resource(Scene::new(data))
+            .insert_resource(settings::Saved::default())
+            .insert_resource(ui::Fonts {
+                display: font(),
+                heavy: font(),
+                label: font(),
+                body: font(),
+                body_bold: font(),
+            })
+            .init_resource::<input::Devices>()
+            .init_resource::<pointer::Pointers>()
+            .init_resource::<Portraits>()
+            .init_resource::<StageThumbs>()
+            .init_resource::<ButtonInput<MouseButton>>()
+            .init_resource::<UiScale>()
+            .add_plugins((select::SelectPlugin, stage_select::StagePlugin));
+        app
+    }
+
+    fn go(app: &mut App, screen: Screen) {
+        app.world_mut().resource_mut::<NextState<Screen>>().set(screen);
+        app.update();
+    }
+
+    fn has<T: Resource>(app: &App) -> bool {
+        app.world().contains_resource::<T>()
+    }
+
+    #[test]
+    fn select_and_stage_screens_own_their_resources() {
+        let mut app = app();
+        app.update();
+        assert!(!has::<select::Select>(&app) && !has::<stage_select::Vote>(&app), "nothing on the title");
+
+        app.insert_resource(select::SelectInit { mode: play::Mode::Versus, dev: Some(input::Dev::Bot(0)) });
+        go(&mut app, Screen::Select);
+        assert!(has::<select::Select>(&app), "character select enters with a lobby");
+        assert!(has::<select::Moments>(&app) && has::<hints::HintClock>(&app));
+
+        go(&mut app, Screen::Stages);
+        assert!(has::<stage_select::Vote>(&app) && has::<stage_select::Clock>(&app), "stage select enters");
+        assert!(
+            !has::<select::Moments>(&app) && !has::<hints::HintClock>(&app),
+            "character select cleaned up after itself"
+        );
+
+        go(&mut app, Screen::Title);
+        assert!(!has::<stage_select::Vote>(&app) && !has::<stage_select::Clock>(&app), "stage select cleaned up");
+    }
+}

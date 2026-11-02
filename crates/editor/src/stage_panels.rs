@@ -22,11 +22,11 @@ fn bad(list: &[ContentError], s: Section) -> bool {
 }
 
 pub(crate) fn browser(ui: &mut egui::Ui, ed: &mut Editor) {
+    let Some(dirty) = ed.ws.stages.get_mut(&ed.st.cur).map(|d| d.dirty_paths()) else { return };
     let Some(doc) = ed.ws.stages.get(&ed.st.cur) else { return };
     let s = &doc.item;
     let errors = doc.errors.clone();
     let notes = stage_ed::notes(ed);
-    let dirty = crate::doc::dirty_paths(doc);
     let mut pick_section = None;
     let mut pick_part: Option<Part> = None;
     ui.add_space(6.);
