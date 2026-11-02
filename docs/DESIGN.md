@@ -1,18 +1,24 @@
 # Design decisions
 
-Living record of decisions made before/while porting from the TS version (`../stick-smash`). Status: **decided**, **proposed**, or **open**.
+Living record of decisions made before/while porting from the TS version (`../stick-smash`). Status: **decided**, **proposed**, or **open**. Contributor workflows live in [DEVELOPMENT.md](DEVELOPMENT.md).
+
+## Status and next
+
+The data pipeline, deterministic sim/TS baseline, renderer, local play and fighter/stage editors are implemented.
+Local multiplayer polish comes first. Online play is planned later: the sim is already deterministic and
+rollback-ready (`World: Clone` plus raw inputs), but nothing net-specific is built. **Proposed:** `ggrs` over
+iroh datagrams; the networking stack is not a settled decision.
 
 ## Decided
 
 ### Scope
 - **Source of truth.** The TS data is converted to JSON once (Node script that imports the TS modules). After that, this repo is the main version.
-- **Players.** Design for N fighters (target 8), build and test for 4. No code may assume two fighters (the TS `const [a, b] = w.fighters` / `other()` patterns go away). Pairwise logic loops over all pairs; AI picks a target.
+- **Players.** Support up to 8 fighters; stage tests exercise both four- and eight-player matches. No code may assume two fighters (the TS `const [a, b] = w.fighters` / `other()` patterns go away). Pairwise logic loops over all pairs; AI picks a target.
 - **Teams.** Free-for-all or teams, chosen per match. Friendly fire is a match rule. Hit filtering in the sim checks team + rule.
 - **Gameplay feel beats fidelity.** The TS version is the starting point, not the spec. The port first matches TS exactly (checked by replaying TS traces) as a verified baseline. After that, gameplay changes that make the game feel better are welcome. They're deliberate, configurable where sensible, and covered by their own tests (TS-trace tests run with those features off).
 - **Input buffer.** Human presses (attack, special, jump, grab, shield press) are buffered for `global.input.bufferFrames` (5 ticks, inclusive age; 0 = TS behavior). Each entry captures press-time directions and smash taps; held buttons always use current raw input. Fresh presses keep every state's existing handling and take priority over replay. On an actionable tick, all fresh entries are consumed immediately; otherwise at most one oldest live entry is replayed and consumed, even if that state cannot use that action. Simultaneous blocked presses queue in attack, special, jump, grab, shield order. Replay states: idle, air, shield without shield stun, ledge when the handler's incremented timer reaches `minHang`, and knockdown when it exceeds `minFrames`. Hitlag blocks replay. Landing and other recovery states wait until the next update starts actionable. Jumpsquat, attacks/charge/cancels, hold/pummel, grabbed/mashing, hitstun/tech, helpless, respawn/death and all other states retain fresh-only handling; their buffered presses can still replay later if unexpired. CPU intents bypass the buffer. Buffer entries live in the rollback snapshot and age during countdown/end freezes (which supply no fresh presses or replay). Sub-tick taps are latched by the game crate's input layer so they last at least one tick.
 - **Units.** Keep TS units: stage pixels, y down, velocities in px/frame, 60 Hz, `f64` + `libm`. Convert to Bevy's y-up world only when rendering.
-- **Multiplayer.** Local multiplayer + CPUs first. Online stays possible: the sim is deterministic, `World: Clone` is the rollback snapshot, and inputs are small plain data. Candidate transport is `ggrs` over iroh datagrams. Nothing net-specific gets built yet.
-- **Deferred, but not designed out.** Online play.
+- **Multiplayer.** Local multiplayer + CPUs first. Keep simulation state and inputs suitable for eventual rollback; see "Status and next" for the proposed networking stack.
 
 ### Content format
 - **Everything moddable is data:** fighters (stats, frame data, special-move behavior, visuals, hurtboxes) and stages. Core content uses the same format as user content, with no fighter- or stage-specific code.
@@ -20,11 +26,11 @@ Living record of decisions made before/while porting from the TS version (`../st
   - Why not RON/YAML/TOML/JSON5: RON is Rust-only, YAML has parsing footguns, and TOML handles deeply nested arrays of hitboxes badly. Comments wouldn't survive an editor save anyway, so docs live in the schema instead.
   - The writer uses a compact pretty-printer: small objects and number arrays (one hitbox, one keyframe) stay on one line, so files are readable and diffs are clean.
 - Every file has `"schemaVersion"`, versioned per content kind. The loader dispatches migrations by kind; see [FORMAT.md](FORMAT.md).
-- **Packages are folders:** `fighters/<id>/fighter.json`, `stages/<id>/stage.json`, so images and sounds can live next to them later. `"extends": "<id>"` inherits from another package. The merge copies objects key by key and replaces arrays whole. `fighters/base` holds shared stats, grabs, throws, state poses and hurtboxes.
-- Load order: built-in `assets/`, then a user content dir (platform data dir). Errors name the file and JSON path and skip that package instead of crashing.
+- **Packages are folders:** `fighters/<id>/fighter.json`, `stages/<id>/stage.json`, so images and sounds can live next to them later. Fighters support `"extends": "<id>"`; stages are complete documents. The fighter merge copies objects key by key and replaces arrays whole. `fighters/base` holds shared stats, grabs, throws, state poses and hurtboxes.
+- Load order: built-in `assets/`, then a user content dir (platform data dir). Errors name the file and JSON path and skip that package; unusable globals or no playable fighter/stage fail loading.
 - A content hash of loaded data is kept so online play can later check that both sides use the same data.
 
-### Moves: phase timelines (replaces `kind`)
+### Moves: phase timelines
 Every move is a list of **phases**, starting at the first. A phase has:
 - a frame timeline: hitboxes (including per-frame `frames`), frame events (`setVel`, `addVel`, `spawn`, `sfx`,
   `fx`, `invuln`), and phase properties such as `armorThreshold` and `fallCap`,
@@ -50,8 +56,8 @@ model later. See [FORMAT.md](FORMAT.md#moves) for exact frame timing, events and
 
 ### Input
 - Sim input = raw per-player state: quantized stick `(i8, i8)` + button bitflags. The sim derives presses, taps (smash input) and short hops from its own per-fighter input history, which is part of `World` so rollback stays correct.
-- Keyboard maps directions to ±127. At first, sticks behave digitally through thresholds, so the game feels the same as the keyboard. True analog features (DI, walk speed) can come later without a format change.
-- Mixed devices in one match. A join screen where any device presses a button to claim a slot. The keyboard can act as two devices (left/right halves). Rebinding per device. Gamepads are first-class; keyboard is the main test device for now.
+- Keyboard maps directions to ±127. Gameplay derives digital directions through thresholds; select pointers use analog motion. Analog gameplay features (DI, walk speed) remain future work without requiring an input format change.
+- Mixed devices in one match. Joining and fighter selection share one screen; an action press claims a slot, while back leaves (a mouse click can join the keyboard player). The keyboard can act as two devices (left/right halves). Rebinding per device; gamepads are first-class.
 - **Devices** (`game::input`): `Keys` (whole keyboard), `KeysL`/`KeysR` (split, the default), each connected
   gamepad, and scripted `Bot`s (screenshot tour). Every device maps 10 actions (left, right, up, down, jump, attack,
   special, grab, shield, start) through a binding profile (`keyboard`, `keyboard-left`, `keyboard-right`,
@@ -65,23 +71,34 @@ model later. See [FORMAT.md](FORMAT.md#moves) for exact frame timing, events and
   content errors are logged and shown as a toast.
 
 ### UI
-- **bevy_ui** with directional focus navigation for menus, character select, the HUD, and anything else players use with a gamepad.
+- **bevy_ui** for menus, fighter/stage selection and HUD; directional menu focus and independent select pointers support gamepads.
 - **egui** for the editor, debug overlays and training panels.
 - **Focus navigation** is our own small layer over bevy_ui (`game::ui`), not `bevy_input_focus`: Bevy's
   `InputFocus` is a single global focus, and character select needs one cursor per player. Lineup changes are deferred until all devices finish navigation, then
-  cursors are repaired. Lobbies allow eight slots and offer only stages with enough spawn and respawn points;
+  cursors are repaired. Lobbies allow eight slots; stages need enough spawn and respawn points to be playable;
   teams require two opposing sides. Unready disconnected slots leave; ready slots can be removed or reclaimed. Each focusable node
   has a stable `key` and an optional owner; screens are rebuilt from a plain model when it changes and focus
   survives by key. Directions move geometrically between nodes (last frame's layout, closest by distance +
   3 × sideways offset; sideways moves stay within 45°; vertical lists wrap). "Spinner" rows take left/right as
-  value changes, so every card has a non-spinner footer (Lock in / Remove CPU / Add CPU) to travel between cards.
+  value changes. Fighter/stage grids use `grid.rs` for row-aware digital navigation; each human also has a free
+  pointer (`pointer.rs`) with analog acceleration/magnetism or direct mouse control. Chips ride on the pointers
+  until dropped on a tile. Small tiles show names under chips; the grid fits the available space and roster size.
+- **Selection.** Hover previews a fighter; confirm drops the chip and locks in. Free pointers can add CPUs,
+  carry CPU chips to other tiles, change CPU level/team and adjust match rules. Confirming one's own chip picks
+  it up (or starts once everyone is ready); special also picks it up. Grab/shield opens per-card team/tap-jump
+  options. Slim player cards use device-specific contextual hints (`hints.rs`) with join/idle/ready fades.
+  Versus stage selection is a thumbnail grid with a large preview: each human drops a vote chip, then roulette
+  chooses among the votes with vote-count weighting. Stages too small for the lineup are dimmed. Back takes a
+  vote back first; with no vote, it returns to fighter selection with picks locked in. A disconnect also returns
+  there, so its reclaim flow handles disconnected devices.
 - **Look.** Barlow Condensed Black Italic for the wordmark, percents and big moments, Barlow Condensed for menu
   rows, Barlow for help text (OFL, `assets/fonts/`, with a system sans fallback for missing glyphs). Ink-navy
   translucent panels over the live stage, the 8-color palette as the accent strip, gold for focus. The title
-  menus play a CPU attract match behind them; character select shows the picked fighters on the stage (ready ones
-  strike their win pose). UI is laid out for 720 logical pixels high and scaled with the window.
-- **Flow.** Title → Versus/Training → join + character select (one screen) → match → results (rematch, character
-  select, main menu). Pause from any player's Start; the pausing device drives the pause menu, with ownership transferred on disconnect. Training uses
+  menus play a CPU attract match behind them; character select's shared `showcase.rs` keeps fighters in card
+  order, swaps changed picks in place, and plays a lock-in flourish before the ready win pose. UI is laid out for
+  720 logical pixels high and scaled with the window.
+- **Flow.** Title → Versus → join + character select → stage vote/roulette → match → results (rematch, character
+  select, main menu, replay). Training goes from its select screen directly to the match. Pause from any player's Start; the pausing device drives the pause menu, with ownership transferred on disconnect. Training uses
   the same select screen (one player + a dummy card) and an egui panel; dummy behavior and damage are also in the
   pause menu for gamepad players.
 - **Teams in the renderer.** Each match gets a copy of `GameData` with the palette reordered per player (team
@@ -115,17 +132,17 @@ model later. See [FORMAT.md](FORMAT.md#moves) for exact frame timing, events and
   by real time, so Bevy's graceful missing-device fallback cannot accumulate queued audio entities.
 
 ### Crates
-`sim` (logic + data types/loading) · `render` (fighter/stage/fx drawing, shared by gameplay and editor) · `editor` (lib: fighter editor, used by `game`) · `game` (bin: app, input, menus, modes) · later `net`.
+`sim` (logic + data types/loading) · `render` (fighter/stage/fx drawing, shared by gameplay and editor) · `editor` (lib: fighter and stage editors, used by `game`) · `game` (bin: app, input, menus, modes, audio and replays). No networking crate yet.
 
-### Editor (milestone 5)
+### Editor
 A fighter and stage editor reached from the title menu (**keyboard and mouse only**). Priorities: fast iteration, clarity,
 feel. Its own design, not a port of the TS panels.
 
-- **Layout** (egui, Barlow fonts, the ink-navy/gold palette): a top bar (fighter picker with dirty dots, undo/redo,
+- **Layout** (egui, Barlow fonts, the ink-navy/gold palette): a top bar (Fighters/Stages switch, picker with dirty dots, undo/redo,
   save, test, validation status, back), a left **browser** (moves grouped ground/smash/air/special/grab, throws,
   poses, fighter stats), the center **viewport** (the real renderer through `render::Scene` with a fixed view), a
-  right **inspector** for the selection, and a bottom **timeline**.
-- **Truthful preview.** A sandbox `World` (training rules, stage `arena` or the first stage) runs the real sim: the
+  right **inspector** for the selection, and a bottom **timeline** in fighter mode. Stage mode shares the frame with its own browser, geometry/art inspector and motion controls.
+- **Truthful preview.** A sandbox `World` (training rules, stage `arena` or the first stage with enough slots) runs the real sim: the
   fighter starts the move on frame 0 (grounded, or in the air for aerials / when toggled) and the sandbox steps
   until the fighter is actionable again (plus a short tail, capped). Every frame is kept, so scrubbing is an index.
   Any data change re-validates (`sim::data::load::check_fighter`) and re-simulates from frame 0. Optional
@@ -136,12 +153,12 @@ feel. Its own design, not a port of the TS panels.
   ticks and pose keys. Click/drag scrubs; space plays (0.25×–1×).
 - **Direct manipulation.** In the viewport: drag a hitbox to move it, its rim to resize, the launch-arrow tip to set
   the angle (Shift snaps 15°). Hitboxes with per-frame `frames` edit the entry shown on the current frame.
-  When the playhead sits on a pose key, the joints get handles and can be dragged (named poses are shared; the
+  When the playhead shows an editable pose key (not an interpolated blend), the joints get handles and can be dragged (named poses are shared; the
   inspector says how many keys use it). Wheel zooms at the cursor, right/middle drag pans, F frames the fighter.
 - **Shortcuts.** Space play · ←/→ (or , .) step · Home/End · [ ] previous/next phase · ⌘/Ctrl Z, Shift Z / Y
   redo · ⌘/Ctrl S save · ⌘/Ctrl D duplicate hitbox · N new hitbox · Delete removes it · Tab cycles hitboxes ·
   Esc deselects, then leaves.
-- **Model** (`editor::doc`, plain Rust, unit-tested): per fighter a `Doc` with the typed merged `Fighter` being
+- **Model** (`editor::doc`, plain Rust, unit-tested): `Doc<T: Content>` for fighters and stages, with the typed content being
   edited, the snapshot it was loaded/saved as, snapshot undo/redo (continuous drags and typing coalesce into one
   step), and the package's own raw JSON.
 - **Save and `extends`.** The file written is the package's *own* document, not the merged fighter. On save the
@@ -151,9 +168,9 @@ feel. Its own design, not a port of the TS panels.
   `extends`, `$schema` and inherited data stay as they were, so a child stays a thin override; editing an inherited
   move writes that move's override into the child. Before writing, the real loader (`sim::data::load`) runs over all
   content with the new document in place; any error for the package refuses the save and lists file + JSON path.
-  Files go to the user content dir (`<data dir>/stick-smash/content/fighters/<id>/fighter.json`), which overrides
+  Files go to the user content dir (`<data dir>/stick-smash/content/{fighters,stages}/<id>/{fighter,stage}.json`), which overrides
   the built-in file; `--features dev` adds a toggle to write into `assets/` instead. Output uses
-  `to_compact_string`. Abstract parents (`base`) aren't editable in v1.
+  `to_compact_string`. Abstract parents (`base`) aren't listed for editing.
 - **Test** starts training with the edited (unsaved) data: P1 on the keyboard, a standing dummy. The pause menu's
   "Back to editor" returns with all editor state intact. After saves, leaving the editor reloads the game's content.
 - **Stage editor** (the top bar's Fighters | Stages switch). Same frame, undo, saving, dialogs and shortcut sheet;
@@ -169,18 +186,18 @@ feel. Its own design, not a port of the TS panels.
   Alt is 0.1 px. Symmetry mirrors edits around `width / 2`: a dragged part's mirror partner (found by geometry) gets
   the mirror image (blocks swap left/right ledges, platform paths mirror), a centred part stays centred and can't be
   dragged past the axis, and list elements without a reflection are left alone. Deleting a mirrored pair is checked
-  as a whole. The sandbox World is rebuilt on any geometry or slot change (keeping its clock). Format-1 documents
+  as a whole. The sandbox World is rebuilt on any geometry or slot change: CPU play restarts at frame zero;
+  without CPUs, the motion preview retains its clock. Format-1 documents
   are migrated before they become the save baseline, so saves never mix `ground` with `blocks`. The inspector is hand-made for geometry and uses schema forms
   (with colour pickers) for art and the backdrop. Problems are the loader's `check_stage`; notes flag legal but
   likely-wrong setups (fewer than 8 spawns, spawns in the air, geometry past the blast zone, KOs off camera). New
   stages copy a template stage (unsaved edits included) as a whole file; only never-saved stages can change id.
   Test plays training or a 3-stock match vs a CPU on the stage; results and pause return to the editor.
-
-
-### Rendering (milestone 3)
+### Rendering
 - **Vector drawing** is our own small tessellator (`render::canvas`): polylines, circles, sectors, rounded rects
   and ear-clipped polygons into one vertex-colored triangle mesh per layer (backdrop, stars, stage, world,
-  debug), rebuilt each frame, MSAA ×4. No gizmos (they can't fill), no lyon dependency.
+  debug, editor overlay), MSAA ×4. Dynamic layers rebuild each frame; backdrop/static stage geometry is cached
+  until the stage or content changes (moving platforms rebuild the stage layer). No gizmos (they can't fill), no lyon dependency.
 - **Interpolation.** The game pushes a `World` snapshot to `render::Scene` every tick and sets `alpha` (fraction
   of a tick since then) every frame. Fighter positions and skeletons, projectiles, particles and the camera
   interpolate between the last two ticks. Fighters snap when their state, facing or position jumps.
@@ -193,20 +210,13 @@ feel. Its own design, not a port of the TS panels.
 - **Cosmetic tuning** lives in `global.render` (camera, overlays, effect looks) and stage `art`. It is part of
   the content hash; harmless, since it's loaded content either way.
 
-### Camera (decided)
-Tuning is in `global.json` → `render.camera` (one rule set for all stages; per-stage overrides can come with
-bigger stages). Each tick: frame every fighter that isn't dead/out (feet positions, clamped to the blast zone ±
+### Camera
+Tuning is in `global.json` → `render.camera`. Geometry-derived zoom limits scale with stage size and platform
+paths (`sim::data::camera`); optional stage `zoom.minHeight` / `maxHeight` override them, capped by camera bounds.
+Each tick: frame every fighter that isn't dead/out (feet positions, clamped to the blast zone ±
 `blastMargin`), pad by `padX`/`padTop`/`padBottom`, pull the center `stageBias` toward the stage's center, fit the
-window's aspect ratio, clamp the visible height to `minHeight..maxHeight` (zoom limits), and clamp the view inside
+gameplay area's aspect ratio, clamp the visible height to the resolved zoom limits, and clamp the view inside
 the stage's `camera` bounds. The camera eases toward that target by `follow` (position) and `zoomFollow` (zoom)
-per tick, so it's deterministic for a given world history (screenshots reproduce). Shake comes from `Fx::Shake`,
-decays by `shakeDecay` per tick and offsets the view randomly. The backdrop gets a little parallax
+per pushed tick; its unshaken framing follows the world history. UI safe areas reserve space above/below gameplay.
+Shake comes from `Fx::Shake`, decays by `shakeDecay` per tick and offsets the drawn view with render-side randomness each frame. The backdrop gets a little parallax
 (`art.background.parallax`).
-
-## Milestones
-
-1. **Data:** Rust content types + schemas; Node script converts TS fighters/stage into the new format (including the 5 kinds as phases); tests load and validate all assets.
-2. **Sim port:** physics, states, combat, moves, projectiles, AI. N players, teams, raw input. A check against the TS sim: record inputs and per-frame state from TS, replay in Rust, compare with a tolerance.
-3. **Render:** stick figures from pose data, attachments, stage, fx, debug overlay, camera that follows the fighters.
-4. **Playable:** join screen with mixed devices, character select, CPU level, stock matches, training mode, HUD.
-5. **Editor** (fast-follow).

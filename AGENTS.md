@@ -3,6 +3,7 @@
 Stick Smash in Rust: a Smash-style platform fighter, ported from the Phaser/TypeScript version (`../stick-smash`). Bevy 0.20 + bevy_egui 0.43.
 
 ## Commands
+See `docs/DEVELOPMENT.md` for the long-form contributor guide; `README.md`, `docs/PLAYTESTING.md` and `docs/MODDING.md` are for users.
 Tasks live in the `justfile` (`just` lists them). Add new scripts as `just` recipes, not shell files.
 - `just run` (`just dev` for dynamic linking / faster rebuilds), `just test`, `just lint`, `just check`.
 - `just balance [seeds] [fighter]` runs optional detailed release CPU matchups (default 16 seeds, all three new fighters); prints JSON damage, tip contacts, whiffs/punishes, KO moves, recovery deaths and unfinished matches.
