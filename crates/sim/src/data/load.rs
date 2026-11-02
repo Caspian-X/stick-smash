@@ -132,10 +132,6 @@ pub fn load(files: impl IntoIterator<Item = Source>) -> Result<(GameData, Vec<Co
             return Err(errors);
         }
     };
-    if let Err(e) = check_global("global.json", &global) {
-        errors.push(e);
-        return Err(errors);
-    }
     let mut hashed = vec![("global".to_string(), gv)];
 
     let mut fighters = Vec::new();
@@ -174,6 +170,10 @@ pub fn load(files: impl IntoIterator<Item = Source>) -> Result<(GameData, Vec<Co
 
     let mut data = GameData { global, stages, fighters, hash: 0 };
     let invalid = validate(&data);
+    // `validate` runs `check_global`; nothing loads without a valid global.
+    if invalid.iter().any(|e| e.file == "global.json") {
+        return Err(invalid);
+    }
     let skipped: BTreeSet<_> = invalid.iter().map(|e| e.file.as_str()).collect();
     data.fighters.retain(|f| !skipped.contains(format!("fighters/{}/fighter.json", f.id).as_str()));
     data.stages.retain(|s| !skipped.contains(format!("stages/{}/stage.json", s.id).as_str()));
@@ -870,7 +870,6 @@ pub fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
         return Err(err(file, "render.camera.minScaleFloor", "must be finite and between 0 and 1"));
     }
     positive(file, "knockback.chargeDamageDivisor", g.knockback.charge_damage_divisor)?;
-    positive(file, "hitTypes.windbox.maxSpeed", g.hit_types.windbox.max_speed)?;
     positive(file, "shield.max", g.shield.max)?;
     positive(file, "hitstun.gravity", g.hitstun.gravity)?;
     positive(file, "hitstun.maxFall", g.hitstun.max_fall)?;
@@ -896,6 +895,7 @@ pub fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
     check_grab(file, &g.grab)?;
     check_sim(file, &g.sim)?;
     check_hit_types(file, &g.hit_types)?;
+    check_render(file, &g.render)?;
     nonnegative(file, "ledge.jumpSpeed", g.ledge.jump_speed)?;
     check_ai(file, &g.ai)?;
     for (name, boxes) in [("knockdown.attack", &g.knockdown.attack), ("ledge.attackHit", &g.ledge.attack_hit)] {
@@ -915,6 +915,107 @@ pub fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
     }
     if g.dodge.roll_move_start > g.dodge.roll_move_end || g.dodge.roll_move_end > g.dodge.roll_frames {
         return Err(err(file, "dodge.rollMoveEnd", "needs rollMoveStart <= rollMoveEnd <= rollFrames"));
+    }
+    Ok(())
+}
+
+fn check_render(file: &str, r: &super::render::Render) -> Result<(), ContentError> {
+    for (name, n) in [
+        ("interpolate.fighterJump", r.interpolate.fighter_jump),
+        ("interpolate.projectileJump", r.interpolate.projectile_jump),
+        ("hud.look.tagHeight", r.hud.look.tag_height),
+        ("hud.look.anchorHeight", r.hud.look.anchor_height),
+        ("select.sizeSmall", r.select.size_small),
+        ("select.sizeLarge", r.select.size_large),
+    ] {
+        positive(file, &format!("render.{name}"), n)?;
+    }
+    nonnegative(file, "render.hud.look.shakeSpeed", f64::from(r.hud.look.shake_speed))?;
+    positive(file, "render.hud.look.bubbleShrink", f64::from(r.hud.look.bubble_shrink))?;
+    range(file, "render.hud.look.bubbleMinScale", f64::from(r.hud.look.bubble_min_scale), 0., 1.)?;
+    positive(file, "render.hud.look.popScale", f64::from(r.hud.look.pop_scale))?;
+    positive(file, "render.hud.look.popSpeed", f64::from(r.hud.look.pop_speed))?;
+    if r.select.size_small > r.select.size_large {
+        return Err(err(file, "render.select", "needs sizeSmall ≤ sizeLarge"));
+    }
+    for (i, n) in r.select.thumb_crop.iter().enumerate() {
+        positive(file, &format!("render.select.thumbCrop[{i}]"), *n)?;
+    }
+    let s = &r.select;
+    for (name, n) in [
+        ("flipSecs", f64::from(s.flip_secs)),
+        ("bannerSecs", f64::from(s.banner_secs)),
+        ("dropScale", f64::from(s.drop_scale)),
+        ("roulette.secs", f64::from(s.roulette.secs)),
+        ("roulette.hops", f64::from(s.roulette.hops)),
+        ("roulette.curve", f64::from(s.roulette.curve)),
+        ("roulette.landScale", f64::from(s.roulette.land_scale)),
+    ] {
+        positive(file, &format!("render.select.{name}"), n)?;
+    }
+    for (name, n) in [
+        ("overshoot", s.overshoot),
+        ("dropHeight", s.drop_height),
+        ("bannerFrom", s.banner_from),
+        ("roulette.pause", s.roulette.pause),
+        ("roulette.landBounce", s.roulette.land_bounce),
+        ("roulette.landWobble", s.roulette.land_wobble),
+    ] {
+        nonnegative(file, &format!("render.select.{name}"), f64::from(n))?;
+    }
+    check_pointer_look(file, &s.pointer)?;
+    positive(file, "render.select.hints.fadeSecs", f64::from(s.hints.fade_secs))?;
+    nonnegative(file, "render.select.hints.showSecs", f64::from(s.hints.show_secs))?;
+    nonnegative(file, "render.select.hints.idleSecs", f64::from(s.hints.idle_secs))?;
+    Ok(())
+}
+
+fn check_pointer_look(file: &str, p: &super::render::PointerLook) -> Result<(), ContentError> {
+    for (name, n) in [
+        ("speed", p.speed),
+        ("curve", p.curve),
+        ("slideSecs", p.slide_secs),
+        ("bounceSecs", p.bounce_secs),
+        ("stroke", p.stroke),
+        ("scale", p.scale),
+        ("motion.breathSecs", p.motion.breath_secs),
+        ("motion.substeps", p.motion.substeps),
+    ] {
+        positive(file, &format!("render.select.pointer.{name}"), f64::from(n))?;
+    }
+    for (name, n) in [
+        ("accel", p.accel),
+        ("magnetRadius", p.magnet_radius),
+        ("magnetStrength", p.magnet_strength),
+        ("reach", p.reach),
+        ("slideOvershoot", p.slide_overshoot),
+        ("fan", p.fan),
+        ("rest", p.rest),
+        ("land", p.land),
+        ("drop", p.drop),
+        ("bounceWobble", p.bounce_wobble),
+        ("motion.lean", p.motion.lean),
+        ("motion.leanMax", p.motion.lean_max),
+        ("motion.stretch", p.motion.stretch),
+        ("motion.stretchMax", p.motion.stretch_max),
+        ("motion.chipLag", p.motion.chip_lag),
+        ("motion.chipSwing", p.motion.chip_swing),
+        ("motion.stillSpeed", p.motion.still_speed),
+        ("motion.breathAfter", p.motion.breath_after),
+        ("motion.breathBob", p.motion.breath_bob),
+        ("motion.breathScale", p.motion.breath_scale),
+    ] {
+        nonnegative(file, &format!("render.select.pointer.{name}"), f64::from(n))?;
+    }
+    range(file, "render.select.pointer.deadzone", f64::from(p.deadzone), 0., 1.)?;
+    range(file, "render.select.pointer.magnetSpeed", f64::from(p.magnet_speed), 0., 1.)?;
+    for (name, [stiffness, damping]) in [
+        ("motion.leanSpring", p.motion.lean_spring),
+        ("motion.stretchSpring", p.motion.stretch_spring),
+        ("motion.chipSpring", p.motion.chip_spring),
+    ] {
+        positive(file, &format!("render.select.pointer.{name}"), f64::from(stiffness))?;
+        nonnegative(file, &format!("render.select.pointer.{name}"), f64::from(damping))?;
     }
     Ok(())
 }
@@ -1158,6 +1259,7 @@ fn check_sim(file: &str, v: &super::global::SimRules) -> Result<(), ContentError
 }
 
 fn check_hit_types(file: &str, v: &super::global::HitTypes) -> Result<(), ContentError> {
+    positive(file, "hitTypes.windbox.maxSpeed", v.windbox.max_speed)?;
     for (path, n) in [
         ("hitTypes.trip.slide", v.trip.slide),
         ("hitTypes.autolink.pull", v.autolink.pull),

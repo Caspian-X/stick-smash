@@ -89,11 +89,12 @@ model later. See [FORMAT.md](FORMAT.md#moves) for exact frame timing, events and
   needed. The content hash is unaffected (computed at load).
 - **Match stats** (results screen) are game-side: every damaging entry in the sim's per-victim `World::hits` records credits damage (shield hits are excluded); a stock lost within 8 s of a hit is a KO for `last_hit_by`, otherwise a self-destruct. Hit records drain each tick alongside effects.
   Placement: the winner (and teammates) first, then by elimination time.
-- **HUD safe area.** The game measures the HUD panels after layout and passes the bottom reserved fraction to
-  the renderer. The camera fits the remaining rectangle; tags share its world mapping and offscreen bubbles
-  stop above the panels.
+- **HUD safe area.** The game measures the HUD panels after layout and passes the reserved top and bottom
+  fractions to the renderer (`Scene::top_safe_area` / `bottom_safe_area`). The camera fits the remaining
+  rectangle; tags share its world mapping and offscreen bubbles stop above the panels.
 - **Presentation tuning** (damage color ramp, hit shake, end-of-match slow motion, results delay) lives in
-  `global.render.hud`; the sim never reads it.
+  `global.render.hud`; the sim never reads it. Name-tag and offscreen-bubble placement plus HUD text pops are
+  tuned separately in `render.hud.look`.
 - **Editor** is a mode of the same executable, reached from the main menu (see "Editor" below).
 
 ### Audio
@@ -183,6 +184,9 @@ feel. Its own design, not a port of the TS panels.
 - **Interpolation.** The game pushes a `World` snapshot to `render::Scene` every tick and sets `alpha` (fraction
   of a tick since then) every frame. Fighter positions and skeletons, projectiles, particles and the camera
   interpolate between the last two ticks. Fighters snap when their state, facing or position jumps.
+- **Interpolation gaps.** A fighter or projectile that moved further in one tick than
+  `render.interpolate.fighterJump` / `projectileJump` stage pixels is treated as teleported and drawn at its
+  new position instead of sliding across.
 - **Effects** are render-side: `Fx` events become particles/rings/beams with a non-sim RNG, advanced per tick.
 - **Blending.** The GPU blends in linear light; the art was tuned for sRGB canvas blending, so translucent alpha
   is raised to `render.alphaGamma` (1.6) on output. Faint glows/shadows then look like the TS version.

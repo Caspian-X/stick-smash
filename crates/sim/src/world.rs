@@ -395,7 +395,7 @@ impl World {
         Ok(Self {
             frame: 0,
             rng: Rng(cfg.seed),
-            cosmetic_rng: data.global.sim.separate_cosmetic_rng.then_some(Rng(cfg.seed)),
+            cosmetic_rng: data.global.sim.separate_cosmetic_rng.then_some(Rng(cfg.seed ^ 0x9e37_79b9)),
             fx: vec![],
             hits: vec![],
             stage,

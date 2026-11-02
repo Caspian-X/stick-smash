@@ -7,6 +7,10 @@ use serde::{Deserialize, Serialize};
 use super::common::Color;
 use super::hitbox::Hitbox;
 
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Global {
@@ -353,7 +357,9 @@ pub struct InputRules {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SimRules {
-    /// Keep effect ranges and charge particles from advancing gameplay randomness.
+    /// Keep effect ranges and charge particles from advancing gameplay randomness. Defaults to true for
+    /// older user `global.json` overrides written before this field existed (the bundled value).
+    #[serde(default = "default_true")]
     pub separate_cosmetic_rng: bool,
     pub jumpsquat_friction: f64,
     pub landing_friction: f64,
