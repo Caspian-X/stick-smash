@@ -1,75 +1,106 @@
-# Stick Smash (Rust)
+# Stick Smash
 
-A Smash-style platform fighter in Rust with Bevy and egui, ported from the Phaser/TypeScript version.
-It's meant for local multiplayer on one machine and online play between installed copies of the game.
+![A four-player match on Tidebreak Isles](docs/images/match.webp)
+
+A Smash-style platform fighter about stick figures knocking each other off the stage, written in Rust with Bevy.
+Up to 8 players share one screen with keyboards and gamepads, and CPUs fill the empty seats. Online play is
+planned for later, once local play feels great.
+
+## Quick start
+
+You need a Rust toolchain and [`just`](https://github.com/casey/just). Run from the repository root.
 
 ```bash
-cargo run -p game                 # play
-cargo run -p game --features dev  # faster incremental builds (dynamic linking)
-cargo run -p game -- --screenshot shots/  # scripted tour through menus, the editor, a 4-player match, results, training; saves PNGs
-cargo test --workspace            # sim (incl. TS traces), render and game tests
+just release   # play (optimized build; use this to judge feel)
+just run       # play (debug build)
+just dev       # debug build with dynamic linking, for fast rebuilds while developing
+just check     # formatting, clippy and all tests
+just shots     # scripted screenshot tour into /tmp/stick-smash-shots
 ```
+
+`just` on its own lists every recipe.
+
+## Tour
+
+| | |
+|---|---|
+| ![Character select](docs/images/select.webp) **Character select**: every player steers a pointer and drops their chip on a fighter. | ![Stage roulette](docs/images/stage-roulette.webp) **Stage select**: everyone votes, then a roulette picks among the votes. |
+| ![Training](docs/images/training.webp) **Training**: frame advantage, combos and a configurable dummy. | ![Results](docs/images/results.webp) **Results** with per-player stats, and every versus match saved as a replay. |
+| ![Fighter editor](docs/images/fighter-editor.webp) **Fighter editor**: drag hitboxes over the real simulation and scrub the timeline. | ![Stage editor](docs/images/stage-editor.webp) **Stage editor**: blocks, platforms, moving lifts and spawns, with CPUs playing as you edit. |
 
 ## How to play
 
-Pick **Versus** or **Training** on the title screen. On character select, any device presses a button to join
-(up to 8 players). Left/right changes your fighter, attack locks in, special backs out. Move down to your card's
-footer and sideways to reach **Add CPU** or a CPU's card (level, fighter, remove), or up to the rules (stocks,
-stage, teams, friendly fire). Only stages that fit the lineup are offered; teams need at least two opposing sides. When everyone's ready, press start. Start/Esc pauses (the device that paused drives
-the menu; ownership moves to a connected device if it disconnects). A disconnected unready player leaves select;
-a ready slot stays available to remove or reclaim with another device. After the match: rematch, character select or main menu. F1 toggles the hitbox/debug overlay.
+Pick **Versus** or **Training** on the title screen.
 
-**Editor** (keyboard and mouse): pick a fighter, then a move, throw, pose or its stats. The viewport plays the
-move in a real-sim sandbox (optionally airborne, against a dummy, holding the button to charge); scrub or play the
-timeline. Drag hitboxes to move them, their rim to resize, the gold dot to aim the launch angle; drag joints on pose
-keys. The inspector edits everything else (phases, transitions, events, pose keys, stats). ⌘/Ctrl Z undoes,
-⌘/Ctrl S saves into your user content dir (only the changed values are written, `extends` is kept), **Test** plays
-your unsaved edits in training (pause → Back to editor). `?` lists the shortcuts.
+**Character select.** Press any button on a keyboard or gamepad to join. You get a pointer carrying your chip
+(P1, P2, …). Move it over a fighter and press attack to drop your chip there; the "?" tile picks at random. Press
+special (or attack on your chip) to pick it back up; special without a chip down leaves. With your hands free you can:
 
-Training: you against a dummy that stands, shields, jumps, fights as a CPU or is controlled by a second device.
-The panel (top right) shows your move and frame, the last hit's frame advantage and combo, and has dummy damage,
-speed, freeze/step and reset. Dummy settings are also in the pause menu.
+- point at **Add CPU** to add a computer player, then use its card to change its fighter (carry its chip to a
+  tile), level (Easy, Normal, Hard) or team, or remove it,
+- set the rules: **Teams** and **Friendly fire**,
+- press grab or shield to open your options: your team (with Teams on), and whether pressing up jumps.
 
-### Default controls
+When everyone has dropped their chip, press start (or attack on your own chip).
 
-| | Keyboard left | Keyboard right | Gamepad |
+**Stage select.** Everyone votes with their pointer by dropping a vote on a stage; Stocks are set here too.
+Special takes your vote back (or, with no vote, returns to character select). Once everyone has voted, or someone
+presses start (or attack on their own vote), a roulette spins over the voted stages, weighted by votes, and the match begins. Stages without
+enough start positions for everyone are dimmed.
+
+**In a match**, knock opponents past the edge of the screen. The more damage they have, the farther they fly.
+Start / Esc pauses; only the device that paused controls the pause menu. F1 toggles the hitbox overlay.
+
+**After a match**: rematch, back to character select, main menu, save the replay or watch it. Every versus match is
+auto-saved (the last 10 are kept); saved replays stay until you delete them from **Replays** on the title screen.
+
+**Training** is you against a dummy that stands, shields, jumps, fights as a CPU or is played by a second
+device. The panel in the top right shows frame advantage and combos, and has the dummy's damage, game speed and
+freeze / frame step. See [PLAYTESTING.md](docs/PLAYTESTING.md#training).
+
+### Controls
+
+| | Keyboard | Gamepad |
+|---|---|---|
+| Move | WASD or arrow keys | Left stick or d-pad |
+| Jump | Space, Right Shift (or up) | X or Y (or up) |
+| Attack | J or . | A |
+| Special | K or / | B |
+| Grab | I or ; | RB |
+| Shield | L or ' | LB, LT, RT |
+| Pause | Esc | Start |
+
+- **Smash attacks**: tap a direction together with attack; hold attack to charge.
+- **Dodges**: shield + left / right rolls, shield + down spot-dodges, shield in the air air-dodges.
+- **Two keyboard players**: Settings → Keyboard → *Two players (split)*. The left player uses WASD, Space, J K I L
+  and Esc; the right player the arrows, Right Shift, . / ; ' and Enter, or the numpad (4 jump, 1 attack, 2 special,
+  3 grab, 0 shield, Enter pause).
+- **Menus**: attack or Enter confirms, special or Esc goes back. The mouse works on the select screens.
+- **Rebinding**: title → **Controls**, per device. Pick an action, then press the new key or button (Esc or the
+  gamepad's B / Back cancels).
+- "Up to jump" can be turned off per player on character select.
+
+### Settings and save files
+
+Settings has volume sliders, the keyboard mode, hitboxes in versus, and fullscreen. Sounds are synthesized at
+startup, so there are no audio files.
+
+| | macOS | Linux | Windows |
 |---|---|---|---|
-| Move | W A S D | Arrow keys | Left stick / d-pad |
-| Jump | Space (or up) | Right Shift, Num 4 (or up) | X / Y (or up) |
-| Attack | J | . or Num 1 | A |
-| Special | K | / or Num 2 | B |
-| Grab | I | ; or Num 3 | RB |
-| Shield | L | ' or Num 0 | LB, LT, RT |
-| Pause | Esc | Enter | Start |
+| Settings, bindings, last picks | `~/Library/Application Support/stick-smash/settings.json` | `~/.config/stick-smash/settings.json` | `%APPDATA%\stick-smash\settings.json` |
+| Replays | `~/Library/Application Support/stick-smash/replays/` | `~/.local/share/stick-smash/replays/` | `%APPDATA%\stick-smash\replays\` |
+| Your fighters and stages | `~/Library/Application Support/stick-smash/content/` | `~/.local/share/stick-smash/content/` | `%APPDATA%\stick-smash\content\` |
 
-Settings includes master, SFX and reserved music volume sliders (left/right to adjust). Effects are synthesized
-at startup; no sound files are needed. Hits scale with impact, and hits, shields and blast-zone KOs pan with the
-action. Training speed changes event timing while sounds retain their normal pitch.
+The Settings screen shows the exact paths on your machine.
 
-Settings → Keyboard switches between two keyboard players (above) and one player using both halves. Controls
-rebinds any device (select an action, press the new control; Esc or the gamepad's B/Back cancels).
-Split keyboard bindings refuse keys used by the other half. Gamepads have per-device session overrides with
-shared model defaults. Gameplay presses clear across menus and pause; release held buttons after resuming. Tap a direction with attack for a smash
-attack (hold to charge). Shield + left/right rolls, shield + down spot-dodges, shield in the air air-dodges.
-"Up to jump" can be turned off per player on character select.
+## More
 
-Settings, bindings and your last picks are saved to the platform config dir (`~/Library/Application Support/
-stick-smash/settings.json` on macOS). Your own fighters and stages go in the platform data dir under
-`stick-smash/content/`, laid out like `assets/`; they load after the built-in content and can override it.
+- [Playtesting](docs/PLAYTESTING.md): running sessions, training tools, replays, balance runs and the tuning loop.
+- [Modding](docs/MODDING.md): your content folder, packages and `extends`, and the fighter and stage editors.
+- [Content format](docs/FORMAT.md): every field of fighters, stages and global tuning.
+- [Development](docs/DEVELOPMENT.md): architecture, determinism rules, tests and how to add things.
+- [Design decisions](docs/DESIGN.md): why things are the way they are.
 
-One-shot TS content import (Node 26, sibling `../stick-smash` checkout): `node tools/convert-ts/convert.mjs`, then `BLESS=1 cargo test -p sim --test content`.
-
-## Layout
-
-```
-crates/sim/    deterministic game logic, no Bevy (rollback-ready)
-crates/render/ Bevy plugin drawing a sim World: figures, attachments, stage, effects, camera, debug overlay
-crates/editor/ fighter editor (egui): browser, real-sim preview + timeline, direct hitbox/pose editing, undo, save
-crates/game/   Bevy app: input devices, menus (bevy_ui), match flow, HUD, training panel (egui)
-assets/        JSON content: global tuning, stages, fighters (moddable), generated schemas; fonts (OFL)
-docs/          DESIGN.md (decisions), FORMAT.md (content format and move phase semantics)
-tools/         one-shot TS → JSON converter
-```
-
-Status: milestones 1–5 done (content format, sim verified against TS traces, rendering, playable game with
-menus, join/character select, stock matches, training and HUD, fighter editor).
+**Tools.** Stick Smash started as a port of a Phaser / TypeScript version. `just convert-ts` re-imports its content
+(needs Node and a sibling `../stick-smash` checkout; it overwrites `assets/`), and `just record-traces` re-records the
+TS behaviour traces the simulation is tested against.
