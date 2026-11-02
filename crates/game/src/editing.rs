@@ -60,7 +60,7 @@ fn enter(mut commands: Commands, testing: Option<Res<Testing>>, mut data: ResMut
 fn requests(
     mut commands: Commands,
     mut out: ResMut<Outbox>,
-    mut ed: ResMut<Editor>,
+    ed: Option<ResMut<Editor>>,
     mut data: ResMut<Data>,
     saved: Res<Saved>,
     mut scene: ResMut<render::Scene>,
@@ -115,7 +115,10 @@ fn requests(
                     play::install(&mut commands, &mut scene, m);
                     next.set(Screen::Match);
                 }
-                Err(e) => ed.say(format!("Couldn’t test: {e}"), true),
+                Err(e) => match ed {
+                    Some(mut ed) => ed.say(format!("Couldn’t test: {e}"), true),
+                    None => error!("couldn’t test: {e}"),
+                },
             }
         }
         None => {}

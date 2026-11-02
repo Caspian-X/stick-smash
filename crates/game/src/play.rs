@@ -459,7 +459,6 @@ mod tests {
     #[test]
     fn fast_forward_discards_countdown_sounds_but_live_ticks_keep_them() {
         let data = crate::test_data();
-
         let mut m = Match::attract(&data, 1).unwrap();
         m.mode = Mode::Versus;
         let (mut devs, mut scene) = (Devices::default(), Scene::new(data));
@@ -475,7 +474,6 @@ mod tests {
     #[test]
     fn hit_records_credit_every_victim_and_last_hitter() {
         let data = crate::test_data();
-
         let mut m = Match::attract(&data, 1).unwrap();
         let before: Vec<_> = m.world.fighters.iter().map(|f| (f.dmg, f.stocks)).collect();
         m.world.frame = 10;
@@ -506,7 +504,6 @@ mod tests {
     #[test]
     fn winning_teammates_share_first() {
         let data = crate::test_data();
-
         let slot = |i: usize| Slot {
             dev: None,
             fighter: 0,
@@ -526,7 +523,6 @@ mod tests {
     #[test]
     fn cpu_match_tracks_stats_and_placements() {
         let data = crate::test_data();
-
         let slot = |i: usize| Slot {
             dev: None,
             fighter: i % data.fighters.len(),

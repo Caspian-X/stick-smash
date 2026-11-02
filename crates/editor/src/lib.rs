@@ -179,7 +179,7 @@ impl<S: States + Copy> Plugin for EditorPlugin<S> {
     }
 }
 
-/// Reads every `.json` under each root (skipping `schema/`), later roots replacing earlier files.
+/// Reads every `.json` under each root (see `sim::data::sources`), later roots replacing earlier files.
 pub fn read_roots(roots: &[PathBuf]) -> Files {
     let mut files = Files::default();
     for root in roots {

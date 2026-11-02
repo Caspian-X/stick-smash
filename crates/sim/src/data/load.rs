@@ -43,16 +43,18 @@ pub struct Source {
     pub text: String,
 }
 
-/// Reads JSON sources in path order, skipping `schema` directories and symbolic links.
-/// Read failures include the affected path; callers can log them before loading the remaining sources.
+/// Reads JSON sources in path order, skipping `schema` directories and symbolic links. A missing root is empty.
+/// Read failures name the root and affected path; callers can log them before loading the remaining sources.
 #[cfg(feature = "fs")]
 pub fn sources(root: impl AsRef<std::path::Path>) -> (Vec<Source>, Vec<ContentError>) {
     fn walk(root: &std::path::Path, dir: &std::path::Path, out: &mut Vec<Source>, errors: &mut Vec<ContentError>) {
         let path = |p: &std::path::Path| p.strip_prefix(root).unwrap_or(p).to_string_lossy().replace('\\', "/");
+        let shown = |p: &std::path::Path| p.to_string_lossy().replace('\\', "/");
         let entries = match std::fs::read_dir(dir) {
             Ok(entries) => entries,
+            Err(e) if dir == root && e.kind() == std::io::ErrorKind::NotFound => return,
             Err(e) => {
-                errors.push(err(&path(dir), "", e.to_string()));
+                errors.push(err(&shown(dir), "", e.to_string()));
                 return;
             }
         };
@@ -60,7 +62,7 @@ pub fn sources(root: impl AsRef<std::path::Path>) -> (Vec<Source>, Vec<ContentEr
             .filter_map(|e| match e {
                 Ok(e) => Some(e),
                 Err(e) => {
-                    errors.push(err(&path(dir), "", e.to_string()));
+                    errors.push(err(&shown(dir), "", e.to_string()));
                     None
                 }
             })
@@ -73,10 +75,10 @@ pub fn sources(root: impl AsRef<std::path::Path>) -> (Vec<Source>, Vec<ContentEr
                 Ok(t) if t.is_file() && p.extension().is_some_and(|e| e == "json") => {
                     match std::fs::read_to_string(&p) {
                         Ok(text) => out.push(Source { path: path(&p), text }),
-                        Err(e) => errors.push(err(&path(&p), "", e.to_string())),
+                        Err(e) => errors.push(err(&shown(&p), "", e.to_string())),
                     }
                 }
-                Err(e) => errors.push(err(&path(&p), "", e.to_string())),
+                Err(e) => errors.push(err(&shown(&p), "", e.to_string())),
                 _ => {}
             }
         }

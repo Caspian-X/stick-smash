@@ -950,7 +950,6 @@ mod tests {
     #[test]
     fn failed_section_continues_and_exits_with_error() {
         let data = crate::test_data();
-
         let mut script = Script::tour(PathBuf::new(), Some("menus")).unwrap();
         script.sections = vec![
             Section::new("fails", vec![Step::Until(|_, _, _| false, 1)]),

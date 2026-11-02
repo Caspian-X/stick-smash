@@ -590,6 +590,5 @@ fn filesystem_sources_are_sorted_relative_and_skip_schemas() {
     assert!(files.iter().all(|s| s.text == "{}"));
     fs::remove_dir_all(&root).unwrap();
     let (files, errors) = sim::data::sources(&root);
-    assert!(files.is_empty());
-    assert_eq!(errors.len(), 1);
+    assert!(files.is_empty() && errors.is_empty(), "a missing root is empty: {errors:?}");
 }
