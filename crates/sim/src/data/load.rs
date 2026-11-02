@@ -257,11 +257,6 @@ pub enum ContentKind {
     Stage,
 }
 
-/// Upgrades a stage in place. Kept for existing stage editor callers.
-pub fn migrate(v: &mut Value) -> Result<(), String> {
-    migrate_kind(ContentKind::Stage, v)
-}
-
 /// Upgrades only the selected content format. Fighter/global version 2 is a legacy alias for version 1.
 pub fn migrate_kind(kind: ContentKind, v: &mut Value) -> Result<(), String> {
     let ver = v.get("schemaVersion").and_then(Value::as_u64).ok_or("missing or not a number")?;
