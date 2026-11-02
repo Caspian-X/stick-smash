@@ -226,6 +226,18 @@ fn invalid_global_numbers_are_fatal() {
 }
 
 #[test]
+fn presentation_values_that_disable_an_effect_still_load() {
+    use serde_json::json;
+    for patch in [
+        json!({"render":{"select":{"dropScale":0}}}),
+        json!({"render":{"hud":{"look":{"tagHeight":0,"anchorHeight":-10}}}}),
+        json!({"render":{"select":{"pointer":{"slideSecs":0,"bounceSecs":0}}}}),
+    ] {
+        assert!(load(patched("global.json", patch.clone())).is_ok(), "{patch}");
+    }
+}
+
+#[test]
 fn invalid_stage_numbers_skip_package_with_path() {
     use serde_json::json;
     let file = "stages/arena/stage.json";

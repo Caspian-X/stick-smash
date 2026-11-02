@@ -920,13 +920,13 @@ fn check_render(file: &str, r: &super::render::Render) -> Result<(), ContentErro
     for (name, n) in [
         ("interpolate.fighterJump", r.interpolate.fighter_jump),
         ("interpolate.projectileJump", r.interpolate.projectile_jump),
-        ("hud.look.tagHeight", r.hud.look.tag_height),
-        ("hud.look.anchorHeight", r.hud.look.anchor_height),
         ("select.sizeSmall", r.select.size_small),
         ("select.sizeLarge", r.select.size_large),
     ] {
         positive(file, &format!("render.{name}"), n)?;
     }
+    finite(file, "render.hud.look.tagHeight", r.hud.look.tag_height)?;
+    finite(file, "render.hud.look.anchorHeight", r.hud.look.anchor_height)?;
     nonnegative(file, "render.hud.look.shakeSpeed", f64::from(r.hud.look.shake_speed))?;
     positive(file, "render.hud.look.bubbleShrink", f64::from(r.hud.look.bubble_shrink))?;
     range(file, "render.hud.look.bubbleMinScale", f64::from(r.hud.look.bubble_min_scale), 0., 1.)?;
@@ -942,7 +942,6 @@ fn check_render(file: &str, r: &super::render::Render) -> Result<(), ContentErro
     for (name, n) in [
         ("flipSecs", f64::from(s.flip_secs)),
         ("bannerSecs", f64::from(s.banner_secs)),
-        ("dropScale", f64::from(s.drop_scale)),
         ("roulette.secs", f64::from(s.roulette.secs)),
         ("roulette.hops", f64::from(s.roulette.hops)),
         ("roulette.curve", f64::from(s.roulette.curve)),
@@ -951,6 +950,7 @@ fn check_render(file: &str, r: &super::render::Render) -> Result<(), ContentErro
         positive(file, &format!("render.select.{name}"), n)?;
     }
     for (name, n) in [
+        ("dropScale", s.drop_scale),
         ("overshoot", s.overshoot),
         ("dropHeight", s.drop_height),
         ("bannerFrom", s.banner_from),
@@ -971,8 +971,6 @@ fn check_pointer_look(file: &str, p: &super::render::PointerLook) -> Result<(), 
     for (name, n) in [
         ("speed", p.speed),
         ("curve", p.curve),
-        ("slideSecs", p.slide_secs),
-        ("bounceSecs", p.bounce_secs),
         ("stroke", p.stroke),
         ("scale", p.scale),
         ("motion.breathSecs", p.motion.breath_secs),
@@ -981,6 +979,8 @@ fn check_pointer_look(file: &str, p: &super::render::PointerLook) -> Result<(), 
         positive(file, &format!("render.select.pointer.{name}"), f64::from(n))?;
     }
     for (name, n) in [
+        ("slideSecs", p.slide_secs),
+        ("bounceSecs", p.bounce_secs),
         ("accel", p.accel),
         ("magnetRadius", p.magnet_radius),
         ("magnetStrength", p.magnet_strength),
