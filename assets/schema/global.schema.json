@@ -194,7 +194,8 @@
       "properties": {
         "separateCosmeticRng": {
           "type": "boolean",
-          "description": "Keep effect ranges and charge particles from advancing gameplay randomness."
+          "description": "Keep effect ranges and charge particles from advancing gameplay randomness. Defaults to true for\nolder user `global.json` overrides written before this field existed (the bundled value).",
+          "default": true
         },
         "jumpsquatFriction": { "type": "number", "format": "double" },
         "landingFriction": { "type": "number", "format": "double" },
@@ -240,7 +241,6 @@
         "projectileWallTop": { "type": "number", "format": "double" }
       },
       "required": [
-        "separateCosmeticRng",
         "jumpsquatFriction",
         "landingFriction",
         "shieldFriction",

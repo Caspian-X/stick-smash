@@ -216,3 +216,59 @@ fn hit_history_tracks_each_victim_rehit_tick_and_resets_on_phase_entry() {
         assert_eq!(w.hits.len(), before + 2);
     }
 }
+
+/// Golden determinism: a fixed-seed CPU match with `separateCosmeticRng` off and effect-range moves injected
+/// (so cosmetic draws advance the shared gameplay RNG) must always end on the same World hash. The hash is
+/// FNV-1a over the world's Debug text; update the constant only when a deliberate change is intended.
+#[test]
+fn cpu_match_golden_world_hash() {
+    fn fnv1a(bytes: &[u8]) -> u64 {
+        let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+        for b in bytes {
+            h = (h ^ u64::from(*b)).wrapping_mul(0x100_0000_01b3);
+        }
+        h
+    }
+
+    let mut d = common::data();
+    d.global.sim.separate_cosmetic_rng = false;
+    for f in &mut d.fighters {
+        for slot in ["jab", "fsmash"] {
+            let m = f.moves.get_mut(slot).unwrap();
+            m.phases[0].events.push(sim::data::moves::Event {
+                at: Some(0),
+                fx: vec![sim::data::moves::Fx::Part {
+                    x: Num::Range([-6., 6.]),
+                    y: Num::Range([0., 8.]),
+                    vx: Num::Range([-3., 3.]),
+                    vy: Num::Range([-2., 6.]),
+                    life: Num::Range([10., 24.]),
+                    size: Num::Range([2., 7.]),
+                    color: sim::data::Color::Player,
+                    gravity: 0.,
+                    inherit_vel: 0.,
+                }],
+                ..Default::default()
+            });
+        }
+    }
+    let mut w = World::new(
+        MatchConfig {
+            seed: 0x5eed_5eed,
+            stocks: 1,
+            players: vec![
+                PlayerConfig { cpu: Some(2), ..PlayerConfig::human("brawler") },
+                PlayerConfig { cpu: Some(2), ..PlayerConfig::human("ninja") },
+            ],
+            ..Default::default()
+        },
+        &d,
+    )
+    .unwrap();
+    for _ in 0..900 {
+        step_world(&mut w, &d, &[]);
+        w.fx.clear();
+        w.hits.clear();
+    }
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x5466_fe51_1e75_75a6);
+}

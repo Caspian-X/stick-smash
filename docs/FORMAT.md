@@ -265,6 +265,10 @@ ledge options require `0 < a < b <= end` (jump allows `a == b`). Ground `underDe
 respawn `descendFrames` must be positive. Projectile lifetimes must fit a positive `i32`. Throw/projectile
 hitbox geometry is ignored; only projectile `r` and active melee hitbox radii must be positive.
 Global validation errors abort loading; invalid fighter/stage packages are skipped with a file and JSON path.
+Global rules are stricter than before: `hitstun.gravity` / `maxFall`, `shield.max`, `shield.breakGravity` /
+`breakMaxFall`, `knockback.chargeDamageDivisor` and `hitTypes.windbox.maxSpeed` must be positive, every
+`ai.thresholds` value is range-checked, and `render.select`, `render.interpolate` and `render.hud.look`
+presentation knobs (durations, scales, jump distances) are rejected when out of range.
 On blocks narrower than twice the AI target padding, that padding is reduced to half the block width.
 
 ## Procedural audio (`global.audio`)
