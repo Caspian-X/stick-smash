@@ -8,6 +8,7 @@ use bevy_egui::{EguiContexts, EguiPlugin, EguiPrimaryContextPass, egui};
 use render::{RenderPlugin, RenderSystems, Scene};
 use sim::data::load;
 use sim::{GameData, TICK_HZ};
+use ui::UiSystems;
 
 mod audio;
 mod editing;

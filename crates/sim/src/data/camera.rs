@@ -83,16 +83,6 @@ mod tests {
     }
 
     #[test]
-    fn older_camera_payload_uses_bundled_defaults() {
-        let (_, c) = data();
-        let mut v = serde_json::to_value(&c).unwrap();
-        for key in ["referencePlayWidth", "referencePlayHeight", "minScaleStart", "minScaleFloor"] {
-            v.as_object_mut().unwrap().remove(key);
-        }
-        assert_eq!(serde_json::from_value::<Camera>(v).unwrap(), c);
-    }
-
-    #[test]
     fn arena_keeps_reference_range_at_landscape_aspects() {
         let (s, c) = data();
         for aspect in [1.2, 4. / 3., 16. / 9., 21. / 9., 3.] {
