@@ -41,8 +41,12 @@ impl Plugin for UiPlugin {
             Update,
             (UiSystems::Input, UiSystems::Draw, UiSystems::Animate).chain().before(render::RenderSystems),
         )
-        .add_systems(Update, (crate::input::clear.run_if(state_changed::<Screen>).before(UiSystems::Input), ui_scale))
+        .add_systems(Update, ui_scale)
         .add_systems(PostUpdate, safe_area.after(bevy::ui::UiSystems::Layout));
+        // On entry, so a press that changed screens never reaches the next screen's fixed ticks.
+        for s in Screen::ALL {
+            app.add_systems(OnEnter(s), crate::input::clear);
+        }
     }
 }
 

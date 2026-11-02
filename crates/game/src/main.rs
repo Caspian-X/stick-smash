@@ -45,6 +45,21 @@ pub enum Screen {
     Editor,
 }
 
+impl Screen {
+    const ALL: [Screen; 10] = [
+        Screen::Title,
+        Screen::Settings,
+        Screen::Controls,
+        Screen::Select,
+        Screen::Stages,
+        Screen::Match,
+        Screen::Results,
+        Screen::Replays,
+        Screen::Playback,
+        Screen::Editor,
+    ];
+}
+
 /// Loaded content (built-in plus user content).
 #[derive(Resource, Clone)]
 pub struct Data(pub Arc<GameData>);
@@ -155,7 +170,7 @@ fn main() {
         fs::create_dir_all(&dir).expect("create screenshot dir");
         play::FIXED_SEED.store(7, std::sync::atomic::Ordering::Relaxed);
         app.insert_resource(script.expect("screenshot script"))
-            .add_systems(Update, shots::run.after(play::attract).after(input::clear).before(UiSystems::Input));
+            .add_systems(Update, shots::run.after(play::attract).before(UiSystems::Input));
     }
     if !app.run().is_success() {
         std::process::exit(1);

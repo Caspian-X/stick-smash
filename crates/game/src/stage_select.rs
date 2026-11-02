@@ -34,7 +34,7 @@ impl Plugin for StagePlugin {
         app.add_systems(OnEnter(Screen::Stages), enter).add_systems(OnExit(Screen::Stages), exit).add_systems(
             Update,
             (
-                (input, (roulette_clock, thumbs, stage).run_if(ui::staying)).chain().in_set(UiSystems::Input),
+                (input, (roulette_clock, thumbs, stage).chain().run_if(ui::staying)).chain().in_set(UiSystems::Input),
                 draw.in_set(UiSystems::Draw),
                 animate.in_set(UiSystems::Animate),
             )
