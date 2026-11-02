@@ -82,7 +82,7 @@ model later. See [FORMAT.md](FORMAT.md#moves) for exact frame timing, events and
   3 × sideways offset; sideways moves stay within 45°; vertical lists wrap). "Spinner" rows take left/right as
   value changes. Fighter/stage grids use `grid.rs` for row-aware digital navigation; each human also has a free
   pointer (`pointer.rs`) with analog acceleration/magnetism or direct mouse control. Chips ride on the pointers
-  until dropped on a tile. Small tiles show names under chips; the grid fits the available space and roster size.
+  until dropped on a tile. Small tiles show their name only while pointed at or holding a chip; the grid fits the available space and roster size.
 - **Selection.** Hover previews a fighter; confirm drops the chip and locks in. Free pointers can add CPUs,
   carry CPU chips to other tiles, change CPU level/team and adjust match rules. Confirming one's own chip picks
   it up (or starts once everyone is ready); special also picks it up. Grab/shield opens per-card team/tap-jump
@@ -217,6 +217,6 @@ Each tick: frame every fighter that isn't dead/out (feet positions, clamped to t
 `blastMargin`), pad by `padX`/`padTop`/`padBottom`, pull the center `stageBias` toward the stage's center, fit the
 gameplay area's aspect ratio, clamp the visible height to the resolved zoom limits, and clamp the view inside
 the stage's `camera` bounds. The camera eases toward that target by `follow` (position) and `zoomFollow` (zoom)
-per pushed tick; its unshaken framing follows the world history. UI safe areas reserve space above/below gameplay.
+per pushed tick; its unshaken framing is a function of the world history and the gameplay area's aspect ratio. UI safe areas reserve space above/below gameplay.
 Shake comes from `Fx::Shake`, decays by `shakeDecay` per tick and offsets the drawn view with render-side randomness each frame. The backdrop gets a little parallax
 (`art.background.parallax`).

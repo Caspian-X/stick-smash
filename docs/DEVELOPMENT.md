@@ -46,7 +46,7 @@ The editor also feeds `Scene`: fighter previews keep every sandbox frame for scr
 - **Keep the sim deterministic and Bevy-free.** No core I/O, wall-clock time, OS/thread randomness or dependence on `HashMap` iteration order. Preserve fighter/pair order and RNG call order. Identical content, initial world and input history must reproduce the same world for traces, replays and eventual rollback networking.
 - **Use `f64` and `libm` in simulation math.** This retains the TS numeric baseline and avoids platform-dependent transcendental implementations. Stage coordinates are pixels with y down and velocity in pixels/tick; raw input stick y points up. Rendering converts to Bevy's y-up coordinates.
 - **Keep random state in the snapshot.** Gameplay draws use `world.rng`. `World::effect_rng` uses `world.cosmetic_rng` when `global.sim.separateCosmeticRng` is enabled, otherwise the gameplay stream. Both are deterministic; splitting them keeps cosmetic range edits from changing AI/gameplay. The renderer has its own non-sim `Rand` for particles, shake and jitter.
-- **`World` is plain `Clone` rollback data.** Put evolving gameplay state, input history/buffers and RNG state there. Refer to fighters/projectiles by index; do not retain references, ECS entities or external mutable state. New snapshot fields affect replay serialization/checksums and may affect the golden hash.
+- **`World` is plain `Clone` rollback data.** Put evolving gameplay state, input history/buffers and RNG state there. Refer to fighters/projectiles by index; do not retain references, ECS entities or external mutable state. New snapshot fields always change the golden hash (it hashes `Debug` output) and replay checksums unless skipped in serialization, so they need a `SIM_VERSION` bump.
 - **Emit presentation as `Fx`.** The game/render/audio layers own side effects; a headless simulation must still work. Per-victim `HitRecord`s carry game-side statistics without coupling simulation to the HUD.
 - **Put tunables in `assets/` JSON.** Model them with typed fields and schema documentation, then validate their ranges. Gameplay tuning belongs with sim data; presentation tuning lives in `global.render`, `global.audio` and stage art. Editor UI constants are in `crates/editor/src/style.rs`.
 - **Choose behavior through data, never fighter or move ids.** Use phase/event fields and typed discriminants such as hitbox `kind`. There is no legacy move `kind` dispatcher: phases express the original special moves. New behavior must be reusable by another package without a code change.
@@ -55,7 +55,7 @@ The editor also feeds `Scene`: fighter previews keep every sandbox frame for scr
 
 ## Game screens and shared UI
 
-`crates/game/src/main.rs` declares `Screen`, `Screen::ALL`, module registration and app wiring. Screen modules own plugins: `menu.rs` (title/settings/controls), `select.rs`, `stage_select.rs`, `hud.rs`, `results.rs`, `training.rs` and `replay/ui.rs`. `editing.rs` installs the generic editor plugin for `Screen::Editor` and handles Test/Back/quit requests.
+`crates/game/src/main.rs` declares `Screen`, `Screen::ALL`, module registration and app wiring. Screen modules own plugins: `menu.rs` (title/settings/controls), `select.rs`, `stage_select.rs`, `hud.rs`, `results.rs`, `training.rs` and `replay/ui.rs`; shared `ui::UiPlugin`, `pointer::PointerPlugin` and `audio::SoundPlugin` are added alongside them. `editing.rs` installs the generic editor plugin for `Screen::Editor` and handles Test/Back/quit requests.
 
 `crates/game/src/ui.rs` orders `UiSystems::{Input, Draw, Animate}` before `render::RenderSystems`. Read devices/update the plain model in Input, rebuild changed UI in Draw, and advance presentation in Animate. `ui::staying` skips work when a screen transition is pending. `ui::Rebuild<K>` and `ui::rebuild` compare a model/key and replace the screen root only when it changes; roots get `DespawnOnExit(screen)`. Focus survives rebuilds through stable `Focusable::key`s, optionally restricted to one owner.
 
@@ -90,12 +90,15 @@ Run commands from the repository root. `just` lists recipes.
 
 | Command | What it checks |
 | --- | --- |
+| `just run` / `just release` / `just dev` | Play: debug, optimized (judge feel here), or debug with dynamic linking for fast rebuilds |
+| `just fmt` | `cargo fmt --all` |
 | `just check` | `fmt-check` (`cargo fmt --all -- --check`), `lint` (`cargo clippy --workspace --all-targets -- -D warnings`), then `test` (`cargo test --workspace`) |
 | `just test` | All workspace tests; accepts cargo test arguments |
 | `just traces [filter]` | `crates/sim/tests/ts_trace.rs`, optionally selecting fixture names by substring |
 | `just bless` | `BLESS=1` content tests: regenerate `assets/schema/*.schema.json` and canonically format assets; still runs content assertions |
 | `just shots [dir] [sections]` | Rendered screenshot tour; optional comma-separated section names, default directory `/tmp/stick-smash-shots` |
 | `just verify-replays <dir>` | Headless re-simulation of `.replay.json` files; fails for desync or unfinished matches |
+| `just readme-shots` | Regenerates `docs/images/*.webp` from named shots (`17a-match-citadel`, `05-select-ready`, `05c-stage-roulette`, `14-training`, `12-results`, `03b-editor-move`, `03q-stage-moving-sandbox`); needs ImageMagick 7 with WebP |
 | `just balance [seeds] [fighter]` | Optional ignored release diagnostic in `crates/sim/tests/stages.rs`; recipe defaults to 16 seeds and every loaded fighter, or one fighter id |
 
 ### TS baseline
@@ -114,7 +117,7 @@ Keep that setup current when adding an optional improvement. The comparison uses
 
 ### Golden world hash
 
-`crates/sim/tests/runtime.rs::cpu_match_golden_world_hash` runs a fixed-seed Brawler/Ninja CPU scenario for 900 ticks, injecting cosmetic range events with RNG separation off and draining FX/hits each tick. It hashes `format!("{w:?}")` with FNV-1a. This catches changes in world representation as well as gameplay/RNG order; it is distinct from replay JSON checksums.
+`crates/sim/tests/runtime.rs::cpu_match_golden_world_hash` runs a fixed-seed Brawler/Ninja CPU scenario for 900 ticks, injecting cosmetic range events with RNG separation off and draining FX/hits each tick. It hashes `format!("{w:?}")` with FNV-1a. This catches changes in world representation as well as gameplay/RNG order; it is distinct from replay JSON checksums. It loads the built-in assets and `World` stores content by index, so it also changes when gameplay values in `base`, `brawler`, `ninja`, `arena` or `global.json` change, or when a fighter sorting before `ninja` or a stage sorting before `arena` is added.
 
 For an intentional change:
 
@@ -124,9 +127,9 @@ For an intentional change:
 
 ### Content, screens and editor
 
-`crates/sim/tests/content.rs` checks loading inherited packages, exact built-in id lists, capacity, migrations, validation paths, hashing, schema freshness and canonical formatting. Change explicit roster/stage expectations when intentionally adding packages. Add invalid-input tests for new content constraints. `stage_geometry.rs`, `stages.rs`, `fighter_kits.rs`, `behavior.rs`, `gadgets.rs`, `armor.rs`, `buffer.rs` and `input.rs` cover focused simulation behavior; `stages.rs` also checks full-jump platform reach and CPU matches.
+`crates/sim/tests/content.rs` checks loading inherited packages, exact built-in id lists, capacity, migrations, validation paths, hashing, schema freshness and canonical formatting. Change explicit roster/stage expectations when intentionally adding packages. Add invalid-input tests for new content constraints. `stage_geometry.rs`, `stages.rs`, `fighter_kits.rs`, `behavior.rs`, `gadgets.rs`, `armor.rs`, `buffer.rs` and `input.rs` cover focused simulation behavior; `stages.rs` also checks full-jump platform reach, ledge recovery and CPU matches.
 
-The game's headless screen smoke test is `crates/game/src/main.rs::screens::select_and_stage_screens_own_their_resources` (`cargo test -p game select_and_stage_screens_own_their_resources`). It uses `MinimalPlugins` without rendering, audio or windows to exercise select/stage enter/exit ownership. It is not a full graphical app test. Other game unit tests cover input, grids/pointers, audio, stats, shots and replays.
+`crates/game/src/main.rs::screens::select_and_stage_screens_own_their_resources` (`cargo test -p game select_and_stage_screens_own_their_resources`) is a headless screen smoke test: `MinimalPlugins` without rendering, audio or windows, exercising select/stage enter/exit ownership. It is not a full graphical app test. `select.rs` (lobby, pointers, carrying) and `stage_select.rs` (its own headless App lobby) have tests too, as do `ui.rs`, input, grids/pointers, hints, audio, stats, shots and replays.
 
 `cargo test -p editor` runs document patch/undo/inheritance tests, preview simulation of every move/throw, coordinate and geometry manipulation tests, and `lib.rs::tests::every_screen_draws` (headless egui subjects/dialogs in both modes). Use these when changing editor behavior; use screenshots for actual rendered composition.
 
@@ -136,7 +139,7 @@ Balance diagnostics print JSON damage, tip contacts, whiffs/punishes, KO moves, 
 
 ## Version boundaries
 
-- **Simulation compatibility:** `crates/game/src/replay/model.rs::SIM_VERSION` is currently the package version plus `-sim-7`. Bump when simulation behavior or checksum representation changes: state transitions, physics, AI, RNG order, input derivation/buffering, snapshot fields or serialization. Replays embed their content, so a content-only balance edit does not by itself require invalidating all old recordings. Assess new content semantics that old embedded data will execute differently.
+- **Simulation compatibility:** `crates/game/src/replay/model.rs::SIM_VERSION` is currently the package version (`CARGO_PKG_VERSION`, so a workspace version bump also invalidates replays) plus `-sim-7`. Bump when simulation behavior or checksum representation changes: state transitions, physics, AI, RNG order, input derivation/buffering, snapshot fields or serialization. Replays embed their content and only check the format and `SIM_VERSION`, so a content-only balance edit leaves old recordings playable. Assess new content semantics that old embedded data will execute differently.
 - **Content versions:** each content kind has its own `schemaVersion` history. `crates/sim/src/data/mod.rs::SCHEMA_VERSION` currently refers to stage version 2; fighter/global are version 1, with legacy version 2 accepted and normalized to 1. `data/load.rs::migrate_kind` dispatches by `ContentKind`, migrating stage v1 `ground` to v2 `blocks`. Do not migrate unrelated kinds when changing one format. Extend migration tests in `tests/content.rs`, regenerate schemas and update FORMAT.md when changing compatibility.
 - **Replay container:** `replay/model.rs::FORMAT_VERSION` is 2, separate from `SIM_VERSION` and content versions. `storage.rs` writes a small JSON metadata header on the first line, then the replay payload: resolved content/package ids, match config, RLE raw inputs, input reset events and periodic/final FNV-1a checksums of drained serialized worlds. Change the format version when the recording contract changes and update storage/model validation and replay tests. Unsupported format/sim versions are reported explicitly.
 
@@ -146,22 +149,22 @@ Balance diagnostics print JSON damage, tip contacts, whiffs/punishes, KO moves, 
 
 1. Edit `assets/fighters/<id>/fighter.json`, under `moves.<slot>`. Reuse an existing slot from `crates/sim/src/data/moves.rs::Moves::SLOTS`; `sspec` is optional. Inherited moves can be thin object overrides, but phase arrays replace whole.
 2. Author phases, hitboxes, events, transitions, charge and pose/attachment keys using [FORMAT.md](FORMAT.md#moves). Add referenced poses, attachments or projectiles in that fighter package as needed. This normally needs no Rust behavior change.
-3. Add focused coverage in `crates/sim/tests/fighter_kits.rs` or the relevant behavior test. Preview the move in the editor with held-button/dummy options; use training for live interaction. Run `just bless`, relevant tests and `just check`; capture affected kits if presentation changed.
-4. If adding a genuinely new input slot, also extend `Moves` fields/accessors/`SLOTS` in `data/moves.rs`, input selection in `crates/sim/src/states.rs`, and editor grouping in `crates/editor/src/browser.rs`; audit slot consumers with `rg` rather than adding an id exception.
+3. Add focused coverage in `crates/sim/tests/fighter_kits.rs` or the relevant behavior test. Preview the move in the editor with held-button/dummy options; use training for live interaction. Run `just bless`, relevant tests and `just check`; capture affected kits if presentation changed. TS traces run the built-in `brawler`, `king` and `swordfighter` on `arena`, so editing those (or `base`) can break `just traces`; `brawler` / `ninja` edits change the golden hash (see [Golden world hash](#golden-world-hash)).
+4. If adding a genuinely new input slot: extend `Moves` fields, `get`/`get_mut` and `SLOTS` in `data/moves.rs` (`base` must supply it unless it's optional like `sspec`; `runtime.rs` asserts `Moves::iter()` order matches `SLOTS`); add selection in `crates/sim/src/moves.rs` (`special`, `ground_actions`) or `states.rs` (aerials, jumpsquat); `ai.rs` intents if CPUs should use it; editor `lib.rs::SLOTS` (browser order, `every_screen_draws`, the copy-move dialog), `browser.rs` groups and `preview.rs::AERIALS`; and FORMAT.md. Audit slot consumers with e.g. `rg '"dspec"'` rather than adding an id exception.
 
 ### Add a fighter
 
-1. Add `assets/fighters/<id>/fighter.json` with `$schema: "../../schema/fighter.schema.json"`, `schemaVersion: 1`, a display name and `extends` pointing to `base` or a playable template. `abstract` is not inherited; omit it or use `false` for a playable package. Supply every required resolved move/stat/body/visual field. The editor's New Fighter dialog can create the thin package in user content instead.
+1. Add `assets/fighters/<id>/fighter.json` with `$schema: "../../schema/fighter.schema.json"`, `schemaVersion: 1`, a display name and `extends` pointing to `base` or a playable template. `abstract` is not inherited; omit it or use `false` for a playable package. The merged result must be complete: extending `base` supplies the shared fields, otherwise supply every required move/stat/body/visual field. The editor's New Fighter dialog can create the thin package in user content instead.
 2. Customize stats, phases, poses, attachments, projectiles and AI data there. No central roster registration is needed: `load` discovers packages and sorts ids.
-3. Update the expected fighter ids in `crates/sim/tests/content.rs::all_assets_load`; add relevant kit/behavior tests and, if useful, a kit capture in `crates/game/src/shots.rs`.
+3. Update the expected fighter ids in `crates/sim/tests/content.rs::all_assets_load`. CPU match coverage uses hard-coded lists in `crates/sim/tests/stages.rs`: add the fighter to `roster_cpu_matchups` (and `new_fighter_cpu_matchups` if wanted). A new id shifts fighter indices and may change the golden hash (see [Golden world hash](#golden-world-hash)). Add relevant kit/behavior tests and, if useful, a kit capture in `crates/game/src/shots.rs`.
 4. Run `just bless`, `just check`, editor previews and select/training screenshots. Optionally run `just balance 16 <id>` and review match completion/recovery as well as wins.
 
 ### Add a stage
 
 1. Add a complete `assets/stages/<id>/stage.json` based on an existing stage: `$schema: "../../schema/stage.schema.json"`, `schemaVersion: 2`, blocks/platforms, bounds, ledges, art and spawn/respawn slots. Stages do not use fighter inheritance. The editor can copy a template, including unsaved edits.
-2. Give it enough spawn **and** respawn points for its intended capacity (eight for the full lobby); keep geometry legal under `crates/sim/src/data/load.rs::check_stage`. Optional waypoint motion is frame-based; optional `zoom` overrides presentation limits.
-3. Update expected stage ids in `crates/sim/tests/content.rs::all_assets_load`. `crates/sim/tests/stages.rs` iterates stages for platform reach/CPU coverage; add any stage-specific regression there or in `stage_geometry.rs`. Add a capture to `crates/game/src/shots.rs::stages` if wanted.
-4. Run `just bless`, `just check`, stage-editor preview/CPU sandbox and stage-select/gameplay captures. New geometry types also need sim collision/data/validation and `crates/editor/src/stage_view.rs` `Part`, `shape`/`set_shape` and handle support.
+2. Give it enough spawn **and** respawn points: built-in stages need eight (`content.rs` asserts `max_players() >= 8`); keep geometry legal under `crates/sim/src/data/load.rs::check_stage`. Optional waypoint motion is frame-based; optional `zoom` overrides presentation limits.
+3. Update expected stage ids in `crates/sim/tests/content.rs::all_assets_load`. Every stage automatically runs `stages.rs`'s `platforms_are_in_full_jump_reach`, `every_ledge_is_recoverable`, `cpu_matches_finish_on_every_stage` (4×4-CPU and one 8-CPU match) and the matchup tests; add any stage-specific regression there or in `stage_geometry.rs`. A stage id sorting before `arena` changes the golden hash (see [Golden world hash](#golden-world-hash)). Stage screenshots use the hard-coded `STAGES` and parallel shot-name arrays in `shots.rs::stages` (plus `preserves_screenshot_names`).
+4. Run `just bless`, `just check`, stage-editor preview/CPU sandbox and stage-select/gameplay captures. New geometry types also need sim collision/data/validation, surface-index ordering (blocks first, then platforms), `sim::data::camera::play_area`, drawing in `crates/render/src/stage.rs`, `crates/editor/src/stage_view.rs` `Part`, `shape`/`set_shape` and handle support, and the `stage_panels.rs` inspector.
 
 ### Add a move behavior or event kind
 
@@ -173,7 +176,7 @@ Balance diagnostics print JSON damage, tip contacts, whiffs/punishes, KO moves, 
 
 ### Add a global tuning value
 
-1. Add a typed, documented field in `crates/sim/src/data/global.rs`, or `data/render.rs` / `data/audio.rs` for presentation. Supply the value in `assets/global.json`; choose a serde default when old embedded/user data should remain readable.
+1. Add a typed, documented field in `crates/sim/src/data/global.rs`, or `data/render.rs` / `data/audio.rs` for presentation. Supply the value in `assets/global.json`; choose a serde default when old embedded/user data should remain readable. `global.render`/`global.audio` are embedded in replays: a new required presentation field breaks decoding old replays unless serde-defaulted or backfilled in `game/src/replay/content.rs::presentation`. Gameplay fields need a `SIM_VERSION` bump and change the golden hash (see [Golden world hash](#golden-world-hash)).
 2. Run `just bless` to generate schema/format changes. Add range, finiteness and cross-field validation in `crates/sim/src/data/load.rs` (`check_global` or the relevant helper), with valid/invalid cases in `crates/sim/tests/content.rs`.
 3. Read the field in the appropriate sim/render/game consumer, replacing the old tuning literal. Document units, defaults and semantics in `docs/FORMAT.md`.
 4. Test the behavior, review trace compatibility and versioning, rerun `just bless` if types changed again, then `just check`.
@@ -182,16 +185,16 @@ Balance diagnostics print JSON damage, tip contacts, whiffs/punishes, KO moves, 
 
 1. Add its module/plugin in `crates/game/src/<screen>.rs`; declare/register it in `main.rs`.
 2. Add the `Screen` variant **and** a `Screen::ALL` entry (update the array length). The latter gives the screen entry input clearing in `ui.rs`.
-3. Register enter/exit systems, state-gated updates and `UiSystems` ordering. Insert transient resources on enter, remove on exit; document any cross-screen lifetime. Build a `ui::rebuild` root keyed by visible state with stable focus keys, or explicitly use `DespawnOnExit` for another root pattern.
+3. Register enter/exit systems, state-gated updates and `UiSystems` ordering. Insert transient resources on enter, remove on exit; document any cross-screen lifetime, and remove resources that outlive the screen in the shots `Step::Reset` arm too. Build a `ui::rebuild` root keyed by visible state with stable focus keys, or explicitly use `DespawnOnExit` for another root pattern.
 4. Connect navigation/transitions from existing screens and return paths. Extend headless ownership/transition tests in `main.rs::screens` as applicable.
-5. Add a screenshot section/setup in `crates/game/src/shots.rs`, including `screen_is` support if needed. Run `just check` and the new section; inspect the captures and test held-input transitions.
+5. Add a screenshot section/setup in `crates/game/src/shots.rs`, including `screen_is` support if needed (unlisted screens fall back to `Screen::Title`). Run `just check` and the new section; inspect the captures and test held-input transitions.
 
 ### Add a screenshot section
 
 1. In `crates/game/src/shots.rs`, write a function returning `Vec<Step>` and register its name/function in `TOUR` (update the array length). `Section::new` supplies Home/Reset isolation; avoid relying on another section's state.
 2. Use existing setup steps, `press` and bot input to exercise real navigation. Use `shot` for settled captures or `Step::Shot` for a deliberately timed frame. Give output stems unique, stable names. Use bounded `Until`/`Fast` steps for simulation conditions.
-3. Extend `Step` and the `run` dispatcher only when existing steps cannot express the setup. Restore/reset any new mutable state through section isolation. Update `tests::preserves_screenshot_names` in the same file for added filenames, and update the section list here and in AGENTS.md when it changes.
-4. Run `just shots /tmp/stick-smash-shots <section>`, inspect every PNG, then run it alongside adjacent sections or the full tour to check isolation. Run relevant shots tests and `just check` after Rust changes.
+3. Extend `Step` and the `run` dispatcher only when existing steps cannot express the setup. Restore/reset any new mutable state through section isolation. Update `tests::preserves_screenshot_names` in the same file for added filenames, and update the section list here and in AGENTS.md when it changes. `just readme-shots` depends on specific shot names (see the commands table); rename those with care.
+4. Each section has a 120 s timeout and fails if any `Step::Shot` PNG is missing. Run `just shots /tmp/stick-smash-shots <section>`, inspect every PNG, then run it alongside adjacent sections or the full tour to check isolation. Run relevant shots tests and `just check` after Rust changes.
 
 ## One-shot TS import
 

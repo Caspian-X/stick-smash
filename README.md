@@ -1,9 +1,9 @@
 # Stick Smash
 
-![A four-player match on Tidebreak Isles](docs/images/match.webp)
+![A four-player match on Citadel](docs/images/match.webp)
 
 A Smash-style platform fighter about stick figures knocking each other off the stage, written in Rust with Bevy.
-Up to 8 players share one screen with keyboards and gamepads, and CPUs fill the empty seats. Online play is
+Up to 8 players share one screen with keyboards and gamepads; add CPUs to fill empty seats. Online play is
 planned for later, once local play feels great.
 
 ## Quick start
@@ -32,9 +32,10 @@ just shots     # scripted screenshot tour into /tmp/stick-smash-shots
 
 Pick **Versus** or **Training** on the title screen.
 
-**Character select.** Press any button on a keyboard or gamepad to join. You get a pointer carrying your chip
-(P1, P2, …). Move it over a fighter and press attack to drop your chip there; the "?" tile picks at random. Press
-special (or attack on your chip) to pick it back up; special without a chip down leaves. With your hands free you can:
+**Character select.** Press attack or jump (any button but special / back) on an unused keyboard or gamepad to
+join. You get a pointer carrying your chip (P1, P2, …). Move it over a fighter and press attack to drop your chip
+there; the "?" tile picks at random. Special (or attack on your chip) picks it back up; with the chip in hand, special
+sends the pointer back to the roster, and on the roster leaves. With your hands free you can:
 
 - point at **Add CPU** to add a computer player, then use its card to change its fighter (carry its chip to a
   tile), level (Easy, Normal, Hard) or team, or remove it,
@@ -45,14 +46,15 @@ When everyone has dropped their chip, press start (or attack on your own chip).
 
 **Stage select.** Everyone votes with their pointer by dropping a vote on a stage; Stocks are set here too.
 Special takes your vote back (or, with no vote, returns to character select). Once everyone has voted, or someone
-presses start (or attack on their own vote), a roulette spins over the voted stages, weighted by votes, and the match begins. Stages without
-enough start positions for everyone are dimmed.
+presses start once there is a vote (or attack on their own vote), a roulette spins over the voted stages, weighted
+by votes, and the match begins. Stages without enough start positions for everyone are dimmed.
 
 **In a match**, knock opponents past the edge of the screen. The more damage they have, the farther they fly.
 Start / Esc pauses; only the device that paused controls the pause menu. F1 toggles the hitbox overlay.
 
-**After a match**: rematch, back to character select, main menu, save the replay or watch it. Every versus match is
-auto-saved (the last 10 are kept); saved replays stay until you delete them from **Replays** on the title screen.
+**After a match**: rematch, back to character select, main menu, save the replay or watch it. Every completed versus
+match is auto-saved (the last 10 are kept, `global.replay.autoSaveCount`; editor test matches aren't recorded);
+saved replays stay until you delete them from **Replays** on the title screen.
 
 **Training** is you against a dummy that stands, shields, jumps, fights as a CPU or is played by a second
 device. The panel in the top right shows frame advantage and combos, and has the dummy's damage, game speed and
@@ -82,7 +84,7 @@ freeze / frame step. See [PLAYTESTING.md](docs/PLAYTESTING.md#training).
 
 ### Settings and save files
 
-Settings has volume sliders, the keyboard mode, hitboxes in versus, and fullscreen. Sounds are synthesized at
+Settings has volume controls, the keyboard mode, hitboxes in versus, and fullscreen. Sounds are synthesized at
 startup, so there are no audio files.
 
 | | macOS | Linux | Windows |
@@ -91,7 +93,7 @@ startup, so there are no audio files.
 | Replays | `~/Library/Application Support/stick-smash/replays/` | `~/.local/share/stick-smash/replays/` | `%APPDATA%\stick-smash\replays\` |
 | Your fighters and stages | `~/Library/Application Support/stick-smash/content/` | `~/.local/share/stick-smash/content/` | `%APPDATA%\stick-smash\content\` |
 
-The Settings screen shows the exact paths on your machine.
+The Settings screen shows the exact settings and content paths on your machine.
 
 ## More
 

@@ -57,7 +57,7 @@ convert-ts:
 
 # Re-simulate every replay and verify checksums and completion
 verify-replays dir:
-    cargo run -p game -- --verify-replays {{dir}}
+    cargo run -p game -- --verify-replays "{{dir}}"
 
 # Detailed seat-swapped CPU matchups: damage, tips, whiffs, KO moves and recovery deaths
 balance seeds="16" fighter="":

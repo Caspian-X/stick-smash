@@ -10,7 +10,7 @@ Controls and the basic flow are in the [README](../README.md#how-to-play).
   the working directory).
 - **Devices**: by default the keyboard is one player. For two keyboard players, set Settings → Keyboard → *Two
   players (split)*: WASD + J K I L + Space + Esc on the left, arrows + . / ; ' + Right Shift + Enter (or the numpad)
-  on the right. Gamepads join with any button. Up to 8 players.
+  on the right. Devices join with attack or jump (any button but special / back). Up to 8 players.
 - **Filling the lobby**: on character select, point at **Add CPU** and press attack. Each CPU card has a fighter,
   a level (Easy, Normal, Hard) and, with Teams on, a team. Your picks, CPUs and rules are remembered for next time.
 - Turn on Settings → *Hitboxes in versus* if you want the debug overlay in every match, or press **F1** in a match
@@ -40,7 +40,8 @@ And controls for:
 - **Freeze / Step**: stop time and advance one frame at a time.
 - **Hitboxes** overlay toggle (same as F1).
 
-The pause menu (Start / Esc) has the dummy settings too, for when you're on a gamepad.
+The pause menu (Start / Esc) has the dummy mode, its damage, Reset positions and Hitboxes too, for when you're on a
+gamepad; level, speed and freeze / step are only on the panel.
 
 ### Debug overlay
 
@@ -60,15 +61,16 @@ just balance 4 lancer   # one fighter, 4 seeds (quicker)
 ```
 
 Runs headless Hard-CPU duels (two stocks) for each fighter against every other fighter on every stage, swapping
-sides between seeds, and prints one `BALANCE <fighter> {json}` line per fighter:
+sides between seeds, and prints one `BALANCE <fighter> {json}` line per fighter once its sweep completes:
 
-- `wins`, `matches`, `unfinished` (matches that hit the time cap, also printed as `TIMEOUT` lines; the run fails if
-  any match doesn't finish),
+- `wins`, `matches`, `unfinished` (the first match that hits the time cap prints a `TIMEOUT` line and fails the run,
+  so that fighter's summary isn't printed),
 - `dealt` / `taken` damage, `deaths`, `self_kos` (deaths with no hit in the last 4 seconds), `recovery_deaths` (died
   shortly after going helpless or using up special off stage),
-- `moves`, per move: `starts`, `hits`, `damage`, `kos`, `tips` (hits with a sweet-spot hitbox), `blocked`, `whiffs`
-  and `punished_whiffs` (whiffs that got hit before the move ended), `punish_starts` / `punish_hits` (started while
-  the opponent was in its endlag), and `start_distance` (total distance at start; divide by `starts`).
+- `moves`, per move: `starts`, `hits`, `damage`, `kos`, `tips` (estimated tip contacts: hits dealing a multi-hitbox
+  phase's first-hitbox damage, not counted for up / down specials), `blocked`, `whiffs` and `punished_whiffs`
+  (whiffs that got hit before the move ended), `punish_starts` / `punish_hits` (started while the opponent was in its
+  endlag), and `start_distance` (summed horizontal separation when the move started; divide by `starts`).
 
 CPU numbers are a smoke test, not the truth: they flag moves nobody can land, recoveries that fail and matches that
 stall. `cargo test -p sim --test stages -- --nocapture` also prints per-stage KO, self-destruct and camera stats.
@@ -90,17 +92,19 @@ Replays live in:
 | Linux | `~/.local/share/stick-smash/replays/` |
 | Windows | `%APPDATA%\stick-smash\replays\` |
 
-Title → **Replays** lists them (saved ones first) to watch or delete. While watching: play / pause, frame step, speed
-(0.25×–2×), hide the HUD, and seek with left / right (one second) or by dragging the bar. Note the tick number
-shown on screen when you report something.
+Title → **Replays** lists them (saved ones first) to watch or delete. While watching: play / pause, frame step,
+speed (0.25×–2×), hide the HUD, and seek by focusing the bar and pressing left / right (one second) or by dragging
+it. Note the tick number shown on screen when you report something.
 
-Replays are tied to the build that recorded them. When the simulation changes, older replays show "recorded with a
-different version" and can't be played, so attach the replay *and* the commit you were on.
+Replays embed the content they were recorded with, so later fighter, stage or tuning edits don't affect them. They
+are tied to the simulation version (`SIM_VERSION`, which includes the workspace version): after a sim change, older
+replays show "recorded with a different version" and can't be played, so attach the replay *and* the commit you
+were on.
 
 To check that a folder of replays still plays back identically (no desync) and every match finishes:
 
 ```bash
-just verify-replays ~/Library/Application\ Support/stick-smash/replays
+just verify-replays "$HOME/Library/Application Support/stick-smash/replays"
 ```
 
 ## Session checklist
@@ -162,4 +166,5 @@ After changing gameplay numbers in `assets/`:
    the change behind a setting that the traces turn off, or update the expectations deliberately. See
    [DEVELOPMENT.md](DEVELOPMENT.md).
 2. `just balance` to compare matchups before and after.
-3. `just verify-replays <dir>` on your saved replays; changes to simulation behaviour invalidate them by design.
+3. `just verify-replays <dir>` on your saved replays. Content edits don't affect them (they play with their embedded
+   content); simulation code changes need a `SIM_VERSION` bump, which invalidates them by design.

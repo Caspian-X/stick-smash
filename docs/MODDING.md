@@ -1,7 +1,8 @@
 # Modding
 
-Fighters, stages and the game's tuning are plain JSON files. You can edit them by hand or with the built-in editor
-(**Editor** on the title screen), and you never have to touch the game's own `assets/` folder to do it.
+Fighters, stages and the game's tuning are plain JSON files. You can edit them by hand, or fighters and stages with
+the built-in editor (**Editor** on the title screen; global tuning is hand-edited only), and you never have to touch
+the game's own `assets/` folder to do it.
 For the full field-by-field format, see [FORMAT.md](FORMAT.md).
 
 ## Your content folder
@@ -76,7 +77,8 @@ point at, so either:
 Content is checked when it loads. Every problem names the file and the JSON path, like
 `fighters/pirate/fighter.json: moves.jab.phases: needs at least one phase`.
 
-- A broken fighter or stage is **skipped**; everything else still loads. A toast in the bottom-right corner lists
+- A broken fighter or stage is **skipped**; everything else still loads, as long as at least one playable fighter
+  and one stage remain. A toast in the bottom-right corner lists
   the first few problems for 15 seconds, and the log has all of them.
 - A broken `global.json` is **fatal**: the game stops at startup and prints the errors.
 - The editor runs the same checks live and refuses to save a package with errors (see below).
@@ -115,15 +117,15 @@ Pick a fighter in the top bar (or **+ New fighter…**: an id, a name and which 
 - **Viewport** (centre): the move played by the real game simulation, not an approximation. Toolbar options start it
   in the air (with a start height), add a standing dummy (distance and damage) to see real hits and knockback, or
   hold the button for a number of frames to see a charge.
-  - Drag a hitbox to move it, its rim to resize it, the gold knob at the tip of its launch arrow to aim it. ⇧ snaps (whole pixels,
-    15°), Alt drags finely with no snapping. Click or Tab selects a hitbox; N adds one on this frame, ⌘D duplicates,
-    Del deletes, Alt + arrows nudge (⇧ ×10).
+  - Drag a hitbox to move it, its rim to resize it, the gold knob at the tip of its launch arrow to aim it. Drags
+    snap to 0.5 px (angles to 1°); ⇧ snaps to whole pixels and 15°, Alt to 0.1 px / 0.1°. Click or Tab selects a
+    hitbox; N adds one on this frame, ⌘D duplicates, Del deletes, Alt + arrows nudge (⇧ ×10).
   - On a pose key the joints get handles you can drag; K adds a pose key on this frame.
   - Wheel or pinch zooms, right or middle drag pans, F frames the fighter. H, I and O toggle the hurtbox, inactive
     hitboxes and the onion skin (3 frames before in red, after in green).
 - **Timeline** (bottom): phases as they really played, each hitbox's active window, events and pose keys. Click or
   drag to scrub. Space plays, ← → (or , .) step a frame (⇧ ×10), Home / End jump, [ ] go to the previous / next phase,
-  L loops, ↑ ↓ switch moves.
+  L loops, ↑ ↓ select the previous / next visible browser entry.
 - **Inspector** (right): every field of the selection (hitbox, phase, move, throw, pose, stats), with problems shown
   next to the field. Data without a hand-made inspector (projectiles, attachments, effects, style, AI…) gets forms
   generated from the schema, with the field docs as hover help. A value that doesn't parse stays red and doesn't
@@ -140,14 +142,15 @@ included) / **Rename…**. Only stages that were never saved can change their id
   platforms, moving-platform waypoints, spawns (click the arrow to flip which way the fighter faces), respawns,
   the ledge zone, and the blast zone and camera bounds (dashed rectangles).
   - The **add** toolbar places a block, a platform (or N), a motion waypoint on the selected platform, a spawn or
-    a respawn. ⌘D duplicates, Del deletes.
+    a respawn. W adds a path stop to the selected platform. ⌘D duplicates, Del deletes.
   - Drags snap to whole pixels; ⇧ (or the **Grid** toggle, G) snaps to the grid, Alt moves 0.1 px. Alt + arrows
     nudge 1 px (⇧ ×10).
-  - **Mirror** (M) mirrors every edit around the stage's centre: the part's mirror partner follows, centred parts stay
-    centred, and a mirrored pair is deleted together.
+  - **Mirror** (M) mirrors viewport drags, nudges, geometry actions and platform motion edits around the stage's
+    centre: the part's mirror partner follows, centred parts stay centred, and a mirrored pair is deleted together.
+    Numbers typed into a block's inspector fields stay on that block.
   - B and P show the bounds and the spawn / respawn points. Wheel or pinch zooms, right drag (or dragging empty
     space) pans, F frames the stage.
-  - Moving platforms have a play button and a scrub bar so you can see their path with the sandbox off.
+  - Moving platforms have a play button (T) and a scrub bar so you can see their path with the sandbox off.
 - **Sandbox**: up to 4 CPUs (at a level you pick) play on the stage while you edit, so you see how it really plays.
   Space starts 2 CPUs (or pauses them), C cycles the count, ⟲ restarts.
 - **Browser** (left) lists the stage's sections, geometry and players; the **inspector** has fields for geometry and
