@@ -158,7 +158,7 @@ pub(crate) fn viewport(ui: &mut egui::Ui, ed: &mut Editor) {
         && let Some(f) = ed.run.as_ref().map(|r| r.frames[0].fighters[0].clone())
     {
         ed.pane.reframe = false;
-        ed.pane.cam.zoom = (f64::from(rect.height()) / 240.).clamp(view::Cam::MIN_ZOOM, view::Cam::MAX_ZOOM);
+        ed.pane.cam.zoom = view::Zoom::FIGHTER_FRAME.clamp(f64::from(rect.height()) / 240.);
         ed.pane.cam.center = [f.x + 30., f.y - 60.];
     }
     crate::pane::interact(ui, ed, FighterInteraction { boxes: playhead_boxes(ed) });
@@ -174,6 +174,9 @@ impl crate::pane::Interaction for FighterInteraction {
     type Shown = (usize, u32);
     fn pane(ed: &mut Editor) -> &mut crate::Pane<Hit, Self::Shown> {
         &mut ed.pane
+    }
+    fn zoom() -> view::Zoom {
+        view::Zoom::FIGHTER_WHEEL
     }
     fn hit(&self, ed: &Editor, m: [f64; 2], px: f64) -> Option<Hit> {
         let (f, shown, b) = match &self.boxes {
@@ -270,7 +273,7 @@ fn drag_box(
             h.angle = if coarse {
                 (a / 15.).round() * 15.
             } else if fine {
-                (a * (1. / style::FINE_STEP)).round() / (1. / style::FINE_STEP)
+                view::round_to(a, style::FINE_STEP)
             } else {
                 a.round()
             };

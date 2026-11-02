@@ -75,6 +75,9 @@ impl crate::pane::Interaction for StageInteraction<'_> {
     fn pane(ed: &mut Editor) -> &mut crate::Pane<Self::Hit, ()> {
         &mut ed.st.pane
     }
+    fn zoom() -> crate::view::Zoom {
+        crate::view::Zoom::STAGE
+    }
     fn hit(&self, ed: &Editor, m: [f64; 2], px: f64) -> Option<Self::Hit> {
         stage_view::hit_test(self.stage, ed.st.sel, m, px, layers(ed))
     }

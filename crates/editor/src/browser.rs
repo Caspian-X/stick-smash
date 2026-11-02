@@ -110,10 +110,12 @@ pub fn browser(ui: &mut egui::Ui, ed: &mut Editor) {
     let shown = visible(ed);
     let mut pick: Option<Subject> = None;
     let mut action: Option<Action> = None;
-    let doc = &ed.ws.docs[&ed.cur];
-    let dirty = doc::dirty_paths(doc);
+    let (dirty, errors) = {
+        let doc = ed.ws.docs.get_mut(&ed.cur).expect("open");
+        (doc.dirty_paths(), doc.errors.clone())
+    };
     let changed = |prefix: &str| crate::section::dirty(&dirty, prefix);
-    let bad = |prefix: &str| crate::inspect::has_err(&doc.errors, prefix);
+    let bad = |prefix: &str| crate::inspect::has_err(&errors, prefix);
     egui::ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
         ui.with_layout(egui::Layout::top_down_justified(egui::Align::LEFT), |ui| {
             let doc = ed.ws.docs.get(&ed.cur).expect("open");

@@ -2,7 +2,7 @@
 
 use bevy_egui::egui::{self, PointerButton, Sense};
 
-use crate::view::{Cam, Port};
+use crate::view::{Cam, Port, Zoom};
 use crate::{Drag, Editor};
 
 pub struct Pane<H, S> {
@@ -38,6 +38,8 @@ pub(crate) trait Interaction {
     type Hit: Copy;
     type Shown;
     fn pane(ed: &mut Editor) -> &mut Pane<Self::Hit, Self::Shown>;
+    /// The wheel's zoom limits for this pane.
+    fn zoom() -> Zoom;
     fn hit(&self, ed: &Editor, at: [f64; 2], px: f64) -> Option<Self::Hit>;
     fn start(&self, ed: &mut Editor, grab: [f64; 2]) -> Option<Drag>;
     fn drag(&self, ed: &mut Editor, drag: &Drag, at: [f64; 2], modifiers: (bool, bool));
@@ -65,7 +67,7 @@ pub(crate) fn interact<I: Interaction>(ui: &mut egui::Ui, ed: &mut Editor, inter
         if (k - 1.).abs() > 1e-4
             && let Some(m) = mouse
         {
-            I::pane(ed).cam.zoom_at(&port, [f64::from(m.x), f64::from(m.y)], k);
+            I::pane(ed).cam.zoom_at(&port, [f64::from(m.x), f64::from(m.y)], k, I::zoom());
         }
     }
     if resp.drag_started_by(PointerButton::Secondary) || resp.drag_started_by(PointerButton::Middle) {
@@ -104,5 +106,6 @@ pub(crate) fn interact<I: Interaction>(ui: &mut egui::Ui, ed: &mut Editor, inter
 pub(crate) fn sync_scene(scene: &mut render::Scene, cam: Cam, port: &Port) {
     scene.debug = false;
     scene.bottom_safe_area = 0.;
+    scene.top_safe_area = 0.;
     scene.fixed_view = Some(cam.window_view(port));
 }

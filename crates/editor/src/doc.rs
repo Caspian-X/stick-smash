@@ -12,7 +12,7 @@ use sim::data::fighter::Fighter;
 use sim::data::json::{merge, to_compact_string};
 use sim::data::stage::Stage;
 use sim::data::visual::{AnimKey, Pose, PoseRef};
-use sim::data::{ContentError, Source, load};
+use sim::data::{ContentError, ContentKind, Source, load, migrate_kind};
 
 /// Every content file the game loaded, by path relative to a content root (`fighters/<id>/fighter.json`). User
 /// files have replaced built-in ones with the same path, like the loader does.
@@ -124,7 +124,7 @@ impl Content for Stage {
     }
     fn upgrade(raw: &mut Value) {
         // A broken version is the loader's to report; the document stays as it is.
-        let _ = sim::data::load::migrate(raw);
+        let _ = migrate_kind(ContentKind::Stage, raw);
     }
     fn find<'a>(d: &'a GameData, id: &str) -> Option<&'a Self> {
         d.stage(id)
@@ -266,6 +266,10 @@ pub struct Doc<T: Content = Fighter> {
     redo: VecDeque<T>,
     /// The last undo step is still growing (a drag or typing in progress).
     open: bool,
+    /// Bumped whenever `item` or `saved` change: the [`Doc::dirty_paths`] cache key.
+    edits: u32,
+    /// Changed paths, and the `edits` counter they were computed at.
+    paths: Option<(u32, BTreeSet<String>)>,
 }
 
 const UNDO_LIMIT: usize = 300;
@@ -289,11 +293,24 @@ impl<T: Content> Doc<T> {
             undo: VecDeque::new(),
             redo: VecDeque::new(),
             open: false,
+            edits: 0,
+            paths: None,
         }
     }
 
     pub fn dirty(&self) -> bool {
         self.fresh || self.item != self.saved
+    }
+    /// Changed JSON paths, shared by the browsers' section and item markers; cached until the next edit.
+    pub fn dirty_paths(&mut self) -> BTreeSet<String> {
+        if let Some((at, paths)) = &self.paths
+            && *at == self.edits
+        {
+            return paths.clone();
+        }
+        let paths = diff_paths(&self.item, &self.saved);
+        self.paths = Some((self.edits, paths.clone()));
+        paths
     }
     pub fn can_undo(&self) -> bool {
         !self.undo.is_empty()
@@ -314,6 +331,7 @@ impl<T: Content> Doc<T> {
         }
         self.redo.clear();
         self.open = ongoing;
+        self.edits += 1;
         self.check();
     }
     pub fn close_step(&mut self) {
@@ -341,6 +359,7 @@ impl<T: Content> Doc<T> {
         if let Some(item) = from.pop_back() {
             to.push_back(std::mem::replace(&mut self.item, item));
             self.open = false;
+            self.edits += 1;
             self.check();
         }
     }
@@ -354,6 +373,7 @@ impl<T: Content> Doc<T> {
         f(&mut self.item);
         f(&mut self.saved);
         self.undo.iter_mut().chain(self.redo.iter_mut()).for_each(f);
+        self.edits += 1;
     }
 
     /// Cheap live validation of the merged value.
@@ -651,6 +671,7 @@ impl Workspace {
         doc.raw = serde_json::from_str(&text).unwrap_or(Value::Null);
         doc.saved = doc.item.clone();
         doc.fresh = false;
+        doc.edits += 1;
         let path = doc.path.clone();
         self.files.0.insert(path, text);
         self.data = Arc::new(*data);
@@ -669,11 +690,8 @@ impl Workspace {
     }
 }
 
-/// Changed JSON paths, shared by the browsers' section and item markers.
-pub fn dirty_paths<T: Content>(doc: &Doc<T>) -> BTreeSet<String> {
-    if doc.item == doc.saved {
-        return BTreeSet::new();
-    }
+/// Changed JSON paths between an edited value and the saved one.
+fn diff_paths<T: Content>(item: &T, saved: &T) -> BTreeSet<String> {
     fn diff(a: &Value, b: &Value, path: String, out: &mut BTreeSet<String>) {
         if a == b {
             return;
@@ -707,10 +725,13 @@ pub fn dirty_paths<T: Content>(doc: &Doc<T>) -> BTreeSet<String> {
             }
         }
     }
+    if item == saved {
+        return BTreeSet::new();
+    }
     let mut paths = BTreeSet::new();
     diff(
-        &serde_json::to_value(&doc.item).unwrap_or_default(),
-        &serde_json::to_value(&doc.saved).unwrap_or_default(),
+        &serde_json::to_value(item).unwrap_or_default(),
+        &serde_json::to_value(saved).unwrap_or_default(),
         String::new(),
         &mut paths,
     );
@@ -763,19 +784,23 @@ mod tests {
     fn dirty_paths_include_nested_edits_additions_and_removals() {
         let (mut ws, _) = Workspace::new(files()).unwrap();
         let d = ws.stage("arena").unwrap();
-        assert!(dirty_paths(d).is_empty());
+        assert!(d.dirty_paths().is_empty());
         d.edit(|s| {
             s.platforms[0].y -= 1.;
             s.platforms.pop();
             s.art.background = None;
         });
         assert_eq!(
-            dirty_paths(d),
+            d.dirty_paths(),
             BTreeSet::from(["platforms[0].y".into(), "platforms[2]".into(), "art.background".into()])
         );
-        d.item = d.saved.clone();
-        d.item.platforms.push(d.item.platforms[0].clone());
-        assert_eq!(dirty_paths(d), BTreeSet::from(["platforms[3]".into()]));
+        let saved = d.saved.clone();
+        d.edit(|s| {
+            *s = saved;
+            let p = s.platforms[0].clone();
+            s.platforms.push(p);
+        });
+        assert_eq!(d.dirty_paths(), BTreeSet::from(["platforms[3]".into()]));
     }
 
     #[test]
