@@ -240,6 +240,10 @@ pub fn copy_move(f: &mut Fighter, from: &str, to: &str) -> bool {
         f.moves.sspec = Some(mv);
         return true;
     }
+    if to == "zair" && f.moves.zair.is_none() {
+        f.moves.zair = Some(mv);
+        return true;
+    }
     f.moves.get_mut(to).map(|m| *m = mv).is_some()
 }
 
@@ -855,6 +859,7 @@ mod tests {
                 from: None,
                 to: "nowhere".into(),
                 lag: None,
+                preserve_hits: false,
             })
         });
         assert_eq!(doc.errors.len(), 1);

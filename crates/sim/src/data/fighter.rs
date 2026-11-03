@@ -58,6 +58,9 @@ pub struct Fighter {
 pub struct Stats {
     /// Knockback taken multiplier. Lower = heavier.
     pub weight: f64,
+    /// Override the shared grab pummel damage.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pummel_damage: Option<f64>,
     pub run_speed: f64,
     pub run_accel: f64,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -237,6 +240,17 @@ pub struct ArticleStroke {
 pub struct ProjectileCharge {
     pub speed: f64,
     pub damage: f64,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub bkb: f64,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub radius: f64,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub life: f64,
+    /// Launch angle at maximum charge; interpolated from the base hit's angle.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub angle_to: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ground_angle_to: Option<f64>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]

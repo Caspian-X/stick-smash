@@ -84,6 +84,10 @@ fn act_text(d: &sim::GameData, fighter: usize, a: &Action) -> String {
     let t = |s: &str| s.to_string();
     match a {
         Action::Move(slot) => d.fighters[fighter].moves.get(slot).map_or_else(|| slot.clone(), |m| m.name.clone()),
+        Action::Followup { slot, phase } => {
+            let name = d.fighters[fighter].moves.get(slot).map_or(slot.as_str(), |m| m.name.as_str());
+            format!("{name} → {phase}")
+        }
         Action::Jump => t("Jump"),
         Action::ShortHop => t("Short hop"),
         Action::FullHop => t("Full hop"),

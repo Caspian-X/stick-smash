@@ -210,6 +210,32 @@ pub fn validate(data: &GameData) -> Vec<ContentError> {
             errors.push(err(&file, "id", "duplicate fighter package id"));
         }
         errors.extend(check_fighter(&file, f).err());
+        for (kind, configured, name) in [
+            (super::HitType::Paralyze, data.global.hit_types.paralyze.is_some(), "paralyze"),
+            (super::HitType::Bury, data.global.hit_types.bury.is_some(), "bury"),
+        ] {
+            if configured {
+                continue;
+            }
+            let uses = f
+                .moves
+                .iter()
+                .flat_map(|(_, m)| &m.phases)
+                .flat_map(|p| &p.hitboxes)
+                .chain(f.projectiles.values().map(|p| &p.hit))
+                .chain(
+                    f.projectiles
+                        .values()
+                        .filter_map(|p| p.article.as_ref())
+                        .flat_map(|a| &a.stages)
+                        .flat_map(|s| &s.hitboxes),
+                )
+                .chain([&f.throws.f.hit, &f.throws.b.hit, &f.throws.u.hit, &f.throws.d.hit])
+                .any(|h| h.kind == kind);
+            if uses {
+                errors.push(err(&file, "moves", format!("{name} hits require global hitTypes.{name}")));
+            }
+        }
     }
     let fighters = if errors.iter().any(|e| e.file.starts_with("fighters/")) {
         std::borrow::Cow::Owned(
@@ -652,6 +678,15 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
         if let Some(c) = &p.charge_scale {
             nonnegative(file, &format!("{path}.chargeScale.speed"), c.speed)?;
             nonnegative(file, &format!("{path}.chargeScale.damage"), c.damage)?;
+            for (name, n) in [("bkb", c.bkb), ("radius", c.radius), ("life", c.life)] {
+                nonnegative(file, &format!("{path}.chargeScale.{name}"), n)?;
+            }
+            if let Some(angle) = c.angle_to {
+                finite(file, &format!("{path}.chargeScale.angleTo"), angle)?;
+            }
+            if let Some(angle) = c.ground_angle_to {
+                finite(file, &format!("{path}.chargeScale.groundAngleTo"), angle)?;
+            }
         }
         if let Some(e) = &p.explosion {
             positive(file, &format!("{path}.explosion.radius"), e.radius)?;
@@ -778,12 +813,17 @@ fn check_move(
             finite(file, &format!("{pp}.reflector.height"), r.height)?;
         }
         nonnegative(file, &format!("{pp}.airAccelMult"), p.air_accel_mult)?;
-        if let Some(r) = p.detection {
+        nonnegative(file, &format!("{pp}.chargeFrames"), p.charge_frames)?;
+        if p.charge_frames != 0. && p.frames.is_none() {
+            return Err(e(format!("{pp}.chargeFrames"), "needs a finite phase length".into()));
+        }
+        for (name, r) in [("detection", p.detection), ("tether", p.tether)] {
+            let Some(r) = r else { continue };
             for (field, n) in [("x1", r.x1), ("x2", r.x2), ("y1", r.y1), ("y2", r.y2)] {
-                finite(file, &format!("{pp}.detection.{field}"), n)?;
+                finite(file, &format!("{pp}.{name}.{field}"), n)?;
             }
             if r.x1 >= r.x2 || r.y1 >= r.y2 {
-                return Err(e(format!("{pp}.detection"), "needs x1 < x2 and y1 < y2".into()));
+                return Err(e(format!("{pp}.{name}"), "needs x1 < x2 and y1 < y2".into()));
             }
         }
         if let Some(c) = &p.counter {
@@ -863,6 +903,9 @@ fn check_life(file: &str, path: &str, n: u32) -> Result<(), ContentError> {
     if n > 0 && n <= i32::MAX as u32 { Ok(()) } else { Err(err(file, path, "must be between 1 and i32::MAX")) }
 }
 fn check_hitbox(file: &str, path: &str, h: &super::Hitbox, geometry: bool) -> Result<(), ContentError> {
+    if let Some(angle) = h.ground_angle {
+        finite(file, &format!("{path}.groundAngle"), angle)?;
+    }
     for (name, n) in [("x", h.x), ("y", h.y), ("angle", h.angle), ("hitstunAdd", h.hitstun_add)] {
         finite(file, &format!("{path}.{name}"), n)?;
     }
@@ -1167,7 +1210,7 @@ fn nonnegative_range(file: &str, path: &str, a: f64, b: f64) -> Result<(), Conte
 }
 
 fn check_stats(file: &str, v: &super::Stats) -> Result<(), ContentError> {
-    for (name, n) in [("walkSpeed", v.walk_speed), ("dashSpeed", v.dash_speed)] {
+    for (name, n) in [("walkSpeed", v.walk_speed), ("dashSpeed", v.dash_speed), ("pummelDamage", v.pummel_damage)] {
         if let Some(n) = n {
             positive(file, &format!("stats.{name}"), n)?;
         }
@@ -1366,6 +1409,26 @@ fn check_sim(file: &str, v: &super::global::SimRules) -> Result<(), ContentError
 }
 
 fn check_hit_types(file: &str, v: &super::global::HitTypes) -> Result<(), ContentError> {
+    if let Some(p) = &v.paralyze {
+        check_life(file, "hitTypes.paralyze.maxFrames", p.max_frames)?;
+        nonnegative(file, "hitTypes.paralyze.extraFrames", p.extra_frames)?;
+    }
+    if let Some(b) = &v.bury {
+        for (name, n) in [
+            ("baseFrames", b.base_frames),
+            ("perPercent", b.per_percent),
+            ("perKnockback", b.per_knockback),
+            ("maxFrames", b.max_frames),
+            ("mash", b.mash),
+            ("buttonMash", b.button_mash),
+            ("releaseThreshold", b.release_threshold),
+        ] {
+            nonnegative(file, &format!("hitTypes.bury.{name}"), n)?;
+        }
+        if b.max_frames < b.base_frames {
+            return Err(err(file, "hitTypes.bury.maxFrames", "must be at least baseFrames"));
+        }
+    }
     positive(file, "hitTypes.windbox.maxSpeed", v.windbox.max_speed)?;
     for (path, n) in [
         ("hitTypes.trip.slide", v.trip.slide),

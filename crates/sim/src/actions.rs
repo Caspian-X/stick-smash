@@ -7,6 +7,11 @@ use serde::{Deserialize, Serialize};
 pub enum Action {
     /// A move by slot (`jab`, `fsmash`, `uspec`…).
     Move(String),
+    /// A player-selected phase within a move.
+    Followup {
+        slot: String,
+        phase: String,
+    },
     Jump,
     ShortHop,
     FullHop,

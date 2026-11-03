@@ -10,7 +10,7 @@ use crate::{Dialog, Editor, doc};
 const GROUPS: [(&str, &[&str]); 5] = [
     ("Ground", &["jab", "ftilt", "utilt", "dtilt", "dashatk"]),
     ("Smash", &["fsmash", "usmash", "dsmash"]),
-    ("Air", &["nair", "fair", "bair", "uair", "dair"]),
+    ("Air", &["nair", "fair", "bair", "uair", "dair", "zair"]),
     ("Special", &["nspec", "sspec", "uspec", "dspec"]),
     ("Grab", &["grab", "dashgrab"]),
 ];
@@ -287,6 +287,8 @@ fn act(ed: &mut Editor, a: Action) {
             ed.doc().edit(|f| {
                 if slot == "sspec" {
                     f.moves.sspec = saved.moves.sspec.clone();
+                } else if slot == "zair" {
+                    f.moves.zair = saved.moves.zair.clone();
                 } else if let (Some(m), Some(s)) = (f.moves.get_mut(slot), saved.moves.get(slot)) {
                     *m = s.clone();
                 }

@@ -52,6 +52,11 @@
           "format": "double",
           "description": "Knockback taken multiplier. Lower = heavier."
         },
+        "pummelDamage": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Override the shared grab pummel damage."
+        },
         "runSpeed": { "type": "number", "format": "double" },
         "runAccel": { "type": "number", "format": "double" },
         "dashSpeed": { "type": ["number", "null"], "format": "double" },
@@ -202,6 +207,13 @@
         "bair": { "$ref": "#/$defs/Move" },
         "uair": { "$ref": "#/$defs/Move" },
         "dair": { "$ref": "#/$defs/Move" },
+        "zair": {
+          "anyOf": [
+            { "$ref": "#/$defs/Move" },
+            { "type": "null" }
+          ],
+          "description": "Optional aerial grab attack (tether/zair)."
+        },
         "grab": { "$ref": "#/$defs/Move" },
         "dashgrab": { "$ref": "#/$defs/Move" },
         "nspec": { "$ref": "#/$defs/Move" },
@@ -246,6 +258,10 @@
           "type": "boolean",
           "description": "Pressing the other direction within `global.movement.bReverseWindow` frames turns the fighter around\n(and flips air momentum)."
         },
+        "oncePerAirtime": {
+          "type": "boolean",
+          "description": "May start once before landing (being hit does not restore it)."
+        },
         "chargeDamage": {
           "type": ["number", "null"],
           "format": "double",
@@ -280,6 +296,11 @@
           "format": "uint32",
           "minimum": 0,
           "description": "Phase length (see the frame convention). Omit for a phase that loops until a transition fires."
+        },
+        "chargeFrames": {
+          "type": "number",
+          "format": "double",
+          "description": "Extra phase frames per stored charge tick (rounded to the nearest whole frame)."
         },
         "hitboxes": {
           "type": "array",
@@ -359,6 +380,17 @@
           "minimum": 0,
           "description": "Can grab a ledge (even while rising) from this phase frame on."
         },
+        "tether": {
+          "anyOf": [
+            { "$ref": "#/$defs/Rect" },
+            { "type": "null" }
+          ],
+          "description": "Extended forward ledge reach while this phase's ledgeGrab window is open."
+        },
+        "passPlatforms": {
+          "type": "boolean",
+          "description": "Pass through semisolid platforms throughout this phase."
+        },
         "anim": {
           "type": "array",
           "items": { "$ref": "#/$defs/AnimKey" },
@@ -406,6 +438,11 @@
           "type": "number",
           "format": "double",
           "description": "Launch angle in degrees. 0 = forward, 90 = straight up, negative = down."
+        },
+        "groundAngle": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Optional launch angle for grounded victims (before the shared ground-bounce rule)."
         },
         "dir": { "$ref": "#/$defs/LaunchDir" },
         "type": { "$ref": "#/$defs/HitType" },
@@ -501,6 +538,16 @@
           "const": "electric",
           "description": "Longer victim hitlag (`global.hitTypes.electric`), with spark effects."
         },
+        {
+          "type": "string",
+          "const": "paralyze",
+          "description": "Freeze in place before launching; cannot paralyze again until actionable or landed."
+        },
+        {
+          "type": "string",
+          "const": "bury",
+          "description": "Trap grounded targets in place; airborne targets launch normally."
+        },
         { "type": "string", "const": "grab", "description": "Grabs instead of hitting." }
       ],
       "description": "Hitbox behavior, modeled on Smash."
@@ -554,6 +601,7 @@
           "format": "double",
           "description": "Scale `setVel` and `addVel` by (1 + held charge ticks × this); never scales `mulVel`."
         },
+        "turn": { "type": "boolean", "description": "Reverse facing without reversing velocity." },
         "minCharge": {
           "type": "integer",
           "format": "uint32",
@@ -719,6 +767,10 @@
           "format": "uint32",
           "minimum": 0,
           "description": "Landing lag frames for `to: \"landing\"`."
+        },
+        "preserveHits": {
+          "type": "boolean",
+          "description": "Keep victim contact history when continuing the same attack in another phase."
         }
       },
       "required": ["on", "to"],
@@ -726,6 +778,7 @@
     },
     "Trigger": {
       "oneOf": [
+        { "type": "string", "enum": ["specialPress", "upHeld"] },
         {
           "type": "string",
           "const": "timeout",
@@ -745,6 +798,11 @@
           "description": "The charge button (or attack, without `charge`) isn't held."
         },
         { "type": "string", "const": "attackHeld", "description": "Attack is held (jab follow-ups)." },
+        {
+          "type": "string",
+          "const": "attackPress",
+          "description": "A new attack press; held buttons alone do not retrigger it."
+        },
         {
           "type": "string",
           "const": "targetNear",
@@ -771,6 +829,12 @@
           "description": "Phase frame that freezes while held."
         },
         "max": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Max frames of charge." },
+        "holdAfterMax": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Additional ticks the button can hold after reaching max; strength stays capped."
+        },
         "button": { "$ref": "#/$defs/Button" },
         "jet": {
           "type": "boolean",
@@ -1176,7 +1240,16 @@
       "additionalProperties": false,
       "properties": {
         "speed": { "type": "number", "format": "double" },
-        "damage": { "type": "number", "format": "double" }
+        "damage": { "type": "number", "format": "double" },
+        "bkb": { "type": "number", "format": "double" },
+        "radius": { "type": "number", "format": "double" },
+        "life": { "type": "number", "format": "double" },
+        "angleTo": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Launch angle at maximum charge; interpolated from the base hit's angle."
+        },
+        "groundAngleTo": { "type": ["number", "null"], "format": "double" }
       },
       "required": ["speed", "damage"]
     },
@@ -1609,6 +1682,11 @@
           "format": "double",
           "description": "Knockback taken multiplier. Lower = heavier."
         },
+        "pummelDamage": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Override the shared grab pummel damage."
+        },
         "runSpeed": { "type": "number", "format": "double" },
         "runAccel": { "type": "number", "format": "double" },
         "dashSpeed": { "type": ["number", "null"], "format": "double" },
@@ -1698,6 +1776,13 @@
         "bair": { "$ref": "#/$defs/MovePartial" },
         "uair": { "$ref": "#/$defs/MovePartial" },
         "dair": { "$ref": "#/$defs/MovePartial" },
+        "zair": {
+          "anyOf": [
+            { "$ref": "#/$defs/MovePartial" },
+            { "type": "null" }
+          ],
+          "description": "Optional aerial grab attack (tether/zair)."
+        },
         "grab": { "$ref": "#/$defs/MovePartial" },
         "dashgrab": { "$ref": "#/$defs/MovePartial" },
         "nspec": { "$ref": "#/$defs/MovePartial" },
@@ -1721,6 +1806,10 @@
         "bReverse": {
           "type": "boolean",
           "description": "Pressing the other direction within `global.movement.bReverseWindow` frames turns the fighter around\n(and flips air momentum)."
+        },
+        "oncePerAirtime": {
+          "type": "boolean",
+          "description": "May start once before landing (being hit does not restore it)."
         },
         "chargeDamage": {
           "type": ["number", "null"],
@@ -1805,6 +1894,11 @@
           "type": "number",
           "format": "double",
           "description": "Launch angle in degrees. 0 = forward, 90 = straight up, negative = down."
+        },
+        "groundAngle": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Optional launch angle for grounded victims (before the shared ground-bounce rule)."
         },
         "dir": { "$ref": "#/$defs/LaunchDirPartial" },
         "type": { "$ref": "#/$defs/HitTypePartial" },
@@ -1898,6 +1992,16 @@
           "type": "string",
           "const": "electric",
           "description": "Longer victim hitlag (`global.hitTypes.electric`), with spark effects."
+        },
+        {
+          "type": "string",
+          "const": "paralyze",
+          "description": "Freeze in place before launching; cannot paralyze again until actionable or landed."
+        },
+        {
+          "type": "string",
+          "const": "bury",
+          "description": "Trap grounded targets in place; airborne targets launch normally."
         },
         { "type": "string", "const": "grab", "description": "Grabs instead of hitting." }
       ],
@@ -2056,7 +2160,16 @@
       "additionalProperties": false,
       "properties": {
         "speed": { "type": "number", "format": "double" },
-        "damage": { "type": "number", "format": "double" }
+        "damage": { "type": "number", "format": "double" },
+        "bkb": { "type": "number", "format": "double" },
+        "radius": { "type": "number", "format": "double" },
+        "life": { "type": "number", "format": "double" },
+        "angleTo": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Launch angle at maximum charge; interpolated from the base hit's angle."
+        },
+        "groundAngleTo": { "type": ["number", "null"], "format": "double" }
       }
     },
     "ExplosionPartial": {

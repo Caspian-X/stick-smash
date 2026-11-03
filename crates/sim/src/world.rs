@@ -89,6 +89,7 @@ pub enum State {
     Grabbed,
     Shieldbreak,
     Dizzy,
+    Buried,
     Respawn,
     Dead,
     Out,
@@ -118,6 +119,7 @@ impl State {
             Self::Grabbed => "grabbed",
             Self::Shieldbreak => "shieldbreak",
             Self::Dizzy => "dizzy",
+            Self::Buried => "buried",
             Self::Respawn => "respawn",
             Self::Dead => "dead",
             Self::Out => "out",
@@ -172,6 +174,9 @@ pub struct MoveState {
     pub t: u32,
     pub elapsed: u32,
     pub charge: u32,
+    /// Saturated charge hold time, separate from strength.
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub charge_hold: u32,
     pub counter_damage: f64,
     pub reversed: bool,
     /// The attack stick (not the button) started it, so only the stick holds its charge.
@@ -242,6 +247,10 @@ pub struct Fighter {
     pub di: bool,
     /// The next ledge grab grants invulnerability (see `ledge.freshInvuln`).
     pub ledge_inv: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub used_air_moves: Vec<String>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub paralyze_used: bool,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -463,6 +472,8 @@ impl World {
                     gait_t: 0,
                     di: false,
                     ledge_inv: true,
+                    used_air_moves: Vec::new(),
+                    paralyze_used: false,
                 }
             })
             .collect();

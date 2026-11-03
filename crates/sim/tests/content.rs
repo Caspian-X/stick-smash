@@ -41,6 +41,7 @@ fn all_assets_load() {
             "ninja",
             "swordfighter",
             "tinker",
+            "whiplash",
             "wizard",
             "wrangler",
             "yoyo"
@@ -50,6 +51,36 @@ fn all_assets_load() {
     assert_eq!(ids, ["arena", "citadel", "foundry", "isles"]);
     assert!(data.stages.iter().all(|s| s.max_players() >= 8));
     assert!(data.global.palette.len() >= 8);
+}
+
+#[test]
+fn tether_charge_and_status_extensions_validate_their_ranges() {
+    let (d, errors) = load(sources()).unwrap();
+    assert!(errors.is_empty());
+    let original = d.fighter("whiplash").unwrap();
+    let mut f = original.clone();
+    let p = f.moves.zair.as_mut().unwrap().phases.iter_mut().find(|p| p.tether.is_some()).unwrap();
+    let r = p.tether.as_mut().unwrap();
+    r.x2 = r.x1;
+    assert!(sim::data::load::check_fighter("whiplash", &f).unwrap_err().path.ends_with("tether"));
+    let mut f = original.clone();
+    f.stats.pummel_damage = Some(-1.);
+    assert_eq!(sim::data::load::check_fighter("whiplash", &f).unwrap_err().path, "stats.pummelDamage");
+    let mut f = original.clone();
+    f.projectiles.get_mut("paralyzer").unwrap().charge_scale.as_mut().unwrap().radius = -1.;
+    assert_eq!(
+        sim::data::load::check_fighter("whiplash", &f).unwrap_err().path,
+        "projectiles.paralyzer.chargeScale.radius"
+    );
+    let mut f = original.clone();
+    f.projectiles.get_mut("paralyzer").unwrap().hit.ground_angle = Some(f64::NAN);
+    assert_eq!(
+        sim::data::load::check_fighter("whiplash", &f).unwrap_err().path,
+        "projectiles.paralyzer.hit.groundAngle"
+    );
+    let mut d = d;
+    d.global.hit_types.bury.as_mut().unwrap().button_mash = -1.;
+    assert!(sim::data::validate(&d).iter().any(|e| e.path == "hitTypes.bury.buttonMash"));
 }
 
 #[test]

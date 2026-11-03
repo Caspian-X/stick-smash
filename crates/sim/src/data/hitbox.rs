@@ -21,6 +21,10 @@ pub enum HitType {
     Windbox,
     /// Longer victim hitlag (`global.hitTypes.electric`), with spark effects.
     Electric,
+    /// Freeze in place before launching; cannot paralyze again until actionable or landed.
+    Paralyze,
+    /// Trap grounded targets in place; airborne targets launch normally.
+    Bury,
     /// Grabs instead of hitting.
     Grab,
 }
@@ -77,6 +81,9 @@ pub struct Hitbox {
     pub kbg: f64,
     /// Launch angle in degrees. 0 = forward, 90 = straight up, negative = down.
     pub angle: f64,
+    /// Optional launch angle for grounded victims (before the shared ground-bounce rule).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ground_angle: Option<f64>,
     #[serde(default, skip_serializing_if = "is_default")]
     pub dir: LaunchDir,
     #[serde(default, skip_serializing_if = "is_default", rename = "type")]

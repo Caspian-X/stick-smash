@@ -153,6 +153,9 @@ pub fn hitlag_of(d: &GameData, b: &Hitbox, kb: f64) -> u32 {
     libm::floor(h.max.min(libm::floor(h.base + b.damage * h.per_damage + kb * h.per_knockback)) * b.hitlag_mult) as u32
 }
 pub fn launch_angle(d: &GameData, b: &Hitbox, kb: f64, ground: bool) -> f64 {
+    if ground && let Some(angle) = b.ground_angle {
+        return angle;
+    }
     match b.kind {
         HitType::Spike => -b.angle.abs(),
         HitType::Sakurai => {
@@ -223,6 +226,45 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
         w.ring(hx, hy, 12., 2., 10);
         w.fx.push(Fx::Sfx { name: "hit".into(), arg: Some(kb), x: Some(hx) });
         return;
+    }
+    if b.kind == HitType::Bury
+        && grounded
+        && vic.state != State::Knockdown
+        && let Some(rule) = &ht.bury
+    {
+        vic.set_state(State::Buried);
+        let scale = g.knockback.ultimate.as_ref().map_or(1., |k| k.launch_speed);
+        let reference = knockback(d, b, vic.dmg, 1.) / scale;
+        vic.sd.n = libm::ceil(rule.base_frames + vic.dmg * rule.per_percent + reference * rule.per_knockback)
+            .min(rule.max_frames);
+        vic.vx = 0.;
+        vic.vy = 0.;
+        vic.hitstun = 0;
+        vic.tumble = false;
+        w.dust(hx, hy, 10);
+        w.sfx("hit");
+        return;
+    }
+    if vic.state == State::Buried
+        && grounded
+        && let Some(rule) = &ht.bury
+    {
+        let scale = g.knockback.ultimate.as_ref().map_or(1., |k| k.launch_speed);
+        if kb / scale < rule.release_threshold {
+            w.sfx("hit");
+            return;
+        }
+    }
+    if b.kind == HitType::Paralyze
+        && !vic.paralyze_used
+        && let Some(rule) = &ht.paralyze
+    {
+        let reference = knockback(d, b, vic.dmg, 1.);
+        let scale = g.knockback.ultimate.as_ref().map_or(1., |k| k.launch_speed);
+        vic.lag =
+            libm::floor((reference / scale * b.hitlag_mult + rule.extra_frames).min(f64::from(rule.max_frames))) as u32;
+        vic.paralyze_used = true;
+        vic.flash = vic.lag;
     }
     if b.kind == HitType::Trip && grounded {
         vic.set_state(State::Knockdown);
@@ -478,7 +520,7 @@ pub fn hit_pass(w: &mut World, d: &GameData) {
                 continue;
             }
             let bx = active_boxes(d, &w.fighters[a]);
-            let t = w.fighters[a].mov.as_ref().map_or(w.fighters[a].t, |m| m.t);
+            let t = w.fighters[a].mov.as_ref().map_or(w.fighters[a].t, |m| m.elapsed);
             let hb = hurt(d, &w.fighters[v]);
             let mut wind = None;
             let mut hit = false;
@@ -500,7 +542,7 @@ pub fn hit_pass(w: &mut World, d: &GameData) {
                 hit = true;
                 let sgn = direction(&w.fighters[a], w.fighters[v].x, b.hit.dir);
                 if b.hit.kind == HitType::Grab {
-                    if !matches!(w.fighters[v].state, State::Ledge | State::Climb | State::Knockdown)
+                    if !matches!(w.fighters[v].state, State::Ledge | State::Climb | State::Knockdown | State::Buried)
                         && (w.fighters[v].y - w.fighters[a].y).abs() < d.global.grab.height_tolerance
                     {
                         start_hold(w, d, a, v);

@@ -198,7 +198,9 @@ fn every_ledge_is_recoverable() {
                             },
                         );
                         let f = &w.fighters[0];
-                        if f.state == State::Ledge && f.sd.ledge_block == block && f.sd.side == side {
+                        if f.state == State::Ledge && f.sd.ledge_block == block && f.sd.side == side
+                            || special && f.ground && f.x >= b.left && f.x <= b.right && f.y <= b.top
+                        {
                             recovered = true;
                             break;
                         }
@@ -747,5 +749,23 @@ fn mike_cpu_matchups_finish_on_every_stage() {
         }
         println!("Mike on {}: {wins}/{finished} wins, {kos} KOs, {self_kos} self-KOs", s.id);
         assert!(self_kos * 3 <= kos, "Mike matchups on {}: excessive self-KOs", s.id);
+    }
+}
+
+#[test]
+fn whiplash_cpu_matches_finish_on_every_stage_in_both_seats() {
+    let d = common::data();
+    for s in &d.stages {
+        let (mut kos, mut self_kos) = (0, 0);
+        for opponent in ["brawler", "mike", "wizard"] {
+            for own in 0..2 {
+                let pair = if own == 0 { ["whiplash", opponent] } else { [opponent, "whiplash"] };
+                let (st, w) = cpu_match(&d, &s.id, &pair, 17 + own as u32, 3);
+                assert!(w.over, "Whiplash vs {opponent} on {} seat {own}: timed out", s.id);
+                kos += st.kos;
+                self_kos += st.self_kos;
+            }
+        }
+        assert!(self_kos * 3 <= kos, "Whiplash on {}: {self_kos}/{kos} self-KOs", s.id);
     }
 }

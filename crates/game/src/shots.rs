@@ -187,6 +187,7 @@ fn fighter_editor() -> Vec<Step> {
                     from: None,
                     to: "nowhere".into(),
                     lag: None,
+                    preserve_hits: false,
                 })
             }),
         );
@@ -512,6 +513,7 @@ fn training() -> Vec<Step> {
         ("archer", "14a-archer", "14b-archer-draw", "14c-archer-kite"),
         ("wizard", "14d-wizard", "14e-wizard-love", "14f-wizard-wind"),
         ("tinker", "14g-tinker", "14h-tinker-bomb", "14i-tinker-jetpack"),
+        ("whiplash", "24a-whiplash-training", "24b-whiplash-charge", "24c-whiplash-recovery"),
     ] {
         v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training(id), Step::Wait(30)]);
         shot(&mut v, idle);
@@ -526,6 +528,12 @@ fn training() -> Vec<Step> {
         shot(&mut v, recovery);
         v.extend([Step::Set(0, Up, false), Step::Set(0, Special, false)]);
     }
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("mike"), Step::Wait(30)]);
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Until(|m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.charge == 209), 260));
+    v.push(Step::Set(0, Special, false));
+    v.push(Step::Until(|m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.t >= 39), 80));
+    v.push(Step::Shot("21i-mike-full-eruption"));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Wait(4), Step::OpenEditor, Step::Wait(20)]);
     for (id, slot, frame, name) in [
         ("ninja", "fsmash", 14, "14b-ninja-heel"),
@@ -569,6 +577,10 @@ fn fighter_kits() -> Vec<Step> {
         ("mike", "nair", 18, "21b-mike-aerial"),
         ("mike", "nspec", 30, "21c-mike-eruption"),
         ("mike", "uspec", 35, "21d-mike-aether"),
+        ("mike", "dtilt", 8, "21e-mike-low-sweep"),
+        ("mike", "uair", 18, "21f-mike-rear-sweep"),
+        ("mike", "fsmash", 24, "21g-mike-smash-windup"),
+        ("mike", "uspec", 20, "21h-mike-sword-toss"),
         ("wizard", "fair", 6, "22a-wizard-lightning"),
         ("wizard", "usmash", 17, "22b-wizard-storm"),
         ("wizard", "nspec", 11, "22c-wizard-love"),
@@ -576,6 +588,14 @@ fn fighter_kits() -> Vec<Step> {
         ("wizard", "dspec", 52, "22e-wizard-phantom"),
         ("wizard", "dspec", 127, "22g-wizard-phantom-strike"),
         ("wizard", "sspec", 44, "22f-wizard-fire"),
+        ("whiplash", "nair", 10, "23a-whiplash-nair"),
+        ("whiplash", "fair", 13, "23b-whiplash-fair"),
+        ("whiplash", "usmash", 23, "23c-whiplash-up-smash"),
+        ("whiplash", "sspec", 31, "23d-whiplash-plasma"),
+        ("whiplash", "uspec", 22, "23e-whiplash-boost"),
+        ("whiplash", "dspec", 10, "23f-whiplash-flip"),
+        ("whiplash", "zair", 15, "23g-whiplash-tether"),
+        ("whiplash", "nspec", 22, "23h-whiplash-paralyzer"),
     ] {
         ed(&mut v, Cmd::Subject(Subject::Move(slot.into())));
         ed(&mut v, Cmd::Fighter(fighter.into()));
@@ -1133,13 +1153,29 @@ mod tests {
 21b-mike-aerial
 21c-mike-eruption
 21d-mike-aether
+21e-mike-low-sweep
+21f-mike-rear-sweep
+21g-mike-smash-windup
+21h-mike-sword-toss
+21i-mike-full-eruption
 22a-wizard-lightning
 22b-wizard-storm
 22c-wizard-love
 22d-wizard-wind
 22e-wizard-phantom
 22f-wizard-fire
-22g-wizard-phantom-strike";
+22g-wizard-phantom-strike
+23a-whiplash-nair
+23b-whiplash-fair
+23c-whiplash-up-smash
+23d-whiplash-plasma
+23e-whiplash-boost
+23f-whiplash-flip
+23g-whiplash-tether
+23h-whiplash-paralyzer
+24a-whiplash-training
+24b-whiplash-charge
+24c-whiplash-recovery";
         assert_eq!(names, expected.lines().collect::<Vec<_>>());
     }
 }

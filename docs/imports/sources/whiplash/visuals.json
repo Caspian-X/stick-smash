@@ -1,0 +1,446 @@
+{
+  "page": "https://ultimateframedata.com/zero_suit_samus",
+  "accessed": "2026-11-02",
+  "pageSha256": "f55a28c24006ac4513cbae373ce0bd9ebf261857114109c23f29564a7487a8b5",
+  "animations": [
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusJab1.gif",
+      "filename": "ZeroSuitSamusJab1.gif",
+      "sha256": "2574a0bd5f09d15a030f22271e6a032c2fa31e117f79faa0bafb466dc8cef399",
+      "frames": 23,
+      "inspect": [
+        0,
+        1,
+        5
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusJab2.gif",
+      "filename": "ZeroSuitSamusJab2.gif",
+      "sha256": "edc4f7a1d5356890e6570b8140a764b9b690a9f07c017f825f3f143f9d7b93ec",
+      "frames": 25,
+      "inspect": [
+        0,
+        1,
+        2,
+        5
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusJab3.gif",
+      "filename": "ZeroSuitSamusJab3.gif",
+      "sha256": "34983995fc36fe6719aeb9bd381a0e0b79f18cc18a18428bea1fa99c9e2dc054",
+      "frames": 34,
+      "inspect": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFTilt.gif",
+      "filename": "ZeroSuitSamusFTilt.gif",
+      "sha256": "39f8721ec3c61e4cad616a15003d503c8e4c5f512a51a5179552bfd13d180190",
+      "frames": 28,
+      "inspect": [
+        4,
+        5,
+        7,
+        8
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFTiltUp.gif",
+      "filename": "ZeroSuitSamusFTiltUp.gif",
+      "sha256": "cfe673c468080190c884f3699c32f6fcf5639381cc99adb8d06f70d6ecff02cf",
+      "frames": 28,
+      "inspect": [
+        5,
+        7
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFTiltDown.gif",
+      "filename": "ZeroSuitSamusFTiltDown.gif",
+      "sha256": "e23710762428cc03095e3b2b9f7254d752122a580d9b20a7880bdd889e2bef12",
+      "frames": 28,
+      "inspect": [
+        5,
+        7
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusUTilt.gif",
+      "filename": "ZeroSuitSamusUTilt.gif",
+      "sha256": "28bf79b1554783404e10cfea1b6f0f6bd361c660d34c097daa70f7207cdbc10f",
+      "frames": 45,
+      "inspect": [
+        2,
+        3,
+        8,
+        9
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusDTilt.gif",
+      "filename": "ZeroSuitSamusDTilt.gif",
+      "sha256": "4d81529d05f1aa6cc8c2ed556b08258f12a8b81da64342cf01fe560746c68891",
+      "frames": 29,
+      "inspect": [
+        7,
+        8
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusDashAttack.gif",
+      "filename": "ZeroSuitSamusDashAttack.gif",
+      "sha256": "3f86735e18cae757a1312f2b698da93e7929acd8c71f9e180e8dbcc0dbecb120",
+      "frames": 51,
+      "inspect": [
+        6,
+        9,
+        18
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFSmash.gif",
+      "filename": "ZeroSuitSamusFSmash.gif",
+      "sha256": "e5814ebecc1c246bd15689e48bb74f1eda03e228d75a68d9bea1e0a0812d1a73",
+      "frames": 64,
+      "inspect": [
+        12,
+        13,
+        25,
+        27
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFSmashUp.gif",
+      "filename": "ZeroSuitSamusFSmashUp.gif",
+      "sha256": "8ad3cec44d72a5f6306d57d4db74e99e64a02e03238ae0584390618db5066f4e",
+      "frames": 64,
+      "inspect": [
+        12,
+        25
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFSmashDown.gif",
+      "filename": "ZeroSuitSamusFSmashDown.gif",
+      "sha256": "70ca2f1a909cd1d2d2c81b43eba86b6b9f5be1fc382ec4da5e90deb391420bc6",
+      "frames": 64,
+      "inspect": [
+        12,
+        25
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusUSmash.gif",
+      "filename": "ZeroSuitSamusUSmash.gif",
+      "sha256": "097fff69189b46c6e22d51e39d3e665d85206830afb6afc2fe2de6566c6ec449",
+      "frames": 48,
+      "inspect": [
+        9,
+        13,
+        19,
+        27,
+        28
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusDSmash.gif",
+      "filename": "ZeroSuitSamusDSmash.gif",
+      "sha256": "765e8114d7c12bdd58cc1d19fd7dbb204ddfe0c599e7e83ea59e10f294ec5f16",
+      "frames": 41,
+      "inspect": [
+        19,
+        21,
+        23
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusNAir.gif",
+      "filename": "ZeroSuitSamusNAir.gif",
+      "sha256": "ea1156106e0ebe92eed43c085f0f7ce206110c98d9d6a459b1046c85d573c708",
+      "frames": 51,
+      "inspect": [
+        9,
+        10,
+        14,
+        15
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFAir.gif",
+      "filename": "ZeroSuitSamusFAir.gif",
+      "sha256": "e8b11b4e89122aa04f257424f8ccd84654cb21c1df27cd9492642467fd262c3d",
+      "frames": 46,
+      "inspect": [
+        5,
+        6,
+        12,
+        13
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusBAir.gif",
+      "filename": "ZeroSuitSamusBAir.gif",
+      "sha256": "0cbd84cb535f5d58aa9ff6dd671a8b62b872ab42f5b88469f0d5f923459182b2",
+      "frames": 40,
+      "inspect": [
+        7,
+        8
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusUAir.gif",
+      "filename": "ZeroSuitSamusUAir.gif",
+      "sha256": "af509b8143355c3e0ac00cab1af0edef28e2496fa5c0936f6154e99303cffedf",
+      "frames": 34,
+      "inspect": [
+        5,
+        7,
+        9,
+        11
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusDAir.gif",
+      "filename": "ZeroSuitSamusDAir.gif",
+      "sha256": "476359357bef076feb2c8ad81c3a42fc04b6e2dd83795b476a2d0a4aa30153fd",
+      "frames": 67,
+      "inspect": [
+        0,
+        12,
+        13,
+        24,
+        48
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusDAirLanding.gif",
+      "filename": "ZeroSuitSamusDAirLanding.gif",
+      "sha256": "781362fb13f23218915b806c642fb4a3af8cdacd2c563a9af9499adf71a7d588",
+      "frames": 24,
+      "inspect": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusZAir.gif",
+      "filename": "ZeroSuitSamusZAir.gif",
+      "sha256": "45dd71cd93d824c70847561abe76d49decae16e4b39dfaf67d85807b2db8e284",
+      "frames": 49,
+      "inspect": [
+        8,
+        11,
+        18,
+        23
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusParalyzerNoCharge.gif",
+      "filename": "ZeroSuitSamusParalyzerNoCharge.gif",
+      "sha256": "def1d8142f99cff135ce89aa4f74b2a88e32f53441916eab79a2372667346f5a",
+      "frames": 48,
+      "inspect": [
+        19,
+        20,
+        23,
+        43
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusParalyzerMaxCharge.gif",
+      "filename": "ZeroSuitSamusParalyzerMaxCharge.gif",
+      "sha256": "9afbb79b4a1dbaf9f554a60d0c2fd032f6caff72077430e4f79a2046d5a72b93",
+      "frames": 62,
+      "inspect": [
+        27,
+        34,
+        42,
+        54
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusPlasmaWhip.gif",
+      "filename": "ZeroSuitSamusPlasmaWhip.gif",
+      "sha256": "3e844e7309f2f24cdcf92c7f6af4ce08e890252d97b931fb5adf9b3b1d9f1306",
+      "frames": 55,
+      "inspect": [
+        21,
+        23,
+        27,
+        30,
+        34
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusPlasmaWhipUp.gif",
+      "filename": "ZeroSuitSamusPlasmaWhipUp.gif",
+      "sha256": "cbf3fdd683426ddf47191b106b25f76aabf08b6bf40206190e470538ba0ffd3c",
+      "frames": 55,
+      "inspect": [
+        21,
+        30,
+        36,
+        41,
+        45
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusBoostKickG.gif",
+      "filename": "ZeroSuitSamusBoostKickG.gif",
+      "sha256": "0c2c41edea880028ef90a22fb636fbe2e03b2984b98a5f842f20e1c45d502463",
+      "frames": 77,
+      "inspect": [
+        5,
+        11,
+        23,
+        27,
+        33,
+        34
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusBoostKickA.gif",
+      "filename": "ZeroSuitSamusBoostKickA.gif",
+      "sha256": "b05d6755ba779659248d7d6d6d7e9e809781ac236621e62ed5ae1efdbd71a7eb",
+      "frames": 76,
+      "inspect": [
+        5,
+        11,
+        23,
+        27,
+        33,
+        34
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFlipJump.gif",
+      "filename": "ZeroSuitSamusFlipJump.gif",
+      "sha256": "0455e99a82e3f0e53e6bc11a5b856af1038c2a9647ab5f6011f0cdf804556d8c",
+      "frames": 38,
+      "inspect": [
+        2,
+        11,
+        18,
+        27,
+        37
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFlipJumpKick.gif",
+      "filename": "ZeroSuitSamusFlipJumpKick.gif",
+      "sha256": "56927fe7d84dafbc73916922fc5b8db2bbba0b9040c9a7a69018bdee87eabf7e",
+      "frames": 59,
+      "inspect": [
+        7,
+        8,
+        9,
+        11,
+        12
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFlipJumpFootstool.gif",
+      "filename": "ZeroSuitSamusFlipJumpFootstool.gif",
+      "sha256": "3eb89892f721a62576bba495a6bfbec1a16507e52dca263155b298cee2e2a9e1",
+      "frames": 59,
+      "inspect": [
+        0,
+        1,
+        9,
+        29
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusGrab.gif",
+      "filename": "ZeroSuitSamusGrab.gif",
+      "sha256": "76ac3d1eb041faa09f293c638b839919ad58611df321a1627f6588f2e2068e4e",
+      "frames": 58,
+      "inspect": [
+        14,
+        17,
+        19,
+        24
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusDashGrab.gif",
+      "filename": "ZeroSuitSamusDashGrab.gif",
+      "sha256": "d6494b5bb45245cfcf1d7c85eb120a96362dba745e88abe011a84bcc6ab08f4c",
+      "frames": 66,
+      "inspect": [
+        16,
+        19,
+        21,
+        25
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusPivotGrab.gif",
+      "filename": "ZeroSuitSamusPivotGrab.gif",
+      "sha256": "53b85de1bb33def1b033cd1eff31ea1a991e2d2bbc24e546ff39d04cf2caf8e7",
+      "frames": 61,
+      "inspect": [
+        17,
+        20,
+        25
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusPummel.gif",
+      "filename": "ZeroSuitSamusPummel.gif",
+      "sha256": "34107ed72a6c17468f2d875acf112f77ec479400b2e91915a22713f32fff10fd",
+      "frames": 6,
+      "inspect": [
+        0,
+        1
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusFThrow.gif",
+      "filename": "ZeroSuitSamusFThrow.gif",
+      "sha256": "694f7bc31dae0aa60a35a3912bd63ebd323efb2e7ea7976a44b1cc7349345be7",
+      "frames": 25,
+      "inspect": [
+        7,
+        8
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusBThrow.gif",
+      "filename": "ZeroSuitSamusBThrow.gif",
+      "sha256": "ffad34e0e36d033526d1dbeaf77889106a4b541997ede6c9fdaea9ad4b8ba94e",
+      "frames": 27,
+      "inspect": [
+        8,
+        10
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusUThrow.gif",
+      "filename": "ZeroSuitSamusUThrow.gif",
+      "sha256": "5f853e158ee085a613a40a1df31d798d6f7d7c18ad369cdb59f6fc440ee6a3b6",
+      "frames": 40,
+      "inspect": [
+        2,
+        4
+      ]
+    },
+    {
+      "url": "https://ultimateframedata.com/hitboxes/zero_suit_samus/ZeroSuitSamusDThrow.gif",
+      "filename": "ZeroSuitSamusDThrow.gif",
+      "sha256": "98094010f9b7fb3e1b050a5f56803295aa990a0ba2f27b94a91923cd1d869362",
+      "frames": 51,
+      "inspect": [
+        19,
+        21
+      ]
+    }
+  ]
+}

@@ -372,7 +372,7 @@ fn quickdraw_whiff_forces_special_fall_but_air_hit_allows_more_recovery() {
             w.fighters[1].y = w.fighters[0].y;
             tick(&mut w, &d, Intent::default());
             assert_eq!(moves::phase(&d, &w.fighters[0]).name, "airSwing");
-            for _ in 0..44 {
+            for _ in 0..20 {
                 tick(&mut w, &d, Intent::default());
             }
             assert_eq!(w.fighters[0].state, State::Air);

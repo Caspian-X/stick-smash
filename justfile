@@ -86,3 +86,12 @@ readme-shots:
         magick "$tmp/${pair%%:*}.png" -resize 1280x -quality 90 -define webp:method=6 "docs/images/${pair#*:}.webp"
     done
     du -ch docs/images/*.webp
+
+# Rebuild the Zero Suit Samus-inspired Whiplash from pinned scripts and fitted poses
+import-whiplash:
+    python3 tools/import-zss/import.py
+    just bless
+
+# Download hash-checked Whiplash reference GIFs and make per-frame inspection sheets (Pillow)
+whiplash-visuals dir="/tmp/whiplash-reference":
+    python3 tools/import-zss/visuals.py "{{dir}}"

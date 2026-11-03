@@ -1,0 +1,4406 @@
+{
+  "$schema": "../../schema/fighter.schema.json",
+  "schemaVersion": 1,
+  "extends": "base",
+  "name": "Whiplash",
+  "tagline": "Never where you expected",
+  "blurb": "A Zero Suit Samus-inspired acrobat: swift kicks, plasma tethers, paralysis and a slippery Flip Jump. Use grab in the air for a tether attack; press attack or special during Flip Jump for its diving kick.",
+  "stats": {
+    "weight": 1.25,
+    "pummelDamage": 1.3,
+    "walkSpeed": 5.145,
+    "runSpeed": 8.085,
+    "dashSpeed": 8.469999999999999,
+    "dashFrames": 13,
+    "runAccel": 0.45,
+    "groundFriction": 0.84,
+    "airSpeed": 4.41,
+    "airAccel": 0.3325,
+    "gravity": 0.72,
+    "fallSpeed": 10.2,
+    "fastFallSpeed": 16.32,
+    "jumpSpeed": 18.1,
+    "shortHopSpeed": 12.4,
+    "airJumpSpeed": 18.0,
+    "airJumpDrift": 4.41
+  },
+  "body": { "halfWidth": 13, "height": 74 },
+  "hurtboxes": {
+    "default": { "x1": -14, "x2": 14, "y1": 0, "y2": 77 },
+    "knockdown": { "x1": -29, "x2": 29, "y1": 0, "y2": 16 }
+  },
+  "style": { "torsoWidth": 5, "frontLimbWidth": 5, "backLimbWidth": 4.5 },
+  "ai": {
+    "reach": 72,
+    "counterChance": 0,
+    "specials": [
+      {
+        "minDistance": 160,
+        "maxDistance": 390,
+        "height": 75,
+        "chance": 0.2,
+        "grounded": true,
+        "noProjectile": false,
+        "down": false,
+        "hold": [0, 22]
+      }
+    ]
+  },
+  "poses": {
+    "stand": {
+      "head": [-3, 67],
+      "shoulder": [-2, 53],
+      "hip": [0, 31],
+      "elbowF": [14, 43],
+      "handF": [26, 48],
+      "elbowB": [-14, 45],
+      "handB": [-12, 59],
+      "kneeF": [13, 17],
+      "footF": [19, 0],
+      "kneeB": [-15, 14],
+      "footB": [-25, 0]
+    },
+    "jabOne": {
+      "head": [-8, 65],
+      "shoulder": [-2, 50],
+      "hip": [-4, 29],
+      "elbowF": [27, 50],
+      "handF": [57, 50],
+      "elbowB": [-10, 56],
+      "handB": [-8, 68],
+      "kneeF": [15, 14],
+      "footF": [26, 0],
+      "kneeB": [-18, 13],
+      "footB": [-31, 0]
+    },
+    "jabTwo": {
+      "head": [-8, 65],
+      "shoulder": [-2, 50],
+      "hip": [-4, 29],
+      "elbowF": [19, 46],
+      "handF": [42, 47],
+      "elbowB": [-10, 56],
+      "handB": [17, 64],
+      "kneeF": [15, 14],
+      "footF": [26, 0],
+      "kneeB": [-18, 13],
+      "footB": [-31, 0]
+    },
+    "jabThree": {
+      "head": [2, 62],
+      "shoulder": [5, 48],
+      "hip": [-4, 26],
+      "elbowF": [42, 48],
+      "handF": [20, 59],
+      "elbowB": [-10, 44],
+      "handB": [-22, 49]
+    },
+    "sideKick": {
+      "head": [-12, 67],
+      "shoulder": [-8, 51],
+      "hip": [0, 35],
+      "kneeF": [29, 56],
+      "footF": [65, 56],
+      "kneeB": [-2, 16],
+      "footB": [-5, 0],
+      "elbowF": [-18, 47],
+      "handF": [-29, 51],
+      "elbowB": [-15, 61],
+      "handB": [-28, 74]
+    },
+    "sweep": {
+      "head": [-25, 26],
+      "shoulder": [-14, 18],
+      "hip": [3, 13],
+      "kneeF": [29, 10],
+      "footF": [65, 10],
+      "kneeB": [-10, 5],
+      "footB": [-22, 0],
+      "elbowF": [-27, 11],
+      "handF": [-37, 2],
+      "elbowB": [-18, 33],
+      "handB": [-28, 39]
+    },
+    "handstand": {
+      "head": [0, 27],
+      "shoulder": [0, 40],
+      "hip": [0, 66],
+      "kneeF": [27, 70],
+      "footF": [50, 70],
+      "kneeB": [-27, 70],
+      "footB": [-50, 70],
+      "elbowF": [13, 22],
+      "handF": [15, 1],
+      "elbowB": [-13, 22],
+      "handB": [-15, 1]
+    },
+    "verticalKick": {
+      "head": [0, 27],
+      "shoulder": [0, 40],
+      "hip": [0, 66],
+      "kneeF": [4, 84],
+      "footF": [3, 108],
+      "kneeB": [-4, 84],
+      "footB": [-3, 108],
+      "elbowF": [13, 22],
+      "handF": [15, 1],
+      "elbowB": [-13, 22],
+      "handB": [-15, 1]
+    },
+    "reverseKick": {
+      "head": [13, 65],
+      "shoulder": [11, 51],
+      "hip": [3, 32],
+      "kneeB": [-26, 40],
+      "footB": [-62, 40],
+      "kneeF": [14, 17],
+      "footF": [19, 0],
+      "elbowF": [25, 52],
+      "handF": [32, 62]
+    },
+    "airKick": {
+      "head": [-20, 65],
+      "shoulder": [-14, 51],
+      "hip": [1, 34],
+      "kneeF": [31, 36],
+      "footF": [61, 39],
+      "kneeB": [-14, 23],
+      "footB": [-28, 16],
+      "elbowF": [0, 61],
+      "handF": [14, 73],
+      "elbowB": [-28, 43],
+      "handB": [-35, 51]
+    },
+    "shoot": {
+      "head": [-5, 66],
+      "shoulder": [-2, 52],
+      "hip": [-5, 30],
+      "elbowF": [20, 47],
+      "handF": [42, 45],
+      "elbowB": [11, 44],
+      "handB": [34, 43]
+    },
+    "upShot": {
+      "head": [-4, 68],
+      "shoulder": [-2, 53],
+      "hip": [-2, 31],
+      "elbowF": [7, 75],
+      "handF": [10, 94],
+      "elbowB": [-11, 66],
+      "handB": [-18, 78]
+    },
+    "dive": {
+      "head": [-8, 64],
+      "shoulder": [-3, 50],
+      "hip": [0, 33],
+      "kneeF": [8, 10],
+      "footF": [18, -15],
+      "kneeB": [-10, 24],
+      "footB": [-13, 12],
+      "elbowF": [8, 52],
+      "handF": [3, 65],
+      "elbowB": [-15, 48],
+      "handB": [-9, 60]
+    },
+    "flipKick": {
+      "head": [-13, 64],
+      "shoulder": [-6, 48],
+      "hip": [0, 32],
+      "kneeF": [25, 19],
+      "footF": [61, -16],
+      "kneeB": [-18, 29],
+      "footB": [-33, 38],
+      "elbowF": [12, 55],
+      "handF": [8, 68],
+      "elbowB": [-21, 48],
+      "handB": [-25, 61]
+    },
+    "airKickSecond": {
+      "head": [-20, 65],
+      "shoulder": [-14, 51],
+      "hip": [1, 34],
+      "kneeF": [-7, 26],
+      "footF": [-17, 16],
+      "kneeB": [30, 36],
+      "footB": [60, 39],
+      "elbowF": [0, 61],
+      "handF": [14, 73],
+      "elbowB": [-28, 43],
+      "handB": [-35, 51]
+    }
+  },
+  "moves": {
+    "jab": {
+      "name": "Snap Combination",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 23,
+          "hitboxes": [
+            {
+              "start": 1,
+              "x": 27.5,
+              "y": 50.0,
+              "r": 10.0,
+              "damage": 1.5,
+              "bkb": 20.0,
+              "kbg": 0.5,
+              "angle": 45,
+              "end": 1,
+              "type": "sakurai",
+              "hitlagMult": 1.8
+            },
+            {
+              "start": 1,
+              "x": 42.5,
+              "y": 50.0,
+              "r": 11.5,
+              "damage": 1.5,
+              "bkb": 15.0,
+              "kbg": 0.33,
+              "angle": 45,
+              "end": 1,
+              "type": "sakurai",
+              "hitlagMult": 1.8
+            },
+            {
+              "start": 1,
+              "x": 57.5,
+              "y": 50.0,
+              "r": 12.5,
+              "damage": 1.5,
+              "bkb": 10.0,
+              "kbg": 0.2,
+              "angle": 180.0,
+              "end": 1,
+              "hitlagMult": 1.8
+            },
+            {
+              "start": 1,
+              "x": 57.5,
+              "y": 50.0,
+              "r": 12.5,
+              "damage": 1.5,
+              "bkb": 10.0,
+              "kbg": 0.2,
+              "angle": 45,
+              "end": 1,
+              "type": "sakurai",
+              "hitlagMult": 1.8
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 0, "pose": "jabOne", "lerp": true },
+            { "at": 1, "pose": "jabOne" },
+            { "at": 11, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 1, "sfx": "slash" }
+          ],
+          "transitions": [
+            { "on": "attackHeld", "from": 6, "to": "second" }
+          ]
+        },
+        {
+          "name": "second",
+          "frames": 25,
+          "hitboxes": [
+            {
+              "start": 2,
+              "x": 5.0,
+              "y": 47.5,
+              "r": 11.0,
+              "damage": 1.5,
+              "bkb": 30.0,
+              "kbg": 0.4,
+              "angle": 45,
+              "end": 2,
+              "type": "sakurai",
+              "hitlagMult": 1.8
+            },
+            {
+              "start": 2,
+              "x": 20.0,
+              "y": 49.0,
+              "r": 14.0,
+              "damage": 1.5,
+              "bkb": 25.0,
+              "kbg": 0.4,
+              "angle": 45,
+              "end": 2,
+              "type": "sakurai",
+              "hitlagMult": 1.8
+            },
+            {
+              "start": 2,
+              "x": 41.5,
+              "y": 50.0,
+              "r": 17.5,
+              "damage": 1.5,
+              "bkb": 20.0,
+              "kbg": 0.3,
+              "angle": 45,
+              "end": 2,
+              "type": "sakurai",
+              "hitlagMult": 1.8
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 0, "pose": "jabTwo", "lerp": true },
+            { "at": 2, "pose": "jabTwo" },
+            { "at": 12, "pose": "stand", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "attackHeld", "from": 6, "to": "third" }
+          ]
+        },
+        {
+          "name": "third",
+          "frames": 34,
+          "hitboxes": [
+            {
+              "start": 3,
+              "x": 40.0,
+              "y": 47.5,
+              "r": 20.0,
+              "damage": 3.0,
+              "bkb": 60.0,
+              "kbg": 1.0,
+              "angle": 45.0,
+              "end": 4,
+              "hitlagMult": 1.8
+            },
+            {
+              "start": 3,
+              "x": 10.0,
+              "y": 45.0,
+              "r": 17.5,
+              "damage": 3.0,
+              "bkb": 60.0,
+              "kbg": 1.0,
+              "angle": 45.0,
+              "end": 4,
+              "hitlagMult": 1.8
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 1, "pose": "jabThree", "lerp": true },
+            { "at": 4, "pose": "jabThree" },
+            { "at": 14, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    },
+    "ftilt": {
+      "name": "High Side Kick",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 28,
+          "hitboxes": [
+            {
+              "start": 6,
+              "x": 63.5,
+              "y": 56.0,
+              "r": 19.0,
+              "damage": 7.0,
+              "bkb": 30.0,
+              "kbg": 1.0,
+              "angle": 45,
+              "end": 8,
+              "type": "sakurai",
+              "frames": [[6, 63.5, 56.0, 19.0], [7, 63.5, 56.0, 19.0], [8, 63.5, 56.0, 19.0]]
+            },
+            {
+              "start": 6,
+              "x": 31.0,
+              "y": 56.0,
+              "r": 21.0,
+              "damage": 7.0,
+              "bkb": 30.0,
+              "kbg": 1.0,
+              "angle": 45,
+              "end": 8,
+              "type": "sakurai",
+              "frames": [[6, 31.0, 56.0, 21.0], [7, 31.0, 56.0, 21.0], [8, 31.0, 56.0, 21.0]]
+            },
+            {
+              "start": 6,
+              "x": 1.0,
+              "y": 56.0,
+              "r": 19.0,
+              "damage": 6.0,
+              "bkb": 30.0,
+              "kbg": 1.0,
+              "angle": 45,
+              "end": 8,
+              "type": "sakurai",
+              "frames": [[6, 1.0, 56.0, 19.0], [7, 1.0, 56.0, 19.0], [8, 1.0, 56.0, 19.0]]
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 4, "pose": "sideKick", "lerp": true },
+            { "at": 8, "pose": "sideKick" },
+            { "at": 18, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 6, "sfx": "slash" }
+          ]
+        }
+      ]
+    },
+    "utilt": {
+      "name": "Handstand Split",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 45,
+          "hitboxes": [
+            {
+              "start": 3,
+              "x": 40.0,
+              "y": 70.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 40.0,
+              "kbg": 0.3,
+              "angle": 138.0,
+              "end": 4,
+              "dir": "away",
+              "situation": "air",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 3,
+              "x": 26.666666666666668,
+              "y": 70.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 40.0,
+              "kbg": 0.3,
+              "angle": 138.0,
+              "end": 4,
+              "dir": "away",
+              "situation": "air",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 3,
+              "x": 13.333333333333336,
+              "y": 70.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 40.0,
+              "kbg": 0.3,
+              "angle": 138.0,
+              "end": 4,
+              "dir": "away",
+              "situation": "air",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 3,
+              "x": 0.0,
+              "y": 70.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 40.0,
+              "kbg": 0.3,
+              "angle": 138.0,
+              "end": 4,
+              "dir": "away",
+              "situation": "air",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 3,
+              "x": -13.333333333333329,
+              "y": 70.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 40.0,
+              "kbg": 0.3,
+              "angle": 138.0,
+              "end": 4,
+              "dir": "away",
+              "situation": "air",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 3,
+              "x": -26.66666666666667,
+              "y": 70.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 40.0,
+              "kbg": 0.3,
+              "angle": 138.0,
+              "end": 4,
+              "dir": "away",
+              "situation": "air",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 3,
+              "x": -40.0,
+              "y": 70.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 40.0,
+              "kbg": 0.3,
+              "angle": 138.0,
+              "end": 4,
+              "dir": "away",
+              "situation": "air",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 3,
+              "x": 50.0,
+              "y": 55.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 57.0,
+              "kbg": 0.4,
+              "angle": 130.0,
+              "end": 4,
+              "dir": "away",
+              "situation": "ground",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 3,
+              "x": 35.714285714285715,
+              "y": 55.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 57.0,
+              "kbg": 0.4,
+              "angle": 130.0,
+              "end": 4,
+              "dir": "away",
+              "situation": "ground",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 3,
+              "x": 21.42857142857143,
+              "y": 55.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 57.0,
+              "kbg": 0.4,
+              "angle": 130.0,
+              "end": 4,
+              "dir": "away",
+              "situation": "ground",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 3,
+              "x": 7.142857142857146,
+              "y": 55.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 57.0,
+              "kbg": 0.4,
+              "angle": 130.0,
+              "end": 4,
+              "dir": "away",
+              "situation": "ground",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 3,
+              "x": -7.142857142857139,
+              "y": 55.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 57.0,
+              "kbg": 0.4,
+              "angle": 130.0,
+              "end": 4,
+              "dir": "away",
+              "situation": "ground",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 3,
+              "x": -21.42857142857143,
+              "y": 55.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 57.0,
+              "kbg": 0.4,
+              "angle": 130.0,
+              "end": 4,
+              "dir": "away",
+              "situation": "ground",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 3,
+              "x": -35.71428571428571,
+              "y": 55.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 57.0,
+              "kbg": 0.4,
+              "angle": 130.0,
+              "end": 4,
+              "dir": "away",
+              "situation": "ground",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 3,
+              "x": -50.0,
+              "y": 55.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 57.0,
+              "kbg": 0.4,
+              "angle": 130.0,
+              "end": 4,
+              "dir": "away",
+              "situation": "ground",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 9,
+              "x": 0.0,
+              "y": 100.0,
+              "r": 35.0,
+              "damage": 7.0,
+              "bkb": 70.0,
+              "kbg": 0.9,
+              "angle": 90.0,
+              "end": 10,
+              "dir": "away",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            },
+            {
+              "start": 9,
+              "x": 0.0,
+              "y": 70.0,
+              "r": 30.0,
+              "damage": 7.0,
+              "bkb": 70.0,
+              "kbg": 0.9,
+              "angle": 90.0,
+              "end": 10,
+              "dir": "away",
+              "hitlagMult": 1.2,
+              "rehit": 4
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 2, "pose": "handstand", "lerp": true },
+            { "at": 4, "pose": "handstand" },
+            { "at": 9, "pose": "verticalKick", "lerp": true },
+            { "at": 14, "pose": "handstand", "lerp": true },
+            { "at": 30, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 3, "sfx": "slash" }
+          ]
+        }
+      ]
+    },
+    "dtilt": {
+      "name": "Sliding Sweep",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 29,
+          "hitboxes": [
+            {
+              "start": 8,
+              "x": 42.5,
+              "y": 10.0,
+              "r": 21.0,
+              "damage": 8.0,
+              "bkb": 60.0,
+              "kbg": 0.85,
+              "angle": 70.0,
+              "end": 9,
+              "frames": [[8, 42.5, 10.0, 21.0], [9, 42.5, 10.0, 21.0]]
+            },
+            {
+              "start": 8,
+              "x": 30.75,
+              "y": 10.0,
+              "r": 21.0,
+              "damage": 8.0,
+              "bkb": 60.0,
+              "kbg": 0.85,
+              "angle": 70.0,
+              "end": 9,
+              "frames": [[8, 30.75, 10.0, 21.0], [9, 30.75, 10.0, 21.0]]
+            },
+            {
+              "start": 8,
+              "x": 19.0,
+              "y": 10.0,
+              "r": 21.0,
+              "damage": 8.0,
+              "bkb": 60.0,
+              "kbg": 0.85,
+              "angle": 70.0,
+              "end": 9,
+              "frames": [[8, 19.0, 10.0, 21.0], [9, 19.0, 10.0, 21.0]]
+            },
+            {
+              "start": 8,
+              "x": 55.0,
+              "y": 10.0,
+              "r": 19.0,
+              "damage": 6.0,
+              "bkb": 60.0,
+              "kbg": 0.85,
+              "angle": 70.0,
+              "end": 9,
+              "frames": [[8, 55.0, 10.0, 19.0], [9, 55.0, 10.0, 19.0]]
+            },
+            {
+              "start": 8,
+              "x": 37.0,
+              "y": 10.0,
+              "r": 19.0,
+              "damage": 6.0,
+              "bkb": 60.0,
+              "kbg": 0.85,
+              "angle": 70.0,
+              "end": 9,
+              "frames": [[8, 37.0, 10.0, 19.0], [9, 37.0, 10.0, 19.0]]
+            },
+            {
+              "start": 8,
+              "x": 19.0,
+              "y": 10.0,
+              "r": 19.0,
+              "damage": 6.0,
+              "bkb": 60.0,
+              "kbg": 0.85,
+              "angle": 70.0,
+              "end": 9,
+              "frames": [[8, 19.0, 10.0, 19.0], [9, 19.0, 10.0, 19.0]]
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 6, "pose": "sweep", "lerp": true },
+            { "at": 9, "pose": "sweep" },
+            { "at": 19, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 8, "sfx": "slash" }
+          ]
+        }
+      ]
+    },
+    "dashatk": {
+      "name": "Flying Knee",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 51,
+          "hitboxes": [
+            {
+              "start": 7,
+              "x": 35.0,
+              "y": 52.5,
+              "r": 17.5,
+              "damage": 8.0,
+              "bkb": 100.0,
+              "kbg": 0.4,
+              "angle": 70.0,
+              "end": 9
+            },
+            {
+              "start": 7,
+              "x": 5.0,
+              "y": 50.0,
+              "r": 22.5,
+              "damage": 8.0,
+              "bkb": 100.0,
+              "kbg": 0.4,
+              "angle": 70.0,
+              "end": 9
+            },
+            {
+              "start": 7,
+              "x": 2.5,
+              "y": 37.5,
+              "r": 22.5,
+              "damage": 8.0,
+              "bkb": 100.0,
+              "kbg": 0.4,
+              "angle": 70.0,
+              "end": 9
+            },
+            {
+              "start": 7,
+              "x": 0.0,
+              "y": 25.0,
+              "r": 22.5,
+              "damage": 8.0,
+              "bkb": 100.0,
+              "kbg": 0.4,
+              "angle": 70.0,
+              "end": 9
+            },
+            {
+              "start": 10,
+              "x": 35.0,
+              "y": 52.5,
+              "r": 15.5,
+              "damage": 5.0,
+              "bkb": 80.0,
+              "kbg": 0.4,
+              "angle": 60.0,
+              "end": 19
+            },
+            {
+              "start": 10,
+              "x": 5.0,
+              "y": 50.0,
+              "r": 22.5,
+              "damage": 5.0,
+              "bkb": 80.0,
+              "kbg": 0.4,
+              "angle": 60.0,
+              "end": 19
+            },
+            {
+              "start": 10,
+              "x": 5.0,
+              "y": 37.5,
+              "r": 22.5,
+              "damage": 5.0,
+              "bkb": 80.0,
+              "kbg": 0.4,
+              "angle": 60.0,
+              "end": 19
+            },
+            {
+              "start": 10,
+              "x": 5.0,
+              "y": 25.0,
+              "r": 22.5,
+              "damage": 5.0,
+              "bkb": 80.0,
+              "kbg": 0.4,
+              "angle": 60.0,
+              "end": 19
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 5, "pose": "airKick", "lerp": true },
+            { "at": 19, "pose": "airKick" },
+            { "at": 29, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "x": 7.5 }
+            },
+            { "at": 7, "sfx": "slash" }
+          ],
+          "slide": 20
+        }
+      ]
+    },
+    "fsmash": {
+      "name": "Jet Double Kick",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 64,
+          "hitboxes": [
+            {
+              "start": 13,
+              "x": 60.0,
+              "y": 51.0,
+              "r": 20.0,
+              "damage": 5.0,
+              "bkb": 43.9,
+              "kbg": 1.0,
+              "angle": 60.0,
+              "end": 14,
+              "situation": "ground",
+              "setKb": true,
+              "frames": [[13, 60.0, 51.0, 20.0], [14, 60.0, 51.0, 20.0]],
+              "rehit": 10
+            },
+            {
+              "start": 13,
+              "x": 27.5,
+              "y": 51.0,
+              "r": 20.0,
+              "damage": 5.0,
+              "bkb": 67.0,
+              "kbg": 1.0,
+              "angle": 40.0,
+              "end": 14,
+              "situation": "ground",
+              "setKb": true,
+              "frames": [[13, 27.5, 51.0, 20.0], [14, 27.5, 51.0, 20.0]],
+              "rehit": 10
+            },
+            {
+              "start": 13,
+              "x": 9.0,
+              "y": 41.0,
+              "r": 17.5,
+              "damage": 5.0,
+              "bkb": 69.8,
+              "kbg": 1.0,
+              "angle": 38.0,
+              "end": 14,
+              "situation": "ground",
+              "setKb": true,
+              "frames": [[13, 9.0, 41.0, 17.5], [14, 9.0, 41.0, 17.5]],
+              "rehit": 10
+            },
+            {
+              "start": 13,
+              "x": 60.0,
+              "y": 51.0,
+              "r": 20.0,
+              "damage": 5.0,
+              "bkb": 41.4,
+              "kbg": 0.9,
+              "angle": 45.0,
+              "end": 14,
+              "situation": "air",
+              "setKb": true,
+              "frames": [[13, 60.0, 51.0, 20.0], [14, 60.0, 51.0, 20.0]],
+              "rehit": 10
+            },
+            {
+              "start": 13,
+              "x": 27.5,
+              "y": 51.0,
+              "r": 20.0,
+              "damage": 5.0,
+              "bkb": 55.26,
+              "kbg": 0.9,
+              "angle": 18.0,
+              "end": 14,
+              "situation": "air",
+              "setKb": true,
+              "frames": [[13, 27.5, 51.0, 20.0], [14, 27.5, 51.0, 20.0]],
+              "rehit": 10
+            },
+            {
+              "start": 13,
+              "x": 9.0,
+              "y": 41.0,
+              "r": 17.5,
+              "damage": 5.0,
+              "bkb": 59.67,
+              "kbg": 0.9,
+              "angle": 16.0,
+              "end": 14,
+              "situation": "air",
+              "setKb": true,
+              "frames": [[13, 9.0, 41.0, 17.5], [14, 9.0, 41.0, 17.5]],
+              "rehit": 10
+            },
+            {
+              "start": 26,
+              "x": 87.5,
+              "y": 42.0,
+              "r": 16.0,
+              "damage": 11.0,
+              "bkb": 28.0,
+              "kbg": 1.06,
+              "angle": 36.0,
+              "end": 28,
+              "hitlagMult": 1.6,
+              "frames": [[26, 87.5, 42.0, 16.0], [27, 87.5, 42.0, 16.0], [28, 87.5, 42.0, 16.0]],
+              "rehit": 10
+            },
+            {
+              "start": 26,
+              "x": 75.0,
+              "y": 43.0,
+              "r": 28.5,
+              "damage": 11.0,
+              "bkb": 28.0,
+              "kbg": 0.97,
+              "angle": 45,
+              "end": 28,
+              "type": "sakurai",
+              "frames": [[26, 75.0, 43.0, 28.5], [27, 75.0, 43.0, 28.5], [28, 75.0, 43.0, 28.5]],
+              "rehit": 10
+            },
+            {
+              "start": 26,
+              "x": 37.5,
+              "y": 43.0,
+              "r": 21.0,
+              "damage": 11.0,
+              "bkb": 28.0,
+              "kbg": 0.97,
+              "angle": 45,
+              "end": 28,
+              "type": "sakurai",
+              "frames": [[26, 37.5, 43.0, 21.0], [27, 37.5, 43.0, 21.0], [28, 37.5, 43.0, 21.0]],
+              "rehit": 10
+            },
+            {
+              "start": 26,
+              "x": 12.0,
+              "y": 36.0,
+              "r": 18.5,
+              "damage": 11.0,
+              "bkb": 28.0,
+              "kbg": 0.97,
+              "angle": 45,
+              "end": 28,
+              "type": "sakurai",
+              "frames": [[26, 12.0, 36.0, 18.5], [27, 12.0, 36.0, 18.5], [28, 12.0, 36.0, 18.5]],
+              "rehit": 10
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 11, "pose": "sideKick", "lerp": true },
+            { "at": 14, "pose": "sideKick" },
+            { "at": 20, "pose": "air", "lerp": true },
+            {
+              "at": 26,
+              "pose": {
+                "head": [-20, 65],
+                "shoulder": [-14, 51],
+                "hip": [1, 34],
+                "kneeF": [35, 43],
+                "footF": [80, 43],
+                "kneeB": [-14, 23],
+                "footB": [-5, 0],
+                "elbowF": [0, 61],
+                "handF": [14, 73],
+                "elbowB": [-28, 43],
+                "handB": [-35, 51]
+              },
+              "lerp": true
+            },
+            {
+              "at": 29,
+              "pose": {
+                "head": [-20, 65],
+                "shoulder": [-14, 51],
+                "hip": [1, 34],
+                "kneeF": [35, 43],
+                "footF": [80, 43],
+                "kneeB": [-14, 23],
+                "footB": [-5, 0],
+                "elbowF": [0, 61],
+                "handF": [14, 73],
+                "elbowB": [-28, 43],
+                "handB": [-35, 51]
+              }
+            },
+            { "at": 50, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 13, "sfx": "smash" }
+          ],
+          "charge": { "frame": 9 }
+        }
+      ]
+    },
+    "usmash": {
+      "name": "Plasma Fountain",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 48,
+          "hitboxes": [
+            {
+              "start": 10,
+              "x": 35.0,
+              "y": 50.0,
+              "r": 30.0,
+              "damage": 4.0,
+              "bkb": 124.4,
+              "kbg": 1.0,
+              "angle": 110.0,
+              "end": 11,
+              "type": "electric",
+              "dir": "away",
+              "setKb": true,
+              "rehit": 3
+            },
+            {
+              "start": 14,
+              "x": 10.0,
+              "y": 110.0,
+              "r": 26.0,
+              "damage": 0.8,
+              "bkb": 45.0,
+              "kbg": 0.25,
+              "angle": 110.0,
+              "end": 14,
+              "type": "electric",
+              "dir": "away",
+              "hitlagMult": 0.5,
+              "rehit": 3
+            },
+            {
+              "start": 14,
+              "x": 10.0,
+              "y": 125.0,
+              "r": 28.0,
+              "damage": 0.8,
+              "bkb": 45.0,
+              "kbg": 0.25,
+              "angle": 100.0,
+              "end": 14,
+              "type": "electric",
+              "dir": "away",
+              "hitlagMult": 0.5,
+              "rehit": 3
+            },
+            {
+              "start": 14,
+              "x": 10.0,
+              "y": 150.0,
+              "r": 32.5,
+              "damage": 0.8,
+              "bkb": 45.0,
+              "kbg": 0.25,
+              "angle": -105.0,
+              "end": 14,
+              "type": "spike",
+              "dir": "away",
+              "hitlagMult": 0.5,
+              "rehit": 3
+            },
+            {
+              "start": 17,
+              "x": 10.0,
+              "y": 110.0,
+              "r": 26.0,
+              "damage": 0.8,
+              "bkb": 45.0,
+              "kbg": 0.25,
+              "angle": 110.0,
+              "end": 17,
+              "type": "electric",
+              "dir": "away",
+              "hitlagMult": 0.5,
+              "rehit": 3
+            },
+            {
+              "start": 17,
+              "x": 10.0,
+              "y": 125.0,
+              "r": 28.0,
+              "damage": 0.8,
+              "bkb": 45.0,
+              "kbg": 0.25,
+              "angle": 100.0,
+              "end": 17,
+              "type": "electric",
+              "dir": "away",
+              "hitlagMult": 0.5,
+              "rehit": 3
+            },
+            {
+              "start": 17,
+              "x": 10.0,
+              "y": 150.0,
+              "r": 32.5,
+              "damage": 0.8,
+              "bkb": 45.0,
+              "kbg": 0.25,
+              "angle": -105.0,
+              "end": 17,
+              "type": "spike",
+              "dir": "away",
+              "hitlagMult": 0.5,
+              "rehit": 3
+            },
+            {
+              "start": 20,
+              "x": 10.0,
+              "y": 110.0,
+              "r": 26.0,
+              "damage": 0.8,
+              "bkb": 45.0,
+              "kbg": 0.25,
+              "angle": 110.0,
+              "end": 20,
+              "type": "electric",
+              "dir": "away",
+              "hitlagMult": 0.5,
+              "rehit": 3
+            },
+            {
+              "start": 20,
+              "x": 10.0,
+              "y": 125.0,
+              "r": 28.0,
+              "damage": 0.8,
+              "bkb": 45.0,
+              "kbg": 0.25,
+              "angle": 100.0,
+              "end": 20,
+              "type": "electric",
+              "dir": "away",
+              "hitlagMult": 0.5,
+              "rehit": 3
+            },
+            {
+              "start": 20,
+              "x": 10.0,
+              "y": 150.0,
+              "r": 32.5,
+              "damage": 0.8,
+              "bkb": 45.0,
+              "kbg": 0.25,
+              "angle": -105.0,
+              "end": 20,
+              "type": "spike",
+              "dir": "away",
+              "hitlagMult": 0.5,
+              "rehit": 3
+            },
+            {
+              "start": 23,
+              "x": 10.0,
+              "y": 110.0,
+              "r": 26.0,
+              "damage": 0.8,
+              "bkb": 45.0,
+              "kbg": 0.25,
+              "angle": 110.0,
+              "end": 23,
+              "type": "electric",
+              "dir": "away",
+              "hitlagMult": 0.5,
+              "rehit": 3
+            },
+            {
+              "start": 23,
+              "x": 10.0,
+              "y": 125.0,
+              "r": 28.0,
+              "damage": 0.8,
+              "bkb": 45.0,
+              "kbg": 0.25,
+              "angle": 100.0,
+              "end": 23,
+              "type": "electric",
+              "dir": "away",
+              "hitlagMult": 0.5,
+              "rehit": 3
+            },
+            {
+              "start": 23,
+              "x": 10.0,
+              "y": 150.0,
+              "r": 32.5,
+              "damage": 0.8,
+              "bkb": 45.0,
+              "kbg": 0.25,
+              "angle": -105.0,
+              "end": 23,
+              "type": "spike",
+              "dir": "away",
+              "hitlagMult": 0.5,
+              "rehit": 3
+            },
+            {
+              "start": 26,
+              "x": 10.0,
+              "y": 110.0,
+              "r": 26.0,
+              "damage": 0.8,
+              "bkb": 45.0,
+              "kbg": 0.25,
+              "angle": 110.0,
+              "end": 26,
+              "type": "electric",
+              "dir": "away",
+              "hitlagMult": 0.5,
+              "rehit": 3
+            },
+            {
+              "start": 26,
+              "x": 10.0,
+              "y": 125.0,
+              "r": 28.0,
+              "damage": 0.8,
+              "bkb": 45.0,
+              "kbg": 0.25,
+              "angle": 100.0,
+              "end": 26,
+              "type": "electric",
+              "dir": "away",
+              "hitlagMult": 0.5,
+              "rehit": 3
+            },
+            {
+              "start": 26,
+              "x": 10.0,
+              "y": 150.0,
+              "r": 32.5,
+              "damage": 0.8,
+              "bkb": 45.0,
+              "kbg": 0.25,
+              "angle": -105.0,
+              "end": 26,
+              "type": "spike",
+              "dir": "away",
+              "hitlagMult": 0.5,
+              "rehit": 3
+            },
+            {
+              "start": 28,
+              "x": 0.0,
+              "y": 85.0,
+              "r": 30.0,
+              "damage": 3.0,
+              "bkb": 45.0,
+              "kbg": 2.12,
+              "angle": 80.0,
+              "end": 29,
+              "type": "electric",
+              "dir": "away",
+              "rehit": 2
+            },
+            {
+              "start": 28,
+              "x": 0.0,
+              "y": 127.5,
+              "r": 37.5,
+              "damage": 3.0,
+              "bkb": 45.0,
+              "kbg": 2.12,
+              "angle": 80.0,
+              "end": 29,
+              "type": "electric",
+              "dir": "away",
+              "rehit": 2
+            },
+            {
+              "start": 28,
+              "x": 0.0,
+              "y": 170.0,
+              "r": 48.0,
+              "damage": 3.0,
+              "bkb": 45.0,
+              "kbg": 2.12,
+              "angle": 80.0,
+              "end": 29,
+              "type": "electric",
+              "dir": "away",
+              "rehit": 2
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 8, "pose": "upShot", "lerp": true },
+            { "at": 29, "pose": "upShot" },
+            { "at": 39, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 10, "sfx": "smash" }
+          ],
+          "charge": { "frame": 4 },
+          "attach": {
+            "whipUp": { "show": [10, 29] }
+          }
+        }
+      ]
+    },
+    "dsmash": {
+      "name": "Paralyzing Burst",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 41,
+          "hitboxes": [
+            {
+              "start": 20,
+              "x": 65.0,
+              "y": 15.0,
+              "r": 20.0,
+              "damage": 8.0,
+              "bkb": 0.0,
+              "kbg": 0.9,
+              "angle": 60.0,
+              "end": 24,
+              "type": "paralyze",
+              "dir": "away",
+              "hitlagMult": 0.6
+            },
+            {
+              "start": 20,
+              "x": 52.5,
+              "y": 15.0,
+              "r": 20.0,
+              "damage": 8.0,
+              "bkb": 0.0,
+              "kbg": 0.9,
+              "angle": 60.0,
+              "end": 24,
+              "type": "paralyze",
+              "dir": "away",
+              "hitlagMult": 0.6
+            },
+            {
+              "start": 20,
+              "x": 40.0,
+              "y": 15.0,
+              "r": 20.0,
+              "damage": 8.0,
+              "bkb": 0.0,
+              "kbg": 0.9,
+              "angle": 60.0,
+              "end": 24,
+              "type": "paralyze",
+              "dir": "away",
+              "hitlagMult": 0.6
+            },
+            {
+              "start": 20,
+              "x": 85.0,
+              "y": 15.0,
+              "r": 35.0,
+              "damage": 6.0,
+              "bkb": 0.0,
+              "kbg": 0.85,
+              "angle": 60.0,
+              "end": 24,
+              "type": "paralyze",
+              "dir": "away",
+              "situation": "ground",
+              "hitlagMult": 0.6
+            },
+            {
+              "start": 20,
+              "x": 50.0,
+              "y": 15.0,
+              "r": 35.0,
+              "damage": 6.0,
+              "bkb": 0.0,
+              "kbg": 0.85,
+              "angle": 60.0,
+              "end": 24,
+              "type": "paralyze",
+              "dir": "away",
+              "situation": "ground",
+              "hitlagMult": 0.6
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            {
+              "at": 18,
+              "pose": {
+                "head": [-5, 66],
+                "shoulder": [-2, 52],
+                "hip": [-5, 30],
+                "elbowF": [20, 36],
+                "handF": [42, 25],
+                "elbowB": [11, 44],
+                "handB": [34, 43]
+              },
+              "lerp": true
+            },
+            {
+              "at": 24,
+              "pose": {
+                "head": [-5, 66],
+                "shoulder": [-2, 52],
+                "hip": [-5, 30],
+                "elbowF": [20, 36],
+                "handF": [42, 25],
+                "elbowB": [11, 44],
+                "handB": [34, 43]
+              }
+            },
+            { "at": 34, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 20, "sfx": "smash" }
+          ],
+          "charge": { "frame": 15 }
+        }
+      ]
+    },
+    "nair": {
+      "name": "Plasma Wheel",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "initial",
+          "frames": 4,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" },
+            { "on": "timeout", "to": "active" }
+          ]
+        },
+        {
+          "name": "active",
+          "frames": 38,
+          "hitboxes": [
+            {
+              "start": 6,
+              "x": 35.0,
+              "y": 55.0,
+              "r": 28.5,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 7,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 6,
+              "x": 50.0,
+              "y": 50.0,
+              "r": 28.5,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 7,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 6,
+              "x": 35.0,
+              "y": 55.0,
+              "r": 15.0,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 7,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 6,
+              "x": 47.0,
+              "y": 51.0,
+              "r": 15.0,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 7,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 6,
+              "x": 59.0,
+              "y": 47.0,
+              "r": 15.0,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 7,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 6,
+              "x": 71.0,
+              "y": 43.0,
+              "r": 15.0,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 7,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 6,
+              "x": 83.0,
+              "y": 39.0,
+              "r": 15.0,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 7,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 6,
+              "x": 95.0,
+              "y": 35.0,
+              "r": 15.0,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 7,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 11,
+              "x": -15.0,
+              "y": 65.0,
+              "r": 28.0,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 12,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 11,
+              "x": -33.0,
+              "y": 69.0,
+              "r": 28.0,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 12,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 11,
+              "x": -15.0,
+              "y": 65.0,
+              "r": 15.0,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 12,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 11,
+              "x": -27.0,
+              "y": 68.5,
+              "r": 15.0,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 12,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 11,
+              "x": -39.0,
+              "y": 72.0,
+              "r": 15.0,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 12,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 11,
+              "x": -51.0,
+              "y": 75.5,
+              "r": 15.0,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 12,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 11,
+              "x": -63.0,
+              "y": 79.0,
+              "r": 15.0,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 12,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 11,
+              "x": -75.0,
+              "y": 82.5,
+              "r": 15.0,
+              "damage": 8.0,
+              "bkb": 38.0,
+              "kbg": 0.96,
+              "angle": 55.0,
+              "end": 12,
+              "type": "electric",
+              "dir": "away"
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "shoot" },
+            { "at": 17, "pose": "air", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 8 },
+            { "on": "timeout", "to": "late" }
+          ],
+          "attach": {
+            "lashFront": { "show": [6, 7] },
+            "lashBack": { "show": [11, 12] }
+          }
+        },
+        {
+          "name": "late",
+          "frames": 9,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" }
+          ]
+        }
+      ]
+    },
+    "fair": {
+      "name": "Scissor Kicks",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "initial",
+          "frames": 4,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" },
+            { "on": "timeout", "to": "active" }
+          ]
+        },
+        {
+          "name": "active",
+          "frames": 34,
+          "hitboxes": [
+            {
+              "start": 2,
+              "x": 60.0,
+              "y": 39.0,
+              "r": 32.0,
+              "damage": 5.0,
+              "bkb": 50.0,
+              "kbg": 0.5,
+              "angle": 45,
+              "end": 3,
+              "type": "sakurai",
+              "situation": "air",
+              "frames": [[2, 60.0, 39.0, 32.0], [3, 60.0, 39.0, 32.0]],
+              "rehit": 5
+            },
+            {
+              "start": 2,
+              "x": 20.0,
+              "y": 36.0,
+              "r": 27.5,
+              "damage": 5.0,
+              "bkb": 50.0,
+              "kbg": 0.5,
+              "angle": 45,
+              "end": 3,
+              "type": "sakurai",
+              "situation": "air",
+              "frames": [[2, 20.0, 36.0, 27.5], [3, 20.0, 36.0, 27.5]],
+              "rehit": 5
+            },
+            {
+              "start": 2,
+              "x": 60.0,
+              "y": 39.0,
+              "r": 32.0,
+              "damage": 5.0,
+              "bkb": 60.0,
+              "kbg": 0.5,
+              "angle": 50.0,
+              "end": 3,
+              "situation": "ground",
+              "frames": [[2, 60.0, 39.0, 32.0], [3, 60.0, 39.0, 32.0]],
+              "rehit": 5
+            },
+            {
+              "start": 2,
+              "x": 20.0,
+              "y": 36.0,
+              "r": 27.5,
+              "damage": 5.0,
+              "bkb": 60.0,
+              "kbg": 0.5,
+              "angle": 40.0,
+              "end": 3,
+              "situation": "ground",
+              "frames": [[2, 20.0, 36.0, 27.5], [3, 20.0, 36.0, 27.5]],
+              "rehit": 5
+            },
+            {
+              "start": 9,
+              "x": 60.0,
+              "y": 39.0,
+              "r": 32.0,
+              "damage": 7.0,
+              "bkb": 40.0,
+              "kbg": 1.04,
+              "angle": 45,
+              "end": 10,
+              "type": "sakurai",
+              "frames": [[9, 60.0, 39.0, 32.0], [10, 60.0, 39.0, 32.0]],
+              "rehit": 5
+            },
+            {
+              "start": 9,
+              "x": 20.0,
+              "y": 36.0,
+              "r": 27.5,
+              "damage": 7.0,
+              "bkb": 40.0,
+              "kbg": 1.04,
+              "angle": 45,
+              "end": 10,
+              "type": "sakurai",
+              "frames": [[9, 20.0, 36.0, 27.5], [10, 20.0, 36.0, 27.5]],
+              "rehit": 5
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 2, "pose": "airKick", "lerp": true },
+            { "at": 3, "pose": "airKick" },
+            { "at": 6, "pose": "air", "lerp": true },
+            { "at": 9, "pose": "airKickSecond", "lerp": true },
+            { "at": 10, "pose": "airKickSecond" },
+            { "at": 19, "pose": "air", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 10 },
+            { "on": "timeout", "to": "late" }
+          ]
+        },
+        {
+          "name": "late",
+          "frames": 8,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" }
+          ]
+        }
+      ]
+    },
+    "bair": {
+      "name": "Reverse Jet Heel",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "initial",
+          "frames": 4,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" },
+            { "on": "timeout", "to": "active" }
+          ]
+        },
+        {
+          "name": "active",
+          "frames": 27,
+          "hitboxes": [
+            {
+              "start": 4,
+              "x": -21.0,
+              "y": 40.0,
+              "r": 17.5,
+              "damage": 10.0,
+              "bkb": 42.0,
+              "kbg": 0.98,
+              "angle": 45,
+              "end": 5,
+              "type": "sakurai",
+              "dir": "back",
+              "frames": [[4, -21.0, 40.0, 17.5], [5, -21.0, 40.0, 17.5]]
+            },
+            {
+              "start": 4,
+              "x": -56.0,
+              "y": 40.0,
+              "r": 27.5,
+              "damage": 12.0,
+              "bkb": 42.0,
+              "kbg": 0.98,
+              "angle": 45,
+              "end": 5,
+              "type": "sakurai",
+              "dir": "back",
+              "frames": [[4, -56.0, 40.0, 27.5], [5, -56.0, 40.0, 27.5]]
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "reverseKick" },
+            { "at": 10, "pose": "air", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 10 },
+            { "on": "timeout", "to": "late" }
+          ]
+        },
+        {
+          "name": "late",
+          "frames": 9,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" }
+          ]
+        }
+      ]
+    },
+    "uair": {
+      "name": "Somersault Heel",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "active",
+          "frames": 25,
+          "hitboxes": [
+            {
+              "start": 6,
+              "x": 55.4418646263686,
+              "y": 54.179188456214455,
+              "r": 23.0,
+              "damage": 6.5,
+              "bkb": 30.0,
+              "kbg": 1.25,
+              "angle": 80.0,
+              "end": 12,
+              "dir": "away",
+              "frames": [
+                [6, 55.4418646263686, 54.179188456214455, 23.0],
+                [7, 42.915044852809885, 74.48825663425528, 23.0],
+                [8, 23.368706196310256, 88.17475030593616, 23.0],
+                [9, 3.6127080574846916e-15, 93.0, 23.0],
+                [10, -23.36870619631025, 88.17475030593616, 23.0],
+                [11, -42.915044852809885, 74.48825663425526, 23.0],
+                [12, -55.44186462636859, 54.17918845621446, 23.0]
+              ]
+            },
+            {
+              "start": 6,
+              "x": 30.07016386514907,
+              "y": 44.9446445864214,
+              "r": 18.0,
+              "damage": 6.5,
+              "bkb": 30.0,
+              "kbg": 1.25,
+              "angle": 80.0,
+              "end": 12,
+              "dir": "away",
+              "frames": [
+                [6, 30.07016386514907, 44.9446445864214, 18.0],
+                [7, 23.275956530337563, 55.95973241179947, 18.0],
+                [8, 12.67455251325302, 63.38291542016877, 18.0],
+                [9, 1.959434878635765e-15, 66.0, 18.0],
+                [10, -12.674552513253017, 63.38291542016877, 18.0],
+                [11, -23.275956530337567, 55.959732411799465, 18.0],
+                [12, -30.070163865149066, 44.944644586421404, 18.0]
+              ]
+            },
+            {
+              "start": 6,
+              "x": 14.095389311788626,
+              "y": 39.13030214988503,
+              "r": 18.0,
+              "damage": 6.5,
+              "bkb": 30.0,
+              "kbg": 1.25,
+              "angle": 80.0,
+              "end": 12,
+              "dir": "away",
+              "frames": [
+                [6, 14.095389311788626, 39.13030214988503, 18.0],
+                [7, 10.910604623595733, 44.29362456803101, 18.0],
+                [8, 5.9411964905873536, 47.77324160320411, 18.0],
+                [9, 9.18485099360515e-16, 49.0, 18.0],
+                [10, -5.941196490587352, 47.77324160320411, 18.0],
+                [11, -10.910604623595734, 44.293624568031, 18.0],
+                [12, -14.095389311788624, 39.13030214988503, 18.0]
+              ]
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            {
+              "at": 6,
+              "pose": {
+                "head": [0, 18],
+                "shoulder": [0, 30],
+                "hip": [0, 34],
+                "kneeF": [30.07016386514907, 44.9446445864214],
+                "footF": [55.4418646263686, 54.179188456214455],
+                "kneeB": [-15, 32],
+                "footB": [-24, 16],
+                "handF": [18, 6],
+                "handB": [-18, 9]
+              },
+              "lerp": true
+            },
+            {
+              "at": 8,
+              "pose": {
+                "head": [0, 18],
+                "shoulder": [0, 30],
+                "hip": [0, 34],
+                "kneeF": [12.67455251325302, 63.38291542016877],
+                "footF": [23.368706196310256, 88.17475030593616],
+                "kneeB": [-15, 32],
+                "footB": [-24, 16],
+                "handF": [18, 6],
+                "handB": [-18, 9]
+              },
+              "lerp": true
+            },
+            {
+              "at": 10,
+              "pose": {
+                "head": [0, 18],
+                "shoulder": [0, 30],
+                "hip": [0, 34],
+                "kneeF": [-12.674552513253017, 63.38291542016877],
+                "footF": [-23.36870619631025, 88.17475030593616],
+                "kneeB": [-15, 32],
+                "footB": [-24, 16],
+                "handF": [18, 6],
+                "handB": [-18, 9]
+              },
+              "lerp": true
+            },
+            {
+              "at": 12,
+              "pose": {
+                "head": [0, 18],
+                "shoulder": [0, 30],
+                "hip": [0, 34],
+                "kneeF": [-30.070163865149066, 44.944644586421404],
+                "footF": [-55.44186462636859, 54.17918845621446],
+                "kneeB": [-15, 32],
+                "footB": [-24, 16],
+                "handF": [18, 6],
+                "handB": [-18, 9]
+              },
+              "lerp": true
+            },
+            { "at": 22, "pose": "air", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 5 },
+            { "on": "timeout", "to": "late" }
+          ]
+        },
+        {
+          "name": "late",
+          "frames": 9,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" }
+          ]
+        }
+      ]
+    },
+    "dair": {
+      "name": "Diving Heel",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "initial",
+          "frames": 4,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" },
+            { "on": "timeout", "to": "stall" }
+          ],
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "x": 0, "y": 0.5 }
+            }
+          ],
+          "hover": true
+        },
+        {
+          "name": "stall",
+          "frames": 10,
+          "hitboxes": [],
+          "hover": true,
+          "airAccelMult": 0,
+          "anim": [
+            { "at": 0, "pose": "dive" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "land" },
+            { "on": "timeout", "to": "active" }
+          ]
+        },
+        {
+          "name": "active",
+          "frames": 36,
+          "hitboxes": [
+            {
+              "start": 0,
+              "x": 18.0,
+              "y": -15.0,
+              "r": 31.5,
+              "damage": 6.0,
+              "bkb": 35.0,
+              "kbg": 0.9,
+              "angle": -82.0,
+              "end": 35,
+              "type": "spike",
+              "dir": "away",
+              "situation": "air",
+              "frames": [
+                [0, 18.0, -15.0, 31.5],
+                [1, 18.0, -15.0, 31.5],
+                [2, 18.0, -15.0, 31.5],
+                [3, 18.0, -15.0, 31.5],
+                [4, 18.0, -15.0, 31.5],
+                [5, 18.0, -15.0, 31.5],
+                [6, 18.0, -15.0, 31.5],
+                [7, 18.0, -15.0, 31.5],
+                [8, 18.0, -15.0, 31.5],
+                [9, 18.0, -15.0, 31.5],
+                [10, 18.0, -15.0, 31.5],
+                [11, 18.0, -15.0, 31.5],
+                [12, 18.0, -15.0, 31.5],
+                [13, 18.0, -15.0, 31.5],
+                [14, 18.0, -15.0, 31.5],
+                [15, 18.0, -15.0, 31.5],
+                [16, 18.0, -15.0, 31.5],
+                [17, 18.0, -15.0, 31.5],
+                [18, 18.0, -15.0, 31.5],
+                [19, 18.0, -15.0, 31.5],
+                [20, 18.0, -15.0, 31.5],
+                [21, 18.0, -15.0, 31.5],
+                [22, 18.0, -15.0, 31.5],
+                [23, 18.0, -15.0, 31.5],
+                [24, 18.0, -15.0, 31.5],
+                [25, 18.0, -15.0, 31.5],
+                [26, 18.0, -15.0, 31.5],
+                [27, 18.0, -15.0, 31.5],
+                [28, 18.0, -15.0, 31.5],
+                [29, 18.0, -15.0, 31.5],
+                [30, 18.0, -15.0, 31.5],
+                [31, 18.0, -15.0, 31.5],
+                [32, 18.0, -15.0, 31.5],
+                [33, 18.0, -15.0, 31.5],
+                [34, 18.0, -15.0, 31.5],
+                [35, 18.0, -15.0, 31.5]
+              ]
+            },
+            {
+              "start": 0,
+              "x": 8.0,
+              "y": 10.0,
+              "r": 26.0,
+              "damage": 6.0,
+              "bkb": 35.0,
+              "kbg": 0.9,
+              "angle": -82.0,
+              "end": 35,
+              "type": "spike",
+              "dir": "away",
+              "situation": "air",
+              "frames": [
+                [0, 8.0, 10.0, 26.0],
+                [1, 8.0, 10.0, 26.0],
+                [2, 8.0, 10.0, 26.0],
+                [3, 8.0, 10.0, 26.0],
+                [4, 8.0, 10.0, 26.0],
+                [5, 8.0, 10.0, 26.0],
+                [6, 8.0, 10.0, 26.0],
+                [7, 8.0, 10.0, 26.0],
+                [8, 8.0, 10.0, 26.0],
+                [9, 8.0, 10.0, 26.0],
+                [10, 8.0, 10.0, 26.0],
+                [11, 8.0, 10.0, 26.0],
+                [12, 8.0, 10.0, 26.0],
+                [13, 8.0, 10.0, 26.0],
+                [14, 8.0, 10.0, 26.0],
+                [15, 8.0, 10.0, 26.0],
+                [16, 8.0, 10.0, 26.0],
+                [17, 8.0, 10.0, 26.0],
+                [18, 8.0, 10.0, 26.0],
+                [19, 8.0, 10.0, 26.0],
+                [20, 8.0, 10.0, 26.0],
+                [21, 8.0, 10.0, 26.0],
+                [22, 8.0, 10.0, 26.0],
+                [23, 8.0, 10.0, 26.0],
+                [24, 8.0, 10.0, 26.0],
+                [25, 8.0, 10.0, 26.0],
+                [26, 8.0, 10.0, 26.0],
+                [27, 8.0, 10.0, 26.0],
+                [28, 8.0, 10.0, 26.0],
+                [29, 8.0, 10.0, 26.0],
+                [30, 8.0, 10.0, 26.0],
+                [31, 8.0, 10.0, 26.0],
+                [32, 8.0, 10.0, 26.0],
+                [33, 8.0, 10.0, 26.0],
+                [34, 8.0, 10.0, 26.0],
+                [35, 8.0, 10.0, 26.0]
+              ]
+            },
+            {
+              "start": 0,
+              "x": 18.0,
+              "y": -15.0,
+              "r": 31.5,
+              "damage": 5.0,
+              "bkb": 35.0,
+              "kbg": 0.6,
+              "angle": 80.0,
+              "end": 35,
+              "dir": "away",
+              "situation": "ground",
+              "frames": [
+                [0, 18.0, -15.0, 31.5],
+                [1, 18.0, -15.0, 31.5],
+                [2, 18.0, -15.0, 31.5],
+                [3, 18.0, -15.0, 31.5],
+                [4, 18.0, -15.0, 31.5],
+                [5, 18.0, -15.0, 31.5],
+                [6, 18.0, -15.0, 31.5],
+                [7, 18.0, -15.0, 31.5],
+                [8, 18.0, -15.0, 31.5],
+                [9, 18.0, -15.0, 31.5],
+                [10, 18.0, -15.0, 31.5],
+                [11, 18.0, -15.0, 31.5],
+                [12, 18.0, -15.0, 31.5],
+                [13, 18.0, -15.0, 31.5],
+                [14, 18.0, -15.0, 31.5],
+                [15, 18.0, -15.0, 31.5],
+                [16, 18.0, -15.0, 31.5],
+                [17, 18.0, -15.0, 31.5],
+                [18, 18.0, -15.0, 31.5],
+                [19, 18.0, -15.0, 31.5],
+                [20, 18.0, -15.0, 31.5],
+                [21, 18.0, -15.0, 31.5],
+                [22, 18.0, -15.0, 31.5],
+                [23, 18.0, -15.0, 31.5],
+                [24, 18.0, -15.0, 31.5],
+                [25, 18.0, -15.0, 31.5],
+                [26, 18.0, -15.0, 31.5],
+                [27, 18.0, -15.0, 31.5],
+                [28, 18.0, -15.0, 31.5],
+                [29, 18.0, -15.0, 31.5],
+                [30, 18.0, -15.0, 31.5],
+                [31, 18.0, -15.0, 31.5],
+                [32, 18.0, -15.0, 31.5],
+                [33, 18.0, -15.0, 31.5],
+                [34, 18.0, -15.0, 31.5],
+                [35, 18.0, -15.0, 31.5]
+              ]
+            },
+            {
+              "start": 0,
+              "x": 8.0,
+              "y": 10.0,
+              "r": 26.0,
+              "damage": 5.0,
+              "bkb": 35.0,
+              "kbg": 0.6,
+              "angle": 80.0,
+              "end": 35,
+              "dir": "away",
+              "situation": "ground",
+              "frames": [
+                [0, 8.0, 10.0, 26.0],
+                [1, 8.0, 10.0, 26.0],
+                [2, 8.0, 10.0, 26.0],
+                [3, 8.0, 10.0, 26.0],
+                [4, 8.0, 10.0, 26.0],
+                [5, 8.0, 10.0, 26.0],
+                [6, 8.0, 10.0, 26.0],
+                [7, 8.0, 10.0, 26.0],
+                [8, 8.0, 10.0, 26.0],
+                [9, 8.0, 10.0, 26.0],
+                [10, 8.0, 10.0, 26.0],
+                [11, 8.0, 10.0, 26.0],
+                [12, 8.0, 10.0, 26.0],
+                [13, 8.0, 10.0, 26.0],
+                [14, 8.0, 10.0, 26.0],
+                [15, 8.0, 10.0, 26.0],
+                [16, 8.0, 10.0, 26.0],
+                [17, 8.0, 10.0, 26.0],
+                [18, 8.0, 10.0, 26.0],
+                [19, 8.0, 10.0, 26.0],
+                [20, 8.0, 10.0, 26.0],
+                [21, 8.0, 10.0, 26.0],
+                [22, 8.0, 10.0, 26.0],
+                [23, 8.0, 10.0, 26.0],
+                [24, 8.0, 10.0, 26.0],
+                [25, 8.0, 10.0, 26.0],
+                [26, 8.0, 10.0, 26.0],
+                [27, 8.0, 10.0, 26.0],
+                [28, 8.0, 10.0, 26.0],
+                [29, 8.0, 10.0, 26.0],
+                [30, 8.0, 10.0, 26.0],
+                [31, 8.0, 10.0, 26.0],
+                [32, 8.0, 10.0, 26.0],
+                [33, 8.0, 10.0, 26.0],
+                [34, 8.0, 10.0, 26.0],
+                [35, 8.0, 10.0, 26.0]
+              ]
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "dive" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "land" },
+            { "on": "timeout", "to": "late" }
+          ],
+          "airAccelMult": 0,
+          "fallCap": 30,
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "x": 3.5, "y": -27 },
+              "sfx": "slash"
+            }
+          ]
+        },
+        {
+          "name": "late",
+          "frames": 17,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" }
+          ]
+        },
+        {
+          "name": "land",
+          "frames": 24,
+          "hitboxes": [
+            {
+              "start": 1,
+              "x": 5.0,
+              "y": 35.0,
+              "r": 45.0,
+              "damage": 5.5,
+              "bkb": 70.0,
+              "kbg": 1.1,
+              "angle": 60.0,
+              "end": 3,
+              "hitlagMult": 0.3
+            },
+            {
+              "start": 1,
+              "x": -7.5,
+              "y": 35.0,
+              "r": 45.0,
+              "damage": 5.5,
+              "bkb": 70.0,
+              "kbg": 1.1,
+              "angle": 60.0,
+              "end": 3,
+              "hitlagMult": 0.3
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "sweep" },
+            { "at": 18, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 1, "sfx": "land" }
+          ]
+        }
+      ]
+    },
+    "zair": {
+      "name": "Plasma Tether",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "initial",
+          "frames": 10,
+          "hitboxes": [
+            {
+              "start": 9,
+              "x": 80.0,
+              "y": 45.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 60.0,
+              "kbg": 0.3,
+              "angle": 45.0,
+              "end": 9,
+              "type": "electric",
+              "dir": "away",
+              "hitlagMult": 0.7,
+              "frames": [[9, 80.0, 45.0, 15.0]]
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" },
+            { "on": "timeout", "to": "active" }
+          ],
+          "ledgeGrab": 2,
+          "tether": { "x1": 25, "x2": 210, "y1": 20, "y2": 130 },
+          "attach": {
+            "whip": { "show": [9, 9], "offset": [[9, 35, 45]], "scale": [[9, 0.28125]] }
+          }
+        },
+        {
+          "name": "active",
+          "frames": 30,
+          "hitboxes": [
+            {
+              "start": 0,
+              "x": 80.0,
+              "y": 45.0,
+              "r": 15.0,
+              "damage": 5.0,
+              "bkb": 60.0,
+              "kbg": 0.3,
+              "angle": 45.0,
+              "end": 9,
+              "type": "electric",
+              "dir": "away",
+              "hitlagMult": 0.7,
+              "frames": [
+                [0, 106.0, 45.0, 15.0],
+                [1, 132.0, 45.0, 15.0],
+                [2, 158.0, 45.0, 15.0],
+                [3, 184.0, 45.0, 15.0],
+                [4, 210.0, 45.0, 15.0],
+                [5, 207.0, 45.0, 15.0],
+                [6, 204.0, 45.0, 15.0],
+                [7, 201.0, 45.0, 15.0],
+                [8, 198.0, 45.0, 15.0],
+                [9, 195.0, 45.0, 15.0]
+              ]
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "shoot" },
+            { "at": 14, "pose": "air", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 8 },
+            { "on": "timeout", "to": "late" }
+          ],
+          "ledgeGrab": 0,
+          "tether": { "x1": 25, "x2": 210, "y1": 20, "y2": 130 },
+          "attach": {
+            "whip": {
+              "show": [0, 9],
+              "offset": [[0, 35, 45]],
+              "scale": [
+                [0, 0.44375],
+                [1, 0.60625],
+                [2, 0.76875],
+                [3, 0.93125],
+                [4, 1.09375],
+                [5, 1.075],
+                [6, 1.05625],
+                [7, 1.0375],
+                [8, 1.01875],
+                [9, 1.0]
+              ]
+            }
+          }
+        },
+        {
+          "name": "late",
+          "frames": 9,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" }
+          ]
+        }
+      ]
+    },
+    "grab": {
+      "name": "Lashing Tether",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 58,
+          "hitboxes": [
+            {
+              "start": 15,
+              "end": 25,
+              "x": 80,
+              "y": 45,
+              "r": 15,
+              "damage": 0,
+              "bkb": 0,
+              "kbg": 0,
+              "angle": 0,
+              "type": "grab",
+              "frames": [
+                [15, 80, 45, 15],
+                [16, 97.0, 45, 15],
+                [17, 114.0, 45, 15],
+                [18, 131.0, 45, 15],
+                [19, 148.0, 45, 15],
+                [20, 165, 45, 15],
+                [21, 162, 45, 15],
+                [22, 159, 45, 15],
+                [23, 156, 45, 15],
+                [24, 153, 45, 15],
+                [25, 150, 45, 15]
+              ]
+            },
+            {
+              "start": 15,
+              "end": 17,
+              "x": 42,
+              "y": 45,
+              "r": 10,
+              "damage": 0,
+              "bkb": 0,
+              "kbg": 0,
+              "angle": 0,
+              "type": "grab",
+              "frames": [[15, 42, 45, 10], [16, 42, 45, 10], [17, 42, 45, 10]]
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 13, "pose": "shoot", "lerp": true },
+            { "at": 25, "pose": "shoot" },
+            { "at": 35, "pose": "stand", "lerp": true }
+          ],
+          "slide": 0,
+          "attach": {
+            "whip": {
+              "show": [15, 25],
+              "offset": [[15, 35, 45]],
+              "scale": [
+                [15, 0.28125],
+                [16, 0.3875],
+                [17, 0.49375],
+                [18, 0.6],
+                [19, 0.70625],
+                [20, 0.8125],
+                [21, 0.79375],
+                [22, 0.775],
+                [23, 0.75625],
+                [24, 0.7375],
+                [25, 0.71875]
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "dashgrab": {
+      "name": "Running Tether",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 66,
+          "hitboxes": [
+            {
+              "start": 17,
+              "end": 26,
+              "x": 80,
+              "y": 45,
+              "r": 15,
+              "damage": 0,
+              "bkb": 0,
+              "kbg": 0,
+              "angle": 0,
+              "type": "grab",
+              "frames": [
+                [17, 80, 45, 15],
+                [18, 97.0, 45, 15],
+                [19, 114.0, 45, 15],
+                [20, 131.0, 45, 15],
+                [21, 148.0, 45, 15],
+                [22, 165, 45, 15],
+                [23, 162, 45, 15],
+                [24, 159, 45, 15],
+                [25, 156, 45, 15],
+                [26, 153, 45, 15]
+              ]
+            },
+            {
+              "start": 17,
+              "end": 19,
+              "x": 42,
+              "y": 45,
+              "r": 10,
+              "damage": 0,
+              "bkb": 0,
+              "kbg": 0,
+              "angle": 0,
+              "type": "grab",
+              "frames": [[17, 42, 45, 10], [18, 42, 45, 10], [19, 42, 45, 10]]
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 15, "pose": "shoot", "lerp": true },
+            { "at": 26, "pose": "shoot" },
+            { "at": 36, "pose": "stand", "lerp": true }
+          ],
+          "slide": 12,
+          "attach": {
+            "whip": {
+              "show": [17, 26],
+              "offset": [[17, 35, 45]],
+              "scale": [
+                [17, 0.28125],
+                [18, 0.3875],
+                [19, 0.49375],
+                [20, 0.6],
+                [21, 0.70625],
+                [22, 0.8125],
+                [23, 0.79375],
+                [24, 0.775],
+                [25, 0.75625],
+                [26, 0.7375]
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nspec": {
+      "name": "Paralyzer",
+      "bReverse": true,
+      "chargeDamage": 0,
+      "phases": [
+        {
+          "name": "charge",
+          "frames": 21,
+          "hitboxes": [],
+          "charge": { "frame": 20, "max": 22, "button": "special" },
+          "anim": [
+            { "at": 0, "pose": "shoot" }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "release" }
+          ]
+        },
+        {
+          "name": "release",
+          "frames": 27,
+          "hitboxes": [],
+          "events": [
+            { "at": 0, "spawn": "paralyzer", "sfx": "shoot" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 0, "pose": "shoot", "lerp": true },
+            { "at": 12, "pose": "shoot" },
+            { "at": 22, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    },
+    "sspec": {
+      "name": "Plasma Whip",
+      "bReverse": true,
+      "phases": [
+        {
+          "name": "start",
+          "frames": 1,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "shoot" }
+          ],
+          "transitions": [
+            { "on": "airborne", "to": "air" },
+            { "on": "timeout", "to": "ground" }
+          ]
+        },
+        {
+          "name": "ground",
+          "frames": 29,
+          "hitboxes": [
+            {
+              "start": 21,
+              "x": 45.0,
+              "y": 40.0,
+              "r": 20.0,
+              "damage": 2.0,
+              "bkb": 54.4,
+              "kbg": 1.0,
+              "angle": 20.0,
+              "end": 22,
+              "type": "electric",
+              "setKb": true,
+              "rehit": 2,
+              "hitlagMult": 0.5
+            },
+            {
+              "start": 21,
+              "x": 95.0,
+              "y": 40.0,
+              "r": 17.5,
+              "damage": 1.2,
+              "bkb": 75.4,
+              "kbg": 1.0,
+              "angle": 10.0,
+              "end": 22,
+              "type": "electric",
+              "setKb": true,
+              "rehit": 2,
+              "hitlagMult": 0.5
+            },
+            {
+              "start": 21,
+              "x": 85.0,
+              "y": 40.0,
+              "r": 17.5,
+              "damage": 1.2,
+              "bkb": 75.4,
+              "kbg": 1.0,
+              "angle": 10.0,
+              "end": 22,
+              "type": "electric",
+              "setKb": true,
+              "rehit": 2,
+              "hitlagMult": 0.5
+            },
+            {
+              "start": 23,
+              "x": 45.0,
+              "y": 40.0,
+              "r": 20.0,
+              "damage": 2.0,
+              "bkb": 75.4,
+              "kbg": 1.0,
+              "angle": 17.0,
+              "end": 24,
+              "type": "electric",
+              "setKb": true,
+              "rehit": 2,
+              "hitlagMult": 0.5
+            },
+            {
+              "start": 23,
+              "x": 115.0,
+              "y": 40.0,
+              "r": 17.5,
+              "damage": 1.2,
+              "bkb": 61.4,
+              "kbg": 1.0,
+              "angle": 17.0,
+              "end": 24,
+              "type": "electric",
+              "setKb": true,
+              "hitlagMult": 0.5,
+              "rehit": 2
+            },
+            {
+              "start": 23,
+              "x": 105.0,
+              "y": 40.0,
+              "r": 17.5,
+              "damage": 1.2,
+              "bkb": 61.4,
+              "kbg": 1.0,
+              "angle": 17.0,
+              "end": 24,
+              "type": "electric",
+              "setKb": true,
+              "hitlagMult": 0.5,
+              "rehit": 2
+            },
+            {
+              "start": 25,
+              "x": 135.0,
+              "y": 40.0,
+              "r": 18.5,
+              "damage": 1.2,
+              "bkb": 64.9,
+              "kbg": 1.0,
+              "angle": 15.0,
+              "end": 26,
+              "type": "electric",
+              "setKb": true,
+              "hitlagMult": 0.5,
+              "rehit": 2
+            },
+            {
+              "start": 25,
+              "x": 125.0,
+              "y": 40.0,
+              "r": 18.5,
+              "damage": 1.2,
+              "bkb": 64.9,
+              "kbg": 1.0,
+              "angle": 15.0,
+              "end": 26,
+              "type": "electric",
+              "setKb": true,
+              "hitlagMult": 0.5,
+              "rehit": 2
+            },
+            {
+              "start": 27,
+              "x": 150.0,
+              "y": 40.0,
+              "r": 20.0,
+              "damage": 1.2,
+              "bkb": 55.26,
+              "kbg": 0.9,
+              "angle": 15.0,
+              "end": 28,
+              "type": "electric",
+              "setKb": true,
+              "hitlagMult": 0.5,
+              "rehit": 2
+            },
+            {
+              "start": 27,
+              "x": 130.0,
+              "y": 40.0,
+              "r": 20.0,
+              "damage": 1.2,
+              "bkb": 55.26,
+              "kbg": 0.9,
+              "angle": 15.0,
+              "end": 28,
+              "type": "electric",
+              "setKb": true,
+              "hitlagMult": 0.5,
+              "rehit": 2
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "shoot" }
+          ],
+          "ledgeGrab": null,
+          "transitions": [
+            { "on": "timeout", "to": "groundChoose" }
+          ],
+          "attach": {
+            "whip": { "show": [21, 28], "offset": [[21, 35, 45]], "scale": [[21, 0.3], [28, 1]] }
+          }
+        },
+        {
+          "name": "groundChoose",
+          "frames": 1,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "shoot" }
+          ],
+          "transitions": [
+            { "on": "upHeld", "to": "groundUp" },
+            { "on": "timeout", "to": "groundEnd" }
+          ]
+        },
+        {
+          "name": "groundEnd",
+          "frames": 24,
+          "hitboxes": [
+            {
+              "start": 0,
+              "x": 190.0,
+              "y": 42.5,
+              "r": 30.0,
+              "damage": 8.0,
+              "bkb": 47.0,
+              "kbg": 1.38,
+              "angle": 55.0,
+              "end": 4,
+              "hitlagMult": 1.5,
+              "rehit": 2
+            },
+            {
+              "start": 0,
+              "x": 175.0,
+              "y": 42.5,
+              "r": 30.0,
+              "damage": 8.0,
+              "bkb": 47.0,
+              "kbg": 1.38,
+              "angle": 55.0,
+              "end": 4,
+              "hitlagMult": 1.5,
+              "rehit": 2
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 0, "pose": "shoot", "lerp": true },
+            { "at": 4, "pose": "shoot" },
+            { "at": 14, "pose": "stand", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "end" }
+          ],
+          "attach": {
+            "whip": { "show": [0, 4], "offset": [[0, 35, 45]], "scale": [[0, 0.97], [4, 0.97]] }
+          }
+        },
+        {
+          "name": "groundUp",
+          "frames": 24,
+          "hitboxes": [
+            {
+              "start": 0,
+              "x": 180.0,
+              "y": 40.0,
+              "r": 22.5,
+              "damage": 4.0,
+              "bkb": 98.0,
+              "kbg": 0.62,
+              "angle": 107.0,
+              "end": 1,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 0,
+              "x": 165.0,
+              "y": 40.0,
+              "r": 22.5,
+              "damage": 4.0,
+              "bkb": 98.0,
+              "kbg": 0.62,
+              "angle": 107.0,
+              "end": 1,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 6,
+              "x": 120.0,
+              "y": 35.0,
+              "r": 22.5,
+              "damage": 4.0,
+              "bkb": 98.0,
+              "kbg": 0.62,
+              "angle": 95.0,
+              "end": 7,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 6,
+              "x": 120.0,
+              "y": 35.0,
+              "r": 22.5,
+              "damage": 4.0,
+              "bkb": 98.0,
+              "kbg": 0.62,
+              "angle": 95.0,
+              "end": 7,
+              "type": "electric",
+              "dir": "away"
+            },
+            {
+              "start": 11,
+              "x": 80.0,
+              "y": 80.0,
+              "r": 17.5,
+              "damage": 4.0,
+              "bkb": 98.0,
+              "kbg": 0.62,
+              "angle": 80.0,
+              "end": 12,
+              "type": "electric",
+              "situation": "air"
+            },
+            {
+              "start": 11,
+              "x": 80.0,
+              "y": 80.0,
+              "r": 17.5,
+              "damage": 4.0,
+              "bkb": 98.0,
+              "kbg": 0.62,
+              "angle": 80.0,
+              "end": 12,
+              "type": "electric",
+              "situation": "air"
+            },
+            {
+              "start": 15,
+              "x": 30.0,
+              "y": 115.0,
+              "r": 20.0,
+              "damage": 4.0,
+              "bkb": 98.0,
+              "kbg": 0.62,
+              "angle": 75.0,
+              "end": 16,
+              "type": "electric",
+              "situation": "air"
+            },
+            {
+              "start": 15,
+              "x": 30.0,
+              "y": 115.0,
+              "r": 20.0,
+              "damage": 4.0,
+              "bkb": 98.0,
+              "kbg": 0.62,
+              "angle": 75.0,
+              "end": 16,
+              "type": "electric",
+              "situation": "air"
+            },
+            {
+              "start": 15,
+              "x": 30.0,
+              "y": 117.5,
+              "r": 12.5,
+              "damage": 4.0,
+              "bkb": 98.0,
+              "kbg": 0.62,
+              "angle": 75.0,
+              "end": 16,
+              "type": "electric",
+              "situation": "ground"
+            },
+            {
+              "start": 15,
+              "x": 30.0,
+              "y": 117.5,
+              "r": 12.5,
+              "damage": 4.0,
+              "bkb": 98.0,
+              "kbg": 0.62,
+              "angle": 75.0,
+              "end": 16,
+              "type": "electric",
+              "situation": "ground"
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "shoot" },
+            { "at": 11, "pose": "upShot", "lerp": true },
+            { "at": 23, "pose": "stand", "lerp": true }
+          ],
+          "attach": {
+            "whip": { "show": [0, 9], "offset": [[0, 35, 45]], "scale": [[0, 1], [9, 0.5]] },
+            "whipUp": { "show": [10, 26] }
+          }
+        },
+        {
+          "name": "air",
+          "frames": 29,
+          "hitboxes": [
+            {
+              "start": 21,
+              "x": 95.0,
+              "y": 40.0,
+              "r": 17.5,
+              "damage": 1.2,
+              "bkb": 78.9,
+              "kbg": 1.0,
+              "angle": 90,
+              "end": 22,
+              "type": "autolink",
+              "setKb": true,
+              "rehit": 2,
+              "hitlagMult": 0.5
+            },
+            {
+              "start": 21,
+              "x": 85.0,
+              "y": 40.0,
+              "r": 17.5,
+              "damage": 1.2,
+              "bkb": 78.9,
+              "kbg": 1.0,
+              "angle": 90,
+              "end": 22,
+              "type": "autolink",
+              "setKb": true,
+              "rehit": 2,
+              "hitlagMult": 0.5
+            },
+            {
+              "start": 21,
+              "x": 45.0,
+              "y": 40.0,
+              "r": 15.0,
+              "damage": 2.0,
+              "bkb": 85.9,
+              "kbg": 1.0,
+              "angle": 0.0,
+              "end": 22,
+              "type": "electric",
+              "setKb": true,
+              "rehit": 2,
+              "hitlagMult": 0.5
+            },
+            {
+              "start": 23,
+              "x": 45.0,
+              "y": 40.0,
+              "r": 15.0,
+              "damage": 2.0,
+              "bkb": 89.4,
+              "kbg": 1.0,
+              "angle": 0.0,
+              "end": 24,
+              "type": "electric",
+              "setKb": true,
+              "rehit": 2,
+              "hitlagMult": 0.5
+            },
+            {
+              "start": 23,
+              "x": 125.0,
+              "y": 40.0,
+              "r": 17.5,
+              "damage": 1.2,
+              "bkb": 78.9,
+              "kbg": 1.0,
+              "angle": -15.0,
+              "end": 24,
+              "type": "electric",
+              "setKb": true,
+              "hitlagMult": 0.5,
+              "rehit": 2
+            },
+            {
+              "start": 23,
+              "x": 111.66666666666667,
+              "y": 40.0,
+              "r": 17.5,
+              "damage": 1.2,
+              "bkb": 78.9,
+              "kbg": 1.0,
+              "angle": -15.0,
+              "end": 24,
+              "type": "electric",
+              "setKb": true,
+              "hitlagMult": 0.5,
+              "rehit": 2
+            },
+            {
+              "start": 23,
+              "x": 98.33333333333334,
+              "y": 40.0,
+              "r": 17.5,
+              "damage": 1.2,
+              "bkb": 78.9,
+              "kbg": 1.0,
+              "angle": -15.0,
+              "end": 24,
+              "type": "electric",
+              "setKb": true,
+              "hitlagMult": 0.5,
+              "rehit": 2
+            },
+            {
+              "start": 23,
+              "x": 85.0,
+              "y": 40.0,
+              "r": 17.5,
+              "damage": 1.2,
+              "bkb": 78.9,
+              "kbg": 1.0,
+              "angle": -15.0,
+              "end": 24,
+              "type": "electric",
+              "setKb": true,
+              "hitlagMult": 0.5,
+              "rehit": 2
+            },
+            {
+              "start": 25,
+              "x": 140.0,
+              "y": 40.0,
+              "r": 18.5,
+              "damage": 1.2,
+              "bkb": 78.9,
+              "kbg": 1.0,
+              "angle": 10.0,
+              "end": 26,
+              "type": "electric",
+              "setKb": true,
+              "hitlagMult": 0.5,
+              "rehit": 2
+            },
+            {
+              "start": 25,
+              "x": 125.0,
+              "y": 40.0,
+              "r": 18.5,
+              "damage": 1.2,
+              "bkb": 78.9,
+              "kbg": 1.0,
+              "angle": 10.0,
+              "end": 26,
+              "type": "electric",
+              "setKb": true,
+              "hitlagMult": 0.5,
+              "rehit": 2
+            },
+            {
+              "start": 27,
+              "x": 150.0,
+              "y": 40.0,
+              "r": 20.0,
+              "damage": 1.2,
+              "bkb": 78.9,
+              "kbg": 1.0,
+              "angle": -15.0,
+              "end": 28,
+              "type": "electric",
+              "setKb": true,
+              "hitlagMult": 0.5,
+              "rehit": 2
+            },
+            {
+              "start": 27,
+              "x": 140.0,
+              "y": 40.0,
+              "r": 20.0,
+              "damage": 1.2,
+              "bkb": 78.9,
+              "kbg": 1.0,
+              "angle": -15.0,
+              "end": 28,
+              "type": "electric",
+              "setKb": true,
+              "hitlagMult": 0.5,
+              "rehit": 2
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "shoot" }
+          ],
+          "ledgeGrab": 19,
+          "transitions": [
+            { "on": "timeout", "to": "airChoose" }
+          ],
+          "tether": { "x1": 25, "x2": 200, "y1": 20, "y2": 130 },
+          "attach": {
+            "whip": { "show": [21, 28], "offset": [[21, 35, 45]], "scale": [[21, 0.3], [28, 1]] }
+          }
+        },
+        {
+          "name": "airChoose",
+          "frames": 1,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "shoot" }
+          ],
+          "transitions": [
+            { "on": "upHeld", "to": "airUp" },
+            { "on": "timeout", "to": "airEnd" }
+          ]
+        },
+        {
+          "name": "airEnd",
+          "frames": 24,
+          "hitboxes": [
+            {
+              "start": 0,
+              "x": 190.0,
+              "y": 42.5,
+              "r": 33.0,
+              "damage": 8.0,
+              "bkb": 45.0,
+              "kbg": 1.05,
+              "angle": 60.0,
+              "end": 4,
+              "hitlagMult": 1.5,
+              "rehit": 2
+            },
+            {
+              "start": 0,
+              "x": 170.0,
+              "y": 42.5,
+              "r": 33.0,
+              "damage": 8.0,
+              "bkb": 45.0,
+              "kbg": 1.05,
+              "angle": 60.0,
+              "end": 4,
+              "hitlagMult": 1.5,
+              "rehit": 2
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 0, "pose": "shoot", "lerp": true },
+            { "at": 4, "pose": "shoot" },
+            { "at": 14, "pose": "stand", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "end" }
+          ],
+          "attach": {
+            "whip": { "show": [0, 4], "offset": [[0, 35, 45]], "scale": [[0, 0.97], [4, 0.97]] }
+          }
+        },
+        {
+          "name": "airUp",
+          "frames": 24,
+          "hitboxes": [
+            {
+              "start": 0,
+              "x": 180.0,
+              "y": 40.0,
+              "r": 25.0,
+              "damage": 4.0,
+              "bkb": 60.0,
+              "kbg": 1.05,
+              "angle": 108.0,
+              "end": 1,
+              "type": "electric",
+              "dir": "away",
+              "rehit": 10
+            },
+            {
+              "start": 0,
+              "x": 180.0,
+              "y": 40.0,
+              "r": 25.0,
+              "damage": 4.0,
+              "bkb": 60.0,
+              "kbg": 1.05,
+              "angle": 108.0,
+              "end": 1,
+              "type": "electric",
+              "dir": "away",
+              "rehit": 10
+            },
+            {
+              "start": 6,
+              "x": 130.0,
+              "y": 10.0,
+              "r": 25.0,
+              "damage": 4.0,
+              "bkb": 60.0,
+              "kbg": 1.05,
+              "angle": 100.0,
+              "end": 7,
+              "type": "electric",
+              "dir": "away",
+              "rehit": 10
+            },
+            {
+              "start": 6,
+              "x": 130.0,
+              "y": 10.0,
+              "r": 25.0,
+              "damage": 4.0,
+              "bkb": 60.0,
+              "kbg": 1.05,
+              "angle": 100.0,
+              "end": 7,
+              "type": "electric",
+              "dir": "away",
+              "rehit": 10
+            },
+            {
+              "start": 11,
+              "x": 80.0,
+              "y": 80.0,
+              "r": 25.0,
+              "damage": 4.0,
+              "bkb": 60.0,
+              "kbg": 1.05,
+              "angle": 80.0,
+              "end": 12,
+              "type": "electric",
+              "rehit": 10
+            },
+            {
+              "start": 11,
+              "x": 80.0,
+              "y": 80.0,
+              "r": 25.0,
+              "damage": 4.0,
+              "bkb": 60.0,
+              "kbg": 1.05,
+              "angle": 80.0,
+              "end": 12,
+              "type": "electric",
+              "rehit": 10
+            },
+            {
+              "start": 15,
+              "x": 25.0,
+              "y": 120.0,
+              "r": 25.0,
+              "damage": 4.0,
+              "bkb": 60.0,
+              "kbg": 1.05,
+              "angle": 75.0,
+              "end": 16,
+              "type": "electric",
+              "rehit": 10
+            },
+            {
+              "start": 15,
+              "x": 25.0,
+              "y": 120.0,
+              "r": 25.0,
+              "damage": 4.0,
+              "bkb": 60.0,
+              "kbg": 1.05,
+              "angle": 75.0,
+              "end": 16,
+              "type": "electric",
+              "rehit": 10
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "shoot" },
+            { "at": 11, "pose": "upShot", "lerp": true },
+            { "at": 23, "pose": "stand", "lerp": true }
+          ],
+          "attach": {
+            "whip": { "show": [0, 9], "offset": [[0, 35, 45]], "scale": [[0, 1], [9, 0.5]] },
+            "whipUp": { "show": [10, 26] }
+          }
+        }
+      ]
+    },
+    "uspec": {
+      "name": "Boost Kick",
+      "air": "upSpecial",
+      "phases": [
+        {
+          "name": "start",
+          "frames": 1,
+          "hitboxes": [],
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "x": 0 }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "sideKick" }
+          ],
+          "transitions": [
+            { "on": "airborne", "to": "air" },
+            { "on": "timeout", "to": "ground" }
+          ]
+        },
+        {
+          "name": "ground",
+          "frames": 76,
+          "hitboxes": [
+            {
+              "start": 5,
+              "x": 25.0,
+              "y": 40.0,
+              "r": 20.0,
+              "damage": 5.0,
+              "bkb": 124.4,
+              "kbg": 1.0,
+              "angle": 84.0,
+              "end": 5,
+              "dir": "away",
+              "setKb": true
+            },
+            {
+              "start": 11,
+              "x": 27.5,
+              "y": 95.0,
+              "r": 35.0,
+              "damage": 1.3,
+              "bkb": 54.4,
+              "kbg": 1.0,
+              "angle": 90,
+              "end": 23,
+              "type": "autolink",
+              "setKb": true,
+              "rehit": 4
+            },
+            {
+              "start": 27,
+              "x": 50.0,
+              "y": 60.0,
+              "r": 35.0,
+              "damage": 1.3,
+              "bkb": 27.799999999999997,
+              "kbg": 1.0,
+              "angle": 90.0,
+              "end": 27,
+              "setKb": true,
+              "rehit": 1,
+              "hitlagMult": 0.0
+            },
+            {
+              "start": 27,
+              "x": 27.5,
+              "y": 100.0,
+              "r": 20.0,
+              "damage": 1.3,
+              "bkb": 26.4,
+              "kbg": 1.0,
+              "angle": -70.0,
+              "end": 27,
+              "type": "spike",
+              "setKb": true,
+              "rehit": 1,
+              "hitlagMult": 0.0
+            },
+            {
+              "start": 33,
+              "x": 55.0,
+              "y": 62.5,
+              "r": 40.0,
+              "damage": 4.0,
+              "bkb": 50.0,
+              "kbg": 2.09,
+              "angle": 48.0,
+              "end": 34,
+              "rehit": 4,
+              "hitlagMult": 2.5
+            },
+            {
+              "start": 33,
+              "x": 45.0,
+              "y": 60.0,
+              "r": 40.0,
+              "damage": 4.0,
+              "bkb": 50.0,
+              "kbg": 2.09,
+              "angle": 48.0,
+              "end": 34,
+              "rehit": 4,
+              "hitlagMult": 2.5
+            }
+          ],
+          "airAccelMult": 0.75,
+          "ledgeGrab": 16,
+          "anim": [
+            { "at": 0, "pose": "airKick" },
+            { "at": 5, "pose": "airKick" },
+            { "at": 11, "pose": "verticalKick", "lerp": true },
+            { "at": 23, "pose": "verticalKick" },
+            { "at": 27, "pose": "airKick", "lerp": true },
+            {
+              "at": 33,
+              "pose": {
+                "head": [-20, 65],
+                "shoulder": [-14, 51],
+                "hip": [1, 34],
+                "kneeF": [28, 55],
+                "footF": [55, 62.5],
+                "kneeB": [-14, 23],
+                "footB": [-28, 16],
+                "elbowF": [0, 61],
+                "handF": [14, 73],
+                "elbowB": [-28, 43],
+                "handB": [-35, 51]
+              },
+              "lerp": true
+            },
+            {
+              "at": 34,
+              "pose": {
+                "head": [-20, 65],
+                "shoulder": [-14, 51],
+                "hip": [1, 34],
+                "kneeF": [28, 55],
+                "footF": [55, 62.5],
+                "kneeB": [-14, 23],
+                "footB": [-28, 16],
+                "elbowF": [0, 61],
+                "handF": [14, 73],
+                "elbowB": [-28, 43],
+                "handB": [-35, 51]
+              }
+            },
+            { "at": 44, "pose": "air", "lerp": true }
+          ],
+          "events": [
+            {
+              "at": 5,
+              "setVel": { "y": 23.4, "x": 1.6 },
+              "leaveGround": true,
+              "sfx": "jet"
+            },
+            {
+              "at": 11,
+              "setVel": { "y": 15.6 }
+            },
+            {
+              "at": 27,
+              "setVel": { "x": 4.8, "y": 1.2 }
+            },
+            { "at": 33, "sfx": "smash" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 30 },
+            { "on": "timeout", "to": "helpless" }
+          ]
+        },
+        {
+          "name": "air",
+          "frames": 76,
+          "hitboxes": [
+            {
+              "start": 5,
+              "x": 55.0,
+              "y": 40.0,
+              "r": 20.0,
+              "damage": 5.0,
+              "bkb": 110.4,
+              "kbg": 1.0,
+              "angle": 90.0,
+              "end": 5,
+              "dir": "away",
+              "setKb": true
+            },
+            {
+              "start": 5,
+              "x": 25.0,
+              "y": 40.0,
+              "r": 20.0,
+              "damage": 5.0,
+              "bkb": 110.4,
+              "kbg": 1.0,
+              "angle": 84.0,
+              "end": 5,
+              "dir": "away",
+              "setKb": true
+            },
+            {
+              "start": 11,
+              "x": 27.5,
+              "y": 95.0,
+              "r": 35.0,
+              "damage": 1.3,
+              "bkb": 54.4,
+              "kbg": 1.0,
+              "angle": 90,
+              "end": 23,
+              "type": "autolink",
+              "setKb": true,
+              "rehit": 4
+            },
+            {
+              "start": 27,
+              "x": 50.0,
+              "y": 60.0,
+              "r": 35.0,
+              "damage": 1.3,
+              "bkb": 26.4,
+              "kbg": 1.0,
+              "angle": 90.0,
+              "end": 27,
+              "setKb": true,
+              "rehit": 1,
+              "hitlagMult": 0.0
+            },
+            {
+              "start": 27,
+              "x": 27.5,
+              "y": 100.0,
+              "r": 20.0,
+              "damage": 1.3,
+              "bkb": 30.6,
+              "kbg": 1.0,
+              "angle": -70.0,
+              "end": 27,
+              "type": "spike",
+              "setKb": true,
+              "rehit": 1,
+              "hitlagMult": 0.0
+            },
+            {
+              "start": 33,
+              "x": 55.0,
+              "y": 62.5,
+              "r": 40.0,
+              "damage": 4.0,
+              "bkb": 50.0,
+              "kbg": 1.84,
+              "angle": 48.0,
+              "end": 34,
+              "rehit": 4,
+              "hitlagMult": 2.5
+            },
+            {
+              "start": 33,
+              "x": 45.0,
+              "y": 60.0,
+              "r": 40.0,
+              "damage": 4.0,
+              "bkb": 50.0,
+              "kbg": 1.84,
+              "angle": 48.0,
+              "end": 34,
+              "rehit": 4,
+              "hitlagMult": 2.5
+            }
+          ],
+          "airAccelMult": 0.75,
+          "ledgeGrab": 16,
+          "anim": [
+            { "at": 0, "pose": "airKick" },
+            { "at": 5, "pose": "airKick" },
+            { "at": 11, "pose": "verticalKick", "lerp": true },
+            { "at": 23, "pose": "verticalKick" },
+            { "at": 27, "pose": "airKick", "lerp": true },
+            {
+              "at": 33,
+              "pose": {
+                "head": [-20, 65],
+                "shoulder": [-14, 51],
+                "hip": [1, 34],
+                "kneeF": [28, 55],
+                "footF": [55, 62.5],
+                "kneeB": [-14, 23],
+                "footB": [-28, 16],
+                "elbowF": [0, 61],
+                "handF": [14, 73],
+                "elbowB": [-28, 43],
+                "handB": [-35, 51]
+              },
+              "lerp": true
+            },
+            {
+              "at": 34,
+              "pose": {
+                "head": [-20, 65],
+                "shoulder": [-14, 51],
+                "hip": [1, 34],
+                "kneeF": [28, 55],
+                "footF": [55, 62.5],
+                "kneeB": [-14, 23],
+                "footB": [-28, 16],
+                "elbowF": [0, 61],
+                "handF": [14, 73],
+                "elbowB": [-28, 43],
+                "handB": [-35, 51]
+              }
+            },
+            { "at": 44, "pose": "air", "lerp": true }
+          ],
+          "events": [
+            {
+              "at": 5,
+              "setVel": { "y": 23.4, "x": 1.6 },
+              "leaveGround": true,
+              "sfx": "jet"
+            },
+            {
+              "at": 11,
+              "setVel": { "y": 15.6 }
+            },
+            {
+              "at": 27,
+              "setVel": { "x": 4.8, "y": 1.2 }
+            },
+            { "at": 33, "sfx": "smash" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 30 },
+            { "on": "timeout", "to": "helpless" }
+          ]
+        }
+      ]
+    },
+    "dspec": {
+      "name": "Flip Jump",
+      "oncePerAirtime": true,
+      "phases": [
+        {
+          "name": "flip",
+          "frames": 38,
+          "hitboxes": [],
+          "airAccelMult": 0.7,
+          "passPlatforms": true,
+          "ledgeGrab": 13,
+          "detection": { "x1": -16, "x2": 16, "y1": -22, "y2": 5 },
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "x": 7.5, "y": 12.6 },
+              "leaveGround": true,
+              "sfx": "jump"
+            },
+            { "at": 3, "invuln": 10 },
+            { "at": 38, "turn": true }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            {
+              "at": 8,
+              "pose": { "from": "air", "rot": -100 },
+              "lerp": true
+            },
+            {
+              "at": 16,
+              "pose": { "from": "air", "rot": -200 },
+              "lerp": true
+            },
+            {
+              "at": 25,
+              "pose": { "from": "air", "rot": -300 },
+              "lerp": true
+            },
+            {
+              "at": 37,
+              "pose": { "from": "air", "rot": -360 },
+              "lerp": true
+            }
+          ],
+          "transitions": [
+            { "on": "attackPress", "from": 14, "to": "kick" },
+            { "on": "specialPress", "from": 14, "to": "kick" },
+            { "on": "targetNear", "from": 19, "to": "stomp" },
+            { "on": "timeout", "to": "end" }
+          ]
+        },
+        {
+          "name": "kick",
+          "frames": 59,
+          "hitboxes": [
+            {
+              "start": 9,
+              "x": 21.465,
+              "y": 22.535,
+              "r": 20.5,
+              "damage": 14.0,
+              "bkb": 30.0,
+              "kbg": 1.0,
+              "angle": 48.0,
+              "end": 12,
+              "dir": "forward",
+              "situation": "air",
+              "hitlagMult": 1.2,
+              "frames": [
+                [9, 21.465, 22.535, 20.5],
+                [10, 21.465, 22.535, 20.5],
+                [11, 21.465, 22.535, 20.5],
+                [12, 21.465, 22.535, 20.5]
+              ]
+            },
+            {
+              "start": 9,
+              "x": 10.860000000000001,
+              "y": 33.14,
+              "r": 20.5,
+              "damage": 14.0,
+              "bkb": 30.0,
+              "kbg": 1.0,
+              "angle": 48.0,
+              "end": 12,
+              "dir": "forward",
+              "situation": "air",
+              "hitlagMult": 1.2,
+              "frames": [
+                [9, 10.860000000000001, 33.14, 20.5],
+                [10, 10.860000000000001, 33.14, 20.5],
+                [11, 10.860000000000001, 33.14, 20.5],
+                [12, 10.860000000000001, 33.14, 20.5]
+              ]
+            },
+            {
+              "start": 9,
+              "x": 60.349999999999994,
+              "y": -16.349999999999994,
+              "r": 20.5,
+              "damage": 14.0,
+              "bkb": 30.0,
+              "kbg": 1.0,
+              "angle": -70.0,
+              "end": 12,
+              "type": "spike",
+              "dir": "forward",
+              "situation": "air",
+              "hitlagMult": 1.2,
+              "frames": [
+                [9, 60.349999999999994, -16.349999999999994, 20.5],
+                [10, 60.349999999999994, -16.349999999999994, 20.5],
+                [11, 60.349999999999994, -16.349999999999994, 20.5],
+                [12, 60.349999999999994, -16.349999999999994, 20.5]
+              ]
+            },
+            {
+              "start": 9,
+              "x": 47.388333333333335,
+              "y": -3.388333333333332,
+              "r": 20.5,
+              "damage": 14.0,
+              "bkb": 30.0,
+              "kbg": 1.0,
+              "angle": -70.0,
+              "end": 12,
+              "type": "spike",
+              "dir": "forward",
+              "situation": "air",
+              "hitlagMult": 1.2,
+              "frames": [
+                [9, 47.388333333333335, -3.388333333333332, 20.5],
+                [10, 47.388333333333335, -3.388333333333332, 20.5],
+                [11, 47.388333333333335, -3.388333333333332, 20.5],
+                [12, 47.388333333333335, -3.388333333333332, 20.5]
+              ]
+            },
+            {
+              "start": 9,
+              "x": 34.42666666666667,
+              "y": 9.57333333333333,
+              "r": 20.5,
+              "damage": 14.0,
+              "bkb": 30.0,
+              "kbg": 1.0,
+              "angle": -70.0,
+              "end": 12,
+              "type": "spike",
+              "dir": "forward",
+              "situation": "air",
+              "hitlagMult": 1.2,
+              "frames": [
+                [9, 34.42666666666667, 9.57333333333333, 20.5],
+                [10, 34.42666666666667, 9.57333333333333, 20.5],
+                [11, 34.42666666666667, 9.57333333333333, 20.5],
+                [12, 34.42666666666667, 9.57333333333333, 20.5]
+              ]
+            },
+            {
+              "start": 9,
+              "x": 21.465000000000003,
+              "y": 22.534999999999997,
+              "r": 20.5,
+              "damage": 14.0,
+              "bkb": 30.0,
+              "kbg": 1.0,
+              "angle": -70.0,
+              "end": 12,
+              "type": "spike",
+              "dir": "forward",
+              "situation": "air",
+              "hitlagMult": 1.2,
+              "frames": [
+                [9, 21.465000000000003, 22.534999999999997, 20.5],
+                [10, 21.465000000000003, 22.534999999999997, 20.5],
+                [11, 21.465000000000003, 22.534999999999997, 20.5],
+                [12, 21.465000000000003, 22.534999999999997, 20.5]
+              ]
+            },
+            {
+              "start": 9,
+              "x": 37.726,
+              "y": 6.274000000000001,
+              "r": 40.0,
+              "damage": 14.0,
+              "bkb": 45.0,
+              "kbg": 1.02,
+              "angle": 48.0,
+              "end": 12,
+              "dir": "forward",
+              "hitlagMult": 1.2,
+              "frames": [
+                [9, 37.726, 6.274000000000001, 40.0],
+                [10, 37.726, 6.274000000000001, 40.0],
+                [11, 37.726, 6.274000000000001, 40.0],
+                [12, 37.726, 6.274000000000001, 40.0]
+              ]
+            }
+          ],
+          "airAccelMult": 0.3,
+          "fallCap": 20,
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 8, "pose": "flipKick", "lerp": true },
+            { "at": 13, "pose": "flipKick" },
+            { "at": 38, "pose": "air", "lerp": true }
+          ],
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "x": 7, "y": -3 }
+            },
+            {
+              "at": 9,
+              "setVel": { "x": 10, "y": -8 },
+              "sfx": "smash"
+            }
+          ],
+          "transitions": [
+            { "on": "hit", "to": "kickBounce" },
+            { "on": "land", "to": "land" }
+          ]
+        },
+        {
+          "name": "stomp",
+          "frames": 58,
+          "hitboxes": [
+            {
+              "start": 0,
+              "x": 0.0,
+              "y": -15.0,
+              "r": 15.0,
+              "damage": 8.0,
+              "bkb": 10.0,
+              "kbg": 0.8,
+              "angle": -90.0,
+              "end": 1,
+              "type": "spike",
+              "dir": "away",
+              "situation": "air",
+              "hitlagMult": 1.8
+            },
+            {
+              "start": 0,
+              "x": 0.0,
+              "y": -15.0,
+              "r": 20.0,
+              "damage": 8.0,
+              "bkb": 10.0,
+              "kbg": 0.9,
+              "angle": 45,
+              "end": 1,
+              "type": "bury",
+              "dir": "away",
+              "situation": "ground",
+              "hitlagMult": 1.8
+            },
+            {
+              "start": 0,
+              "x": 0.0,
+              "y": -15.0,
+              "r": 15.0,
+              "damage": 8.0,
+              "bkb": 10.0,
+              "kbg": 0.8,
+              "angle": -90.0,
+              "end": 1,
+              "type": "spike",
+              "dir": "away",
+              "situation": "ground",
+              "hitlagMult": 1.8
+            }
+          ],
+          "airAccelMult": 0.8,
+          "ledgeGrab": 2,
+          "anim": [
+            { "at": 0, "pose": "dive" },
+            {
+              "at": 10,
+              "pose": { "from": "air", "rot": -180 },
+              "lerp": true
+            },
+            { "at": 35, "pose": "air", "lerp": true }
+          ],
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "x": 2, "y": 12 },
+              "sfx": "djump"
+            }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" }
+          ]
+        },
+        {
+          "name": "kickBounce",
+          "frames": 49,
+          "hitboxes": [],
+          "airAccelMult": 0.8,
+          "ledgeGrab": 1,
+          "anim": [
+            {
+              "at": 0,
+              "pose": { "from": "air", "rot": -90 }
+            },
+            { "at": 28, "pose": "air", "lerp": true }
+          ],
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "x": -3, "y": 11 }
+            }
+          ],
+          "transitions": [
+            { "on": "land", "to": "land" }
+          ]
+        },
+        {
+          "name": "land",
+          "frames": 35,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "sweep" },
+            { "at": 23, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    }
+  },
+  "throws": {
+    "f": {
+      "release": 9,
+      "total": 25,
+      "hit": {
+        "start": 0,
+        "x": 0.0,
+        "y": 0.0,
+        "r": 5.0,
+        "damage": 4.0,
+        "bkb": 58.0,
+        "kbg": 0.75,
+        "angle": 33.0,
+        "hitlagMult": 0.0
+      },
+      "ticks": [
+        { "at": 8, "damage": 5 }
+      ]
+    },
+    "b": {
+      "release": 11,
+      "total": 27,
+      "hit": {
+        "start": 0,
+        "x": 0.0,
+        "y": 0.0,
+        "r": 5.0,
+        "damage": 6.0,
+        "bkb": 72.0,
+        "kbg": 0.45,
+        "angle": 45.0,
+        "hitlagMult": 0.0
+      },
+      "ticks": [
+        { "at": 9, "damage": 2 }
+      ]
+    },
+    "u": {
+      "release": 5,
+      "total": 40,
+      "hit": {
+        "start": 0,
+        "x": 0.0,
+        "y": 0.0,
+        "r": 5.0,
+        "damage": 8.0,
+        "bkb": 65.0,
+        "kbg": 0.93,
+        "angle": 73.0,
+        "hitlagMult": 0.0
+      },
+      "ticks": [
+        { "at": 3, "damage": 2 }
+      ]
+    },
+    "d": {
+      "release": 22,
+      "total": 51,
+      "hit": {
+        "start": 0,
+        "x": 0.0,
+        "y": 0.0,
+        "r": 5.0,
+        "damage": 4.0,
+        "bkb": 90.0,
+        "kbg": 0.6,
+        "angle": 75.0,
+        "hitlagMult": 0.0
+      },
+      "ticks": [
+        { "at": 20, "damage": 4 }
+      ]
+    }
+  },
+  "projectiles": {
+    "paralyzer": {
+      "name": "Paralyzer",
+      "spawn": [50, 45],
+      "vel": [12, 0],
+      "r": 6.5,
+      "life": 24,
+      "max": 3,
+      "hit": {
+        "x": 0,
+        "y": 0,
+        "r": 6.5,
+        "damage": 4,
+        "bkb": 34.1,
+        "kbg": 1,
+        "angle": 45,
+        "groundAngle": 0,
+        "type": "paralyze",
+        "setKb": true,
+        "hitlagMult": 0.7
+      },
+      "chargeScale": {
+        "speed": 0.014,
+        "damage": 0.022727272727272728,
+        "bkb": 0.045721141029058915,
+        "radius": 0.02447552447552448,
+        "life": 0.045454545454545456,
+        "angleTo": 60,
+        "groundAngleTo": -45
+      },
+      "shapes": [
+        { "shape": "circle", "at": [0, 0], "r": 6.5, "fill": "#fff3b5", "alpha": 1 },
+        { "shape": "line", "from": [-12, 0], "to": [5, 0], "width": 3, "color": "#ffce4b", "alpha": 1 }
+      ],
+      "trail": [
+        {
+          "every": 2,
+          "fx": [
+            { "type": "part", "x": 0, "y": 0, "vx": -0.8, "vy": 0, "life": 8, "size": 3, "color": "#ffed9a" }
+          ]
+        }
+      ]
+    }
+  },
+  "attachments": [
+    {
+      "id": "ribbon",
+      "joint": "head",
+      "behind": true,
+      "shapes": [
+        { "shape": "line", "from": [-6, 5], "to": [-20, 10], "width": 7, "color": "#f2df82", "alpha": 1 },
+        { "shape": "line", "from": [-20, 10], "to": [-35, 3], "width": 6, "color": "#e6c862", "alpha": 1 },
+        { "shape": "poly", "points": [[-19, 13], [-40, 7], [-31, -1]], "fill": "#f2df82" }
+      ]
+    },
+    {
+      "id": "blaster",
+      "joint": "handF",
+      "angle": 0,
+      "shapes": [
+        { "shape": "poly", "points": [[0, -4], [18, -4], [22, 2], [18, 6], [0, 6]], "fill": "#314463" },
+        { "shape": "line", "from": [3, 3], "to": [19, 3], "width": 2, "color": "#e2e5ed", "alpha": 1 },
+        { "shape": "circle", "at": [20, 1], "r": 3, "fill": "#ffe77d", "alpha": 1 }
+      ]
+    },
+    {
+      "id": "heelF",
+      "joint": "footF",
+      "shapes": [
+        { "shape": "line", "from": [-5, 0], "to": [7, 0], "width": 5, "color": "#e5cd72", "alpha": 1 },
+        { "shape": "circle", "at": [2, -2], "r": 3, "fill": "#a5e9ff", "alpha": 1 }
+      ]
+    },
+    {
+      "id": "heelB",
+      "joint": "footB",
+      "shapes": [
+        { "shape": "line", "from": [-5, 0], "to": [7, 0], "width": 5, "color": "#e5cd72", "alpha": 1 },
+        { "shape": "circle", "at": [2, -2], "r": 3, "fill": "#a5e9ff", "alpha": 1 }
+      ]
+    },
+    {
+      "id": "whip",
+      "joint": "root",
+      "hidden": true,
+      "shapes": [
+        { "shape": "line", "from": [0, 0], "to": [160, 0], "width": 7, "color": "#ffb52d", "alpha": 0.3 },
+        { "shape": "line", "from": [0, 0], "to": [160, 0], "width": 2, "color": "#fff0a8", "alpha": 1 },
+        { "shape": "circle", "at": [160, 0], "r": 4, "fill": "#fff3aa", "alpha": 1 }
+      ]
+    },
+    {
+      "id": "whipUp",
+      "joint": "root",
+      "hidden": true,
+      "shapes": [
+        { "shape": "line", "from": [10, 80], "to": [10, 170], "width": 7, "color": "#ffb52d", "alpha": 0.3 },
+        { "shape": "line", "from": [10, 80], "to": [10, 170], "width": 2, "color": "#fff0a8", "alpha": 1 },
+        { "shape": "circle", "at": [10, 170], "r": 7, "fill": "#fff3aa", "alpha": 1 }
+      ]
+    },
+    {
+      "id": "lashFront",
+      "joint": "root",
+      "hidden": true,
+      "shapes": [
+        { "shape": "line", "from": [30, 55], "to": [95, 35], "width": 4, "color": "#ffc347", "alpha": 1 },
+        { "shape": "line", "from": [30, 55], "to": [95, 35], "width": 1.5, "color": "#fff2c0", "alpha": 1 }
+      ]
+    },
+    {
+      "id": "lashBack",
+      "joint": "root",
+      "hidden": true,
+      "shapes": [
+        { "shape": "line", "from": [-15, 65], "to": [-75, 82.5], "width": 4, "color": "#ffc347", "alpha": 1 },
+        { "shape": "line", "from": [-15, 65], "to": [-75, 82.5], "width": 1.5, "color": "#fff2c0", "alpha": 1 }
+      ]
+    }
+  ]
+}

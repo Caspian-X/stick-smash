@@ -86,6 +86,9 @@ fn events(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) {
         if !e.fires(t, w.frame) || !cond(f, e.cond) || charge < e.min_charge {
             continue;
         }
+        if e.turn {
+            f.face = -f.face;
+        }
         let speed = 1. + f64::from(charge) * e.charge_velocity;
         if let Some(v) = e.mul_vel {
             if let Some(x) = v.x {
@@ -131,6 +134,11 @@ fn events(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) {
     }
 }
 pub fn start_move(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, slot: &str) {
+    if d.fighters[f.data].moves.get(slot).is_some_and(|m| m.once_per_airtime)
+        && !f.used_air_moves.iter().any(|s| s == slot)
+    {
+        f.used_air_moves.push(slot.into());
+    }
     f.set_state(State::Attack);
     f.mov = Some(MoveState {
         slot: slot.into(),
@@ -139,6 +147,7 @@ pub fn start_move(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, slot: 
         t: 0,
         elapsed: 0,
         charge: 0,
+        charge_hold: 0,
         counter_damage: 0.,
         reversed: false,
         stick: false,
@@ -157,6 +166,20 @@ pub fn start_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, slot
 pub fn attack_held(f: &Fighter, inp: &Intent) -> bool {
     if f.mov.as_ref().is_some_and(|m| m.stick) { inp.stick_held } else { inp.atk_held }
 }
+/// A phase input window can accept a buffered follow-up while the containing move remains locked.
+pub fn accepts_command(d: &GameData, f: &Fighter, inp: &Intent) -> bool {
+    f.state == State::Attack
+        && f.mov.is_some()
+        && phase(d, f).transitions.iter().any(|tr| {
+            tr.from.is_none_or(|n| f.mov.as_ref().unwrap().t.saturating_add(1) >= n)
+                && cond(f, tr.cond)
+                && match tr.on {
+                    Trigger::AttackPress => inp.atk,
+                    Trigger::SpecialPress => inp.sp,
+                    _ => false,
+                }
+        })
+}
 fn transition(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, tr: &Transition) {
     match tr.to.as_str() {
         "end" => f.set_state(if f.ground { State::Idle } else { State::Air }),
@@ -167,7 +190,9 @@ fn transition(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, tr: &Trans
             let m = f.mov.as_mut().unwrap();
             m.phase = n;
             m.t = 0;
-            f.sd.clear_hits();
+            if !tr.preserve_hits {
+                f.sd.clear_hits();
+            }
             events(w, d, i, f);
         }
     }
@@ -205,7 +230,6 @@ pub fn special(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Inte
         up_special(w, d, i, f, dir);
         return;
     }
-    reverse(f, dir);
     let slot = if inp.down {
         "dspec"
     } else if dir != 0. && d.fighters[f.data].moves.sspec.is_some() {
@@ -213,6 +237,12 @@ pub fn special(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Inte
     } else {
         "nspec"
     };
+    if d.fighters[f.data].moves.get(slot).is_some_and(|m| m.once_per_airtime)
+        && f.used_air_moves.iter().any(|s| s == slot)
+    {
+        return;
+    }
+    reverse(f, dir);
     accept(w, i, Action::Move(slot.into()));
     start_move(w, d, i, f, slot);
 }
@@ -351,13 +381,17 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
     let charge = phase(d, f).charge.as_ref().filter(|c| {
         let m = f.mov.as_ref().unwrap();
         m.t == c.frame
-            && m.charge < c.max
+            && (m.charge < c.max || m.charge_hold < c.hold_after_max)
             && if c.button == Button::Special { inp.sp_held } else { attack_held(f, &inp) }
     });
     if let Some(c) = charge {
         let m = f.mov.as_mut().unwrap();
-        m.charge += 1;
-        let n = m.charge;
+        if m.charge < c.max {
+            m.charge += 1;
+        } else {
+            m.charge_hold += 1;
+        }
+        let n = m.charge.saturating_add(m.charge_hold);
         if n.is_multiple_of(10) {
             w.sfx("charge");
         }
@@ -389,6 +423,9 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
         events(w, d, i, f);
         let p = phase(d, f);
         let t = f.mov.as_ref().unwrap().t;
+        let frames = p
+            .frames
+            .map(|n| n.saturating_add(libm::round(f64::from(f.mov.as_ref().unwrap().charge) * p.charge_frames) as u32));
         let held = if p.charge.as_ref().is_some_and(|c| c.button == Button::Special) {
             inp.sp_held
         } else {
@@ -398,12 +435,15 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
             tr.from.is_none_or(|n| t >= n)
                 && cond(f, tr.cond)
                 && match tr.on {
-                    Trigger::Timeout => p.frames.is_some_and(|n| t >= n),
+                    Trigger::Timeout => frames.is_some_and(|n| t >= n),
                     Trigger::Grounded => f.ground,
                     Trigger::Airborne => !f.ground,
                     Trigger::Falling => f.vy >= 0.,
                     Trigger::Release => !held,
                     Trigger::AttackHeld => attack_held(f, &inp),
+                    Trigger::AttackPress => inp.atk,
+                    Trigger::SpecialPress => inp.sp,
+                    Trigger::UpHeld => inp.up,
                     Trigger::TargetNear => p.detection.is_some_and(|r| {
                         let (x1, x2) = (f.x + r.x1 * f.face, f.x + r.x2 * f.face);
                         w.fighters.iter().enumerate().any(|(v, other)| {
@@ -422,8 +462,11 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
         });
         // The ending tick keeps the phase that ended for movement.
         if let Some(tr) = tr {
+            if matches!(tr.on, Trigger::AttackPress | Trigger::SpecialPress) {
+                accept(w, i, Action::Followup { slot: f.mov.as_ref().unwrap().slot.clone(), phase: tr.to.clone() });
+            }
             transition(w, d, i, f, tr);
-        } else if p.frames.is_some_and(|n| t >= n) && !p.transitions.iter().any(|t| t.on == Trigger::Timeout) {
+        } else if frames.is_some_and(|n| t >= n) && !p.transitions.iter().any(|t| t.on == Trigger::Timeout) {
             f.set_state(if f.ground { State::Idle } else { State::Air });
         }
         if f.mov.is_none() {
@@ -437,6 +480,9 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
 }
 fn movement(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, (def, p, t): (&Move, &Phase, u32)) {
     let mv = &d.global.movement;
+    if p.pass_platforms {
+        f.drop = f.drop.max(2);
+    }
     if let Some(speed) = p.travel_speed {
         if t == 0 {
             let (x, y) = if inp.x == 0. && inp.y == 0. { (0., 1.) } else { (inp.x, inp.y) };

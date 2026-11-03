@@ -79,7 +79,9 @@ next phase's frame 0 is that same tick. A one-phase move with `frames: N` lasts 
 ### Per-tick order (fighter in a move)
 
 1. **Charge.** If the phase has `charge`, its frame equals `charge.frame`, the button is held and charge < `max`:
-   charge +1, and skip steps 2 to 4 this tick. Movement still runs.
+   charge +1, and skip steps 2 to 4 this tick. Movement still runs. With `holdAfterMax`, it can remain on
+   this frame for that many additional held ticks after strength reaches `max`; those ticks do not increase
+   damage, travel scaling or charge thresholds. Release still resumes immediately.
 2. **B-reverse.** For a `bReverse` move, before the window closes: holding the other direction turns the fighter
    (once). In the air, horizontal speed flips too.
 3. **Advance** the phase frame.
@@ -117,6 +119,10 @@ gameplay RNG unchanged. Set it false to share the gameplay RNG for TS compatibil
 
 ### Transitions
 
+A transition may set `preserveHits: true` to retain victim contact history for an attack that continues
+across phases (for example, the same falling sword hit). Rehit intervals use the move
+elapsed clock, so resetting the phase frame does not reset those cooldowns. Other transitions clear contacts.
+
 `{ "on": <trigger>, "if": <cond>, "from": <min phase frame>, "to": <phase|end|helpless|landing>, "lag": <frames> }`.
 Triggers: `timeout`, `land`, `grounded`, `airborne`, `falling` (vertical speed ≥ 0, y down), `release` (charge
 button, else attack, not held), `attackHeld` (attack held), `targetNear`, `shieldPress`, `counter`, `hit`.
@@ -129,6 +135,8 @@ A move may override the global charge damage bonus with `chargeDamage`: damage �
 Charge knockback derives from charged damage; `chargeKbRatio` applies only in legacy TS compatibility mode. Events may set `chargeVelocity` to scale their `setVel`
 and `addVel` by (1 + held ticks × value); `mulVel` is unchanged. Events and move hitboxes may set
 `minCharge` to require that many held ticks (default 0). Charge persists across phases.
+A finite phase may set nonnegative `chargeFrames`: its duration is `frames + round(charge × chargeFrames)`.
+This scales recovery independently from the saturated hold time and leaves hitbox/event times unchanged.
 These fields default to existing behavior; projectile damage still uses its own `chargeScale`.
 Hitboxes also accept `situation: "both" | "ground" | "air"` (default `both`), filtering victims by
 whether they are grounded. This applies to melee, grabs, windboxes and projectile contact/explosion hits;
@@ -473,3 +481,45 @@ speed without gravity or drift until the phase changes. Normal stage collision s
 controls whether travel can catch a ledge. `hidden` affects only rendering; author invulnerability separately.
 Optional `stats.dashSpeed` / `dashFrames` override the shared initial dash, independently of run speed.
 `Throw.ticks` are damage-only contacts with the held victim before the release hit, each with `at` and `damage`.
+
+## Aerial tethers, follow-ups and status hits
+
+The optional `moves.zair` slot is selected by grab while airborne; omitting it preserves the existing air
+controls. It has the same phase, landing and animation semantics as any other move. The editor can copy a
+move into this optional slot. `Phase.tether` is a fighter-local forward/up rectangle extending ledge reach
+while `ledgeGrab` is open. Only ledges outside the block and in front of the fighter qualify; ordinary
+occupancy, down-input rejection and regrab rules still apply. A successful tether uses the shared ledge
+snap/hang, rather than simulating a rope. Split phases to close a tether window. `passPlatforms` suppresses
+semisolid contact throughout its phase, without disabling solid collision.
+
+`Move.oncePerAirtime` records the slot when the move starts. That special cannot restart until landing,
+grounded ledge climb or respawn; damage and ledge hanging do not restore it. Ordinary air jumps and the
+up-special resource remain independent. The used-slot list is rollback state. `Event.turn` reverses facing
+before that event's velocity operations without reversing momentum.
+
+`attackPress` and `specialPress` transitions accept fresh presses, rather than held buttons; `from` bounds
+their input window. A buffered matching press may be accepted on the first legal tick. Acceptance emits a
+structured `Followup { slot, phase }` action and consumes the command so it cannot become a delayed aerial/special.
+`upHeld` follows the live up direction. Charge phases must leave room after the hold frame: if charge holds
+on 20, a phase ending on 21 can transition into a release attack at its frame 0; ending on 20 would leave
+the phase before it could hold. Entry and transition frames retain the existing convention.
+
+`Hitbox.groundAngle` optionally overrides the launch angle for grounded victims, before the shared ground
+bounce. `Projectile.chargeScale` optionally scales `bkb`, `radius` and `life`, alongside speed/damage, by
+`1 + chargeTicks * value`; lifetime rounds to whole ticks. `angleTo` and `groundAngleTo` interpolate toward
+maximum-charge launch angles using the move's charge maximum. `stats.pummelDamage` optionally overrides
+the shared pummel damage while retaining its shared timing.
+
+`type: "paralyze"` freezes the victim before launch, using `hitTypes.paralyze`: duration is reference-weight
+knockback in source units times hitlag multiplier, plus `extraFrames`, floored and capped by `maxFrames`.
+The victim's pending velocity/DI stays frozen with the state clock. Repeated paralysis instead causes an
+ordinary hit until the victim becomes actionable, lands or grabs a ledge. This immunity is rollback state.
+Attackers retain ordinary melee hitlag; projectiles do not freeze their owner.
+
+`type: "bury"` traps grounded victims in the `buried` state. Equal-stock duration is
+`ceil(baseFrames + postHitPercent * perPercent + referenceKnockback * perKnockback)`, capped by `maxFrames`.
+Fresh directional inputs subtract `mash`; button presses subtract `buttonMash`. Weak follow-up hits below
+`releaseThreshold` source knockback preserve the trap, stronger hits launch normally, and grabs cannot
+capture buried fighters. Airborne/knocked-down targets launch normally. Stock-advantage modifiers, mash
+rate limiting and deferred launch from weak hits are not simulated. The built-in 600-tick ceiling is an
+adapted bound, not an SSBU rule. These hit types require their corresponding optional shared tuning objects.

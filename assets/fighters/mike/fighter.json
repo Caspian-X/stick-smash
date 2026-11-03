@@ -11,7 +11,7 @@
     "runAccel": 0.7,
     "groundFriction": 0.82,
     "jumpSpeed": 12.9,
-    "shortHopSpeed": 10.1,
+    "shortHopSpeed": 7.0623076923,
     "airJumpSpeed": 12.9,
     "airJumpDrift": 3.969,
     "airJumps": 1,
@@ -762,7 +762,7 @@
               "start": 7,
               "end": 8,
               "x": 34.451,
-              "y": 0.436,
+              "y": 20.744,
               "r": 17.0,
               "damage": 8.0,
               "bkb": 70.0,
@@ -775,7 +775,7 @@
               "start": 7,
               "end": 8,
               "x": 50.96,
-              "y": 7.679,
+              "y": 17.833,
               "r": 17.0,
               "damage": 8.0,
               "bkb": 70.0,
@@ -801,7 +801,7 @@
               "start": 7,
               "end": 8,
               "x": 84.411,
-              "y": 24.628,
+              "y": 11.935,
               "r": 15.0,
               "damage": 8.0,
               "bkb": 70.0,
@@ -1228,7 +1228,10 @@
           "attach": {
             "sword": {
               "angle": [
-                [0, 145],
+                [0, -25],
+                [6, 140],
+                [12, -40],
+                [18, -55],
                 [24, 230],
                 [30, 145],
                 [31, 140],
@@ -1242,14 +1245,37 @@
             }
           },
           "anim": [
+            { "at": 0, "pose": "mikeGuard" },
             {
-              "at": 0,
+              "at": 6,
               "pose": {
-                "from": "mikeCut",
-                "handF": [-12, 66],
-                "handB": [-16, 63],
-                "elbowF": [-12.0, 53.0],
-                "elbowB": [-17.0, 51.0]
+                "from": "stand",
+                "handF": [-10, 75],
+                "handB": [-14, 72],
+                "elbowF": [-11.0, 57.5],
+                "elbowB": [-16.0, 55.5]
+              },
+              "lerp": true
+            },
+            {
+              "at": 12,
+              "pose": {
+                "from": "stand",
+                "handF": [12, 80],
+                "handB": [8, 77],
+                "elbowF": [0.0, 60.0],
+                "elbowB": [-5.0, 58.0]
+              },
+              "lerp": true
+            },
+            {
+              "at": 18,
+              "pose": {
+                "from": "stand",
+                "handF": [-8, 80],
+                "handB": [-12, 77],
+                "elbowF": [-10.0, 60.0],
+                "elbowB": [-15.0, 58.0]
               },
               "lerp": true
             },
@@ -2848,8 +2874,8 @@
                 [8, 50.963, 123.567, 25.0],
                 [9, 16.529, 145.956, 25.0],
                 [10, -25.521, 144.382, 25.0],
-                [11, -60.963, 120.567, 25.0],
-                [12, -81.382, 92.521, 25.0]
+                [11, -72.378, 103.357, 25.0],
+                [12, -89.088, 57.581, 25.0]
               ]
             },
             {
@@ -2869,8 +2895,8 @@
                 [8, 35.642, 110.712, 25.0],
                 [9, 11.353, 126.637, 25.0],
                 [10, -18.681, 125.588, 25.0],
-                [11, -45.642, 107.712, 25.0],
-                [12, -62.588, 85.681, 25.0]
+                [11, -54.252, 94.905, 25.0],
+                [12, -69.392, 61.054, 25.0]
               ]
             },
             {
@@ -2890,8 +2916,8 @@
                 [8, 20.321, 97.856, 25.0],
                 [9, 6.176, 107.319, 25.0],
                 [10, -11.84, 106.794, 25.0],
-                [11, -30.321, 94.856, 25.0],
-                [12, -43.794, 78.84, 25.0]
+                [11, -36.126, 86.452, 25.0],
+                [12, -49.696, 64.527, 25.0]
               ]
             },
             {
@@ -2911,14 +2937,14 @@
                 [8, 5.0, 85.0, 25.0],
                 [9, 1.0, 88.0, 25.0],
                 [10, -5.0, 88.0, 25.0],
-                [11, -15.0, 82.0, 25.0],
-                [12, -25.0, 72.0, 25.0]
+                [11, -18.0, 78.0, 25.0],
+                [12, -30.0, 68.0, 25.0]
               ]
             }
           ],
           "attach": {
             "sword": {
-              "angle": [[6, -40], [7, -15], [8, 40], [9, 75], [10, 110], [11, 140], [12, 160], [44, 160], [48, 75]]
+              "angle": [[6, -40], [7, -15], [8, 40], [9, 75], [10, 110], [11, 155], [12, 190], [44, 190], [48, 75]]
             }
           },
           "anim": [
@@ -2981,10 +3007,10 @@
               "at": 11,
               "pose": {
                 "from": "mikeAir",
-                "handF": [-15, 82],
-                "handB": [-19, 79],
-                "elbowF": [-13.5, 61.0],
-                "elbowB": [-18.5, 59.0]
+                "handF": [-18, 78],
+                "handB": [-22, 75],
+                "elbowF": [-15.0, 59.0],
+                "elbowB": [-20.0, 57.0]
               },
               "lerp": true
             },
@@ -2992,10 +3018,10 @@
               "at": 12,
               "pose": {
                 "from": "mikeAir",
-                "handF": [-25, 72],
-                "handB": [-29, 69],
-                "elbowF": [-18.5, 56.0],
-                "elbowB": [-23.5, 54.0]
+                "handF": [-30, 68],
+                "handB": [-34, 65],
+                "elbowF": [-21.0, 54.0],
+                "elbowB": [-26.0, 52.0]
               },
               "lerp": true
             },
@@ -3003,10 +3029,10 @@
               "at": 44,
               "pose": {
                 "from": "mikeAir",
-                "handF": [-25, 72],
-                "handB": [-29, 69],
-                "elbowF": [-18.5, 56.0],
-                "elbowB": [-23.5, 54.0]
+                "handF": [-30, 68],
+                "handB": [-34, 65],
+                "elbowF": [-21.0, 54.0],
+                "elbowB": [-26.0, 52.0]
               },
               "lerp": true
             },
@@ -3674,6 +3700,159 @@
               "fx": [
                 { "type": "burst", "x": 220, "y": 40, "color": "#ffe08c", "n": 30, "speed": 8, "life": 28, "size": 8 }
               ]
+            },
+            {
+              "from": 30,
+              "to": 34,
+              "minCharge": 0,
+              "fx": [
+                {
+                  "type": "part",
+                  "x": [-22, 108],
+                  "y": [0, 82.5],
+                  "vx": [-0.7, 0.7],
+                  "vy": [4, 8],
+                  "life": [9, 13],
+                  "size": [10, 18],
+                  "color": "#ff722c",
+                  "gravity": -0.05
+                },
+                {
+                  "type": "part",
+                  "x": [-22, 108],
+                  "y": [82.5, 165],
+                  "vx": [-0.7, 0.7],
+                  "vy": [4, 8],
+                  "life": [9, 13],
+                  "size": [10, 18],
+                  "color": "#ff722c",
+                  "gravity": -0.05
+                },
+                {
+                  "type": "part",
+                  "x": [-22, 108],
+                  "y": [0, 82.5],
+                  "vx": [-0.7, 0.7],
+                  "vy": [7, 11],
+                  "life": [9, 13],
+                  "size": [5, 10],
+                  "color": "#ffe08c",
+                  "gravity": -0.05
+                },
+                {
+                  "type": "part",
+                  "x": [-22, 108],
+                  "y": [82.5, 165],
+                  "vx": [-0.7, 0.7],
+                  "vy": [7, 11],
+                  "life": [9, 13],
+                  "size": [5, 10],
+                  "color": "#ffe08c",
+                  "gravity": -0.05
+                }
+              ]
+            },
+            {
+              "from": 34,
+              "to": 39,
+              "minCharge": 100,
+              "fx": [
+                {
+                  "type": "part",
+                  "x": [102, 178],
+                  "y": [0, 70.0],
+                  "vx": [-0.7, 0.7],
+                  "vy": [4, 8],
+                  "life": [9, 13],
+                  "size": [10, 18],
+                  "color": "#ff722c",
+                  "gravity": -0.05
+                },
+                {
+                  "type": "part",
+                  "x": [102, 178],
+                  "y": [70.0, 140],
+                  "vx": [-0.7, 0.7],
+                  "vy": [4, 8],
+                  "life": [9, 13],
+                  "size": [10, 18],
+                  "color": "#ff722c",
+                  "gravity": -0.05
+                },
+                {
+                  "type": "part",
+                  "x": [102, 178],
+                  "y": [0, 70.0],
+                  "vx": [-0.7, 0.7],
+                  "vy": [7, 11],
+                  "life": [9, 13],
+                  "size": [5, 10],
+                  "color": "#ffe08c",
+                  "gravity": -0.05
+                },
+                {
+                  "type": "part",
+                  "x": [102, 178],
+                  "y": [70.0, 140],
+                  "vx": [-0.7, 0.7],
+                  "vy": [7, 11],
+                  "life": [9, 13],
+                  "size": [5, 10],
+                  "color": "#ffe08c",
+                  "gravity": -0.05
+                }
+              ]
+            },
+            {
+              "from": 38,
+              "to": 41,
+              "minCharge": 209,
+              "fx": [
+                {
+                  "type": "part",
+                  "x": [185, 255],
+                  "y": [0, 57.5],
+                  "vx": [-0.7, 0.7],
+                  "vy": [4, 8],
+                  "life": [9, 13],
+                  "size": [10, 18],
+                  "color": "#ff722c",
+                  "gravity": -0.05
+                },
+                {
+                  "type": "part",
+                  "x": [185, 255],
+                  "y": [57.5, 115],
+                  "vx": [-0.7, 0.7],
+                  "vy": [4, 8],
+                  "life": [9, 13],
+                  "size": [10, 18],
+                  "color": "#ff722c",
+                  "gravity": -0.05
+                },
+                {
+                  "type": "part",
+                  "x": [185, 255],
+                  "y": [0, 57.5],
+                  "vx": [-0.7, 0.7],
+                  "vy": [7, 11],
+                  "life": [9, 13],
+                  "size": [5, 10],
+                  "color": "#ffe08c",
+                  "gravity": -0.05
+                },
+                {
+                  "type": "part",
+                  "x": [185, 255],
+                  "y": [57.5, 115],
+                  "vx": [-0.7, 0.7],
+                  "vy": [7, 11],
+                  "life": [9, 13],
+                  "size": [5, 10],
+                  "color": "#ffe08c",
+                  "gravity": -0.05
+                }
+              ]
             }
           ]
         }
@@ -3693,35 +3872,35 @@
             { "at": 0, "pose": "mikeWind" }
           ],
           "airAccelMult": 0,
-          "charge": { "frame": 15, "max": 69, "button": "special" },
+          "charge": { "frame": 15, "max": 69, "button": "special", "holdAfterMax": 120 },
           "transitions": [
             { "on": "timeout", "to": "rush" }
           ]
         },
         {
           "name": "rush",
-          "frames": 37,
+          "frames": 18,
           "attach": {
-            "sword": { "angle": [[0, 0], [36, 0]] }
+            "sword": { "angle": [[0, 0], [17, 0]] }
           },
           "anim": [
             { "at": 0, "pose": "mikeLunge" }
           ],
           "hover": true,
           "airAccelMult": 0,
-          "slide": 38,
+          "slide": 19,
           "detection": { "x1": 0, "x2": 78, "y1": 0, "y2": 80 },
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 8, "y": 0 },
-              "chargeVelocity": 0.012,
+              "setVel": { "x": 12.333333333333334, "y": 0 },
+              "chargeVelocity": 0.02083091787439614,
               "sfx": "slash"
             },
             {
               "from": 1,
-              "setVel": { "x": 8, "y": 0 },
-              "chargeVelocity": 0.012
+              "setVel": { "x": 12.333333333333334, "y": 0 },
+              "chargeVelocity": 0.02083091787439614
             }
           ],
           "transitions": [
@@ -3734,7 +3913,7 @@
         },
         {
           "name": "groundSwing",
-          "frames": 34,
+          "frames": 22,
           "hitboxes": [
             {
               "start": 2,
@@ -3768,7 +3947,7 @@
           },
           "anim": [
             { "at": 0, "pose": "mikeLunge" },
-            { "at": 25, "pose": "mikeGuard", "lerp": true }
+            { "at": 19, "pose": "mikeGuard", "lerp": true }
           ],
           "events": [
             {
@@ -3776,11 +3955,12 @@
               "setVel": { "x": 0 }
             },
             { "at": 2, "sfx": "slash" }
-          ]
+          ],
+          "chargeFrames": 0.17391304347826086
         },
         {
           "name": "airSwing",
-          "frames": 44,
+          "frames": 20,
           "hitboxes": [
             {
               "start": 2,
@@ -3814,18 +3994,26 @@
           },
           "anim": [
             { "at": 0, "pose": "mikeLunge" },
-            { "at": 38, "pose": "mikeAir", "lerp": true }
+            { "at": 17, "pose": "mikeAir", "lerp": true }
           ],
           "events": [
             {
               "at": 0,
               "setVel": { "x": 0 }
             },
-            { "at": 2, "sfx": "slash" }
+            { "at": 2, "sfx": "slash" },
+            {
+              "at": 5,
+              "setVel": { "x": 8.016666666666667 },
+              "chargeVelocity": 0.02083091787439614
+            }
           ],
           "transitions": [
             { "on": "land", "to": "end" }
-          ]
+          ],
+          "chargeFrames": 0.34782608695652173,
+          "airAccelMult": 0,
+          "ledgeGrab": 12
         },
         {
           "name": "specialFall",
@@ -4255,17 +4443,47 @@
             {
               "start": 8,
               "end": 14,
-              "x": 0,
-              "y": 99,
-              "r": 32,
+              "x": 70,
+              "y": 40,
+              "r": 45,
               "damage": 1,
               "bkb": 28.5714285714,
               "kbg": 0,
               "angle": 90,
               "type": "autolink",
-              "rehit": 3,
+              "rehit": 7,
               "setKb": true,
-              "hitlagMult": 0.3
+              "hitlagMult": 0.5
+            },
+            {
+              "start": 8,
+              "end": 14,
+              "x": 70,
+              "y": 60,
+              "r": 45,
+              "damage": 1,
+              "bkb": 28.5714285714,
+              "kbg": 0,
+              "angle": 90,
+              "type": "autolink",
+              "rehit": 7,
+              "setKb": true,
+              "hitlagMult": 0.5
+            },
+            {
+              "start": 8,
+              "end": 14,
+              "x": 70,
+              "y": 80,
+              "r": 45,
+              "damage": 1,
+              "bkb": 28.5714285714,
+              "kbg": 0,
+              "angle": 90,
+              "type": "autolink",
+              "rehit": 7,
+              "setKb": true,
+              "hitlagMult": 0.5
             }
           ],
           "attach": {
@@ -4284,6 +4502,13 @@
         {
           "name": "catch",
           "frames": 10,
+          "fallCap": 18,
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "y": -18 }
+            }
+          ],
           "hitboxes": [
             {
               "start": 0,
@@ -4325,7 +4550,7 @@
           "airAccelMult": 0.45,
           "ledgeGrab": 0,
           "transitions": [
-            { "on": "timeout", "to": "plunge" },
+            { "on": "timeout", "to": "plunge", "preserveHits": true },
             { "on": "land", "to": "impact" }
           ]
         },
@@ -4668,10 +4893,10 @@
   "projectiles": {
     "aetherSword": {
       "name": "Aether Sword",
-      "spawn": [0, 86],
-      "vel": [0, 6],
+      "spawn": [40, 100],
+      "vel": [1.5, 10],
       "r": 25,
-      "life": 20,
+      "life": 25,
       "max": 1,
       "gravity": 0.6,
       "hit": {

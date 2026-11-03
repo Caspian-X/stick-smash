@@ -66,7 +66,8 @@ fn effect_ranges_and_charge_particles_use_the_selected_rollback_rng() {
     let mut d = common::data();
     let id = d.fighters.iter().position(|f| f.id == "brawler").unwrap();
     let p = &mut d.fighters[id].moves.fsmash.phases[0];
-    p.charge = Some(sim::data::moves::Charge { frame: 0, max: 60, button: Default::default(), jet: true });
+    p.charge =
+        Some(sim::data::moves::Charge { frame: 0, max: 60, hold_after_max: 0, button: Default::default(), jet: true });
     let fx = [sim::data::moves::Fx::Part {
         x: Num::Range([1., 2.]),
         y: Num::Range([3., 4.]),
@@ -135,6 +136,7 @@ fn move_slots_handle_optional_and_unknown_moves_explicitly() {
     let d = common::data();
     let mut moves = d.fighter("brawler").unwrap().moves.clone();
     moves.sspec = Some(moves.nspec.clone());
+    moves.zair = Some(moves.nair.clone());
     assert_eq!(moves.iter().map(|(slot, _)| slot).collect::<Vec<_>>(), Moves::SLOTS);
     for slot in Moves::SLOTS {
         let name = format!("changed {slot}");
@@ -142,7 +144,8 @@ fn move_slots_handle_optional_and_unknown_moves_explicitly() {
         assert_eq!(moves.get(slot).unwrap().name, name);
     }
     moves.sspec = None;
-    for slot in ["sspec", "unknown"] {
+    moves.zair = None;
+    for slot in ["sspec", "zair", "unknown"] {
         assert!(moves.get(slot).is_none());
         assert!(moves.get_mut(slot).is_none());
         assert!(!moves.iter().any(|(s, _)| s == slot));
@@ -166,7 +169,7 @@ fn invalid_runtime_move_does_not_fall_back_to_neutral_special() {
 fn hit_history_tracks_each_victim_rehit_tick_and_resets_on_phase_entry() {
     let mut d = common::data();
     let id = d.fighters.iter().position(|f| f.id == "brawler").unwrap();
-    for rehit in [None, Some(3)] {
+    for (rehit, preserve_hits) in [(None, false), (Some(3), false), (None, true), (Some(3), true)] {
         let p = &mut d.fighters[id].moves.jab.phases[0];
         p.frames = Some(100);
         p.hitboxes.truncate(1);
@@ -181,6 +184,7 @@ fn hit_history_tracks_each_victim_rehit_tick_and_resets_on_phase_entry() {
             from: None,
             to: "again".into(),
             lag: None,
+            preserve_hits,
         }];
         let mut again = p.clone();
         again.name = "again".into();
@@ -202,6 +206,7 @@ fn hit_history_tracks_each_victim_rehit_tick_and_resets_on_phase_entry() {
         for (tick, contacts) in [(0, 2), (2, 2), (3, 4), (5, 4), (6, 6)] {
             w.fighters[0].lag = 0;
             w.fighters[0].mov.as_mut().unwrap().t = tick;
+            w.fighters[0].mov.as_mut().unwrap().elapsed = tick;
             combat::hit_pass(&mut w, &d);
             assert_eq!(w.hits.len(), if rehit.is_some() { contacts } else { 2 });
             assert!(w.hits.iter().all(|h| h.shielded));
@@ -213,7 +218,15 @@ fn hit_history_tracks_each_victim_rehit_tick_and_resets_on_phase_entry() {
         f.lag = 0;
         w.fighters[0] = f;
         combat::hit_pass(&mut w, &d);
-        assert_eq!(w.hits.len(), before + 2);
+        assert_eq!(w.hits.len(), before + if preserve_hits { 0 } else { 2 });
+        if preserve_hits && rehit.is_some() {
+            w.fighters[0].lag = 0;
+            let m = w.fighters[0].mov.as_mut().unwrap();
+            m.t = 3;
+            m.elapsed = 9;
+            combat::hit_pass(&mut w, &d);
+            assert_eq!(w.hits.len(), before + 2);
+        }
     }
 }
 
@@ -271,5 +284,5 @@ fn cpu_match_golden_world_hash() {
         w.hits.clear();
         w.acts.clear();
     }
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x6e6f62d1001c1ba7);
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x576c9949bb891017);
 }

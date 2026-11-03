@@ -26,6 +26,9 @@ pub struct Moves {
     pub bair: Move,
     pub uair: Move,
     pub dair: Move,
+    /// Optional aerial grab attack (tether/zair).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub zair: Option<Move>,
     pub grab: Move,
     pub dashgrab: Move,
     pub nspec: Move,
@@ -36,9 +39,9 @@ pub struct Moves {
 }
 
 impl Moves {
-    pub const SLOTS: [&str; 19] = [
+    pub const SLOTS: [&str; 20] = [
         "jab", "ftilt", "utilt", "dtilt", "dashatk", "fsmash", "usmash", "dsmash", "nair", "fair", "bair", "uair",
-        "dair", "grab", "dashgrab", "nspec", "sspec", "uspec", "dspec",
+        "dair", "zair", "grab", "dashgrab", "nspec", "sspec", "uspec", "dspec",
     ];
     pub fn get(&self, slot: &str) -> Option<&Move> {
         Some(match slot {
@@ -55,6 +58,7 @@ impl Moves {
             "bair" => &self.bair,
             "uair" => &self.uair,
             "dair" => &self.dair,
+            "zair" => return self.zair.as_ref(),
             "grab" => &self.grab,
             "dashgrab" => &self.dashgrab,
             "nspec" => &self.nspec,
@@ -79,6 +83,7 @@ impl Moves {
             "bair" => &mut self.bair,
             "uair" => &mut self.uair,
             "dair" => &mut self.dair,
+            "zair" => return self.zair.as_mut(),
             "grab" => &mut self.grab,
             "dashgrab" => &mut self.dashgrab,
             "nspec" => &mut self.nspec,
@@ -118,6 +123,9 @@ pub struct Move {
     /// (and flips air momentum).
     #[serde(default, skip_serializing_if = "is_default")]
     pub b_reverse: bool,
+    /// May start once before landing (being hit does not restore it).
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub once_per_airtime: bool,
     /// Damage bonus per held charge tick. Omit to use the global smash-charge divisor.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub charge_damage: Option<f64>,
@@ -139,6 +147,9 @@ pub struct Phase {
     /// Phase length (see the frame convention). Omit for a phase that loops until a transition fires.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub frames: Option<u32>,
+    /// Extra phase frames per stored charge tick (rounded to the nearest whole frame).
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub charge_frames: f64,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub hitboxes: Vec<Hitbox>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -184,6 +195,12 @@ pub struct Phase {
     /// Can grab a ledge (even while rising) from this phase frame on.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ledge_grab: Option<u32>,
+    /// Extended forward ledge reach while this phase's ledgeGrab window is open.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tether: Option<super::common::Rect>,
+    /// Pass through semisolid platforms throughout this phase.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub pass_platforms: bool,
     /// Body pose keyframes, in phase frames.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub anim: Vec<AnimKey>,
@@ -210,6 +227,9 @@ pub struct Charge {
     /// Max frames of charge.
     #[serde(default = "sixty", skip_serializing_if = "is_sixty")]
     pub max: u32,
+    /// Additional ticks the button can hold after reaching max; strength stays capped.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub hold_after_max: u32,
     #[serde(default, skip_serializing_if = "is_default")]
     pub button: Button,
     /// Jet-engine charge effects (flames behind, jet sound, glowing attachments).
@@ -282,6 +302,9 @@ pub struct Event {
     /// Scale `setVel` and `addVel` by (1 + held charge ticks × this); never scales `mulVel`.
     #[serde(default, skip_serializing_if = "is_default")]
     pub charge_velocity: f64,
+    /// Reverse facing without reversing velocity.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub turn: bool,
     /// Skip this event below this many held charge ticks.
     #[serde(default, skip_serializing_if = "is_default")]
     pub min_charge: u32,
@@ -350,6 +373,10 @@ pub enum Trigger {
     Release,
     /// Attack is held (jab follow-ups).
     AttackHeld,
+    /// A new attack press; held buttons alone do not retrigger it.
+    AttackPress,
+    SpecialPress,
+    UpHeld,
     /// A hittable opponent overlaps the phase's fighter-local `detection` rectangle.
     TargetNear,
     /// Shield was pressed this tick.
@@ -377,6 +404,9 @@ pub struct Transition {
     /// Landing lag frames for `to: "landing"`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub lag: Option<u32>,
+    /// Keep victim contact history when continuing the same attack in another phase.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub preserve_hits: bool,
 }
 
 pub const END: &str = "end";

@@ -17,6 +17,8 @@ pub fn hit_type_color(t: HitType) -> u32 {
         HitType::Autolink => 0x3fb6ff,
         HitType::Windbox => 0xa8c4ff,
         HitType::Electric => 0xffe14a,
+        HitType::Paralyze => 0xffee65,
+        HitType::Bury => 0xc89666,
         HitType::Grab => 0xb070ff,
     }
 }

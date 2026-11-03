@@ -158,6 +158,29 @@ pub struct HitTypes {
     pub autolink: AutolinkRule,
     pub windbox: WindboxRule,
     pub electric: ElectricRule,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub paralyze: Option<ParalyzeRule>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bury: Option<BuryRule>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ParalyzeRule {
+    pub max_frames: u32,
+    pub extra_frames: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BuryRule {
+    pub base_frames: f64,
+    pub per_percent: f64,
+    pub per_knockback: f64,
+    pub max_frames: f64,
+    pub mash: f64,
+    pub button_mash: f64,
+    pub release_threshold: f64,
 }
 
 /// Grounded victim knocked prone: slide speed away from the attacker.

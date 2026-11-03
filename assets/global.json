@@ -46,7 +46,17 @@
     "sakurai": { "groundLow": 0, "groundHigh": 40, "air": 45 },
     "autolink": { "pull": 0.22, "momentum": 1 },
     "windbox": { "push": 0.6, "maxSpeed": 9 },
-    "electric": { "victimHitlagMult": 1.6 }
+    "electric": { "victimHitlagMult": 1.6 },
+    "paralyze": { "maxFrames": 90, "extraFrames": 1 },
+    "bury": {
+      "baseFrames": 55,
+      "perPercent": 0.5,
+      "perKnockback": 1.5,
+      "maxFrames": 600,
+      "mash": 8,
+      "buttonMash": 14.4,
+      "releaseThreshold": 90
+    }
   },
   "shield": {
     "max": 50,

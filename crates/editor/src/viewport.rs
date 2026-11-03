@@ -166,6 +166,12 @@ pub(crate) fn viewport(ui: &mut egui::Ui, ed: &mut Editor) {
             right = right.max(f.x + 40.);
             top = top.min(f.y - 150.);
             bottom = bottom.max(f.y + 20.);
+            for b in sim::combat::active_boxes(&run.data, f) {
+                left = left.min(b.x - b.hit.r - 20.);
+                right = right.max(b.x + b.hit.r + 20.);
+                top = top.min(b.y - b.hit.r - 45.);
+                bottom = bottom.max(b.y + b.hit.r + 20.);
+            }
             for p in w.projs.iter().filter(|p| p.owner == 0) {
                 let mut radius = p.r;
                 if let Some(a) = &run.data.fighters[p.fighter_data].projectiles[&p.id].article {

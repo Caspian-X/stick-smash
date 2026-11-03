@@ -3057,6 +3057,14 @@
           "lerp": true
         }
       ]
+    },
+    "buried": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": { "from": "crouch", "offsetY": 24 }
+        }
+      ]
     }
   }
 }

@@ -49,6 +49,9 @@ fn air_jump(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, dir: f64) {
 pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
     let g = &d.global;
     let f = &mut w.fighters[i];
+    if f.actionable(g) {
+        f.paralyze_used = false;
+    }
     if g.input.jump_aerials && f.state == State::Jumpsquat && f.lag == 0 {
         // Presses during jumpsquat shape the jump instead of queueing: attack picks a short-hop aerial, a second
         // jump press short hops.
@@ -68,7 +71,9 @@ pub fn update_fighter(w: &mut World, d: &GameData, i: usize, mut inp: Intent) {
     }
     let mut delivered = None;
     if w.cfg.players[i].cpu.is_none() {
-        let actionable = f.actionable(g) && w.count == 0 && w.end_t == 0;
+        let command = f.buffer.cmd.as_ref().map_or(&inp, |c| &c.intent);
+        let actionable =
+            (f.actionable(g) || f.lag == 0 && moves::accepts_command(d, f, command)) && w.count == 0 && w.end_t == 0;
         let ab = w.cfg.players[i].controls.ab_smash;
         delivered = f.buffer.deliver(&mut inp, w.frame, &g.input, actionable, ab);
     }
@@ -210,6 +215,8 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
             } else {
                 if inp.sp {
                     moves::special(w, d, i, &mut f, inp, dir);
+                } else if inp.grab && d.fighters[f.data].moves.zair.is_some() {
+                    moves::start_attack(w, d, i, &mut f, "zair", inp);
                 } else if inp.atk {
                     if g.input.jump_aerials && inp.jump_attack && f.jumps > 0 {
                         air_jump(w, d, i, &mut f, dir);
@@ -413,6 +420,20 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
                 f.set_state(State::Idle);
             }
         }
+        State::Buried => {
+            f.vx = 0.;
+            f.vy = 0.;
+            if inp.any_p
+                && let Some(b) = &g.hit_types.bury
+            {
+                f.sd.n -=
+                    if inp.atk || inp.sp || inp.jump || inp.grab || inp.shield_p { b.button_mash } else { b.mash };
+            }
+            fall(w, d, i, &mut f, true, None);
+            if f64::from(f.t) >= f.sd.n || !f.ground {
+                f.set_state(if f.ground { State::Idle } else { State::Air });
+            }
+        }
         _ => {}
     }
     w.fighters[i] = f;
@@ -501,6 +522,7 @@ fn st_climb(w: &mut World, d: &GameData, f: &mut Fighter) {
     }
     f.ground = true;
     f.surf = Some(f.sd.ledge_block);
+    f.used_air_moves.clear();
     f.y = block.top;
     if f.t <= c.b {
         f.x = ex
@@ -537,7 +559,7 @@ fn st_hold(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, 
     if f.sd.pt > 0 {
         f.sd.pt -= 1;
         if f.sd.pt == g.pummel_hit_frame {
-            combat::credit_damage(w, d, i, v, g.pummel_damage);
+            combat::credit_damage(w, d, i, v, d.fighters[f.data].stats.pummel_damage.unwrap_or(g.pummel_damage));
             let vic = &mut w.fighters[v];
             vic.flash = 5;
             vic.hud_shake = 6;
@@ -690,6 +712,8 @@ pub fn respawn(w: &World, d: &GameData, i: usize, f: &mut Fighter) {
     f.blink = 0;
     f.di = false;
     f.ledge_inv = true;
+    f.used_air_moves.clear();
+    f.paralyze_used = false;
     f.set_state(State::Respawn);
 }
 pub fn ko(w: &mut World, d: &GameData, i: usize) {

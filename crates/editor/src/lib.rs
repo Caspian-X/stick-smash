@@ -195,9 +195,9 @@ pub fn read_roots(roots: &[PathBuf]) -> Files {
 }
 
 /// Every move slot, in browser order.
-pub const SLOTS: [&str; 19] = [
+pub const SLOTS: [&str; 20] = [
     "jab", "ftilt", "utilt", "dtilt", "dashatk", "fsmash", "usmash", "dsmash", "nair", "fair", "bair", "uair", "dair",
-    "nspec", "sspec", "uspec", "dspec", "grab", "dashgrab",
+    "zair", "nspec", "sspec", "uspec", "dspec", "grab", "dashgrab",
 ];
 
 pub fn throw_ref<'a>(t: &'a Throws, k: &str) -> &'a Throw {
@@ -711,6 +711,7 @@ mod tests {
                 from: None,
                 to: "nowhere".into(),
                 lag: None,
+                preserve_hits: false,
             })
         });
         ed.select(Subject::Move("jab".into()));

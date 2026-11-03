@@ -70,7 +70,7 @@ impl Subject {
     }
 }
 
-pub const AERIALS: [&str; 5] = ["nair", "fair", "bair", "uair", "dair"];
+pub const AERIALS: [&str; 6] = ["nair", "fair", "bair", "uair", "dair", "zair"];
 
 /// Sandbox options, shown in the timeline bar.
 #[derive(Clone, Debug, PartialEq)]

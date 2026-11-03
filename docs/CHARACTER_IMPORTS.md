@@ -10,6 +10,8 @@ semantics. Copy the [reference-record template](templates/FIGHTER_REFERENCE.md) 
 [tests](../crates/sim/tests/mike.rs) are a worked example, not universal conversion constants.
 [Wizard's Zelda record](imports/wizard.md) covers a complete replacement, pinned-script regeneration,
 animated bone fitting and independent controlled projectiles.
+[Whiplash's Zero Suit Samus record](imports/whiplash.md) covers aerial grab/tether attacks, once-per-airtime
+specials, follow-up input windows, paralysis and grounded bury effects.
 
 ## 1. Establish the target
 

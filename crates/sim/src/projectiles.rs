@@ -16,6 +16,30 @@ pub fn spawn(w: &mut World, d: &GameData, i: usize, f: &Fighter, id: &str) {
     let speed = p.charge_scale.as_ref().map_or(1., |c| 1. + charge * c.speed);
     let mut hit = p.hit.clone();
     hit.damage *= p.charge_scale.as_ref().map_or(1., |c| 1. + charge * c.damage);
+    let mut radius = p.r;
+    let mut life = p.life;
+    if let Some(c) = &p.charge_scale {
+        hit.bkb *= 1. + charge * c.bkb;
+        radius *= 1. + charge * c.radius;
+        life = libm::round(f64::from(life) * (1. + charge * c.life)) as u32;
+        if c.angle_to.is_some() || c.ground_angle_to.is_some() {
+            let max = crate::moves::definition(d, f)
+                .phases
+                .iter()
+                .filter_map(|p| p.charge.as_ref())
+                .map(|c| c.max)
+                .max()
+                .unwrap_or(1);
+            let fraction = (charge / f64::from(max.max(1))).min(1.);
+            if let Some(angle) = c.angle_to {
+                hit.angle += (angle - hit.angle) * fraction;
+            }
+            if let Some(angle) = c.ground_angle_to {
+                let start = hit.ground_angle.unwrap_or(hit.angle);
+                hit.ground_angle = Some(start + (angle - start) * fraction);
+            }
+        }
+    }
     w.projs.push(Projectile {
         owner: i,
         fighter_data: f.data,
@@ -24,8 +48,8 @@ pub fn spawn(w: &mut World, d: &GameData, i: usize, f: &Fighter, id: &str) {
         y: f.y - p.spawn[1],
         vx: f.face * p.vel[0] * speed,
         vy: -p.vel[1] * speed,
-        life: p.life as i32,
-        r: p.r,
+        life: life as i32,
+        r: radius,
         hit,
         bounces: 0,
         cooldown: 0,

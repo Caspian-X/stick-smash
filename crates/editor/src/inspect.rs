@@ -19,7 +19,7 @@ use crate::style::{self, DIM, FAINT, GOLD, RED, STAR, caps, faint, heading};
 use crate::ui::at_playhead;
 use crate::{Dialog, Editor, doc, form, throw_mut};
 
-const TRIGGERS: [(Trigger, &str); 12] = [
+const TRIGGERS: [(Trigger, &str); 15] = [
     (Trigger::Timeout, "timeout"),
     (Trigger::Land, "land"),
     (Trigger::Grounded, "grounded"),
@@ -27,6 +27,9 @@ const TRIGGERS: [(Trigger, &str); 12] = [
     (Trigger::Falling, "falling"),
     (Trigger::Release, "release"),
     (Trigger::AttackHeld, "attackHeld"),
+    (Trigger::AttackPress, "attackPress"),
+    (Trigger::SpecialPress, "specialPress"),
+    (Trigger::UpHeld, "upHeld"),
     (Trigger::TargetNear, "targetNear"),
     (Trigger::ShieldPress, "shieldPress"),
     (Trigger::ArticleRelease, "articleRelease"),
@@ -39,7 +42,7 @@ const CONDS: [(Option<Cond>, &str); 4] = [
     (Some(Cond::Airborne), "airborne"),
     (Some(Cond::Countered), "countered"),
 ];
-const KINDS: [(HitType, &str); 8] = [
+const KINDS: [(HitType, &str); 10] = [
     (HitType::Normal, "normal"),
     (HitType::Spike, "spike"),
     (HitType::Trip, "trip"),
@@ -47,6 +50,8 @@ const KINDS: [(HitType, &str); 8] = [
     (HitType::Autolink, "autolink"),
     (HitType::Windbox, "windbox"),
     (HitType::Electric, "electric"),
+    (HitType::Paralyze, "paralyze"),
+    (HitType::Bury, "bury"),
     (HitType::Grab, "grab"),
 ];
 const DIRS: [(LaunchDir, &str); 3] =
@@ -572,6 +577,7 @@ fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<G
         grid(ui, "move", |ui| {
             row(ui, "air control", &d("Move", "air"), |ui| combo(ui, "air", &mut mv.air, &AIRS));
             check(ui, "b-reverse", &d("Move", "bReverse"), &mut mv.b_reverse);
+            check(ui, "once per airtime", &d("Move", "oncePerAirtime"), &mut mv.once_per_airtime);
             opt_num(ui, "charge damage", &d("Move", "chargeDamage"), &mut mv.charge_damage, 0.01, "global");
         });
     });
@@ -649,6 +655,7 @@ fn hit_fields(ui: &mut egui::Ui, b: &mut Hitbox, geometry: bool, data: Option<&G
         num(ui, "bkb", &d("Hitbox", "bkb"), &mut b.bkb, 0.1);
         num(ui, "kbg", &d("Hitbox", "kbg"), &mut b.kbg, 0.005);
         num(ui, "angle", &format!("{} Drag the gold dot in the viewport.", d("Hitbox", "angle")), &mut b.angle, 1.);
+        opt_num(ui, "ground angle", &d("Hitbox", "groundAngle"), &mut b.ground_angle, 0., "same as air");
         row(
             ui,
             "direction",
@@ -658,7 +665,7 @@ fn hit_fields(ui: &mut egui::Ui, b: &mut Hitbox, geometry: bool, data: Option<&G
         row(
             ui,
             "type",
-            "Hit behavior: spike (meteor), trip, sakurai angle, autolink (drags along), windbox (push, no damage), electric, grab",
+            "Hit behavior: spike, trip, sakurai, autolink, windbox, electric, paralysis, bury or grab",
             |ui| combo(ui, "kind", &mut b.kind, &KINDS),
         );
         check(ui, "fixed kb", &d("Hitbox", "setKb"), &mut b.set_kb);
@@ -770,6 +777,8 @@ fn transitions(ui: &mut egui::Ui, p: &mut Phase, names: &[String]) {
                 } else {
                     t.lag = None;
                 }
+                ui.checkbox(&mut t.preserve_hits, "preserve hits")
+                    .on_hover_text("Keep victim contact history across this phase transition");
                 let mut from = t.from.is_some();
                 if ui.checkbox(&mut from, "from").on_hover_text("Only from this phase frame on").changed() {
                     t.from = from.then_some(1);
@@ -794,7 +803,7 @@ fn transitions(ui: &mut egui::Ui, p: &mut Phase, names: &[String]) {
     }
     if ui.small_button("+ Transition").clicked() {
         let on = if p.frames.is_some() { Trigger::Timeout } else { Trigger::Land };
-        p.transitions.push(Transition { on, cond: None, from: None, to: END.into(), lag: None });
+        p.transitions.push(Transition { on, cond: None, from: None, to: END.into(), lag: None, preserve_hits: false });
     }
 }
 
@@ -891,6 +900,7 @@ fn events(ui: &mut egui::Ui, p: &mut Phase, projectiles: &[String], t: Option<u3
                 num(ui, "charge velocity", &d("Event", "chargeVelocity"), &mut e.charge_velocity, 0.001);
                 int(ui, "min charge", &d("Event", "minCharge"), &mut e.min_charge);
                 check(ui, "leaveGround", "Needed for upward launches from the ground", &mut e.leave_ground);
+                check(ui, "turn", &d("Event", "turn"), &mut e.turn);
                 opt_int(ui, "invuln", "Invulnerable frames", &mut e.invuln, 5, "none");
                 opt_int(ui, "every", "Only on world frames divisible by this", &mut e.every, 2, "every frame");
                 row(ui, "spawn", "Projectile", |ui| {
@@ -980,24 +990,30 @@ fn phase_more(ui: &mut egui::Ui, p: &mut Phase) {
         opt_num(ui, "fallCap", "Max fall speed in this phase", &mut p.fall_cap, 4., "fighter's");
         opt_num(ui, "travel speed", &d("Phase", "travelSpeed"), &mut p.travel_speed, 20., "none");
         check(ui, "hidden", &d("Phase", "hidden"), &mut p.hidden);
+        check(ui, "pass platforms", &d("Phase", "passPlatforms"), &mut p.pass_platforms);
         num(ui, "air accel ×", "0 = no drift control", &mut p.air_accel_mult, 0.01);
+        num(ui, "charge frames", &d("Phase", "chargeFrames"), &mut p.charge_frames, 0.01);
         int(ui, "slide", "Grounded: frames below this use slide friction", &mut p.slide);
         opt_int(ui, "ledgeGrab", "Can grab ledges from this phase frame on", &mut p.ledge_grab, 1, "never");
         row(ui, "charge", "Hold to charge on a frame", |ui| {
             let mut on = p.charge.is_some();
             if ui.checkbox(&mut on, "").changed() {
-                p.charge = on.then_some(Charge { frame: 1, max: 60, button: Button::Attack, jet: false });
+                p.charge =
+                    on.then_some(Charge { frame: 1, max: 60, hold_after_max: 0, button: Button::Attack, jet: false });
             }
         });
     });
     ui.label(caps("Target detection"));
     form::edit(ui, egui::Id::new("phase-detection"), &form::def("Phase")["properties"]["detection"], &mut p.detection);
+    ui.label(caps("Tether ledge reach"));
+    form::edit(ui, egui::Id::new("phase-tether"), &form::def("Phase")["properties"]["tether"], &mut p.tether);
     ui.label(caps("Reflector"));
     form::edit(ui, egui::Id::new("phase-reflector"), &form::def("Phase")["properties"]["reflector"], &mut p.reflector);
     if let Some(c) = &mut p.charge {
         grid(ui, "charge", |ui| {
             int(ui, "  frame", "Phase frame that freezes while held", &mut c.frame);
             int(ui, "  max", "Max charge frames", &mut c.max);
+            int(ui, "  hold after max", &d("Charge", "holdAfterMax"), &mut c.hold_after_max);
             row(ui, "  button", "", |ui| {
                 combo(ui, "btn", &mut c.button, &[(Button::Attack, "attack"), (Button::Special, "special")])
             });
@@ -1153,6 +1169,7 @@ fn fighter_panel(ui: &mut egui::Ui, ed: &mut Editor, errors: &[ContentError]) {
         let s = &mut f.stats;
         grid(ui, "stats", |ui| {
             num(ui, "weight", &stat_tip("weight"), &mut s.weight, 0.005);
+            opt_num(ui, "pummel damage", &d("Stats", "pummelDamage"), &mut s.pummel_damage, 1.3, "global");
             num(ui, "run speed", &stat_tip("runSpeed"), &mut s.run_speed, 0.05);
             num(ui, "run accel", &stat_tip("runAccel"), &mut s.run_accel, 0.01);
             opt_num(ui, "walk speed", &d("Stats", "walkSpeed"), &mut s.walk_speed, 3., "global ratio");

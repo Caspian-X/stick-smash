@@ -1722,18 +1722,18 @@ mod tests {
         assert_eq!(t.s.slots[1].carry, None);
         // Hovering previews the CPU's fighter (not P1's), confirm drops it there.
         let p1 = t.s.slots[0].fighter;
-        t.s.slots[0].cursor.key = key(TILE, 4);
+        t.s.slots[0].cursor.key = key(TILE, 2);
         t.navs([vec![Nav::Right], vec![]]).frame(&spots);
-        assert_eq!((t.s.slots[2].fighter, t.s.slots[0].fighter), (5, p1));
+        assert_eq!((t.s.slots[2].fighter, t.s.slots[0].fighter), (3, p1));
         t.navs([vec![Nav::Confirm], vec![]]).frame(&spots);
-        assert_eq!((t.s.slots[2].fighter, t.s.slots[0].carry), (5, None));
+        assert_eq!((t.s.slots[2].fighter, t.s.slots[0].carry), (3, None));
         // Back puts a carried chip back where it was.
         t.s.slots[0].cursor.key = key(FIGHTER, 2);
         t.navs([vec![Nav::Confirm], vec![]]).frame(&spots);
         t.s.slots[0].cursor.key = key(TILE, 0);
         t.navs([vec![Nav::Right], vec![]]).frame(&spots);
         t.navs([vec![Nav::Back], vec![]]).frame(&spots);
-        assert_eq!((t.s.slots[2].fighter, t.s.slots[0].carry, t.s.humans().count()), (5, None, 2));
+        assert_eq!((t.s.slots[2].fighter, t.s.slots[0].carry, t.s.humans().count()), (3, None, 2));
     }
     #[test]
     fn a_carried_cpu_chip_follows_its_card_when_someone_joins_or_returns_when_the_carrier_leaves() {

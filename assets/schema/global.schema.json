@@ -731,7 +731,19 @@
         "sakurai": { "$ref": "#/$defs/SakuraiRule" },
         "autolink": { "$ref": "#/$defs/AutolinkRule" },
         "windbox": { "$ref": "#/$defs/WindboxRule" },
-        "electric": { "$ref": "#/$defs/ElectricRule" }
+        "electric": { "$ref": "#/$defs/ElectricRule" },
+        "paralyze": {
+          "anyOf": [
+            { "$ref": "#/$defs/ParalyzeRule" },
+            { "type": "null" }
+          ]
+        },
+        "bury": {
+          "anyOf": [
+            { "$ref": "#/$defs/BuryRule" },
+            { "type": "null" }
+          ]
+        }
       },
       "required": ["trip", "sakurai", "autolink", "windbox", "electric"],
       "description": "Rules for each hitbox `type`."
@@ -783,6 +795,29 @@
         "victimHitlagMult": { "type": "number", "format": "double", "description": "Victim hitlag multiplier." }
       },
       "required": ["victimHitlagMult"]
+    },
+    "ParalyzeRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "extraFrames": { "type": "number", "format": "double" }
+      },
+      "required": ["maxFrames", "extraFrames"]
+    },
+    "BuryRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "baseFrames": { "type": "number", "format": "double" },
+        "perPercent": { "type": "number", "format": "double" },
+        "perKnockback": { "type": "number", "format": "double" },
+        "maxFrames": { "type": "number", "format": "double" },
+        "mash": { "type": "number", "format": "double" },
+        "buttonMash": { "type": "number", "format": "double" },
+        "releaseThreshold": { "type": "number", "format": "double" }
+      },
+      "required": ["baseFrames", "perPercent", "perKnockback", "maxFrames", "mash", "buttonMash", "releaseThreshold"]
     },
     "Shield": {
       "type": "object",
@@ -1025,6 +1060,11 @@
           "format": "double",
           "description": "Launch angle in degrees. 0 = forward, 90 = straight up, negative = down."
         },
+        "groundAngle": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Optional launch angle for grounded victims (before the shared ground-bounce rule)."
+        },
         "dir": { "$ref": "#/$defs/LaunchDir" },
         "type": { "$ref": "#/$defs/HitType" },
         "situation": {
@@ -1118,6 +1158,16 @@
           "type": "string",
           "const": "electric",
           "description": "Longer victim hitlag (`global.hitTypes.electric`), with spark effects."
+        },
+        {
+          "type": "string",
+          "const": "paralyze",
+          "description": "Freeze in place before launching; cannot paralyze again until actionable or landed."
+        },
+        {
+          "type": "string",
+          "const": "bury",
+          "description": "Trap grounded targets in place; airborne targets launch normally."
         },
         { "type": "string", "const": "grab", "description": "Grabs instead of hitting." }
       ],

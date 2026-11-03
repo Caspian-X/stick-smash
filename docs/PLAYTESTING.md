@@ -114,8 +114,14 @@ just verify-replays "$HOME/Library/Application Support/stick-smash/replays"
   (flick to drop, slow press to crouch and down tilt), ledge grab, trump and getup options, shield, up smash and
   parry out of shield, DI on launches, roll, spot-dodge, air-dodge, techs. Watch training's **Inputs** list to see
   which press became which action (and when it was buffered).
-- **Every fighter's kit**: Archer, Brawler, Dancer, Golem, King, Lancer, Ninja, Swordfighter, Tinker, Wizard,
+- **Every fighter's kit**: Archer, Brawler, Dancer, Golem, King, Lancer, Mike, Ninja, Swordfighter, Tinker, Whiplash, Wizard,
   Wrangler, Yo-yo. Tilts, smashes (charged), aerials, specials, grab and throws, and their recovery from far away.
+- **Whiplash (Zero Suit Samus adaptation)**: compare light walking, initial dash, full hop and short hop;
+  jump + attack into low nair/fair, then fast fall and buffer a follow-up. Grab in the air should use zair,
+  catching a ledge from its forward tether range. Try weak and fully charged Paralyzer, then punish the
+  freeze; check forward-only down smash. Flip Jump should preserve double jump, stay intangible on 3–12,
+  accept attack/special into Flip Kick from 14, and bounce/bury or spike on footstool contact. Being hit
+  should not restore Flip Jump; landing should. Check Boost Kick recovery from both sides of every stage.
 - **Wizard (Zelda adaptation)**: test the one-frame lightning sweet spots against late 4% sour hits; rapid jab
   hold/release; shield up-smash; reflect several shots during Nayru's Love; guide Din's Fire up/down, release
   early and at maximum; hold the intended warp direction through Farore's Wind disappearance (neutral aims
