@@ -431,6 +431,40 @@ pub fn check_stage(file: &str, s: &Stage, fighters: &[Fighter], platform_pad: f6
             if !enabled {
                 continue;
             }
+            for f in fighters {
+                if let Some(l) = crate::interactions::ledge(f) {
+                    for (name, distance) in [
+                        ("pullIn", l.pull_in),
+                        ("climbDistance", l.climb_distance),
+                        ("rollDistance", l.roll_distance),
+                        ("attackDistance", l.attack_distance),
+                    ] {
+                        let Some(distance) = distance else { continue };
+                        let side = if field == "leftLedge" { -1. } else { 1. };
+                        let end = x - side * distance;
+                        let path = format!("blocks[{i}].{field}");
+                        if !end.is_finite() || end < g.left || end > g.right {
+                            return Err(err(
+                                file,
+                                &path,
+                                format!("{} interactions.ledge.{name} endpoint leaves supporting block", f.id),
+                            ));
+                        }
+                        if let Some((j, _)) = s
+                            .blocks
+                            .iter()
+                            .enumerate()
+                            .find(|(_, b)| b.intersects_body(end, g.top, f.body.half_width, f.body.height))
+                        {
+                            return Err(err(
+                                file,
+                                &path,
+                                format!("{} interactions.ledge.{name} endpoint intersects blocks[{j}]", f.id),
+                            ));
+                        }
+                    }
+                }
+            }
             for (j, b) in s.blocks.iter().enumerate() {
                 let bottom = b.bottom + ((x - b.left).min(b.right - x) / b.under_inset).clamp(0., 1.) * b.under_depth;
                 if i != j && x >= b.left && x <= b.right && g.top >= b.top && g.top <= bottom {
@@ -440,16 +474,17 @@ pub fn check_stage(file: &str, s: &Stage, fighters: &[Fighter], platform_pad: f6
                         format!("corner is covered by blocks[{j}]; disable this ledge"),
                     ));
                 }
-                if i != j
-                    && fighters.iter().any(|f| {
-                        b.intersects_body(
-                            x + if field == "leftLedge" { -s.ledge.hang_x } else { s.ledge.hang_x },
-                            g.top + s.ledge.hang_y,
-                            f.body.half_width,
-                            f.body.height,
-                        )
-                    })
-                {
+                if fighters.iter().any(|f| {
+                    let overridden = crate::interactions::ledge(f).is_some_and(|l| l.hang_anchor.is_some());
+                    let root = crate::interactions::ledge_hang_root(
+                        f,
+                        s,
+                        x,
+                        g.top,
+                        if field == "leftLedge" { -1. } else { 1. },
+                    );
+                    (i != j || overridden) && b.intersects_body(root[0], root[1], f.body.half_width, f.body.height)
+                }) {
                     return Err(err(
                         file,
                         format!("blocks[{i}].{field}"),
@@ -561,11 +596,57 @@ pub fn check_stage(file: &str, s: &Stage, fighters: &[Fighter], platform_pad: f6
     Ok(())
 }
 
+// Leave ample headroom for composition and downstream squared-distance arithmetic.
+fn interaction_number(file: &str, path: &str, n: f64) -> Result<(), ContentError> {
+    finite(file, path, n)?;
+    if n.abs() > 1e100 {
+        return Err(err(file, path, "interaction magnitude must not exceed 1e100"));
+    }
+    Ok(())
+}
+
 /// Cross-reference checks serde can't do, on a fully merged fighter. [`load`] runs these; the editor runs them on
 /// every edit before simulating.
 pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
     let e = |path: String, msg: String| err(file, path, msg);
     check_stats(file, &f.stats)?;
+    if let Some(g) = crate::interactions::grab(f) {
+        for (name, p) in [("catchPoint", g.catch_point), ("holdPoint", g.hold_point), ("heldAnchor", g.held_anchor)] {
+            if let Some(p) = p {
+                for (i, n) in p.into_iter().enumerate() {
+                    interaction_number(file, &format!("interactions.grab.{name}[{i}]"), n)?;
+                }
+            }
+        }
+    }
+    if let Some(l) = crate::interactions::ledge(f) {
+        for (name, p) in [("catchPoint", l.catch_point), ("hangAnchor", l.hang_anchor)] {
+            if let Some(p) = p {
+                for (i, n) in p.into_iter().enumerate() {
+                    interaction_number(file, &format!("interactions.ledge.{name}[{i}]"), n)?;
+                }
+            }
+        }
+        for (name, n) in [
+            ("pullIn", l.pull_in),
+            ("climbDistance", l.climb_distance),
+            ("rollDistance", l.roll_distance),
+            ("attackDistance", l.attack_distance),
+        ] {
+            if let Some(n) = n {
+                nonnegative(file, &format!("interactions.ledge.{name}"), n)?;
+                interaction_number(file, &format!("interactions.ledge.{name}"), n)?;
+            }
+        }
+    }
+    if let Some(rig) = &f.rig {
+        crate::rig::resolve(rig, &Default::default()).map_err(|e| err(file, format!("rig.{}", e.path), e.message))?;
+        for (i, joint) in rig.joints.iter().enumerate() {
+            for (j, shape) in joint.shapes.iter().enumerate() {
+                check_rig_shape(file, &format!("rig.joints[{i}].shapes[{j}]"), shape)?;
+            }
+        }
+    }
     positive(file, "body.halfWidth", f.body.half_width)?;
     positive(file, "body.height", f.body.height)?;
     for (name, r) in [("default", f.hurtboxes.default), ("knockdown", f.hurtboxes.knockdown)] {
@@ -616,6 +697,7 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
         PoseRef::Inline(p) => p.from.as_ref().is_none_or(|n| f.poses.contains_key(n)),
     };
     for (name, p) in &f.poses {
+        check_rig_pose(file, &format!("poses.{name}.joints"), f, p)?;
         let mut seen = BTreeSet::from([name.as_str()]);
         let mut cur = p;
         while let Some(from) = &cur.from {
@@ -628,16 +710,35 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
             cur = next;
         }
     }
+    if let Some(rig) = &f.rig {
+        for (name, pose) in &f.poses {
+            crate::rig::resolve(rig, &crate::pose::resolve_rig_pose(f, pose))
+                .map_err(|e| err(file, format!("poses.{name}.joints"), e.to_string()))?;
+        }
+    }
     if !f.poses.contains_key("stand") {
         return Err(e("poses".into(), "needs a \"stand\" pose (the default for missing joints)".into()));
     }
     let check_anim = |path: String, keys: &[super::visual::AnimKey]| -> Result<(), ContentError> {
+        for (i, key) in keys.iter().enumerate() {
+            nonnegative(file, &format!("{path}[{i}].at"), key.at)?;
+            if let PoseRef::Inline(p) = &key.pose {
+                check_rig_pose(file, &format!("{path}[{i}].pose.joints"), f, p)?;
+                if let Some(rig) = &f.rig {
+                    crate::rig::resolve(rig, &crate::pose::resolve_rig_pose(f, p))
+                        .map_err(|e| err(file, format!("{path}[{i}].pose.joints"), e.to_string()))?;
+                }
+            }
+        }
         match keys.iter().position(|k| !pose_ok(&k.pose)) {
             Some(i) => Err(e(format!("{path}[{i}].pose"), "unknown pose".into())),
             None => Ok(()),
         }
     };
-    for (name, Anim { keys, .. }) in &f.anims {
+    for (name, Anim { keys, period, .. }) in &f.anims {
+        if let Some(n) = period {
+            positive(file, &format!("anims.{name}.period"), *n)?;
+        }
         if keys.is_empty() {
             return Err(e(format!("anims.{name}.keys"), "needs at least one key".into()));
         }
@@ -647,6 +748,68 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
     if attach_ids.len() != f.attachments.len() {
         return Err(e("attachments".into(), "ids must be unique".into()));
     }
+    if let Some(center) = f.combat_center {
+        for n in center {
+            finite(file, "combatCenter", n)?;
+        }
+    }
+    if let Some(regions) = &f.hurt_regions {
+        if regions.is_empty() {
+            return Err(err(file, "hurtRegions", "must be nonempty"));
+        }
+        if f.combat_center.is_none() {
+            return Err(err(file, "combatCenter", "required with hurtRegions"));
+        }
+        if !regions.iter().any(|r| r.enabled) {
+            return Err(err(file, "hurtRegions", "requires at least one default-enabled region"));
+        }
+        let mut ids = BTreeSet::new();
+        for (i, r) in regions.iter().enumerate() {
+            let path = format!("hurtRegions[{i}]");
+            if r.id.trim().is_empty() || !ids.insert(&r.id) {
+                return Err(err(file, format!("{path}.id"), "requires unique nonblank ID"));
+            }
+            for (j, value) in r.states.iter().enumerate() {
+                if r.states[..j].iter().any(|v| v.state == value.state) {
+                    return Err(err(file, format!("{path}.states[{j}].state"), "duplicate state selector"));
+                }
+            }
+            check_combat_geometry(file, &format!("{path}.geometry"), &r.geometry, f)?;
+        }
+    }
+    for (slot, m) in f.moves.iter() {
+        for (i, p) in m.phases.iter().enumerate() {
+            for (j, window) in p.hurt_regions.iter().enumerate() {
+                let path = format!("moves.{slot}.phases[{i}].hurtRegions[{j}]");
+                if !f.hurt_regions.as_ref().is_some_and(|rs| rs.iter().any(|r| r.id == window.region)) {
+                    return Err(err(
+                        file,
+                        format!("{path}.region"),
+                        "unknown or deleted hurtRegions ID; restore the region or update this reference",
+                    ));
+                }
+                if window.from > window.to || p.frames.is_some_and(|n| window.to >= n) {
+                    return Err(err(
+                        file,
+                        &path,
+                        "requires from <= to and to before phase end (phase end enters the next phase)",
+                    ));
+                }
+                if p.hurt_regions[..j]
+                    .iter()
+                    .any(|v| v.region == window.region && v.from <= window.to && window.from <= v.to)
+                {
+                    return Err(err(file, &path, "overlapping windows for the same region"));
+                }
+            }
+            for (j, h) in p.hitboxes.iter().enumerate() {
+                if let Some(g) = &h.geometry {
+                    check_combat_geometry(file, &format!("moves.{slot}.phases[{i}].hitboxes[{j}].geometry"), g, f)?;
+                }
+            }
+        }
+    }
+
     for (slot, m) in f.moves.iter() {
         check_move(file, &format!("moves.{slot}"), m, f, &attach_ids, &e, &check_anim)?;
     }
@@ -893,6 +1056,72 @@ fn check_phase(
     Ok(())
 }
 
+fn check_rig_pose(file: &str, path: &str, f: &Fighter, pose: &super::visual::Pose) -> Result<(), ContentError> {
+    let base = path.strip_suffix(".joints").unwrap_or(path);
+    for (field, value) in [("rot", pose.rot), ("pivot", pose.pivot), ("offsetY", pose.offset_y)] {
+        if let Some(n) = value {
+            finite(file, &format!("{base}.{field}"), n)?;
+        }
+    }
+    if pose.joints.is_empty() {
+        return Ok(());
+    }
+    let Some(rig) = &f.rig else { return Err(err(file, path, "named joint overrides need a rig")) };
+    crate::rig::resolve(rig, &pose.joints).map_err(|e| {
+        let suffix = e.path.strip_prefix("pose.").unwrap_or(&e.path);
+        err(file, format!("{path}.{suffix}"), e.message)
+    })?;
+    Ok(())
+}
+
+fn check_rig_shape(file: &str, path: &str, shape: &super::visual::Shape) -> Result<(), ContentError> {
+    use super::visual::Shape;
+    let point = |name: &str, p: [f64; 2]| -> Result<(), ContentError> {
+        finite(file, &format!("{path}.{name}[0]"), p[0])?;
+        finite(file, &format!("{path}.{name}[1]"), p[1])
+    };
+    let scalar = |name: &str, n| nonnegative(file, &format!("{path}.{name}"), n);
+    let alpha = match shape {
+        Shape::Line { from, to, width, alpha, .. } => {
+            point("from", *from)?;
+            point("to", *to)?;
+            positive(file, &format!("{path}.width"), *width)?;
+            alpha
+        }
+        Shape::Circle { at, r, width, alpha, .. } => {
+            point("at", *at)?;
+            positive(file, &format!("{path}.r"), *r)?;
+            scalar("width", *width)?;
+            alpha
+        }
+        Shape::Poly { points, width, alpha, .. } => {
+            if points.len() < 3 {
+                return Err(err(file, format!("{path}.points"), "needs at least three points"));
+            }
+            for (i, p) in points.iter().enumerate() {
+                point(&format!("points[{i}]"), *p)?;
+            }
+            scalar("width", *width)?;
+            alpha
+        }
+        Shape::Star { at, r, alpha, .. } => {
+            point("at", *at)?;
+            positive(file, &format!("{path}.r"), *r)?;
+            alpha
+        }
+        Shape::Rect { x, y, w, h, radius, width, alpha, .. } => {
+            finite(file, &format!("{path}.x"), *x)?;
+            finite(file, &format!("{path}.y"), *y)?;
+            positive(file, &format!("{path}.w"), *w)?;
+            positive(file, &format!("{path}.h"), *h)?;
+            scalar("radius", *radius)?;
+            scalar("width", *width)?;
+            alpha
+        }
+    };
+    probability(file, &format!("{path}.alpha"), *alpha)
+}
+
 fn positive(file: &str, path: &str, n: f64) -> Result<(), ContentError> {
     if n.is_finite() && n > 0. { Ok(()) } else { Err(err(file, path, "must be finite and positive")) }
 }
@@ -903,13 +1132,26 @@ fn check_life(file: &str, path: &str, n: u32) -> Result<(), ContentError> {
     if n > 0 && n <= i32::MAX as u32 { Ok(()) } else { Err(err(file, path, "must be between 1 and i32::MAX")) }
 }
 fn check_hitbox(file: &str, path: &str, h: &super::Hitbox, geometry: bool) -> Result<(), ContentError> {
+    if let Some(g) = &h.geometry {
+        if !geometry || path.contains(".article.") || path.starts_with("knockdown") || path.starts_with("ledge") {
+            return Err(err(
+                file,
+                format!("{path}.geometry"),
+                "explicit geometry is supported only on fighter move attacks",
+            ));
+        }
+        if !h.frames.is_empty() {
+            return Err(err(file, format!("{path}.frames"), "cannot combine geometry and legacy tracks"));
+        }
+        positive(file, &format!("{path}.geometry.radius"), g.radius())?;
+    }
     if let Some(angle) = h.ground_angle {
         finite(file, &format!("{path}.groundAngle"), angle)?;
     }
     for (name, n) in [("x", h.x), ("y", h.y), ("angle", h.angle), ("hitstunAdd", h.hitstun_add)] {
         finite(file, &format!("{path}.{name}"), n)?;
     }
-    if geometry {
+    if geometry && h.geometry.is_none() {
         positive(file, &format!("{path}.r"), h.r)?;
     }
     for (name, n) in [
@@ -964,6 +1206,7 @@ fn check_event(file: &str, path: &str, ev: &super::Event) -> Result<(), ContentE
 /// Validates global content, including presentation tuning in embedded replay payloads.
 pub fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
     check_audio(file, &g.audio)?;
+    nonnegative(file, "gait.poseRunSpeed", g.gait.pose_run_speed)?;
     range(file, "gait.runThreshold", g.gait.run_threshold, 0., 1.)?;
     range(file, "gait.walkThreshold", g.gait.walk_threshold, 0., 1.)?;
     if g.gait.run_threshold > 0. && g.gait.walk_threshold > g.gait.run_threshold {
@@ -1584,6 +1827,54 @@ fn check_ai_thresholds(file: &str, v: &super::global::AiThresholds) -> Result<()
     }
     if v.down_tilt_chance > v.jab_chance {
         return Err(err(file, "ai.thresholds.jabChance", "cumulative cutoff must not precede downTiltChance"));
+    }
+    Ok(())
+}
+
+fn check_combat_geometry(
+    file: &str,
+    path: &str,
+    g: &super::hitbox::CombatGeometry,
+    f: &Fighter,
+) -> Result<(), ContentError> {
+    positive(file, &format!("{path}.radius"), g.radius())?;
+    use super::hitbox::CombatGeometry;
+    let points = match g {
+        CombatGeometry::Circle { center, .. } => vec![("center", center)],
+        CombatGeometry::Capsule { a, b, .. } => vec![("a", a), ("b", b)],
+    };
+    for (field, p) in points {
+        for n in p.offset {
+            finite(file, &format!("{path}.{field}.offset"), n)?;
+        }
+        if let Some(id) = &p.joint
+            && !f.rig.as_ref().is_some_and(|r| r.joints.iter().any(|j| &j.id == id))
+        {
+            return Err(err(file, format!("{path}.{field}.joint"), "unknown joint (requires rig joint, not bone)"));
+        }
+        if let Some(id) = &p.joint {
+            let rig = f.rig.as_ref().expect("checked joint binding");
+            let mut poses: Vec<&super::visual::Pose> = f.poses.values().collect();
+            let keys = f
+                .anims
+                .values()
+                .flat_map(|a| &a.keys)
+                .chain(f.moves.iter().flat_map(|(_, m)| m.phases.iter().flat_map(|p| &p.anim)));
+            for key in keys {
+                if let PoseRef::Inline(pose) = &key.pose {
+                    poses.push(pose);
+                }
+            }
+            for pose in poses {
+                let joints = crate::rig::resolve(rig, &crate::pose::resolve_rig_pose(f, pose))
+                    .map_err(|e| err(file, format!("{path}.{field}"), e.to_string()))?;
+                let body = crate::pose::BodyTransform::new(&crate::pose::resolve(f, pose), [0., 0.], 1.);
+                let point = body.local_to_world(joints.get(id).expect("checked joint binding").point(p.offset));
+                for n in point {
+                    finite(file, &format!("{path}.{field}.offset (resolved pose)"), n)?;
+                }
+            }
+        }
     }
     Ok(())
 }

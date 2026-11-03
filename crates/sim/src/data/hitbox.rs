@@ -122,6 +122,9 @@ pub struct Hitbox {
     /// x/y/r before the first entry. Omit for a box that stays put.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub frames: Vec<HitboxFrame>,
+    /// Explicit collision replaces static x/y/r; cannot combine with frames.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub geometry: Option<CombatGeometry>,
 }
 
 impl Hitbox {
@@ -148,4 +151,80 @@ impl Hitbox {
         }
         best.map_or((self.x, self.y, self.r), |e| (e[1], e[2], e[3]))
     }
+}
+
+/// Feet-relative forward/up, or a named joint's rotated local space.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BoundPoint {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub joint: Option<String>,
+    pub offset: super::Pt,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(tag = "kind", rename_all = "camelCase", deny_unknown_fields)]
+pub enum CombatGeometry {
+    Circle { center: BoundPoint, radius: f64 },
+    Capsule { a: BoundPoint, b: BoundPoint, radius: f64 },
+}
+impl CombatGeometry {
+    pub fn points_mut(&mut self) -> Vec<&mut BoundPoint> {
+        match self {
+            Self::Circle { center, .. } => vec![center],
+            Self::Capsule { a, b, .. } => vec![a, b],
+        }
+    }
+    pub fn points(&self) -> Vec<&BoundPoint> {
+        match self {
+            Self::Circle { center, .. } => vec![center],
+            Self::Capsule { a, b, .. } => vec![a, b],
+        }
+    }
+    pub fn radius(&self) -> f64 {
+        match self {
+            Self::Circle { radius, .. } | Self::Capsule { radius, .. } => *radius,
+        }
+    }
+}
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct HurtRegion {
+    /// Default activation. State selectors override this; phase windows override selectors.
+    #[serde(default = "region_enabled", skip_serializing_if = "region_is_enabled")]
+    pub enabled: bool,
+    /// Typed state overrides. Crouch overrides idle while grounded in the crouch gait.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub states: Vec<HurtStateOverride>,
+    pub id: String,
+    pub geometry: CombatGeometry,
+}
+
+fn region_enabled() -> bool {
+    true
+}
+fn region_is_enabled(value: &bool) -> bool {
+    *value
+}
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum HurtState {
+    State(crate::world::State),
+    Crouch,
+}
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct HurtStateOverride {
+    pub state: HurtState,
+    pub enabled: bool,
+}
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct HurtRegionWindow {
+    /// Stable hurtRegions ID; deleting a referenced region is a validation error.
+    pub region: String,
+    pub enabled: bool,
+    /// Inclusive current phase MoveState.t, independent of elapsed move time.
+    pub from: u32,
+    pub to: u32,
 }

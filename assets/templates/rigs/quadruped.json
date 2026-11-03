@@ -1,0 +1,43 @@
+{
+  "joints": [
+    { "id": "hips", "translation": [-23, 37] },
+    { "id": "chest", "translation": [43, 4], "parent": "hips" },
+    { "id": "neck", "translation": [14, 15], "parent": "chest" },
+    {
+      "id": "head",
+      "translation": [12, 8],
+      "parent": "neck",
+      "shapes": [
+        { "shape": "circle", "at": [0, 0], "r": 10, "fill": "#102034", "stroke": "player", "width": 3 },
+        { "shape": "line", "from": [5, -4], "to": [19, -4], "width": 6, "color": "player" },
+        { "shape": "poly", "points": [[-7, 6], [-5, 20], [2, 9]], "stroke": "player", "width": 3 },
+        { "shape": "circle", "at": [5, 2], "r": 2, "fill": "player" }
+      ]
+    },
+    { "id": "tailBase", "translation": [-12, 6], "parent": "hips" },
+    { "id": "tailTip", "translation": [-22, 12], "parent": "tailBase" },
+    { "id": "farHindKnee", "translation": [-6, -18.5], "parent": "hips" },
+    { "id": "farHindFoot", "translation": [4, -18.5], "parent": "farHindKnee" },
+    { "id": "farForeKnee", "translation": [-6, -20.5], "parent": "chest" },
+    { "id": "farForeFoot", "translation": [4, -20.5], "parent": "farForeKnee" },
+    { "id": "nearHindKnee", "translation": [4, -18.5], "parent": "hips" },
+    { "id": "nearHindFoot", "translation": [4, -18.5], "parent": "nearHindKnee" },
+    { "id": "nearForeKnee", "translation": [4, -20.5], "parent": "chest" },
+    { "id": "nearForeFoot", "translation": [4, -20.5], "parent": "nearForeKnee" }
+  ],
+  "bones": [
+    { "from": "hips", "to": "chest", "width": 7, "color": "player" },
+    { "from": "chest", "to": "neck", "width": 6, "color": "player" },
+    { "from": "neck", "to": "head", "width": 5, "color": "player" },
+    { "from": "hips", "to": "tailBase", "width": 4, "color": "player" },
+    { "from": "tailBase", "to": "tailTip", "width": 3, "color": "player" },
+    { "from": "hips", "to": "farHindKnee", "width": 5, "color": "playerDark" },
+    { "from": "farHindKnee", "to": "farHindFoot", "width": 5, "color": "playerDark" },
+    { "from": "chest", "to": "farForeKnee", "width": 5, "color": "playerDark" },
+    { "from": "farForeKnee", "to": "farForeFoot", "width": 5, "color": "playerDark" },
+    { "from": "hips", "to": "nearHindKnee", "width": 5, "color": "player" },
+    { "from": "nearHindKnee", "to": "nearHindFoot", "width": 5, "color": "player" },
+    { "from": "chest", "to": "nearForeKnee", "width": 5, "color": "player" },
+    { "from": "nearForeKnee", "to": "nearForeFoot", "width": 5, "color": "player" }
+  ]
+}

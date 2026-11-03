@@ -378,9 +378,12 @@ pub struct Di {
 }
 
 /// Ground gait. Speeds are fractions of the fighter's runSpeed (walkSpeed may be overridden per fighter).
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct Gait {
+    /// Speed selecting the run animation, including combat joint sampling.
+    #[serde(default = "default_pose_run_speed")]
+    pub pose_run_speed: f64,
     pub enabled: bool,
     /// Full-tilt walk speed; a partial tilt walks proportionally slower.
     pub walk_speed: f64,
@@ -404,6 +407,27 @@ pub struct Gait {
     pub brake_friction: f64,
     /// Frames to lower into a crouch or rise back to idle. Zero switches immediately.
     pub crouch_frames: u32,
+}
+
+impl Default for Gait {
+    fn default() -> Self {
+        Self {
+            pose_run_speed: default_pose_run_speed(),
+            enabled: false,
+            walk_speed: 0.,
+            walk_accel: 0.,
+            run_threshold: 0.,
+            walk_threshold: 0.,
+            dash_lock: false,
+            dash_speed: 0.,
+            dash_frames: 0,
+            turn_frames: 0,
+            turn_friction: 0.,
+            brake_frames: 0,
+            brake_friction: 0.,
+            crouch_frames: 0,
+        }
+    }
 }
 
 /// Ledge getup timing.
@@ -646,4 +670,8 @@ impl Default for Replay {
     fn default() -> Self {
         Self { auto_save_count: 10, checkpoint_ticks: 300 }
     }
+}
+
+fn default_pose_run_speed() -> f64 {
+    0.8
 }

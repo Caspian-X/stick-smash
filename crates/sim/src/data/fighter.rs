@@ -36,6 +36,14 @@ pub struct Fighter {
     /// Collision body for stage geometry.
     pub body: Body,
     pub hurtboxes: Hurtboxes,
+    /// Nonempty regions replace both legacy rectangle groups.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hurt_regions: Option<Vec<super::hitbox::HurtRegion>>,
+    /// Stable feet-relative autolink target; required with hurtRegions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub combat_center: Option<Pt>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub interactions: Option<Interactions>,
     pub ai: Ai,
     pub moves: Moves,
     pub throws: Throws,
@@ -45,6 +53,9 @@ pub struct Fighter {
     #[serde(default, skip_serializing_if = "FighterFx::is_empty")]
     pub fx: FighterFx,
     pub style: Style,
+    /// Optional named-joint figure. Omit to draw the legacy humanoid skeleton.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rig: Option<super::rig::Rig>,
     /// Named poses, used by `anims`, move phases and other poses (`from`).
     pub poses: BTreeMap<String, Pose>,
     /// State animations by name (`idle`, `run`, `air.rise`, `hitstun`…). See `docs/FORMAT.md` for the list.
@@ -322,4 +333,39 @@ pub struct SpecialTactic {
     pub down: bool,
     /// Optional special-button hold duration range; sampled then floored.
     pub hold: Option<[f64; 2]>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Interactions {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub grab: Option<GrabInteraction>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ledge: Option<LedgeInteraction>,
+}
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct GrabInteraction {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub catch_point: Option<Pt>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hold_point: Option<Pt>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub held_anchor: Option<Pt>,
+}
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LedgeInteraction {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub catch_point: Option<Pt>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hang_anchor: Option<Pt>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pull_in: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub climb_distance: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub roll_distance: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub attack_distance: Option<f64>,
 }

@@ -80,7 +80,12 @@ pub fn bat(w: &mut World, d: &GameData, a: usize, bx: &[ActiveBox]) {
             continue;
         }
         let Some(b) = bx.iter().find(|b| {
-            !matches!(b.hit.kind, HitType::Grab | HitType::Windbox) && libm::hypot(b.x - p.x, b.y - p.y) < b.hit.r + p.r
+            !matches!(b.hit.kind, HitType::Grab | HitType::Windbox)
+                && if b.hit.geometry.is_none() {
+                    libm::hypot(b.x - p.x, b.y - p.y) < b.hit.r + p.r
+                } else {
+                    b.shape.overlaps(crate::geometry::Shape::Circle { center: [p.x, p.y], radius: p.r })
+                }
         }) else {
             continue;
         };
@@ -197,9 +202,7 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                 || p.age >= e.arm_ticks
                     && e.proximity.is_some_and(|r| {
                         w.fighters.iter().enumerate().any(|(v, f)| {
-                            w.opponents(p.owner, v)
-                                && f.hittable()
-                                && combat::circ_rect(p.x, p.y, r, combat::hurt(d, f))
+                            w.opponents(p.owner, v) && f.hittable() && combat::circle_hurt(d, f, w.frame, p.x, p.y, r)
                         })
                     })
         });
@@ -232,7 +235,7 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                 || !w.fighters[v].hittable()
                 || !p.hit.targets(w.fighters[v].ground)
                 || p.life <= 0 && !detonate
-                || !combat::circ_rect(p.x, p.y, p.r, combat::hurt(d, &w.fighters[v]))
+                || !combat::circle_hurt(d, &w.fighters[v], w.frame, p.x, p.y, p.r)
             {
                 continue;
             }

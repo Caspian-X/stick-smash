@@ -313,14 +313,17 @@ pub fn try_ledge(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
             }
             let ex = if side < 0. { b.left } else { b.right };
             let dx = f.x - ex;
-            let dy = f.y - l.hand_y - (b.top + l.cy);
+            let catch = crate::interactions::ledge(&d.fighters[f.data]).and_then(|l| l.catch_point);
+            let point = catch.map(|p| crate::interactions::forward_point(f, p));
+            let catch_dx = point.map_or(dx, |p| p[0] - ex);
+            let dy = point.map_or_else(|| f.y - l.hand_y - (b.top + l.cy), |p| p[1] - (b.top + l.cy));
             let tether = if f.state == State::Attack { crate::moves::phase(d, f).tether } else { None };
             let tethered = tether.is_some_and(|r| {
                 let x = (ex - f.x) * f.face;
                 let y = f.y - b.top;
                 x >= r.x1 && x <= r.x2 && y >= r.y1 && y <= r.y2 && dx * side >= 0.
             });
-            if !tethered && (dx * side < -l.reach_in || dx * dx + dy * dy > l.r * l.r) {
+            if !tethered && (dx * side < -l.reach_in || catch_dx * catch_dx + dy * dy > l.r * l.r) {
                 continue;
             }
             let held = occupant(w, d, i, block, side);
@@ -352,9 +355,10 @@ pub fn try_ledge(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
             f.ff = false;
             f.vx = 0.;
             f.vy = 0.;
-            f.x = ex + side * l.hang_x;
-            f.y = b.top + l.hang_y;
             f.face = -side;
+            let root = crate::interactions::ledge_hang_root(&d.fighters[f.data], s, ex, b.top, side);
+            f.x = root[0];
+            f.y = root[1];
             if f.ledge_inv || !g.fresh_invuln {
                 f.inv = f.inv.max(g.invuln);
             }

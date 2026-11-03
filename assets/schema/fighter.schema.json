@@ -15,6 +15,24 @@
     "stats": { "$ref": "#/$defs/StatsPartial" },
     "body": { "$ref": "#/$defs/BodyPartial", "description": "Collision body for stage geometry." },
     "hurtboxes": { "$ref": "#/$defs/HurtboxesPartial" },
+    "hurtRegions": {
+      "type": ["array", "null"],
+      "items": { "$ref": "#/$defs/HurtRegion" },
+      "description": "Nonempty regions replace both legacy rectangle groups."
+    },
+    "combatCenter": {
+      "type": ["array", "null"],
+      "items": { "type": "number", "format": "double" },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "Stable feet-relative autolink target; required with hurtRegions."
+    },
+    "interactions": {
+      "anyOf": [
+        { "$ref": "#/$defs/InteractionsPartial" },
+        { "type": "null" }
+      ]
+    },
     "ai": { "$ref": "#/$defs/AiPartial" },
     "moves": { "$ref": "#/$defs/MovesPartial" },
     "throws": { "$ref": "#/$defs/ThrowsPartial" },
@@ -24,6 +42,13 @@
     },
     "fx": { "$ref": "#/$defs/FighterFxPartial", "description": "Effects for fighter-wide moments." },
     "style": { "$ref": "#/$defs/StylePartial" },
+    "rig": {
+      "anyOf": [
+        { "$ref": "#/$defs/RigPartial" },
+        { "type": "null" }
+      ],
+      "description": "Optional named-joint figure. Omit to draw the legacy humanoid skeleton."
+    },
     "poses": {
       "type": "object",
       "additionalProperties": { "$ref": "#/$defs/PosePartial" },
@@ -125,6 +150,181 @@
       },
       "required": ["x1", "x2", "y1", "y2"],
       "description": "Axis-aligned box in fighter-local space (x forward, y up from the feet)."
+    },
+    "HurtRegion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Default activation. State selectors override this; phase windows override selectors."
+        },
+        "states": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/HurtStateOverride" },
+          "description": "Typed state overrides. Crouch overrides idle while grounded in the crouch gait."
+        },
+        "id": { "type": "string" },
+        "geometry": { "$ref": "#/$defs/CombatGeometry" }
+      },
+      "required": ["id", "geometry"]
+    },
+    "HurtStateOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "state": { "$ref": "#/$defs/HurtState" },
+        "enabled": { "type": "boolean" }
+      },
+      "required": ["state", "enabled"]
+    },
+    "HurtState": {
+      "oneOf": [
+        { "type": "string", "enum": ["crouch"] },
+        {
+          "type": "object",
+          "properties": {
+            "state": { "$ref": "#/$defs/State" }
+          },
+          "required": ["state"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "State": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "jumpsquat",
+        "air",
+        "attack",
+        "helpless",
+        "landing",
+        "shield",
+        "roll",
+        "spot",
+        "airdodge",
+        "hitstun",
+        "knockdown",
+        "getup",
+        "tech",
+        "ledge",
+        "climb",
+        "hold",
+        "throw",
+        "grabbed",
+        "shieldbreak",
+        "dizzy",
+        "buried",
+        "respawn",
+        "dead",
+        "out",
+        "win"
+      ]
+    },
+    "CombatGeometry": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "type": "string", "const": "circle" },
+            "center": { "$ref": "#/$defs/BoundPoint" },
+            "radius": { "type": "number", "format": "double" }
+          },
+          "required": ["kind", "center", "radius"]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "type": "string", "const": "capsule" },
+            "a": { "$ref": "#/$defs/BoundPoint" },
+            "b": { "$ref": "#/$defs/BoundPoint" },
+            "radius": { "type": "number", "format": "double" }
+          },
+          "required": ["kind", "a", "b", "radius"]
+        }
+      ]
+    },
+    "BoundPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "joint": { "type": ["string", "null"] },
+        "offset": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": ["offset"],
+      "description": "Feet-relative forward/up, or a named joint's rotated local space."
+    },
+    "Interactions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "grab": {
+          "anyOf": [
+            { "$ref": "#/$defs/GrabInteraction" },
+            { "type": "null" }
+          ]
+        },
+        "ledge": {
+          "anyOf": [
+            { "$ref": "#/$defs/LedgeInteraction" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "GrabInteraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "catchPoint": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "holdPoint": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "heldAnchor": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "LedgeInteraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "catchPoint": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "hangAnchor": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "pullIn": { "type": ["number", "null"], "format": "double" },
+        "climbDistance": { "type": ["number", "null"], "format": "double" },
+        "rollDistance": { "type": ["number", "null"], "format": "double" },
+        "attackDistance": { "type": ["number", "null"], "format": "double" }
+      }
     },
     "Ai": {
       "type": "object",
@@ -287,6 +487,11 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "hurtRegions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/HurtRegionWindow" },
+          "description": "Inclusive phase-tick activation overrides of named fighter hurt regions."
+        },
         "name": {
           "type": "string",
           "description": "Unique within the move. Transitions refer to it. `end`, `helpless` and `landing` are reserved."
@@ -405,6 +610,25 @@
       "required": ["name"],
       "description": "One step of a move.\n\nFrame convention: a phase's frame 0 is the tick it's entered (the move's first phase is entered on the tick\nthe move starts). Each later tick advances the phase frame by 1, runs that frame's `events`, then checks\n`transitions`. With `frames: N`, the phase ends on its frame N: the next phase's frame 0 is that same tick.\nA single-phase move with `frames: N` therefore matches the old \"last active frame + endLag\" total N."
     },
+    "HurtRegionWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "region": {
+          "type": "string",
+          "description": "Stable hurtRegions ID; deleting a referenced region is a validation error."
+        },
+        "enabled": { "type": "boolean" },
+        "from": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Inclusive current phase MoveState.t, independent of elapsed move time."
+        },
+        "to": { "type": "integer", "format": "uint32", "minimum": 0 }
+      },
+      "required": ["region", "enabled", "from", "to"]
+    },
     "Hitbox": {
       "type": "object",
       "additionalProperties": false,
@@ -492,6 +716,13 @@
             "maxItems": 4
           },
           "description": "Per-frame position/size `[frame, x, y, r]`. A frame without an entry uses the closest earlier entry, or\nx/y/r before the first entry. Omit for a box that stays put."
+        },
+        "geometry": {
+          "anyOf": [
+            { "$ref": "#/$defs/CombatGeometry" },
+            { "type": "null" }
+          ],
+          "description": "Explicit collision replaces static x/y/r; cannot combine with frames."
         }
       },
       "required": ["x", "y", "r", "damage", "bkb", "kbg", "angle"],
@@ -921,6 +1152,11 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "joints": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/JointPose" },
+          "description": "Local transform overrides for an optional named-joint rig. Missing components inherit from\n`from` / `stand`, then the rig's rest transforms. Does not alter combat geometry."
+        },
         "from": { "type": ["string", "null"] },
         "head": {
           "type": ["array", "null"],
@@ -1003,6 +1239,24 @@
         }
       },
       "description": "Joint positions in fighter-local space (x forward, y up, feet at the origin). A pose may be partial: missing\njoints come from `from` (another named pose), or from the `stand` pose."
+    },
+    "JointPose": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "translation": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Replaces the rest translation; it is not an additive offset."
+        },
+        "angle": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Replaces the rest angle. Keep angles unwrapped when animating through a full turn."
+        }
+      }
     },
     "AttachAnim": {
       "type": "object",
@@ -1553,6 +1807,63 @@
       ],
       "description": "Drawing style of the stick figure."
     },
+    "Rig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "joints": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/RigJoint" },
+          "description": "Declaration order is stable; parents may appear before or after their children."
+        },
+        "bones": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/RigBone" },
+          "description": "Stick strokes connecting resolved joint positions."
+        }
+      },
+      "required": ["joints"]
+    },
+    "RigJoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "description": "Unique stable id, used by poses and bindings." },
+        "parent": {
+          "type": ["string", "null"],
+          "description": "Omit for a joint relative to the fighter root. Multiple root joints are allowed."
+        },
+        "translation": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Rest translation in the parent's rotated coordinate system."
+        },
+        "angle": {
+          "type": "number",
+          "format": "double",
+          "description": "Rest rotation in degrees, counterclockwise, relative to the parent."
+        },
+        "shapes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Shape" },
+          "description": "Vector appearance in joint-local space, after local rotation."
+        }
+      },
+      "required": ["id", "translation"]
+    },
+    "RigBone": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "width": { "type": "number", "format": "double" },
+        "color": { "$ref": "#/$defs/Color" }
+      },
+      "required": ["from", "to", "width", "color"]
+    },
     "Anim": {
       "type": "object",
       "additionalProperties": false,
@@ -1736,6 +2047,70 @@
         "y2": { "type": "number", "format": "double" }
       },
       "description": "Axis-aligned box in fighter-local space (x forward, y up from the feet)."
+    },
+    "InteractionsPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "grab": {
+          "anyOf": [
+            { "$ref": "#/$defs/GrabInteractionPartial" },
+            { "type": "null" }
+          ]
+        },
+        "ledge": {
+          "anyOf": [
+            { "$ref": "#/$defs/LedgeInteractionPartial" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "GrabInteractionPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "catchPoint": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "holdPoint": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "heldAnchor": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "LedgeInteractionPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "catchPoint": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "hangAnchor": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "pullIn": { "type": ["number", "null"], "format": "double" },
+        "climbDistance": { "type": ["number", "null"], "format": "double" },
+        "rollDistance": { "type": ["number", "null"], "format": "double" },
+        "attackDistance": { "type": ["number", "null"], "format": "double" }
+      }
     },
     "AiPartial": {
       "type": "object",
@@ -1948,6 +2323,13 @@
             "maxItems": 4
           },
           "description": "Per-frame position/size `[frame, x, y, r]`. A frame without an entry uses the closest earlier entry, or\nx/y/r before the first entry. Omit for a box that stays put."
+        },
+        "geometry": {
+          "anyOf": [
+            { "$ref": "#/$defs/CombatGeometryPartial" },
+            { "type": "null" }
+          ],
+          "description": "Explicit collision replaces static x/y/r; cannot combine with frames."
         }
       },
       "description": "A hit circle. In a move phase, `start`/`end` are inclusive phase frames. For throws, projectiles and other\nhits that aren't frame-windowed they are ignored. When two boxes overlap a victim, the first listed wins."
@@ -2011,6 +2393,43 @@
       "type": "string",
       "enum": ["both", "ground", "air"],
       "description": "Which victim positions a hitbox can hit."
+    },
+    "CombatGeometryPartial": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "type": "string", "const": "circle" },
+            "center": { "$ref": "#/$defs/BoundPointPartial" },
+            "radius": { "type": "number", "format": "double" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "type": "string", "const": "capsule" },
+            "a": { "$ref": "#/$defs/BoundPointPartial" },
+            "b": { "$ref": "#/$defs/BoundPointPartial" },
+            "radius": { "type": "number", "format": "double" }
+          }
+        }
+      ]
+    },
+    "BoundPointPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "joint": { "type": ["string", "null"] },
+        "offset": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "description": "Feet-relative forward/up, or a named joint's rotated local space."
     },
     "ProjectilePartial": {
       "type": "object",
@@ -2265,10 +2684,31 @@
       "type": "string",
       "pattern": "^(#[0-9a-fA-F]{6}|player|playerDark|playerLight)$"
     },
+    "RigPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "joints": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/RigJoint" },
+          "description": "Declaration order is stable; parents may appear before or after their children."
+        },
+        "bones": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/RigBone" },
+          "description": "Stick strokes connecting resolved joint positions."
+        }
+      }
+    },
     "PosePartial": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "joints": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/JointPosePartial" },
+          "description": "Local transform overrides for an optional named-joint rig. Missing components inherit from\n`from` / `stand`, then the rig's rest transforms. Does not alter combat geometry."
+        },
         "from": { "type": ["string", "null"] },
         "head": {
           "type": ["array", "null"],
@@ -2351,6 +2791,24 @@
         }
       },
       "description": "Joint positions in fighter-local space (x forward, y up, feet at the origin). A pose may be partial: missing\njoints come from `from` (another named pose), or from the `stand` pose."
+    },
+    "JointPosePartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "translation": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Replaces the rest translation; it is not an additive offset."
+        },
+        "angle": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Replaces the rest angle. Keep angles unwrapped when animating through a full turn."
+        }
+      }
     },
     "AnimPartial": {
       "type": "object",

@@ -64,7 +64,7 @@ pub enum Fx {
     Part { x: f64, y: f64, vx: f64, vy: f64, life: f64, color: Color, player: usize, size: f64, gravity: f64 },
     Shake { k: f64 },
 }
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize, schemars::JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum State {
     #[default]

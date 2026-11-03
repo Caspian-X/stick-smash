@@ -240,7 +240,15 @@ fn batting_resets_fuse_and_support_but_preserves_arming_age() {
     w.projs[0].life = 50;
     w.projs[0].surf = Some(0);
     let p = &w.projs[0];
-    let bx = sim::combat::ActiveBox { hit: d.fighters[data].moves.jab.phases[0].hitboxes[0].clone(), x: p.x, y: p.y };
+    let bx = sim::combat::ActiveBox {
+        hit: d.fighters[data].moves.jab.phases[0].hitboxes[0].clone(),
+        x: p.x,
+        y: p.y,
+        shape: sim::geometry::Shape::Circle {
+            center: [p.x, p.y],
+            radius: d.fighters[data].moves.jab.phases[0].hitboxes[0].r,
+        },
+    };
     sim::projectiles::bat(&mut w, &d, 0, &[bx]);
     assert_eq!(w.projs[0].age, 17);
     assert_eq!(w.projs[0].life, 120);

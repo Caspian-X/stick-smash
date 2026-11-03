@@ -99,13 +99,13 @@ pub fn step(w: &mut World, d: &GameData, pi: usize) {
                 .mov
                 .as_ref()
                 .map_or((w.frame.saturating_sub(u64::from(fighter.t)), 0), |m| (m.started, m.phase));
-            for b in combat::active_boxes(d, fighter) {
+            for b in combat::active_boxes_at(d, fighter, w.frame) {
                 if b.hit.kind == crate::data::HitType::Windbox
                     || b.hit.kind == crate::data::HitType::Grab
                     || p.damage_hits.iter().any(|&(v, attack, part, age)| {
                         v == i && attack == start && part == phase && p.age - age < b.hit.rehit.unwrap_or(u32::MAX)
                     })
-                    || !combat::circ_rect(b.x, b.y, b.hit.r, rect)
+                    || !b.shape.overlaps_rect(rect)
                 {
                     continue;
                 }
@@ -144,7 +144,7 @@ pub fn step(w: &mut World, d: &GameData, pi: usize) {
                     p.hits.clear();
                     break;
                 }
-                if !combat::circ_rect(x, y, r, combat::hurt(d, &w.fighters[v]))
+                if !combat::circle_hurt(d, &w.fighters[v], w.frame, x, y, r)
                     || !w.fighters[v].hittable()
                     || p.hits.iter().any(|&(i, age)| i == v && p.age - age < b.rehit.unwrap_or(u32::MAX))
                 {

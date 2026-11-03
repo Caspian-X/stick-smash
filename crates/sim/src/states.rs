@@ -449,8 +449,9 @@ fn st_ledge(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent,
     let ex = if side < 0. { block.left } else { block.right };
     f.vx = 0.;
     f.vy = 0.;
-    f.x = ex + side * s.ledge.hang_x;
-    f.y = block.top + s.ledge.hang_y;
+    let root = crate::interactions::ledge_hang_root(&d.fighters[f.data], s, ex, block.top, side);
+    f.x = root[0];
+    f.y = root[1];
     if f.t < g.min_hang {
         return;
     }
@@ -498,13 +499,24 @@ fn st_climb(w: &mut World, d: &GameData, f: &mut Fighter) {
     let block = &s.blocks[f.sd.ledge_block];
     let ex = if side < 0. { block.left } else { block.right };
     let fx = -side;
+    let interaction = crate::interactions::ledge(&d.fighters[f.data]);
+    let pull_in = interaction.and_then(|l| l.pull_in).unwrap_or(r.ledge_pull_in);
+    let dist = interaction
+        .and_then(|l| match kind.as_str() {
+            "roll" => l.roll_distance,
+            "attack" => l.attack_distance,
+            "climb" => l.climb_distance,
+            _ => None,
+        })
+        .unwrap_or(c.dist);
     f.vx = 0.;
     f.vy = 0.;
     if f.t <= c.a {
         let k = ease(f64::from(f.t) / f64::from(c.a));
-        let x0 = ex + side * s.ledge.hang_x;
-        f.x = x0 + (ex + fx * r.ledge_pull_in - x0) * k;
-        let y0 = block.top + s.ledge.hang_y;
+        let root = crate::interactions::ledge_hang_root(&d.fighters[f.data], s, ex, block.top, side);
+        let x0 = root[0];
+        f.x = x0 + (ex + fx * pull_in - x0) * k;
+        let y0 = root[1];
         f.y = y0 + (block.top - y0) * k;
         f.ground = false;
         f.surf = None;
@@ -525,9 +537,7 @@ fn st_climb(w: &mut World, d: &GameData, f: &mut Fighter) {
     f.used_air_moves.clear();
     f.y = block.top;
     if f.t <= c.b {
-        f.x = ex
-            + fx * r.ledge_pull_in
-            + fx * (c.dist - r.ledge_pull_in) * ease(f64::from(f.t - c.a) / f64::from(c.b - c.a));
+        f.x = ex + fx * pull_in + fx * (dist - pull_in) * ease(f64::from(f.t - c.a) / f64::from(c.b - c.a));
     }
     if kind == "attack" && f.t == g.attack_active[0] {
         w.sfx("swing");
@@ -551,10 +561,7 @@ fn st_hold(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, 
         return;
     };
     let vic = &mut w.fighters[v];
-    vic.x = f.x + f.face * d.global.sim.grab_offset;
-    vic.y = f.y;
-    vic.face = -f.face;
-    vic.ground = f.ground;
+    crate::interactions::place_held(d, f, vic);
     f.sd.timer -= 1.;
     if f.sd.pt > 0 {
         f.sd.pt -= 1;
@@ -656,6 +663,26 @@ fn st_throw(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) {
                 vic.x = f.x + f.face * r.throw_down_offset;
                 vic.y = f.y;
             }
+        }
+        if crate::interactions::grab_overridden(d, f, vic) {
+            let h = crate::interactions::hold_point(d, f);
+            let target = match k.as_str() {
+                "f" => [h[0] + p * r.throw_forward, h[1]],
+                "b" => {
+                    let a = p * std::f64::consts::PI;
+                    [h[0] * libm::cos(a), h[1] + r.throw_back_height * libm::sin(a)]
+                }
+                "u" => [h[0] * (1. - p), h[1] + r.throw_up_height * p],
+                _ => [r.throw_down_offset, h[1]],
+            };
+            let root = crate::interactions::inverse_anchor(
+                crate::interactions::forward_point(f, target),
+                vic.face,
+                crate::interactions::held_anchor(d, vic),
+            );
+            vic.x = root[0];
+            vic.y = root[1];
+            vic.surf = None;
         }
         for hit in tt.ticks.iter().filter(|h| h.at == f.t) {
             combat::credit_damage(w, d, i, v, hit.damage);

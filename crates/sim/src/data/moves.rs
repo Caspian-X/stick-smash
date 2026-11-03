@@ -142,6 +142,9 @@ pub struct Move {
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Phase {
+    /// Inclusive phase-tick activation overrides of named fighter hurt regions.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub hurt_regions: Vec<super::hitbox::HurtRegionWindow>,
     /// Unique within the move. Transitions refer to it. `end`, `helpless` and `landing` are reserved.
     pub name: String,
     /// Phase length (see the frame convention). Omit for a phase that loops until a transition fires.

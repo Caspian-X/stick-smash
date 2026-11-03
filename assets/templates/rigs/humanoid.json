@@ -1,0 +1,35 @@
+{
+  "joints": [
+    { "id": "hip", "translation": [0, 32] },
+    { "id": "shoulder", "translation": [0, 22], "parent": "hip" },
+    {
+      "id": "head",
+      "translation": [0, 13],
+      "parent": "shoulder",
+      "shapes": [
+        { "shape": "circle", "at": [0, 0], "r": 9, "fill": "#102034", "stroke": "player", "width": 3 },
+        { "shape": "rect", "x": 2, "y": 0, "w": 5, "h": 3, "fill": "player" }
+      ]
+    },
+    { "id": "farElbow", "translation": [-14, -11], "parent": "shoulder" },
+    { "id": "farHand", "translation": [-8, -12], "parent": "farElbow" },
+    { "id": "farKnee", "translation": [-9, -16], "parent": "hip" },
+    { "id": "farFoot", "translation": [-4, -16], "parent": "farKnee" },
+    { "id": "nearElbow", "translation": [14, -11], "parent": "shoulder" },
+    { "id": "nearHand", "translation": [8, -12], "parent": "nearElbow" },
+    { "id": "nearKnee", "translation": [9, -16], "parent": "hip" },
+    { "id": "nearFoot", "translation": [4, -16], "parent": "nearKnee" }
+  ],
+  "bones": [
+    { "from": "hip", "to": "shoulder", "width": 6, "color": "player" },
+    { "from": "shoulder", "to": "head", "width": 5, "color": "player" },
+    { "from": "shoulder", "to": "farElbow", "width": 5, "color": "playerDark" },
+    { "from": "farElbow", "to": "farHand", "width": 5, "color": "playerDark" },
+    { "from": "hip", "to": "farKnee", "width": 5, "color": "playerDark" },
+    { "from": "farKnee", "to": "farFoot", "width": 5, "color": "playerDark" },
+    { "from": "shoulder", "to": "nearElbow", "width": 5, "color": "player" },
+    { "from": "nearElbow", "to": "nearHand", "width": 5, "color": "player" },
+    { "from": "hip", "to": "nearKnee", "width": 5, "color": "player" },
+    { "from": "nearKnee", "to": "nearFoot", "width": 5, "color": "player" }
+  ]
+}

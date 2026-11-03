@@ -10,6 +10,7 @@
       "$ref": "#/$defs/Gait",
       "description": "Walk / dash / run on the ground. Off = the reference single accelerate-to-run gait.",
       "default": {
+        "poseRunSpeed": 0.8,
         "enabled": false,
         "walkSpeed": 0.0,
         "walkAccel": 0.0,
@@ -267,6 +268,12 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "poseRunSpeed": {
+          "type": "number",
+          "format": "double",
+          "description": "Speed selecting the run animation, including combat joint sampling.",
+          "default": 0.8
+        },
         "enabled": { "type": "boolean", "default": false },
         "walkSpeed": {
           "type": "number",
@@ -1113,6 +1120,13 @@
             "maxItems": 4
           },
           "description": "Per-frame position/size `[frame, x, y, r]`. A frame without an entry uses the closest earlier entry, or\nx/y/r before the first entry. Omit for a box that stays put."
+        },
+        "geometry": {
+          "anyOf": [
+            { "$ref": "#/$defs/CombatGeometry" },
+            { "type": "null" }
+          ],
+          "description": "Explicit collision replaces static x/y/r; cannot combine with frames."
         }
       },
       "required": ["x", "y", "r", "damage", "bkb", "kbg", "angle"],
@@ -1177,6 +1191,46 @@
       "type": "string",
       "enum": ["both", "ground", "air"],
       "description": "Which victim positions a hitbox can hit."
+    },
+    "CombatGeometry": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "type": "string", "const": "circle" },
+            "center": { "$ref": "#/$defs/BoundPoint" },
+            "radius": { "type": "number", "format": "double" }
+          },
+          "required": ["kind", "center", "radius"]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "type": "string", "const": "capsule" },
+            "a": { "$ref": "#/$defs/BoundPoint" },
+            "b": { "$ref": "#/$defs/BoundPoint" },
+            "radius": { "type": "number", "format": "double" }
+          },
+          "required": ["kind", "a", "b", "radius"]
+        }
+      ]
+    },
+    "BoundPoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "joint": { "type": ["string", "null"] },
+        "offset": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": ["offset"],
+      "description": "Feet-relative forward/up, or a named joint's rotated local space."
     },
     "Ledge": {
       "type": "object",

@@ -177,6 +177,7 @@
     "jumpAerials": true
   },
   "gait": {
+    "poseRunSpeed": 0.8,
     "enabled": true,
     "walkSpeed": 0.55,
     "walkAccel": 0.7,

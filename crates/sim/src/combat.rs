@@ -7,6 +7,7 @@ use crate::{
 #[derive(Clone, Debug)]
 pub struct ActiveBox {
     pub hit: Hitbox,
+    pub shape: crate::geometry::Shape,
     pub x: f64,
     pub y: f64,
 }
@@ -21,7 +22,7 @@ pub fn circ_rect(x: f64, y: f64, r: f64, b: Rect) -> bool {
     let dy = y - y.clamp(b.y1, b.y2);
     dx * dx + dy * dy <= r * r
 }
-pub fn active_boxes(d: &GameData, f: &Fighter) -> Vec<ActiveBox> {
+pub fn active_boxes_at(d: &GameData, f: &Fighter, frame: u64) -> Vec<ActiveBox> {
     let g = &d.global;
     let (boxes, t, cd, charge) = if f.state == State::Attack
         && let Some(m) = &f.mov
@@ -59,7 +60,14 @@ pub fn active_boxes(d: &GameData, f: &Fighter) -> Vec<ActiveBox> {
             if g.knockback.ultimate.is_none() {
                 hit.bkb *= 1. + (mult - 1.) * g.knockback.charge_kb_ratio;
             }
-            ActiveBox { hit, x: f.x + x * f.face, y: f.y - y }
+            let shape = b
+                .geometry
+                .as_ref()
+                .map_or(crate::geometry::Shape::Circle { center: [f.x + x * f.face, f.y - y], radius: r }, |g| {
+                    resolve_geometry(d, f, frame, g)
+                });
+            let [x, y] = shape.center();
+            ActiveBox { hit, shape, x, y }
         })
         .collect()
 }
@@ -290,9 +298,12 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
         return;
     }
     if b.kind == HitType::Autolink {
-        let h = d.fighters[vic.data].hurtboxes.default;
-        let cx = vic.x + (h.x1 + h.x2) / 2. * vic.face;
-        let cy = vic.y - (h.y1 + h.y2) / 2.;
+        let center = d.fighters[vic.data].combat_center.unwrap_or_else(|| {
+            let h = d.fighters[vic.data].hurtboxes.default;
+            [(h.x1 + h.x2) / 2., (h.y1 + h.y2) / 2.]
+        });
+        let cx = vic.x + center[0] * vic.face;
+        let cy = vic.y - center[1];
         vic.vx = (px - cx) * ht.autolink.pull + avx * ht.autolink.momentum;
         vic.vy = (py - cy) * ht.autolink.pull + avy * ht.autolink.momentum;
     } else {
@@ -461,7 +472,8 @@ pub fn start_hold(w: &mut World, d: &GameData, a: usize, v: usize) {
     f.sd.victim = Some(v);
     f.sd.timer = timer;
     f.vx = 0.;
-    let (x, y, face, ground) = (f.x, f.y, f.face, f.ground);
+    let holder = f.clone();
+    let face = f.face;
     let v = &mut w.fighters[v];
     v.set_state(State::Grabbed);
     v.sd.by = Some(a);
@@ -470,9 +482,7 @@ pub fn start_hold(w: &mut World, d: &GameData, a: usize, v: usize) {
     v.face = -face;
     v.hitstun = 0;
     v.tumble = false;
-    v.y = y;
-    v.x = x + face * d.global.sim.grab_offset;
-    v.ground = ground;
+    crate::interactions::place_held(d, &holder, v);
     w.sfx("grab");
 }
 pub fn counter(w: &mut World, d: &GameData, v: usize, a: Option<usize>, damage: f64) {
@@ -510,7 +520,7 @@ pub fn hit_pass(w: &mut World, d: &GameData) {
         if w.fighters[a].lag > 0 || !matches!(w.fighters[a].state, State::Attack | State::Getup | State::Climb) {
             continue;
         }
-        let bx = active_boxes(d, &w.fighters[a]);
+        let bx = active_boxes_at(d, &w.fighters[a], w.frame);
         if bx.is_empty() {
             continue;
         }
@@ -519,13 +529,12 @@ pub fn hit_pass(w: &mut World, d: &GameData) {
             if !w.opponents(a, v) || !w.fighters[v].hittable() {
                 continue;
             }
-            let bx = active_boxes(d, &w.fighters[a]);
+            let bx = active_boxes_at(d, &w.fighters[a], w.frame);
             let t = w.fighters[a].mov.as_ref().map_or(w.fighters[a].t, |m| m.elapsed);
-            let hb = hurt(d, &w.fighters[v]);
             let mut wind = None;
             let mut hit = false;
             for b in &bx {
-                if !b.hit.targets(w.fighters[v].ground) || !circ_rect(b.x, b.y, b.hit.r, hb) {
+                if !b.hit.targets(w.fighters[v].ground) || !overlaps_hurt(d, &w.fighters[v], w.frame, b.shape) {
                     continue;
                 }
                 if b.hit.kind == HitType::Windbox {
@@ -543,7 +552,8 @@ pub fn hit_pass(w: &mut World, d: &GameData) {
                 let sgn = direction(&w.fighters[a], w.fighters[v].x, b.hit.dir);
                 if b.hit.kind == HitType::Grab {
                     if !matches!(w.fighters[v].state, State::Ledge | State::Climb | State::Knockdown | State::Buried)
-                        && (w.fighters[v].y - w.fighters[a].y).abs() < d.global.grab.height_tolerance
+                        && crate::interactions::grab_vertical_distance(d, &w.fighters[a], &w.fighters[v])
+                            < d.global.grab.height_tolerance
                     {
                         start_hold(w, d, a, v);
                     }
@@ -592,4 +602,93 @@ pub fn hit_pass(w: &mut World, d: &GameData) {
             }
         }
     }
+}
+
+/// Invalid unvalidated bindings fail loudly rather than silently dropping contacts.
+pub fn resolve_geometry(
+    d: &GameData,
+    f: &Fighter,
+    frame: u64,
+    g: &crate::data::hitbox::CombatGeometry,
+) -> crate::geometry::Shape {
+    use crate::data::hitbox::{BoundPoint, CombatGeometry};
+    let rig = if g.points().iter().any(|p| p.joint.is_some()) {
+        Some(
+            crate::pose::fighter_rig_transform(d, f, frame)
+                .expect("validated combat rig")
+                .expect("joint binding requires rig"),
+        )
+    } else {
+        None
+    };
+    let point = |p: &BoundPoint| {
+        let out = match &p.joint {
+            Some(id) => rig.as_ref().unwrap().joint_to_world(id, p.offset).expect("validated combat joint"),
+            None => [f.x + p.offset[0] * f.face, f.y - p.offset[1]],
+        };
+        assert!(out.into_iter().all(f64::is_finite), "nonfinite resolved combat point");
+        out
+    };
+    match g {
+        CombatGeometry::Circle { center, radius } => {
+            crate::geometry::Shape::Circle { center: point(center), radius: *radius }
+        }
+        CombatGeometry::Capsule { a, b, radius } => {
+            crate::geometry::Shape::Capsule { a: point(a), b: point(b), radius: *radius }
+        }
+    }
+}
+/// Activation is independent of global hittability; callers retain invulnerability/state gates.
+pub fn region_enabled(d: &GameData, f: &Fighter, region: &crate::data::hitbox::HurtRegion) -> bool {
+    use crate::data::hitbox::HurtState;
+    let mut enabled = region.enabled;
+    if let Some(value) = region.states.iter().find(|v| v.state == HurtState::State(f.state)) {
+        enabled = value.enabled;
+    }
+    if f.state == State::Idle
+        && f.ground
+        && f.gait == crate::world::Gait::Crouch
+        && let Some(value) = region.states.iter().find(|v| v.state == HurtState::Crouch)
+    {
+        enabled = value.enabled;
+    }
+    if f.state == State::Attack
+        && let Some(m) = &f.mov
+        && let Some(window) =
+            moves::phase(d, f).hurt_regions.iter().find(|v| v.region == region.id && m.t >= v.from && m.t <= v.to)
+    {
+        enabled = window.enabled;
+    }
+    enabled
+}
+pub fn hurt_shapes(d: &GameData, f: &Fighter, frame: u64) -> Option<Vec<crate::geometry::Shape>> {
+    d.fighters[f.data].hurt_regions.as_ref().map(|regions| {
+        regions.iter().filter(|r| region_enabled(d, f, r)).map(|r| resolve_geometry(d, f, frame, &r.geometry)).collect()
+    })
+}
+pub fn overlaps_hurt(d: &GameData, f: &Fighter, frame: u64, shape: crate::geometry::Shape) -> bool {
+    hurt_shapes(d, f, frame).map_or_else(
+        || match shape {
+            crate::geometry::Shape::Circle { center, radius } => circ_rect(center[0], center[1], radius, hurt(d, f)),
+            _ => shape.overlaps_rect(hurt(d, f)),
+        },
+        |regions| regions.iter().any(|r| shape.overlaps(*r)),
+    )
+}
+pub fn circle_hurt(d: &GameData, f: &Fighter, frame: u64, x: f64, y: f64, radius: f64) -> bool {
+    overlaps_hurt(d, f, frame, crate::geometry::Shape::Circle { center: [x, y], radius })
+}
+pub fn rect_hurt(d: &GameData, f: &Fighter, frame: u64, rect: Rect) -> bool {
+    hurt_shapes(d, f, frame).map_or_else(
+        || {
+            let h = hurt(d, f);
+            h.x2 >= rect.x1 && h.x1 <= rect.x2 && h.y2 >= rect.y1 && h.y1 <= rect.y2
+        },
+        |regions| regions.iter().any(|r| r.overlaps_rect(rect)),
+    )
+}
+
+/// Convenience sampling at tick zero. Use active_boxes_at for live collision and overlays.
+pub fn active_boxes(d: &GameData, f: &Fighter) -> Vec<ActiveBox> {
+    active_boxes_at(d, f, 0)
 }

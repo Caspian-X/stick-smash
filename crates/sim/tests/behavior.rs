@@ -510,7 +510,12 @@ fn bat_without_bounce_recovers_cooldown_and_can_be_batted_again() {
     w.projs[0].x = 650.;
     w.projs[0].y = 100.;
     let hit = d.fighters[di].moves.jab.phases[0].hitboxes[0].clone();
-    let boxes = [combat::ActiveBox { hit, x: 650., y: 100. }];
+    let boxes = [combat::ActiveBox {
+        shape: sim::geometry::Shape::Circle { center: [650., 100.], radius: hit.r },
+        hit,
+        x: 650.,
+        y: 100.,
+    }];
     sim::projectiles::bat(&mut w, &d, 0, &boxes);
     assert_eq!(w.projs[0].cooldown, 3);
     for _ in 0..3 {

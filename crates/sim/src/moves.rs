@@ -447,13 +447,19 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
                     Trigger::TargetNear => p.detection.is_some_and(|r| {
                         let (x1, x2) = (f.x + r.x1 * f.face, f.x + r.x2 * f.face);
                         w.fighters.iter().enumerate().any(|(v, other)| {
-                            let h = crate::combat::hurt(d, other);
                             w.opponents(i, v)
                                 && other.hittable()
-                                && h.x2 >= x1.min(x2)
-                                && h.x1 <= x1.max(x2)
-                                && h.y2 >= f.y - r.y2
-                                && h.y1 <= f.y - r.y1
+                                && crate::combat::rect_hurt(
+                                    d,
+                                    other,
+                                    w.frame,
+                                    crate::data::Rect {
+                                        x1: x1.min(x2),
+                                        x2: x1.max(x2),
+                                        y1: f.y - r.y2,
+                                        y2: f.y - r.y1,
+                                    },
+                                )
                         })
                     }),
                     Trigger::ShieldPress => inp.shield_p,

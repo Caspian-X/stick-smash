@@ -12,6 +12,10 @@ use super::moves::Cond;
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Pose {
+    /// Local transform overrides for an optional named-joint rig. Missing components inherit from
+    /// `from` / `stand`, then the rig's rest transforms. Does not alter combat geometry.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub joints: super::rig::RigPose,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub from: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

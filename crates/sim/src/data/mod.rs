@@ -11,6 +11,7 @@ pub mod json;
 pub mod load;
 pub mod moves;
 pub mod render;
+pub mod rig;
 pub mod schema;
 pub mod stage;
 pub mod visual;
