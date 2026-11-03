@@ -33,7 +33,11 @@ pub(crate) fn timeline(ui: &mut egui::Ui, ed: &mut Editor) {
         let mut job = egui::text::LayoutJob::default();
         job.append(&format!("Pose {name}  "), 0., egui::TextFormat::simple(FontId::new(17., style::label()), STAR));
         job.append(
-            "is a single still frame: drag its joints in the viewport, or open a move and key it with K.",
+            if ed.ws.docs[&ed.cur].item.rig.is_some() {
+                "is a single still frame: edit named joint transforms in the inspector, or key a move with K."
+            } else {
+                "is a single still frame: drag its joints in the viewport, or open a move and key it with K."
+            },
             0.,
             egui::TextFormat::simple(style::text(13.5), DIM),
         );

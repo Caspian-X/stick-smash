@@ -22,6 +22,7 @@ pub enum Subject {
 /// Fighter-wide data edited through schema forms.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Section {
+    Rig,
     Style,
     Attachments,
     Projectiles,
@@ -31,10 +32,18 @@ pub enum Section {
 }
 
 impl Section {
-    pub const ALL: [Section; 6] =
-        [Section::Style, Section::Attachments, Section::Projectiles, Section::Effects, Section::Anims, Section::Ai];
+    pub const ALL: [Section; 7] = [
+        Section::Rig,
+        Section::Style,
+        Section::Attachments,
+        Section::Projectiles,
+        Section::Effects,
+        Section::Anims,
+        Section::Ai,
+    ];
     pub fn name(self) -> &'static str {
         match self {
+            Section::Rig => "Rig",
             Section::Style => "Style",
             Section::Attachments => "Attachments",
             Section::Projectiles => "Projectiles",
@@ -53,6 +62,7 @@ impl crate::section::Section for Section {
     const ALL: &'static [Self] = &Self::ALL;
     fn keys(self) -> &'static [&'static str] {
         match self {
+            Self::Rig => &["rig"],
             Self::Style => &["style"],
             Self::Attachments => &["attachments"],
             Self::Projectiles => &["projectiles"],
@@ -235,6 +245,12 @@ pub fn simulate(data: Arc<GameData>, fighter: &str, subj: &Subject, setup: &Setu
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rig_errors_navigate_to_the_rig_section() {
+        assert_eq!(crate::section::of_path::<Section>("rig.joints[1].parent"), Some(Section::Rig));
+        assert_eq!(Section::Rig.key(), "rig");
+    }
 
     #[test]
     fn every_move_and_throw_simulates_and_ends() {

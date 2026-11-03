@@ -49,7 +49,16 @@ pub(crate) fn sync_scene(ed: &mut Editor, scene: &mut render::Scene, dt: f32) {
     }
     crate::pane::sync_scene(scene, ed.pane.cam, &ed.port);
     scene.pose_override = match &ed.subject {
+        Subject::Data(crate::preview::Section::Rig) => Some((0, Default::default())),
         Subject::Pose(n) => ed.ws.docs.get(&ed.cur).and_then(|d| d.item.poses.get(n).map(|p| (0, resolve(&d.item, p)))),
+        _ => None,
+    };
+    scene.rig_pose_override = match &ed.subject {
+        Subject::Data(crate::preview::Section::Rig) => Some((0, Default::default())),
+        Subject::Pose(n) => ed.ws.docs.get(&ed.cur).and_then(|d| {
+            d.item.rig.as_ref()?;
+            d.item.poses.get(n).map(|p| (0, sim::pose::resolve_rig_pose(&d.item, p)))
+        }),
         _ => None,
     };
     if ed.frame != ed.followed {
@@ -85,7 +94,11 @@ pub(crate) fn overlay(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::
     let gamma = run.data.global.render.alpha_gamma;
     scene.overlay.clear(ed.pane.cam.zoom * ppp, gamma);
     let Some(crate::ui::Playhead { fighter: f, .. }) = at_playhead(ed) else { return };
-    if ed.onion && !ed.playing && matches!(ed.subject, Subject::Move(_) | Subject::Throw(_)) {
+    if ed.onion
+        && !ed.playing
+        && ed.ws.docs[&ed.cur].item.rig.is_none()
+        && matches!(ed.subject, Subject::Move(_) | Subject::Throw(_))
+    {
         onion(ed, &mut scene.overlay, px);
     }
     let fd = &ed.ws.docs[&ed.cur].item;
@@ -109,12 +122,40 @@ pub(crate) fn overlay(ctx: &egui::Context, ed: &mut Editor, scene: &mut render::
         sel: ed.hitbox,
         hover: ed.pane.hover,
         joints: &joints,
-        show_hurt: ed.show_hurt,
+        show_hurt: ed.show_hurt && fd.hurt_regions.is_none(),
         show_inactive: ed.show_inactive,
         trail: if trail.len() > 1 { &trail } else { &[] },
         counter,
     };
     view::draw(&mut scene.overlay, &o, px);
+    let frame = run.frames[ed.frame].frame;
+    if ed.show_hurt
+        && let Some(regions) = sim::combat::hurt_shapes(&run.data, &f, frame)
+    {
+        for shape in regions {
+            render::debug::combat_shape(&mut scene.overlay, shape, 1.5 * px, Rgba::hex(0xffee55, 0.9));
+        }
+    }
+    for b in sim::combat::active_boxes_at(&run.data, &f, frame).into_iter().filter(|b| b.hit.geometry.is_some()) {
+        render::debug::combat_shape(
+            &mut scene.overlay,
+            b.shape,
+            2. * px,
+            Rgba::hex(render::debug::hit_type_color(b.hit.kind), 1.),
+        );
+    }
+    if let Some((_, resolved, sk)) = named(ed) {
+        for joint in &fd.rig.as_ref().unwrap().joints {
+            let Some(t) = resolved.get(&joint.id) else { continue };
+            let p = view::joint_to_stage(&f, &sk, t.translation);
+            if let Some(parent) = joint.parent.as_ref().and_then(|id| resolved.get(id)) {
+                scene.overlay.line(view::joint_to_stage(&f, &sk, parent.translation), p, px, Rgba::hex(0xaabbee, 0.5));
+            }
+            if ed.rig_edit.selected.as_ref() == Some(&joint.id) {
+                scene.overlay.stroke_circle(p, 10. * px, 2. * px, Rgba::hex(0xffcc66, 1.));
+            }
+        }
+    }
 }
 
 /// Ghost stick figures of the frames around the playhead (earlier ones warm, later ones cool).
@@ -141,8 +182,25 @@ fn onion(ed: &Editor, cv: &mut render::canvas::Canvas, px: f64) {
     }
 }
 
+fn named(ed: &Editor) -> Option<(Option<String>, sim::rig::ResolvedRig, render::pose::Skel)> {
+    let fd = &ed.ws.docs.get(&ed.cur)?.item;
+    let rig = fd.rig.as_ref()?;
+    let (name, pose, sk) = match &ed.subject {
+        Subject::Data(crate::preview::Section::Rig) => (None, Default::default(), Default::default()),
+        Subject::Pose(n) => {
+            let p = fd.poses.get(n)?;
+            (Some(n.clone()), sim::pose::resolve_rig_pose(fd, p), resolve(fd, p))
+        }
+        _ => return None,
+    };
+    Some((name, sim::rig::resolve(rig, &pose).ok()?, sk))
+}
+
 fn joint_points(ed: &Editor, f: &Fighter) -> Vec<[f64; 2]> {
-    if ed.playing {
+    if let Some((_, resolved, sk)) = named(ed) {
+        return resolved.joints.iter().map(|j| view::joint_to_stage(f, &sk, j.transform.translation)).collect();
+    }
+    if ed.playing || ed.ws.docs[&ed.cur].item.rig.is_some() {
         return vec![];
     }
     match pose_target(ed) {
@@ -166,11 +224,12 @@ pub(crate) fn viewport(ui: &mut egui::Ui, ed: &mut Editor) {
             right = right.max(f.x + 40.);
             top = top.min(f.y - 150.);
             bottom = bottom.max(f.y + 20.);
-            for b in sim::combat::active_boxes(&run.data, f) {
-                left = left.min(b.x - b.hit.r - 20.);
-                right = right.max(b.x + b.hit.r + 20.);
-                top = top.min(b.y - b.hit.r - 45.);
-                bottom = bottom.max(b.y + b.hit.r + 20.);
+            for b in sim::combat::active_boxes_at(&run.data, f, w.frame) {
+                let bounds = b.shape.bounds();
+                left = left.min(bounds.x1 - 20.);
+                right = right.max(bounds.x2 + 20.);
+                top = top.min(bounds.y1 - 45.);
+                bottom = bottom.max(bounds.y2 + 20.);
             }
             for p in w.projs.iter().filter(|p| p.owner == 0) {
                 let mut radius = p.r;
@@ -189,8 +248,20 @@ pub(crate) fn viewport(ui: &mut egui::Ui, ed: &mut Editor) {
             .clamp((f64::from(rect.height()) / (bottom - top)).min(f64::from(rect.width()) / (right - left)));
         ed.pane.cam.center = [(left + right) / 2., (top + bottom) / 2.];
     }
-    crate::pane::interact(ui, ed, FighterInteraction { boxes: playhead_boxes(ed) });
+    let response = crate::pane::interact(ui, ed, FighterInteraction { boxes: playhead_boxes(ed) });
     chrome(ui, ed, rect);
+    if ed.rig_edit.add
+        && matches!(ed.subject, Subject::Data(crate::preview::Section::Rig))
+        && response.clicked()
+        && let Some(p) = response.interact_pointer_pos()
+        && let Some(ph) = at_playhead(ed)
+    {
+        let m = ed.pane.cam.to_stage(&ed.port, [f64::from(p.x), f64::from(p.y)]);
+        let p = view::stage_to_joint(&ph.fighter, &Default::default(), m);
+        let parent = ed.rig_edit.selected.clone();
+        ed.rig_edit.selected = crate::rig_ed::add(ed.fighter(), parent, p);
+        ed.rig_edit.add = false;
+    }
 }
 
 struct FighterInteraction {
@@ -217,6 +288,15 @@ impl crate::pane::Interaction for FighterInteraction {
         view::hit_test(&f, &b, &shown, ed.hitbox, &joints, m, px)
     }
     fn start(&self, ed: &mut Editor, grab: [f64; 2]) -> Option<Drag> {
+        if let Some((pose, resolved, skel)) = named(ed)
+            && let Some(Hit::Joint(j)) = ed.pane.hover
+        {
+            let id = resolved.joints[j].id.clone();
+            ed.rig_edit.selected = Some(id.clone());
+            let joint = &ed.ws.docs[&ed.cur].item.rig.as_ref()?.joints[j];
+            let parent = joint.parent.as_ref().and_then(|p| resolved.get(p)).unwrap_or_default();
+            return Some(Drag::RigJoint { id, parent, skel, f: Box::new(at_playhead(ed)?.fighter), pose });
+        }
         match (ed.pane.hover, &self.boxes) {
             (
                 Some(h @ (Hit::Body(i) | Hit::Rim(i) | Hit::Angle(i))),
@@ -237,6 +317,19 @@ impl crate::pane::Interaction for FighterInteraction {
     }
     fn drag(&self, ed: &mut Editor, drag: &Drag, m: [f64; 2], (coarse, fine): (bool, bool)) {
         match drag {
+            Drag::RigJoint { id, parent, skel, f, pose } => {
+                let p = crate::rig_ed::local(*parent, view::stage_to_joint(f, skel, m))
+                    .map(|v| crate::stage_view::Snap::fighter(coarse, fine).v(v));
+                let fd = ed.fighter();
+                if let Some(name) = pose {
+                    if let Some(pose) = fd.poses.get_mut(name) {
+                        pose.joints.entry(id.clone()).or_default().translation = Some(p);
+                    }
+                } else if let Some(j) = fd.rig.as_mut().and_then(|r| r.joints.iter_mut().find(|j| &j.id == id)) {
+                    j.translation = p;
+                }
+            }
+
             Drag::Box { kind, phase, t, f, grab, orig } => {
                 drag_box(ed, (*kind, *phase, *t), f, *grab, *orig, m, (coarse, fine));
             }
@@ -252,7 +345,11 @@ impl crate::pane::Interaction for FighterInteraction {
     fn click(&self, ed: &mut Editor) {
         match ed.pane.hover {
             Some(Hit::Body(i) | Hit::Rim(i) | Hit::Angle(i)) => ed.hitbox = Some(i),
-            Some(Hit::Joint(_)) => {}
+            Some(Hit::Joint(j)) => {
+                if let Some((_, r, _)) = named(ed) {
+                    ed.rig_edit.selected = Some(r.joints[j].id.clone());
+                }
+            }
             None => ed.hitbox = None,
         }
     }
@@ -309,6 +406,9 @@ fn drag_box(
         }
         Hit::Joint(_) => return,
     };
+    if h.geometry.is_some() {
+        return;
+    }
     match view::geom_source(h, t).1 {
         Some(j) => {
             let e = &mut h.frames[j];
@@ -338,10 +438,14 @@ fn chrome(ui: &mut egui::Ui, ed: &mut Editor, rect: Rect) {
                 ui.toggle_value(&mut ed.show_inactive, "Inactive")
                     .on_hover_text("Show hitboxes outside their active frames  I");
                 let move_like = matches!(ed.subject, Subject::Move(_) | Subject::Throw(_));
-                ui.add_enabled(move_like, egui::Button::selectable(ed.onion, "Onion"))
-                    .on_hover_text("Ghosts of the 3 frames before (red) and after (green)  O")
-                    .clicked()
-                    .then(|| ed.onion = !ed.onion);
+                ui.add_enabled(
+                    move_like && ed.ws.docs[&ed.cur].item.rig.is_none(),
+                    egui::Button::selectable(ed.onion, "Onion"),
+                )
+                .on_hover_text("Ghosts of the 3 frames before (red) and after (green)  O")
+                .on_disabled_hover_text("Onion skins currently support legacy stick figures")
+                .clicked()
+                .then(|| ed.onion = !ed.onion);
                 ui.separator();
                 if ui.button("⛶").on_hover_text("Frame the fighter  F · double-click").clicked() {
                     ed.pane.reframe = true;
@@ -393,8 +497,14 @@ fn chrome(ui: &mut egui::Ui, ed: &mut Editor, rect: Rect) {
             ("Del", "delete"),
             ("Tab", "next"),
         ],
+        (Subject::Move(_), _, _, _) if ed.ws.docs[&ed.cur].item.rig.is_some() => {
+            &[("click", "a hitbox"), ("N", "new hitbox"), ("K", "pose key")]
+        }
         (Subject::Move(_), _, _, _) => {
             &[("click", "a hitbox"), ("N", "new hitbox"), ("K", "pose key"), ("◆", "keys pose by dragging joints")]
+        }
+        (Subject::Pose(_), _, _, _) if ed.ws.docs[&ed.cur].item.rig.is_some() => {
+            &[("drag", "named joints"), ("wheel", "zoom"), ("right-drag", "pan")]
         }
         (Subject::Pose(_), _, _, _) => &[("drag", "joints to pose"), ("wheel", "zoom"), ("right-drag", "pan")],
         _ => &[("wheel", "zoom"), ("right-drag", "pan"), ("?", "all shortcuts")],
@@ -410,7 +520,10 @@ fn chrome(ui: &mut egui::Ui, ed: &mut Editor, rect: Rect) {
                 ui.add_space(6.);
             }
             if let Some(Hit::Joint(j)) = ed.pane.hover {
-                ui.label(RichText::new(view::JOINTS[j]).color(STAR));
+                let name = named(ed)
+                    .and_then(|(_, r, _)| r.joints.get(j).map(|j| j.id.clone()))
+                    .unwrap_or_else(|| view::JOINTS.get(j).unwrap_or(&"joint").to_string());
+                ui.label(RichText::new(name).color(STAR));
             }
         });
     });
@@ -444,4 +557,109 @@ fn setup_bar(ui: &mut egui::Ui, ed: &mut Editor) {
     ui.label(RichText::new("Hold").color(style::DIM));
     ui.add(egui::DragValue::new(&mut s.hold).range(0..=240).suffix(" f"))
         .on_hover_text("Hold the move's button this many frames (charge, release)");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::EditorConfig;
+    use sim::data::rig::JointPose;
+    use std::path::Path;
+
+    #[test]
+    fn add_joint_ignores_toolbar_clicks() {
+        let assets = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets");
+        let config = EditorConfig { roots: vec![assets.clone()], assets, user_dir: None, dev: false };
+        let mut ed = Editor::new(config).unwrap();
+        ed.open("brawler");
+        ed.doc().edit(|f| {
+            f.rig = Some(serde_json::from_str(include_str!("../../../assets/templates/rigs/humanoid.json")).unwrap());
+        });
+        ed.select(Subject::Data(crate::preview::Section::Rig));
+        ed.refresh();
+        ed.rig_edit.add = true;
+        let count = ed.fighter().rig.as_ref().unwrap().joints.len();
+        let ctx = egui::Context::default();
+        ctx.run_ui(Default::default(), |_| {}).textures_delta.clear();
+        crate::style::install_fonts(&ctx, &Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets"));
+        let mut frame = |events| {
+            let input = egui::RawInput {
+                screen_rect: Some(Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(800., 600.))),
+                events,
+                ..Default::default()
+            };
+            ctx.run_ui(input, |ui| viewport(ui, &mut ed)).textures_delta.clear();
+        };
+        frame(vec![]);
+        for pos in [egui::pos2(45., 32.), egui::pos2(400., 350.)] {
+            for pressed in [true, false] {
+                frame(vec![
+                    egui::Event::PointerMoved(pos),
+                    egui::Event::PointerButton {
+                        pos,
+                        button: egui::PointerButton::Primary,
+                        pressed,
+                        modifiers: Default::default(),
+                    },
+                ]);
+            }
+        }
+        // The toolbar click must leave Add mode active for the subsequent canvas click.
+        assert_eq!(ed.fighter().rig.as_ref().unwrap().joints.len(), count + 1);
+        assert!(!ed.rig_edit.add);
+        // A toolbar misfire would have placed the joint near the top-left instead.
+        let translation = ed.fighter().rig.as_ref().unwrap().joints.last().unwrap().translation;
+        let expected = ed.pane.cam.to_stage(&ed.port, [400., 350.]);
+        let f = at_playhead(&ed).unwrap().fighter;
+        assert_eq!(translation, view::stage_to_joint(&f, &Default::default(), expected));
+    }
+
+    #[test]
+    fn named_rig_pose_preview_uses_override_without_legacy_handles() {
+        let assets = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets");
+        let config = EditorConfig { roots: vec![assets.clone()], assets, user_dir: None, dev: false };
+        let mut ed = Editor::new(config).unwrap();
+        ed.open("brawler");
+        ed.doc().edit(|f| {
+            f.rig = Some(serde_json::from_str(include_str!("../../../assets/templates/rigs/quadruped.json")).unwrap());
+            let mut pose = sim::data::visual::Pose::default();
+            pose.joints.insert("tailBase".into(), JointPose { angle: Some(50.), ..Default::default() });
+            f.poses.insert("raisedTail".into(), pose);
+        });
+        ed.select(Subject::Pose("raisedTail".into()));
+        ed.refresh();
+        let mut scene = render::Scene::new(ed.ws.data.clone());
+        sync_scene(&mut ed, &mut scene, 0.);
+        let (i, pose) = scene.rig_pose_override.as_ref().unwrap();
+        assert_eq!(*i, 0);
+        assert_eq!(pose["tailBase"].angle, Some(50.));
+        assert!(!joint_points(&ed, &ed.run.as_ref().unwrap().frames[0].fighters[0]).is_empty());
+        ed.select(Subject::Data(crate::preview::Section::Rig));
+        ed.refresh();
+        sync_scene(&mut ed, &mut scene, 0.);
+        assert!(scene.rig_pose_override.as_ref().unwrap().1.is_empty());
+        use crate::pane::Interaction;
+        let interaction = FighterInteraction { boxes: None };
+        let f = at_playhead(&ed).unwrap().fighter;
+        let points = joint_points(&ed, &f);
+        let i = points.len() - 1;
+        assert_eq!(interaction.hit(&ed, points[i], 0.01), Some(Hit::Joint(i)));
+        ed.pane.hover = Some(Hit::Joint(i));
+        let before = crate::ui::Snapshot::take(&mut ed);
+        let drag = interaction.start(&mut ed, points[i]).unwrap();
+        interaction.drag(&mut ed, &drag, [points[i][0] + 12., points[i][1]], (false, true));
+        crate::ui::record(&mut ed, before, true);
+        let before = crate::ui::Snapshot::take(&mut ed);
+        interaction.drag(&mut ed, &drag, [points[i][0] + 20., points[i][1]], (false, true));
+        crate::ui::record(&mut ed, before, true);
+        let before = crate::ui::Snapshot::take(&mut ed);
+        crate::ui::record(&mut ed, before, false);
+        assert_ne!(joint_points(&ed, &f)[i], points[i]);
+        ed.doc().undo();
+        assert_eq!(joint_points(&ed, &f)[i], points[i]);
+        ed.select(Subject::Fighter);
+        ed.refresh();
+        sync_scene(&mut ed, &mut scene, 0.);
+        assert!(scene.rig_pose_override.is_none());
+    }
 }

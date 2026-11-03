@@ -47,7 +47,7 @@ pub(crate) trait Interaction {
     fn cursor(&self, ed: &Editor) -> egui::CursorIcon;
 }
 
-pub(crate) fn interact<I: Interaction>(ui: &mut egui::Ui, ed: &mut Editor, interaction: I) {
+pub(crate) fn interact<I: Interaction>(ui: &mut egui::Ui, ed: &mut Editor, interaction: I) -> egui::Response {
     let resp = ui.allocate_rect(ui.max_rect(), Sense::click_and_drag());
     let port = ed.port;
     let to_stage = |ed: &mut Editor, p: egui::Pos2| I::pane(ed).cam.to_stage(&port, [f64::from(p.x), f64::from(p.y)]);
@@ -101,6 +101,7 @@ pub(crate) fn interact<I: Interaction>(ui: &mut egui::Ui, ed: &mut Editor, inter
     if resp.hovered() || I::pane(ed).drag.is_some() {
         ui.ctx().set_cursor_icon(interaction.cursor(ed));
     }
+    resp
 }
 
 pub(crate) fn sync_scene(scene: &mut render::Scene, cam: Cam, port: &Port) {

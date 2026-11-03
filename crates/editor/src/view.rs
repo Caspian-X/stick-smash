@@ -172,6 +172,7 @@ pub fn shown(f: &Fighter, boxes: &[Hitbox], t: u32, cd: f64) -> Vec<Shown> {
     boxes
         .iter()
         .enumerate()
+        .filter(|(_, h)| h.geometry.is_none())
         .map(|(i, h)| {
             let (x, y, r) = h.geom_at(t);
             Shown { i, c: local_to_stage(f, [x, y]), r, active: h.active(t) && (!h.counter_damage || cd > 0.) }

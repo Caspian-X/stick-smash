@@ -18,6 +18,7 @@ mod inspect;
 mod overlay;
 mod pane;
 pub mod preview;
+mod rig_ed;
 mod section;
 pub mod stage_ed;
 mod stage_panels;
@@ -222,6 +223,13 @@ pub fn throw_mut<'a>(t: &'a mut Throws, k: &str) -> &'a mut Throw {
 #[derive(Debug)]
 pub(crate) enum Drag {
     Pan,
+    RigJoint {
+        id: String,
+        parent: sim::rig::Transform,
+        f: Box<sim::world::Fighter>,
+        skel: render::pose::Skel,
+        pose: Option<String>,
+    },
     Part {
         h: stage_view::Handle,
         orig: Box<Stage>,
@@ -261,6 +269,7 @@ pub struct Editor {
     /// Inspector selection: phase of the current move and a hitbox in it.
     pub phase: usize,
     pub hitbox: Option<usize>,
+    pub(crate) rig_edit: rig_ed::State,
     pub run: Option<Run>,
     pub pane: Pane<Hit, (usize, u32)>,
     pub frame: usize,
@@ -302,6 +311,7 @@ impl Editor {
             setup: Setup::default(),
             phase: 0,
             hitbox: None,
+            rig_edit: Default::default(),
             run: None,
             pane: Pane::new(Cam { center: [0., 0.], zoom: 3. }),
             frame: 0,
@@ -545,6 +555,7 @@ fn enter(mut commands: Commands, ed: Option<ResMut<Editor>>, config: Option<Res<
 fn exit(mut scene: ResMut<render::Scene>, mut ctx: EguiContexts, ed: Option<ResMut<Editor>>, saved: Res<SavedStyle>) {
     scene.fixed_view = None;
     scene.pose_override = None;
+    scene.rig_pose_override = None;
     scene.overlay.clear(1., 1.);
     if let (Ok(ctx), Some(s)) = (ctx.ctx_mut(), &saved.0) {
         ctx.set_global_style(s.clone());
@@ -702,6 +713,20 @@ mod tests {
                 frame(&mut ed);
             }
         }
+        ed.open("brawler");
+        ed.doc().edit(|f| {
+            f.rig = Some(serde_json::from_str(include_str!("../../../assets/templates/rigs/quadruped.json")).unwrap());
+            f.poses
+                .get_mut("stand")
+                .unwrap()
+                .joints
+                .insert("tailBase".into(), sim::data::rig::JointPose { angle: Some(15.), ..Default::default() });
+        });
+        for subject in [Subject::Data(Section::Rig), Subject::Pose("stand".into()), Subject::Move("jab".into())] {
+            ed.select(subject);
+            frame(&mut ed);
+        }
+        ed.doc().edit(doc::remove_rig);
         ed.search = "air".into();
         ed.help = true;
         ed.doc().edit(|f| {

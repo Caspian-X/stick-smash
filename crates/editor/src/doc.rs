@@ -223,6 +223,133 @@ pub fn rename_pose(f: &mut Fighter, old: &str, new: &str) -> bool {
     true
 }
 
+/// Remove regions and their activation references in the same document edit.
+pub fn remove_hurt_regions(f: &mut Fighter) {
+    f.hurt_regions = None;
+    f.combat_center = None;
+    for slot in sim::data::moves::Moves::SLOTS {
+        if let Some(m) = f.moves.get_mut(slot) {
+            for p in &mut m.phases {
+                p.hurt_regions.clear();
+            }
+        }
+    }
+}
+
+/// Return to the legacy figure without leaving named overrides bound to a missing rig.
+pub fn remove_rig(f: &mut Fighter) {
+    if f.hurt_regions
+        .as_ref()
+        .is_some_and(|rs| rs.iter().any(|r| r.geometry.points().iter().any(|p| p.joint.is_some())))
+    {
+        remove_hurt_regions(f);
+    }
+    for slot in sim::data::moves::Moves::SLOTS {
+        if let Some(m) = f.moves.get_mut(slot) {
+            for p in &mut m.phases {
+                p.hitboxes
+                    .retain(|h| !h.geometry.as_ref().is_some_and(|g| g.points().iter().any(|p| p.joint.is_some())));
+            }
+        }
+    }
+    f.rig = None;
+    for p in f.poses.values_mut() {
+        p.joints.clear();
+    }
+    each_anim_key(f, |k| {
+        if let PoseRef::Inline(p) = &mut k.pose {
+            p.joints.clear();
+        }
+    });
+}
+
+/// Rename all bindings atomically, including inline animation keys.
+pub fn rename_joint(f: &mut Fighter, old: &str, new: &str) -> Result<(), String> {
+    let mut collision_occupied = false;
+    collision_geometries(f, |g| collision_occupied |= g.points().iter().any(|p| p.joint.as_deref() == Some(new)));
+    if collision_occupied {
+        return Err("That ID already has collision bindings".into());
+    }
+    let mut occupied = f.poses.values().any(|p| p.joints.contains_key(new));
+    each_anim_key(f, |k| {
+        if let PoseRef::Inline(p) = &k.pose {
+            occupied |= p.joints.contains_key(new);
+        }
+    });
+    if occupied {
+        return Err("That ID already has pose keys; rename or remove those keys first".into());
+    }
+    let rig = f.rig.as_mut().ok_or("Add a rig first")?;
+    if new.trim().is_empty() || rig.joints.iter().any(|j| j.id == new) {
+        return Err("Choose a nonblank, unused joint ID".into());
+    }
+    let joint = rig.joints.iter_mut().find(|j| j.id == old).ok_or("Select a joint first")?;
+    joint.id = new.into();
+    for j in &mut rig.joints {
+        if j.parent.as_deref() == Some(old) {
+            j.parent = Some(new.into());
+        }
+    }
+    for b in &mut rig.bones {
+        if b.from == old {
+            b.from = new.into();
+        }
+        if b.to == old {
+            b.to = new.into();
+        }
+    }
+    let rename = |p: &mut Pose| {
+        if let Some(v) = p.joints.remove(old) {
+            p.joints.insert(new.into(), v);
+        }
+    };
+    for p in f.poses.values_mut() {
+        rename(p);
+    }
+    each_anim_key(f, |k| {
+        if let PoseRef::Inline(p) = &mut k.pose {
+            rename(p);
+        }
+    });
+    collision_geometries(f, |g| {
+        for p in g.points_mut() {
+            if p.joint.as_deref() == Some(old) {
+                p.joint = Some(new.into());
+            }
+        }
+    });
+    Ok(())
+}
+
+/// Delete only unbound leaves; never silently discard animation or appearance bindings.
+pub fn delete_joint(f: &mut Fighter, id: &str) -> Result<(), String> {
+    let mut collision_bound = false;
+    collision_geometries(f, |g| collision_bound |= g.points().iter().any(|p| p.joint.as_deref() == Some(id)));
+    if collision_bound {
+        return Err("Remove this joint's collision bindings first".into());
+    }
+    let rig = f.rig.as_ref().ok_or("Add a rig first")?;
+    if rig.joints.len() <= 1 {
+        return Err("Keep one root joint, or use Remove rig & joint keys".into());
+    }
+    if rig.joints.iter().any(|j| j.parent.as_deref() == Some(id)) {
+        return Err("Delete or reparent child joints first".into());
+    }
+    let mut bound = f.poses.values().any(|p| p.joints.contains_key(id));
+    each_anim_key(f, |k| {
+        if let PoseRef::Inline(p) = &k.pose {
+            bound |= p.joints.contains_key(id);
+        }
+    });
+    if bound {
+        return Err("Remove this joint's named and inline pose keys first".into());
+    }
+    let rig = f.rig.as_mut().unwrap();
+    rig.bones.retain(|b| b.from != id && b.to != id);
+    rig.joints.retain(|j| j.id != id);
+    Ok(())
+}
+
 /// Adds a pose (a copy of `from`'s joints, or one that inherits `stand`) under a free name; returns the name.
 pub fn new_pose(f: &mut Fighter, base: &str, from: Option<&Pose>) -> String {
     let name = unique_name(base, |n| f.poses.contains_key(n));
@@ -742,7 +869,25 @@ fn diff_paths<T: Content>(item: &T, saved: &T) -> BTreeSet<String> {
     paths
 }
 
-/// The built-in assets, for tests.
+fn collision_geometries(f: &mut Fighter, mut visit: impl FnMut(&mut sim::data::hitbox::CombatGeometry)) {
+    if let Some(regions) = &mut f.hurt_regions {
+        for r in regions {
+            visit(&mut r.geometry);
+        }
+    }
+    for slot in sim::data::moves::Moves::SLOTS {
+        if let Some(m) = f.moves.get_mut(slot) {
+            for p in &mut m.phases {
+                for h in &mut p.hitboxes {
+                    if let Some(g) = &mut h.geometry {
+                        visit(g);
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 pub(crate) fn tests_files() -> Files {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets");
@@ -845,6 +990,125 @@ mod tests {
         let doc = ws.doc(&id).unwrap();
         assert!(!doc.dirty());
         assert_eq!(ws.data.fighter(&id).unwrap().moves.jab.phases[0].hitboxes[0].angle, 77.);
+    }
+
+    #[test]
+    fn rig_and_named_pose_edits_survive_undo_save_and_reload() {
+        let (mut ws, errors) = Workspace::new(files()).unwrap();
+        assert!(errors.is_empty(), "{errors:?}");
+        let doc = ws.doc("brawler").unwrap();
+        let before = doc.raw.clone();
+        doc.edit(|f| {
+            f.rig = Some(
+                serde_json::from_value(json!({
+                    "joints": [
+                        {"id": "body", "translation": [0., 30.]},
+                        {"id": "paw", "parent": "body", "translation": [20., -30.]}
+                    ],
+                    "bones": [{"from": "body", "to": "paw", "width": 5., "color": "player"}]
+                }))
+                .unwrap(),
+            );
+            f.poses
+                .get_mut("stand")
+                .unwrap()
+                .joints
+                .insert("paw".into(), sim::data::rig::JointPose { angle: Some(12.), ..Default::default() });
+        });
+        assert!(doc.errors.is_empty(), "{:?}", doc.errors);
+        let edited = doc.item.clone();
+        doc.undo();
+        assert!(doc.item.rig.is_none());
+        doc.redo();
+        assert_eq!(doc.item, edited);
+        let patched = doc.patched();
+        assert_eq!(patched["extends"], before["extends"]);
+        assert_eq!(patched["moves"], before["moves"]);
+        assert_eq!(patched["rig"]["joints"][1]["id"], "paw");
+        assert_eq!(patched["poses"]["stand"]["joints"]["paw"]["angle"], 12.);
+        let Saved::Ok { text, data } = ws.prepare_save::<Fighter>("brawler") else { panic!("save refused") };
+        assert_eq!(data.fighter("brawler").unwrap(), &edited);
+        ws.saved::<Fighter>("brawler", text, data);
+        assert!(!ws.doc("brawler").unwrap().dirty());
+    }
+
+    #[test]
+    fn joint_operations_preserve_bindings_and_reject_bound_deletes() {
+        let (mut ws, _) = Workspace::new(files()).unwrap();
+        let doc = ws.doc("brawler").unwrap();
+        doc.edit(|f| {
+            f.rig = Some(serde_json::from_str(include_str!("../../../assets/templates/rigs/quadruped.json")).unwrap());
+            let root = f.rig.as_ref().unwrap().joints[0].id.clone();
+            let child = crate::rig_ed::add(f, Some(root.clone()), [35., 40.]).unwrap();
+            let pose = Pose { joints: BTreeMap::from([(child.clone(), Default::default())]), ..Default::default() };
+            f.poses.insert("test".into(), pose.clone());
+            f.moves.jab.phases[0].anim[0].pose = PoseRef::Inline(Box::new(pose));
+            assert!(delete_joint(f, &root).unwrap_err().contains("child"));
+            assert!(delete_joint(f, &child).unwrap_err().contains("pose keys"));
+            rename_joint(f, &child, "antenna").unwrap();
+            assert!(f.poses["test"].joints.contains_key("antenna"));
+            let PoseRef::Inline(p) = &f.moves.jab.phases[0].anim[0].pose else { panic!() };
+            assert!(p.joints.contains_key("antenna"));
+            assert!(f.rig.as_ref().unwrap().bones.iter().any(|b| b.to == "antenna"));
+            rename_joint(f, &root, "trunk").unwrap();
+            assert_eq!(f.rig.as_ref().unwrap().joints.last().unwrap().parent.as_deref(), Some("trunk"));
+            assert!(rename_joint(f, "trunk", "antenna").is_err());
+        });
+        let edited = doc.item.clone();
+        doc.undo();
+        assert!(doc.item.rig.is_none());
+        doc.redo();
+        assert_eq!(doc.item, edited);
+        let Saved::Ok { data, .. } = ws.prepare_save::<Fighter>("brawler") else { panic!("save refused") };
+        assert_eq!(data.fighter("brawler").unwrap(), &edited);
+    }
+
+    #[test]
+    fn joint_rename_rejects_existing_pose_keys_atomically() {
+        let (mut ws, _) = Workspace::new(files()).unwrap();
+        let f = &mut ws.doc("brawler").unwrap().item;
+        f.rig = Some(serde_json::from_str(include_str!("../../../assets/templates/rigs/humanoid.json")).unwrap());
+        let root = f.rig.as_ref().unwrap().joints[0].id.clone();
+        for inline in [false, true] {
+            let pose = Pose {
+                joints: BTreeMap::from([("antenna".into(), Default::default()), (root.clone(), Default::default())]),
+                ..Default::default()
+            };
+            if inline {
+                f.poses.remove("collision");
+                f.moves.jab.phases[0].anim[0].pose = PoseRef::Inline(Box::new(pose));
+            } else {
+                f.poses.insert("collision".into(), pose);
+            }
+            let before = f.clone();
+            assert!(rename_joint(f, &root, "antenna").unwrap_err().contains("pose keys"));
+            assert_eq!(*f, before);
+        }
+    }
+
+    #[test]
+    fn removing_rig_clears_named_and_inline_bindings_but_keeps_legacy_pose_fields() {
+        let (mut ws, _) = Workspace::new(files()).unwrap();
+        let f = &mut ws.doc("brawler").unwrap().item;
+        let pose = Pose {
+            head: Some([1., 60.]),
+            joints: BTreeMap::from([(
+                "paw".into(),
+                sim::data::rig::JointPose { angle: Some(30.), ..Default::default() },
+            )]),
+            ..Default::default()
+        };
+        f.poses.insert("custom".into(), pose.clone());
+        f.anims.get_mut("idle").unwrap().keys[0].pose = PoseRef::Inline(Box::new(pose.clone()));
+        f.moves.jab.phases[0].anim[0].pose = PoseRef::Inline(Box::new(pose));
+        remove_rig(f);
+        assert_eq!(f.poses["custom"].head, Some([1., 60.]));
+        assert!(f.poses.values().all(|p| p.joints.is_empty()));
+        each_anim_key(f, |k| {
+            if let PoseRef::Inline(p) = &k.pose {
+                assert!(p.joints.is_empty());
+            }
+        });
     }
 
     #[test]
@@ -1074,5 +1338,44 @@ mod tests {
         ws.saved::<Stage>("old", text.clone(), data);
         let (d, _) = load(ws.files.sources()).unwrap();
         assert_eq!(d.stage("old").unwrap(), &ws.stage("old").unwrap().item);
+    }
+    #[test]
+    fn collision_bindings_rename_delete_and_explicit_rig_clear() {
+        use sim::data::hitbox::{BoundPoint, CombatGeometry, HurtRegion};
+        let (mut ws, errors) = Workspace::new(files()).unwrap();
+        assert!(errors.is_empty());
+        let doc = ws.doc("brawler").unwrap();
+        doc.edit(|f| {
+            f.rig=Some(serde_json::from_value(json!({"joints":[{"id":"root","translation":[0,0]},{"id":"tip","parent":"root","translation":[40,40]}]})).unwrap());
+            let geometry=CombatGeometry::Circle{center:BoundPoint{joint:Some("tip".into()),offset:[0.,0.]},radius:4.};
+            f.hurt_regions=Some(vec![HurtRegion { enabled: true, states: vec![],id:"head".into(),geometry:geometry.clone()}]);f.combat_center=Some([0.,40.]);
+            f.moves.jab.phases[0].hitboxes[0].geometry=Some(geometry);
+            assert!(delete_joint(f,"tip").unwrap_err().contains("collision"));
+            rename_joint(f,"tip","blade").unwrap();
+            assert_eq!(f.hurt_regions.as_ref().unwrap()[0].geometry.points()[0].joint.as_deref(),Some("blade"));
+            assert_eq!(f.moves.jab.phases[0].hitboxes[0].geometry.as_ref().unwrap().points()[0].joint.as_deref(),Some("blade"));
+        });
+        doc.edit(|f| {
+            f.moves.jab.phases[0].hurt_regions.push(sim::data::hitbox::HurtRegionWindow {
+                region: "head".into(),
+                enabled: false,
+                from: 0,
+                to: 0,
+            });
+        });
+        let before = doc.item.clone();
+        doc.edit(remove_hurt_regions);
+        assert!(doc.item.hurt_regions.is_none());
+        assert!(doc.item.moves.jab.phases[0].hurt_regions.is_empty());
+        assert!(doc.errors.is_empty(), "{:?}", doc.errors);
+        doc.undo();
+        assert_eq!(doc.item, before);
+        doc.edit(remove_rig);
+        assert!(doc.item.hurt_regions.is_none());
+        assert!(doc.item.moves.jab.phases[0].hurt_regions.is_empty());
+        assert!(doc.errors.is_empty(), "{:?}", doc.errors);
+        assert!(doc.item.moves.jab.phases[0].hitboxes.is_empty());
+        doc.undo();
+        assert_eq!(doc.item, before);
     }
 }

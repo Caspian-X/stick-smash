@@ -28,6 +28,7 @@ pub enum Step {
     LeaveRoster(u8, Act),
     Match(i32),
     Training(&'static str),
+    Interaction(u8),
     /// Expand Arena's camera to expose all four KO boundaries.
     WideCamera,
     Debug(bool),
@@ -59,7 +60,7 @@ pub enum Step {
 type Entry = (&'static str, fn() -> Vec<Step>);
 
 /// Every section in full-tour order; `--shots` picks a subset in the order given.
-const TOUR: [Entry; 12] = [
+const TOUR: [Entry; 13] = [
     ("menus", menus),
     ("fighter-editor", fighter_editor),
     ("stage-editor", stage_editor),
@@ -72,6 +73,7 @@ const TOUR: [Entry; 12] = [
     ("blast-zones", blast_zones),
     ("fighter-kits", fighter_kits),
     ("stages", stages),
+    ("interactions", interaction_shots),
 ];
 
 pub fn section_names() -> String {
@@ -138,6 +140,20 @@ fn offscreen(m: &Match, fr: &Framing, _: Screen) -> bool {
             .iter()
             .any(|f| f.state == FState::Hitstun && (f.x < x0 - 30. || f.x > x1 + 30. || f.y - 40. < y0 - 30.))
         && w.fighters.iter().filter(|f| f.dmg > 20.).count() >= 2
+}
+
+fn interaction_shots() -> Vec<Step> {
+    vec![
+        Step::Interaction(0),
+        Step::Wait(20),
+        Step::Shot("24a-unequal-hold"),
+        Step::Interaction(1),
+        Step::Wait(20),
+        Step::Shot("24b-unequal-ledge"),
+        Step::Interaction(2),
+        Step::Wait(20),
+        Step::Shot("24c-unequal-climb"),
+    ]
 }
 
 fn menus() -> Vec<Step> {
@@ -224,6 +240,88 @@ fn fighter_editor() -> Vec<Step> {
         shot(&mut v, "03d-editor-new-fighter");
         ed(&mut v, Cmd::Dismiss);
         shot(&mut v, "03e-editor-stats");
+        ed(
+            &mut v,
+            Cmd::Edit(|f| {
+                f.rig =
+                    Some(serde_json::from_str(include_str!("../../../assets/templates/rigs/humanoid.json")).unwrap());
+            }),
+        );
+        ed(&mut v, Cmd::Subject(Subject::Data(Section::Rig)));
+        shot(&mut v, "03e2-editor-humanoid-rig");
+        ed(
+            &mut v,
+            Cmd::Edit(|f| {
+                f.rig =
+                    Some(serde_json::from_str(include_str!("../../../assets/templates/rigs/quadruped.json")).unwrap());
+            }),
+        );
+        shot(&mut v, "03e3-editor-quadruped-rig");
+        ed(
+            &mut v,
+            Cmd::Edit(|f| {
+                let mut p = sim::data::visual::Pose::default();
+                p.joints.insert("tailBase".into(), sim::data::rig::JointPose { angle: Some(65.), translation: None });
+                f.poses.insert("rigTail".into(), p);
+            }),
+        );
+        ed(&mut v, Cmd::Subject(Subject::Pose("rigTail".into())));
+        shot(&mut v, "03e4-editor-named-pose-handles");
+        ed(&mut v, Cmd::Subject(Subject::Data(Section::Rig)));
+        shot(&mut v, "03e5-editor-rest-despite-pose");
+        ed(
+            &mut v,
+            Cmd::Edit(|f| {
+                use sim::data::hitbox::{BoundPoint, CombatGeometry, HurtRegion};
+                let point = |id: &str| BoundPoint { joint: Some(id.into()), offset: [0., 0.] };
+                f.hurt_regions = Some(vec![
+                    HurtRegion {
+                        enabled: true,
+                        states: vec![],
+                        id: "torso".into(),
+                        geometry: CombatGeometry::Capsule { a: point("hips"), b: point("chest"), radius: 9. },
+                    },
+                    HurtRegion {
+                        enabled: true,
+                        states: vec![],
+                        id: "head".into(),
+                        geometry: CombatGeometry::Circle { center: point("head"), radius: 10. },
+                    },
+                    HurtRegion {
+                        enabled: true,
+                        states: vec![],
+                        id: "leg".into(),
+                        geometry: CombatGeometry::Capsule {
+                            a: point("nearForeKnee"),
+                            b: point("nearForeFoot"),
+                            radius: 4.,
+                        },
+                    },
+                ]);
+                f.combat_center = Some([0., 35.]);
+                let p = &mut f.moves.get_mut("jab").unwrap().phases[0];
+                p.anim.clear();
+                let h = &mut p.hitboxes[0];
+                h.start = 0;
+                h.end = None;
+                h.frames.clear();
+                h.geometry = Some(CombatGeometry::Capsule { a: point("tailBase"), b: point("tailTip"), radius: 6. });
+            }),
+        );
+        ed(&mut v, Cmd::Subject(Subject::Move("jab".into())));
+        ed(&mut v, Cmd::Hitbox(Some(0)));
+        shot(&mut v, "03e6-editor-attached-collision");
+        ed(
+            &mut v,
+            Cmd::Edit(|f| {
+                f.moves.get_mut("jab").unwrap().phases[0].hurt_regions =
+                    vec![sim::data::hitbox::HurtRegionWindow { region: "head".into(), enabled: false, from: 0, to: 1 }];
+            }),
+        );
+        ed(&mut v, Cmd::Frame(1));
+        shot(&mut v, "03e7-editor-region-disabled");
+        ed(&mut v, Cmd::Frame(2));
+        shot(&mut v, "03e8-editor-region-restored");
     }
     v
 }
@@ -879,6 +977,73 @@ pub fn run(
             }
             s.at += 1;
         }
+        Step::Interaction(kind) => {
+            use sim::data::fighter::{GrabInteraction, Interactions, LedgeInteraction};
+            let mut content = (*data.0).clone();
+            let a = content.fighters.iter().position(|f| f.id == "brawler").unwrap();
+            let v = content.fighters.iter().position(|f| f.id == "ninja").unwrap();
+            content.fighters[a].interactions = Some(Interactions {
+                grab: Some(GrabInteraction { hold_point: Some([39., 75.]), ..Default::default() }),
+                ..Default::default()
+            });
+            content.fighters[v].body.height = 24.;
+            content.fighters[v].body.half_width = 7.;
+            content.fighters[v].rig =
+                Some(serde_json::from_str(include_str!("../../../assets/templates/rigs/quadruped.json")).unwrap());
+            content.fighters[v].interactions = Some(Interactions {
+                grab: Some(GrabInteraction { held_anchor: Some([13., 21.]), ..Default::default() }),
+                ledge: Some(LedgeInteraction {
+                    hang_anchor: Some([25., 35.]),
+                    pull_in: Some(19.),
+                    climb_distance: Some(51.),
+                    ..Default::default()
+                }),
+            });
+            let content = std::sync::Arc::new(content);
+            let slots = [a, v]
+                .into_iter()
+                .enumerate()
+                .map(|(i, fighter)| Slot {
+                    dev: Some(Dev::Bot(i as u8)),
+                    fighter,
+                    cpu: None,
+                    team: None,
+                    tap_jump: false,
+                    controls: Default::default(),
+                    tag: String::new(),
+                    color: i,
+                })
+                .collect();
+            let mut m = Match::new(
+                &content,
+                Mode::Training,
+                slots,
+                Rules { stocks: 3, stage: "arena".into(), friendly_fire: false },
+                7,
+            )
+            .unwrap();
+            m.world.count = 0;
+            if *kind == 0 {
+                sim::combat::start_hold(&mut m.world, &content, 0, 1);
+            } else {
+                let f = &mut m.world.fighters[1];
+                f.face = 1.;
+                f.ground = false;
+                f.set_state(if *kind == 1 { FState::Ledge } else { FState::Climb });
+                f.sd.side = -1.;
+                f.sd.ledge_block = 0;
+                f.sd.kind = "climb".into();
+                if *kind == 2 {
+                    f.t = content.global.ledge.climb.a - 1;
+                }
+                sim::states::update_fighter(&mut m.world, &content, 1, sim::input::Intent::default());
+            }
+            m.frozen = true;
+            commands.remove_resource::<Select>();
+            play::install(&mut commands, &mut scene, m);
+            next.set(Screen::Match);
+            s.at += 1;
+        }
         Step::Training(id) => {
             let slots = [*id, "brawler"]
                 .into_iter()
@@ -1071,6 +1236,13 @@ mod tests {
 03c-editor-pose
 03d-editor-new-fighter
 03e-editor-stats
+03e2-editor-humanoid-rig
+03e3-editor-quadruped-rig
+03e4-editor-named-pose-handles
+03e5-editor-rest-despite-pose
+03e6-editor-attached-collision
+03e7-editor-region-disabled
+03e8-editor-region-restored
 03f-stage-overview
 03g-stage-platform
 03h-stage-spawns
@@ -1173,8 +1345,11 @@ mod tests {
 23f-whiplash-flip
 23g-whiplash-tether
 23h-whiplash-paralyzer
+24a-unequal-hold
 24a-whiplash-training
+24b-unequal-ledge
 24b-whiplash-charge
+24c-unequal-climb
 24c-whiplash-recovery";
         assert_eq!(names, expected.lines().collect::<Vec<_>>());
     }

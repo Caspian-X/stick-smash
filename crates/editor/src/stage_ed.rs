@@ -255,6 +255,7 @@ pub(crate) fn sync_scene(ed: &mut Editor, scene: &mut render::Scene, dt: f32) {
     }
     crate::pane::sync_scene(scene, ed.st.pane.cam, &ed.port);
     scene.pose_override = None;
+    scene.rig_pose_override = None;
 }
 
 /// Whether the sim-relevant geometry (blocks, platforms, spawn and respawn slots) is the same; art, names and

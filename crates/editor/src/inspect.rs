@@ -463,7 +463,9 @@ fn hitbox_panel(
                 errs(ui, errors, &format!("{pbase}.hitboxes[{h}]"));
                 let b = &mut p.hitboxes[h];
                 hit_fields(ui, b, true, data, w);
-                key_frames(ui, b, playhead_t);
+                if b.geometry.is_none() {
+                    key_frames(ui, b, playhead_t);
+                }
             });
         }
     });
@@ -473,6 +475,7 @@ fn hitbox_panel(
 fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<GameData>>, errors: &[ContentError]) {
     let playhead_t = at_playhead(ed).and_then(|p| p.phase).filter(|(p, _)| *p == ed.phase).map(|(_, t)| t);
     let w = ed_weight(&data, &ed.cur);
+    let rigged = ed.fighter().rig.is_some();
     let poses: Vec<String> = ed.fighter().poses.keys().cloned().collect();
     let projectiles: Vec<String> = ed.fighter().projectiles.keys().cloned().collect();
     let attachments: Vec<String> = ed.fighter().attachments.iter().map(|a| a.id.clone()).collect();
@@ -541,6 +544,13 @@ fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<G
                 );
             });
         });
+        form::edit(
+            ui,
+            egui::Id::new(("hurt-windows", ph)),
+            &form::def("Phase")["properties"]["hurtRegions"],
+            &mut p.hurt_regions,
+        );
+        ui.label(faint("Region windows override state/default on inclusive phase ticks (not elapsed move time)."));
         sub(ui, "Transitions", &d("Phase", "transitions"));
         errs(ui, errors, &format!("{pbase}.transitions"));
         transitions(ui, p, &names);
@@ -549,7 +559,7 @@ fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<G
         events(ui, p, &projectiles, playhead_t);
         sub(ui, "Pose keys", &d("Phase", "anim"));
         errs(ui, errors, &format!("{pbase}.anim"));
-        anim_keys(ui, p, &poses, playhead_t);
+        anim_keys(ui, p, &poses, playhead_t, rigged);
         section(ui, "Movement, charge & counter", false, |ui| phase_more(ui, p));
         section(ui, "Attachment animation", false, |ui| {
             ui.label(faint(d("Phase", "attach")));
@@ -624,7 +634,48 @@ pub fn new_hitbox(t: u32) -> Hitbox {
     }
 }
 
+fn geometry_fields(ui: &mut egui::Ui, id: egui::Id, g: &mut sim::data::hitbox::CombatGeometry) {
+    use sim::data::hitbox::CombatGeometry;
+    ui.push_id(id, |ui| {
+        let capsule = matches!(g, CombatGeometry::Capsule { .. });
+        ui.horizontal(|ui| {
+            for (label, want) in [("Circle", false), ("Capsule", true)] {
+                if ui.selectable_label(capsule == want, label).clicked() && capsule != want {
+                    let point = g.points()[0].clone();
+                    let radius = g.radius();
+                    *g = if want {
+                        CombatGeometry::Capsule { a: point.clone(), b: point, radius }
+                    } else {
+                        CombatGeometry::Circle { center: point, radius }
+                    };
+                }
+            }
+        });
+        form::edit(ui, id, form::def("CombatGeometry"), g);
+    });
+}
+
 fn hit_fields(ui: &mut egui::Ui, b: &mut Hitbox, geometry: bool, data: Option<&GameData>, weight: f64) {
+    if geometry {
+        if b.geometry.is_none() && ui.button("+ Attached geometry").clicked() {
+            b.geometry = Some(sim::data::hitbox::CombatGeometry::Circle {
+                center: sim::data::hitbox::BoundPoint { joint: None, offset: [b.x, b.y] },
+                radius: b.r,
+            });
+        }
+        if let Some(g) = &mut b.geometry {
+            geometry_fields(ui, egui::Id::new("combat-geometry"), g);
+            ui.label(faint(
+                "Bound geometry: edit through forms; viewport handles are disabled. Static x/y/r are ignored.",
+            ));
+            if !b.frames.is_empty() && ui.button("Clear incompatible legacy geometry tracks").clicked() {
+                b.frames.clear();
+            }
+            if ui.small_button("Remove attached geometry").clicked() {
+                b.geometry = None;
+            }
+        }
+    }
     grid(ui, "hit", |ui| {
         if geometry {
             int(ui, "start", &d("Hitbox", "start"), &mut b.start);
@@ -930,7 +981,7 @@ fn events(ui: &mut egui::Ui, p: &mut Phase, projectiles: &[String], t: Option<u3
     }
 }
 
-fn anim_keys(ui: &mut egui::Ui, p: &mut Phase, poses: &[String], t: Option<u32>) {
+fn anim_keys(ui: &mut egui::Ui, p: &mut Phase, poses: &[String], t: Option<u32>, rigged: bool) {
     let mut del = None;
     for (i, k) in p.anim.iter_mut().enumerate() {
         ui.horizontal(|ui| {
@@ -980,7 +1031,20 @@ fn anim_keys(ui: &mut egui::Ui, p: &mut Phase, poses: &[String], t: Option<u32>)
     {
         insert_key(p, t);
     }
-    ui.label(faint("Scrub onto a ♦ key to drag its joints in the viewport."));
+    ui.label(faint(if rigged {
+        "Edit named joint transforms in the pose inspector; inline keys can be edited below."
+    } else {
+        "Scrub onto a ♦ key to drag its joints in the viewport."
+    }));
+    if rigged {
+        for (i, key) in p.anim.iter_mut().enumerate() {
+            if let PoseRef::Inline(pose) = &mut key.pose {
+                section(ui, &format!("Key {} · named joints", i + 1), false, |ui| {
+                    rig_pose(ui, egui::Id::new(("inline-rig-pose", i)), pose);
+                });
+            }
+        }
+    }
 }
 
 fn phase_more(ui: &mut egui::Ui, p: &mut Phase) {
@@ -1065,7 +1129,9 @@ fn pose_panel(ui: &mut egui::Ui, ed: &mut Editor, name: &str, errors: &[ContentE
     });
     let uses = doc::pose_users(ed.fighter(), name);
     let what = if uses > 0 { " · edits show everywhere it's used" } else { "" };
-    ui.label(faint(format!("{}{what}. Drag joints in the viewport.", doc::uses_text(name, uses))));
+    let rigged = ed.fighter().rig.is_some();
+    let hint = if rigged { "Edit named joint transforms below." } else { "Drag joints in the viewport." };
+    ui.label(faint(format!("{}{what}. {hint}", doc::uses_text(name, uses))));
     inherited(ui, ed, &format!("poses.{name}"));
     errs(ui, errors, &format!("poses.{name}"));
     if rename {
@@ -1087,7 +1153,17 @@ fn pose_panel(ui: &mut egui::Ui, ed: &mut Editor, name: &str, errors: &[ContentE
         opt_num(ui, "pivot", &d("Pose", "pivot"), &mut p.pivot, 30., base);
         opt_num(ui, "offsetY", &d("Pose", "offsetY"), &mut p.offset_y, 0., base);
     });
-    pose_joints(ui, p, &inherit, base);
+    if rigged {
+        rig_pose(ui, egui::Id::new(("rig-pose", name)), p);
+    } else {
+        pose_joints(ui, p, &inherit, base);
+    }
+}
+
+fn rig_pose(ui: &mut egui::Ui, id: egui::Id, p: &mut Pose) {
+    ui.label(caps("Named joint transforms"));
+    ui.label(faint("Use joint IDs from Rig. Unset components inherit the parent pose or rig rest transform."));
+    let _ = form::map(ui, id, form::def("JointPose"), &mut p.joints, || Some(Default::default()));
 }
 
 /// Joint fields; unset joints come from `from` / `stand` (`inherit`), which is where "+ set" starts them.
@@ -1139,6 +1215,40 @@ fn stat_tip(key: &str) -> String {
     }
 }
 
+fn region_state_choices() -> Vec<(sim::data::hitbox::HurtState, String)> {
+    use sim::data::hitbox::HurtState;
+    let mut choices = vec![(HurtState::Crouch, "crouch".into())];
+    for value in form::def("State")["enum"].as_array().expect("State enum schema") {
+        let state = serde_json::from_value(value.clone()).expect("State schema value");
+        choices.push((HurtState::State(state), value.as_str().unwrap().into()));
+    }
+    choices
+}
+
+fn region_states(ui: &mut egui::Ui, states: &mut Vec<sim::data::hitbox::HurtStateOverride>) {
+    use sim::data::hitbox::{HurtState, HurtStateOverride};
+    let choices = region_state_choices();
+    let mut remove = None;
+    for (i, entry) in states.iter_mut().enumerate() {
+        ui.push_id(i, |ui| {
+            ui.horizontal(|ui| {
+                let options: Vec<_> = choices.iter().map(|(state, label)| (state.clone(), label.as_str())).collect();
+                combo(ui, "state", &mut entry.state, &options);
+                ui.checkbox(&mut entry.enabled, "Enabled");
+                if ui.small_button("Remove override").clicked() {
+                    remove = Some(i);
+                }
+            });
+        });
+    }
+    if let Some(i) = remove {
+        states.remove(i);
+    }
+    if ui.small_button("+ State override").clicked() {
+        states.push(HurtStateOverride { state: HurtState::Crouch, enabled: false });
+    }
+}
+
 fn fighter_panel(ui: &mut egui::Ui, ed: &mut Editor, errors: &[ContentError]) {
     let id = ed.cur.clone();
     let fresh = ed.ws.docs.get(&id).is_some_and(|d| d.fresh);
@@ -1149,7 +1259,7 @@ fn fighter_panel(ui: &mut egui::Ui, ed: &mut Editor, errors: &[ContentError]) {
         f.extends.as_ref().map_or(String::new(), |e| format!(" · extends {e}")),
         if fresh { " · new, not saved yet" } else { "" }
     )));
-    for k in ["name", "blurb", "tagline", "stats", "body", "hurtboxes"] {
+    for k in ["name", "blurb", "tagline", "stats", "body", "hurtboxes", "hurtRegions", "combatCenter", "interactions"] {
         errs(ui, errors, k);
     }
     section(ui, "Identity", true, |ui| {
@@ -1203,6 +1313,83 @@ fn fighter_panel(ui: &mut egui::Ui, ed: &mut Editor, errors: &[ContentError]) {
             }
         });
     });
+    if f.hurt_regions.is_none() && ui.button("+ Named hurt regions").clicked() {
+        let r = f.hurtboxes.default;
+        f.combat_center = Some([(r.x1 + r.x2) / 2., (r.y1 + r.y2) / 2.]);
+        f.hurt_regions = Some(vec![]);
+    }
+    let referenced: Vec<String> =
+        f.moves.iter().flat_map(|(_, m)| &m.phases).flat_map(|p| &p.hurt_regions).map(|w| w.region.clone()).collect();
+    let mut region_renames = Vec::new();
+    if let Some(regions) = &mut f.hurt_regions {
+        let ids: Vec<String> = regions.iter().map(|r| r.id.clone()).collect();
+        let mut remove = None;
+        for (i, r) in regions.iter_mut().enumerate() {
+            ui.push_id(("hurt-region", i), |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Region ID");
+                    let mut proposed = r.id.clone();
+                    if ui.text_edit_singleline(&mut proposed).changed() && !proposed.trim().is_empty() && !ids.iter().any(|id| id == &proposed) {
+                        region_renames.push((r.id.clone(), proposed.clone()));
+                        r.id = proposed;
+                    }
+                    if ui.add_enabled(!referenced.contains(&r.id), egui::Button::new("Remove region").small()).on_hover_text("Remove phase window references first").clicked() {
+                        remove = Some(i);
+                    }
+                });
+                ui.checkbox(&mut r.enabled, "Enabled by default");
+                region_states(ui, &mut r.states);
+                ui.label(faint("State overrides default; crouch overrides idle. Phase windows override both. Rename updates phase references. Remove phase references before deleting a region."));
+                geometry_fields(ui, egui::Id::new(("region-geometry", i)), &mut r.geometry);
+            });
+        }
+        if let Some(i) = remove {
+            regions.remove(i);
+        }
+        if ui.button("+ Region").clicked() {
+            let id = doc::unique_name("region", |id| regions.iter().any(|r| r.id == id));
+            regions.push(sim::data::hitbox::HurtRegion {
+                enabled: true,
+                states: vec![],
+                id,
+                geometry: sim::data::hitbox::CombatGeometry::Circle {
+                    center: sim::data::hitbox::BoundPoint { joint: None, offset: [0., 0.] },
+                    radius: 1.,
+                },
+            });
+        }
+        form::edit(
+            ui,
+            egui::Id::new("combat-center"),
+            &form::def("Fighter")["properties"]["combatCenter"],
+            &mut f.combat_center,
+        );
+        ui.label(faint("combatCenter: stable forward/up autolink target"));
+        if ui.button("Use legacy hurt rectangles").clicked() {
+            doc::remove_hurt_regions(f);
+        }
+    }
+    for (old, new) in region_renames {
+        for slot in sim::data::moves::Moves::SLOTS {
+            if let Some(m) = f.moves.get_mut(slot) {
+                for p in &mut m.phases {
+                    for w in &mut p.hurt_regions {
+                        if w.region == old {
+                            w.region = new.clone();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    section(ui, "Grab & ledge interactions", false, |ui| {
+        form::edit(
+            ui,
+            egui::Id::new("interactions"),
+            &form::def("Fighter")["properties"]["interactions"],
+            &mut f.interactions,
+        );
+    });
     ui.label(faint("The preview loops the idle animation with the hurtbox."));
 }
 
@@ -1210,7 +1397,10 @@ fn fighter_panel(ui: &mut egui::Ui, ed: &mut Editor, errors: &[ContentError]) {
 fn data_panel(ui: &mut egui::Ui, ed: &mut Editor, s: Section, errors: &[ContentError]) {
     ui.label(heading(s.name()));
     let help = match s {
-        Section::Style => "How the stick figure is drawn: limb widths, glow, head.",
+        Section::Rig => {
+            "Named joints, local rest transforms, bones, and joint shapes. Named poses animate these joints. Stage and combat geometry remain separate."
+        }
+        Section::Style => "How the legacy stick figure is drawn: limb widths, glow, head.",
         Section::Attachments => {
             "Vector parts hung on joints: weapons, hats, props. Phases animate them under Attachment animation."
         }
@@ -1225,8 +1415,34 @@ fn data_panel(ui: &mut egui::Ui, ed: &mut Editor, s: Section, errors: &[ContentE
     ui.label(faint("Hover a field for help · ✖ removes an optional field · + Field adds one."));
     ui.add_space(4.);
     let id = egui::Id::new(("data", s.key()));
+    if s == Section::Rig {
+        let mut state = std::mem::take(&mut ed.rig_edit);
+        crate::rig_ed::panel(ui, ed.fighter(), &mut state);
+        ed.rig_edit = state;
+    }
     let f = ed.fighter();
     match s {
+        Section::Rig => {
+            if f.rig.is_some() {
+                if ui
+                    .small_button("Remove rig, joint keys & bound collision")
+                    .on_hover_text("Return to legacy: remove named pose keys, joint-bound attack boxes, and any region set with joint bindings. Undo restores all.")
+                    .clicked()
+                {
+                    doc::remove_rig(f);
+                }
+            } else {
+                for (label, text) in [
+                    ("Add humanoid rig", include_str!("../../../assets/templates/rigs/humanoid.json")),
+                    ("Add quadruped rig", include_str!("../../../assets/templates/rigs/quadruped.json")),
+                ] {
+                    if ui.button(label).clicked() {
+                        f.rig = Some(serde_json::from_str(text).expect("bundled rig template"));
+                    }
+                }
+                ui.label(faint("Templates replace the drawn body. Legacy poses and combat geometry stay unchanged; animate named joints in Poses."));
+            }
+        }
         Section::Style => drop(form::edit(ui, id, form::def("Style"), &mut f.style)),
         Section::Attachments => drop(form::edit(ui, id, &form::array_of("Attachment"), &mut f.attachments)),
         Section::Projectiles => drop(form::map(ui, id, form::def("Projectile"), &mut f.projectiles, || None)),
@@ -1292,6 +1508,9 @@ pub fn nudge_hitbox(ed: &mut Editor, dx: f64, dy: f64) {
     let t = at_playhead(ed).and_then(|p| p.phase).map_or(0, |(_, t)| t);
     let Some((p, _)) = cur_phase(ed) else { return };
     let Some(b) = p.hitboxes.get_mut(h) else { return };
+    if b.geometry.is_some() {
+        return;
+    }
     match crate::view::geom_source(b, t).1 {
         Some(j) => (b.frames[j][1], b.frames[j][2]) = (b.frames[j][1] + dx, b.frames[j][2] + dy),
         None => (b.x, b.y) = (b.x + dx, b.y + dy),
@@ -1316,4 +1535,16 @@ fn insert_key(p: &mut Phase, t: u32) {
     };
     p.anim.push(AnimKey { at: f64::from(t), pose, lerp: false, cond: None });
     p.anim.sort_by(|a, b| a.at.total_cmp(&b.at));
+}
+
+#[cfg(test)]
+mod region_selector_tests {
+    #[test]
+    fn selector_offers_crouch_and_every_ordinary_state() {
+        use sim::data::hitbox::HurtState;
+        let choices = super::region_state_choices();
+        assert!(choices.iter().any(|(s, _)| *s == HurtState::Crouch));
+        assert!(choices.iter().any(|(s, _)| *s == HurtState::State(sim::world::State::Idle)));
+        assert_eq!(choices.len(), super::form::def("State")["enum"].as_array().unwrap().len() + 1);
+    }
 }

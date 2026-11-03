@@ -248,3 +248,64 @@ fn watching_results_preserves_match_and_allows_saving_without_autosave() {
     assert_eq!(m.recording.as_ref().unwrap().saved_path.as_ref(), Some(&path));
     fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn interaction_overrides_recorded_file_hold_throw_checksums() {
+    use sim::data::fighter::{GrabInteraction, Interactions};
+    use sim::world::State;
+    let mut data = (*crate::test_data()).clone();
+    let cfg =
+        MatchConfig::sandbox("arena", vec![sim::PlayerConfig::human("brawler"), sim::PlayerConfig::human("ninja")], 19);
+    let initial = World::new(cfg.clone(), &data).unwrap();
+    let a = initial.fighters[0].data;
+    let v = initial.fighters[1].data;
+    data.fighters[a].interactions = Some(Interactions {
+        grab: Some(GrabInteraction { hold_point: Some([39., 75.]), catch_point: Some([4., 60.]), ..default() }),
+        ..default()
+    });
+    data.fighters[v].body.height = 24.;
+    data.fighters[v].interactions =
+        Some(Interactions { grab: Some(GrabInteraction { held_anchor: Some([13., 60.]), ..default() }), ..default() });
+    let mut w = World::new(cfg, &data).unwrap();
+    let mut r = Replay::new(&data, &w);
+    let mut held = 0;
+    let mut thrown = false;
+    for tick in 0..900 {
+        let mut inputs = vec![Input::default(); 2];
+        if w.fighters[0].state == State::Hold {
+            held += 1;
+            if held >= 10 {
+                inputs[0].stick = (127, 0);
+            }
+        } else if held == 0 {
+            let dx = w.fighters[1].x - w.fighters[0].x;
+            if dx.abs() > 34. {
+                inputs[0].stick = (if dx > 0. { 127 } else { -127 }, 0);
+            } else if tick % 2 == 0 {
+                inputs[0].buttons = sim::input::GRAB;
+            }
+        }
+        step_world(&mut w, &data, &inputs);
+        thrown |= w.fighters[0].state == State::Throw;
+        drain(&mut w);
+        r.record(inputs, &w);
+    }
+    assert!(held >= 10 && thrown, "held {held}, thrown {thrown}");
+    r.final_hash = checksum(&w);
+    let dir = std::env::temp_dir().join(format!("stick-smash-interactions-replay-{}", std::process::id()));
+    fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("hold-throw.replay.json");
+    r.write(&file).unwrap();
+    let loaded = Replay::read(&file).unwrap();
+    assert_eq!(loaded.data.fighters[a].interactions, data.fighters[a].interactions);
+    let mut playback = Playback::new(loaded).unwrap();
+    let mut actual = playback.snapshots[0].1.clone();
+    playback.seek(900, &mut actual);
+    assert_eq!(playback.warning, None);
+    assert_eq!(actual, w);
+    playback.seek(100, &mut actual);
+    playback.seek(900, &mut actual);
+    assert_eq!(playback.warning, None);
+    assert_eq!(actual, w);
+    fs::remove_dir_all(dir).unwrap();
+}
