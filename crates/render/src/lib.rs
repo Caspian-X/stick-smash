@@ -73,6 +73,8 @@ pub struct Scene {
     pub overlay: Canvas,
     /// Draw fighter `i` with this skeleton instead of its animation (editor pose editing).
     pub pose_override: Option<(usize, pose::Skel)>,
+    /// Named-joint override for editor pose editing.
+    pub rig_pose_override: Option<(usize, sim::data::rig::RigPose)>,
     pending: VecDeque<World>,
     reset: bool,
 }
@@ -88,6 +90,7 @@ impl Scene {
             fixed_view: None,
             overlay: Canvas::default(),
             pose_override: None,
+            rig_pose_override: None,
             pending: VecDeque::new(),
             reset: true,
         }
@@ -241,6 +244,7 @@ fn fighter_views<'a>(
     cur: &'a World,
     t: f64,
     over: Option<(usize, pose::Skel)>,
+    rig_over: Option<&(usize, sim::data::rig::RigPose)>,
 ) -> Vec<FighterView<'a>> {
     let jump = d.global.render.interpolate.fighter_jump;
     let mut views: Vec<FighterView<'a>> = cur
@@ -249,6 +253,7 @@ fn fighter_views<'a>(
         .enumerate()
         .map(|(i, f)| {
             let skel = pose::fighter_pose(d, f, cur.frame);
+            let rig = d.fighters[f.data].rig.as_ref().map(|_| pose::fighter_rig_pose(d, f, cur.frame));
             let p = prev.and_then(|w| w.fighters.get(i)).filter(|p| {
                 p.data == f.data && p.face == f.face && p.state == f.state && (p.x - f.x).hypot(p.y - f.y) < jump
             });
@@ -258,9 +263,17 @@ fn fighter_views<'a>(
                     f,
                     x: p.x + (f.x - p.x) * t,
                     y: p.y + (f.y - p.y) * t,
+                    rig: rig.as_ref().map(|cur_pose| {
+                        pose::blend_rig_pose(
+                            &d.fighters[f.data],
+                            &pose::fighter_rig_pose(d, p, prev.map_or(cur.frame, |w| w.frame)),
+                            cur_pose,
+                            t,
+                        )
+                    }),
                     skel: pose::fighter_pose(d, p, prev.map_or(cur.frame, |w| w.frame)).blend(&skel, t),
                 },
-                None => FighterView { i, f, x: f.x, y: f.y, skel },
+                None => FighterView { i, f, x: f.x, y: f.y, skel, rig },
             }
         })
         .collect();
@@ -268,6 +281,11 @@ fn fighter_views<'a>(
         && let Some(v) = views.get_mut(i)
     {
         v.skel = skel;
+    }
+    if let Some((i, pose)) = rig_over
+        && let Some(v) = views.get_mut(*i)
+    {
+        v.rig = Some(pose.clone());
     }
     views
 }
@@ -308,7 +326,7 @@ fn draw(
     let rebuild_static = st.stage != Some(cur.stage) || !st.built.as_ref().is_some_and(|b| Arc::ptr_eq(b, &scene.data));
     st.stage = Some(cur.stage);
     st.built = Some(scene.data.clone());
-    let views = fighter_views(d, st.prev.as_ref(), cur, t, scene.pose_override);
+    let views = fighter_views(d, st.prev.as_ref(), cur, t, scene.pose_override, scene.rig_pose_override.as_ref());
     let asp = win.as_deref().map_or(16. / 9., |w| aspect(w));
     let [x0, y0, x1, y1] = fx::Cam { x: c.x + sx, y: c.y + sy, h: c.h }.view(asp);
     framing.view = [x0, y0, x1, y1];
@@ -384,7 +402,14 @@ fn debug_labels(
     };
     let ctx = ctx.ctx_mut()?;
     let painter = ctx.layer_painter(egui::LayerId::new(egui::Order::Background, egui::Id::new("render-debug")));
-    let views = fighter_views(&scene.data, st.prev.as_ref(), cur, scene.alpha.clamp(0., 1.), scene.pose_override);
+    let views = fighter_views(
+        &scene.data,
+        st.prev.as_ref(),
+        cur,
+        scene.alpha.clamp(0., 1.),
+        scene.pose_override,
+        scene.rig_pose_override.as_ref(),
+    );
     let font = egui::FontId::monospace(12.);
     let mut placed: Vec<egui::Rect> = vec![];
     let mut labels: Vec<(egui::Pos2, String)> = views

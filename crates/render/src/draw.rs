@@ -108,6 +108,8 @@ pub struct FighterView<'a> {
     pub x: f64,
     pub y: f64,
     pub skel: Skel,
+    /// Interpolated named-joint pose, or None to sample the current tick.
+    pub rig: Option<sim::data::rig::RigPose>,
 }
 
 pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, rng: &mut Rand) {
@@ -127,11 +129,11 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
     let fr = frame as f64;
 
     // Attachments: phase keys, hold IK (moves the front arm), resting angles.
-    let active = !sim::combat::active_boxes(d, f).is_empty();
+    let active = !sim::combat::active_boxes_at(d, f, frame).is_empty();
     let countering = sim::combat::countering(d, f).is_some();
     let mut placed = Vec::new();
     let mut trails = Vec::new();
-    for a in &fd.attachments {
+    for a in fd.attachments.iter().filter(|_| fd.rig.is_none()) {
         let anim = mc.phase.and_then(|ph| ph.attach.get(&a.id));
         let show = anim.and_then(|an| an.show).is_some_and(|[s, e]| mc.t >= f64::from(s) && mc.t <= f64::from(e));
         if a.hidden && !show {
@@ -188,7 +190,7 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
 
     // Overlay colors and alpha.
     let pal = |c: Color, a: f64| color(d, c, i, a);
-    if dodge {
+    if dodge && fd.rig.is_none() {
         let n = o.dodge.ghosts;
         for k in (1..=n).rev() {
             let s = f64::from(k) * o.dodge.spacing;
@@ -220,13 +222,7 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
     } else {
         1.
     };
-    cv.translate(0., -p.offset_y);
-    cv.scale(f.face, -1.);
-    if p.rot != 0. {
-        cv.translate(0., p.pivot);
-        cv.rotate(-p.rot.to_radians());
-        cv.translate(0., -p.pivot);
-    }
+    apply_body_transform(cv, sim::pose::BodyTransform::new(&p, [0., 0.], f.face));
     let helpless = f.state == State::Helpless;
     let charge_blink = mc.charging && (frame / u64::from(o.charge.blink.max(1))) % 2 == 1;
     let body = if f.flash > 0 {
@@ -265,38 +261,62 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
             color(d, o.trail.color, i, o.trail.alpha * fade * alpha),
         );
     }
-    let neck = [p.head[0] * 0.5 + p.shoulder[0] * 0.5, p.head[1] - st.head_radius];
-    let torso = [neck, p.shoulder, p.hip];
-    let limbs = [
-        [p.hip, p.knee_b, p.foot_b],
-        [p.shoulder, p.elbow_b, p.hand_b],
-        [p.hip, p.knee_f, p.foot_f],
-        [p.shoulder, p.elbow_f, p.hand_f],
-    ];
-    for l in &limbs {
-        cv.stroke_open(l, st.glow_width, glow, true);
-    }
-    cv.stroke_open(&torso, st.torso_glow_width, glow, true);
-    cv.fill_circle(p.head, st.head_glow_radius, glow);
-
-    for pl in placed.iter().filter(|pl| pl.a.behind) {
-        draw_attachment(cv, d, i, pl, alpha, frame);
-    }
-    cv.stroke_open(&limbs[0], st.back_limb_width, back, true);
-    cv.stroke_open(&limbs[1], st.back_limb_width, back, true);
-    cv.stroke_open(&torso, st.torso_width, body, true);
-    cv.stroke_open(&limbs[2], st.front_limb_width, body, true);
-    cv.stroke_open(&limbs[3], st.front_limb_width, body, true);
-    cv.fill_circle(p.head, st.head_radius, color(d, st.head_fill, i, alpha));
-    cv.stroke_circle(p.head, st.head_radius, st.head_ring, body);
-    let [ex, ey, ew, eh] = st.eye;
-    let h = p.head;
-    if matches!(f.state, State::Dizzy | State::Knockdown) {
-        let (x0, x1, y0, y1) = (h[0] + ex - 1., h[0] + ex + ew, h[1] + ey, h[1] + ey + eh);
-        cv.line([x0, y1], [x1, y0], o.x_eye_width, body);
-        cv.line([x1, y1], [x0, y0], o.x_eye_width, body);
+    if let Some(rig) = &fd.rig {
+        let sampled;
+        let pose = match &v.rig {
+            Some(pose) => pose,
+            None => {
+                sampled = sim::pose::fighter_rig_pose(d, f, frame);
+                &sampled
+            }
+        };
+        draw_rig(
+            cv,
+            d,
+            i,
+            rig,
+            pose,
+            alpha,
+            glow,
+            st.glow_width,
+            (body, back),
+            active || mc.charging || countering,
+            frame,
+        );
     } else {
-        cv.fill_rect(h[0] + ex, h[1] + ey, ew, eh, body);
+        let neck = [p.head[0] * 0.5 + p.shoulder[0] * 0.5, p.head[1] - st.head_radius];
+        let torso = [neck, p.shoulder, p.hip];
+        let limbs = [
+            [p.hip, p.knee_b, p.foot_b],
+            [p.shoulder, p.elbow_b, p.hand_b],
+            [p.hip, p.knee_f, p.foot_f],
+            [p.shoulder, p.elbow_f, p.hand_f],
+        ];
+        for l in &limbs {
+            cv.stroke_open(l, st.glow_width, glow, true);
+        }
+        cv.stroke_open(&torso, st.torso_glow_width, glow, true);
+        cv.fill_circle(p.head, st.head_glow_radius, glow);
+
+        for pl in placed.iter().filter(|pl| pl.a.behind) {
+            draw_attachment(cv, d, i, pl, alpha, frame);
+        }
+        cv.stroke_open(&limbs[0], st.back_limb_width, back, true);
+        cv.stroke_open(&limbs[1], st.back_limb_width, back, true);
+        cv.stroke_open(&torso, st.torso_width, body, true);
+        cv.stroke_open(&limbs[2], st.front_limb_width, body, true);
+        cv.stroke_open(&limbs[3], st.front_limb_width, body, true);
+        cv.fill_circle(p.head, st.head_radius, color(d, st.head_fill, i, alpha));
+        cv.stroke_circle(p.head, st.head_radius, st.head_ring, body);
+        let [ex, ey, ew, eh] = st.eye;
+        let h = p.head;
+        if matches!(f.state, State::Dizzy | State::Knockdown) {
+            let (x0, x1, y0, y1) = (h[0] + ex - 1., h[0] + ex + ew, h[1] + ey, h[1] + ey + eh);
+            cv.line([x0, y1], [x1, y0], o.x_eye_width, body);
+            cv.line([x1, y1], [x0, y0], o.x_eye_width, body);
+        } else {
+            cv.fill_rect(h[0] + ex, h[1] + ey, ew, eh, body);
+        }
     }
     for pl in placed.iter().filter(|pl| !pl.a.behind) {
         draw_attachment(cv, d, i, pl, alpha, frame);
@@ -318,6 +338,49 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
             let a = (fr * z.speed).to_radians() + TAU * f64::from(k) / f64::from(z.stars.max(1));
             cv.star([v.x + a.cos() * z.rx, v.y - z.y + a.sin() * z.ry], z.r, color(d, z.color, i, 1.));
         }
+    }
+}
+
+// Keep the canvas matrix for strokes and joint-attached shapes (including reflection).
+// This is the matrix form of BodyTransform, tested against its deterministic point math.
+fn apply_body_transform(cv: &mut Canvas, t: sim::pose::BodyTransform) {
+    cv.translate(t.root[0], t.root[1] - t.offset_y);
+    cv.scale(t.facing, -1.);
+    if t.rotation != 0. {
+        cv.translate(0., t.pivot);
+        cv.rotate(-t.rotation.to_radians());
+        cv.translate(0., -t.pivot);
+    }
+}
+
+/// Named figures use the same deterministic local transforms as authoring tools.
+fn draw_rig(
+    cv: &mut Canvas,
+    d: &GameData,
+    player: usize,
+    rig: &sim::data::rig::Rig,
+    pose: &sim::data::rig::RigPose,
+    alpha: f64,
+    glow: Rgba,
+    glow_width: f64,
+    palette: (Rgba, Rgba),
+    lit: bool,
+    frame: u64,
+) {
+    let Ok(resolved) = sim::rig::resolve(rig, pose) else { return };
+    for bone in &rig.bones {
+        let (Some(a), Some(b)) = (resolved.get(&bone.from), resolved.get(&bone.to)) else { continue };
+        cv.line(a.translation, b.translation, bone.width + glow_width, glow);
+        cv.line(a.translation, b.translation, bone.width, rig_color(d, bone.color, player, alpha, 1., Some(palette)));
+    }
+    for (joint, resolved) in rig.joints.iter().zip(&resolved.joints) {
+        cv.save();
+        cv.translate(resolved.transform.translation[0], resolved.transform.translation[1]);
+        cv.rotate(resolved.transform.angle.to_radians());
+        for shape in &joint.shapes {
+            draw_shape_palette(cv, d, player, shape, alpha, lit, frame, Some(palette));
+        }
+        cv.restore();
     }
 }
 
@@ -360,12 +423,46 @@ fn draw_attachment(cv: &mut Canvas, d: &GameData, player: usize, pl: &Placed, al
 
 /// One vector shape in the current (y-up) space.
 pub fn draw_shape(cv: &mut Canvas, d: &GameData, player: usize, s: &Shape, alpha: f64, glow: bool, frame: u64) {
+    draw_shape_palette(cv, d, player, s, alpha, glow, frame, None);
+}
+
+fn rig_color(
+    d: &GameData,
+    c: Color,
+    player: usize,
+    alpha: f64,
+    shape_alpha: f64,
+    palette: Option<(Rgba, Rgba)>,
+) -> Rgba {
+    if let Some((body, back)) = palette {
+        let base = match c {
+            Color::Player | Color::PlayerLight => Some(body),
+            Color::PlayerDark => Some(back),
+            _ => None,
+        };
+        if let Some(base) = base {
+            return base.alpha(shape_alpha);
+        }
+    }
+    color(d, c, player, alpha * shape_alpha)
+}
+
+fn draw_shape_palette(
+    cv: &mut Canvas,
+    d: &GameData,
+    player: usize,
+    s: &Shape,
+    alpha: f64,
+    glow: bool,
+    frame: u64,
+    palette: Option<(Rgba, Rgba)>,
+) {
     let on = |w: ShapeWhen| match w {
         ShapeWhen::Always => true,
         ShapeWhen::Glow => glow,
         ShapeWhen::NoGlow => !glow,
     };
-    let col = |c: Color, a: f64| color(d, c, player, a * alpha);
+    let col = |c: Color, a: f64| rig_color(d, c, player, alpha, a, palette);
     match s {
         Shape::Line { from, to, width, color: c, alpha: a, when } if on(*when) => {
             cv.line(*from, *to, *width, col(*c, *a))
@@ -468,5 +565,39 @@ mod tests {
         assert_eq!(keyed(&anim.angle, 28.) - keyed(&anim.angle, 25.), 220.);
         assert_eq!(keyed(&anim.angle, 31.), 540.);
         assert_eq!(keyed(&anim.angle, 62.), 415.);
+    }
+}
+
+#[cfg(test)]
+mod transform_tests {
+    use super::*;
+
+    #[test]
+    fn canvas_body_and_joint_matrices_match_shared_point_math() {
+        for face in [-1., 1.] {
+            for rot in [0., 90., -37., 215.] {
+                for pivot in [0., 13.] {
+                    for offset_y in [0., 7.] {
+                        let t = sim::pose::BodyTransform::new(
+                            &Skel { rot, pivot, offset_y, ..Default::default() },
+                            [101., -53.],
+                            face,
+                        );
+                        let joint = sim::rig::Transform { translation: [2., 8.], angle: 123. };
+                        let mut cv = Canvas::new(1.);
+                        apply_body_transform(&mut cv, t);
+                        cv.translate(joint.translation[0], joint.translation[1]);
+                        cv.rotate(joint.angle.to_radians());
+                        for p in [[0., 0.], [3., -9.], [-7., 4.]] {
+                            let actual = cv.to_world(p);
+                            let expected = t.local_to_world(joint.point(p));
+                            for (a, b) in actual.into_iter().zip(expected) {
+                                assert!((a - b).abs() < 1e-10, "{actual:?} != {expected:?}");
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

@@ -69,7 +69,13 @@ fn cpu_matches_draw_cleanly() {
                         );
                     }
                     let skel = pose::fighter_pose(&d, f, w.frame);
-                    draw_fighter(&mut cv, &d, w.frame, &FighterView { i, f, x: f.x, y: f.y, skel }, &mut rng);
+                    draw_fighter(
+                        &mut cv,
+                        &d,
+                        w.frame,
+                        &FighterView { i, f, x: f.x, y: f.y, skel, rig: None },
+                        &mut rng,
+                    );
                     let _ = debug::info(&d, f);
                 }
                 fx.draw(&mut cv, &d, 1.);

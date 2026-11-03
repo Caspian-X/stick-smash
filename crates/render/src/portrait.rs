@@ -100,7 +100,7 @@ pub(crate) fn draw(
                 // Measure the idle figure (attachments included) once, drawn at the origin.
                 let mut cv = Canvas::new(1.);
                 let skel = pose::fighter_pose(&d, &f, 0);
-                draw_fighter(&mut cv, &d, 0, &FighterView { i: 0, f: &f, x: 0., y: 0., skel }, &mut rng);
+                draw_fighter(&mut cv, &d, 0, &FighterView { i: 0, f: &f, x: 0., y: 0., skel, rig: None }, &mut rng);
                 let (mut x0, mut x1, mut top) = (0f64, 0f64, 0f64);
                 for [x, y, _] in &cv.pos {
                     (x0, x1, top) = (x0.min(f64::from(*x)), x1.max(f64::from(*x)), top.max(f64::from(*y)));
@@ -129,7 +129,7 @@ pub(crate) fn draw(
         cv.scale(cache.scale, cache.scale);
         let skel = pose::fighter_pose(&d, &f, frame);
         let i = p.color.unwrap_or(neutral);
-        draw_fighter(&mut cv, &d, frame, &FighterView { i, f: &f, x: dx, y: 0., skel }, &mut rng);
+        draw_fighter(&mut cv, &d, frame, &FighterView { i, f: &f, x: dx, y: 0., skel, rig: None }, &mut rng);
         cv.restore();
     }
     sheet::show(&SHEET, &cv, &meshes, &mut assets);

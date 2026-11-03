@@ -24,7 +24,7 @@ pub fn hit_type_color(t: HitType) -> u32 {
 }
 
 /// `pos[i]` = where fighter i is drawn (interpolated), so boxes stick to the figure between ticks.
-pub fn draw_debug(cv: &mut Canvas, d: &GameData, w: &World, pos: &[(f64, f64)]) {
+pub fn draw_debug(cv: &mut Canvas, d: &GameData, w: &World, _pos: &[(f64, f64)]) {
     let s = &d.stages[w.stage];
     let b = &s.blast;
     cv.stroke_closed(
@@ -53,11 +53,11 @@ pub fn draw_debug(cv: &mut Canvas, d: &GameData, w: &World, pos: &[(f64, f64)]) 
     for p in &w.projs {
         cv.stroke_circle([p.x, p.y], p.r, 2., Rgba::hex(0xff3355, 1.));
     }
-    for (i, f) in w.fighters.iter().enumerate() {
+    for f in &w.fighters {
         if matches!(f.state, State::Out | State::Dead) {
             continue;
         }
-        let (x, y) = pos.get(i).copied().unwrap_or((f.x, f.y));
+        let (x, y) = (f.x, f.y);
         let (dx, dy) = (x - f.x, y - f.y);
         let h = sim::combat::hurt(d, f);
         let hc = if f.inv > 0 || f.blink > 0 {
@@ -68,15 +68,20 @@ pub fn draw_debug(cv: &mut Canvas, d: &GameData, w: &World, pos: &[(f64, f64)]) 
             0xffee55
         };
         let r = [[h.x1 + dx, h.y1 + dy], [h.x2 + dx, h.y1 + dy], [h.x2 + dx, h.y2 + dy], [h.x1 + dx, h.y2 + dy]];
-        cv.fill_convex(&r, Rgba::hex(hc, 0.12));
-        cv.stroke_closed(&r, 1.5, Rgba::hex(hc, 0.9));
+        if let Some(regions) = sim::combat::hurt_shapes(d, f, w.frame) {
+            for shape in regions {
+                combat_shape(cv, shape, 1.5, Rgba::hex(hc, 0.9));
+            }
+        } else {
+            cv.fill_convex(&r, Rgba::hex(hc, 0.12));
+            cv.stroke_closed(&r, 1.5, Rgba::hex(hc, 0.9));
+        }
         cv.fill_circle([x, y], 2.5, Rgba::hex(0xffffff, 1.));
         cv.fill_circle([x, y - l.hand_y], 2.5, Rgba::hex(0x66ffcc, 1.));
-        for bx in sim::combat::active_boxes(d, f) {
+        for bx in sim::combat::active_boxes_at(d, f, w.frame) {
             let (bx_, by, hb) = (bx.x + dx, bx.y + dy, &bx.hit);
             let c = hit_type_color(hb.kind);
-            cv.fill_circle([bx_, by], hb.r, Rgba::hex(c, 0.3));
-            cv.stroke_circle([bx_, by], hb.r, 2., Rgba::hex(c, 1.));
+            combat_shape(cv, bx.shape, 2., Rgba::hex(c, 1.));
             launch_arrow(cv, [bx_, by], hb, f.face, 1.);
         }
     }
@@ -138,4 +143,26 @@ pub fn info(d: &GameData, f: &Fighter) -> String {
         lines.push(extra.join(" · "));
     }
     lines.join("\n")
+}
+
+/// Exact closed circle/capsule outline at the simulation tick.
+pub fn combat_shape(cv: &mut Canvas, shape: sim::geometry::Shape, width: f64, color: Rgba) {
+    match shape {
+        sim::geometry::Shape::Circle { center, radius } => cv.stroke_circle(center, radius, width, color),
+        sim::geometry::Shape::Capsule { a, b, radius } => {
+            if a == b {
+                cv.stroke_circle(a, radius, width, color);
+                return;
+            }
+            let angle = (b[1] - a[1]).atan2(b[0] - a[0]);
+            let mut points = Vec::new();
+            for (center, start) in [(b, angle - PI / 2.), (a, angle + PI / 2.)] {
+                for i in 0..=24 {
+                    let t = start + PI * f64::from(i) / 24.;
+                    points.push([center[0] + radius * t.cos(), center[1] + radius * t.sin()]);
+                }
+            }
+            cv.stroke_closed(&points, width, color);
+        }
+    }
 }
