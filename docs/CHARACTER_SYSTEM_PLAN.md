@@ -332,3 +332,15 @@ bounded training recording; it does not claim completed-match directory verifica
 The targeted `interactions` screenshot section captures unequal humanoid/quadruped hold, static ledge
 hang, and the first climb-segment endpoint. All three captures were rendered and visually inspected.
 They show scripted snapshots, not swept-path clearance or hand/limb retargeting.
+
+### Combined integration review
+
+The combined review identified extreme finite rig-key interpolation overflowing before collision resolution.
+Interpolation now avoids overflowing endpoint subtraction, including presentation angle wrapping; a regression
+validates the package and resolves attached hurt geometry across the animation. Ordinary-range interpolation
+keeps its existing arithmetic. Simulation compatibility is `sim-22` (replay container remains version 2).
+
+A pre-existing controller identity limitation remains: reconnecting a pad as a new entity can allocate a new
+per-device profile suffix, losing its chosen layout. A profile-reclaim policy and reconnect lifecycle test remain
+follow-up work. Human combo/pacing acceptance of the experimental roster normalization and hardware controller
+playtesting remain outstanding.

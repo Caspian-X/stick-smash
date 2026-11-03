@@ -113,6 +113,7 @@ fn quadruped_regions_move_with_joints_without_weapon_hurt() {
             .collect(),
     );
     fd.combat_center = Some([0., 35.]);
+    fd.combat_center = Some([0., 40.]);
     sim::data::load::check_fighter("fixture", fd).unwrap();
     assert_eq!(combat::hurt_shapes(&d, f, 0).unwrap().len(), 3);
     assert!(!combat::circle_hurt(&d, f, 0, f.x + 160., f.y - 40., 3.));
@@ -558,4 +559,52 @@ fn omitted_activation_fields_preserve_region_defaults_and_encoding() {
     assert!(encoded.get("enabled").is_none());
     assert!(encoded.get("states").is_none());
     assert_eq!(serde_json::from_value::<HurtRegion>(encoded).unwrap(), original);
+}
+
+#[test]
+fn validated_extreme_animation_stays_finite_through_attached_collision() {
+    let mut d = common::data();
+    let w = common::fighters(&d, "brawler", &[]);
+    let f = &w.fighters[0];
+    let fd = &mut d.fighters[f.data];
+    fd.rig = Some(serde_json::from_value(serde_json::json!({"joints":[{"id":"root","translation":[0,0]}]})).unwrap());
+    for (name, value) in [("extremeA", 1e308), ("extremeB", -1e308)] {
+        fd.poses.insert(
+            name.into(),
+            serde_json::from_value(serde_json::json!({
+                "joints":{"root":{"translation":[value,0],"angle":value}}
+            }))
+            .unwrap(),
+        );
+    }
+    fd.anims.insert(
+        "idle".into(),
+        serde_json::from_value(serde_json::json!({
+            "clock":"world","keys":[{"at":0,"pose":"extremeA"},{"at":10,"pose":"extremeB","lerp":true}]
+        }))
+        .unwrap(),
+    );
+    fd.hurt_regions = Some(vec![HurtRegion {
+        enabled: true,
+        states: vec![],
+        id: "body".into(),
+        geometry: CombatGeometry::Circle { center: point(Some("root"), 0., 0.), radius: 6. },
+    }]);
+    fd.combat_center = Some([0., 40.]);
+    sim::data::load::check_fighter("fixture", fd).unwrap();
+    for tick in [0, 2, 5, 8, 10] {
+        let shapes = combat::hurt_shapes(&d, f, tick).unwrap();
+        let center = shapes[0].center();
+        assert!(center.iter().all(|v| v.is_finite()), "tick {tick}: {center:?}");
+        assert_eq!(combat::circle_hurt(&d, f, tick, f.x, f.y, 1.), tick == 5);
+        if tick == 5 {
+            assert_eq!(center, [f.x, f.y]);
+        }
+    }
+    let fd = &d.fighters[f.data];
+    let a = sim::pose::resolve_rig_pose(fd, &fd.poses["extremeA"]);
+    let b = sim::pose::resolve_rig_pose(fd, &fd.poses["extremeB"]);
+    let blended = sim::pose::blend_rig_pose(fd, &a, &b, 0.5);
+    assert!(blended["root"].angle.unwrap().is_finite());
+    assert!(blended["root"].translation.unwrap().iter().all(|v| v.is_finite()));
 }

@@ -314,14 +314,19 @@ fn resolve_rig_ref(fd: &FighterData, r: &PoseRef) -> crate::data::rig::RigPose {
     }
 }
 
+fn lerp_rig_value(a: f64, b: f64, t: f64) -> f64 {
+    let delta = b - a;
+    if delta.is_finite() { a + delta * t } else { a * (1. - t) + b * t }
+}
+
 fn lerp_rig(mut a: crate::data::rig::RigPose, b: &crate::data::rig::RigPose, t: f64) -> crate::data::rig::RigPose {
     for (id, a) in &mut a {
         let Some(b) = b.get(id) else { continue };
         if let (Some(x), Some(y)) = (a.translation, b.translation) {
-            a.translation = Some([x[0] + (y[0] - x[0]) * t, x[1] + (y[1] - x[1]) * t]);
+            a.translation = Some([lerp_rig_value(x[0], y[0], t), lerp_rig_value(x[1], y[1], t)]);
         }
         if let (Some(x), Some(y)) = (a.angle, b.angle) {
-            a.angle = Some(x + (y - x) * t);
+            a.angle = Some(lerp_rig_value(x, y, t));
         }
     }
     a
@@ -339,7 +344,9 @@ pub fn blend_rig_pose(
     let mut to = resolve_rig_pose(fd, &Pose { joints: b.clone(), ..Default::default() });
     for (id, joint) in &mut to {
         if let (Some(a), Some(b)) = (from.get(id).and_then(|j| j.angle), joint.angle) {
-            let delta = (b - a).rem_euclid(360.);
+            let difference = b - a;
+            let delta = if difference.is_finite() { difference } else { b.rem_euclid(360.) - a.rem_euclid(360.) }
+                .rem_euclid(360.);
             joint.angle = Some(a + if delta > 180. { delta - 360. } else { delta });
         }
     }
