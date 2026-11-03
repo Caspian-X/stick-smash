@@ -611,6 +611,7 @@ fn training() -> Vec<Step> {
         ("archer", "14a-archer", "14b-archer-draw", "14c-archer-kite"),
         ("wizard", "14d-wizard", "14e-wizard-love", "14f-wizard-wind"),
         ("tinker", "14g-tinker", "14h-tinker-bomb", "14i-tinker-jetpack"),
+        ("king", "25i-king-training", "25j-king-inhale", "25k-king-recovery"),
         ("whiplash", "24a-whiplash-training", "24b-whiplash-charge", "24c-whiplash-recovery"),
     ] {
         v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training(id), Step::Wait(30)]);
@@ -626,6 +627,45 @@ fn training() -> Vec<Step> {
         shot(&mut v, recovery);
         v.extend([Step::Set(0, Up, false), Step::Set(0, Special, false)]);
     }
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("king"), Step::Wait(30)]);
+    v.push(Step::Set(0, Down, true));
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Until(
+        |m, _, _| {
+            m.world.fighters[0].state == FState::Attack
+                && m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.slot == "dspec" && mv.charge >= 90)
+        },
+        180,
+    ));
+    v.push(Step::Shot("25l-king-jet-charge"));
+    v.push(Step::Set(0, Special, false));
+    v.push(Step::Set(0, Down, false));
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("king"), Step::Wait(30)]);
+    v.push(Step::Set(0, Right, true));
+    v.push(Step::Wait(4));
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Until(|m, _, _| !m.world.projs.is_empty(), 80));
+    v.push(Step::Wait(10));
+    v.push(Step::Shot("25m-king-gordo"));
+    v.push(Step::Set(0, Special, false));
+    v.push(Step::Set(0, Right, false));
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("king"), Step::Wait(30)]);
+    v.push(Step::Set(0, Up, true));
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Until(
+        |m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.slot == "uspec" && mv.phase >= 2),
+        200,
+    ));
+    v.push(Step::Shot("25n-king-super-jump"));
+    v.push(Step::Until(|m, _, _| m.world.projs.len() >= 2, 500));
+    v.push(Step::Shot("25o-king-landing-stars"));
+    v.push(Step::Set(0, Up, false));
+    v.push(Step::Set(0, Special, false));
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("king"), Step::Wait(30)]);
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Wait(24));
+    v.push(Step::Shot("25p-king-inhale"));
+    v.push(Step::Set(0, Special, false));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("mike"), Step::Wait(30)]);
     v.push(Step::Set(0, Special, true));
     v.push(Step::Until(|m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.charge == 209), 260));
@@ -694,6 +734,14 @@ fn fighter_kits() -> Vec<Step> {
         ("whiplash", "dspec", 10, "23f-whiplash-flip"),
         ("whiplash", "zair", 15, "23g-whiplash-tether"),
         ("whiplash", "nspec", 22, "23h-whiplash-paralyzer"),
+        ("king", "fsmash", 39, "25a-king-smash"),
+        ("king", "sspec", 31, "25b-king-gordo"),
+        ("king", "nspec", 24, "25c-king-inhale"),
+        ("king", "uspec", 30, "25d-king-super-jump"),
+        ("king", "dair", 21, "25e-king-meteor"),
+        ("king", "dspec", 28, "25f-king-jet"),
+        ("king", "grab", 8, "25g-king-grab"),
+        ("king", "utilt", 8, "25h-king-head-lift"),
     ] {
         ed(&mut v, Cmd::Subject(Subject::Move(slot.into())));
         ed(&mut v, Cmd::Fighter(fighter.into()));
@@ -1350,7 +1398,23 @@ mod tests {
 24b-unequal-ledge
 24b-whiplash-charge
 24c-unequal-climb
-24c-whiplash-recovery";
+24c-whiplash-recovery
+25a-king-smash
+25b-king-gordo
+25c-king-inhale
+25d-king-super-jump
+25e-king-meteor
+25f-king-jet
+25g-king-grab
+25h-king-head-lift
+25i-king-training
+25j-king-inhale
+25k-king-recovery
+25l-king-jet-charge
+25m-king-gordo
+25n-king-super-jump
+25o-king-landing-stars
+25p-king-inhale";
         assert_eq!(names, expected.lines().collect::<Vec<_>>());
     }
 }

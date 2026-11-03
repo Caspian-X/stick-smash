@@ -1,0 +1,391 @@
+{
+ "page": "https://ultimateframedata.com/king_dedede",
+ "accessed": "2026-11-03",
+ "pageSha256": "9a23d46496b779d101240b667758455dc12af13dc0ff017d75d66b6512b84e29",
+ "animations": [
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeJab1.gif",
+   "filename": "KingDededeJab1.gif",
+   "sha256": "347b1c63ef2a7c79c9f0366397943677cb554a68cd4c470ed9a1f5feb9f46120",
+   "frames": 32,
+   "inspect": [
+    0,
+    7,
+    9,
+    10,
+    20
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeJab2.gif",
+   "filename": "KingDededeJab2.gif",
+   "sha256": "4f0125791d104657bb47a7eac9fdb5eb8a64362d5028f81ffe84b79046f38709",
+   "frames": 27,
+   "inspect": [
+    0,
+    8,
+    10,
+    11,
+    20
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeFTilt.gif",
+   "filename": "KingDededeFTilt.gif",
+   "sha256": "f9808e842067ba2af70f56dc7e59e82f6e98de46da8bf0038c5a4ed2a132b22d",
+   "frames": 48,
+   "inspect": [
+    0,
+    8,
+    10,
+    11,
+    20,
+    22
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeUTilt.gif",
+   "filename": "KingDededeUTilt.gif",
+   "sha256": "b93795251dfe23dff0f8778cea2e0b3289e5752e8d6e4733b5c9bfd12f2a7a8a",
+   "frames": 38,
+   "inspect": [
+    0,
+    5,
+    6,
+    12,
+    20
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeDTilt.gif",
+   "filename": "KingDededeDTilt.gif",
+   "sha256": "d098ba8f714b2a2b19545d30566a2f6eedee0d8a44c70daf2d5bbb1b3a92c3b8",
+   "frames": 37,
+   "inspect": [
+    0,
+    4,
+    5,
+    7,
+    10
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeDashAttack.gif",
+   "filename": "KingDededeDashAttack.gif",
+   "sha256": "af78eb185275a08435756348ca852b723831a8ba88d8c47a46ca9cb808282cf6",
+   "frames": 66,
+   "inspect": [
+    0,
+    18,
+    25,
+    26,
+    30,
+    40
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeFSmash.gif",
+   "filename": "KingDededeFSmash.gif",
+   "sha256": "d5493b52ea4398570f238127803f55c1acfce13930c7845519ffcd65c1f7e7d6",
+   "frames": 76,
+   "inspect": [
+    0,
+    20,
+    31,
+    37,
+    39,
+    41,
+    43,
+    60
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeUSmash.gif",
+   "filename": "KingDededeUSmash.gif",
+   "sha256": "657b3e4b01675b6401d324d77d57a2ed163273c743c6d5e2b09ba0d10e883b18",
+   "frames": 67,
+   "inspect": [
+    0,
+    8,
+    15,
+    16,
+    20,
+    23,
+    40
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeDSmash.gif",
+   "filename": "KingDededeDSmash.gif",
+   "sha256": "7fc51713906fb78dffe5ac669eae09a5322a5bfdd2a18ecc66cde6074028e475",
+   "frames": 52,
+   "inspect": [
+    0,
+    8,
+    12,
+    13,
+    16,
+    21,
+    40
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeNAir.gif",
+   "filename": "KingDededeNAir.gif",
+   "sha256": "bf90b1c4d4dd021bd0396f2af25941c02d1661ae7dd72c90076b4294b762fcfb",
+   "frames": 39,
+   "inspect": [
+    0,
+    5,
+    6,
+    8,
+    20,
+    30
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeFAir.gif",
+   "filename": "KingDededeFAir.gif",
+   "sha256": "b6aa68f3e55536a8a4763839fb4c47074614f0aafabb4e0951b8a3c15dc01d94",
+   "frames": 41,
+   "inspect": [
+    0,
+    5,
+    12,
+    13,
+    14,
+    30
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeBAir.gif",
+   "filename": "KingDededeBAir.gif",
+   "sha256": "ec4f8576076feab3a747c770c4bb2c651732d54a43241f50590b3913a648e52c",
+   "frames": 37,
+   "inspect": [
+    0,
+    10,
+    16,
+    17,
+    18,
+    30
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeUAir.gif",
+   "filename": "KingDededeUAir.gif",
+   "sha256": "de7cedce6f4d8c782e1c863350ee2c9daf809ed4eedb93589a3f611d026611c8",
+   "frames": 44,
+   "inspect": [
+    0,
+    8,
+    9,
+    10,
+    15,
+    23,
+    24
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeDAir.gif",
+   "filename": "KingDededeDAir.gif",
+   "sha256": "89cac5f121b3d193ea33062b5144e45738dc2ef28bb0dc3264f2160b8b6d259a",
+   "frames": 47,
+   "inspect": [
+    0,
+    9,
+    21,
+    22,
+    23,
+    40
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeGordoThrow.gif",
+   "filename": "KingDededeGordoThrow.gif",
+   "sha256": "557e872601f8b5f58b02e208a926ebbfbc34a8ccba3943b8de1a511d5fee32e7",
+   "frames": 58,
+   "inspect": [
+    0,
+    20,
+    27,
+    28,
+    29,
+    40
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeInhaleStart.gif",
+   "filename": "KingDededeInhaleStart.gif",
+   "sha256": "27acc6803f53079e7c95c723bb807cb3597ee8ea0ab73514ae754d2f0320ff88",
+   "frames": 16,
+   "inspect": [
+    0,
+    5,
+    13,
+    15
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeInhale.gif",
+   "filename": "KingDededeInhale.gif",
+   "sha256": "b3028b2bda0960b3c16d9e0c8638a9afb32b08de948f50c1d45d2b65b8961a93",
+   "frames": 18,
+   "inspect": [
+    0,
+    8,
+    17
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeSuperDededeJump.gif",
+   "filename": "KingDededeSuperDededeJump.gif",
+   "sha256": "e6a0cfa53c3beeb9cecd63d31a6861ca1e5e327c8e2157219ec0926dec4c935a",
+   "frames": 128,
+   "inspect": [
+    0,
+    8,
+    17,
+    21,
+    34,
+    52,
+    69,
+    80,
+    100
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeSuperDededeJumpLanding.gif",
+   "filename": "KingDededeSuperDededeJumpLanding.gif",
+   "sha256": "cb6d1f0a48c0d9dd9d5fbeb2552904e89c801b20412237ab3162301c0f012c2c",
+   "frames": 59,
+   "inspect": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    10,
+    20
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeJetHammerG.gif",
+   "filename": "KingDededeJetHammerG.gif",
+   "sha256": "c706d1586e1731b352b7b8c9f6a066ae24dcffd31717c248555277e08fbadcc1",
+   "frames": 50,
+   "inspect": [
+    0,
+    9,
+    17,
+    26,
+    27,
+    28,
+    29,
+    40
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeGrab.gif",
+   "filename": "KingDededeGrab.gif",
+   "sha256": "d39a9fc8291e36c4a51b98a10492a5d89a0e303b83f10d2d43273c7157d30adb",
+   "frames": 36,
+   "inspect": [
+    0,
+    7,
+    8,
+    9,
+    20
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeDashGrab.gif",
+   "filename": "KingDededeDashGrab.gif",
+   "sha256": "e4d926eae110a13cf55a57e6a4f309d3d4da575e9e993d1e1d85e9aad540aa38",
+   "frames": 46,
+   "inspect": [
+    0,
+    10,
+    11,
+    12,
+    20
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededePummel.gif",
+   "filename": "KingDededePummel.gif",
+   "sha256": "3d778e557728115fc51d0dd402eb3d7d46502532442496074816288a70070922",
+   "frames": 7,
+   "inspect": [
+    0,
+    2,
+    4
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeFthrow.gif",
+   "filename": "KingDededeFthrow.gif",
+   "sha256": "edc0d678455f847dc6708949a679afd8803cfdb60a98ca0af7534ac7a305703a",
+   "frames": 37,
+   "inspect": [
+    0,
+    11,
+    12,
+    13,
+    20
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeBThrow.gif",
+   "filename": "KingDededeBThrow.gif",
+   "sha256": "acac6afbb252e2966f7b1a57c16d6250d00d77781fb4e7547539334df1ef0f93",
+   "frames": 41,
+   "inspect": [
+    0,
+    15,
+    16,
+    17,
+    18
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeUThrow.gif",
+   "filename": "KingDededeUThrow.gif",
+   "sha256": "aff0a88b981f33c8748c53f9532d4133c122d28dc6df2c557aef55795fa57ae7",
+   "frames": 39,
+   "inspect": [
+    0,
+    15,
+    16,
+    18
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeDThrow.gif",
+   "filename": "KingDededeDThrow.gif",
+   "sha256": "02fc27857c060219c42fa2f65c614ba1dac58f37710d9ca3f5c7a676eb51281f",
+   "frames": 41,
+   "inspect": [
+    0,
+    23,
+    25,
+    26
+   ]
+  },
+  {
+   "url": "https://ultimateframedata.com/hitboxes/king_dedede/KingDededeJet%20HammerGMax.gif",
+   "filename": "KingDededeJet HammerGMax.gif",
+   "sha256": "dd566254b381e0548a8ecebbbc092f3c6255f400eeb9a2ca5f0d889f4704bd74",
+   "frames": 69,
+   "inspect": [
+    0,
+    9,
+    10,
+    11,
+    30
+   ]
+  }
+ ]
+}

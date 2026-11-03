@@ -2,835 +2,2582 @@
   "$schema": "../../schema/fighter.schema.json",
   "schemaVersion": 1,
   "extends": "base",
-  "name": "King",
-  "blurb": "King: heavy, 3 air jumps · special: throw a Gordo (any attack bats it back) · ↑ super jump · ↓ hold for Jet Hammer",
-  "tagline": "Heavy hammer royalty with three air jumps",
-  "stats": { "weight": 0.9, "runSpeed": 5, "jumpSpeed": 14, "airJumpSpeed": 11.5, "airJumps": 3 },
+  "name": "Penguin King",
+  "tagline": "The self-made king of Dream Land",
+  "blurb": "Penguin King: a super-heavy penguin with four midair jumps, a huge hammer, a bouncing Gordo, armored Super Dedede Jump and a chargeable Jet Hammer. Neutral special inhales; side special throws a Gordo that any attack can bat back.",
+  "stats": {
+    "weight": 0.78740157,
+    "pummelDamage": 1.6,
+    "walkSpeed": 3.6015,
+    "runSpeed": 5.236,
+    "dashSpeed": 6.3525,
+    "dashFrames": 15,
+    "runAccel": 0.72,
+    "groundFriction": 0.86,
+    "jumpSpeed": 15.1468,
+    "shortHopSpeed": 10.5775,
+    "airJumpSpeed": 15.1468,
+    "airJumpDrift": 3.8,
+    "airJumps": 4,
+    "airSpeed": 2.5725,
+    "airAccel": 0.175,
+    "gravity": 0.582,
+    "fallSpeed": 11.7,
+    "fastFallSpeed": 18.72
+  },
+  "body": { "halfWidth": 18, "height": 74 },
+  "hurtboxes": {
+    "default": { "x1": -23, "x2": 23, "y1": 0, "y2": 92 },
+    "knockdown": { "x1": -36, "x2": 36, "y1": 0, "y2": 20 }
+  },
+  "interactions": {
+    "grab": { "catchPoint": [0, 20], "holdPoint": [58, 40] }
+  },
+  "style": {
+    "headRadius": 18,
+    "torsoWidth": 9,
+    "frontLimbWidth": 8,
+    "backLimbWidth": 7,
+    "glowWidth": 20,
+    "torsoGlowWidth": 22,
+    "headGlowRadius": 25,
+    "headRing": 5,
+    "headFill": "#f4e6b8",
+    "eye": [4, -1, 4, 5]
+  },
   "ai": {
     "reach": 100,
     "counterChance": 0,
     "specials": [
       {
-        "minDistance": 100,
-        "maxDistance": 200,
-        "height": 40,
-        "chance": 0.15,
+        "minDistance": 90,
+        "maxDistance": 220,
+        "height": 60,
+        "chance": 0.18,
         "grounded": true,
-        "noProjectile": false,
-        "down": true,
-        "hold": [10, 70]
+        "noProjectile": true,
+        "neutral": true,
+        "down": false,
+        "hold": [10, 40]
       },
       {
-        "minDistance": 160,
-        "maxDistance": 480,
-        "height": 120,
+        "minDistance": 150,
+        "maxDistance": 500,
+        "height": 110,
         "chance": 0.3,
-        "grounded": false,
+        "grounded": true,
         "noProjectile": true,
         "down": false,
         "hold": null
+      },
+      {
+        "minDistance": 60,
+        "maxDistance": 160,
+        "height": 50,
+        "chance": 0.14,
+        "grounded": true,
+        "noProjectile": true,
+        "down": true,
+        "hold": [20, 70]
       }
-    ],
-    "recoveryShieldCancel": "plunge"
+    ]
   },
+  "poses": {
+    "stand": {
+      "head": [0, 84],
+      "shoulder": [0, 64],
+      "hip": [0, 42],
+      "elbowF": [18, 59],
+      "handF": [30, 54],
+      "elbowB": [-16, 58],
+      "handB": [-26, 50],
+      "kneeF": [8, 20],
+      "footF": [16, 0],
+      "kneeB": [-8, 20],
+      "footB": [-16, 0],
+      "pivot": 42
+    },
+    "crouch": {
+      "from": "stand",
+      "head": [2, 70],
+      "shoulder": [0, 52],
+      "hip": [0, 30],
+      "elbowF": [16, 46],
+      "handF": [26, 40],
+      "elbowB": [-14, 46],
+      "handB": [-24, 38],
+      "kneeF": [14, 14],
+      "footF": [24, 0],
+      "kneeB": [-12, 14],
+      "footB": [-22, 0],
+      "pivot": 32
+    },
+    "runA": {
+      "from": "stand",
+      "head": [6, 82],
+      "shoulder": [4, 62],
+      "hip": [0, 40],
+      "elbowF": [20, 58],
+      "handF": [28, 52],
+      "elbowB": [-14, 58],
+      "handB": [-24, 52],
+      "kneeF": [16, 18],
+      "footF": [28, 2],
+      "kneeB": [-12, 16],
+      "footB": [-20, 0]
+    },
+    "runB": {
+      "from": "stand",
+      "head": [6, 82],
+      "shoulder": [4, 62],
+      "hip": [0, 40],
+      "elbowF": [12, 58],
+      "handF": [20, 56],
+      "elbowB": [-18, 60],
+      "handB": [-28, 58],
+      "kneeF": [-8, 18],
+      "footF": [-18, 0],
+      "kneeB": [12, 20],
+      "footB": [22, 4]
+    },
+    "air": {
+      "from": "stand",
+      "head": [2, 82],
+      "shoulder": [0, 62],
+      "hip": [0, 40],
+      "elbowF": [20, 62],
+      "handF": [30, 66],
+      "elbowB": [-20, 60],
+      "handB": [-30, 64],
+      "kneeF": [14, 28],
+      "footF": [20, 18],
+      "kneeB": [-10, 26],
+      "footB": [-16, 14]
+    },
+    "airFall": { "from": "air", "kneeF": [10, 20], "footF": [14, 6], "kneeB": [-8, 18], "footB": [-12, 4] },
+    "lean": { "from": "stand", "head": [8, 82], "shoulder": [4, 62], "hip": [-2, 40], "pivot": 40 },
+    "swing": {
+      "from": "stand",
+      "head": [-4, 82],
+      "shoulder": [-2, 62],
+      "hip": [0, 40],
+      "elbowF": [-14, 58],
+      "handF": [-24, 54],
+      "elbowB": [-20, 56],
+      "handB": [-30, 50]
+    },
+    "airSwing": { "from": "air", "head": [-4, 80], "shoulder": [-2, 60], "hip": [0, 38] },
+    "hold": {
+      "from": "stand",
+      "head": [2, 82],
+      "elbowF": [22, 60],
+      "handF": [38, 58],
+      "elbowB": [18, 58],
+      "handB": [34, 56]
+    },
+    "hurt": {
+      "from": "stand",
+      "head": [-6, 80],
+      "shoulder": [-4, 60],
+      "hip": [-2, 40],
+      "elbowF": [8, 70],
+      "handF": [16, 80],
+      "elbowB": [-16, 68],
+      "handB": [-24, 78],
+      "kneeF": [8, 18],
+      "footF": [14, 2],
+      "kneeB": [-8, 18],
+      "footB": [-14, 2]
+    },
+    "ledge": {
+      "from": "stand",
+      "head": [4, 78],
+      "shoulder": [2, 60],
+      "hip": [0, 38],
+      "elbowF": [10, 76],
+      "handF": [12, 94],
+      "elbowB": [6, 74],
+      "handB": [8, 92],
+      "kneeF": [8, 18],
+      "footF": [6, 2],
+      "kneeB": [-6, 18],
+      "footB": [-10, 2]
+    },
+    "win": {
+      "from": "stand",
+      "head": [0, 86],
+      "shoulder": [0, 66],
+      "elbowF": [12, 80],
+      "handF": [18, 100],
+      "elbowB": [-12, 78],
+      "handB": [-18, 98]
+    },
+    "throwF": {
+      "from": "stand",
+      "head": [8, 80],
+      "shoulder": [4, 60],
+      "hip": [0, 40],
+      "elbowF": [28, 62],
+      "handF": [48, 58],
+      "elbowB": [22, 60],
+      "handB": [42, 56]
+    },
+    "throwB": {
+      "from": "stand",
+      "head": [-8, 80],
+      "shoulder": [-4, 60],
+      "hip": [0, 40],
+      "elbowF": [-8, 62],
+      "handF": [-26, 60],
+      "elbowB": [-14, 60],
+      "handB": [-30, 56]
+    },
+    "throwU": {
+      "from": "stand",
+      "head": [0, 86],
+      "shoulder": [0, 66],
+      "elbowF": [18, 78],
+      "handF": [10, 100],
+      "elbowB": [-18, 76],
+      "handB": [-10, 98]
+    },
+    "throwD": {
+      "from": "crouch",
+      "head": [8, 64],
+      "shoulder": [4, 48],
+      "elbowF": [22, 36],
+      "handF": [38, 22],
+      "elbowB": [16, 34],
+      "handB": [32, 20]
+    }
+  },
+  "anims": {
+    "idle": {
+      "clock": "world",
+      "loop": 90,
+      "keys": [
+        { "at": 0, "pose": "stand" },
+        {
+          "at": 22.5,
+          "pose": { "from": "stand", "head": [0, 85.2], "shoulder": [0, 65.2] },
+          "lerp": true
+        },
+        { "at": 45, "pose": "stand", "lerp": true },
+        {
+          "at": 67.5,
+          "pose": { "from": "stand", "head": [0, 83] },
+          "lerp": true
+        },
+        { "at": 90, "pose": "stand", "lerp": true }
+      ]
+    },
+    "crouch": {
+      "clock": "world",
+      "loop": 60,
+      "keys": [
+        { "at": 0, "pose": "crouch" },
+        {
+          "at": 30,
+          "pose": { "from": "crouch", "head": [2, 71] },
+          "lerp": true
+        },
+        { "at": 60, "pose": "crouch", "lerp": true }
+      ]
+    },
+    "run": {
+      "clock": "run",
+      "loop": 360,
+      "keys": [
+        { "at": 0, "pose": "runA" },
+        { "at": 90, "pose": "runB", "lerp": true },
+        { "at": 180, "pose": "runA", "lerp": true },
+        { "at": 270, "pose": "runB", "lerp": true },
+        { "at": 360, "pose": "runA", "lerp": true }
+      ]
+    },
+    "jumpsquat": {
+      "keys": [
+        { "at": 0, "pose": "crouch" }
+      ]
+    },
+    "landing": {
+      "keys": [
+        { "at": 0, "pose": "crouch" }
+      ]
+    },
+    "helpless": {
+      "keys": [
+        { "at": 0, "pose": "airFall" }
+      ]
+    },
+    "shield": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": { "from": "crouch", "elbowF": [18, 56], "handF": [10, 70], "elbowB": [14, 54], "handB": [6, 68] }
+        }
+      ]
+    },
+    "spot": {
+      "keys": [
+        { "at": 0, "pose": "crouch" }
+      ]
+    },
+    "airdodge": {
+      "keys": [
+        { "at": 0, "pose": "air" }
+      ]
+    },
+    "hold": {
+      "keys": [
+        { "at": 0, "pose": "hold" }
+      ]
+    },
+    "knockdown": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": { "from": "hurt", "rot": -90, "offsetY": -34 }
+        }
+      ]
+    },
+    "respawn": {
+      "keys": [
+        { "at": 0, "pose": "stand" }
+      ]
+    },
+    "shieldDrop": {
+      "keys": [
+        { "at": 0, "pose": "crouch" }
+      ]
+    },
+    "air.rise": {
+      "keys": [
+        { "at": 0, "pose": "air" }
+      ]
+    },
+    "air.fall": {
+      "keys": [
+        { "at": 0, "pose": "airFall" }
+      ]
+    },
+    "air.flip": {
+      "loop": 20,
+      "keys": [
+        {
+          "at": 0,
+          "pose": { "from": "airFall", "rot": 0 }
+        },
+        {
+          "at": 20,
+          "pose": { "from": "airFall", "rot": 360 }
+        }
+      ]
+    },
+    "roll": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": { "from": "crouch", "rot": -20 }
+        },
+        { "at": 8, "pose": "crouch" }
+      ]
+    },
+    "pummel": {
+      "keys": [
+        { "at": 0, "pose": "hold" },
+        {
+          "at": 4,
+          "pose": { "from": "hold", "head": [6, 82] }
+        },
+        { "at": 8, "pose": "hold" }
+      ]
+    },
+    "throw.f": {
+      "keys": [
+        { "at": 0, "pose": "hold" },
+        { "at": 8, "pose": "throwF", "lerp": true },
+        { "at": 20, "pose": "stand", "lerp": true }
+      ]
+    },
+    "throw.b": {
+      "keys": [
+        { "at": 0, "pose": "hold" },
+        { "at": 9, "pose": "throwB", "lerp": true },
+        { "at": 22, "pose": "stand", "lerp": true }
+      ]
+    },
+    "throw.u": {
+      "keys": [
+        { "at": 0, "pose": "hold" },
+        { "at": 10, "pose": "throwU", "lerp": true },
+        { "at": 22, "pose": "stand", "lerp": true }
+      ]
+    },
+    "throw.d": {
+      "keys": [
+        { "at": 0, "pose": "hold" },
+        { "at": 14, "pose": "throwD", "lerp": true },
+        { "at": 26, "pose": "stand", "lerp": true }
+      ]
+    },
+    "grabbed": {
+      "clock": "world",
+      "loop": 12,
+      "keys": [
+        { "at": 0, "pose": "hurt" },
+        {
+          "at": 4,
+          "pose": { "from": "hurt", "head": [-8, 82] },
+          "lerp": true
+        },
+        { "at": 8, "pose": "hurt", "lerp": true }
+      ]
+    },
+    "hitstun": {
+      "clock": "world",
+      "loop": 12,
+      "keys": [
+        {
+          "at": 0,
+          "pose": { "from": "hurt", "rot": -12 }
+        },
+        {
+          "at": 6,
+          "pose": { "from": "hurt", "rot": -18 },
+          "lerp": true
+        },
+        {
+          "at": 12,
+          "pose": { "from": "hurt", "rot": -12 },
+          "lerp": true
+        }
+      ]
+    },
+    "tumble": {
+      "clock": "spin",
+      "loop": 360,
+      "keys": [
+        {
+          "at": 0,
+          "pose": { "from": "airFall", "rot": 0 }
+        },
+        {
+          "at": 360,
+          "pose": { "from": "airFall", "rot": 360 }
+        }
+      ]
+    },
+    "shieldbreak": {
+      "clock": "world",
+      "loop": 12,
+      "keys": [
+        {
+          "at": 0,
+          "pose": { "from": "hurt", "rot": 8 }
+        },
+        {
+          "at": 6,
+          "pose": { "from": "hurt", "rot": -8 },
+          "lerp": true
+        },
+        {
+          "at": 12,
+          "pose": { "from": "hurt", "rot": 8 },
+          "lerp": true
+        }
+      ]
+    },
+    "getup": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": { "from": "crouch", "rot": -80, "offsetY": -28 }
+        },
+        { "at": 10, "pose": "crouch" }
+      ]
+    },
+    "getupAttack": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": { "from": "crouch", "rot": -80, "offsetY": -28 }
+        },
+        { "at": 12, "pose": "crouch" }
+      ]
+    },
+    "tech": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": { "from": "crouch", "rot": -50 }
+        },
+        { "at": 8, "pose": "crouch" }
+      ]
+    },
+    "ledge": {
+      "clock": "world",
+      "loop": 60,
+      "keys": [
+        { "at": 0, "pose": "ledge" },
+        {
+          "at": 30,
+          "pose": { "from": "ledge", "head": [4, 76] },
+          "lerp": true
+        },
+        { "at": 60, "pose": "ledge", "lerp": true }
+      ]
+    },
+    "climb": {
+      "keys": [
+        { "at": 0, "pose": "ledge" },
+        { "at": 10, "pose": "crouch" }
+      ]
+    },
+    "ledgeAttack": {
+      "keys": [
+        { "at": 0, "pose": "ledge" },
+        { "at": 10, "pose": "crouch" }
+      ]
+    },
+    "ledgeRoll": {
+      "keys": [
+        { "at": 0, "pose": "ledge" },
+        { "at": 10, "pose": "crouch" }
+      ]
+    },
+    "ledgeJump": {
+      "keys": [
+        { "at": 0, "pose": "ledge" },
+        { "at": 6, "pose": "air" }
+      ]
+    },
+    "dizzy": {
+      "clock": "world",
+      "loop": 60,
+      "keys": [
+        {
+          "at": 0,
+          "pose": { "from": "stand", "head": [-4, 82] }
+        },
+        {
+          "at": 15,
+          "pose": { "from": "stand", "head": [4, 82] },
+          "lerp": true
+        },
+        {
+          "at": 30,
+          "pose": { "from": "stand", "head": [4, 84] },
+          "lerp": true
+        },
+        {
+          "at": 45,
+          "pose": { "from": "stand", "head": [-4, 84] },
+          "lerp": true
+        },
+        {
+          "at": 60,
+          "pose": { "from": "stand", "head": [-4, 82] },
+          "lerp": true
+        }
+      ]
+    },
+    "win": {
+      "clock": "world",
+      "loop": 40,
+      "keys": [
+        { "at": 0, "pose": "win" },
+        {
+          "at": 20,
+          "pose": { "from": "win", "head": [0, 88] },
+          "lerp": true
+        },
+        { "at": 40, "pose": "win", "lerp": true }
+      ]
+    },
+    "buried": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": { "from": "crouch", "offsetY": 24 }
+        }
+      ]
+    }
+  },
+  "attachments": [
+    {
+      "id": "hammer",
+      "joint": "handF",
+      "angle": 104,
+      "hold": { "elbow": 18, "hand": 30.0, "bend": -18 },
+      "trail": { "inner": 55, "outer": 110 },
+      "glow": "jetCharging",
+      "shapes": [
+        { "shape": "line", "from": [-12, 0], "to": [34, 0], "width": 8, "color": "#6b4a2a" },
+        { "shape": "line", "from": [30, -4], "to": [30, 4], "width": 12, "color": "#8a5a2b" },
+        {
+          "shape": "rect",
+          "x": 26,
+          "y": -25,
+          "w": 48,
+          "h": 50,
+          "fill": "player",
+          "radius": 8,
+          "alpha": 0.22,
+          "when": "noGlow"
+        },
+        {
+          "shape": "rect",
+          "x": 26,
+          "y": -25,
+          "w": 48,
+          "h": 50,
+          "fill": "#ff9a3c",
+          "radius": 8,
+          "alpha": 0.42,
+          "when": "glow"
+        },
+        {
+          "shape": "rect",
+          "x": 29,
+          "y": -21,
+          "w": 42,
+          "h": 42,
+          "fill": "#b9474f",
+          "radius": 7,
+          "stroke": "#5c2a2b",
+          "width": 2.5,
+          "when": "noGlow"
+        },
+        {
+          "shape": "rect",
+          "x": 29,
+          "y": -21,
+          "w": 42,
+          "h": 42,
+          "fill": "#ffc46a",
+          "radius": 7,
+          "stroke": "#5c2a2b",
+          "width": 2.5,
+          "when": "glow"
+        },
+        { "shape": "rect", "x": 42, "y": -21, "w": 6, "h": 42, "fill": "#e6c45a" },
+        { "shape": "rect", "x": 42, "y": -21, "w": 42, "h": 4, "fill": "#e6c45a" },
+        { "shape": "rect", "x": 42, "y": 17, "w": 42, "h": 4, "fill": "#e6c45a" }
+      ]
+    },
+    {
+      "id": "crown",
+      "joint": "head",
+      "shapes": [
+        {
+          "shape": "poly",
+          "fill": "#ffd35a",
+          "points": [[-12, 8], [-14, 23], [-5, 15], [0, 26], [5, 15], [14, 23], [12, 8]]
+        },
+        { "shape": "circle", "at": [0, 12], "r": 2.4, "fill": "#ff5d8a" }
+      ]
+    },
+    {
+      "id": "belly",
+      "joint": "hip",
+      "behind": false,
+      "shapes": [
+        {
+          "shape": "circle",
+          "at": [0, 8],
+          "r": 27,
+          "fill": "#f7e4b0",
+          "alpha": 0.92,
+          "stroke": "playerDark",
+          "width": 2.5
+        },
+        { "shape": "poly", "points": [[-18, 12], [18, 12], [21, -6], [-21, -6]], "fill": "playerDark", "alpha": 0.38 }
+      ]
+    },
+    {
+      "id": "beak",
+      "joint": "head",
+      "shapes": [
+        { "shape": "poly", "points": [[10, 0], [25, -2], [12, -7]], "fill": "#f2a63b" },
+        { "shape": "circle", "at": [7, 2], "r": 2.2, "fill": "#22252e" }
+      ]
+    },
+    {
+      "id": "coat",
+      "joint": "hip",
+      "behind": true,
+      "shapes": [
+        { "shape": "poly", "points": [[-15, 8], [15, 8], [22, -34], [-24, -34]], "fill": "playerDark", "alpha": 0.72 },
+        { "shape": "line", "from": [-14, 2], "to": [14, 2], "width": 3, "color": "#e6c45a" }
+      ]
+    },
+    {
+      "id": "footF",
+      "joint": "footF",
+      "shapes": [
+        { "shape": "rect", "x": -5, "y": -3, "w": 16, "h": 7, "fill": "#f2a63b", "radius": 3 }
+      ]
+    },
+    {
+      "id": "footB",
+      "joint": "footB",
+      "shapes": [
+        { "shape": "rect", "x": -5, "y": -3, "w": 16, "h": 7, "fill": "#f2a63b", "radius": 3 }
+      ]
+    },
+    {
+      "id": "gordoHeld",
+      "joint": "handF",
+      "hidden": true,
+      "shapes": [
+        { "shape": "circle", "at": [0, 0], "r": 17, "fill": "#d9dbe8", "stroke": "player", "width": 2 },
+        { "shape": "poly", "fill": "#f4f4ff", "points": [[12, 3], [22, 0], [12, -3], [0, 3], [-12, 0], [0, -3]] }
+      ]
+    },
+    {
+      "id": "inhale",
+      "joint": "head",
+      "hidden": true,
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[8, 2], [100, -34], [100, 38], [8, 8]],
+          "fill": "#8adfff",
+          "alpha": 0.16,
+          "stroke": "#c6edff",
+          "width": 1.5
+        },
+        { "shape": "circle", "at": [72, 2], "r": 22, "fill": "#8adfff", "alpha": 0.12 }
+      ]
+    }
+  ],
   "moves": {
-    "grab": {
+    "jab": {
+      "name": "Hammer Jab",
+      "phases": [
+        {
+          "name": "jab1",
+          "frames": 32,
+          "hitboxes": [
+            {
+              "start": 9,
+              "end": 10,
+              "x": 78.7846,
+              "y": 77.8919,
+              "r": 14.0,
+              "damage": 2.5,
+              "bkb": 35.0,
+              "kbg": 0.15,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 1.5,
+              "hitstunAdd": 5
+            },
+            {
+              "start": 9,
+              "end": 10,
+              "x": 78.7846,
+              "y": 77.8919,
+              "r": 14.0,
+              "damage": 2.5,
+              "bkb": 25.0,
+              "kbg": 0.15,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 1.5,
+              "hitstunAdd": 5
+            },
+            {
+              "start": 9,
+              "end": 10,
+              "x": 78.7846,
+              "y": 77.8919,
+              "r": 14.0,
+              "damage": 2.5,
+              "bkb": 25.0,
+              "kbg": 0.15,
+              "angle": 180.0,
+              "hitlagMult": 1.5,
+              "hitstunAdd": 5
+            }
+          ],
+          "attach": {
+            "hammer": { "angle": [[0, -40], [7, 30], [9, 10], [10, 0], [16, -20], [31, -30]] }
+          },
+          "events": [
+            { "at": 9, "sfx": "whack" }
+          ],
+          "transitions": [
+            { "on": "attackHeld", "from": 12, "to": "jab2" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 7, "pose": "lean", "lerp": true },
+            { "at": 9, "pose": "lean" },
+            { "at": 17, "pose": "stand", "lerp": true }
+          ]
+        },
+        {
+          "name": "jab2",
+          "frames": 27,
+          "hitboxes": [
+            {
+              "start": 10,
+              "end": 11,
+              "x": 78.7846,
+              "y": 77.8919,
+              "r": 17.5,
+              "damage": 2.2,
+              "bkb": 35.0,
+              "kbg": 0.15,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 1.5,
+              "hitstunAdd": 5,
+              "frames": [[10, 78.7846, 77.8919, 17.5], [11, 79.6956, 70.9725, 17.5]]
+            },
+            {
+              "start": 10,
+              "end": 11,
+              "x": 78.7846,
+              "y": 77.8919,
+              "r": 17.5,
+              "damage": 2.2,
+              "bkb": 30.0,
+              "kbg": 0.15,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 1.5,
+              "hitstunAdd": 5,
+              "frames": [[10, 78.7846, 77.8919, 17.5], [11, 79.6956, 70.9725, 17.5]]
+            },
+            {
+              "start": 10,
+              "end": 11,
+              "x": 78.7846,
+              "y": 77.8919,
+              "r": 19.0,
+              "damage": 2.2,
+              "bkb": 25.0,
+              "kbg": 0.12,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 1.5,
+              "hitstunAdd": 5,
+              "frames": [[10, 78.7846, 77.8919, 19.0], [11, 79.6956, 70.9725, 19.0]]
+            },
+            {
+              "start": 10,
+              "end": 11,
+              "x": 78.7846,
+              "y": 77.8919,
+              "r": 19.0,
+              "damage": 2.2,
+              "bkb": 25.0,
+              "kbg": 0.12,
+              "angle": 180.0,
+              "hitlagMult": 1.5,
+              "hitstunAdd": 5,
+              "frames": [[10, 78.7846, 77.8919, 19.0], [11, 79.6956, 70.9725, 19.0]]
+            }
+          ],
+          "attach": {
+            "hammer": { "angle": [[0, -30], [8, 35], [10, 10], [11, 5], [18, -10], [26, -25]] }
+          },
+          "events": [
+            { "at": 10, "sfx": "whack" }
+          ],
+          "transitions": [
+            { "on": "attackHeld", "from": 21, "to": "rapidStart" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 8, "pose": "lean", "lerp": true },
+            { "at": 11, "pose": "lean" },
+            { "at": 19, "pose": "stand", "lerp": true }
+          ]
+        },
+        {
+          "name": "rapidStart",
+          "frames": 4,
+          "anim": [
+            { "at": 0, "pose": "lean" }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "rapid" }
+          ]
+        },
+        {
+          "name": "rapid",
+          "frames": 3,
+          "hitboxes": [
+            {
+              "start": 0,
+              "end": 2,
+              "x": 70,
+              "y": 65,
+              "r": 35,
+              "damage": 0.5,
+              "bkb": 10.0,
+              "kbg": 0.12,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 0.5,
+              "hitstunAdd": 2,
+              "shieldStunMult": 5
+            }
+          ],
+          "attach": {
+            "hammer": { "angle": [[0, 100]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "lean" }
+          ],
+          "transitions": [
+            { "on": "release", "to": "finish" },
+            { "on": "timeout", "to": "rapid" }
+          ]
+        },
+        {
+          "name": "finish",
+          "frames": 49,
+          "hitboxes": [
+            {
+              "start": 3,
+              "end": 3,
+              "x": 72,
+              "y": 66,
+              "r": 35,
+              "damage": 3.0,
+              "bkb": 80.0,
+              "kbg": 1.62,
+              "angle": 70.0,
+              "hitlagMult": 2.0
+            },
+            {
+              "start": 3,
+              "end": 3,
+              "x": 72,
+              "y": 66,
+              "r": 35,
+              "damage": 3.0,
+              "bkb": 80.0,
+              "kbg": 1.62,
+              "angle": 70.0,
+              "hitlagMult": 2.0
+            }
+          ],
+          "attach": {
+            "hammer": { "angle": [[0, 100], [3, 70], [20, 40]] }
+          },
+          "events": [
+            { "at": 3, "sfx": "smash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 1, "pose": "lean", "lerp": true },
+            { "at": 4, "pose": "lean" },
+            { "at": 12, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    },
+    "ftilt": {
+      "name": "Hammer Sweep",
       "phases": [
         {
           "name": "main",
-          "frames": 30,
+          "frames": 48,
+          "hitboxes": [
+            {
+              "start": 11,
+              "end": 20,
+              "x": 78.7846,
+              "y": 77.8919,
+              "r": 15.0,
+              "damage": 2.0,
+              "bkb": 61.4,
+              "kbg": 1.0,
+              "angle": 22.0,
+              "setKb": true,
+              "situation": "ground",
+              "rehit": 4,
+              "hitlagMult": 0.9,
+              "frames": [
+                [11, 78.7846, 77.8919, 15.0],
+                [12, 78.7846, 77.8919, 15.0],
+                [13, 78.7846, 77.8919, 15.0],
+                [14, 78.7846, 77.8919, 15.0],
+                [15, 78.7846, 77.8919, 15.0],
+                [16, 78.7846, 77.8919, 15.0],
+                [17, 78.7846, 77.8919, 15.0],
+                [18, 78.7846, 77.8919, 15.0],
+                [19, 78.7846, 77.8919, 15.0],
+                [20, 78.7846, 77.8919, 15.0]
+              ]
+            },
+            {
+              "start": 11,
+              "end": 20,
+              "x": 78.7846,
+              "y": 77.8919,
+              "r": 17.5,
+              "damage": 2.0,
+              "bkb": 54.4,
+              "kbg": 1.0,
+              "angle": 22.0,
+              "setKb": true,
+              "rehit": 4,
+              "hitlagMult": 0.9,
+              "frames": [
+                [11, 78.7846, 77.8919, 17.5],
+                [12, 78.7846, 77.8919, 17.5],
+                [13, 78.7846, 77.8919, 17.5],
+                [14, 78.7846, 77.8919, 17.5],
+                [15, 78.7846, 77.8919, 17.5],
+                [16, 78.7846, 77.8919, 17.5],
+                [17, 78.7846, 77.8919, 17.5],
+                [18, 78.7846, 77.8919, 17.5],
+                [19, 78.7846, 77.8919, 17.5],
+                [20, 78.7846, 77.8919, 17.5]
+              ]
+            },
+            {
+              "start": 11,
+              "end": 20,
+              "x": 78.7846,
+              "y": 77.8919,
+              "r": 15.0,
+              "damage": 2.0,
+              "bkb": 40.4,
+              "kbg": 1.0,
+              "angle": 100.0,
+              "setKb": true,
+              "rehit": 3,
+              "hitlagMult": 0.9,
+              "frames": [
+                [11, 78.7846, 77.8919, 15.0],
+                [12, 78.7846, 77.8919, 15.0],
+                [13, 78.7846, 77.8919, 15.0],
+                [14, 78.7846, 77.8919, 15.0],
+                [15, 78.7846, 77.8919, 15.0],
+                [16, 78.7846, 77.8919, 15.0],
+                [17, 78.7846, 77.8919, 15.0],
+                [18, 78.7846, 77.8919, 15.0],
+                [19, 78.7846, 77.8919, 15.0],
+                [20, 78.7846, 77.8919, 15.0]
+              ]
+            },
+            {
+              "start": 11,
+              "end": 20,
+              "x": 78.7846,
+              "y": 77.8919,
+              "r": 20.0,
+              "damage": 2.0,
+              "bkb": 37.6,
+              "kbg": 1.0,
+              "angle": -110.0,
+              "setKb": true,
+              "rehit": 3,
+              "hitlagMult": 0.9,
+              "frames": [
+                [11, 78.7846, 77.8919, 20.0],
+                [12, 78.7846, 77.8919, 20.0],
+                [13, 78.7846, 77.8919, 20.0],
+                [14, 78.7846, 77.8919, 20.0],
+                [15, 78.7846, 77.8919, 20.0],
+                [16, 78.7846, 77.8919, 20.0],
+                [17, 78.7846, 77.8919, 20.0],
+                [18, 78.7846, 77.8919, 20.0],
+                [19, 78.7846, 77.8919, 20.0],
+                [20, 78.7846, 77.8919, 20.0]
+              ]
+            },
+            {
+              "start": 22,
+              "end": 22,
+              "x": 75.1754,
+              "y": 91.3616,
+              "r": 17.5,
+              "damage": 3.0,
+              "bkb": 30.0,
+              "kbg": 1.9,
+              "angle": 50.0,
+              "situation": "ground",
+              "hitlagMult": 2.0
+            },
+            {
+              "start": 22,
+              "end": 22,
+              "x": 75.1754,
+              "y": 91.3616,
+              "r": 41.5,
+              "damage": 3.0,
+              "bkb": 30.0,
+              "kbg": 1.9,
+              "angle": 50.0,
+              "hitlagMult": 2.0
+            }
+          ],
+          "attach": {
+            "hammer": { "angle": [[0, 20], [8, 120], [10, 10], [20, 10], [22, 20]] }
+          },
+          "events": [
+            { "at": 11, "sfx": "whack" },
+            { "at": 22, "sfx": "smash" },
+            {
+              "at": 11,
+              "setVel": { "x": 1.2 }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 9, "pose": "lean", "lerp": true },
+            { "at": 22, "pose": "lean" },
+            { "at": 30, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    },
+    "utilt": {
+      "name": "Head Lift",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 38,
           "hitboxes": [
             {
               "start": 6,
-              "end": 8,
-              "x": 34,
-              "y": 46,
-              "r": 20,
-              "damage": 0,
-              "bkb": 0,
-              "kbg": 0,
-              "angle": 0,
-              "type": "grab"
+              "end": 12,
+              "x": 5,
+              "y": 88,
+              "r": 30.0,
+              "damage": 11.5,
+              "bkb": 65.0,
+              "kbg": 0.94,
+              "angle": 96.0,
+              "dir": "away",
+              "frames": [
+                [6, 5, 88, 30.0],
+                [7, 5, 88, 30.0],
+                [8, 5, 88, 30.0],
+                [9, 5, 88, 30.0],
+                [10, 5, 88, 30.0],
+                [11, 5, 88, 30.0],
+                [12, 5, 88, 30.0]
+              ]
+            },
+            {
+              "start": 6,
+              "end": 12,
+              "x": 11,
+              "y": 86,
+              "r": 32.5,
+              "damage": 9.5,
+              "bkb": 65.0,
+              "kbg": 0.94,
+              "angle": 96.0,
+              "dir": "away",
+              "frames": [
+                [6, 11, 86, 32.5],
+                [7, 11, 86, 32.5],
+                [8, 11, 86, 32.5],
+                [9, 11, 86, 32.5],
+                [10, 11, 86, 32.5],
+                [11, 11, 86, 32.5],
+                [12, 11, 86, 32.5]
+              ]
             }
           ],
           "events": [
             { "at": 6, "sfx": "whack" }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": { "elbowF": [6, 44], "handF": [10, 40], "elbowB": [4, 42], "handB": [8, 38] }
-            },
-            {
-              "at": 5,
-              "pose": { "elbowF": [6, 44], "handF": [10, 40], "elbowB": [4, 42], "handB": [8, 38] }
-            },
-            {
-              "at": 6,
-              "pose": { "head": [4, 63], "elbowF": [18, 48], "handF": [36, 46], "elbowB": [16, 46], "handB": [34, 44] }
-            },
-            {
-              "at": 8,
-              "pose": { "head": [4, 63], "elbowF": [18, 48], "handF": [36, 46], "elbowB": [16, 46], "handB": [34, 44] }
-            },
-            {
-              "at": 9,
-              "pose": { "head": [4, 63], "elbowF": [18, 48], "handF": [30, 46], "elbowB": [16, 46], "handB": [28, 44] }
-            }
+            { "at": 0, "pose": "stand" },
+            { "at": 4, "pose": "swing", "lerp": true },
+            { "at": 13, "pose": "swing" },
+            { "at": 21, "pose": "stand", "lerp": true }
           ]
-        }
-      ]
-    },
-    "dashgrab": {
-      "phases": [
-        {
-          "name": "main",
-          "frames": 38,
-          "hitboxes": [
-            {
-              "start": 8,
-              "end": 10,
-              "x": 40,
-              "y": 46,
-              "r": 22,
-              "damage": 0,
-              "bkb": 0,
-              "kbg": 0,
-              "angle": 0,
-              "type": "grab"
-            }
-          ],
-          "events": [
-            { "at": 8, "sfx": "whack" }
-          ],
-          "slide": 8,
-          "anim": [
-            {
-              "at": 0,
-              "pose": { "elbowF": [6, 44], "handF": [10, 40], "elbowB": [4, 42], "handB": [8, 38] }
-            },
-            {
-              "at": 7,
-              "pose": { "elbowF": [6, 44], "handF": [10, 40], "elbowB": [4, 42], "handB": [8, 38] }
-            },
-            {
-              "at": 8,
-              "pose": { "head": [4, 63], "elbowF": [18, 48], "handF": [36, 46], "elbowB": [16, 46], "handB": [34, 44] }
-            },
-            {
-              "at": 10,
-              "pose": { "head": [4, 63], "elbowF": [18, 48], "handF": [36, 46], "elbowB": [16, 46], "handB": [34, 44] }
-            },
-            {
-              "at": 11,
-              "pose": { "head": [4, 63], "elbowF": [18, 48], "handF": [30, 46], "elbowB": [16, 46], "handB": [28, 44] }
-            }
-          ]
-        }
-      ]
-    },
-    "jab": {
-      "name": "Jab",
-      "phases": [
-        {
-          "name": "main",
-          "frames": 22,
-          "hitboxes": [
-            {
-              "start": 4,
-              "end": 7,
-              "x": 62,
-              "y": 46,
-              "r": 24,
-              "damage": 5,
-              "bkb": 23.1292517007,
-              "kbg": 1.3605442177,
-              "angle": 35
-            }
-          ],
-          "events": [
-            { "at": 4, "sfx": "whack" }
-          ],
-          "anim": [
-            { "at": 0, "pose": "stand" }
-          ],
-          "attach": {
-            "hammer": { "angle": [[0, 70], [4, 10], [7, -15]] }
-          }
-        }
-      ]
-    },
-    "ftilt": {
-      "name": "Forward Tilt",
-      "phases": [
-        {
-          "name": "main",
-          "frames": 38,
-          "hitboxes": [
-            {
-              "start": 11,
-              "end": 14,
-              "x": 78,
-              "y": 40,
-              "r": 32,
-              "damage": 13,
-              "bkb": 39.2380952381,
-              "kbg": 1.5238095238,
-              "angle": 36
-            }
-          ],
-          "events": [
-            { "at": 11, "sfx": "whack" }
-          ],
-          "anim": [
-            { "at": 0, "pose": "back" },
-            { "at": 11, "pose": "lean" }
-          ],
-          "attach": {
-            "hammer": { "angle": [[0, 30], [6, 140], [10, 125], [14, -30]] }
-          }
-        }
-      ]
-    },
-    "utilt": {
-      "name": "Up Tilt",
-      "phases": [
-        {
-          "name": "main",
-          "frames": 36,
-          "hitboxes": [
-            {
-              "start": 10,
-              "end": 16,
-              "x": 30,
-              "y": 100,
-              "r": 40,
-              "damage": 11,
-              "bkb": 37.6556776557,
-              "kbg": 1.6117216117,
-              "angle": 88
-            }
-          ],
-          "events": [
-            { "at": 10, "sfx": "whack" }
-          ],
-          "anim": [
-            { "at": 0, "pose": "stand" }
-          ],
-          "attach": {
-            "hammer": { "angle": [[0, -40], [8, -20], [10, 0], [16, 200]] }
-          }
         }
       ]
     },
     "dtilt": {
-      "name": "Down Tilt",
+      "name": "Low Hammer",
       "phases": [
         {
           "name": "main",
-          "frames": 30,
+          "frames": 37,
           "hitboxes": [
+            {
+              "start": 5,
+              "end": 6,
+              "x": 46,
+              "y": 16,
+              "r": 35.0,
+              "damage": 10.0,
+              "bkb": 60.0,
+              "kbg": 0.75,
+              "angle": 35.0,
+              "frames": [[5, 46, 16, 35.0], [6, 46, 16, 35.0]]
+            },
             {
               "start": 7,
               "end": 10,
-              "x": 76,
-              "y": 14,
-              "r": 26,
-              "damage": 9,
-              "bkb": 22.683982684,
-              "kbg": 1.3852813853,
-              "angle": 22
+              "x": 38,
+              "y": 12,
+              "r": 25.0,
+              "damage": 6.0,
+              "bkb": 60.0,
+              "kbg": 0.75,
+              "angle": 35.0,
+              "frames": [[7, 38, 12, 25.0], [8, 38, 12, 25.0], [9, 38, 12, 25.0], [10, 38, 12, 25.0]]
             }
           ],
           "events": [
-            { "at": 7, "sfx": "whack" }
+            { "at": 5, "sfx": "whack" }
           ],
           "anim": [
-            { "at": 0, "pose": "crouch" }
+            { "at": 0, "pose": "stand" },
+            { "at": 3, "pose": "crouch", "lerp": true },
+            { "at": 10, "pose": "crouch" },
+            { "at": 18, "pose": "stand", "lerp": true }
           ],
           "attach": {
-            "hammer": { "angle": [[0, 40], [5, 60], [7, -15], [10, -20]] }
+            "hammer": { "angle": [[0, 60], [4, 20], [6, 15], [10, 10], [36, 10]] }
           }
         }
       ]
     },
     "dashatk": {
-      "name": "Dash Attack",
+      "name": "Body Check",
       "phases": [
         {
           "name": "main",
-          "frames": 44,
+          "frames": 66,
           "hitboxes": [
             {
-              "start": 10,
-              "end": 16,
-              "x": 68,
-              "y": 36,
-              "r": 32,
-              "damage": 12,
-              "bkb": 44.6258503401,
-              "kbg": 1.2244897959,
-              "angle": 50
+              "start": 25,
+              "end": 26,
+              "x": 65.9,
+              "y": 38.75,
+              "r": 35.0,
+              "damage": 16.0,
+              "bkb": 65.0,
+              "kbg": 0.92,
+              "angle": 45,
+              "type": "sakurai",
+              "dir": "away",
+              "hitlagMult": 1.2,
+              "frames": [[25, 65.9, 38.75, 35.0], [26, 64.0, 38.0, 35.0]]
+            },
+            {
+              "start": 27,
+              "end": 40,
+              "x": 52.75,
+              "y": 30.4,
+              "r": 30.0,
+              "damage": 13.0,
+              "bkb": 55.0,
+              "kbg": 0.92,
+              "angle": 45,
+              "type": "sakurai",
+              "dir": "away",
+              "frames": [
+                [27, 52.75, 30.4, 30.0],
+                [28, 52.0, 30.0, 30.0],
+                [29, 51.25, 29.6, 30.0],
+                [30, 50.5, 29.2, 30.0],
+                [31, 49.75, 28.8, 30.0],
+                [32, 49.0, 28.4, 30.0],
+                [33, 48.25, 28.0, 30.0],
+                [34, 47.5, 27.6, 30.0],
+                [35, 46.75, 27.2, 30.0],
+                [36, 46.0, 26.8, 30.0],
+                [37, 45.25, 26.4, 30.0],
+                [38, 44.5, 26.0, 30.0],
+                [39, 43.75, 25.6, 30.0],
+                [40, 43.0, 25.2, 30.0]
+              ]
             }
           ],
           "events": [
-            { "at": 10, "sfx": "whack" }
+            {
+              "at": 0,
+              "setVel": { "x": 4.5 }
+            },
+            { "at": 25, "sfx": "whack" },
+            { "at": 41, "sfx": "whack" }
           ],
-          "slide": 18,
           "anim": [
-            { "at": 0, "pose": "lean" }
-          ],
-          "attach": {
-            "hammer": { "angle": [[0, 120], [8, 120], [16, -30]] }
-          }
+            { "at": 0, "pose": "stand" },
+            { "at": 23, "pose": "lean", "lerp": true },
+            { "at": 40, "pose": "lean" },
+            { "at": 48, "pose": "stand", "lerp": true }
+          ]
         }
       ]
     },
     "fsmash": {
-      "name": "Forward Smash",
+      "name": "Hammer Drop",
       "phases": [
         {
           "name": "main",
-          "frames": 70,
+          "frames": 77,
           "hitboxes": [
             {
-              "start": 22,
-              "end": 26,
-              "x": 82,
-              "y": 24,
-              "r": 36,
-              "damage": 24,
-              "bkb": 60.6593406593,
-              "kbg": 1.3919413919,
-              "angle": 40
-            }
-          ],
-          "events": [
-            { "at": 22, "sfx": "smash" },
-            { "at": 22, "sfx": "whack" },
-            {
-              "at": 22,
-              "setVel": { "x": 4 }
+              "start": 39,
+              "end": 40,
+              "x": 65.5322,
+              "y": 18.1139,
+              "r": 22.5,
+              "damage": 16.0,
+              "bkb": 85.0,
+              "kbg": 0.55,
+              "angle": 45.0,
+              "frames": [[39, 65.5322, 18.1139, 22.5], [40, 66.839, 20.0393, 22.5]]
             },
             {
-              "at": 25,
+              "start": 41,
+              "end": 42,
+              "x": 68.0893,
+              "y": 22.0019,
+              "r": 30.0,
+              "damage": 25.0,
+              "bkb": 70.0,
+              "kbg": 0.74,
+              "angle": 45,
+              "type": "sakurai",
+              "frames": [[41, 68.0893, 22.0019, 30.0], [42, 69.282, 24.0, 30.0]]
+            },
+            {
+              "start": 41,
+              "end": 42,
+              "x": 68.0893,
+              "y": 22.0019,
+              "r": 17.5,
+              "damage": 18.5,
+              "bkb": 50.0,
+              "kbg": 0.85,
+              "angle": 45.0,
+              "hitlagMult": 0.8,
+              "frames": [[41, 68.0893, 22.0019, 17.5], [42, 69.282, 24.0, 17.5]]
+            },
+            {
+              "start": 43,
+              "end": 43,
+              "x": 68.0,
+              "y": 14.0,
+              "r": 42.0,
+              "damage": 11.0,
+              "bkb": 100.0,
+              "kbg": 0.3,
+              "angle": 60.0,
+              "situation": "ground"
+            }
+          ],
+          "attach": {
+            "hammer": { "angle": [[0, 30], [20, 155], [31, 165], [37, 80], [39, -35], [42, -30], [59, -25], [76, 20]] }
+          },
+          "events": [
+            { "at": 32, "sfx": "charge" },
+            { "at": 39, "sfx": "smash" },
+            { "at": 39, "sfx": "whack" },
+            {
+              "at": 39,
+              "setVel": { "x": 2 }
+            },
+            {
+              "at": 43,
               "if": "grounded",
               "sfx": "quake",
               "fx": [
-                { "type": "dust", "x": 76, "y": 0, "n": 10 },
-                { "type": "ring", "x": 76, "y": 4, "r": 8, "grow": 5, "life": 12 },
-                { "type": "shake", "k": 6 }
+                { "type": "dust", "x": 72, "y": 0, "n": 12 },
+                { "type": "ring", "x": 72, "y": 5, "r": 10, "grow": 6, "life": 14 },
+                { "type": "shake", "k": 7 }
               ]
             }
           ],
-          "charge": { "frame": 10 },
+          "charge": { "frame": 32 },
           "anim": [
-            { "at": 0, "pose": "back" },
-            { "at": 22, "pose": "lean" }
-          ],
-          "attach": {
-            "hammer": { "angle": [[0, 20], [10, 150], [20, 140], [25, -35]] }
-          }
+            { "at": 0, "pose": "stand" },
+            { "at": 37, "pose": "lean", "lerp": true },
+            { "at": 43, "pose": "lean" },
+            { "at": 51, "pose": "stand", "lerp": true }
+          ]
         }
       ]
     },
     "usmash": {
-      "name": "Up Smash",
+      "name": "Overhead Hammer",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 67,
+          "hitboxes": [
+            {
+              "start": 16,
+              "end": 23,
+              "x": 20.7055,
+              "y": 141.2741,
+              "r": 30.0,
+              "damage": 16.0,
+              "bkb": 40.0,
+              "kbg": 0.95,
+              "angle": 80.0,
+              "dir": "away",
+              "frames": [
+                [16, 20.7055, 141.2741, 30.0],
+                [17, 21.6672, 141.0099, 30.0],
+                [18, 22.6256, 140.7338, 30.0],
+                [19, 23.5804, 140.4458, 30.0],
+                [20, 24.5316, 140.1459, 30.0],
+                [21, 25.4789, 139.8342, 30.0],
+                [22, 26.4223, 139.5107, 30.0],
+                [23, 27.3616, 139.1754, 30.0]
+              ]
+            },
+            {
+              "start": 16,
+              "end": 23,
+              "x": 20.7055,
+              "y": 141.2741,
+              "r": 20.0,
+              "damage": 16.0,
+              "bkb": 40.0,
+              "kbg": 0.96,
+              "angle": 80.0,
+              "dir": "away",
+              "frames": [
+                [16, 20.7055, 141.2741, 20.0],
+                [17, 21.6672, 141.0099, 20.0],
+                [18, 22.6256, 140.7338, 20.0],
+                [19, 23.5804, 140.4458, 20.0],
+                [20, 24.5316, 140.1459, 20.0],
+                [21, 25.4789, 139.8342, 20.0],
+                [22, 26.4223, 139.5107, 20.0],
+                [23, 27.3616, 139.1754, 20.0]
+              ]
+            },
+            {
+              "start": 16,
+              "end": 23,
+              "x": 20.7055,
+              "y": 141.2741,
+              "r": 20.0,
+              "damage": 10.0,
+              "bkb": 40.0,
+              "kbg": 0.96,
+              "angle": 80.0,
+              "dir": "away",
+              "frames": [
+                [16, 20.7055, 141.2741, 20.0],
+                [17, 21.6672, 141.0099, 20.0],
+                [18, 22.6256, 140.7338, 20.0],
+                [19, 23.5804, 140.4458, 20.0],
+                [20, 24.5316, 140.1459, 20.0],
+                [21, 25.4789, 139.8342, 20.0],
+                [22, 26.4223, 139.5107, 20.0],
+                [23, 27.3616, 139.1754, 20.0]
+              ]
+            }
+          ],
+          "attach": {
+            "hammer": { "angle": [[0, 25], [8, 210], [15, 200], [16, 75], [23, 70], [40, 55], [66, 30]] }
+          },
+          "events": [
+            { "at": 16, "sfx": "smash" },
+            { "at": 16, "sfx": "whack" }
+          ],
+          "charge": { "frame": 5 },
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 14, "pose": "crouch", "lerp": true },
+            { "at": 23, "pose": "crouch" },
+            { "at": 31, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    },
+    "dsmash": {
+      "name": "Low Sweep",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 52,
+          "hitboxes": [
+            {
+              "start": 13,
+              "end": 21,
+              "x": 70.0,
+              "y": 28.0,
+              "r": 35.0,
+              "damage": 13.0,
+              "bkb": 60.0,
+              "kbg": 0.8,
+              "angle": 30.0,
+              "dir": "away"
+            },
+            {
+              "start": 13,
+              "end": 21,
+              "x": -72.0,
+              "y": 34.0,
+              "r": 28.0,
+              "damage": 13.0,
+              "bkb": 60.0,
+              "kbg": 0.8,
+              "angle": 45,
+              "type": "sakurai",
+              "dir": "away"
+            }
+          ],
+          "attach": {
+            "hammer": { "angle": [[0, 60], [8, 110], [12, -30], [16, -25], [17, 160], [21, 200], [38, 200], [51, 40]] }
+          },
+          "events": [
+            { "at": 13, "sfx": "smash" },
+            { "at": 13, "sfx": "whack" },
+            {
+              "at": 13,
+              "if": "grounded",
+              "sfx": "quake",
+              "fx": [
+                { "type": "dust", "x": 55, "y": 0, "n": 8 },
+                { "type": "dust", "x": -55, "y": 0, "n": 8 },
+                { "type": "ring", "x": 0, "y": 4, "r": 8, "grow": 5, "life": 12 },
+                { "type": "shake", "k": 6 }
+              ]
+            }
+          ],
+          "charge": { "frame": 2 },
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 11, "pose": "crouch", "lerp": true },
+            { "at": 21, "pose": "crouch" },
+            { "at": 29, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    },
+    "nair": {
+      "name": "Belly Spin",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "initial",
+          "frames": 2,
+          "attach": {
+            "hammer": { "angle": [[0, 100], [5, 100], [30, 100]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" },
+            { "on": "timeout", "to": "active" }
+          ]
+        },
+        {
+          "name": "active",
+          "frames": 32,
+          "attach": {
+            "hammer": { "angle": [[0, 100], [5, 100], [30, 100]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 3, "pose": "airSwing", "lerp": true },
+            { "at": 32, "pose": "air", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 9 },
+            { "on": "timeout", "to": "late" }
+          ],
+          "hitboxes": [
+            {
+              "start": 4,
+              "end": 5,
+              "x": 0,
+              "y": 52,
+              "r": 50,
+              "damage": 12.0,
+              "bkb": 40.0,
+              "kbg": 0.95,
+              "angle": 60.0,
+              "dir": "away",
+              "type": "normal"
+            },
+            {
+              "start": 6,
+              "end": 26,
+              "x": 0,
+              "y": 48,
+              "r": 30,
+              "damage": 7.0,
+              "bkb": 40.0,
+              "kbg": 0.95,
+              "angle": 80.0,
+              "dir": "away",
+              "type": "normal"
+            }
+          ]
+        },
+        {
+          "name": "late",
+          "frames": 5,
+          "attach": {
+            "hammer": { "angle": [[0, 100], [5, 100], [30, 100]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" }
+          ]
+        }
+      ]
+    },
+    "fair": {
+      "name": "Overhead Slam",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "initial",
+          "frames": 4,
+          "attach": {
+            "hammer": { "angle": [[0.0, 80]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" },
+            { "on": "timeout", "to": "active" }
+          ]
+        },
+        {
+          "name": "active",
+          "frames": 35,
+          "hitboxes": [
+            {
+              "start": 8,
+              "end": 10,
+              "x": 75.1754,
+              "y": 91.3616,
+              "r": 40.0,
+              "damage": 12.0,
+              "bkb": 15.0,
+              "kbg": 0.98,
+              "angle": 45,
+              "type": "sakurai",
+              "frames": [[8, 75.1754, 91.3616, 40.0], [9, 75.1754, 91.3616, 40.0], [10, 75.1754, 91.3616, 40.0]]
+            }
+          ],
+          "attach": {
+            "hammer": { "angle": [[0.0, 132.0], [1, 145], [8, 20], [11, 20], [21, 5]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 14, "pose": "airSwing", "lerp": true },
+            { "at": 20, "pose": "air", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 18 },
+            { "on": "timeout", "to": "late" }
+          ]
+        },
+        {
+          "name": "late",
+          "frames": 2,
+          "attach": {
+            "hammer": { "angle": [[0.0, 19.0], [1, 20]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" }
+          ]
+        }
+      ]
+    },
+    "bair": {
+      "name": "Rear Hammer",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "initial",
+          "frames": 4,
+          "attach": {
+            "hammer": { "angle": [[0.0, 70]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" },
+            { "on": "timeout", "to": "active" }
+          ]
+        },
+        {
+          "name": "active",
+          "frames": 28,
+          "hitboxes": [
+            {
+              "start": 12,
+              "end": 14,
+              "x": -79.6956,
+              "y": 57.0275,
+              "r": 32.5,
+              "damage": 16.0,
+              "bkb": 30.0,
+              "kbg": 0.88,
+              "angle": 45,
+              "type": "sakurai",
+              "dir": "back",
+              "hitlagMult": 1.2,
+              "frames": [[12, -79.6956, 57.0275, 32.5], [13, -79.6956, 57.0275, 32.5], [14, -79.6956, 57.0275, 32.5]]
+            }
+          ],
+          "attach": {
+            "hammer": { "angle": [[0.0, 115.0], [4, 160], [12, 185], [15, 185], [26, 170]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 18, "pose": "airSwing", "lerp": true },
+            { "at": 24, "pose": "air", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 13 },
+            { "on": "timeout", "to": "late" }
+          ]
+        },
+        {
+          "name": "late",
+          "frames": 5,
+          "attach": {
+            "hammer": { "angle": [[0.0, 133.33333333333334], [4, 60]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" }
+          ]
+        }
+      ]
+    },
+    "uair": {
+      "name": "Hammer Copter",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "initial",
+          "frames": 4,
+          "attach": {
+            "hammer": { "angle": [[0.0, 100]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" },
+            { "on": "timeout", "to": "active" }
+          ]
+        },
+        {
+          "name": "active",
+          "frames": 37,
+          "attach": {
+            "hammer": { "angle": [[0.0, 160.0], [4, 220], [5, 320], [20, 1040], [36, 1080]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 4, "pose": "airSwing", "lerp": true },
+            { "at": 32, "pose": "air", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 13 },
+            { "on": "timeout", "to": "late" }
+          ],
+          "hitboxes": [
+            {
+              "start": 5,
+              "end": 17,
+              "x": 61.2836,
+              "y": 12.577,
+              "r": 30,
+              "damage": 1.0,
+              "bkb": 33.4,
+              "kbg": 1.0,
+              "angle": 90,
+              "type": "autolink",
+              "setKb": true,
+              "dir": "away",
+              "rehit": 2,
+              "frames": [
+                [5, 61.2836, 12.577, 30],
+                [6, 79.2214, 75.1338, 30],
+                [7, 44.7354, 130.323, 30],
+                [8, -19.3538, 141.6237, 30],
+                [9, -70.6358, 101.5577, 30],
+                [10, -75.1754, 36.6384, 30],
+                [11, -29.9685, -10.1747, 30],
+                [12, 35.0697, -7.9035, 30],
+                [13, 76.9009, 41.949, 30],
+                [14, 67.8438, 106.3935, 30],
+                [15, 13.8919, 142.7846, 30],
+                [16, -49.2529, 127.0409, 30],
+                [17, -79.8051, 69.5805, 30]
+              ]
+            },
+            {
+              "start": 19,
+              "end": 20,
+              "x": 2.792,
+              "y": -15.9513,
+              "r": 32,
+              "damage": 5.0,
+              "bkb": 55.0,
+              "kbg": 1.67,
+              "angle": 60.0,
+              "dir": "away",
+              "hitlagMult": 2.0,
+              "frames": [[19, 2.792, -15.9513, 32], [20, 61.2836, 12.577, 32]]
+            }
+          ]
+        },
+        {
+          "name": "late",
+          "frames": 3,
+          "attach": {
+            "hammer": { "angle": [[0.0, 1080]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" }
+          ]
+        }
+      ]
+    },
+    "dair": {
+      "name": "Meteor Hammer",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "initial",
+          "frames": 6,
+          "attach": {
+            "hammer": { "angle": [[0.0, 90]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" },
+            { "on": "timeout", "to": "active" }
+          ]
+        },
+        {
+          "name": "active",
+          "frames": 37,
+          "attach": {
+            "hammer": { "angle": [[0.0, 150.0], [3, 180], [15, -90], [17, -90], [29, -45]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 7, "pose": "airSwing", "lerp": true },
+            { "at": 34, "pose": "air", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 18 },
+            { "on": "timeout", "to": "late" }
+          ],
+          "hitboxes": [
+            {
+              "start": 15,
+              "end": 17,
+              "x": 0.0,
+              "y": -16.0,
+              "r": 28,
+              "damage": 15.0,
+              "bkb": 20.0,
+              "kbg": 0.9,
+              "angle": -90,
+              "type": "spike",
+              "dir": "away",
+              "situation": "air",
+              "hitlagMult": 1.5
+            },
+            {
+              "start": 15,
+              "end": 17,
+              "x": 0.0,
+              "y": -16.0,
+              "r": 30,
+              "damage": 15.0,
+              "bkb": 20.0,
+              "kbg": 1.0,
+              "angle": 45,
+              "type": "sakurai",
+              "dir": "away",
+              "situation": "ground"
+            },
+            {
+              "start": 15,
+              "end": 17,
+              "x": 0.0,
+              "y": -16.0,
+              "r": 42,
+              "damage": 8.0,
+              "bkb": 20.0,
+              "kbg": 1.0,
+              "angle": 45,
+              "type": "sakurai",
+              "dir": "away",
+              "situation": "both"
+            }
+          ]
+        },
+        {
+          "name": "late",
+          "frames": 4,
+          "attach": {
+            "hammer": { "angle": [[0.0, 16.81818181818182], [3, 40]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "air" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "end" }
+          ]
+        }
+      ]
+    },
+    "grab": {
+      "name": "Hammer Grab",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 39,
+          "hitboxes": [
+            {
+              "start": 7,
+              "end": 9,
+              "x": 20.0,
+              "y": 44,
+              "r": 22.5,
+              "damage": 0.0,
+              "bkb": 0.0,
+              "kbg": 0.0,
+              "angle": 0.0,
+              "situation": "ground",
+              "type": "grab"
+            },
+            {
+              "start": 7,
+              "end": 9,
+              "x": 62.5,
+              "y": 44,
+              "r": 22.5,
+              "damage": 0.0,
+              "bkb": 0.0,
+              "kbg": 0.0,
+              "angle": 0.0,
+              "situation": "ground",
+              "type": "grab"
+            }
+          ],
+          "events": [
+            { "at": 7, "sfx": "grab" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 5, "pose": "hold", "lerp": true },
+            { "at": 9, "pose": "hold" },
+            { "at": 17, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    },
+    "dashgrab": {
+      "name": "Dash Hammer Grab",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 47,
+          "hitboxes": [
+            {
+              "start": 10,
+              "end": 12,
+              "x": 20.0,
+              "y": 40,
+              "r": 18.0,
+              "damage": 0.0,
+              "bkb": 0.0,
+              "kbg": 0.0,
+              "angle": 0.0,
+              "situation": "ground",
+              "type": "grab"
+            },
+            {
+              "start": 10,
+              "end": 12,
+              "x": 72.0,
+              "y": 40,
+              "r": 18.0,
+              "damage": 0.0,
+              "bkb": 0.0,
+              "kbg": 0.0,
+              "angle": 0.0,
+              "situation": "ground",
+              "type": "grab"
+            }
+          ],
+          "slide": 10,
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "x": 5 }
+            },
+            { "at": 10, "sfx": "grab" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 8, "pose": "lean", "lerp": true },
+            { "at": 12, "pose": "lean" },
+            { "at": 20, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    },
+    "nspec": {
+      "name": "Inhale",
+      "bReverse": true,
+      "phases": [
+        {
+          "name": "start",
+          "frames": 16,
+          "events": [
+            { "at": 0, "sfx": "swing" }
+          ],
+          "attach": {
+            "inhale": { "show": [0, 15] }
+          },
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 5, "pose": "lean", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "inhale" }
+          ]
+        },
+        {
+          "name": "inhale",
+          "hitboxes": [
+            {
+              "start": 0,
+              "end": null,
+              "x": 44,
+              "y": 60,
+              "r": 45,
+              "damage": 0.0,
+              "bkb": 0.0,
+              "kbg": 0.0,
+              "angle": 0.0,
+              "type": "grab"
+            },
+            {
+              "start": 0,
+              "end": null,
+              "x": 44,
+              "y": 60,
+              "r": 70,
+              "damage": 0.0,
+              "bkb": 1.5,
+              "kbg": 0.0,
+              "angle": 180.0,
+              "type": "windbox"
+            }
+          ],
+          "attach": {
+            "inhale": { "show": [0, 999] }
+          },
+          "events": [
+            { "at": 0, "sfx": "swing" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "lean" }
+          ],
+          "transitions": [
+            { "on": "release", "to": "finish" }
+          ]
+        },
+        {
+          "name": "finish",
+          "frames": 19,
+          "anim": [
+            { "at": 0, "pose": "lean" },
+            { "at": 12, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    },
+    "sspec": {
+      "name": "Gordo Throw",
+      "bReverse": true,
       "phases": [
         {
           "name": "main",
           "frames": 58,
           "hitboxes": [
             {
-              "start": 17,
-              "end": 23,
-              "x": 20,
-              "y": 112,
-              "r": 42,
-              "damage": 17,
-              "bkb": 45.5137844612,
-              "kbg": 1.7042606516,
-              "angle": 88
+              "start": 28,
+              "end": 29,
+              "x": 55,
+              "y": 52,
+              "r": 37.5,
+              "damage": 10.0,
+              "bkb": 30.0,
+              "kbg": 1.0,
+              "angle": 45,
+              "type": "sakurai"
             }
           ],
-          "events": [
-            { "at": 17, "sfx": "smash" },
-            { "at": 17, "sfx": "whack" }
-          ],
-          "charge": { "frame": 8 },
-          "anim": [
-            { "at": 0, "pose": "crouch" },
-            { "at": 17, "pose": "stretch" }
-          ],
           "attach": {
-            "hammer": { "angle": [[0, 90], [8, 200], [16, 200], [24, 70]] }
-          }
+            "hammer": { "angle": [[0, 20], [20, 145], [28, 70], [30, -20], [45, -20], [57, 20]] },
+            "gordoHeld": { "show": [5, 28], "offset": [[5, 35, 50], [27, 42, 52]] }
+          },
+          "events": [
+            { "at": 0, "sfx": "swing" },
+            { "at": 5, "sfx": "toss" },
+            { "at": 28, "spawn": "gordo", "sfx": "toss" },
+            { "at": 28, "sfx": "whack" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "swing" },
+            { "at": 27, "pose": "lean", "lerp": true },
+            { "at": 40, "pose": "stand", "lerp": true }
+          ]
         }
       ]
     },
-    "dsmash": {
-      "name": "Down Smash",
+    "uspec": {
+      "name": "Super Dedede Jump",
+      "air": "upSpecial",
       "phases": [
         {
-          "name": "main",
-          "frames": 56,
-          "hitboxes": [
-            {
-              "start": 14,
-              "end": 17,
-              "x": 74,
-              "y": 12,
-              "r": 30,
-              "damage": 15,
-              "bkb": 36.4145658263,
-              "kbg": 1.6806722689,
-              "angle": 28,
-              "dir": "away"
-            },
-            {
-              "start": 21,
-              "end": 24,
-              "x": -74,
-              "y": 12,
-              "r": 30,
-              "damage": 15,
-              "bkb": 36.4145658263,
-              "kbg": 1.6806722689,
-              "angle": 28,
-              "dir": "away"
-            }
-          ],
+          "name": "squat",
+          "frames": 18,
           "events": [
-            { "at": 14, "sfx": "smash" },
-            { "at": 14, "sfx": "whack" },
-            { "at": 21, "sfx": "whack" },
+            { "at": 0, "sfx": "charge" },
             {
-              "at": 14,
-              "if": "grounded",
-              "sfx": "quake",
-              "fx": [
-                { "type": "dust", "x": 76, "y": 0, "n": 10 },
-                { "type": "ring", "x": 76, "y": 4, "r": 8, "grow": 5, "life": 12 },
-                { "type": "shake", "k": 6 }
-              ]
+              "from": 1,
+              "to": 17,
+              "mulVel": { "x": 0.7 }
             }
           ],
-          "charge": { "frame": 8 },
           "anim": [
             { "at": 0, "pose": "crouch" }
           ],
-          "attach": {
-            "hammer": { "angle": [[0, 60], [8, 110], [14, -25], [17, -25], [19, 140], [24, 200]] }
-          }
-        }
-      ]
-    },
-    "nair": {
-      "name": "Neutral Air",
-      "air": "aerial",
-      "phases": [
+          "transitions": [
+            { "on": "timeout", "to": "launch" }
+          ]
+        },
         {
-          "name": "main",
-          "frames": 34,
+          "name": "launch",
+          "frames": 17,
+          "armorThreshold": 9999,
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "x": 0, "y": 22 },
+              "leaveGround": true,
+              "invuln": 4,
+              "sfx": "djump",
+              "fx": [
+                { "type": "dust", "x": 0, "y": 0, "n": 10 }
+              ]
+            }
+          ],
+          "attach": {
+            "hammer": { "angle": [[0, 100]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 2, "pose": "win", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "rise" }
+          ]
+        },
+        {
+          "name": "rise",
+          "ledgeGrab": 1,
+          "attach": {
+            "hammer": { "angle": [[0, 100]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "win" }
+          ],
+          "events": [
+            { "from": 0, "capFall": 12 }
+          ],
+          "transitions": [
+            { "on": "falling", "to": "plungeArmor" },
+            { "on": "land", "to": "wave" }
+          ]
+        },
+        {
+          "name": "plungeArmor",
+          "frames": 8,
           "hitboxes": [
             {
-              "start": 6,
-              "end": 14,
+              "start": 0,
+              "end": null,
               "x": 0,
-              "y": 46,
-              "r": 64,
-              "damage": 10,
-              "bkb": 21.9047619048,
-              "kbg": 1.4285714286,
-              "angle": 45,
+              "y": 50,
+              "r": 49,
+              "damage": 15.0,
+              "bkb": 60.0,
+              "kbg": 0.9,
+              "angle": -90,
+              "type": "bury",
+              "situation": "ground"
+            },
+            {
+              "start": 0,
+              "end": null,
+              "x": 0,
+              "y": 50,
+              "r": 42,
+              "damage": 15.0,
+              "bkb": 60.0,
+              "kbg": 0.8,
+              "angle": -90,
+              "type": "spike",
+              "situation": "air"
+            }
+          ],
+          "armorThreshold": 9999,
+          "ledgeGrab": 1,
+          "attach": {
+            "hammer": { "angle": [[0, -90]] }
+          },
+          "events": [
+            { "at": 0, "sfx": "smash" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 4, "pose": "airSwing", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "plunge" },
+            { "on": "shieldPress", "from": 1, "to": "helpless" },
+            { "on": "land", "to": "wave" }
+          ]
+        },
+        {
+          "name": "plunge",
+          "hitboxes": [
+            {
+              "start": 0,
+              "end": null,
+              "x": 0,
+              "y": 50,
+              "r": 49,
+              "damage": 15.0,
+              "bkb": 60.0,
+              "kbg": 0.9,
+              "angle": -90,
+              "type": "bury",
+              "situation": "ground"
+            },
+            {
+              "start": 0,
+              "end": null,
+              "x": 0,
+              "y": 50,
+              "r": 42,
+              "damage": 15.0,
+              "bkb": 60.0,
+              "kbg": 0.8,
+              "angle": -90,
+              "type": "spike",
+              "situation": "air"
+            }
+          ],
+          "ledgeGrab": 1,
+          "attach": {
+            "hammer": { "angle": [[0, -90]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "airSwing" }
+          ],
+          "transitions": [
+            { "on": "shieldPress", "from": 1, "to": "helpless" },
+            { "on": "land", "to": "wave" }
+          ]
+        },
+        {
+          "name": "wave",
+          "frames": 60,
+          "hitboxes": [
+            {
+              "start": 3,
+              "end": 4,
+              "x": 0,
+              "y": 44,
+              "r": 50,
+              "damage": 12,
+              "bkb": 105.0,
+              "kbg": 0.7,
+              "angle": 90.0,
+              "dir": "away"
+            },
+            {
+              "start": 3,
+              "end": 4,
+              "x": 50,
+              "y": 22,
+              "r": 55,
+              "damage": 12.0,
+              "bkb": 100.0,
+              "kbg": 0.82,
+              "angle": 60.0,
+              "situation": "ground",
+              "dir": "away"
+            },
+            {
+              "start": 3,
+              "end": 4,
+              "x": -50,
+              "y": 22,
+              "r": 55,
+              "damage": 12.0,
+              "bkb": 100.0,
+              "kbg": 0.82,
+              "angle": 60.0,
+              "situation": "ground",
               "dir": "away"
             }
           ],
-          "events": [
-            { "at": 6, "sfx": "whack" }
-          ],
-          "transitions": [
-            { "on": "land", "to": "landing", "lag": 9 }
-          ],
-          "anim": [
-            { "at": 0, "pose": "air" }
-          ],
           "attach": {
-            "hammer": { "angle": [[0, 40], [6, 40], [14, -320]] }
-          }
-        }
-      ]
-    },
-    "fair": {
-      "name": "Forward Air",
-      "air": "aerial",
-      "phases": [
-        {
-          "name": "main",
-          "frames": 34,
-          "hitboxes": [
+            "hammer": { "angle": [[0, 20]] }
+          },
+          "events": [
             {
-              "start": 9,
-              "end": 13,
-              "x": 68,
-              "y": 48,
-              "r": 32,
-              "damage": 12,
-              "bkb": 27.7551020408,
-              "kbg": 1.6326530612,
-              "angle": 40
-            }
-          ],
-          "events": [
-            { "at": 9, "sfx": "whack" }
-          ],
-          "transitions": [
-            { "on": "land", "to": "landing", "lag": 10 }
-          ],
-          "anim": [
-            { "at": 0, "pose": "air" }
-          ],
-          "attach": {
-            "hammer": { "angle": [[0, 90], [7, 140], [13, -70]] }
-          }
-        }
-      ]
-    },
-    "bair": {
-      "name": "Back Air",
-      "air": "aerial",
-      "phases": [
-        {
-          "name": "main",
-          "frames": 34,
-          "hitboxes": [
-            {
-              "start": 8,
-              "end": 12,
-              "x": -68,
-              "y": 46,
-              "r": 32,
-              "damage": 14,
-              "bkb": 38.8095238095,
-              "kbg": 1.5476190476,
-              "angle": 40,
-              "dir": "back"
-            }
-          ],
-          "events": [
-            { "at": 8, "sfx": "whack" }
-          ],
-          "transitions": [
-            { "on": "land", "to": "landing", "lag": 10 }
-          ],
-          "anim": [
-            { "at": 0, "pose": "air" }
-          ],
-          "attach": {
-            "hammer": { "angle": [[0, 30], [8, 170], [12, 230]] }
-          }
-        }
-      ]
-    },
-    "uair": {
-      "name": "Up Air",
-      "air": "aerial",
-      "phases": [
-        {
-          "name": "main",
-          "frames": 30,
-          "hitboxes": [
-            {
-              "start": 6,
-              "end": 12,
-              "x": 10,
-              "y": 114,
-              "r": 38,
-              "damage": 11,
-              "bkb": 30.7692307692,
-              "kbg": 1.4652014652,
-              "angle": 85
-            }
-          ],
-          "events": [
-            { "at": 6, "sfx": "whack" }
-          ],
-          "transitions": [
-            { "on": "land", "to": "landing", "lag": 8 }
-          ],
-          "anim": [
-            { "at": 0, "pose": "air" }
-          ],
-          "attach": {
-            "hammer": { "angle": [[0, -30], [6, -10], [12, 190]] }
-          }
-        }
-      ]
-    },
-    "dair": {
-      "name": "Down Air",
-      "air": "aerial",
-      "phases": [
-        {
-          "name": "main",
-          "frames": 42,
-          "hitboxes": [
-            {
-              "start": 12,
-              "end": 16,
-              "x": 2,
-              "y": -16,
-              "r": 30,
-              "damage": 14,
-              "bkb": 16.6666666667,
-              "kbg": 1.1904761905,
-              "angle": -80
-            }
-          ],
-          "events": [
-            { "at": 12, "sfx": "whack" }
-          ],
-          "transitions": [
-            { "on": "land", "to": "landing", "lag": 18 }
-          ],
-          "anim": [
-            { "at": 0, "pose": "air" }
-          ],
-          "attach": {
-            "hammer": { "angle": [[0, 70], [10, -60], [12, -90]] }
-          }
-        }
-      ]
-    },
-    "nspec": {
-      "name": "Gordo Toss",
-      "bReverse": true,
-      "phases": [
-        {
-          "name": "main",
-          "frames": 40,
-          "events": [
-            { "if": "airborne", "capFall": 3 },
-            { "at": 14, "spawn": "gordo" }
-          ],
-          "anim": [
-            { "at": 0, "pose": "back" }
-          ],
-          "attach": {
-            "hammer": { "angle": [[0, 20], [10, 140], [15, -20], [20, -30]] },
-            "heldGordo": {
-              "show": [0, 13],
-              "offset": [
-                [0, 20, 50],
-                [1.857, 24.776, 63.763],
-                [3.714, 29.551, 75.169],
-                [5.571, 34.327, 82.268],
-                [7.429, 39.102, 83.843],
-                [9.286, 43.878, 79.625],
-                [11.143, 48.653, 70.336],
-                [13, 53.429, 57.566]
+              "at": 0,
+              "sfx": "quake",
+              "fx": [
+                { "type": "ring", "x": 0, "y": 5, "r": 10, "grow": 8, "life": 18 },
+                { "type": "dust", "x": -35, "y": 0, "n": 10 },
+                { "type": "dust", "x": 35, "y": 0, "n": 10 },
+                { "type": "shake", "k": 8 }
               ]
-            }
-          }
+            },
+            { "at": 5, "spawn": "starR", "sfx": "toss" },
+            { "at": 5, "spawn": "starL", "sfx": "toss" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 30, "pose": "stand", "lerp": true }
+          ]
         }
       ]
     },
     "dspec": {
       "name": "Jet Hammer",
+      "chargeDamage": 0.012566844919786095,
       "phases": [
         {
-          "name": "main",
-          "frames": 46,
-          "hitboxes": [
-            {
-              "start": 17,
-              "end": 21,
-              "x": 70,
-              "y": 44,
-              "r": 36,
-              "damage": 16,
-              "bkb": 47.619047619,
-              "kbg": 1.5873015873,
-              "angle": 38,
-              "shieldDmgMult": 1.5
-            }
-          ],
+          "name": "start",
+          "frames": 17,
           "events": [
-            { "at": 17, "sfx": "smash" },
-            { "at": 17, "sfx": "whack" }
-          ],
-          "charge": { "frame": 10, "max": 90, "button": "special", "jet": true },
-          "anim": [
-            { "at": 0, "pose": "back" },
-            { "at": 17, "pose": "lean" }
-          ],
-          "attach": {
-            "hammer": { "angle": [[0, 20], [10, 170], [16, 160], [20, -30]] }
-          }
-        }
-      ]
-    },
-    "uspec": {
-      "name": "Super Jump",
-      "air": "upSpecial",
-      "phases": [
-        {
-          "name": "squat",
-          "frames": 8,
-          "hover": true,
-          "ledgeGrab": 7,
-          "events": [
-            {
-              "from": 1,
-              "to": 8,
-              "mulVel": { "x": 0.6 }
-            }
-          ],
-          "transitions": [
-            { "on": "timeout", "to": "rise" }
-          ],
-          "anim": [
-            { "at": 0, "pose": "crouch" }
-          ],
-          "attach": {
-            "hammer": { "angle": [[0, -150]] }
-          }
-        },
-        {
-          "name": "rise",
-          "ledgeGrab": 0,
-          "events": [
-            {
-              "at": 0,
-              "setVel": { "x": 2.5, "y": 20 },
-              "leaveGround": true,
-              "sfx": "djump",
-              "fx": [
-                { "type": "dust", "x": 0, "y": 0, "n": 8 }
-              ]
-            },
-            {
-              "every": 2,
-              "fx": [
-                { "type": "part", "x": 0, "y": 30, "vx": 0, "vy": -1, "life": 16, "color": "player", "size": 6 }
-              ]
-            }
-          ],
-          "hitboxes": [
-            {
-              "x": 10,
-              "y": 60,
-              "r": 32,
-              "damage": 8,
-              "bkb": 33.1428571429,
-              "kbg": 1.3333333333,
-              "angle": 80,
-              "end": 9
-            }
-          ],
-          "transitions": [
-            { "on": "falling", "to": "plunge" },
-            { "on": "land", "to": "wave" }
-          ],
-          "anim": [
-            { "at": 0, "pose": "rise" }
+            { "at": 0, "sfx": "jet" }
           ],
           "attach": {
             "hammer": { "angle": [[0, 100]] }
-          }
-        },
-        {
-          "name": "plunge",
-          "ledgeGrab": 0,
-          "fallCap": 19,
-          "airAccelMult": 0.5,
-          "events": [
-            {
-              "at": 0,
-              "mulVel": { "x": 0.4 },
-              "sfx": "smash"
-            },
-            { "setVel": { "y": -19 } },
-            {
-              "every": 2,
-              "fx": [
-                { "type": "part", "x": [-8, 8], "y": 50, "vx": 0, "vy": 2, "life": 14, "color": "#ffe680", "size": 5 }
-              ]
-            }
-          ],
-          "hitboxes": [
-            { "x": 0, "y": 20, "r": 30, "damage": 12, "bkb": 32.925170068, "kbg": 0.8163265306, "angle": -70 }
+          },
+          "anim": [
+            { "at": 0, "pose": "swing" },
+            { "at": 10, "pose": "crouch", "lerp": true }
           ],
           "transitions": [
-            { "on": "shieldPress", "to": "helpless", "from": 1 },
-            { "on": "land", "to": "wave" }
-          ],
-          "anim": [
-            { "at": 0, "pose": "stretch" }
-          ],
-          "attach": {
-            "hammer": { "angle": [[0, -90]] }
-          }
+            { "on": "timeout", "to": "charge" }
+          ]
         },
         {
-          "name": "wave",
-          "frames": 28,
-          "airAccelMult": 1,
-          "events": [
-            {
-              "at": 0,
-              "sfx": "quake",
-              "fx": [
-                { "type": "ring", "x": 0, "y": 6, "r": 10, "grow": 7, "life": 16, "color": "player" },
-                { "type": "dust", "x": -30, "y": 0, "n": 8 },
-                { "type": "dust", "x": 30, "y": 0, "n": 8 },
-                { "type": "shake", "k": 8 }
-              ]
-            }
-          ],
-          "hitboxes": [
-            {
-              "x": 60,
-              "y": 14,
-              "r": 36,
-              "damage": 9,
-              "bkb": 25.974025974,
-              "kbg": 1.7316017316,
-              "angle": 50,
-              "dir": "away",
-              "end": 5
-            },
-            {
-              "x": -60,
-              "y": 14,
-              "r": 36,
-              "damage": 9,
-              "bkb": 25.974025974,
-              "kbg": 1.7316017316,
-              "angle": 50,
-              "dir": "away",
-              "end": 5
-            }
-          ],
-          "ledgeGrab": 0,
+          "name": "charge",
+          "charge": { "frame": 0, "max": 136, "button": "special", "jet": true },
+          "attach": {
+            "hammer": { "angle": [[0, 105]] }
+          },
           "anim": [
             { "at": 0, "pose": "crouch" }
           ],
+          "transitions": [
+            { "on": "release", "to": "swing" }
+          ]
+        },
+        {
+          "name": "swing",
+          "frames": 14,
+          "hitboxes": [
+            {
+              "start": 10,
+              "end": 12,
+              "x": 69.282,
+              "y": 24.0,
+              "r": 45,
+              "damage": 14.76510067114094,
+              "bkb": 60.0,
+              "kbg": 0.46,
+              "angle": 45,
+              "type": "sakurai",
+              "minCharge": 136
+            },
+            {
+              "start": 10,
+              "end": 12,
+              "x": 69.282,
+              "y": 24.0,
+              "r": 45,
+              "damage": 11.0,
+              "bkb": 30.0,
+              "kbg": 1.0,
+              "angle": 45,
+              "type": "sakurai"
+            }
+          ],
+          "armorThreshold": 14,
           "attach": {
-            "hammer": { "angle": [[0, -25]] }
-          }
+            "hammer": { "angle": [[0, 20], [8, 150], [10, -30], [12, -30], [13, -30]] }
+          },
+          "events": [
+            { "at": 9, "sfx": "smash" },
+            { "at": 9, "sfx": "whack" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "swing" },
+            { "at": 10, "pose": "lean", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "recovery" }
+          ]
+        },
+        {
+          "name": "recovery",
+          "frames": 45,
+          "chargeFrames": 0.07352941176470588,
+          "attach": {
+            "hammer": { "angle": [[0, -30], [16, -30], [44, 20]] }
+          },
+          "anim": [
+            { "at": 0, "pose": "lean" },
+            { "at": 26, "pose": "stand", "lerp": true }
+          ]
         }
       ]
     }
   },
+  "throws": {
+    "f": {
+      "release": 14,
+      "total": 37,
+      "hit": {
+        "start": 0,
+        "end": 0,
+        "x": 0,
+        "y": 0,
+        "r": 0,
+        "damage": 6.0,
+        "bkb": 70.0,
+        "kbg": 0.8,
+        "angle": 45.0,
+        "hitlagMult": 0.0
+      },
+      "ticks": [
+        { "at": 12, "damage": 4.0 }
+      ]
+    },
+    "b": {
+      "release": 19,
+      "total": 41,
+      "hit": {
+        "start": 0,
+        "end": 0,
+        "x": 0,
+        "y": 0,
+        "r": 0,
+        "damage": 9.0,
+        "bkb": 60.0,
+        "kbg": 0.79,
+        "angle": 60.0,
+        "hitlagMult": 0.0
+      },
+      "ticks": [
+        { "at": 16, "damage": 4.0 }
+      ]
+    },
+    "u": {
+      "release": 19,
+      "total": 39,
+      "hit": {
+        "start": 0,
+        "end": 0,
+        "x": 0,
+        "y": 0,
+        "r": 0,
+        "damage": 5.0,
+        "bkb": 70.0,
+        "kbg": 0.72,
+        "angle": 90.0,
+        "hitlagMult": 0.0
+      },
+      "ticks": [
+        { "at": 16, "damage": 4.0 }
+      ]
+    },
+    "d": {
+      "release": 26,
+      "total": 41,
+      "hit": {
+        "start": 0,
+        "end": 0,
+        "x": 0,
+        "y": 0,
+        "r": 0,
+        "damage": 6.0,
+        "bkb": 70.0,
+        "kbg": 0.82,
+        "angle": 80.0,
+        "hitlagMult": 0.0
+      }
+    }
+  },
   "projectiles": {
     "gordo": {
-      "spawn": [56, 58],
+      "name": "Gordo",
+      "spawn": [52, 60],
       "vel": [5.5, 7],
-      "r": 16,
-      "life": 160,
+      "r": 19,
+      "life": 140,
       "max": 1,
-      "hit": { "x": 0, "y": 0, "r": 14, "damage": 11, "bkb": 30.7692307692, "kbg": 1.4652014652, "angle": 45 },
+      "hit": {
+        "x": 0,
+        "y": 0,
+        "r": 19,
+        "damage": 14,
+        "bkb": 70,
+        "kbg": 0.66,
+        "angle": 60,
+        "shieldDmgMult": 0.5,
+        "hitlagMult": 1.5
+      },
       "spawnSfx": "toss",
       "fullSfx": "bonk",
       "gravity": 0.4,
@@ -848,178 +2595,70 @@
       "bat": { "speed": 10, "vy": 5, "life": 120, "cooldown": 12, "hitlag": 4 },
       "spin": -3.438,
       "shapes": [
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[12.228, 3.783], [23.2, 0], [12.228, -3.783]] },
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[11.321, -5.972], [16.405, -16.405], [5.972, -11.321]] },
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[3.783, -12.228], [0, -23.2], [-3.783, -12.228]] },
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[-5.972, -11.321], [-16.405, -16.405], [-11.321, -5.972]] },
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[-12.228, -3.783], [-23.2, 0], [-12.228, 3.783]] },
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[-11.321, 5.972], [-16.405, 16.405], [-5.972, 11.321]] },
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[-3.783, 12.228], [0, 23.2], [3.783, 12.228]] },
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[5.972, 11.321], [16.405, 16.405], [11.321, 5.972]] },
-        { "shape": "circle", "at": [0, 0], "r": 21, "fill": "player", "alpha": 0.25 },
-        { "shape": "circle", "at": [0, 0], "r": 16, "fill": "#3a2f5a", "stroke": "player", "width": 2.5 }
-      ],
-      "overlay": [
-        { "shape": "rect", "x": -7.1, "y": -1.6, "w": 3, "h": 7.2, "fill": "#ffffff" },
-        { "shape": "rect", "x": 4.1, "y": -1.6, "w": 3, "h": 7.2, "fill": "#ffffff" }
-      ],
-      "name": "Gordo"
-    }
-  },
-  "attachments": [
-    {
-      "id": "hammer",
-      "joint": "handF",
-      "angle": 183.346,
-      "hold": { "elbow": 15, "hand": 28, "bend": -20.054 },
-      "trail": { "inner": 50, "outer": 96 },
-      "glow": "jetCharging",
-      "shapes": [
-        { "shape": "line", "from": [-6, 0], "to": [40, 0], "width": 4.5, "color": "#8a5a2b" },
-        {
-          "shape": "rect",
-          "x": 32,
-          "y": -19,
-          "w": 26,
-          "h": 38,
-          "fill": "player",
-          "radius": 6,
-          "alpha": 0.15,
-          "when": "noGlow"
-        },
-        {
-          "shape": "rect",
-          "x": 32,
-          "y": -19,
-          "w": 26,
-          "h": 38,
-          "fill": "#ff9a3c",
-          "radius": 6,
-          "alpha": 0.35,
-          "when": "glow"
-        },
-        {
-          "shape": "rect",
-          "x": 36,
-          "y": -15,
-          "w": 18,
-          "h": 30,
-          "fill": "#b98545",
-          "radius": 4,
-          "stroke": "#4a2f14",
-          "width": 2,
-          "when": "noGlow"
-        },
-        {
-          "shape": "rect",
-          "x": 36,
-          "y": -15,
-          "w": 18,
-          "h": 30,
-          "fill": "#ffcf7a",
-          "radius": 4,
-          "stroke": "#4a2f14",
-          "width": 2,
-          "when": "glow"
-        },
-        { "shape": "rect", "x": 38, "y": -15, "w": 3, "h": 30, "fill": "#e0b84a" },
-        { "shape": "rect", "x": 49, "y": -15, "w": 3, "h": 30, "fill": "#e0b84a" }
-      ]
-    },
-    {
-      "id": "crown",
-      "joint": "head",
-      "shapes": [
         {
           "shape": "poly",
-          "fill": "#ffd35a",
-          "points": [[-9, 7], [-10, 19], [-4, 12], [0, 21], [4, 12], [10, 19], [9, 7]]
+          "fill": "#e8e8f0",
+          "points": [
+            [12.228, 3.783],
+            [23.2, 0],
+            [12.228, -3.783],
+            [11.321, -5.972],
+            [16.405, -16.405],
+            [5.972, -11.321],
+            [3.783, -12.228],
+            [0, -23.2],
+            [-3.783, -12.228],
+            [-5.972, -11.321],
+            [-16.405, -16.405],
+            [-11.321, -5.972],
+            [-12.228, -3.783],
+            [-23.2, 0],
+            [-12.228, 3.783],
+            [-11.321, 5.972],
+            [-16.405, 16.405],
+            [-5.972, 11.321],
+            [-3.783, 12.228],
+            [0, 23.2],
+            [3.783, 12.228],
+            [5.972, 11.321],
+            [16.405, 16.405],
+            [11.321, 5.972]
+          ]
         },
-        { "shape": "circle", "at": [0, 10], "r": 2, "fill": "#ff5d8a" }
+        { "shape": "circle", "at": [0, 0], "r": 22, "fill": "player", "alpha": 0.22 },
+        { "shape": "circle", "at": [0, 0], "r": 18, "fill": "#4b4567", "stroke": "player", "width": 2.5 },
+        { "shape": "circle", "at": [0, 0], "r": 4, "fill": "#ffffff", "alpha": 0.8 }
       ]
     },
-    {
-      "id": "heldGordo",
-      "joint": "root",
-      "hidden": true,
+    "starR": {
+      "name": "Star",
+      "spawn": [36, 6],
+      "vel": [7, -1],
+      "r": 11,
+      "life": 16,
+      "max": 1,
+      "hit": { "x": 0, "y": 0, "r": 11, "damage": 5, "bkb": 8, "kbg": 0.65, "angle": 70 },
+      "spawnSfx": "toss",
+      "gravity": 0.25,
+      "maxFall": 8,
       "shapes": [
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[9.171, 2.837], [17.4, 0], [9.171, -2.837]] },
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[8.491, -4.479], [12.304, -12.304], [4.479, -8.491]] },
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[2.837, -9.171], [0, -17.4], [-2.837, -9.171]] },
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[-4.479, -8.491], [-12.304, -12.304], [-8.491, -4.479]] },
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[-9.171, -2.837], [-17.4, 0], [-9.171, 2.837]] },
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[-8.491, 4.479], [-12.304, 12.304], [-4.479, 8.491]] },
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[-2.837, 9.171], [0, 17.4], [2.837, 9.171]] },
-        { "shape": "poly", "fill": "#e8e8f0", "points": [[4.479, 8.491], [12.304, 12.304], [8.491, 4.479]] },
-        { "shape": "circle", "at": [0, 0], "r": 17, "fill": "player", "alpha": 0.25 },
-        { "shape": "circle", "at": [0, 0], "r": 12, "fill": "#3a2f5a", "stroke": "player", "width": 2.5 },
-        { "shape": "rect", "x": -5.7, "y": -1.2, "w": 3, "h": 5.4, "fill": "#ffffff" },
-        { "shape": "rect", "x": 2.7, "y": -1.2, "w": 3, "h": 5.4, "fill": "#ffffff" }
+        { "shape": "star", "at": [0, 0], "r": 11, "fill": "#ffe680" }
+      ]
+    },
+    "starL": {
+      "name": "Star",
+      "spawn": [-36, 6],
+      "vel": [-7, -1],
+      "r": 11,
+      "life": 16,
+      "max": 1,
+      "hit": { "x": 0, "y": 0, "r": 11, "damage": 5, "bkb": 8, "kbg": 0.65, "angle": 70 },
+      "spawnSfx": "toss",
+      "gravity": 0.25,
+      "maxFall": 8,
+      "shapes": [
+        { "shape": "star", "at": [0, 0], "r": 11, "fill": "#ffe680" }
       ]
     }
-  ],
-  "fx": {
-    "airJump": [
-      {
-        "type": "part",
-        "x": [-14, 14],
-        "y": 4,
-        "vx": [-1.5, 1.5],
-        "vy": [-2, -0.5],
-        "life": 18,
-        "color": "#ddddee",
-        "size": 5
-      },
-      {
-        "type": "part",
-        "x": [-14, 14],
-        "y": 4,
-        "vx": [-1.5, 1.5],
-        "vy": [-2, -0.5],
-        "life": 18,
-        "color": "#ddddee",
-        "size": 5
-      },
-      {
-        "type": "part",
-        "x": [-14, 14],
-        "y": 4,
-        "vx": [-1.5, 1.5],
-        "vy": [-2, -0.5],
-        "life": 18,
-        "color": "#ddddee",
-        "size": 5
-      },
-      {
-        "type": "part",
-        "x": [-14, 14],
-        "y": 4,
-        "vx": [-1.5, 1.5],
-        "vy": [-2, -0.5],
-        "life": 18,
-        "color": "#ddddee",
-        "size": 5
-      },
-      {
-        "type": "part",
-        "x": [-14, 14],
-        "y": 4,
-        "vx": [-1.5, 1.5],
-        "vy": [-2, -0.5],
-        "life": 18,
-        "color": "#ddddee",
-        "size": 5
-      },
-      {
-        "type": "part",
-        "x": [-14, 14],
-        "y": 4,
-        "vx": [-1.5, 1.5],
-        "vy": [-2, -0.5],
-        "life": 18,
-        "color": "#ddddee",
-        "size": 5
-      }
-    ]
   }
 }

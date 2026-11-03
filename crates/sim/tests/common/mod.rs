@@ -34,6 +34,9 @@ fn load_data(linear: bool) -> GameData {
         for s in &mut sources {
             let text = if s.path == "fighters/wizard/fighter.json" {
                 include_str!("../fixtures/wizard-linear.json")
+            } else if s.path == "fighters/king/fighter.json" {
+                // The production King package is a King Dedede import; keep the original TS King for baseline traces.
+                include_str!("../fixtures/king-ts.json")
             } else {
                 &s.text
             };

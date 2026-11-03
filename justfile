@@ -96,6 +96,15 @@ import-whiplash:
 whiplash-visuals dir="/tmp/whiplash-reference":
     python3 tools/import-zss/visuals.py "{{dir}}"
 
+# Rebuild the King package as a King Dedede (SSBU 13.0.1) adaptation
+import-king:
+    python3 tools/import-dedede/import.py
+    just bless
+
+# Download hash-checked King Dedede reference GIFs and make per-frame inspection sheets (Pillow)
+king-visuals dir="/tmp/king-reference":
+    python3 tools/import-dedede/visuals.py "{{dir}}"
+
 # Capture character-select layout selection and Controls profile management
 layout-shots dir="/tmp/stick-smash-layout-shots":
     cargo run -p game -- --layout-shots "{{dir}}"
