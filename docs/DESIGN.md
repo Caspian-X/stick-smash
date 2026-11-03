@@ -77,9 +77,18 @@ model later. See [FORMAT.md](FORMAT.md#moves) for exact frame timing, events and
   jump (and Enter), back = special (and Esc/Backspace), start, and repeating directions. Gamepad left stick is
   analog into the sim stick; the d-pad overrides it. Presses are latched until the next sim tick. Screen, pause/resume and ownership changes clear latches and
   edge history; held controls are suppressed until released. Split-keyboard rebinding refuses keys owned by
-  the other active half; gamepad capture can be cancelled with Esc or B/Back.
-- **Persistence** (`game::settings`): one JSON file in the platform config dir (settings, bindings, last versus and
-  training picks). User content loads from `<data dir>/stick-smash/content` after the built-in `assets/`;
+  the other active half; gamepad capture can be cancelled with Esc or B/Back. A device's selected layout supplies
+  bindings and options before its profile/model overrides; built-in Tiltstick / Smashstick profiles retain device bindings and supply
+  right-stick mode, AB smash, stick range and up-jump options. The same resolution feeds gameplay polling, menu/hints, the match slot's `PlayerConfig.controls`
+  and its `tapJump`, so replays embed the effective options. A device with no explicit choice uses the built-in
+  Smashstick profile; settings from before profiles use Custom when the device already has saved bindings/options.
+  Legacy join-order up-jump is materialized once into each joining device’s Custom layout unless it already chose
+  a profile. Editing any layout copies all effective options and bindings into Custom before making the edit.
+- **Persistence** (`game::settings`): one JSON file in the platform config dir (settings, per-device bindings and
+  options, named control layouts and each device's layout choice, last versus and training picks). Named layouts and
+  layout choices are device-family scoped; a missing or mismatched named layout falls back to the device's own
+  Custom layout without rewriting it. Built-in Smashstick/Tiltstick profiles supply documented defaults and keep
+  the device's bindings. Deleting a named layout moves its devices back to Custom. User content loads from `<data dir>/stick-smash/content` after the built-in `assets/`;
   content errors are logged and shown as a toast.
 
 ### UI
@@ -97,7 +106,7 @@ model later. See [FORMAT.md](FORMAT.md#moves) for exact frame timing, events and
   until dropped on a tile. Small tiles show their name only while pointed at or holding a chip; the grid fits the available space and roster size.
 - **Selection.** Hover previews a fighter; confirm drops the chip and locks in. Free pointers can add CPUs,
   carry CPU chips to other tiles, change CPU level/team and adjust match rules. Confirming one's own chip picks
-  it up (or starts once everyone is ready); special also picks it up. Grab/shield opens per-card team/tap-jump
+  it up (or starts once everyone is ready); special also picks it up. Grab/shield opens per-card team/layout
   options. Slim player cards use device-specific contextual hints (`hints.rs`) with join/idle/ready fades.
   Versus stage selection is a thumbnail grid with a large preview: each human drops a vote chip, then roulette
   chooses among the votes with vote-count weighting. Stages too small for the lineup are dimmed. Back takes a

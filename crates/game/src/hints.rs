@@ -218,4 +218,19 @@ mod tests {
         assert_eq!(cap(Ctl::Back, Dev::Bot(0), &saved, &devs), ("B".into(), true));
         assert_eq!(cap(Ctl::Start, Dev::Bot(0), &saved, &devs), ("Start".into(), true));
     }
+
+    #[test]
+    fn caps_follow_a_selected_named_layout() {
+        let mut saved = Saved::default();
+        saved.layouts.insert(
+            "Grabbing".into(),
+            crate::settings::Layout {
+                family: crate::settings::Family::Keyboard,
+                bindings: [("grab".into(), vec!["KeyG".into()])].into(),
+                options: crate::settings::ControlPrefs::default(),
+            },
+        );
+        saved.layout_choices.insert("keyboard".into(), "Grabbing".into());
+        assert_eq!(cap(Ctl::Options, Dev::Keys, &saved, &Devices::default()), ("G".into(), false));
+    }
 }

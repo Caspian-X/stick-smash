@@ -16,6 +16,7 @@ mod grid;
 mod hints;
 mod hud;
 mod input;
+mod layout_shots;
 mod menu;
 mod play;
 mod pointer;
@@ -85,6 +86,14 @@ fn main() {
         .iter()
         .position(|a| a == "--screenshot")
         .map(|i| PathBuf::from(args.get(i + 1).map_or("screenshots", |s| s.as_str())));
+    let layout_dir = args
+        .iter()
+        .position(|a| a == "--layout-shots")
+        .map(|i| PathBuf::from(args.get(i + 1).map_or("screenshots", |s| s.as_str())));
+    if layout_dir.is_some() && shot_dir.is_some() {
+        eprintln!("--layout-shots and --screenshot are separate runs");
+        std::process::exit(1);
+    }
     let filter = args
         .iter()
         .position(|a| a == "--shots")
@@ -115,8 +124,9 @@ fn main() {
     }
     let (data, errors) = load_data(&roots);
     let data = Arc::new(data);
-    let persist = settings::Persist(if shot_dir.is_some() { None } else { settings::config_file() });
-    let saved = settings::load(persist.0.as_ref());
+    let persist =
+        settings::Persist(if shot_dir.is_some() || layout_dir.is_some() { None } else { settings::config_file() });
+    let saved = if layout_dir.is_some() { layout_shots::saved() } else { settings::load(persist.0.as_ref()) };
     let mut app = App::new();
     app.add_plugins(
         DefaultPlugins
@@ -171,6 +181,12 @@ fn main() {
         play::FIXED_SEED.store(7, std::sync::atomic::Ordering::Relaxed);
         app.insert_resource(script.expect("screenshot script"))
             .add_systems(Update, shots::run.after(play::attract).before(UiSystems::Input));
+    }
+    if let Some(dir) = layout_dir {
+        fs::create_dir_all(&dir).expect("create layout screenshot dir");
+        play::FIXED_SEED.store(7, std::sync::atomic::Ordering::Relaxed);
+        app.insert_resource(layout_shots::Plan::new(dir))
+            .add_systems(Update, layout_shots::run.before(UiSystems::Input));
     }
     if !app.run().is_success() {
         std::process::exit(1);

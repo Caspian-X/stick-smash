@@ -576,6 +576,7 @@ mod tests {
         let mut app = App::new();
         app.insert_resource(Data(d.clone()))
             .init_resource::<render::portrait::Portraits>()
+            .init_resource::<Devices>()
             .insert_resource(Saved::default())
             .insert_resource(SelectInit { mode: Mode::Versus, dev: Some(Dev::Bot(0)) })
             .add_systems(Update, select::enter);

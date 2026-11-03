@@ -22,7 +22,7 @@ use crate::hints::{self, Ctl, HintClock};
 use crate::input::{Act, Dev, Devices, Nav};
 use crate::play::{self, Match, Mode, Rules, Slot};
 use crate::pointer::{self, Grid, Look, Pointer, Pointers};
-use crate::settings::{PlayerPref, Saved};
+use crate::settings::{self, PlayerPref, Saved};
 use crate::showcase;
 use crate::ui::{self, *};
 use crate::{Data, Screen};
@@ -42,8 +42,8 @@ const TEAMS: u32 = 9;
 const FF: u32 = 10;
 /// A human's options popover rows (only that player's pointer reaches them, and only them while it is open). `TEAM`
 /// is also a CPU card row.
+pub(crate) const LAYOUT: u32 = 15;
 const TEAM: u32 = 13;
-const TAP: u32 = 14;
 const N_TEAMS: u8 = 4;
 
 /// Room for the roster grid, between the title and the rules panel.
@@ -246,13 +246,20 @@ impl Select {
     }
     /// Rows of a player's options popover.
     fn options(&self) -> Vec<u32> {
-        if self.teams { vec![TEAM, TAP] } else { vec![TAP] }
+        let mut v = vec![LAYOUT];
+        if self.teams {
+            v.push(TEAM);
+        }
+        v
     }
-    fn join(&mut self, dev: Dev, saved: &Saved, d: &GameData) -> bool {
+    fn join(&mut self, dev: Dev, saved: &mut Saved, devs: &Devices, d: &GameData) -> bool {
+        let profile = devs.profile(dev);
+        settings::migrate_layout(saved, &profile, self.humans().count());
         if let Some(p) = self.slots.iter_mut().find(|p| p.disconnected) {
             p.dev = Some(dev);
             p.disconnected = false;
             p.ready = false;
+            p.tap_jump = settings::control_prefs(saved, &profile).tap_jump;
             return true;
         }
         if self.slots.len() >= self.max() || self.mode == Mode::Training && self.humans().count() > 0 {
@@ -267,7 +274,8 @@ impl Select {
         };
         let fighter = d.fighters.iter().position(|f| f.id == pref.fighter).unwrap_or(n % d.fighters.len());
         let team = if self.teams { (at % 2) as u8 } else { pref.team };
-        self.slots.insert(at, Pick::human(dev, at, fighter, team, pref.tap_jump));
+        let tap_jump = settings::control_prefs(saved, &profile).tap_jump;
+        self.slots.insert(at, Pick::human(dev, at, fighter, team, tap_jump));
         self.inserted(at);
         true
     }
@@ -348,10 +356,25 @@ impl Select {
         ptr.hop();
     }
     pub(crate) fn spin(&mut self, k: u32, by: i32, d: &GameData) {
+        self.spin_rows(k, by, d, None);
+    }
+    pub(crate) fn spin_with(&mut self, k: u32, by: i32, d: &GameData, saved: &mut Saved, devs: &Devices) {
+        self.spin_rows(k, by, d, Some((saved, devs)));
+    }
+    fn spin_rows(&mut self, k: u32, by: i32, d: &GameData, ctx: Option<(&mut Saved, &Devices)>) {
         let (kd, s) = kind(k);
         let cyc = |v: i32, n: i32| (v + by).rem_euclid(n);
         let p = self.slots.get_mut(s);
         match kd {
+            LAYOUT => {
+                if let (Some(dev), Some((saved, devs))) = (p.and_then(|p| p.dev), ctx) {
+                    let profile = devs.profile(dev);
+                    settings::cycle_layout(saved, &profile, by);
+                    if let Some(p) = self.slots.get_mut(s) {
+                        p.tap_jump = settings::control_prefs(saved, &profile).tap_jump;
+                    }
+                }
+            }
             FIGHTER => {
                 if let Some(p) = p {
                     p.fighter = cyc(p.fighter as i32, d.fighters.len() as i32) as usize;
@@ -365,11 +388,6 @@ impl Select {
             TEAM => {
                 if let Some(p) = p {
                     p.team = cyc(i32::from(p.team), i32::from(N_TEAMS)) as u8;
-                }
-            }
-            TAP => {
-                if let Some(p) = p {
-                    p.tap_jump = !p.tap_jump;
                 }
             }
             STOCKS => self.stocks = cyc(self.stocks - 1, 9) + 1,
@@ -422,7 +440,7 @@ impl Select {
         &mut self,
         devs: &Devices,
         spots: &[Spot],
-        saved: &Saved,
+        saved: &mut Saved,
         d: &GameData,
         ptrs: &mut Pointers,
         dt: f32,
@@ -470,7 +488,7 @@ impl Select {
                 s.hover(i, t, d);
             }
             for a in acts {
-                start |= s.act(i, a, d, ptr, &mut remove, &mut adds);
+                start |= s.act(i, a, d, saved, devs, ptr, &mut remove, &mut adds);
             }
         }
         let changed = !remove.is_empty() || adds > 0;
@@ -500,7 +518,7 @@ impl Select {
                 continue;
             }
             if st.any_press() {
-                s.join(*dev, saved, d);
+                s.join(*dev, saved, devs, d);
             }
         }
         s.fit_stage(d);
@@ -525,6 +543,8 @@ impl Select {
         i: usize,
         a: Action,
         d: &GameData,
+        saved: &mut Saved,
+        devs: &Devices,
         ptr: &mut Pointer,
         remove: &mut Vec<usize>,
         adds: &mut usize,
@@ -534,15 +554,15 @@ impl Select {
         let (home, ready, carry, k) = (Self::home(p, d), p.ready, p.carry, p.cursor.key);
         if p.menu.is_some() {
             match a {
-                Action::Spin(k, by) => self.spin(k, by, d),
-                Action::Activate(k) if k != NONE => self.spin(k, 1, d),
+                Action::Spin(k, by) => self.spin_with(k, by, d, saved, devs),
+                Action::Activate(k) if k != NONE => self.spin_with(k, 1, d, saved, devs),
                 Action::Back | Action::Start => self.toggle_menu(i, ptr),
                 Action::Activate(_) => {}
             }
             return false;
         }
         match a {
-            Action::Spin(k, by) => self.spin(k, by, d),
+            Action::Spin(k, by) => self.spin_with(k, by, d, saved, devs),
             Action::Back if carry.is_some() => self.drop_carry(i, false, d),
             // Pick the chip back up: the pointer goes to get it.
             Action::Back if ready => {
@@ -594,7 +614,7 @@ impl Select {
                         self.drop_carry(j, false, d);
                     }
                 }
-                (LEVEL | TEAM | BEHAVIOR | STAGE | TEAMS | FF | TAP, _) => self.spin(k, 1, d),
+                (LEVEL | TEAM | BEHAVIOR | STAGE | TEAMS | FF | LAYOUT, _) => self.spin_with(k, 1, d, saved, devs),
                 _ if ready && self.ready() => return true,
                 _ => {}
             },
@@ -618,6 +638,18 @@ impl Select {
             })
             .collect()
     }
+    /// The match slots with each device's effective layout controls filled in.
+    pub(crate) fn match_slots_with(&self, saved: &Saved, devs: &Devices) -> Vec<Slot> {
+        let mut slots = self.match_slots();
+        for s in &mut slots {
+            if let Some(dv) = s.dev {
+                let prefs = settings::control_prefs(saved, &devs.profile(dv));
+                s.controls = prefs.controls();
+                s.tap_jump = prefs.tap_jump;
+            }
+        }
+        slots
+    }
     /// The rules for a match on stage `stage`.
     pub(crate) fn rules(&self, d: &GameData, stage: usize) -> Rules {
         Rules { stocks: self.stocks, stage: d.stages[stage].id.clone(), friendly_fire: self.ff }
@@ -634,12 +666,7 @@ impl Select {
     ) {
         remember(self, saved, data);
         let rules = self.rules(data, self.stage);
-        let mut slots = self.match_slots();
-        for s in &mut slots {
-            if let Some(dv) = s.dev {
-                s.controls = crate::settings::control_prefs(saved, &devs.profile(dv)).controls();
-            }
-        }
+        let slots = self.match_slots_with(saved, devs);
         let Ok(mut m) = Match::new(data, self.mode, slots, rules, play::seed()) else { return };
         if self.mode == Mode::Training {
             m.dummy.mode = self.dummy;
@@ -657,8 +684,9 @@ pub fn enter(
     mut commands: Commands,
     init: Option<Res<SelectInit>>,
     sel: Option<ResMut<Select>>,
-    saved: Res<Saved>,
+    mut saved: ResMut<Saved>,
     data: Res<Data>,
+    devs: Res<Devices>,
     back: Option<Res<FromStages>>,
     mut portraits: ResMut<Portraits>,
 ) {
@@ -702,7 +730,7 @@ pub fn enter(
         }
     }
     if let Some(dev) = init.dev {
-        sel.join(dev, &saved, d);
+        sel.join(dev, &mut saved, &devs, d);
     }
     sel.renumber(&[]);
     sel.fit_stage(d);
@@ -737,8 +765,9 @@ fn input(
     ptrs.screen = mouse.screen();
     moments.mouse =
         pointer::mouse(&mut devs, &mut ptrs, &spots, &mouse, |dv| s.slots.iter().any(|p| p.dev == Some(dv)));
-    let step = s.frame(&devs, &spots, &saved, d, &mut ptrs, time.delta_secs());
-    if s.slots.iter().map(|p| p.dev).ne(sel.slots.iter().map(|p| p.dev)) {
+    let layouts = saved.layout_choices.clone();
+    let step = s.frame(&devs, &spots, &mut saved, d, &mut ptrs, time.delta_secs());
+    if s.slots.iter().map(|p| p.dev).ne(sel.slots.iter().map(|p| p.dev)) || saved.layout_choices != layouts {
         devs.clear();
     }
     sel.set_if_neq(s);
@@ -1246,6 +1275,10 @@ fn card(
                 n.margin.bottom = Val::Px(4.);
             }))
             .with_child((txt(&f.body, 11., DIM, line), TextLayout::new(Justify::Left, LineBreak::WordBoundary)));
+            if let (Some(dev), true) = (pk.dev, human) {
+                let choice = settings::layout_choice(saved, &devs.profile(dev));
+                p.spawn(txt(&f.body_bold, 11., GOLD.with_alpha(0.85), format!("Layout: {}", choice.label())));
+            }
             if !human && s.mode == Mode::Versus {
                 spin_row(p, f, d, s, key(LEVEL, i), "Level", level_name(pk.level).into(), None, 16.);
             }
@@ -1288,7 +1321,7 @@ fn card(
             }
         });
         if pk.menu.is_some() {
-            options(p, f, d, s, i);
+            options(p, f, d, s, i, saved, devs);
         }
     });
 }
@@ -1333,7 +1366,7 @@ fn hints(s: &Select, i: usize, d: &GameData) -> Vec<(Ctl, &'static str)> {
 }
 
 /// A player's options popover, above their card. Only their pointer reaches its rows.
-fn options(p: &mut ChildSpawnerCommands, f: &Fonts, d: &GameData, s: &Select, i: usize) {
+fn options(p: &mut ChildSpawnerCommands, f: &Fonts, d: &GameData, s: &Select, i: usize, saved: &Saved, devs: &Devices) {
     let pk = &s.slots[i];
     let (main, _, _) = pal(d, s.color(i));
     p.spawn((
@@ -1341,7 +1374,7 @@ fn options(p: &mut ChildSpawnerCommands, f: &Fonts, d: &GameData, s: &Select, i:
             n.position_type = PositionType::Absolute;
             n.bottom = Val::Percent(100.);
             n.left = Val::Px(-2.);
-            n.min_width = Val::Px(190.);
+            n.min_width = Val::Px(240.);
             n.margin.bottom = Val::Px(8.);
             n.flex_direction = FlexDirection::Column;
             n.padding = UiRect::all(Val::Px(8.));
@@ -1360,8 +1393,11 @@ fn options(p: &mut ChildSpawnerCommands, f: &Fonts, d: &GameData, s: &Select, i:
             let k = key(kd, i);
             let on = pk.cursor.key == k;
             let (label, value, color) = match kd {
-                TEAM => ("Team", team_name(pk.team).to_string(), Some(pal(d, pk.team as usize).0)),
-                _ => ("Up to jump", on_off(pk.tap_jump).to_string(), None),
+                LAYOUT => {
+                    let dev = pk.dev.expect("a human card");
+                    ("Layout", settings::layout_choice(saved, &devs.profile(dev)).label(), None)
+                }
+                _ => ("Team", team_name(pk.team).to_string(), Some(pal(d, pk.team as usize).0)),
             };
             p.spawn((
                 node(|n| {
@@ -1481,7 +1517,7 @@ fn level_name(level: u8) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::DummyMode;
+    use crate::settings::{ControlPrefs, DummyMode, Family, Layout};
 
     struct T {
         s: Select,
@@ -1493,7 +1529,7 @@ mod tests {
     impl T {
         fn new() -> Self {
             let data = (*crate::test_data()).clone();
-            let saved = Saved::default();
+            let mut saved = Saved::default();
             let mut s = Select {
                 mode: Mode::Versus,
                 slots: vec![],
@@ -1504,12 +1540,12 @@ mod tests {
                 dummy: DummyMode::Stand,
                 roll: 1,
             };
-            s.join(Dev::Bot(0), &saved, &data);
-            s.join(Dev::Bot(1), &saved, &data);
-            s.add_cpu(&saved, &data);
             let mut devs = Devices::default();
             devs.map.insert(Dev::Bot(0), default());
             devs.map.insert(Dev::Bot(1), default());
+            s.join(Dev::Bot(0), &mut saved, &devs, &data);
+            s.join(Dev::Bot(1), &mut saved, &devs, &data);
+            s.add_cpu(&saved, &data);
             let ptrs = Pointers { screen: Vec2::new(1280., 720.), ..default() };
             T { s, devs, d: data, saved, ptrs }
         }
@@ -1519,9 +1555,17 @@ mod tests {
             }
             self
         }
+        fn navs_at(&mut self, b: [(Dev, Vec<Nav>); 2]) -> &mut Self {
+            for (d, n) in b {
+                self.devs.map.get_mut(&d).unwrap().nav = n;
+            }
+            self
+        }
         fn frame(&mut self, spots: &[Spot]) -> Step {
-            let r = self.s.frame(&self.devs, spots, &self.saved, &self.d, &mut self.ptrs, 1. / 60.);
-            self.navs([vec![], vec![]]);
+            let r = self.s.frame(&self.devs, spots, &mut self.saved, &self.d, &mut self.ptrs, 1. / 60.);
+            for st in self.devs.map.values_mut() {
+                st.nav.clear();
+            }
             r
         }
         /// Every roster tile in a row, then the given controls below.
@@ -1593,12 +1637,12 @@ mod tests {
         let mut t = T::new();
         t.s.slots[0].ready = true;
         t.devs.map.clear();
-        t.s.frame(&t.devs, &[], &t.saved, &t.d, &mut t.ptrs, 0.016);
+        t.s.frame(&t.devs, &[], &mut t.saved, &t.d, &mut t.ptrs, 0.016);
         assert_eq!(t.s.slots.len(), 2);
         assert!(t.s.slots[0].disconnected);
         assert_eq!(t.s.slots[0].dev, None);
         assert!(t.ptrs.map.is_empty(), "no pointers for the gone");
-        assert!(t.s.join(Dev::Bot(2), &t.saved, &t.d));
+        assert!(t.s.join(Dev::Bot(2), &mut t.saved, &t.devs, &t.d));
         assert_eq!(t.s.slots[0].dev, Some(Dev::Bot(2)));
         assert!(!t.s.slots[0].ready);
     }
@@ -1609,7 +1653,7 @@ mod tests {
         t.s.slots[1].cursor.key = key(REMOVE, 0);
         t.devs.map.remove(&Dev::Bot(0));
         t.devs.map.get_mut(&Dev::Bot(1)).unwrap().nav = vec![Nav::Confirm];
-        t.s.frame(&t.devs, &[spot(key(REMOVE, 0), false)], &t.saved, &t.d, &mut t.ptrs, 0.016);
+        t.s.frame(&t.devs, &[spot(key(REMOVE, 0), false)], &mut t.saved, &t.d, &mut t.ptrs, 0.016);
         assert_eq!(t.s.slots.len(), 2);
         assert_eq!(t.s.slots[0].dev, Some(Dev::Bot(1)));
         assert!(!t.s.slots.iter().any(|p| p.disconnected));
@@ -1744,7 +1788,7 @@ mod tests {
         t.navs([vec![], vec![Nav::Confirm]]).frame(&spots);
         assert_eq!(t.s.slots[1].carry, Some((2, f)));
         // A new human takes the CPU's place in line; the chip stays the CPU's.
-        assert!(t.s.join(Dev::Bot(2), &t.saved, &t.d));
+        assert!(t.s.join(Dev::Bot(2), &mut t.saved, &t.devs, &t.d));
         assert_eq!((t.s.slots[2].dev, t.s.slots[1].carry), (Some(Dev::Bot(2)), Some((3, f))));
         let p3 = t.s.slots[2].fighter;
         t.s.hover(1, (f + 1) % t.d.fighters.len(), &t.d);
@@ -1753,7 +1797,7 @@ mod tests {
         // The unlocked carrier unplugs: the CPU gets its own fighter back.
         t.devs.map.remove(&Dev::Bot(1));
         t.devs.map.insert(Dev::Bot(2), default());
-        t.s.frame(&t.devs, &spots, &t.saved, &t.d, &mut t.ptrs, 1. / 60.);
+        t.s.frame(&t.devs, &spots, &mut t.saved, &t.d, &mut t.ptrs, 1. / 60.);
         assert_eq!((t.s.slots.len(), t.s.slots[2].dev, t.s.slots[2].fighter), (3, None, f));
     }
     #[test]
@@ -1761,11 +1805,12 @@ mod tests {
         let mut t = T::new();
         t.s.teams = true;
         let tap = t.s.slots[0].tap_jump;
+        let team = t.s.slots[0].team;
         let home = t.s.slots[0].cursor.key;
         let rows = |o: usize| {
-            [TEAM, TAP].map(|kd| Spot {
+            [LAYOUT, TEAM].map(|kd| Spot {
                 f: Focusable { key: key(kd, o), owner: Some(o), spin: true },
-                center: Vec2::new(0., if kd == TEAM { -100. } else { -70. }),
+                center: Vec2::new(0., if kd == LAYOUT { -130. } else { -100. }),
                 size: Vec2::new(150., 20.),
             })
         };
@@ -1775,15 +1820,130 @@ mod tests {
         t.devs.map.get_mut(&Dev::Bot(0)).unwrap().pressed[Act::Grab as usize] = true;
         t.navs([vec![Nav::Down, Nav::Right], vec![]]).frame(&spots);
         assert_eq!(
-            (t.s.slots[0].menu, t.s.slots[0].cursor.key, t.s.slots[0].tap_jump),
-            (Some(home), key(TAP, 0), !tap)
+            (t.s.slots[0].menu, t.s.slots[0].cursor.key, t.s.slots[0].team, t.s.slots[0].tap_jump),
+            (Some(home), key(TEAM, 0), (team + 1) % N_TEAMS, tap)
         );
         t.devs.map.get_mut(&Dev::Bot(0)).unwrap().pressed = [false; 10];
-        // Only its own rows: down wraps rather than leaving for P2's.
+        // Only its own rows: down from the last wraps to the first, and the layout row cycles the device's profile.
+        t.navs([vec![Nav::Down], vec![]]).frame(&spots);
+        assert_eq!(t.s.slots[0].cursor.key, key(LAYOUT, 0), "down past the last row wraps");
+        t.navs([vec![Nav::Right], vec![]]).frame(&spots);
+        assert_eq!(t.saved.layout_choices.get("bot").map(String::as_str), Some("tilt"));
+        assert!(t.s.slots[0].tap_jump, "Tiltstick's up-to-jump option follows the profile");
         t.navs([vec![Nav::Down], vec![]]).frame(&spots);
         assert_eq!(t.s.slots[0].cursor.key, key(TEAM, 0));
         t.navs([vec![Nav::Back], vec![]]).frame(&spots);
         assert_eq!((t.s.slots.len(), t.s.slots[0].menu, t.s.slots[0].cursor.key), (3, None, home));
+    }
+    #[test]
+    fn legacy_join_order_options_become_independent_device_layouts() {
+        let mut t = T::new();
+        t.s.slots.clear();
+        t.saved = serde_json::from_str(r#"{"versus":{"humans":[{"tapJump":false},{"tapJump":true}]}}"#).unwrap();
+        t.s.join(Dev::KeysL, &mut t.saved, &t.devs, &t.d);
+        t.s.join(Dev::KeysR, &mut t.saved, &t.devs, &t.d);
+        assert!(!t.s.slots[0].tap_jump);
+        assert!(t.s.slots[1].tap_jump);
+        assert!(!settings::control_prefs(&t.saved, "keyboard-left").tap_jump);
+        assert!(settings::control_prefs(&t.saved, "keyboard-right").tap_jump);
+        t.s.slots.clear();
+        t.s.join(Dev::KeysR, &mut t.saved, &t.devs, &t.d);
+        t.s.join(Dev::KeysL, &mut t.saved, &t.devs, &t.d);
+        assert!(t.s.slots[0].tap_jump);
+        assert!(!t.s.slots[1].tap_jump);
+    }
+
+    #[test]
+    fn layouts_are_chosen_per_device_and_can_be_shared() {
+        let data = (*crate::test_data()).clone();
+        let mut saved = Saved { split_keyboard: true, ..default() };
+        saved.layouts.insert(
+            "Split A".into(),
+            Layout {
+                family: Family::Keyboard,
+                bindings: [("attack".into(), vec!["KeyU".into()])].into(),
+                options: ControlPrefs { stick_tilts: true, stick_range: 0.7, ..default() },
+            },
+        );
+        let mut s = Select {
+            mode: Mode::Versus,
+            slots: vec![],
+            stocks: 3,
+            stage: 0,
+            teams: false,
+            ff: false,
+            dummy: DummyMode::Stand,
+            roll: 1,
+        };
+        let mut devs = Devices::default();
+        devs.map.insert(Dev::Keys, default());
+        devs.map.insert(Dev::KeysL, default());
+        s.join(Dev::Keys, &mut saved, &devs, &data);
+        s.join(Dev::KeysL, &mut saved, &devs, &data);
+        let mut t = T { s, devs, d: data, saved, ptrs: Pointers { screen: Vec2::new(1280., 720.), ..default() } };
+        let rows = |o: usize| Spot {
+            f: Focusable { key: key(LAYOUT, o), owner: Some(o), spin: true },
+            center: Vec2::new(o as f32 * 100., 400.),
+            size: Vec2::new(150., 20.),
+        };
+        let spots = [rows(0), rows(1)];
+        for p in &mut t.s.slots {
+            p.menu = Some(key(TILE, p.fighter));
+            p.cursor.key = key(LAYOUT, p.cursor.owner.unwrap());
+        }
+        // Both pick the shared named layout independently (Smashstick, Tiltstick, Custom, then the named one).
+        for _ in 0..3 {
+            t.navs_at([(Dev::Keys, vec![Nav::Right]), (Dev::KeysL, vec![Nav::Right])]).frame(&spots);
+        }
+        assert_eq!(t.saved.layout_choices["keyboard"], "Split A");
+        assert_eq!(t.saved.layout_choices["keyboard-left"], "Split A");
+        let slots = t.s.match_slots_with(&t.saved, &t.devs);
+        assert!(slots[0].controls.stick_tilts && slots[1].controls.stick_tilts);
+        assert_eq!(crate::input::binds(&t.saved, "keyboard")[5], ["KeyU"], "the shared layout's binding is live");
+        // One device can move on without disturbing the other, and its choice survives fighter changes.
+        t.navs_at([(Dev::Keys, vec![Nav::Right]), (Dev::KeysL, vec![])]).frame(&spots);
+        assert_eq!(t.saved.layout_choices["keyboard"], "smash");
+        assert_eq!(t.saved.layout_choices["keyboard-left"], "Split A");
+        t.navs_at([(Dev::Keys, vec![Nav::Back]), (Dev::KeysL, vec![])]).frame(&spots);
+        t.s.slots[0].cursor.key = key(TILE, 3);
+        t.navs_at([(Dev::Keys, vec![Nav::Confirm]), (Dev::KeysL, vec![])]);
+        t.frame(&t.spots(&[]));
+        assert!(t.s.slots[0].ready);
+        assert_eq!(t.saved.layout_choices["keyboard"], "smash");
+    }
+    #[test]
+    fn match_slots_use_each_devices_effective_layout_controls() {
+        let mut t = T::new();
+        t.saved.controls.insert("bot".into(), ControlPrefs { stick_range: 0.8, ..default() });
+        t.saved.layout_choices.insert("bot".into(), settings::TILT.into());
+        let slots = t.s.match_slots_with(&t.saved, &t.devs);
+        assert_eq!(slots.len(), 3);
+        assert!(slots[0].controls.stick_tilts && slots[1].controls.stick_tilts, "both bots share the preset");
+        assert!(slots[2].controls == Default::default(), "the CPU has no device layout");
+        t.saved.layout_choices.insert("bot".into(), settings::SMASH.into());
+        assert!(!t.s.match_slots_with(&t.saved, &t.devs)[0].controls.stick_tilts);
+    }
+    #[test]
+    fn selected_up_to_jump_reaches_the_match_config() {
+        let mut t = T::new();
+        t.saved.layouts.insert(
+            "No up jump".into(),
+            Layout {
+                family: Family::Gamepad,
+                bindings: default(),
+                options: ControlPrefs { tap_jump: false, ..default() },
+            },
+        );
+        t.saved.layout_choices.insert("bot".into(), "No up jump".into());
+        let slots = t.s.match_slots_with(&t.saved, &t.devs);
+        assert!(!slots[0].tap_jump && !slots[1].tap_jump);
+        assert!(slots[2].tap_jump, "the CPU keeps its own preference");
+        let rules = Rules { stocks: 1, stage: "arena".into(), friendly_fire: false };
+        let data = std::sync::Arc::new(t.d.clone());
+        let m = Match::new(&data, Mode::Versus, slots, rules, 7).unwrap();
+        assert!(!m.world.cfg.players[0].tap_jump);
+        assert!(!m.world.cfg.players[1].tap_jump);
+        assert_eq!(m.world.cfg.players[0].controls, t.saved.layouts["No up jump"].options.controls());
     }
     #[test]
     fn cpu_team_row_spins_that_cpu() {

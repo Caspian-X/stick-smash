@@ -434,6 +434,7 @@ pub fn attract(mut commands: Commands, m: Option<Res<Match>>, data: Res<Data>, m
 pub fn match_flow(
     mut m: ResMut<Match>,
     mut devs: ResMut<Devices>,
+    saved: Res<crate::settings::Saved>,
     keys: Res<ButtonInput<KeyCode>>,
     mut scene: ResMut<Scene>,
     mut next: ResMut<NextState<Screen>>,
@@ -449,7 +450,10 @@ pub fn match_flow(
     if m.mode == Mode::Training && m.dummy.mode == DummyMode::Human && m.dummy.dev.is_none() {
         let p1 = m.slots[0].dev;
         if let Some((d, _)) = devs.map.iter().find(|(d, s)| Some(**d) != p1 && s.any_press()) {
+            let prefs = crate::settings::control_prefs(&saved, &devs.profile(*d));
             m.dummy.dev = Some(*d);
+            m.world.cfg.players[1].controls = prefs.controls();
+            m.world.cfg.players[1].tap_jump = prefs.tap_jump;
             m.clear_input(&mut devs);
         }
     }

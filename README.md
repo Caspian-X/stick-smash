@@ -98,8 +98,18 @@ freeze / frame step. See [PLAYTESTING.md](docs/PLAYTESTING.md#training).
   Physical A selects and B goes back on this screen, independent of gameplay bindings.
   Pick an action, then press the new key or button (Esc or the
   gamepad's Back / View button cancels). All face buttons can be rebound, including B.
-- "Up to jump" can be turned off per player on character select. **Controls** also has per-device options: right
-  stick smashes or tilts, attack + special smash on / off, and stick sensitivity.
+- **Control layouts**: open a human card's options on character select (Grab / Shield) and use the **Layout** row,
+  or the profile editor in **Controls**. Every player chooses for their own device; any number of players may choose
+  the same layout, and a pick stays with the device when the fighter changes. The built-in **Smashstick** is the
+  default profile (right stick smashes, attack + special smashes, 100% stick range, up to jump on); **Tiltstick**
+  is the same profile with the right stick doing tilts. Both keep the device's action bindings.
+  A named layout saves bindings plus those options for either device family (keyboard keys are never offered to
+  gamepads, or vice versa). **Save layout…** names the device's effective bindings and options; **Delete layout**
+  returns every device using it to its own **Custom** profile. Editing a binding or option in **Controls** edits the
+  device's Custom profile (and selects it), so shared built-in and named layouts are only changed by save/delete.
+  Settings without an explicit profile use **Custom** when they already have device bindings/options, else
+  Smashstick. Legacy join-order up-jump choices are copied to a device’s Custom layout when it first joins,
+  unless it has explicitly selected a profile. **Up to jump** is a profile option, independent of character.
 - **Training**: the panel's **Inputs** list shows your controls and what your fighter actually did (marking
   buffered actions), to compare what you meant with what happened.
 - **Controllers**: any gamepad Bevy supports. Joy-Cons and the Pro Controller work on macOS too (pair them in

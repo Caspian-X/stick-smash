@@ -1,6 +1,7 @@
 //! Title menu, settings and the controls (remap) screen. Single cursor, driven by every device; the attract match
 //! plays behind them.
 
+use bevy::input::ButtonState;
 use bevy::prelude::*;
 use bevy::text::LineHeight;
 use bevy::window::{MonitorSelection, PrimaryWindow, WindowMode};
@@ -36,6 +37,8 @@ pub struct MenuState {
     /// Controls screen: the profile being edited and the action waiting for a control.
     pub profile: usize,
     pub capture: Option<usize>,
+    /// Controls screen: a layout name being typed before saving.
+    pub naming: Option<String>,
     pub warning: Option<String>,
 }
 
@@ -59,6 +62,10 @@ const RESET: u32 = 50;
 const RIGHT_STICK: u32 = 51;
 const AB_SMASH: u32 = 52;
 const RANGE: u32 = 53;
+pub(crate) const LAYOUT: u32 = 54;
+pub(crate) const SAVE_LAYOUT: u32 = 55;
+pub(crate) const DELETE_LAYOUT: u32 = 56;
+const TAP_JUMP: u32 = 57;
 
 pub fn enter_title(mut st: ResMut<MenuState>) {
     *st = MenuState { cursor: Cursor { key: VERSUS, owner: None }, ..default() };
@@ -68,6 +75,34 @@ pub fn enter_settings(mut st: ResMut<MenuState>) {
 }
 pub fn enter_controls(mut st: ResMut<MenuState>) {
     *st = MenuState { cursor: Cursor { key: TAB0, owner: None }, ..default() };
+}
+
+/// A fresh name so a controller-only player can save without typing.
+fn new_layout_name(saved: &Saved) -> String {
+    (1..).map(|n| format!("Layout {n}")).find(|n| !saved.layouts.contains_key(n)).unwrap()
+}
+
+/// Save a profile's effective bindings and options under `name` and make that profile use it.
+fn save_layout(saved: &mut Saved, profile: &str, name: &str) -> Result<(), String> {
+    let name = name.trim();
+    if name.is_empty() {
+        return Err("Give the layout a name first.".into());
+    }
+    if settings::reserved_name(name) {
+        return Err(format!("\"{name}\" is a built-in profile name; choose another name."));
+    }
+    if saved.layouts.contains_key(name) {
+        return Err(format!("A layout named \"{name}\" already exists. Choose another name."));
+    }
+    let bindings = ACTS.iter().zip(input::binds(saved, profile)).map(|(a, b)| (a.id().to_string(), b)).collect();
+    let layout = settings::Layout {
+        family: settings::Family::of(profile),
+        bindings,
+        options: settings::control_prefs(saved, profile),
+    };
+    saved.layouts.insert(name.into(), layout);
+    saved.layout_choices.insert(profile.into(), name.into());
+    Ok(())
 }
 
 /// Control profiles that can be edited right now: the keyboard (or its halves) and each connected gamepad.
@@ -109,11 +144,55 @@ fn update(
     mut exit: MessageWriter<AppExit>,
     mut win: Query<&mut Window, With<PrimaryWindow>>,
     mut ed: Option<ResMut<editor::Editor>>,
+    keys: Res<ButtonInput<KeyCode>>,
+    mut typed: MessageReader<bevy::input::keyboard::KeyboardInput>,
 ) {
     let spots = ui::spots(&q);
     let mut s = st.clone();
     let profs = profiles(&saved, &devs);
     s.profile = s.profile.min(profs.len().saturating_sub(1));
+    // Reading every frame keeps old keystrokes from appearing when a name prompt opens.
+    let typed: Vec<_> = typed.read().collect();
+    if let Some(mut name) = s.naming.take() {
+        let navs: Vec<input::Nav> =
+            controls_navs(&devs).into_iter().filter(|(dev, _)| !dev.is_keyboard()).map(|(_, n)| n).collect();
+        let (mut cancel, mut confirm) = (
+            keys.just_pressed(KeyCode::Escape) || navs.contains(&input::Nav::Back),
+            navs.iter().any(|n| matches!(n, input::Nav::Confirm | input::Nav::Start)),
+        );
+        for e in typed.iter().filter(|e| e.state == ButtonState::Pressed && !e.repeat) {
+            match e.key_code {
+                KeyCode::Escape => cancel = true,
+                KeyCode::Enter | KeyCode::NumpadEnter => confirm = true,
+                KeyCode::Backspace => {
+                    name.pop();
+                }
+                _ => {
+                    for c in e.text.iter().flat_map(|t| t.chars()) {
+                        if !c.is_control() && name.chars().count() < 24 {
+                            name.push(c);
+                        }
+                    }
+                }
+            }
+        }
+        if confirm && let Some((_, prof)) = profs.get(s.profile) {
+            match save_layout(&mut saved, prof, &name) {
+                Ok(()) => s.warning = None,
+                Err(e) => {
+                    s.warning = Some(e);
+                    s.naming = Some(name);
+                }
+            }
+        } else if !cancel {
+            s.naming = Some(name);
+        }
+        if s.naming.is_none() {
+            devs.clear();
+        }
+        *st = s;
+        return;
+    }
     if let Some(a) = s.capture {
         let (pd, prof) = &profs[s.profile];
         let kb = pd.is_keyboard();
@@ -136,6 +215,7 @@ fn update(
                 ));
             }
             Some(r) => {
+                settings::customize_layout(&mut saved, prof);
                 let mut b = input::binds(&saved, prof);
                 b[a] = vec![r];
                 saved
@@ -227,17 +307,46 @@ fn update(
                 if let Some((_, prof)) = profs.get(s.profile) {
                     saved.bindings.remove(prof);
                     saved.controls.remove(prof);
+                    saved.layout_choices.insert(prof.clone(), String::new());
+                    s.warning = None;
                 }
             }
-            (Screen::Controls, Action::Spin(k @ (RIGHT_STICK | AB_SMASH | RANGE), by)) => {
+            (Screen::Controls, Action::Spin(LAYOUT, by)) => {
                 if let Some((_, prof)) = profs.get(s.profile) {
+                    settings::cycle_layout(&mut saved, prof, by);
+                    s.warning = None;
+                }
+            }
+            (Screen::Controls, Action::Activate(SAVE_LAYOUT)) => {
+                if profs.get(s.profile).is_some() {
+                    s.naming = Some(new_layout_name(&saved));
+                    s.warning = None;
+                    devs.clear();
+                    break;
+                }
+            }
+            (Screen::Controls, Action::Activate(DELETE_LAYOUT)) => {
+                if let Some((_, prof)) = profs.get(s.profile)
+                    && let settings::Choice::Named(name) = settings::layout_choice(&saved, prof)
+                {
+                    settings::delete_layout(&mut saved, &name);
+                    s.warning =
+                        Some(format!("Deleted layout \"{name}\". Its devices now use their own Custom profiles."));
+                }
+            }
+            (Screen::Controls, Action::Spin(k @ (RIGHT_STICK | AB_SMASH | RANGE | TAP_JUMP), by)) => {
+                if let Some((_, prof)) = profs.get(s.profile) {
+                    // Options belong to the device's Custom profile; built-ins and named layouts stay shared.
+                    settings::customize_layout(&mut saved, prof);
                     let mut c = settings::control_prefs(&saved, prof);
                     match k {
                         RIGHT_STICK => c.stick_tilts = !c.stick_tilts,
                         AB_SMASH => c.ab_smash = !c.ab_smash,
+                        TAP_JUMP => c.tap_jump = !c.tap_jump,
                         _ => c.stick_range = (c.stick_range - by as f32 * 0.05).clamp(0.5, 1.),
                     }
                     saved.controls.insert(prof.clone(), c);
+                    s.warning = None;
                 }
             }
             _ => {}
@@ -375,6 +484,15 @@ fn draw(
                 if let Some(warning) = &st.warning {
                     p.spawn(txt(&f.body, 16., GOLD, warning));
                 }
+                if let Some(name) = &st.naming {
+                    p.spawn(txt(&f.label, 22., STAR, format!("Layout name: {name}_")));
+                    p.spawn(txt(
+                        &f.body,
+                        14.,
+                        DIM,
+                        "Type a name  •  Enter saves  •  Esc cancels  •  the layout keeps this device's bindings and options",
+                    ));
+                }
                 let Some((_, prof)) = profs.get(st.profile) else { return };
                 p.spawn(node(|n| {
                     n.column_gap = Val::Px(8.);
@@ -412,6 +530,7 @@ fn draw(
                     items.push(Item { hot, ..Item::info(ACT0 + i as u32, act.label(), v) });
                 }
                 let c = settings::control_prefs(&saved, prof);
+                let choice = settings::layout_choice(&saved, prof);
                 if !prof.starts_with("keyboard") {
                     let tilts = if c.stick_tilts { "Tilt attacks" } else { "Smash attacks" };
                     items.push(Item::spin(RIGHT_STICK, "Right stick", tilts));
@@ -419,8 +538,18 @@ fn draw(
                     items.push(Item::spin(RANGE, "Stick sensitivity", sens));
                 }
                 items.push(Item::spin(AB_SMASH, "Attack + Special", if c.ab_smash { "Smash attack" } else { "Off" }));
+                items.push(Item::spin(TAP_JUMP, "Up to jump", on_off(c.tap_jump)));
                 items.push(Item::button(RESET, "Reset to defaults"));
                 items.push(Item::button(BACK, "Back"));
+                let mut layouts = vec![Item::spin(
+                    LAYOUT,
+                    "Layout",
+                    format!("{} ({})", choice.label(), settings::Family::of(prof).label()),
+                )];
+                layouts.push(Item::button(SAVE_LAYOUT, "Save layout…"));
+                if matches!(choice, settings::Choice::Named(_)) {
+                    layouts.push(Item::button(DELETE_LAYOUT, "Delete layout"));
+                }
                 p.spawn(node(|n| n.column_gap = Val::Px(40.))).with_children(|p| {
                     // Two columns: action, then its controls.
                     let list = List { gap: 0., label_width: Some(170.), ..List::new(560., 21.) };
@@ -432,12 +561,14 @@ fn draw(
                         n.margin.top = Val::Px(8.);
                     }))
                     .with_children(|p| {
+                        menu_list(p, f, &layouts, focus, List::new(300., 19.));
+                        p.spawn(node(|n| n.height = Val::Px(4.)));
                         for line in [
-                            "Tilt the stick to walk, flick it to dash; tilt + attack for tilts, flick + attack to smash.",
+                            "Smashstick is the default profile; Tiltstick is the same with a tilt right stick. Both keep this device's bindings.",
+                            "A named layout saves bindings and options (right stick, stick range, attack + special, up to jump) for either family.",
+                            "Selecting a profile applies it here and at character select. Changing bindings or options returns the device to Custom.",
                             "Hold attack to charge a smash. Press both jump buttons (or jump twice) to short hop.",
                             "Shield + up attack is an up smash; let go of shield just before a hit to parry.",
-                            "Shield + left/right rolls, shield + down dodges, shield in the air air-dodges.",
-                            "Grab, then attack to pummel or a direction to throw.",
                             "On this screen, physical A selects and B goes back, regardless of gameplay bindings.",
                         ] {
                             p.spawn(txt(&f.body, 14., DIM, line));
@@ -522,6 +653,120 @@ mod tests {
     fn button(app: &mut App, pad: Entity, button: GamepadButton, value: f32) {
         app.world_mut().write_message(RawGamepadEvent::Button(RawGamepadButtonChangedEvent::new(pad, button, value)));
         app.update();
+    }
+
+    fn focus(app: &mut App, key: u32, spin: bool) {
+        app.world_mut().spawn((
+            Focusable { key, owner: None, spin },
+            ComputedNode { size: Vec2::splat(30.), ..default() },
+            UiGlobalTransform::default(),
+        ));
+        app.world_mut().resource_mut::<MenuState>().cursor.key = key;
+    }
+
+    fn type_key(app: &mut App, key: KeyCode, text: Option<&str>) {
+        app.world_mut().write_message(bevy::input::keyboard::KeyboardInput {
+            key_code: key,
+            logical_key: bevy::input::keyboard::Key::Character(text.unwrap_or_default().into()),
+            state: ButtonState::Pressed,
+            text: text.map(Into::into),
+            repeat: false,
+            window: Entity::PLACEHOLDER,
+        });
+        app.update();
+    }
+
+    #[test]
+    fn layout_rows_cycle_save_and_delete_through_normal_input() {
+        let (mut app, pad) = controls();
+        let profile = app.world().resource::<Devices>().profile(Dev::Pad(pad));
+        focus(&mut app, LAYOUT, true);
+        button(&mut app, pad, GamepadButton::DPadRight, 1.);
+        assert_eq!(app.world().resource::<Saved>().layout_choices[&profile], settings::TILT);
+        button(&mut app, pad, GamepadButton::DPadRight, 0.);
+
+        // Save the current device layout under a typed name.
+        focus(&mut app, SAVE_LAYOUT, false);
+        button(&mut app, pad, GamepadButton::South, 1.);
+        assert_eq!(app.world().resource::<MenuState>().naming.as_deref(), Some("Layout 1"));
+        button(&mut app, pad, GamepadButton::South, 0.);
+        type_key(&mut app, KeyCode::KeyA, Some("A"));
+        type_key(&mut app, KeyCode::Enter, None);
+        let saved = app.world().resource::<Saved>().clone();
+        assert!(saved.layouts.contains_key("Layout 1A"));
+        assert_eq!(saved.layouts["Layout 1A"].family, settings::Family::Gamepad);
+        assert_eq!(saved.layout_choices[&profile], "Layout 1A");
+        assert!(saved.layouts["Layout 1A"].options.stick_tilts, "the built-in preset was captured");
+        assert_eq!(app.world().resource::<MenuState>().naming, None);
+
+        // Delete it: this device falls back to its own layout.
+        focus(&mut app, DELETE_LAYOUT, false);
+        button(&mut app, pad, GamepadButton::South, 1.);
+        let saved = app.world().resource::<Saved>();
+        assert!(!saved.layouts.contains_key("Layout 1A"));
+        assert_eq!(saved.layout_choices[&profile], "", "deletion falls back to this device's Custom profile");
+        button(&mut app, pad, GamepadButton::South, 0.);
+        assert_eq!(app.world().resource::<MenuState>().profile, 1);
+    }
+
+    #[test]
+    fn profile_editor_toggles_up_to_jump_and_saves_it_for_reuse() {
+        let (mut app, pad) = controls();
+        let profile = app.world().resource::<Devices>().profile(Dev::Pad(pad));
+        focus(&mut app, TAP_JUMP, true);
+        button(&mut app, pad, GamepadButton::DPadRight, 1.);
+        let saved = app.world().resource::<Saved>();
+        assert!(!saved.controls[&profile].tap_jump);
+        assert_eq!(settings::layout_choice(saved, &profile), settings::Choice::Device);
+        button(&mut app, pad, GamepadButton::DPadRight, 0.);
+
+        focus(&mut app, SAVE_LAYOUT, false);
+        button(&mut app, pad, GamepadButton::South, 1.);
+        button(&mut app, pad, GamepadButton::South, 0.);
+        type_key(&mut app, KeyCode::Enter, None);
+        let saved = app.world().resource::<Saved>();
+        assert!(!saved.layouts["Layout 1"].options.tap_jump);
+        assert_eq!(saved.layout_choices[&profile], "Layout 1");
+    }
+
+    #[test]
+    fn layout_name_ignores_keyboard_gameplay_actions() {
+        let (mut app, _) = controls();
+        app.world_mut().resource_mut::<MenuState>().naming = Some(String::new());
+        for (key, text, expected) in
+            [(KeyCode::KeyJ, Some("J"), "J"), (KeyCode::KeyK, Some("K"), "JK"), (KeyCode::Backspace, None, "J")]
+        {
+            app.world_mut().resource_mut::<ButtonInput<KeyCode>>().press(key);
+            type_key(&mut app, key, text);
+            assert!(app.world().resource::<ButtonInput<KeyCode>>().pressed(key));
+            assert_eq!(app.world().resource::<MenuState>().naming.as_deref(), Some(expected));
+            assert!(app.world().resource::<Saved>().layouts.is_empty());
+        }
+        type_key(&mut app, KeyCode::Enter, None);
+        assert!(app.world().resource::<Saved>().layouts.contains_key("J"));
+    }
+
+    #[test]
+    fn editing_layout_preserves_the_other_effective_settings() {
+        let (mut app, pad) = controls();
+        let profile = app.world().resource::<Devices>().profile(Dev::Pad(pad));
+        app.world_mut().resource_mut::<Saved>().layout_choices.insert(profile.clone(), settings::TILT.into());
+        focus(&mut app, TAP_JUMP, true);
+        button(&mut app, pad, GamepadButton::DPadRight, 1.);
+        let prefs = settings::control_prefs(app.world().resource::<Saved>(), &profile);
+        assert!(prefs.stick_tilts);
+        assert!(!prefs.tap_jump);
+        button(&mut app, pad, GamepadButton::DPadRight, 0.);
+        save_layout(&mut app.world_mut().resource_mut::<Saved>(), &profile, "Tilt no jump").unwrap();
+        app.world_mut().resource_mut::<MenuState>().capture = Some(input::Act::Attack as usize);
+        let before = input::binds(app.world().resource::<Saved>(), &profile);
+        button(&mut app, pad, GamepadButton::North, 1.);
+        let saved = app.world().resource::<Saved>();
+        assert_eq!(settings::control_prefs(saved, &profile), prefs);
+        let mut expected = before;
+        expected[input::Act::Attack as usize] = vec!["North".into()];
+        assert_eq!(input::binds(saved, &profile), expected);
+        assert_eq!(saved.layouts["Tilt no jump"].options, prefs);
     }
 
     #[test]

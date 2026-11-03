@@ -95,3 +95,7 @@ import-whiplash:
 # Download hash-checked Whiplash reference GIFs and make per-frame inspection sheets (Pillow)
 whiplash-visuals dir="/tmp/whiplash-reference":
     python3 tools/import-zss/visuals.py "{{dir}}"
+
+# Capture character-select layout selection and Controls profile management
+layout-shots dir="/tmp/stick-smash-layout-shots":
+    cargo run -p game -- --layout-shots "{{dir}}"

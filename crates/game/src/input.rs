@@ -280,14 +280,16 @@ pub fn default_binds(profile: &str) -> [Vec<&'static str>; 10] {
     }
 }
 
-/// The controls bound to each action for a profile (saved overrides, else defaults).
+/// The controls bound to each action for a profile (its selected layout, else saved overrides, else defaults).
 pub fn binds(saved: &Saved, profile: &str) -> [Vec<String>; 10] {
     let model = profile.rsplit_once('#').map_or(profile, |(model, _)| model);
-    let custom = saved
-        .bindings
-        .get(profile)
-        .or_else(|| saved.bindings.get(model))
-        .or_else(|| profile.starts_with("gamepad:").then(|| saved.bindings.get("gamepad")).flatten());
+    let custom = crate::settings::active_layout(saved, profile).map(|(_, l)| &l.bindings).or_else(|| {
+        saved
+            .bindings
+            .get(profile)
+            .or_else(|| saved.bindings.get(model))
+            .or_else(|| profile.starts_with("gamepad:").then(|| saved.bindings.get("gamepad")).flatten())
+    });
     let def = default_binds(profile);
     std::array::from_fn(|i| {
         custom
