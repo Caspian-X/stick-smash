@@ -1319,6 +1319,7 @@ fn check_render(file: &str, r: &super::render::Render) -> Result<(), ContentErro
     for (name, n) in [
         ("flipSecs", f64::from(s.flip_secs)),
         ("bannerSecs", f64::from(s.banner_secs)),
+        ("backHoldSecs", f64::from(s.back_hold_secs)),
         ("roulette.secs", f64::from(s.roulette.secs)),
         ("roulette.hops", f64::from(s.roulette.hops)),
         ("roulette.curve", f64::from(s.roulette.curve)),

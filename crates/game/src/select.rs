@@ -74,6 +74,7 @@ pub struct FromStages;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Pick {
+    pub identity: usize,
     /// `None`: CPU (or the training dummy).
     pub dev: Option<Dev>,
     pub disconnected: bool,
@@ -96,6 +97,7 @@ impl Pick {
     /// A player joining as slot `at`, their pointer on their fighter's tile.
     fn human(dev: Dev, at: usize, fighter: usize, team: u8, tap_jump: bool) -> Self {
         Pick {
+            identity: at,
             dev: Some(dev),
             disconnected: false,
             fighter,
@@ -112,6 +114,7 @@ impl Pick {
     /// A CPU (or the training dummy), always ready.
     fn cpu(fighter: usize, level: u8, team: u8) -> Self {
         Pick {
+            identity: 1,
             dev: None,
             disconnected: false,
             fighter,
@@ -231,11 +234,11 @@ impl Select {
         }
     }
     pub(crate) fn color(&self, i: usize) -> usize {
-        if self.teams { self.slots[i].team as usize } else { i }
+        if self.teams { self.slots[i].team as usize } else { self.slots[i].identity }
     }
-    fn tag(&self, i: usize) -> String {
+    pub(crate) fn tag(&self, i: usize) -> String {
         match (self.slots[i].dev.is_some() || self.slots[i].disconnected, self.mode) {
-            (true, _) => format!("P{}", i + 1),
+            (true, _) => format!("P{}", self.slots[i].identity + 1),
             (false, Mode::Training) => "Dummy".into(),
             (false, _) => "CPU".into(),
         }
@@ -275,7 +278,10 @@ impl Select {
         let fighter = d.fighters.iter().position(|f| f.id == pref.fighter).unwrap_or(n % d.fighters.len());
         let team = if self.teams { (at % 2) as u8 } else { pref.team };
         let tap_jump = settings::control_prefs(saved, &profile).tap_jump;
-        self.slots.insert(at, Pick::human(dev, at, fighter, team, tap_jump));
+        let identity = (0..8).find(|id| !self.slots.iter().any(|p| p.identity == *id)).unwrap();
+        let mut pick = Pick::human(dev, at, fighter, team, tap_jump);
+        pick.identity = identity;
+        self.slots.insert(at, pick);
         self.inserted(at);
         true
     }
@@ -303,7 +309,10 @@ impl Select {
         let pref = saved.versus.cpus.get(n).cloned().unwrap_or_default();
         let i = self.slots.len();
         let fighter = d.fighters.iter().position(|f| f.id == pref.fighter).unwrap_or((i + 1) % d.fighters.len());
-        self.slots.push(Pick::cpu(fighter, pref.level.min(CPU_LEVELS.len() as u8 - 1), (i % 2) as u8));
+        let identity = (1..8).chain(0..1).find(|id| !self.slots.iter().any(|p| p.identity == *id)).unwrap();
+        let mut pick = Pick::cpu(fighter, pref.level.min(CPU_LEVELS.len() as u8 - 1), (i % 2) as u8);
+        pick.identity = identity;
+        self.slots.push(pick);
     }
     fn roll_random(&mut self, i: usize, d: &GameData) {
         let p = &mut self.slots[i];
@@ -446,8 +455,10 @@ impl Select {
         dt: f32,
     ) -> Step {
         let s = self;
+        ptrs.back.retain(|dev, _| devs.map.get(dev).is_some_and(|st| st.back_held()));
         let cfg = &d.global.render.select.pointer;
         let mut start = false;
+        let mut backed_out = false;
         let mut remove = Vec::new();
         let mut adds = 0;
         for (i, p) in s.slots.iter_mut().enumerate() {
@@ -471,6 +482,20 @@ impl Select {
         let humans: Vec<(usize, Dev)> = s.slots.iter().enumerate().filter_map(|(i, p)| Some((i, p.dev?))).collect();
         for (i, dev) in humans {
             let Some(st) = devs.map.get(&dev).filter(|_| !remove.contains(&i)) else { continue };
+            let p = &s.slots[i];
+            let contextual = p.menu.is_some() || p.carry.is_some() || p.ready || kind(p.cursor.key).0 != TILE;
+            let exit = ptrs.hold_back(
+                dev,
+                st,
+                contextual,
+                dt,
+                d.global.render.select.back_hold_secs,
+                format!("{} · {}", s.tag(i), if s.humans().count() == 1 { "back to title" } else { "leave selection" }),
+            );
+            if exit {
+                backed_out = true;
+                remove.push(i);
+            }
             let ptr = ptrs.of(dev, i, &s.slots[i].cursor, spots);
             // Grab / Shield toggles the options popover.
             if st.pressed[Act::Grab as usize] || st.pressed[Act::Shield as usize] {
@@ -488,6 +513,9 @@ impl Select {
                 s.hover(i, t, d);
             }
             for a in acts {
+                if matches!(a, Action::Back) && !contextual || matches!(a, Action::Start) && st.back_held() {
+                    continue;
+                }
                 start |= s.act(i, a, d, saved, devs, ptr, &mut remove, &mut adds);
             }
         }
@@ -513,8 +541,16 @@ impl Select {
                 continue;
             }
             // A device leaving this frame cannot immediately join again.
-            if devs.navs().any(|(d, n)| d == *dev && n == Nav::Back) {
-                leave |= s.humans().count() == 0;
+            if st.back_held() || st.nav.contains(&Nav::Back) {
+                leave |= s.humans().count() == 0
+                    && ptrs.hold_back(
+                        *dev,
+                        st,
+                        false,
+                        dt,
+                        d.global.render.select.back_hold_secs,
+                        "Back to title".into(),
+                    );
                 continue;
             }
             if st.any_press() {
@@ -526,12 +562,12 @@ impl Select {
         for (i, p) in s.slots.iter().enumerate() {
             if let Some(ptr) = p.dev.and_then(|dev| ptrs.map.get_mut(&dev)) {
                 let carry = p.carry.map(|(c, _)| (s.tag(c), pal(d, s.color(c)).0));
-                ptr.look = Look::new(pal(d, s.color(i)).0, i, !p.ready, carry);
+                ptr.look = Look::new(pal(d, s.color(i)).0, p.identity, !p.ready, carry);
             }
         }
-        if leave && s.humans().count() == 0 {
+        if (leave || backed_out) && s.humans().count() == 0 {
             Step::Leave
-        } else if start && s.ready() && s.fits(d, s.stage) {
+        } else if start && !devs.map.values().any(|st| st.back_held()) && s.ready() && s.fits(d, s.stage) {
             Step::Start
         } else {
             Step::Stay
@@ -1049,7 +1085,7 @@ fn roster(p: &mut ChildSpawnerCommands, f: &Fonts, d: &GameData, s: &Select, por
                 .map(|(i, p)| {
                     let (color, _, light) = pal(d, s.color(i));
                     let cpu = p.dev.is_none();
-                    Chip { label: if cpu { s.tag(i) } else { format!("P{}", i + 1) }, color, light, cpu, drop: p.dev }
+                    Chip { label: s.tag(i), color, light, cpu, drop: p.dev }
                 })
                 .collect();
             let random = t >= d.fighters.len();
@@ -1356,7 +1392,7 @@ fn hints(s: &Select, i: usize, d: &GameData) -> Vec<(Ctl, &'static str)> {
     } else if p.ready {
         (Ctl::Back, "unlock")
     } else if kd == TILE {
-        (Ctl::Back, "leave")
+        (Ctl::Back, "hold to leave")
     } else if first.is_some() {
         (Ctl::Back, "back")
     } else {
@@ -1388,7 +1424,7 @@ fn options(p: &mut ChildSpawnerCommands, f: &Fonts, d: &GameData, s: &Select, i:
         GlobalZIndex(z::POPOVER),
     ))
     .with_children(|p| {
-        p.spawn(txt(&f.heavy, 15., main, format!("P{} options", i + 1)));
+        p.spawn(txt(&f.heavy, 15., main, format!("{} options", s.tag(i))));
         for kd in s.options() {
             let k = key(kd, i);
             let on = pk.cursor.key == k;
@@ -1561,6 +1597,13 @@ mod tests {
             }
             self
         }
+        fn leave(&mut self, spots: &[Spot]) {
+            self.devs.map.get_mut(&Dev::Bot(0)).unwrap().held[6] = true;
+            for _ in 0..100 {
+                self.frame(spots);
+            }
+            self.devs.map.get_mut(&Dev::Bot(0)).unwrap().held[6] = false;
+        }
         fn frame(&mut self, spots: &[Spot]) -> Step {
             let r = self.s.frame(&self.devs, spots, &mut self.saved, &self.d, &mut self.ptrs, 1. / 60.);
             for st in self.devs.map.values_mut() {
@@ -1625,7 +1668,11 @@ mod tests {
         let mut t = T::new();
         t.s.slots.truncate(1);
         t.s.slots[0].cursor.key = key(TILE, 0);
-        t.navs([vec![Nav::Back], vec![Nav::Confirm]]);
+        t.devs.map.get_mut(&Dev::Bot(0)).unwrap().held[6] = true;
+        for _ in 0..89 {
+            t.frame(&[spot(key(TILE, 0), false)]);
+        }
+        t.navs([vec![], vec![Nav::Confirm]]);
         assert_ne!(t.frame(&[spot(key(TILE, 0), false)]), Step::Leave);
         assert_eq!(t.s.slots.len(), 1);
         assert_eq!(t.s.slots[0].dev, Some(Dev::Bot(1)));
@@ -1736,8 +1783,50 @@ mod tests {
         t.s.slots[0].cursor.key = key(ADD, 0);
         t.navs([vec![Nav::Back], vec![]]).frame(&spots);
         assert_eq!((t.s.slots[0].ready, t.s.slots[0].cursor.key), (false, key(TILE, 3)));
-        t.navs([vec![Nav::Back], vec![]]).frame(&spots);
+        t.leave(&spots);
         assert_eq!(t.s.humans().count(), 1);
+    }
+    #[test]
+    fn brief_back_release_and_exact_hold_threshold() {
+        let mut t = T::new();
+        let spots = t.spots(&[]);
+        t.devs.map.get_mut(&Dev::Bot(0)).unwrap().held[6] = true;
+        for _ in 0..20 {
+            t.frame(&spots);
+        }
+        assert_eq!(t.s.humans().count(), 2);
+        t.devs.map.get_mut(&Dev::Bot(0)).unwrap().held[6] = false;
+        t.frame(&spots);
+        t.devs.map.get_mut(&Dev::Bot(0)).unwrap().held[6] = true;
+        for _ in 0..29 {
+            t.s.frame(&t.devs, &spots, &mut t.saved, &t.d, &mut t.ptrs, 0.05);
+            assert_eq!(t.s.humans().count(), 2);
+        }
+        t.s.frame(&t.devs, &spots, &mut t.saved, &t.d, &mut t.ptrs, 0.05);
+        assert_eq!(t.s.humans().count(), 1);
+    }
+    #[test]
+    fn stable_identity_survives_leave_rejoin_and_cpu_compaction() {
+        let mut t = T::new();
+        let spots = t.spots(&[]);
+        assert_eq!((t.s.tag(1), t.s.color(1)), ("P2".into(), 1));
+        t.leave(&spots);
+        assert_eq!((t.s.tag(0), t.s.color(0)), ("P2".into(), 1));
+        assert!(t.s.join(Dev::Bot(0), &mut t.saved, &t.devs, &t.d));
+        assert_eq!((t.s.tag(1), t.s.color(1)), ("P1".into(), 0));
+        assert_eq!(t.s.slots[0].cursor.owner, Some(0));
+        assert_eq!(t.s.slots[1].cursor.owner, Some(1));
+        let slots = t.s.match_slots();
+        assert_eq!((slots[0].tag.as_str(), slots[0].color), ("P2", 1));
+        assert_eq!((slots[1].tag.as_str(), slots[1].color), ("P1", 0));
+        t.frame(&spots);
+        assert_eq!(t.ptrs.map[&Dev::Bot(1)].look.num, "2");
+        assert_eq!(t.ptrs.map[&Dev::Bot(0)].look.num, "1");
+        let identities: Vec<_> = t.s.slots.iter().map(|p| p.identity).collect();
+        t.s.slots.remove(2);
+        t.s.renumber(&[2]);
+        t.s.add_cpu(&t.saved, &t.d);
+        assert_eq!(t.s.slots.iter().map(|p| p.identity).collect::<Vec<_>>(), identities);
     }
     #[test]
     fn everyone_ready_confirm_on_your_chip_starts() {
@@ -1959,7 +2048,7 @@ mod tests {
     fn hints_follow_the_context() {
         let mut t = T::new();
         t.s.slots[0].cursor.key = key(TILE, 0);
-        assert_eq!(hints(&t.s, 0, &t.d), [(Ctl::Confirm, "lock in"), (Ctl::Back, "leave")]);
+        assert_eq!(hints(&t.s, 0, &t.d), [(Ctl::Confirm, "lock in"), (Ctl::Back, "hold to leave")]);
         t.s.slots[0].cursor.key = key(ADD, 0);
         assert_eq!(hints(&t.s, 0, &t.d)[0], (Ctl::Confirm, "add CPU"));
         for p in &mut t.s.slots {

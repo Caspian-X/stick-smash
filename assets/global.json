@@ -399,6 +399,7 @@
       }
     },
     "select": {
+      "backHoldSecs": 1.5,
       "flourish": "usmash",
       "rosterColor": { "main": "#d9dcf5", "dark": "#8a8fb8", "light": "#ffffff" },
       "flipSecs": 0.22,

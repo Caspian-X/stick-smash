@@ -1892,6 +1892,12 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "backHoldSecs": {
+          "type": "number",
+          "format": "float",
+          "description": "Real seconds holding Back before leaving a selection screen.",
+          "default": 1.5
+        },
         "flourish": {
           "type": "string",
           "description": "Move slot a fighter plays on the stage when its player locks in, before its `win` pose."

@@ -114,6 +114,7 @@ pub struct Pointer {
 
 #[derive(Resource, Default)]
 pub struct Pointers {
+    pub back: BTreeMap<Dev, BackHold>,
     pub map: BTreeMap<Dev, Pointer>,
     /// Last mouse position; only motion moves the keyboard player's pointer.
     pub mouse: Option<Vec2>,
@@ -121,10 +122,46 @@ pub struct Pointers {
     pub screen: Vec2,
 }
 
+#[derive(Default)]
+pub struct BackHold {
+    elapsed: f32,
+    consumed: bool,
+    label: String,
+}
+
 impl Pointers {
+    pub fn hold_back(
+        &mut self,
+        dev: Dev,
+        st: &crate::input::DevState,
+        contextual: bool,
+        dt: f32,
+        secs: f32,
+        label: String,
+    ) -> bool {
+        let h = self.back.entry(dev).or_default();
+        if !st.back_held() {
+            *h = BackHold::default();
+            return false;
+        }
+        if st.nav.contains(&Nav::Back) && contextual {
+            h.consumed = true;
+        }
+        if h.consumed {
+            return false;
+        }
+        h.label = label;
+        h.elapsed += dt.clamp(0., 0.05);
+        if h.elapsed + f32::EPSILON * 8. >= secs {
+            h.consumed = true;
+            return true;
+        }
+        false
+    }
     /// Nobody points at anything (leaving a select screen).
     pub fn reset(&mut self) {
         self.map.clear();
+        self.back.clear();
         self.mouse = None;
     }
     /// `dev`'s pointer, made on cursor `c`'s target (else mid-screen) the first time; `fan`: its place among
@@ -408,6 +445,9 @@ pub fn drive(
 pub struct PointerLayer;
 
 #[derive(Component)]
+pub struct BackProgress;
+
+#[derive(Component)]
 pub struct PointerNode(Dev, Look);
 
 /// The chip riding on a pointer's arrow; pivots where it hangs.
@@ -424,11 +464,36 @@ pub fn draw(
     f: Res<Fonts>,
     data: Res<crate::Data>,
     time: Res<Time<Real>>,
+    mut progress: Query<&mut Text, With<BackProgress>>,
 ) {
     let cfg = &data.0.global.render.select.pointer;
     let dt = time.delta_secs();
     for p in ptrs.map.values_mut() {
         p.animate(&cfg.motion, dt);
+    }
+    let message = ptrs
+        .back
+        .values()
+        .filter(|h| !h.consumed && h.elapsed > 0.)
+        .map(|h| {
+            let ratio = (h.elapsed / data.0.global.render.select.back_hold_secs).clamp(0., 1.);
+            format!("{}  Hold Back  {}%", h.label, (ratio * 100.).round() as u32)
+        })
+        .collect::<Vec<_>>()
+        .join("    ");
+    if let Ok(mut text) = progress.single_mut() {
+        text.0 = message;
+    } else {
+        commands.entity(*layer).with_children(|p| {
+            p.spawn(node(|n| {
+                n.position_type = PositionType::Absolute;
+                n.top = Val::Px(80.);
+                n.left = Val::Px(36.);
+            }))
+            .with_children(|p| {
+                p.spawn((txt(&f.heavy, 22., GOLD, message), BackProgress));
+            });
+        });
     }
     let poses: BTreeMap<Dev, Pose> = ptrs.map.iter().map(|(d, p)| (*d, p.pose(cfg))).collect();
     let mut have = vec![];
@@ -716,5 +781,30 @@ mod tests {
         let s = slow.1;
         assert!(s.lean.abs() < 1e-3 && s.chip.length() < 0.05, "{s:?}");
         assert!((s.scale - Vec2::ONE).abs().max_element() <= m.breath_scale + 1e-3, "{s:?}");
+    }
+}
+
+#[cfg(test)]
+mod back_tests {
+    use super::*;
+    #[test]
+    fn threshold_release_consumption_and_independent_devices() {
+        let mut p = Pointers::default();
+        let mut st = DevState::default();
+        st.held[6] = true;
+        for _ in 0..29 {
+            assert!(!p.hold_back(Dev::Bot(0), &st, false, 0.05, 1.5, String::new()));
+        }
+        assert!(!p.hold_back(Dev::Bot(1), &st, false, 0.05, 1.5, String::new()));
+        assert!(p.hold_back(Dev::Bot(0), &st, false, 0.05, 1.5, String::new()));
+        st.held[6] = false;
+        p.hold_back(Dev::Bot(0), &st, false, 0.05, 1.5, String::new());
+        st.held[6] = true;
+        st.nav.push(Nav::Back);
+        assert!(!p.hold_back(Dev::Bot(0), &st, true, 0.05, 1.5, String::new()));
+        st.nav.clear();
+        for _ in 0..40 {
+            assert!(!p.hold_back(Dev::Bot(0), &st, false, 0.05, 1.5, String::new()));
+        }
     }
 }

@@ -182,3 +182,9 @@ After changing gameplay numbers in `assets/`:
 2. `just balance` to compare matchups before and after.
 3. `just verify-replays <dir>` on your saved replays. Content edits don't affect them (they play with their embedded
    content); simulation code changes need a `SIM_VERSION` bump, which invalidates them by design.
+
+### Selection identity and leaving
+
+Player numbers and free-for-all colors stay with each selection pick when cards compact. New humans receive the lowest unused identity; CPUs also reserve identities (the initial CPU starts blue, leaving red P1 available). A ready disconnected pick keeps its identity when reclaimed. Team colors continue to follow the team. Device reconnect profile allocation remains a separate limitation.
+
+Hold Back for 1.5 seconds to leave an unlocked roster pick, return from stage select without a vote, or return to the title with no joined player. The overlay names the player and destination and shows progress. Releasing cancels progress. Closing options, returning a carried CPU chip, unlocking a fighter, and unvoting happen immediately and consume that press until release. Back suppresses Start while held. Timing uses UI frame time with a 50 ms hitch cap; `render.select.backHoldSecs` tunes the threshold.

@@ -680,3 +680,5 @@ is overridden. Authored pull-in and climb/roll/attack endpoints must stay over t
 checks do not guarantee swept climb safety; authors must inspect paths around overhangs.
 This slice does not resize pushing, shields, cameras or effects, retarget throw poses, or add IK.
 Simulation recordings now use `sim-21`; the replay container version is unchanged.
+
+`global.render.select.backHoldSecs` is the positive real-time hold duration for leaving selection screens (default 1.5 seconds for older embedded presentation data). UI updates cap each contribution at 50 ms. Contextual Back actions consume the hold until release.

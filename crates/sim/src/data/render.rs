@@ -51,6 +51,9 @@ pub const CPU_LEVELS: [&str; 3] = ["Easy", "Normal", "Hard"];
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SelectLook {
+    /// Real seconds holding Back before leaving a selection screen.
+    #[serde(default = "back_hold_secs")]
+    pub back_hold_secs: f32,
     /// Move slot a fighter plays on the stage when its player locks in, before its `win` pose.
     pub flourish: String,
     /// Roster tile figures no player is pointing at.
@@ -414,4 +417,8 @@ pub struct RingLook {
     pub grow: f64,
     pub life: u32,
     pub color: Color,
+}
+
+fn back_hold_secs() -> f32 {
+    1.5
 }

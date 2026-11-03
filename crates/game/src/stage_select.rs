@@ -151,6 +151,15 @@ impl Vote {
         let screen = ptrs.screen;
         for (v, x) in self.voters.iter_mut().enumerate() {
             let Some(st) = devs.map.get(&x.dev) else { continue };
+            let exit = ptrs.hold_back(
+                x.dev,
+                st,
+                x.vote.is_some(),
+                dt,
+                d.global.render.select.back_hold_secs,
+                format!("{} · back to fighters", sel.tag(x.slot)),
+            );
+            leave |= exit;
             let ptr = ptrs.of(x.dev, v, &x.cursor, spots);
             let (acts, moved) = pointer::drive(ptr, &mut x.cursor, st, spots, Some(g), cfg, dt, screen);
             for a in acts {
@@ -169,20 +178,21 @@ impl Vote {
                         x.vote = None;
                         ptr.bump(cfg.land);
                     }
-                    Action::Back => leave = true,
-                    Action::Start => go = true,
+                    Action::Back => {}
+                    Action::Start if !st.back_held() => go = true,
+                    Action::Start => {}
                 }
             }
             if let Some((TILE, t)) = moved.map(kind) {
                 self.preview = t;
             }
-            ptr.look = Look::new(pal(d, sel.color(x.slot)).0, x.slot, x.vote.is_none(), None);
+            ptr.look = Look::new(pal(d, sel.color(x.slot)).0, sel.slots[x.slot].identity, x.vote.is_none(), None);
         }
         let votes: Vec<usize> = self.voters.iter().filter_map(|v| v.vote).collect();
         if leave {
             return Step::Leave;
         }
-        if votes.is_empty() || !go && votes.len() < self.voters.len() {
+        if devs.map.values().any(|st| st.back_held()) || votes.is_empty() || !go && votes.len() < self.voters.len() {
             return Step::Stay;
         }
         let pool = resolve(&votes, d.stages.len(), &fit, &mut self.roll);
@@ -201,7 +211,7 @@ impl Vote {
         }
         hints.push(match x.vote {
             Some(_) => (Ctl::Back, "take back"),
-            None => (Ctl::Back, "to fighters"),
+            None => (Ctl::Back, "hold to fighters"),
         });
         hints
     }
@@ -387,7 +397,7 @@ fn draw(
     let color = |voter: &Voter| pal(d, s.color(voter.slot));
     let chip = |voter: &Voter| {
         let (c, _, light) = color(voter);
-        Chip { label: format!("P{}", voter.slot + 1), color: c, light, cpu: false, drop: None }
+        Chip { label: s.tag(voter.slot), color: c, light, cpu: false, drop: None }
     };
     root.insert(BackgroundColor(NIGHT.with_alpha(0.8))).with_children(|p| {
         title_band(p, f, d, "Stage", |p| {
@@ -545,7 +555,7 @@ fn preview(
                     }),
                     BackgroundColor(c),
                 ))
-                .with_child(txt(&f.display, 15., NIGHT, format!("P{}", x.slot + 1)));
+                .with_child(txt(&f.display, 15., NIGHT, s.tag(x.slot)));
                 let (label, col) = match x.vote {
                     Some(t) if t >= d.stages.len() => ("Random".to_string(), STAR),
                     Some(t) => (d.stages[t].name.clone(), STAR),
@@ -653,8 +663,15 @@ mod tests {
         assert_eq!(v.voters[0].vote, None);
         assert_eq!(
             v.frame(&mut sel, &devices([vec![Nav::Back], vec![]]), &spots, &d, &mut Pointers::default(), 0.016),
-            Step::Leave
+            Step::Stay
         );
+        let mut ptrs = Pointers::default();
+        let mut held = devices([vec![], vec![]]);
+        held.map.get_mut(&v.voters[0].dev).unwrap().held[6] = true;
+        for _ in 0..29 {
+            assert_eq!(v.frame(&mut sel, &held, &spots, &d, &mut ptrs, 0.05), Step::Stay);
+        }
+        assert_eq!(v.frame(&mut sel, &held, &spots, &d, &mut ptrs, 0.05), Step::Leave);
         // Start after one vote rolls; all votes in rolls too.
         v.frame(&mut sel, &devices([vec![Nav::Confirm], vec![]]), &spots, &d, &mut Pointers::default(), 0.016);
         assert_eq!(

@@ -436,6 +436,16 @@ fn select() -> Vec<Step> {
     press(&mut v, 0, Attack);
     press(&mut v, 0, Attack);
     press(&mut v, 0, Special);
+    v.extend([
+        Step::Set(0, Special, true),
+        Step::Wait(80),
+        Step::Shot("04d-back-progress"),
+        Step::Wait(300),
+        Step::Set(0, Special, false),
+        Step::Wait(5),
+    ]);
+    shot(&mut v, "04e-stable-p2");
+    press(&mut v, 0, Attack);
     // Bot 0 previews the next tile and drops its chip there; bot 1 opens its card options.
     press(&mut v, 0, Right);
     press(&mut v, 0, Attack);
@@ -1307,6 +1317,8 @@ mod tests {
 04a-select-solo
 04b-select-carry-cpu
 04c-select-carry-glide
+04d-back-progress
+04e-stable-p2
 05-select-ready
 05b-stage-votes
 05c-stage-roulette

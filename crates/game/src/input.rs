@@ -76,6 +76,8 @@ pub enum Nav {
 
 #[derive(Clone, Default)]
 pub struct DevState {
+    back_key: bool,
+    back_blocked: bool,
     pub held: [bool; 10],
     pub pressed: [bool; 10],
     /// Analog stick (gamepads), y up, used when no direction button is held.
@@ -94,6 +96,9 @@ pub struct DevState {
 }
 
 impl DevState {
+    pub fn back_held(&self) -> bool {
+        !self.back_blocked && (self.back_key || self.held[6] && !self.blocked[6])
+    }
     pub fn input(&self) -> Input {
         let h: [bool; 10] = std::array::from_fn(|i| self.held[i] && !self.blocked[i]);
         let ax = |neg: bool, pos: bool, analog: f32| match (neg, pos) {
@@ -189,6 +194,7 @@ impl Devices {
             s.latch = Input::default();
             s.pressed = [false; 10];
             s.blocked = s.held;
+            s.back_blocked = s.back_key || s.held[6];
             s.attack_blocked = s.attack_stick != (0, 0);
             s.jump2 = false;
             s.nav.clear();
@@ -503,6 +509,7 @@ pub fn poll(
         let mut menu_pad = Vec2::ZERO;
         let mut raw = None;
         let mut extra: Vec<Nav> = vec![];
+        let mut back_key = false;
         let prof = devs.profile(d);
         match d {
             Dev::Keys | Dev::KeysL | Dev::KeysR => {
@@ -517,7 +524,9 @@ pub fn poll(
                 if enter && d != Dev::KeysL {
                     extra.push(Nav::Confirm);
                 }
-                if jp(&[KeyCode::Escape]) && d != Dev::KeysR || jp(&[KeyCode::Backspace]) {
+                back_key = d != Dev::KeysR && keys.pressed(KeyCode::Escape)
+                    || d != Dev::KeysL && keys.pressed(KeyCode::Backspace);
+                if back_key && !devs.map.get(&d).is_some_and(|s| s.back_key || s.back_blocked) {
                     extra.push(Nav::Back);
                 }
             }
@@ -545,6 +554,8 @@ pub fn poll(
             }
         }
         let s = devs.map.entry(d).or_default();
+        s.back_blocked &= back_key || held[6];
+        s.back_key = back_key;
         let pressed = s.sample(held);
         s.sample_jump2(jumps >= 2);
         s.sample_attack(attack_stick);
@@ -728,5 +739,28 @@ mod tests {
         let saved = Saved { split_keyboard: true, ..Saved::default() };
         assert!(keyboard_conflict(&saved, "keyboard-left", "Period"));
         assert!(!keyboard_conflict(&saved, "keyboard-left", "KeyJ"));
+    }
+}
+
+#[cfg(test)]
+mod back_hold_tests {
+    use super::*;
+    #[test]
+    fn keyboard_and_bound_special_are_suppressed_until_release() {
+        for keyboard in [false, true] {
+            let mut devs = Devices::default();
+            let s = devs.map.entry(Dev::Keys).or_default();
+            s.back_key = keyboard;
+            s.sample(std::array::from_fn(|i| !keyboard && i == 6));
+            assert!(s.back_held());
+            devs.clear();
+            let s = devs.map.get_mut(&Dev::Keys).unwrap();
+            assert!(!s.back_held());
+            s.back_key = false;
+            s.back_blocked = false;
+            s.sample([false; 10]);
+            s.sample(std::array::from_fn(|i| i == 6));
+            assert!(s.back_held());
+        }
     }
 }
