@@ -2,6 +2,9 @@
 
 Living record of decisions made before/while porting from the TS version (`../stick-smash`). Status: **decided**, **proposed**, or **open**. Contributor workflows live in [DEVELOPMENT.md](DEVELOPMENT.md).
 
+Planned character architecture, generic rigs, and the editor's Character Creator workflow are tracked in
+[Character system and creator plan](CHARACTER_SYSTEM_PLAN.md). These are future changes, not the current format.
+
 ## Status and next
 
 The data pipeline, deterministic sim/TS baseline, renderer, local play and fighter/stage editors are implemented.

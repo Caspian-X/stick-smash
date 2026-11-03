@@ -338,8 +338,8 @@ Content validation rejects nonpositive movement speeds, gravity, fall speeds, we
 negative magnitudes/timings, reversed hurtbox/stage bounds and frame windows, zero divisors/event periods,
 and invalid content references. Integer frame counts are unsigned. Throws require `0 < release <= total`;
 ledge options require `0 < a < b <= end` (jump allows `a == b`). Ground `underDepth` and `underInset` and
-respawn `descendFrames` must be positive. Projectile lifetimes must fit a positive `i32`. Throw/projectile
-hitbox geometry is ignored; only projectile `r` and active melee hitbox radii must be positive.
+respawn `descendFrames` must be positive. Projectile lifetimes must fit a positive `i32`. Throw/projectile legacy static
+hitbox geometry is ignored (explicit `geometry` is rejected); only projectile `r` and active melee hitbox radii must be positive.
 Global validation errors abort loading; invalid fighter/stage packages are skipped with a file and JSON path.
 Global rules are stricter than before: `hitstun.gravity` / `maxFall`, `shield.max`, `shield.breakGravity` /
 `breakMaxFall`, `knockback.chargeDamageDivisor` and `hitTypes.windbox.maxSpeed` must be positive, every
@@ -523,3 +523,160 @@ Fresh directional inputs subtract `mash`; button presses subtract `buttonMash`. 
 capture buried fighters. Airborne/knocked-down targets launch normally. Stock-advantage modifiers, mash
 rate limiting and deferred launch from weak hits are not simulated. The built-in 600-tick ceiling is an
 adapted bound, not an SSBU rule. These hit types require their corresponding optional shared tuning objects.
+
+
+## Optional named-joint figures
+
+`fighter.rig` replaces the legacy humanoid drawing with a named-joint figure. Omit it to preserve
+existing rendering. Presets live in `assets/templates/rigs/{humanoid,quadruped}.json`; the editor's
+**Rig** section can add either preset and edit its schema-backed fields.
+
+A rig has `joints` and optional `bones`. Each joint has a unique `id`, optional `parent`, local
+`translation: [x,y]`, optional `angle` in counterclockwise degrees, and optional vector `shapes`.
+Parents may be declared after children. Multiple roots are allowed; cycles and missing references
+are rejected. Bones connect `from` and `to` joint IDs with a positive `width` and `color`.
+Bone order is drawing order, followed by joint shapes in joint declaration order.
+
+`Pose.joints` maps joint IDs to optional local `translation` and `angle` overrides. Components inherit
+from `stand`, then the `from` chain, then the authored pose, with rig rest transforms as defaults.
+Translations replace rest values, rather than adding to them. Keyframe interpolation preserves authored
+unwrapped rotations; between-tick presentation interpolation takes the short angular path.
+Existing whole-figure rotation, pivot and vertical offset still apply. Pose evaluation is shared pure
+Rust in `sim::pose` and `sim::rig`.
+
+Rigs affect appearance by default. Optional attached combat geometry is described below; stage bodies
+remain independently authored. Legacy attachments and humanoid dodge afterimages are suppressed for
+rigged figures. Joint shapes can use `when: glow` while attacking, charging, or countering. Player palette
+roles retain body status tinting; fixed RGB colors remain authored colors.
+
+Named-joint poses and rigs support forms and the generic mouse handles described below. Legacy
+humanoid handles and onion skins are disabled for these rigs. Removing a rig through the editor also
+clears its named-joint pose keys, as one undoable edit. No automatic gait conversion or collision binding
+is implied by choosing a preset.
+
+### Mouse rig authoring
+
+In Fighters → Rig, the preview explicitly shows rest geometry. Select a joint in the list or viewport,
+then drag its handle to change its parent-local rest translation. Parent rotations, facing and body
+transforms are inverted before storing coordinates. Shift snaps and Alt uses fine movement.
+Enable **Add connected joint**, then click the viewport to add a child of the selected joint; the
+new stroke copies a connected/template stroke's style. With no selection, placement adds a root.
+A blank rig starts with one root. The selected joint's rest angle and vector shapes remain editable
+in forms. Bones and parent links are shown as viewport guides.
+
+**Rename joint & references** updates parents, bones, named poses and inline animation pose keys.
+**Delete leaf & connected strokes** removes a leaf and its incident bones, rejecting joints with
+children or pose bindings with an explanation. Remove those bindings/children first, or remove the
+whole rig with **Remove rig & joint keys**. Snapshot undo and inheritance-aware saves apply normally.
+In Poses, dragging named joint handles stores local translation overrides; rotations stay in the
+inspector. This workflow does not provide shape mouse editing, inline pose mouse editing or IK.
+
+
+### Opt-in attached combat geometry
+
+Move-phase hitboxes may set `geometry` to replace static `x`, `y`, `r` (those required legacy fields
+remain serialized but are ignored for collision). `frames` must be empty when geometry is supplied.
+For example:
+
+```json
+"geometry": {
+  "kind": "capsule",
+  "a": { "joint": "hand", "offset": [0, 0] },
+  "b": { "joint": "weaponTip", "offset": [0, 0] },
+  "radius": 4
+}
+```
+
+A circle has `kind: "circle"`, `center` (a bound point), and `radius`. A bound point has a required
+finite `offset: [x,y]` and optional `joint`. Without `joint`, coordinates are feet-relative forward/up,
+unaffected by pose body rotation or vertical offset. With `joint`, the point includes animated parent
+rotation, joint rotation, body pivot/rotation/offset, facing, and world placement. Only named rig joints
+are anchors; cosmetic bones are not. Radius must be finite and positive. Runtime evaluation assumes
+validated content and fails explicitly on invalid programmatic bindings rather than treating them as misses.
+
+Optional fighter `hurtRegions` is a **nonempty** array of `{id, geometry}` with unique nonblank stable
+IDs. It replaces both default and knockdown rectangles in all states; regions follow animated joints,
+with activation described below. It requires `combatCenter: [x,y]`, a
+stable root-local forward/up autolink target unaffected by the pose. Without regions, legacy hurt
+rectangles and the default-rectangle autolink target remain exact fallbacks. Stage `body` is independent.
+
+Only fighter move attacks accept explicit geometry. Throws, ordinary projectile hit definitions,
+article timeline attacks, and global ledge/getup attacks reject it. Projectiles and articles retain
+authored root-relative attacks and correctly contact fighter regions. Reflectors remain independent;
+shield/parry/counter ordering still follows hurt overlap, without a separate shield collider. Throws
+and pummels remain scripted. Region overlap produces one victim-level contact, respecting attack-array
+priority, rehit clocks and preserved contact histories. Capsule hit effects/autolink use its midpoint.
+
+Collision samples integer tick poses, never rendering interpolation, override poses, jitter, shape
+appearance or attachment positioning. `global.gait.poseRunSpeed` replaces the former render overlay
+threshold for selecting run poses; its compatibility default is the built-in 0.8. The legacy
+`render.overlays.runSpeed` field is retained for decoding and no longer selects poses. Old embedded content
+without this field decodes with that default. The optional fields need no replay container bump;
+`sim-20` rejects prior simulation recordings explicitly. Bundled resolved content hashes change due to
+the new gameplay tuning; fighter source geometry is unchanged.
+
+Editor forms author attack geometry and regions. Bound attacks have no legacy circle handles or
+keyboard nudges; inverse geometry editing is deferred. Debug/editor outlines use exact tick shapes.
+Renaming joints updates collision references; leaf deletion rejects bound joints. The explicit
+**Remove rig, joint keys & bound collision** action clears the region set if any region binds a joint,
+and removes joint-bound attack boxes (root-only attacks remain); undo restores the edit.
+
+Deferred: broader size integration beyond the stable interaction points below,
+contact groups, IK, shield colliders, and advanced grab/ledge choreography. This is a first slice of
+milestone C, not completion of it.
+
+### Named hurt-region activation
+
+Each region has optional `enabled` (default true) and `states` (default empty).
+For example `"states": [{"state":{"state":"idle"},"enabled":true},
+{"state":"crouch","enabled":false}]`. State names use the existing lowercase
+State enum. The special typed `crouch` selector applies only to grounded idle
+fighters in Gait::Crouch and takes precedence over idle (Rise uses idle).
+At least one region must be enabled by default.
+
+Move phases may author `hurtRegions: [{"region":"head","enabled":false,"from":2,"to":5}]`.
+Windows use inclusive current `MoveState.t`, reset with phase transitions, and
+ignore elapsed move time and rendering clocks. Outside a window, state/default
+activation returns. Intervals must be ordered, end before a finite phase's end,
+and never overlap for the same region. Loop phases permit finite windows.
+Unknown or deleted IDs are errors with phase/reference paths. Other contexts
+(projectiles, articles, throws) do not accept region windows.
+
+All contact queries and exact paused tick overlays filter through the same resolver.
+An intentionally empty active set has no damage, grab or proximity contact and
+never restores the legacy rectangle. Global hittability/invulnerability rules still
+apply. Fighters without regions retain legacy behavior. Editor forms expose default,
+state and phase activation; region rename updates phase references, and deletion is guarded while referenced. External edits report missing IDs through validation. Stable grab/ledge anchors are described below; broader size integration, advanced choreography and IK remain pending.
+
+### Stable grab and ledge interactions
+
+Optional `fighter.interactions` owns stable feet-relative points (`x` forward, `y` up).
+They do not follow animated joints, hurt regions, or `combatCenter`. Each field is optional:
+
+- `grab.catchPoint`: holder reference for vertical grab tolerance, default `[0,0]`.
+- `grab.holdPoint`: holder target for the captive anchor, default `[global.sim.grabOffset,0]`.
+- `grab.heldAnchor`: victim attachment point, default `[0,0]`. The victim faces opposite the holder.
+- `ledge.catchPoint`: ledge proximity reference, default `[0,stage.ledge.handY]`.
+- `ledge.hangAnchor`: attachment to the block corner while facing inward,
+  default `[stage.ledge.hangX,stage.ledge.hangY]`.
+- `ledge.pullIn`: first climb segment's inward endpoint, default `global.sim.ledgePullIn`.
+- `ledge.climbDistance`, `rollDistance`, `attackDistance`: second segment inward endpoints,
+  default the corresponding `global.ledge` option's `dist`. Jump retains its existing behavior.
+
+Points must be finite; distances must be finite and nonnegative. Objects inherit key by key;
+`null` removes an inherited key and restores its fallback. Omitting all overrides retains legacy
+arithmetic. The fighter inspector exposes these fields through schema forms.
+
+Throws move the holder's target along the existing forward/back/up/down paths and subtract the
+victim's mirrored anchor. Release uses that tick's placement. Captives have no scripted stage collision.
+A grab object on either participant clears captive surface support; absent objects retain legacy support
+behavior. Holder physics runs before attachment. Platform carry still precedes fighter updates and hitlag
+still freezes each fighter: a captive can lag behind a moving holder during pummel hitlag until attachment
+runs again. There is no extra attachment pass or added platform velocity.
+
+Tether reach rectangles remain root-local. Ledges belong only to static blocks. Validation checks each
+fighter's mirrored hanging body against neighbouring blocks, plus the owning block when `hangAnchor`
+is overridden. Authored pull-in and climb/roll/attack endpoints must stay over their supporting block and clear all solids. Interaction coordinates and distances are limited to magnitude `1e100` to leave arithmetic headroom. Spawn, respawn and moving-platform clearance remain independent. Hang and climb endpoint
+checks do not guarantee swept climb safety; authors must inspect paths around overhangs.
+This slice does not resize pushing, shields, cameras or effects, retarget throw poses, or add IK.
+Simulation recordings now use `sim-21`; the replay container version is unchanged.
