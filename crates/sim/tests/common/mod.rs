@@ -14,6 +14,17 @@ pub fn linear_data() -> GameData {
     load_data(true)
 }
 
+/// Fighters whose balance pass overrides the shared base throws.
+const THROW_OVERRIDE_FIGHTERS: [&str; 7] = [
+    "fighters/archer/fighter.json",
+    "fighters/brawler/fighter.json",
+    "fighters/dancer/fighter.json",
+    "fighters/golem/fighter.json",
+    "fighters/lancer/fighter.json",
+    "fighters/swordfighter/fighter.json",
+    "fighters/tinker/fighter.json",
+];
+
 fn load_data(linear: bool) -> GameData {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets");
     let (mut sources, errors) = sim::data::sources(root);
@@ -36,6 +47,11 @@ fn load_data(linear: bool) -> GameData {
             }
             if s.path == "global.json" {
                 json["knockback"].as_object_mut().unwrap().remove("ultimate");
+            }
+            // Balance passes scale inherited base throws inside the fighter package. TS traces compare
+            // against the original shared throws, so drop those overrides and let the patched base win.
+            if THROW_OVERRIDE_FIGHTERS.contains(&s.path.as_str()) {
+                json.as_object_mut().unwrap().remove("throws");
             }
             s.text = serde_json::to_string(&json).unwrap();
         }

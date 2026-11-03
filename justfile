@@ -99,3 +99,7 @@ whiplash-visuals dir="/tmp/whiplash-reference":
 # Capture character-select layout selection and Controls profile management
 layout-shots dir="/tmp/stick-smash-layout-shots":
     cargo run -p game -- --layout-shots "{{dir}}"
+
+# Compare original fighters with imported references (opt-in release matrix)
+balance-original seeds="16" first="1":
+    BALANCE_SEEDS={{seeds}} BALANCE_FIRST_SEED={{first}} cargo test --release -p sim --test balance_original -- --ignored --nocapture original_vs_reference_balance
