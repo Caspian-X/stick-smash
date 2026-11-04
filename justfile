@@ -123,6 +123,15 @@ robin-visuals dir="/tmp/robin-reference":
 plant-visuals dir="/tmp/plant-reference":
     python3 tools/import-plant/visuals.py "{{dir}}"
 
+# Rebuild Bongo Boy (SSBU Diddy Kong, 13.0.1) from pinned scripts and UFD rows
+import-bongo:
+    python3 tools/import-bongo/import.py
+    just bless
+
+# Download hash-checked Diddy Kong reference GIFs and write per-frame montages (Pillow)
+bongo-visuals dir="/tmp/bongo-reference":
+    python3 tools/import-bongo/visuals.py "{{dir}}"
+
 # Capture character-select layout selection and Controls profile management
 layout-shots dir="/tmp/stick-smash-layout-shots":
     cargo run -p game -- --layout-shots "{{dir}}"
