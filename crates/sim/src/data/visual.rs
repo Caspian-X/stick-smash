@@ -221,6 +221,9 @@ pub struct AttachAnim {
     /// Inclusive phase frames a `hidden` attachment is shown.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub show: Option<[u32; 2]>,
+    /// Inclusive phase frames a visible attachment is not shown (a weapon stowed while casting or grabbing).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hide: Option<[u32; 2]>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]

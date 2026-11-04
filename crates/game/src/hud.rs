@@ -6,6 +6,7 @@ use bevy::prelude::*;
 use bevy::text::{FontSize, LineHeight};
 use bevy::window::PrimaryWindow;
 use render::Framing;
+use sim::data::render::EndBanner;
 use sim::world::State as FState;
 
 use crate::input::{Dev, Devices, Nav};
@@ -436,35 +437,50 @@ fn bubbles(
     }
 }
 
+/// The end banner's (alpha, slam-in ease) `t` real seconds in: it fades in as it slams in, then fades out over the
+/// last `fade` of its time.
+fn end_banner_look(t: f32, b: &EndBanner) -> (f32, f32) {
+    let ease = (t / b.pop.max(1e-3)).clamp(0., 1.);
+    let out = ((t - (b.secs - b.fade)) / b.fade.max(1e-3)).clamp(0., 1.);
+    (ease * (1. - out), ease)
+}
+
 /// The countdown, GO!, TIME! and GAME!, popping in.
 fn big(
     m: Res<Match>,
-    mut q: Query<(&mut Text, &mut TextColor, &mut TextFont, &mut UiTransform, &mut Visibility), With<Big>>,
+    mut q: Query<
+        (&mut Text, &mut TextColor, &mut TextFont, &mut UiTransform, &mut Visibility, &mut TextShadow),
+        With<Big>,
+    >,
 ) {
     let w = &m.world;
     let g = &m.data.global.match_;
     let look = &m.data.global.render.hud.look;
+    let banner = &m.data.global.render.hud.end_banner;
     let hz = sim::TICK_HZ;
-    let (s, color, pop): (String, Color, f32) = if m.mode == Mode::Training || m.mode == Mode::Showcase {
-        (String::new(), STAR, 0.)
+    // TIME! / GAME! run on their own real-time clock, so the end slow motion can neither stretch nor skip them.
+    let t = m.banner_secs;
+    let (alpha, ease) = end_banner_look(t, banner);
+    let (s, color, pop, fade): (String, Color, f32, f32) = if m.mode == Mode::Training || m.mode == Mode::Showcase {
+        (String::new(), STAR, 0., 1.)
     } else if w.count > 0 {
         let into = 1. - (w.count % hz) as f32 / hz as f32;
         if w.cfg.sudden_death {
-            ("SUDDEN DEATH".into(), ALERT, into)
+            ("SUDDEN DEATH".into(), ALERT, into, 1.)
         } else {
-            (w.count.div_ceil(hz).to_string(), STAR, if w.count.is_multiple_of(hz) { 0. } else { into })
+            let pop = if w.count.is_multiple_of(hz) { 0. } else { into };
+            (w.count.div_ceil(hz).to_string(), STAR, pop, 1.)
         }
     } else if w.go_t > 0 {
-        ("GO!".into(), GOLD, 1. - w.go_t as f32 / g.go_frames as f32)
-    } else if w.time_up && w.end_t > 0 {
-        ("TIME!".into(), ALERT, 1. - w.end_t as f32 / g.end_frames as f32)
-    } else if w.end_t > 0 && !w.over {
-        ("GAME!".into(), STAR, 1. - w.end_t as f32 / g.end_frames as f32)
+        let pop = 1. - w.go_t as f32 / g.go_frames as f32;
+        ("GO!".into(), GOLD, pop, ((1. - pop) * 2.).clamp(0., 1.))
+    } else if t > 0. && t < banner.secs {
+        (if w.time_up { "TIME!" } else { "GAME!" }.into(), if w.time_up { ALERT } else { STAR }, ease, alpha)
     } else {
-        (String::new(), STAR, 0.)
+        (String::new(), STAR, 0., 1.)
     };
     let size = if s == "SUDDEN DEATH" { 72. } else { 180. };
-    for (mut text, mut tc, mut font, mut tf, mut vis) in &mut q {
+    for (mut text, mut tc, mut font, mut tf, mut vis, mut shadow) in &mut q {
         *vis = if s.is_empty() { Visibility::Hidden } else { Visibility::Inherited };
         if text.0 != s {
             text.0.clone_from(&s);
@@ -472,11 +488,11 @@ fn big(
         if font.font_size != FontSize::Px(size) {
             font.font_size = FontSize::Px(size);
         }
-        let fade = if s == "GO!" { (1. - pop) * 2. } else { 1. };
-        tc.0 = color.with_alpha(fade.clamp(0., 1.));
+        tc.0 = color.with_alpha(fade);
         let e = (pop * look.pop_speed).min(1.);
         tf.scale = Vec2::splat(look.pop_scale - (look.pop_scale - 1.) * (1. - (1. - e).powi(3)));
         tf.rotation = Rot2::degrees(if matches!(s.as_str(), "GAME!" | "TIME!") { -4. } else { 0. });
+        shadow.color = NIGHT.with_alpha(0.7 * fade);
     }
 }
 
@@ -657,4 +673,22 @@ fn draw_pause(
             menu_list(p, f, &items, pm.cursor.key, List::new(460., 30.));
         });
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The end banner runs on real seconds: it fades in as it slams in, holds, then fades out before the results.
+    #[test]
+    fn the_end_banner_slams_in_and_fades_out() {
+        let b = EndBanner { secs: 1., pop: 0.2, fade: 0.25 };
+        assert_eq!(end_banner_look(0., &b), (0., 0.), "invisible as it starts");
+        let (alpha, ease) = end_banner_look(0.1, &b);
+        assert!((alpha - 0.5).abs() < 1e-6 && (ease - 0.5).abs() < 1e-6, "half way through the slam-in");
+        assert_eq!(end_banner_look(0.5, &b), (1., 1.), "held at full size");
+        let (alpha, ease) = end_banner_look(0.9, &b);
+        assert!(ease == 1. && alpha > 0.2 && alpha < 0.5, "fading out");
+        assert_eq!(end_banner_look(1., &b).0, 0., "gone as the results enter");
+    }
 }

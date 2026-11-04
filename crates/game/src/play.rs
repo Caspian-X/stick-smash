@@ -113,6 +113,10 @@ pub struct Match {
     acc: f64,
     pub over_t: u32,
     end_t: u32,
+    /// Real seconds the end-of-match banner has shown (`0` while the match runs).
+    pub banner_secs: f32,
+    /// The results screen has opened for this match (returning from a watched replay doesn't reset it).
+    pub results_shown: bool,
     pub debug: bool,
     pub sounds: Vec<sim::Fx>,
     pub recording: Option<crate::replay::Replay>,
@@ -202,6 +206,8 @@ impl Match {
             acc: 0.,
             over_t: 0,
             end_t: 0,
+            banner_secs: 0.,
+            results_shown: false,
             debug: mode == Mode::Training,
             sounds: Vec::new(),
             recording,
@@ -506,10 +512,14 @@ pub fn match_flow(
     mut devs: ResMut<Devices>,
     saved: Res<crate::settings::Saved>,
     keys: Res<ButtonInput<KeyCode>>,
+    time: Res<Time>,
     mut scene: ResMut<Scene>,
     data: Res<Data>,
     mut next: ResMut<NextState<Screen>>,
 ) {
+    // Real seconds the end banner has shown, so the results screen's arrival never depends on the end freeze. The
+    // clock keeps running past the freeze, so a short `match.endFrames` never cuts the banner's fade-out short.
+    m.banner_secs = if m.world.end_t > 0 || m.world.over { m.banner_secs + time.delta_secs() } else { 0. };
     if keys.just_pressed(KeyCode::F1) {
         m.debug = !m.debug;
     }
@@ -547,9 +557,19 @@ pub fn match_flow(
         m.clear_input(&mut devs);
         return;
     }
-    if m.mode == Mode::Versus && m.world.over && m.over_t >= m.data.global.render.hud.results_delay {
+    if results_ready(&m) {
         next.set(Screen::Results);
     }
+}
+
+/// Whether the results screen takes over: once the end banner has shown for `render.hud.endBanner.secs` real seconds,
+/// or `render.hud.resultsDelay` ticks after the winner's pose (which is how fast-forwarded matches get there). A
+/// time-up tie waits for the pose, since sudden death starts from there.
+fn results_ready(m: &Match) -> bool {
+    let hud = &m.data.global.render.hud;
+    let posed = m.world.over && m.over_t >= hud.results_delay;
+    let banner = m.world.winner.is_some() && m.banner_secs >= hud.end_banner.secs;
+    m.mode == Mode::Versus && (posed || banner)
 }
 
 #[cfg(test)]
@@ -569,6 +589,74 @@ mod tests {
         assert_eq!(time_remaining(60 * 60 - 1), "1:00");
         assert_eq!(time_remaining(1), "0:01");
         assert_eq!(time_remaining(0), "0:00");
+    }
+
+    /// The winner's pose follows "GAME!" in a beat, so the replay is finished and closed quickly.
+    /// The results screen does not wait for it: `render.hud.endBanner` paces that.
+    #[test]
+    fn the_winner_poses_soon_after_game() {
+        let data = crate::test_data();
+        let slot = |i: usize| Slot {
+            dev: None,
+            fighter: i,
+            cpu: Some(1),
+            team: None,
+            tap_jump: true,
+            controls: Default::default(),
+            tag: "CPU".into(),
+            color: i,
+        };
+        let rules = Rules { stocks: 1, stage: "arena".into(), friendly_fire: false, time_limit: None };
+        let mut m = Match::new(&data, Mode::Versus, (0..2).map(slot).collect(), rules, 7).unwrap();
+        let (mut devs, mut scene) = (Devices::default(), Scene::new(data));
+        m.world.count = 0;
+        m.world.fighters[1].stocks = 0;
+        m.world.fighters[1].set_state(sim::world::State::Out);
+        m.world.winner = Some(0);
+        m.world.end_t = m.data.global.match_.end_frames;
+        let mut frames = 0;
+        while !m.world.over && frames < 600 {
+            m.acc += m.tick_speed();
+            while m.acc >= 1. {
+                m.acc -= 1.;
+                m.tick(&mut devs, &mut scene, false);
+            }
+            frames += 1;
+        }
+        assert!(m.world.over, "the match ends");
+        assert!(frames <= 100, "\"GAME!\" to the winner's pose took {frames} frames (1.7 s at 60 Hz)");
+    }
+
+    #[test]
+    fn the_end_banner_paces_the_results_before_the_pose() {
+        let data = crate::test_data();
+        let slot = |i: usize| Slot {
+            dev: None,
+            fighter: i,
+            cpu: Some(1),
+            team: None,
+            tap_jump: true,
+            controls: Default::default(),
+            tag: "CPU".into(),
+            color: i,
+        };
+        let rules = Rules { stocks: 1, stage: "arena".into(), friendly_fire: false, time_limit: None };
+        let mut m = Match::new(&data, Mode::Versus, (0..2).map(slot).collect(), rules, 7).unwrap();
+        let banner = m.data.global.render.hud.end_banner.secs;
+        m.world.winner = Some(0);
+        m.world.end_t = m.data.global.match_.end_frames;
+        assert!(!results_ready(&m), "not before the banner has shown");
+        m.banner_secs = banner;
+        assert!(results_ready(&m), "the banner paces it, well before the pose");
+        assert!(!m.world.over);
+        // A time-up tie plays sudden death first, however long the banner has been up.
+        m.world.winner = None;
+        m.world.time_up = true;
+        m.banner_secs = banner * 4.;
+        assert!(!results_ready(&m));
+        // With the pose (or a draw), the handoff takes it.
+        m.world.over = true;
+        assert!(results_ready(&m));
     }
 
     #[test]
@@ -594,6 +682,7 @@ mod tests {
             .insert_resource(Data(data.clone()))
             .init_resource::<crate::settings::Saved>()
             .init_resource::<ButtonInput<KeyCode>>()
+            .init_resource::<Time>()
             .insert_resource(State::new(Screen::Match))
             .insert_resource(NextState::<Screen>::default())
             .add_systems(Update, match_flow);

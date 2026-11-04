@@ -252,8 +252,9 @@ this age; fuse expiry still detonates even before arming.
   reverses the blend from its current depth. The base fighter supplies a breathing loop inherited by the roster.
   Override `anims.crouch` and `poses.crouch` to customize it. Attacks, jumps and platform drops interrupt it normally.
 - **Attachments**: vector `shapes` (line, circle, poly, rect) hung on a joint at an angle. On a hand the angle is
-  relative to the forearm. A phase's `attach.<id>` can key `angle`, `offset` and `scale`, and `show` a hidden
-  attachment. Angle keys interpolate linearly without wrapping: use 350 → 430 to continue forward through 360°
+  relative to the forearm. A phase's `attach.<id>` can key `angle`, `offset` and `scale`, `show` a hidden
+  attachment and `hide` a visible one (a sheathed weapon while casting or grabbing). Angle keys interpolate
+  linearly without wrapping: use 350 → 430 to continue forward through 360°
   to 70°; 350 → 70 rotates backward by 280°. Keep subsequent keys on the same turn for continuous trails and
   recovery. While a phase keys the angle, the angle is absolute, `hold` poses the front arm to grip it, and a
   `trail` sweeps a ring sector around the shoulder over the last `render.overlays.trail.frames` ticks of each

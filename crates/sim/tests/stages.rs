@@ -554,6 +554,39 @@ fn fighter_balance_diagnostics() {
     }
 }
 
+/// Opt-in Throbbin sweep against every other fighter (seats swap on even seeds). `just throbbin-matchups`.
+#[test]
+#[ignore]
+fn throbbin_vs_roster() {
+    let d = common::data();
+    let seeds: u32 = std::env::var("THROBBIN_SEEDS").ok().map_or(1, |v| v.parse().unwrap());
+    assert!(seeds > 0);
+    let stage = std::env::var("THROBBIN_STAGE").unwrap_or_else(|_| MatchConfig::default().stage);
+    let (mut total_kos, mut total_self_kos) = (0, 0);
+    for opponent in d.fighters.iter().map(|f| f.id.as_str()).filter(|id| *id != "throbbin") {
+        let (mut wins, mut kos, mut self_kos) = (0, 0, 0);
+        for seed in 1..=seeds {
+            let own = usize::from(seed % 2 == 0);
+            let ids = if own == 0 { ["throbbin", opponent] } else { [opponent, "throbbin"] };
+            let (st, w) = cpu_match(&d, &stage, &ids, seed, 2);
+            assert!(
+                w.over,
+                "{stage}: throbbin vs {opponent} seed {seed} unfinished: {:?}",
+                w.fighters.iter().map(|f| (f.x, f.y, f.dmg, f.stocks, f.state)).collect::<Vec<_>>()
+            );
+            wins += usize::from(w.fighters[own].state == State::Win);
+            kos += st.kos;
+            self_kos += st.self_kos;
+        }
+        let pct = 100. * wins as f64 / seeds as f64;
+        println!("{stage} throbbin vs {opponent:12} {wins}/{seeds} wins ({pct:3.0}%), {kos} KOs, {self_kos} self-KOs");
+        total_kos += kos;
+        total_self_kos += self_kos;
+    }
+    println!("{stage} throbbin: {total_kos} KOs, {total_self_kos} self-KOs");
+    assert!(total_self_kos * 3 <= total_kos, "{stage}: too many throbbin self-destructs");
+}
+
 #[test]
 fn roster_cpu_matchups() {
     let d = common::data();

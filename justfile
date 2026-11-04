@@ -72,6 +72,10 @@ verify-replays dir:
 balance seeds="16" fighter="":
     BALANCE_SEEDS={{seeds}} BALANCE_FIGHTER="{{fighter}}" cargo test --release -p sim --test stages fighter_balance_diagnostics -- --ignored --nocapture
 
+# Throbbin against every other fighter, one seat-swapped pair per seed (stage: THROBBIN_STAGE, default arena)
+throbbin-matchups seeds="1" stage="arena":
+    THROBBIN_SEEDS={{seeds}} THROBBIN_STAGE="{{stage}}" cargo test --release -p sim --test stages throbbin_vs_roster -- --ignored --nocapture
+
 # Regenerate the README screenshots in docs/images (needs ImageMagick 7 with WebP)
 readme-shots:
     #!/usr/bin/env bash

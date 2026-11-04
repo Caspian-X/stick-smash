@@ -1396,6 +1396,13 @@ fn check_render(file: &str, r: &super::render::Render) -> Result<(), ContentErro
     }
     finite(file, "render.hud.look.tagHeight", r.hud.look.tag_height)?;
     finite(file, "render.hud.look.anchorHeight", r.hud.look.anchor_height)?;
+    nonnegative(file, "render.hud.resultsHoldSecs", f64::from(r.hud.results_hold_secs))?;
+    positive(file, "render.hud.endBanner.secs", f64::from(r.hud.end_banner.secs))?;
+    nonnegative(file, "render.hud.endBanner.pop", f64::from(r.hud.end_banner.pop))?;
+    nonnegative(file, "render.hud.endBanner.fade", f64::from(r.hud.end_banner.fade))?;
+    positive(file, "render.hud.resultsEnter.secs", f64::from(r.hud.results_enter.secs))?;
+    nonnegative(file, "render.hud.resultsEnter.slide", f64::from(r.hud.results_enter.slide))?;
+    nonnegative(file, "render.hud.resultsEnter.stagger", f64::from(r.hud.results_enter.stagger))?;
     nonnegative(file, "render.hud.look.shakeSpeed", f64::from(r.hud.look.shake_speed))?;
     positive(file, "render.hud.look.bubbleShrink", f64::from(r.hud.look.bubble_shrink))?;
     range(file, "render.hud.look.bubbleMinScale", f64::from(r.hud.look.bubble_min_scale), 0., 1.)?;

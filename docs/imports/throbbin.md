@@ -16,8 +16,9 @@ Playable SSBU **Robin** adaptation, packaged as **Throbbin**. It is the first im
   Arcfire, Elwind, Nosferatu) draw from per-tome use pools that must recharge after depletion, so the kit
   cycles between pressure and downtime.
 - State: research, authoring, engine support, focused tests and CPU/stage coverage complete. Visual
-  inspection used a headless CPU-canvas render of every attack pose (Bevy window captures are black in this
-  session). No controller playtest was performed.
+  inspection used the live editor preview frame by frame (plus a headless CPU-canvas render in the earlier
+  session); every move and article has been checked against the pinned references. No controller playtest was
+  performed.
 - Remaining work: physical controller feel pass; discarded-weapon items (tomes/sword can be thrown in the
   source), Levin "sword already out" neutral-aerial rule, Nosferatu's held drain and
   damage-comparison healing bonus, gradual in-match durability UI, and Arcthunder's vortex multi-hit.
@@ -154,10 +155,12 @@ Special notes:
 - The Levin-era "sword already out" rule for neutral air is not modeled: neutral air uses its Levin variant
   whenever the pool has a use.
 - Poses show the Levin-length blade outside Levin attacks; the Bronze variant scales the attachment to 0.62.
+- The sword rides on his back while he casts or grabs (the source sheathes it): those phases hide the hand blade
+  and show a `swordBack` copy, using the new per-phase `attach.hide` window (the inverse of `show`).
 
 ## Validation and handoff
 
-- Reference tests (`crates/sim/tests/throbbin.rs`, 26): package identity and pool sizes; Levin variant/cost
+- Reference tests (`crates/sim/tests/throbbin.rs`, 30): package identity and pool sizes; Levin variant/cost
   wiring and Bronze fallback data; active windows (forward smash 15–17 clean and 18–26 late after the entry
   shift; forward tilt 8–9; down tilt 6–7); 8 Levin uses then Bronze plus gradual recharge to full after 600
   ticks, including that a use spent while recharging is not refunded; Thunder tier selection at 0/26/66/126
@@ -166,12 +169,19 @@ Special notes:
   burst and the Wind rapid loop are skipped, one Wind use still gives the first Elwind blade, empty tomes
   animate without hitboxes); Nosferatu's four-frame capture window, whiff recovery, shield bypass and
   1.5x drain healing; both neutral-air swings landing on the same victim; every Levin move completing with
-  empty pools; aerial landing lag; contact reach; raw-input routing for jab/tilts/specials/grab.
+  empty pools; aerial landing lag; contact reach; raw-input routing for jab/tilts/specials/grab; every sword
+  angle key turning at most half a turn (a wrapped key spins the blade the long way); the forward smash's blade
+  lying within 25° of horizontal through frames 15–26; every spell/grab phase stowing the hand sword and showing
+  the back copy while normal attacks keep it in hand; and every spell article carrying vector shapes.
 - Contact coverage: `move_reach_matches_fitted_geometry` places a still dummy at 40/55/70/85/100 px in the
   direction each attack swings and asserts the intended close distances connect and nothing reaches 170 px.
 - Shared-behaviour coverage: `tests/content.rs` roster expectation, `tests/stages.rs` `new_fighter_cpu_matchups`
   (all four stages, three opponents, four seeds: 48/48 finished, 11 wins, 134 KOs, 8 self-KOs) and the existing
   `every_ledge_is_recoverable` / `cpu_matches_finish_on_every_stage` sweeps now include the package.
+- `just throbbin-matchups 8` (Arena, every other fighter, 8 seat-swapped seeds, 160 matches): 81 wins (51%),
+  450 KOs, 38 self-KOs, 0 unfinished. Worst matchups: golem and stratus 0/8, lancer/duchess/ninja 2/8; best:
+  king 8/8, bongo/plant/whiplash 7/8. The test asserts every match finishes and self-KOs stay under a third of
+  KOs.
 - `just balance 6 throbbin` (6 seeds, every opponent and stage, 360 matches): 0 unfinished, 121 wins, 89k
   damage dealt / 131k taken, 68 self-KOs (more than an earlier pass because a single Wind use now yields the
   one-blade Elwind, as in the source). Per-move hit counts are spread sensibly (up air 1215, down air 1111, up
@@ -194,8 +204,9 @@ Special notes:
   hash re-blessed because the snapshot gained `Fighter::charges` / `charge_wait` and `MoveState::variant`.
 - Commands run: `cargo test -p sim --test throbbin`, `just bless`, `just lint`, `cargo fmt --all`,
   `cargo test --release --workspace` (all green), `just shots /tmp/throbbin-shots fighter-kits` (sections
-  finish; PNGs are black in this session), `cargo test --release -p sim --test stages new_fighter`.
-- Visual inspection: two passes. (1) The UFD per-move hitbox GIFs were downloaded (37 files, hashes in
+  finish; PNGs are black in this session), `cargo test --release -p sim --test stages new_fighter`,
+  `just throbbin-matchups 8`.
+- Visual inspection: four passes. (1) The UFD per-move hitbox GIFs were downloaded (37 files, hashes in
   `visuals.json`) and frames around each active window were opened for Levin forward/up/down smash, neutral,
   forward, back, up and down air (Levin and Bronze), jab 1/3, up/down tilt, Thunder, Thoron, Arcfire, Elwind
   and Nosferatu. That pass corrected fitted geometry: down air's hit is a mostly vertical box below the feet
@@ -207,7 +218,24 @@ Special notes:
   those. (2) Since Bevy window captures are black in this session, poses, attachments and blade lengths were
   rendered through the CPU canvas (`render::draw::draw_fighter`) for the same move set and rasterized for
   review; that pass set the blade length/thickness, the gold electric glow, the tome size and the Bronze blade
-  scale.
+  scale. (3) A frame-by-frame editor pass captured every move (and both timelines of the sword moves) through
+  the real editor preview, cropped the viewport and compared it with the pinned UFD montages. It found and fixed
+  four sword arcs whose last key was written on the far side of a wrap (forward smash 10 → 350, up tilt 150 → 340,
+  neutral air 340 → 20, down air 60 → 250): with no angle wrapping the blade spun the long way while the hitbox
+  stayed forward, so its tip left the hitbox during the active windows. The dash attack's cut was also pitched
+  45° up instead of lying along its chest-height box, and the spell/grab phases used `sword(0)`, which both
+  pointed the blade forward and overrode the `cast`/`castHigh` arm pose through the hold IK. The pass also
+  stowed the sword for those phases and the Fire jab / Wind loop. (4) A body/pose pass read the same dense GIF
+  strips for silhouette timing: air smashes and aerials now pitch the skeleton with the source (forward air
+  dives ~50°, up air leans ~20°, neutral air ~40°, back air ~15°), with the lean taken back out of the keyed
+  blade angle so the fitted geometry stays aligned; smash/tilt/dash tracks gained windup, impact and recovery
+  keys instead of holding one pose for 40+ frames. The same pass found the articles had no drawing at all (the
+  imported `hit` data was valid but invisible): every Thunder tier, Arcfire bolt/flame/burst, Elwind blade and
+  the Thoron beam now has vector shapes, trails, spawn FX and a Thunder charge spark. The Thunder tiers were
+  also using the overhead `castHigh` pose while the article left the chest; they now use a two-handed forward
+  cast, and Arcfire raises the tome hand through its release, so each spell leaves the hand that throws it
+  (the Arcfire bolt spawn moved from chest height to the raised hand). The renders were checked frame by frame
+  in the editor and in the live game.
 - Controller playtest: not performed.
 - Screenshot tour: `30a`-`30m` cover the Levin smashes and aerials, the four specials, the jab, the charge pose
   and a Bronze forward smash; the Bronze shot forces the base timeline through the editor's preview variant
@@ -217,6 +245,8 @@ Special notes:
   Arcfire pillar placement; Elwind late damage tier (a projectile carries one contact hit); Nosferatu is a
   paralysing unblockable drain rather than a held command grab, and its damage-comparison healing bonus is not
   modeled; no discarded-item mechanic; no in-match durability meter; the resting blade is always drawn at Levin
-  length outside Bronze attacks.
+  length outside Bronze attacks; the stowed sword sits on the back rather than in the hip sheath the source
+  shows during the Wind loop; the spells' vector shapes are stylized (their sizes follow the hit radius and the
+  source art's palette), not source models, and the source's per-frame article animation is not reproduced.
 - Delivery: local branch `char-tune`, uncommitted working tree (this record, the importer, the package, engine
   changes and tests).

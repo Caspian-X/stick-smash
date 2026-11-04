@@ -155,7 +155,7 @@
     "releaseLag": 12
   },
   "respawn": { "deadFrames": 70, "descendFrames": 40, "maxWait": 220, "invuln": 100 },
-  "match": { "countdown": 180, "goFrames": 45, "endFrames": 110, "timerWarnSeconds": 10, "suddenDeathDamage": 300 },
+  "match": { "countdown": 180, "goFrames": 45, "endFrames": 48, "timerWarnSeconds": 10, "suddenDeathDamage": 300 },
   "palette": [
     { "main": "#ff5d5d", "dark": "#a63b3b", "light": "#ffd0d0" },
     { "main": "#4fa8ff", "dark": "#2c66a6", "light": "#cfeaff" },
@@ -387,8 +387,11 @@
     "hud": {
       "damageRamp": [[0, "#ffffff"], [50, "#ffe98a"], [100, "#ffa04a"], [150, "#ff4d4d"], [250, "#c41a3b"]],
       "shake": 6,
-      "endSlowmo": { "speed": 0.25, "ticks": 50 },
-      "resultsDelay": 100,
+      "endSlowmo": { "speed": 0.35, "ticks": 16 },
+      "endBanner": { "secs": 1, "pop": 0.2, "fade": 0.25 },
+      "resultsDelay": 0,
+      "resultsHoldSecs": 0.25,
+      "resultsEnter": { "secs": 0.3, "slide": 30, "stagger": 0.035 },
       "koCreditTicks": 480,
       "look": {
         "shakeSpeed": 91,

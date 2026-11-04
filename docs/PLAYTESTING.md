@@ -141,7 +141,10 @@ just verify-replays "$HOME/Library/Application Support/stick-smash/replays"
 - **Pause**: only the device that paused controls the menu; unplug it and control moves to another device.
 - **Stage too small for the lineup**: make a stage with fewer spawns in the editor and check it's dimmed for big
   lineups (all built-in stages take 8).
-- **Results and replays**: rematch, save, watch, seek, back to results.
+- **Results and replays**: the results screen arrives shortly after "GAME!" with a slide-in and nothing focused;
+  steer to a button and hold it for a quarter second to take it. Rematch, save, watch, seek, back to results.
+  The end-of-match freeze (`match.endFrames`) only paces the winner's pose, and the replay is finished and
+  auto-saved when the match is over, whichever screen is showing.
 
 ## Reporting
 

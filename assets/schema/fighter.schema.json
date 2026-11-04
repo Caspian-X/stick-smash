@@ -1441,6 +1441,13 @@
           "minItems": 2,
           "maxItems": 2,
           "description": "Inclusive phase frames a `hidden` attachment is shown."
+        },
+        "hide": {
+          "type": ["array", "null"],
+          "items": { "type": "integer", "format": "uint32", "minimum": 0 },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Inclusive phase frames a visible attachment is not shown (a weapon stowed while casting or grabbing)."
         }
       },
       "description": "Attachment animation within a move phase (phase frames). Angle, offset and scale keys interpolate linearly."

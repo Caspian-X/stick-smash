@@ -78,6 +78,9 @@ pub enum Nav {
 pub struct DevState {
     back_key: bool,
     back_blocked: bool,
+    /// The keyboard's Enter, a menu confirm outside the ten controls.
+    confirm_key: bool,
+    confirm_blocked: bool,
     pub held: [bool; 10],
     pub pressed: [bool; 10],
     /// Analog stick (gamepads), y up, used when no direction button is held.
@@ -98,6 +101,18 @@ pub struct DevState {
 impl DevState {
     pub fn back_held(&self) -> bool {
         !self.back_blocked && (self.back_key || self.held[6] && !self.blocked[6])
+    }
+    /// Confirm held (jump, attack or Enter), ignoring a control held since the screen opened.
+    pub fn confirm_held(&self) -> bool {
+        !self.confirm_blocked && self.confirm_key
+            || [Act::Jump, Act::Attack].iter().any(|a| {
+                let i = *a as usize;
+                self.held[i] && !self.blocked[i]
+            })
+    }
+    /// Start / pause held.
+    pub fn start_held(&self) -> bool {
+        self.held[Act::Start as usize] && !self.blocked[Act::Start as usize]
     }
     pub fn input(&self) -> Input {
         let h: [bool; 10] = std::array::from_fn(|i| self.held[i] && !self.blocked[i]);
@@ -195,6 +210,7 @@ impl Devices {
             s.pressed = [false; 10];
             s.blocked = s.held;
             s.back_blocked = s.back_key || s.held[6];
+            s.confirm_blocked = s.confirm_key;
             s.attack_blocked = s.attack_stick != (0, 0);
             s.jump2 = false;
             s.nav.clear();
@@ -510,6 +526,7 @@ pub fn poll(
         let mut raw = None;
         let mut extra: Vec<Nav> = vec![];
         let mut back_key = false;
+        let mut confirm_key = false;
         let prof = devs.profile(d);
         match d {
             Dev::Keys | Dev::KeysL | Dev::KeysR => {
@@ -520,8 +537,8 @@ pub fn poll(
                 jumps = b[4].iter().filter(|c| KEYS.iter().any(|(k, n)| n == *c && keys.pressed(*k))).count();
                 raw.clone_from(&raw_key);
                 let jp = |ks: &[KeyCode]| ks.iter().any(|k| keys.just_pressed(*k));
-                let enter = jp(&[KeyCode::Enter, KeyCode::NumpadEnter]);
-                if enter && d != Dev::KeysL {
+                confirm_key = d != Dev::KeysL && (keys.pressed(KeyCode::Enter) || keys.pressed(KeyCode::NumpadEnter));
+                if jp(&[KeyCode::Enter, KeyCode::NumpadEnter]) && d != Dev::KeysL {
                     extra.push(Nav::Confirm);
                 }
                 back_key = d != Dev::KeysR && keys.pressed(KeyCode::Escape)
@@ -556,6 +573,8 @@ pub fn poll(
         let s = devs.map.entry(d).or_default();
         s.back_blocked &= back_key || held[6];
         s.back_key = back_key;
+        s.confirm_blocked &= confirm_key;
+        s.confirm_key = confirm_key;
         let pressed = s.sample(held);
         s.sample_jump2(jumps >= 2);
         s.sample_attack(attack_stick);
@@ -745,6 +764,28 @@ mod tests {
 #[cfg(test)]
 mod back_hold_tests {
     use super::*;
+
+    #[test]
+    fn a_confirm_held_since_the_screen_opened_is_ignored_until_released() {
+        let mut devs = Devices::default();
+        let jump = Act::Jump as usize;
+        let held = std::array::from_fn(|i| i == jump);
+        let s = devs.map.entry(Dev::Keys).or_default();
+        s.sample(held);
+        assert!(s.confirm_held());
+        devs.clear();
+        let s = devs.map.get_mut(&Dev::Keys).unwrap();
+        assert!(!s.confirm_held(), "held since the screen opened: blocked until released");
+        s.sample(held);
+        assert!(!s.confirm_held());
+        s.sample([false; 10]);
+        s.sample(std::array::from_fn(|i| i == Act::Attack as usize));
+        assert!(s.confirm_held(), "either confirm control holds it");
+        s.sample(std::array::from_fn(|i| i == Act::Start as usize));
+        assert!(!s.confirm_held());
+        assert!(s.start_held());
+    }
+
     #[test]
     fn keyboard_and_bound_special_are_suppressed_until_release() {
         for keyboard in [false, true] {

@@ -120,6 +120,11 @@ fn press(v: &mut Vec<Step>, bot: u8, act: Act) {
     v.extend([Step::Set(bot, act, true), Step::Wait(3), Step::Set(bot, act, false), Step::Wait(4)]);
 }
 
+/// Hold `act` long enough for a hold-to-fire control (the results buttons want a quarter second).
+fn hold(v: &mut Vec<Step>, bot: u8, act: Act, frames: u32) {
+    v.extend([Step::Set(bot, act, true), Step::Wait(frames), Step::Set(bot, act, false), Step::Wait(4)]);
+}
+
 fn shot(v: &mut Vec<Step>, name: &'static str) {
     v.extend([Step::Wait(6), Step::Shot(name)]);
 }
@@ -576,14 +581,17 @@ fn results_replay() -> Vec<Step> {
     let mut v = vec![
         Step::Match(1),
         Step::Fast(|m, _, _| m.world.over && m.over_t >= m.data.global.render.hud.results_delay, 60 * 60 * 6),
-        Step::Until(screen_is(Screen::Results), 30),
+        // The end banner's real-time clock paces the handoff, so allow a couple of seconds for it.
+        Step::Until(screen_is(Screen::Results), 240),
         Step::Wait(30),
-        Step::Shot("12-results"),
     ];
+    // Nothing is focused on entry; steer to a button before the shot.
+    press(&mut v, 0, Down);
+    shot(&mut v, "12-results");
     for _ in 0..4 {
         press(&mut v, 0, Right);
     }
-    press(&mut v, 0, Attack);
+    hold(&mut v, 0, Attack, 40);
     v.push(Step::Until(screen_is(Screen::Playback), 30));
     v.push(Step::Fast(|m, _, _| m.playback.as_ref().is_some_and(|p| p.position >= 600), 2000));
     press(&mut v, 0, Start);

@@ -482,6 +482,8 @@ pub struct Respawn {
 pub struct Match {
     pub countdown: u32,
     pub go_frames: u32,
+    /// Ticks the match stays frozen after its last KO ("GAME!") before the winner poses. Keep it short: nothing
+    /// happens in it but the KO effects, and the end slow motion stretches it in real time.
     pub end_frames: u32,
     /// The timer shows its warning style and beeps once a second for its last this many seconds.
     #[serde(default = "default_timer_warn_seconds")]

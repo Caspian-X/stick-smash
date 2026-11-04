@@ -132,9 +132,9 @@
           ],
           "anim": [
             { "at": 0, "pose": "stand" },
-            { "at": 0, "pose": "thrust", "lerp": true },
-            { "at": 4, "pose": "thrust" },
-            { "at": 10, "pose": "stand", "lerp": true }
+            { "at": 1, "pose": "thrust", "lerp": true },
+            { "at": 9, "pose": "thrust" },
+            { "at": 15, "pose": "stand", "lerp": true }
           ],
           "attach": {
             "sword": { "angle": [[0.0, 95.0], [2.0, 60.0], [4.0, 0.0], [30.0, 95.0]], "scale": [[0, 0.62]] }
@@ -150,8 +150,8 @@
           "anim": [
             { "at": 0, "pose": "stand" },
             { "at": 1, "pose": "thrust", "lerp": true },
-            { "at": 5, "pose": "thrust" },
-            { "at": 11, "pose": "stand", "lerp": true }
+            { "at": 9, "pose": "thrust" },
+            { "at": 15, "pose": "stand", "lerp": true }
           ],
           "attach": {
             "sword": { "angle": [[0.0, 95.0], [2.0, 60.0], [4.0, 0.0], [30.0, 95.0]], "scale": [[0, 0.62]] }
@@ -201,8 +201,8 @@
           "anim": [
             { "at": 0, "pose": "stand" },
             { "at": 1, "pose": "thrust", "lerp": true },
-            { "at": 6, "pose": "thrust" },
-            { "at": 12, "pose": "stand", "lerp": true }
+            { "at": 9, "pose": "thrust" },
+            { "at": 15, "pose": "stand", "lerp": true }
           ],
           "attach": {
             "sword": { "angle": [[0.0, 95.0], [2.0, 60.0], [4.0, 0.0], [30.0, 95.0]], "scale": [[0, 0.62]] }
@@ -247,7 +247,8 @@
             { "at": 12, "pose": "stand", "lerp": true }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 95.0], [5.0, 60.0], [7.0, 20.0], [35.0, 95.0]], "scale": [[0, 0.62]] }
+            "sword": { "hide": [0, 4294967295] },
+            "swordBack": { "show": [0, 4294967295] }
           },
           "events": [
             { "at": 5, "sfx": "slash" }
@@ -270,7 +271,8 @@
             { "at": 0, "pose": "cast" }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 0.0]], "scale": [[0, 0.62]] }
+            "sword": { "hide": [0, 4294967295] },
+            "swordBack": { "show": [0, 4294967295] }
           },
           "transitions": [
             { "on": "timeout", "to": "rapid" }
@@ -299,7 +301,8 @@
             { "at": 0, "pose": "cast" }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 0.0]], "scale": [[0, 0.62]] }
+            "sword": { "hide": [0, 4294967295] },
+            "swordBack": { "show": [0, 4294967295] }
           },
           "events": [
             { "at": 0, "sfx": "swing" }
@@ -404,9 +407,9 @@
           ],
           "anim": [
             { "at": 0, "pose": "stand" },
-            { "at": 5, "pose": "thrust", "lerp": true },
-            { "at": 9, "pose": "thrust" },
-            { "at": 15, "pose": "stand", "lerp": true }
+            { "at": 5, "pose": "lunge", "lerp": true },
+            { "at": 12, "pose": "lunge" },
+            { "at": 18, "pose": "stand", "lerp": true }
           ],
           "attach": {
             "sword": { "angle": [[0.0, 150.0], [6.0, 60.0], [9.0, 8.0], [32.0, 95.0]], "scale": [[0, 0.62]] }
@@ -465,13 +468,13 @@
           ],
           "anim": [
             { "at": 0, "pose": "stand" },
-            { "at": 2, "pose": "sweepUp", "lerp": true },
-            { "at": 13, "pose": "sweepUp" },
-            { "at": 19, "pose": "stand", "lerp": true }
+            { "at": 3, "pose": "sweepUp", "lerp": true },
+            { "at": 16, "pose": "sweepUp" },
+            { "at": 22, "pose": "stand", "lerp": true }
           ],
           "attach": {
             "sword": {
-              "angle": [[0.0, 150.0], [3.0, 340.0], [6.0, 30.0], [9.0, 80.0], [14.0, 120.0], [32.0, 95.0]],
+              "angle": [[0.0, 150.0], [3.0, -20.0], [6.0, 30.0], [9.0, 80.0], [14.0, 120.0], [32.0, 95.0]],
               "scale": [[0, 0.62]]
             }
           },
@@ -527,12 +530,12 @@
           ],
           "anim": [
             { "at": 0, "pose": "stand" },
-            { "at": 3, "pose": "sweepLow", "lerp": true },
-            { "at": 7, "pose": "sweepLow" },
-            { "at": 13, "pose": "stand", "lerp": true }
+            { "at": 2, "pose": "sweepLow", "lerp": true },
+            { "at": 12, "pose": "sweepLow" },
+            { "at": 18, "pose": "stand", "lerp": true }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 150.0], [4.0, 300.0], [8.0, 330.0], [21.0, 95.0]], "scale": [[0, 0.62]] }
+            "sword": { "angle": [[0.0, 150.0], [4.0, 300.0], [8.0, 330.0], [21.0, 455.0]], "scale": [[0, 0.62]] }
           },
           "events": [
             { "at": 6, "sfx": "slash" }
@@ -575,12 +578,12 @@
           "slide": 19,
           "anim": [
             { "at": 0, "pose": "stand" },
-            { "at": 4, "pose": "thrust", "lerp": true },
-            { "at": 17, "pose": "thrust" },
-            { "at": 23, "pose": "stand", "lerp": true }
+            { "at": 4, "pose": "lunge", "lerp": true },
+            { "at": 20, "pose": "lunge" },
+            { "at": 26, "pose": "stand", "lerp": true }
           ],
           "attach": {
-            "sword": { "angle": [[0, 130], [7, 40], [17, 100], [40, 95]], "scale": [[0, 0.62]] }
+            "sword": { "angle": [[0, 130], [7, 10], [17, 20], [29, 95], [40, 95]], "scale": [[0, 0.62]] }
           },
           "events": [
             { "at": 7, "sfx": "slash" },
@@ -667,13 +670,15 @@
               "charge": { "frame": 5 },
               "anim": [
                 { "at": 0, "pose": "stand" },
-                { "at": 4, "pose": "thrust", "lerp": true },
-                { "at": 48, "pose": "thrust" },
-                { "at": 54, "pose": "stand", "lerp": true }
+                { "at": 2, "pose": "windup", "lerp": true },
+                { "at": 12, "pose": "windup" },
+                { "at": 15, "pose": "lunge", "lerp": true },
+                { "at": 30, "pose": "lunge" },
+                { "at": 48, "pose": "stand", "lerp": true }
               ],
               "attach": {
                 "sword": {
-                  "angle": [[0, 150], [5, 190], [14, 60], [15, 10], [26, 350], [56, 95]],
+                  "angle": [[0, 150], [5, 190], [14, 60], [15, 10], [26, -10], [56, 95]],
                   "scale": [[0, 1.0]]
                 }
               },
@@ -729,12 +734,14 @@
           "charge": { "frame": 5 },
           "anim": [
             { "at": 0, "pose": "stand" },
-            { "at": 4, "pose": "thrust", "lerp": true },
-            { "at": 48, "pose": "thrust" },
-            { "at": 54, "pose": "stand", "lerp": true }
+            { "at": 2, "pose": "windup", "lerp": true },
+            { "at": 12, "pose": "windup" },
+            { "at": 15, "pose": "lunge", "lerp": true },
+            { "at": 30, "pose": "lunge" },
+            { "at": 48, "pose": "stand", "lerp": true }
           ],
           "attach": {
-            "sword": { "angle": [[0, 150], [5, 190], [14, 60], [15, 10], [26, 350], [56, 95]], "scale": [[0, 0.62]] }
+            "sword": { "angle": [[0, 150], [5, 190], [14, 60], [15, 10], [26, -10], [56, 95]], "scale": [[0, 0.62]] }
           },
           "events": [
             { "at": 5, "sfx": "smash" }
@@ -798,9 +805,11 @@
               "charge": { "frame": 4 },
               "anim": [
                 { "at": 0, "pose": "stand" },
-                { "at": 3, "pose": "overhead", "lerp": true },
-                { "at": 43, "pose": "overhead" },
-                { "at": 49, "pose": "stand", "lerp": true }
+                { "at": 3, "pose": "sweepLow", "lerp": true },
+                { "at": 8, "pose": "sweepLow" },
+                { "at": 12, "pose": "overhead", "lerp": true },
+                { "at": 28, "pose": "overhead" },
+                { "at": 46, "pose": "stand", "lerp": true }
               ],
               "attach": {
                 "sword": {
@@ -837,9 +846,11 @@
           "charge": { "frame": 4 },
           "anim": [
             { "at": 0, "pose": "stand" },
-            { "at": 3, "pose": "overhead", "lerp": true },
-            { "at": 43, "pose": "overhead" },
-            { "at": 49, "pose": "stand", "lerp": true }
+            { "at": 3, "pose": "sweepLow", "lerp": true },
+            { "at": 8, "pose": "sweepLow" },
+            { "at": 12, "pose": "overhead", "lerp": true },
+            { "at": 28, "pose": "overhead" },
+            { "at": 46, "pose": "stand", "lerp": true }
           ],
           "attach": {
             "sword": { "angle": [[0, 170], [4, 175], [10, 120], [12, 80], [15, 30], [51, 95]], "scale": [[0, 0.62]] }
@@ -949,9 +960,10 @@
               "charge": { "frame": 2 },
               "anim": [
                 { "at": 0, "pose": "stand" },
-                { "at": 1, "pose": "sweepLow", "lerp": true },
-                { "at": 47, "pose": "sweepLow" },
-                { "at": 53, "pose": "stand", "lerp": true }
+                { "at": 4, "pose": "windup", "lerp": true },
+                { "at": 12, "pose": "sweepLow", "lerp": true },
+                { "at": 32, "pose": "sweepLow" },
+                { "at": 48, "pose": "stand", "lerp": true }
               ],
               "attach": {
                 "sword": {
@@ -999,9 +1011,10 @@
           "charge": { "frame": 2 },
           "anim": [
             { "at": 0, "pose": "stand" },
-            { "at": 1, "pose": "sweepLow", "lerp": true },
-            { "at": 47, "pose": "sweepLow" },
-            { "at": 53, "pose": "stand", "lerp": true }
+            { "at": 4, "pose": "windup", "lerp": true },
+            { "at": 12, "pose": "sweepLow", "lerp": true },
+            { "at": 32, "pose": "sweepLow" },
+            { "at": 48, "pose": "stand", "lerp": true }
           ],
           "attach": {
             "sword": {
@@ -1027,8 +1040,8 @@
               "frames": 3,
               "anim": [
                 { "at": 0, "pose": "air" },
-                { "at": 0, "pose": "air", "lerp": true },
-                { "at": 0, "pose": "air" },
+                { "at": 0, "pose": "tuck", "lerp": true },
+                { "at": 0, "pose": "tuck" },
                 { "at": 2, "pose": "air", "lerp": true }
               ],
               "transitions": [
@@ -1038,13 +1051,13 @@
               "attach": {
                 "sword": {
                   "angle": [
-                    [0.0, 300.0],
-                    [5.0, 340.0],
-                    [8.0, 20.0],
-                    [16.0, 120.0],
-                    [20.0, 200.0],
-                    [24.0, 215.0],
-                    [48.0, 95.0]
+                    [0.0, 340.0],
+                    [5.0, 380.0],
+                    [8.0, 420.0],
+                    [16.0, 520.0],
+                    [20.0, 600.0],
+                    [24.0, 615.0],
+                    [48.0, 495.0]
                   ],
                   "scale": [[0, 1.0]]
                 }
@@ -1084,8 +1097,8 @@
               ],
               "anim": [
                 { "at": 0, "pose": "air" },
-                { "at": 1, "pose": "air", "lerp": true },
-                { "at": 6, "pose": "air" },
+                { "at": 1, "pose": "tuck", "lerp": true },
+                { "at": 6, "pose": "tuck" },
                 { "at": 9, "pose": "air", "lerp": true }
               ],
               "transitions": [
@@ -1095,13 +1108,13 @@
               "attach": {
                 "sword": {
                   "angle": [
-                    [0.0, 300.0],
-                    [5.0, 340.0],
-                    [8.0, 20.0],
-                    [16.0, 120.0],
-                    [20.0, 200.0],
-                    [24.0, 215.0],
-                    [48.0, 95.0]
+                    [0.0, 340.0],
+                    [5.0, 380.0],
+                    [8.0, 420.0],
+                    [16.0, 520.0],
+                    [20.0, 600.0],
+                    [24.0, 615.0],
+                    [48.0, 495.0]
                   ],
                   "scale": [[0, 1.0]]
                 }
@@ -1141,8 +1154,8 @@
               ],
               "anim": [
                 { "at": 0, "pose": "air" },
-                { "at": 0, "pose": "air", "lerp": true },
-                { "at": 8, "pose": "air" },
+                { "at": 0, "pose": "tuck", "lerp": true },
+                { "at": 8, "pose": "tuck" },
                 { "at": 11, "pose": "air", "lerp": true }
               ],
               "transitions": [
@@ -1152,13 +1165,13 @@
               "attach": {
                 "sword": {
                   "angle": [
-                    [0.0, 300.0],
-                    [5.0, 340.0],
-                    [8.0, 20.0],
-                    [16.0, 120.0],
-                    [20.0, 200.0],
-                    [24.0, 215.0],
-                    [48.0, 95.0]
+                    [0.0, 340.0],
+                    [5.0, 380.0],
+                    [8.0, 420.0],
+                    [16.0, 520.0],
+                    [20.0, 600.0],
+                    [24.0, 615.0],
+                    [48.0, 495.0]
                   ],
                   "scale": [[0, 1.0]]
                 }
@@ -1170,8 +1183,8 @@
               "frames": 8,
               "anim": [
                 { "at": 0, "pose": "air" },
-                { "at": 0, "pose": "air", "lerp": true },
-                { "at": 0, "pose": "air" },
+                { "at": 0, "pose": "tuck", "lerp": true },
+                { "at": 0, "pose": "tuck" },
                 { "at": 6, "pose": "air", "lerp": true }
               ],
               "transitions": [
@@ -1180,13 +1193,13 @@
               "attach": {
                 "sword": {
                   "angle": [
-                    [0.0, 300.0],
-                    [5.0, 340.0],
-                    [8.0, 20.0],
-                    [16.0, 120.0],
-                    [20.0, 200.0],
-                    [24.0, 215.0],
-                    [48.0, 95.0]
+                    [0.0, 340.0],
+                    [5.0, 380.0],
+                    [8.0, 420.0],
+                    [16.0, 520.0],
+                    [20.0, 600.0],
+                    [24.0, 615.0],
+                    [48.0, 495.0]
                   ],
                   "scale": [[0, 1.0]]
                 }
@@ -1202,8 +1215,8 @@
           "frames": 3,
           "anim": [
             { "at": 0, "pose": "air" },
-            { "at": 0, "pose": "air", "lerp": true },
-            { "at": 0, "pose": "air" },
+            { "at": 0, "pose": "tuck", "lerp": true },
+            { "at": 0, "pose": "tuck" },
             { "at": 2, "pose": "air", "lerp": true }
           ],
           "transitions": [
@@ -1213,13 +1226,13 @@
           "attach": {
             "sword": {
               "angle": [
-                [0.0, 300.0],
-                [5.0, 340.0],
-                [8.0, 20.0],
-                [16.0, 120.0],
-                [20.0, 200.0],
-                [24.0, 215.0],
-                [48.0, 95.0]
+                [0.0, 340.0],
+                [5.0, 380.0],
+                [8.0, 420.0],
+                [16.0, 520.0],
+                [20.0, 600.0],
+                [24.0, 615.0],
+                [48.0, 495.0]
               ],
               "scale": [[0, 0.62]]
             }
@@ -1256,8 +1269,8 @@
           ],
           "anim": [
             { "at": 0, "pose": "air" },
-            { "at": 1, "pose": "air", "lerp": true },
-            { "at": 6, "pose": "air" },
+            { "at": 1, "pose": "tuck", "lerp": true },
+            { "at": 6, "pose": "tuck" },
             { "at": 9, "pose": "air", "lerp": true }
           ],
           "transitions": [
@@ -1267,13 +1280,13 @@
           "attach": {
             "sword": {
               "angle": [
-                [0.0, 300.0],
-                [5.0, 340.0],
-                [8.0, 20.0],
-                [16.0, 120.0],
-                [20.0, 200.0],
-                [24.0, 215.0],
-                [48.0, 95.0]
+                [0.0, 340.0],
+                [5.0, 380.0],
+                [8.0, 420.0],
+                [16.0, 520.0],
+                [20.0, 600.0],
+                [24.0, 615.0],
+                [48.0, 495.0]
               ],
               "scale": [[0, 0.62]]
             }
@@ -1298,8 +1311,8 @@
           ],
           "anim": [
             { "at": 0, "pose": "air" },
-            { "at": 0, "pose": "air", "lerp": true },
-            { "at": 3, "pose": "air" },
+            { "at": 0, "pose": "tuck", "lerp": true },
+            { "at": 3, "pose": "tuck" },
             { "at": 6, "pose": "air", "lerp": true }
           ],
           "transitions": [
@@ -1309,13 +1322,13 @@
           "attach": {
             "sword": {
               "angle": [
-                [0.0, 300.0],
-                [5.0, 340.0],
-                [8.0, 20.0],
-                [16.0, 120.0],
-                [20.0, 200.0],
-                [24.0, 215.0],
-                [48.0, 95.0]
+                [0.0, 340.0],
+                [5.0, 380.0],
+                [8.0, 420.0],
+                [16.0, 520.0],
+                [20.0, 600.0],
+                [24.0, 615.0],
+                [48.0, 495.0]
               ],
               "scale": [[0, 0.62]]
             }
@@ -1326,8 +1339,8 @@
           "frames": 16,
           "anim": [
             { "at": 0, "pose": "air" },
-            { "at": 0, "pose": "air", "lerp": true },
-            { "at": 0, "pose": "air" },
+            { "at": 0, "pose": "tuck", "lerp": true },
+            { "at": 0, "pose": "tuck" },
             { "at": 6, "pose": "air", "lerp": true }
           ],
           "transitions": [
@@ -1336,13 +1349,13 @@
           "attach": {
             "sword": {
               "angle": [
-                [0.0, 300.0],
-                [5.0, 340.0],
-                [8.0, 20.0],
-                [16.0, 120.0],
-                [20.0, 200.0],
-                [24.0, 215.0],
-                [48.0, 95.0]
+                [0.0, 340.0],
+                [5.0, 380.0],
+                [8.0, 420.0],
+                [16.0, 520.0],
+                [20.0, 600.0],
+                [24.0, 615.0],
+                [48.0, 495.0]
               ],
               "scale": [[0, 0.62]]
             }
@@ -1362,8 +1375,8 @@
               "frames": 3,
               "anim": [
                 { "at": 0, "pose": "air" },
-                { "at": 0, "pose": "airHigh", "lerp": true },
-                { "at": 0, "pose": "airHigh" },
+                { "at": 0, "pose": "dive", "lerp": true },
+                { "at": 0, "pose": "dive" },
                 { "at": 2, "pose": "air", "lerp": true }
               ],
               "transitions": [
@@ -1371,7 +1384,7 @@
                 { "on": "timeout", "to": "main" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 270.0], [8.0, 120.0], [12.0, 30.0], [34.0, 95.0]], "scale": [[0, 1.0]] }
+                "sword": { "angle": [[0.0, 320.0], [8.0, 170.0], [12.0, 80.0], [34.0, 145.0]], "scale": [[0, 1.0]] }
               },
               "cost": { "charge": "levin", "uses": 1 }
             },
@@ -1418,8 +1431,8 @@
               ],
               "anim": [
                 { "at": 0, "pose": "air" },
-                { "at": 6, "pose": "airHigh", "lerp": true },
-                { "at": 15, "pose": "airHigh" },
+                { "at": 6, "pose": "dive", "lerp": true },
+                { "at": 15, "pose": "dive" },
                 { "at": 18, "pose": "air", "lerp": true }
               ],
               "transitions": [
@@ -1427,7 +1440,7 @@
                 { "on": "timeout", "to": "late" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 270.0], [8.0, 120.0], [12.0, 30.0], [34.0, 95.0]], "scale": [[0, 1.0]] }
+                "sword": { "angle": [[0.0, 320.0], [8.0, 170.0], [12.0, 80.0], [34.0, 145.0]], "scale": [[0, 1.0]] }
               },
               "cost": null
             },
@@ -1436,15 +1449,15 @@
               "frames": 6,
               "anim": [
                 { "at": 0, "pose": "air" },
-                { "at": 0, "pose": "airHigh", "lerp": true },
-                { "at": 0, "pose": "airHigh" },
+                { "at": 0, "pose": "dive", "lerp": true },
+                { "at": 0, "pose": "dive" },
                 { "at": 5, "pose": "air", "lerp": true }
               ],
               "transitions": [
                 { "on": "land", "to": "end" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 270.0], [8.0, 120.0], [12.0, 30.0], [34.0, 95.0]], "scale": [[0, 1.0]] }
+                "sword": { "angle": [[0.0, 320.0], [8.0, 170.0], [12.0, 80.0], [34.0, 145.0]], "scale": [[0, 1.0]] }
               },
               "cost": null
             }
@@ -1457,8 +1470,8 @@
           "frames": 3,
           "anim": [
             { "at": 0, "pose": "air" },
-            { "at": 0, "pose": "airHigh", "lerp": true },
-            { "at": 0, "pose": "airHigh" },
+            { "at": 0, "pose": "dive", "lerp": true },
+            { "at": 0, "pose": "dive" },
             { "at": 2, "pose": "air", "lerp": true }
           ],
           "transitions": [
@@ -1466,7 +1479,7 @@
             { "on": "timeout", "to": "main" }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 270.0], [8.0, 120.0], [12.0, 30.0], [34.0, 95.0]], "scale": [[0, 0.62]] }
+            "sword": { "angle": [[0.0, 320.0], [8.0, 170.0], [12.0, 80.0], [34.0, 145.0]], "scale": [[0, 0.62]] }
           }
         },
         {
@@ -1500,8 +1513,8 @@
           ],
           "anim": [
             { "at": 0, "pose": "air" },
-            { "at": 6, "pose": "airHigh", "lerp": true },
-            { "at": 11, "pose": "airHigh" },
+            { "at": 6, "pose": "dive", "lerp": true },
+            { "at": 11, "pose": "dive" },
             { "at": 14, "pose": "air", "lerp": true }
           ],
           "transitions": [
@@ -1509,7 +1522,7 @@
             { "on": "timeout", "to": "late" }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 270.0], [8.0, 120.0], [12.0, 30.0], [34.0, 95.0]], "scale": [[0, 0.62]] }
+            "sword": { "angle": [[0.0, 320.0], [8.0, 170.0], [12.0, 80.0], [34.0, 145.0]], "scale": [[0, 0.62]] }
           }
         },
         {
@@ -1517,15 +1530,15 @@
           "frames": 7,
           "anim": [
             { "at": 0, "pose": "air" },
-            { "at": 0, "pose": "airHigh", "lerp": true },
-            { "at": 0, "pose": "airHigh" },
+            { "at": 0, "pose": "dive", "lerp": true },
+            { "at": 0, "pose": "dive" },
             { "at": 6, "pose": "air", "lerp": true }
           ],
           "transitions": [
             { "on": "land", "to": "end" }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 270.0], [8.0, 120.0], [12.0, 30.0], [34.0, 95.0]], "scale": [[0, 0.62]] }
+            "sword": { "angle": [[0.0, 320.0], [8.0, 170.0], [12.0, 80.0], [34.0, 145.0]], "scale": [[0, 0.62]] }
           }
         }
       ]
@@ -1583,8 +1596,8 @@
               ],
               "anim": [
                 { "at": 0, "pose": "air" },
-                { "at": 6, "pose": "air", "lerp": true },
-                { "at": 15, "pose": "air" },
+                { "at": 6, "pose": "guard", "lerp": true },
+                { "at": 15, "pose": "guard" },
                 { "at": 18, "pose": "air", "lerp": true }
               ],
               "transitions": [
@@ -1592,7 +1605,7 @@
                 { "on": "timeout", "to": "late" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 95.0], [6.0, 60.0], [9.0, 200.0], [40.0, 95.0]], "scale": [[0, 1.0]] }
+                "sword": { "angle": [[0.0, 110.0], [6.0, 75.0], [9.0, 215.0], [40.0, 110.0]], "scale": [[0, 1.0]] }
               },
               "cost": { "charge": "levin", "uses": 1 }
             },
@@ -1601,15 +1614,15 @@
               "frames": 8,
               "anim": [
                 { "at": 0, "pose": "air" },
-                { "at": 0, "pose": "air", "lerp": true },
-                { "at": 0, "pose": "air" },
+                { "at": 0, "pose": "guard", "lerp": true },
+                { "at": 0, "pose": "guard" },
                 { "at": 6, "pose": "air", "lerp": true }
               ],
               "transitions": [
                 { "on": "land", "to": "end" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 95.0], [6.0, 60.0], [9.0, 200.0], [40.0, 95.0]], "scale": [[0, 1.0]] }
+                "sword": { "angle": [[0.0, 110.0], [6.0, 75.0], [9.0, 215.0], [40.0, 110.0]], "scale": [[0, 1.0]] }
               },
               "cost": null
             }
@@ -1650,8 +1663,8 @@
           ],
           "anim": [
             { "at": 0, "pose": "air" },
-            { "at": 6, "pose": "air", "lerp": true },
-            { "at": 9, "pose": "air" },
+            { "at": 6, "pose": "guard", "lerp": true },
+            { "at": 9, "pose": "guard" },
             { "at": 12, "pose": "air", "lerp": true }
           ],
           "transitions": [
@@ -1659,7 +1672,7 @@
             { "on": "timeout", "to": "late" }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 95.0], [6.0, 60.0], [9.0, 200.0], [40.0, 95.0]], "scale": [[0, 0.62]] }
+            "sword": { "angle": [[0.0, 110.0], [6.0, 75.0], [9.0, 215.0], [40.0, 110.0]], "scale": [[0, 0.62]] }
           }
         },
         {
@@ -1667,15 +1680,15 @@
           "frames": 8,
           "anim": [
             { "at": 0, "pose": "air" },
-            { "at": 0, "pose": "air", "lerp": true },
-            { "at": 0, "pose": "air" },
+            { "at": 0, "pose": "guard", "lerp": true },
+            { "at": 0, "pose": "guard" },
             { "at": 6, "pose": "air", "lerp": true }
           ],
           "transitions": [
             { "on": "land", "to": "end" }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 95.0], [6.0, 60.0], [9.0, 200.0], [40.0, 95.0]], "scale": [[0, 0.62]] }
+            "sword": { "angle": [[0.0, 110.0], [6.0, 75.0], [9.0, 215.0], [40.0, 110.0]], "scale": [[0, 0.62]] }
           }
         }
       ]
@@ -1692,8 +1705,8 @@
               "frames": 4,
               "anim": [
                 { "at": 0, "pose": "air" },
-                { "at": 0, "pose": "airHigh", "lerp": true },
-                { "at": 0, "pose": "airHigh" },
+                { "at": 0, "pose": "arch", "lerp": true },
+                { "at": 0, "pose": "arch" },
                 { "at": 3, "pose": "air", "lerp": true }
               ],
               "transitions": [
@@ -1701,7 +1714,7 @@
                 { "on": "timeout", "to": "main" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 150.0], [6.0, 60.0], [10.0, 105.0], [46.0, 95.0]], "scale": [[0, 1.0]] }
+                "sword": { "angle": [[0.0, 170.0], [6.0, 80.0], [10.0, 125.0], [46.0, 115.0]], "scale": [[0, 1.0]] }
               },
               "cost": { "charge": "levin", "uses": 1 }
             },
@@ -1751,8 +1764,8 @@
               ],
               "anim": [
                 { "at": 0, "pose": "air" },
-                { "at": 3, "pose": "airHigh", "lerp": true },
-                { "at": 18, "pose": "airHigh" },
+                { "at": 3, "pose": "arch", "lerp": true },
+                { "at": 18, "pose": "arch" },
                 { "at": 21, "pose": "air", "lerp": true }
               ],
               "transitions": [
@@ -1760,7 +1773,7 @@
                 { "on": "timeout", "to": "late" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 150.0], [6.0, 60.0], [10.0, 105.0], [46.0, 95.0]], "scale": [[0, 1.0]] }
+                "sword": { "angle": [[0.0, 170.0], [6.0, 80.0], [10.0, 125.0], [46.0, 115.0]], "scale": [[0, 1.0]] }
               },
               "cost": null
             },
@@ -1769,15 +1782,15 @@
               "frames": 18,
               "anim": [
                 { "at": 0, "pose": "air" },
-                { "at": 0, "pose": "airHigh", "lerp": true },
-                { "at": 0, "pose": "airHigh" },
+                { "at": 0, "pose": "arch", "lerp": true },
+                { "at": 0, "pose": "arch" },
                 { "at": 6, "pose": "air", "lerp": true }
               ],
               "transitions": [
                 { "on": "land", "to": "end" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 150.0], [6.0, 60.0], [10.0, 105.0], [46.0, 95.0]], "scale": [[0, 1.0]] }
+                "sword": { "angle": [[0.0, 170.0], [6.0, 80.0], [10.0, 125.0], [46.0, 115.0]], "scale": [[0, 1.0]] }
               },
               "cost": null
             }
@@ -1790,8 +1803,8 @@
           "frames": 4,
           "anim": [
             { "at": 0, "pose": "air" },
-            { "at": 0, "pose": "airHigh", "lerp": true },
-            { "at": 0, "pose": "airHigh" },
+            { "at": 0, "pose": "arch", "lerp": true },
+            { "at": 0, "pose": "arch" },
             { "at": 3, "pose": "air", "lerp": true }
           ],
           "transitions": [
@@ -1799,7 +1812,7 @@
             { "on": "timeout", "to": "main" }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 150.0], [6.0, 60.0], [10.0, 105.0], [46.0, 95.0]], "scale": [[0, 0.62]] }
+            "sword": { "angle": [[0.0, 170.0], [6.0, 80.0], [10.0, 125.0], [46.0, 115.0]], "scale": [[0, 0.62]] }
           }
         },
         {
@@ -1835,8 +1848,8 @@
           ],
           "anim": [
             { "at": 0, "pose": "air" },
-            { "at": 3, "pose": "airHigh", "lerp": true },
-            { "at": 8, "pose": "airHigh" },
+            { "at": 3, "pose": "arch", "lerp": true },
+            { "at": 8, "pose": "arch" },
             { "at": 11, "pose": "air", "lerp": true }
           ],
           "transitions": [
@@ -1844,7 +1857,7 @@
             { "on": "timeout", "to": "late" }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 150.0], [6.0, 60.0], [10.0, 105.0], [46.0, 95.0]], "scale": [[0, 0.62]] }
+            "sword": { "angle": [[0.0, 170.0], [6.0, 80.0], [10.0, 125.0], [46.0, 115.0]], "scale": [[0, 0.62]] }
           }
         },
         {
@@ -1852,15 +1865,15 @@
           "frames": 19,
           "anim": [
             { "at": 0, "pose": "air" },
-            { "at": 0, "pose": "airHigh", "lerp": true },
-            { "at": 0, "pose": "airHigh" },
+            { "at": 0, "pose": "arch", "lerp": true },
+            { "at": 0, "pose": "arch" },
             { "at": 6, "pose": "air", "lerp": true }
           ],
           "transitions": [
             { "on": "land", "to": "end" }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 150.0], [6.0, 60.0], [10.0, 105.0], [46.0, 95.0]], "scale": [[0, 0.62]] }
+            "sword": { "angle": [[0.0, 170.0], [6.0, 80.0], [10.0, 125.0], [46.0, 115.0]], "scale": [[0, 0.62]] }
           }
         }
       ]
@@ -1887,7 +1900,7 @@
               ],
               "attach": {
                 "sword": {
-                  "angle": [[0.0, 60.0], [8.0, 250.0], [13.0, 300.0], [24.0, 320.0], [60.0, 95.0]],
+                  "angle": [[0.0, 60.0], [8.0, -110.0], [13.0, -60.0], [24.0, -40.0], [60.0, 95.0]],
                   "scale": [[0, 1.0]]
                 }
               },
@@ -1970,7 +1983,7 @@
               ],
               "attach": {
                 "sword": {
-                  "angle": [[0.0, 60.0], [8.0, 250.0], [13.0, 300.0], [24.0, 320.0], [60.0, 95.0]],
+                  "angle": [[0.0, 60.0], [8.0, -110.0], [13.0, -60.0], [24.0, -40.0], [60.0, 95.0]],
                   "scale": [[0, 1.0]]
                 }
               },
@@ -1990,7 +2003,7 @@
               ],
               "attach": {
                 "sword": {
-                  "angle": [[0.0, 60.0], [8.0, 250.0], [13.0, 300.0], [24.0, 320.0], [60.0, 95.0]],
+                  "angle": [[0.0, 60.0], [8.0, -110.0], [13.0, -60.0], [24.0, -40.0], [60.0, 95.0]],
                   "scale": [[0, 1.0]]
                 }
               },
@@ -2015,7 +2028,7 @@
           ],
           "attach": {
             "sword": {
-              "angle": [[0.0, 60.0], [8.0, 250.0], [13.0, 300.0], [24.0, 320.0], [60.0, 95.0]],
+              "angle": [[0.0, 60.0], [8.0, -110.0], [13.0, -60.0], [24.0, -40.0], [60.0, 95.0]],
               "scale": [[0, 0.62]]
             }
           }
@@ -2066,7 +2079,7 @@
           ],
           "attach": {
             "sword": {
-              "angle": [[0.0, 60.0], [8.0, 250.0], [13.0, 300.0], [24.0, 320.0], [60.0, 95.0]],
+              "angle": [[0.0, 60.0], [8.0, -110.0], [13.0, -60.0], [24.0, -40.0], [60.0, 95.0]],
               "scale": [[0, 0.62]]
             }
           }
@@ -2085,7 +2098,7 @@
           ],
           "attach": {
             "sword": {
-              "angle": [[0.0, 60.0], [8.0, 250.0], [13.0, 300.0], [24.0, 320.0], [60.0, 95.0]],
+              "angle": [[0.0, 60.0], [8.0, -110.0], [13.0, -60.0], [24.0, -40.0], [60.0, 95.0]],
               "scale": [[0, 0.62]]
             }
           }
@@ -2138,12 +2151,13 @@
           ],
           "anim": [
             { "at": 0, "pose": "stand" },
-            { "at": 3, "pose": "thrust", "lerp": true },
-            { "at": 7, "pose": "thrust" },
-            { "at": 13, "pose": "stand", "lerp": true }
+            { "at": 4, "pose": "thrust", "lerp": true },
+            { "at": 12, "pose": "thrust" },
+            { "at": 18, "pose": "stand", "lerp": true }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 0.0]], "scale": [[0, 0.62]] }
+            "sword": { "hide": [0, 4294967295] },
+            "swordBack": { "show": [0, 4294967295] }
           }
         }
       ]
@@ -2207,12 +2221,13 @@
           "slide": 17,
           "anim": [
             { "at": 0, "pose": "stand" },
-            { "at": 6, "pose": "thrust", "lerp": true },
-            { "at": 10, "pose": "thrust" },
-            { "at": 16, "pose": "stand", "lerp": true }
+            { "at": 7, "pose": "thrust", "lerp": true },
+            { "at": 16, "pose": "thrust" },
+            { "at": 22, "pose": "stand", "lerp": true }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 0.0]], "scale": [[0, 0.62]] }
+            "sword": { "hide": [0, 4294967295] },
+            "swordBack": { "show": [0, 4294967295] }
           }
         }
       ]
@@ -2231,10 +2246,28 @@
                 { "at": 0, "pose": "cast" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "events": [
-                { "at": 0, "sfx": "charge" }
+                { "at": 0, "sfx": "charge" },
+                {
+                  "from": 4,
+                  "every": 5,
+                  "fx": [
+                    {
+                      "type": "part",
+                      "x": 46,
+                      "y": 56,
+                      "vx": 0,
+                      "vy": 1.6,
+                      "life": 10,
+                      "size": 2.4,
+                      "color": "#ffe066"
+                    },
+                    { "type": "ring", "x": 46, "y": 56, "r": 8, "grow": 3, "life": 6, "color": "#ffe066" }
+                  ]
+                }
               ],
               "charge": { "frame": 7, "max": 126, "holdAfterMax": 600, "button": "special" },
               "transitions": [
@@ -2249,10 +2282,11 @@
               "name": "thunder",
               "frames": 32,
               "anim": [
-                { "at": 0, "pose": "castHigh" }
+                { "at": 0, "pose": "castForward" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "cost": { "charge": "thunder", "uses": 1 },
               "events": [
@@ -2263,10 +2297,11 @@
               "name": "elthunder",
               "frames": 38,
               "anim": [
-                { "at": 0, "pose": "castHigh" }
+                { "at": 0, "pose": "castForward" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "cost": { "charge": "thunder", "uses": 3 },
               "events": [
@@ -2277,10 +2312,11 @@
               "name": "arcthunder",
               "frames": 38,
               "anim": [
-                { "at": 0, "pose": "castHigh" }
+                { "at": 0, "pose": "castForward" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "cost": { "charge": "thunder", "uses": 5 },
               "events": [
@@ -2291,14 +2327,32 @@
               "name": "thoron",
               "frames": 74,
               "anim": [
-                { "at": 0, "pose": "castHigh" }
+                { "at": 0, "pose": "castForward" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "cost": { "charge": "thunder", "uses": 8 },
               "events": [
-                { "at": 22, "spawn": "thoron", "sfx": "shoot" }
+                {
+                  "at": 22,
+                  "spawn": "thoron",
+                  "sfx": "shoot",
+                  "fx": [
+                    { "type": "shake", "k": 5 },
+                    {
+                      "type": "burst",
+                      "x": 46,
+                      "y": 58,
+                      "color": "#ffe066",
+                      "n": 12,
+                      "speed": 4.5,
+                      "life": 14,
+                      "size": 3.5
+                    }
+                  ]
+                }
               ]
             }
           ]
@@ -2309,10 +2363,11 @@
           "name": "empty",
           "frames": 39,
           "anim": [
-            { "at": 0, "pose": "castHigh" }
+            { "at": 0, "pose": "castForward" }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 0.0]] }
+            "sword": { "hide": [0, 4294967295] },
+            "swordBack": { "show": [0, 4294967295] }
           },
           "events": [
             { "at": 0, "sfx": "charge" }
@@ -2332,15 +2387,57 @@
               "frames": 63,
               "cost": { "charge": "fire", "uses": 1 },
               "anim": [
-                { "at": 0, "pose": "cast" }
+                { "at": 0, "pose": "cast" },
+                { "at": 12, "pose": "castHigh", "lerp": true },
+                { "at": 22, "pose": "castHigh" },
+                { "at": 30, "pose": "cast", "lerp": true }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "events": [
-                { "at": 16, "spawn": "arcfire", "sfx": "shoot" },
-                { "at": 22, "spawn": "arcfireFlame" },
-                { "at": 56, "spawn": "arcfireBurst" }
+                {
+                  "at": 16,
+                  "spawn": "arcfire",
+                  "sfx": "shoot",
+                  "fx": [
+                    {
+                      "type": "burst",
+                      "x": 58,
+                      "y": 50,
+                      "color": "#ff8a2a",
+                      "n": 8,
+                      "speed": 3.0,
+                      "life": 12,
+                      "size": 3.0
+                    }
+                  ]
+                },
+                {
+                  "at": 22,
+                  "spawn": "arcfireFlame",
+                  "fx": [
+                    { "type": "ring", "x": 96, "y": 22, "r": 12, "grow": 6, "life": 10, "color": "#ffb04a" }
+                  ]
+                },
+                {
+                  "at": 56,
+                  "spawn": "arcfireBurst",
+                  "fx": [
+                    { "type": "shake", "k": 4 },
+                    {
+                      "type": "burst",
+                      "x": 96,
+                      "y": 22,
+                      "color": "#ff8a2a",
+                      "n": 14,
+                      "speed": 4.0,
+                      "life": 16,
+                      "size": 4.0
+                    }
+                  ]
+                }
               ]
             }
           ]
@@ -2354,7 +2451,8 @@
             { "at": 0, "pose": "cast" }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 0.0]] }
+            "sword": { "hide": [0, 4294967295] },
+            "swordBack": { "show": [0, 4294967295] }
           },
           "events": [
             { "at": 16, "sfx": "swing" }
@@ -2377,7 +2475,8 @@
                 { "at": 0, "pose": "cast" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "events": [
                 {
@@ -2398,11 +2497,20 @@
                 { "at": 0, "pose": "castHigh" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "ledgeGrab": 6,
               "events": [
-                { "at": 0, "spawn": "elwind1", "sfx": "slash", "leaveGround": true },
+                {
+                  "at": 0,
+                  "spawn": "elwind1",
+                  "sfx": "slash",
+                  "leaveGround": true,
+                  "fx": [
+                    { "type": "ring", "x": 26, "y": 24, "r": 10, "grow": 6, "life": 10, "color": "#8af0bf" }
+                  ]
+                },
                 {
                   "at": 0,
                   "setVel": { "y": 12.5 }
@@ -2421,7 +2529,8 @@
                 { "at": 0, "pose": "castHigh" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "ledgeGrab": 0,
               "transitions": [
@@ -2430,7 +2539,14 @@
               ],
               "cost": { "charge": "wind", "uses": 1 },
               "events": [
-                { "at": 0, "spawn": "elwind2", "sfx": "slash" },
+                {
+                  "at": 0,
+                  "spawn": "elwind2",
+                  "sfx": "slash",
+                  "fx": [
+                    { "type": "ring", "x": 26, "y": 24, "r": 10, "grow": 6, "life": 10, "color": "#8af0bf" }
+                  ]
+                },
                 {
                   "at": 0,
                   "setVel": { "y": 10.5 }
@@ -2450,7 +2566,8 @@
                 { "at": 0, "pose": "cast" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "events": [
                 {
@@ -2471,11 +2588,20 @@
                 { "at": 0, "pose": "castHigh" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "ledgeGrab": 6,
               "events": [
-                { "at": 0, "spawn": "elwind1", "sfx": "slash", "leaveGround": true },
+                {
+                  "at": 0,
+                  "spawn": "elwind1",
+                  "sfx": "slash",
+                  "leaveGround": true,
+                  "fx": [
+                    { "type": "ring", "x": 26, "y": 24, "r": 10, "grow": 6, "life": 10, "color": "#8af0bf" }
+                  ]
+                },
                 {
                   "at": 0,
                   "setVel": { "y": 12.5 }
@@ -2494,7 +2620,8 @@
                 { "at": 0, "pose": "castHigh" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "ledgeGrab": 0,
               "transitions": [
@@ -2514,7 +2641,8 @@
             { "at": 0, "pose": "cast" }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 0.0]] }
+            "sword": { "hide": [0, 4294967295] },
+            "swordBack": { "show": [0, 4294967295] }
           },
           "events": [
             { "at": 0, "sfx": "swing" }
@@ -2540,7 +2668,8 @@
                 { "at": 0, "pose": "drain" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "events": [
                 { "at": 0, "sfx": "charge" }
@@ -2557,7 +2686,8 @@
                 { "at": 0, "pose": "drain" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "hitboxes": [
                 {
@@ -2577,7 +2707,24 @@
                 }
               ],
               "events": [
-                { "at": 0, "sfx": "grab", "invuln": 4 }
+                {
+                  "at": 0,
+                  "sfx": "grab",
+                  "invuln": 4,
+                  "fx": [
+                    { "type": "ring", "x": 58, "y": 46, "r": 16, "grow": 5, "life": 8, "color": "#b05ce0" },
+                    {
+                      "type": "burst",
+                      "x": 58,
+                      "y": 46,
+                      "color": "#c05ce0",
+                      "n": 8,
+                      "speed": 2.5,
+                      "life": 10,
+                      "size": 3.0
+                    }
+                  ]
+                }
               ],
               "transitions": [
                 { "on": "hit", "to": "drain" },
@@ -2596,7 +2743,8 @@
                 }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "hitboxes": [
                 {
@@ -2618,7 +2766,23 @@
                 }
               ],
               "events": [
-                { "at": 0, "sfx": "slash" }
+                { "at": 0, "sfx": "slash" },
+                {
+                  "from": 2,
+                  "every": 6,
+                  "fx": [
+                    {
+                      "type": "part",
+                      "x": 56,
+                      "y": 44,
+                      "vx": 0,
+                      "vy": 2.0,
+                      "life": 12,
+                      "size": 2.6,
+                      "color": "#c05ce0"
+                    }
+                  ]
+                }
               ],
               "transitions": [
                 { "on": "timeout", "to": "end" }
@@ -2632,7 +2796,8 @@
                 { "at": 0, "pose": "drain" }
               ],
               "attach": {
-                "sword": { "angle": [[0.0, 0.0]] }
+                "sword": { "hide": [0, 4294967295] },
+                "swordBack": { "show": [0, 4294967295] }
               },
               "transitions": [
                 { "on": "timeout", "to": "end" }
@@ -2649,7 +2814,8 @@
             { "at": 0, "pose": "drain" }
           ],
           "attach": {
-            "sword": { "angle": [[0.0, 0.0]] }
+            "sword": { "hide": [0, 4294967295] },
+            "swordBack": { "show": [0, 4294967295] }
           },
           "events": [
             { "at": 0, "sfx": "swing" }
@@ -2748,7 +2914,21 @@
         "angle": 50.0,
         "shieldDmgMult": 0.5455,
         "type": "electric"
-      }
+      },
+      "shapes": [
+        { "shape": "circle", "at": [0, 0], "r": 8, "alpha": 0.3, "fill": "#ffe066" },
+        { "shape": "circle", "at": [0, 0], "r": 5.28, "alpha": 0.6499999999999999, "fill": "#ffe066" },
+        { "shape": "circle", "at": [0, 0], "r": 2.4, "fill": "#fffbe0" },
+        { "shape": "line", "from": [-10, 0], "to": [10, 0], "width": 1.4, "color": "#fff7cf", "alpha": 0.9 }
+      ],
+      "trail": [
+        {
+          "every": 2,
+          "fx": [
+            { "type": "part", "x": -5, "y": 0, "vx": -2.5, "vy": 1.2, "life": 9, "size": 2.2, "color": "#ffe066" }
+          ]
+        }
+      ]
     },
     "elthunder": {
       "name": "Elthunder",
@@ -2769,7 +2949,23 @@
         "angle": 50.0,
         "shieldDmgMult": 0.5,
         "type": "electric"
-      }
+      },
+      "shapes": [
+        { "shape": "circle", "at": [0, 0], "r": 16, "alpha": 0.32, "fill": "#ffd84a" },
+        { "shape": "circle", "at": [0, 0], "r": 10.56, "alpha": 0.6699999999999999, "fill": "#ffd84a" },
+        { "shape": "circle", "at": [0, 0], "r": 4.8, "fill": "#fffbe0" },
+        { "shape": "line", "from": [-16, 0], "to": [16, 0], "width": 2.0, "color": "#fff7cf", "alpha": 0.85 },
+        { "shape": "line", "from": [-6, -10], "to": [2, 6], "width": 1.6, "color": "#fffbe0", "alpha": 0.8 },
+        { "shape": "line", "from": [6, 10], "to": [12, -4], "width": 1.6, "color": "#fffbe0", "alpha": 0.8 }
+      ],
+      "trail": [
+        {
+          "every": 2,
+          "fx": [
+            { "type": "part", "x": -5, "y": 0, "vx": -3.0, "vy": 2.0, "life": 10, "size": 2.8, "color": "#ffd84a" }
+          ]
+        }
+      ]
     },
     "arcthunder": {
       "name": "Arcthunder",
@@ -2799,7 +2995,23 @@
         "fx": [
           { "type": "burst", "color": "#7fd8ff", "n": 14, "speed": 4.5, "life": 18, "size": 4.5 }
         ]
-      }
+      },
+      "shapes": [
+        { "shape": "circle", "at": [0, 0], "r": 15, "alpha": 0.4, "fill": "#7b3fd6" },
+        { "shape": "circle", "at": [0, 0], "r": 9.9, "alpha": 0.75, "fill": "#7b3fd6" },
+        { "shape": "circle", "at": [0, 0], "r": 4.5, "fill": "#efe0ff" },
+        { "shape": "circle", "at": [0, 0], "r": 12, "stroke": "#d9b6ff", "width": 1.6 },
+        { "shape": "line", "from": [-13, -7], "to": [-3, 3], "width": 1.6, "color": "#e6c9ff", "alpha": 0.8 },
+        { "shape": "line", "from": [5, -9], "to": [10, 2], "width": 1.6, "color": "#e6c9ff", "alpha": 0.8 }
+      ],
+      "trail": [
+        {
+          "every": 2,
+          "fx": [
+            { "type": "part", "x": -5, "y": 0, "vx": -2.0, "vy": 1.5, "life": 12, "size": 3.0, "color": "#b07cf0" }
+          ]
+        }
+      ]
     },
     "thoron": {
       "name": "Thoron",
@@ -2820,11 +3032,35 @@
         "angle": 45.0,
         "type": "electric",
         "rehit": 4
-      }
+      },
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[-46, -10], [36, -12], [48, 0], [36, 12], [-46, 10]],
+          "fill": "#ffe066",
+          "alpha": 0.35
+        },
+        {
+          "shape": "poly",
+          "points": [[-42, -5], [34, -6], [44, 0], [34, 6], [-42, 5]],
+          "fill": "#fff3b0",
+          "alpha": 0.9
+        },
+        { "shape": "poly", "points": [[-34, -2], [34, -2], [40, 0], [34, 2], [-34, 2]], "fill": "#ffffff" },
+        { "shape": "circle", "at": [42, 0], "r": 11, "alpha": 0.85, "fill": "#fffbe0" }
+      ],
+      "trail": [
+        {
+          "every": 1,
+          "fx": [
+            { "type": "part", "x": -5, "y": 0, "vx": -6.0, "vy": 0.0, "life": 8, "size": 2.6, "color": "#ffe066" }
+          ]
+        }
+      ]
     },
     "arcfire": {
       "name": "Arcfire",
-      "spawn": [58, 50],
+      "spawn": [44, 68],
       "vel": [9.5, 2.2],
       "r": 9,
       "life": 30,
@@ -2843,7 +3079,31 @@
         "shieldDmgMult": 0.5
       },
       "gravity": 0.16,
-      "spawnSfx": "shoot"
+      "spawnSfx": "shoot",
+      "shapes": [
+        { "shape": "circle", "at": [0, 0], "r": 9, "alpha": 0.85, "fill": "#d63b1a" },
+        { "shape": "circle", "at": [0, 0], "r": 6, "alpha": 0.9, "fill": "#ff7a2a" },
+        { "shape": "circle", "at": [0, 0], "r": 3, "fill": "#ffe08a" },
+        { "shape": "poly", "points": [[-7, 2], [-11, 8], [-4, 6], [-2, 10], [2, 4]], "fill": "#ff9a3a", "alpha": 0.8 }
+      ],
+      "trail": [
+        {
+          "every": 1,
+          "fx": [
+            {
+              "type": "part",
+              "x": -4,
+              "y": 2,
+              "vx": -2.0,
+              "vy": 1.6,
+              "life": 12,
+              "size": 3.2,
+              "color": "#ff8a2a",
+              "gravity": 0.05
+            }
+          ]
+        }
+      ]
     },
     "arcfireFlame": {
       "name": "Arcfire Flame",
@@ -2867,7 +3127,35 @@
         "rehit": 8,
         "hitlagMult": 0.5,
         "shieldDmgMult": 0.5385
-      }
+      },
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[-14, -8], [-6, -42], [4, -26], [10, -36], [14, -6], [18, 12], [8, 20], [-8, 20], [-17, 4]],
+          "fill": "#d63b1a",
+          "alpha": 0.6
+        },
+        {
+          "shape": "poly",
+          "points": [[-8, -2], [-2, -30], [4, -14], [8, -22], [9, 2], [10, 12], [4, 14], [-4, 14], [-9, 4]],
+          "fill": "#ff8a2a",
+          "alpha": 0.85
+        },
+        {
+          "shape": "poly",
+          "points": [[0, 2], [0, -18], [4, -6], [5, 4], [2, 8], [-2, 6]],
+          "fill": "#ffe08a",
+          "alpha": 0.95
+        }
+      ],
+      "trail": [
+        {
+          "every": 2,
+          "fx": [
+            { "type": "part", "x": 0, "y": 12, "vx": 0.8, "vy": 2.2, "life": 14, "size": 3.4, "color": "#ffb04a" }
+          ]
+        }
+      ]
     },
     "arcfireBurst": {
       "name": "Arcfire Burst",
@@ -2889,7 +3177,13 @@
         "hitlagMult": 2.0,
         "shieldDmgMult": 0.5
       },
-      "spawnSfx": "quake"
+      "spawnSfx": "quake",
+      "shapes": [
+        { "shape": "circle", "at": [0, 0], "r": 26, "alpha": 0.3, "fill": "#ff7a2a" },
+        { "shape": "circle", "at": [0, 0], "r": 20, "alpha": 0.45, "fill": "#ffb04a" },
+        { "shape": "circle", "at": [0, 0], "r": 11, "alpha": 0.7, "fill": "#ffe08a" },
+        { "shape": "star", "at": [0, 0], "r": 18, "fill": "#fff3c0", "alpha": 0.8 }
+      ]
     },
     "elwind1": {
       "name": "Elwind 1",
@@ -2910,7 +3204,31 @@
         "angle": -105.0,
         "type": "spike"
       },
-      "spawnSfx": "slash"
+      "spawnSfx": "slash",
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[-7, -28], [2, -18], [8, 0], [2, 18], [-7, 28], [0, 0]],
+          "fill": "#4fc98f",
+          "alpha": 0.55
+        },
+        {
+          "shape": "poly",
+          "points": [[-2, -22], [4, -12], [8, 0], [4, 12], [-2, 22], [3, 0]],
+          "fill": "#b9ffe0",
+          "alpha": 0.9
+        },
+        { "shape": "line", "from": [-9, -20], "to": [-3, -8], "width": 1.6, "color": "#e6fff2", "alpha": 0.8 },
+        { "shape": "line", "from": [8, 8], "to": [3, 20], "width": 1.6, "color": "#e6fff2", "alpha": 0.8 }
+      ],
+      "trail": [
+        {
+          "every": 1,
+          "fx": [
+            { "type": "part", "x": 0, "y": -18, "vx": 0.4, "vy": -2.0, "life": 10, "size": 2.6, "color": "#8af0bf" }
+          ]
+        }
+      ]
     },
     "elwind2": {
       "name": "Elwind 2",
@@ -2920,7 +3238,31 @@
       "life": 24,
       "max": 6,
       "hit": { "start": 0, "end": 0, "x": 0, "y": 0, "r": 0, "damage": 7.0, "bkb": 70.0, "kbg": 0.9, "angle": 55.0 },
-      "spawnSfx": "slash"
+      "spawnSfx": "slash",
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[-7, -28], [2, -18], [8, 0], [2, 18], [-7, 28], [0, 0]],
+          "fill": "#4fc98f",
+          "alpha": 0.55
+        },
+        {
+          "shape": "poly",
+          "points": [[-2, -22], [4, -12], [8, 0], [4, 12], [-2, 22], [3, 0]],
+          "fill": "#b9ffe0",
+          "alpha": 0.9
+        },
+        { "shape": "line", "from": [-9, -20], "to": [-3, -8], "width": 1.6, "color": "#e6fff2", "alpha": 0.8 },
+        { "shape": "line", "from": [8, 8], "to": [3, 20], "width": 1.6, "color": "#e6fff2", "alpha": 0.8 }
+      ],
+      "trail": [
+        {
+          "every": 1,
+          "fx": [
+            { "type": "part", "x": 0, "y": -18, "vx": 0.4, "vy": -2.0, "life": 10, "size": 2.6, "color": "#8af0bf" }
+          ]
+        }
+      ]
     }
   },
   "style": {
@@ -2961,6 +3303,48 @@
       "footF": [20, 1],
       "kneeB": [-6, 15],
       "footB": [-12, 1]
+    },
+    "lunge": {
+      "from": "stand",
+      "head": [6, 60],
+      "shoulder": [3, 48],
+      "hip": [2, 28],
+      "elbowF": [20, 46],
+      "handF": [38, 46],
+      "elbowB": [-12, 42],
+      "handB": [-20, 38],
+      "kneeF": [17, 14],
+      "footF": [30, 1],
+      "kneeB": [-10, 14],
+      "footB": [-24, 2]
+    },
+    "windup": {
+      "from": "stand",
+      "head": [0, 62],
+      "shoulder": [-2, 49],
+      "hip": [3, 28],
+      "elbowF": [6, 54],
+      "handF": [0, 69],
+      "elbowB": [-13, 44],
+      "handB": [-21, 40],
+      "kneeF": [9, 15],
+      "footF": [13, 1],
+      "kneeB": [-8, 14],
+      "footB": [-17, 2]
+    },
+    "castForward": {
+      "from": "stand",
+      "head": [2, 63],
+      "shoulder": [1, 50],
+      "hip": [0, 30],
+      "elbowF": [18, 52],
+      "handF": [36, 55],
+      "elbowB": [4, 50],
+      "handB": [20, 53],
+      "kneeF": [5, 16],
+      "footF": [8, 1],
+      "kneeB": [-6, 16],
+      "footB": [-10, 1]
     },
     "sweepLow": {
       "head": [6, 50],
@@ -3104,7 +3488,11 @@
       "footF": [9, 1],
       "kneeB": [-6, 17],
       "footB": [-10, 1]
-    }
+    },
+    "dive": { "from": "air", "rot": 50, "pivot": 50 },
+    "arch": { "from": "air", "rot": 20, "pivot": 50 },
+    "tuck": { "from": "air", "rot": 40, "pivot": 50 },
+    "guard": { "from": "air", "rot": 15, "pivot": 50 }
   },
   "anims": {
     "idle": {
@@ -3288,6 +3676,29 @@
       "trail": { "inner": 20, "outer": 74 },
       "glow": "active",
       "hold": { "elbow": 14, "hand": 26, "bend": 18 },
+      "shapes": [
+        { "shape": "line", "from": [-11, 0], "to": [2, 0], "width": 5, "color": "#4a3b2d" },
+        { "shape": "line", "from": [2, -7], "to": [2, 7], "width": 5, "color": "#c9a24a" },
+        { "shape": "line", "from": [4, 0], "to": [58, 0], "width": 3.2, "color": "#8d93a8" },
+        { "shape": "line", "from": [4, 2], "to": [55, 2], "width": 1.2, "color": "#dfe4f2" },
+        {
+          "shape": "line",
+          "from": [4, 0],
+          "to": [58, 0],
+          "width": 8,
+          "color": "#ffdd6a",
+          "alpha": 0.5,
+          "when": "glow"
+        },
+        { "shape": "line", "from": [4, 0], "to": [58, 0], "width": 2.4, "color": "#fff7cf", "when": "glow" }
+      ]
+    },
+    {
+      "id": "swordBack",
+      "joint": "shoulder",
+      "angle": 238,
+      "behind": true,
+      "hidden": true,
       "shapes": [
         { "shape": "line", "from": [-11, 0], "to": [2, 0], "width": 5, "color": "#4a3b2d" },
         { "shape": "line", "from": [2, -7], "to": [2, 7], "width": 5, "color": "#c9a24a" },

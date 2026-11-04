@@ -1449,7 +1449,12 @@
       "properties": {
         "countdown": { "type": "integer", "format": "uint32", "minimum": 0 },
         "goFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "endFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "endFrames": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks the match stays frozen after its last KO (\"GAME!\") before the winner poses. Keep it short: nothing\nhappens in it but the KO effects, and the end slow motion stretches it in real time."
+        },
         "timerWarnSeconds": {
           "type": "integer",
           "format": "uint32",
@@ -1889,13 +1894,29 @@
         },
         "endSlowmo": {
           "$ref": "#/$defs/Slowmo",
-          "description": "When the match ends (\"GAME!\"), the sim runs at `speed` for its first `ticks` end-freeze ticks."
+          "description": "When the match ends (\"GAME!\"), the sim runs at `speed` for its first `ticks` end-freeze ticks. This\nstretches real time by `ticks / speed`."
+        },
+        "endBanner": {
+          "$ref": "#/$defs/EndBanner",
+          "description": "The end-of-match banner (\"GAME!\" / \"TIME!\") and its handoff to the results screen, timed in real seconds.\nThe results never wait for `match.endFrames`: only the winner's pose does.",
+          "default": { "secs": 1.0, "pop": 0.20000000298023224, "fade": 0.25 }
         },
         "resultsDelay": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Ticks the winner pose shows after the match is over, before the results screen."
+          "description": "Ticks the winner pose shows after the match is over, before the results screen (`0`: it opens as the pose\nstarts). [`Hud::end_banner`] usually opens the screen first."
+        },
+        "resultsHoldSecs": {
+          "type": "number",
+          "format": "float",
+          "description": "Real seconds the focused results button must be held before it fires, so a press buffered from the match\ncannot pick one.",
+          "default": 0.25
+        },
+        "resultsEnter": {
+          "$ref": "#/$defs/ResultsEnter",
+          "description": "How the results screen enters (it arrives while the end freeze is still running).",
+          "default": { "secs": 0.30000001192092896, "slide": 30.0, "stagger": 0.03500000014901161 }
         },
         "koCreditTicks": {
           "type": "integer",
@@ -1916,6 +1937,48 @@
         "ticks": { "type": "integer", "format": "uint32", "minimum": 0 }
       },
       "required": ["speed", "ticks"]
+    },
+    "EndBanner": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "secs": {
+          "type": "number",
+          "format": "float",
+          "description": "From the deciding KO (or TIME!) to the results screen."
+        },
+        "pop": {
+          "type": "number",
+          "format": "float",
+          "description": "The slam-in: the banner starts at `look.popScale`, fading in, and settles over this many seconds."
+        },
+        "fade": { "type": "number", "format": "float", "description": "The fade-out, over the last of `secs`." }
+      },
+      "required": ["secs", "pop", "fade"],
+      "description": "The end banner's real-time clock: it slams in, holds, then fades out, and the results screen enters from the\nmoment it's gone. Keeping it in real seconds means the end slow motion can't stretch the banner or skip it."
+    },
+    "ResultsEnter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "secs": {
+          "type": "number",
+          "format": "float",
+          "description": "Real seconds an element takes to settle once its entrance starts."
+        },
+        "slide": {
+          "type": "number",
+          "format": "float",
+          "description": "Logical pixels the content rises into place; the backdrop darkens over the same time."
+        },
+        "stagger": {
+          "type": "number",
+          "format": "float",
+          "description": "Real seconds between one card's entrance and the next (the buttons follow the cards)."
+        }
+      },
+      "required": ["secs", "slide", "stagger"],
+      "description": "The results screen's entrance, timed in real seconds so display refresh and the end freeze don't change it."
     },
     "HudLook": {
       "type": "object",

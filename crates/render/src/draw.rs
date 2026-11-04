@@ -135,8 +135,10 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
     let mut trails = Vec::new();
     for a in fd.attachments.iter().filter(|_| fd.rig.is_none()) {
         let anim = mc.phase.and_then(|ph| ph.attach.get(&a.id));
-        let show = anim.and_then(|an| an.show).is_some_and(|[s, e]| mc.t >= f64::from(s) && mc.t <= f64::from(e));
-        if a.hidden && !show {
+        let window = |w: [u32; 2]| mc.t >= f64::from(w[0]) && mc.t <= f64::from(w[1]);
+        let shown = anim.and_then(|an| an.show).is_some_and(window);
+        let hidden = anim.and_then(|an| an.hide).is_some_and(window);
+        if (a.hidden && !shown) || (!a.hidden && hidden) {
             continue;
         }
         let keyed_angle = anim.filter(|an| !an.angle.is_empty()).map(|an| keyed(&an.angle, mc.t));

@@ -203,6 +203,21 @@ def swing(pose, start, end, total, air=False, **kw):
         [{'at': min(max(1, total - 1), end + 6), 'pose': 'air' if air else 'stand', 'lerp': True}]
 
 
+def tilted(base, deg, pivot=50, **over):
+    p = {'from': base, 'rot': deg, 'pivot': pivot}
+    p.update(over)
+    return p
+
+
+def tilt_attach(attach, deg):
+    """Keep the blade's world direction under a body lean: the body rotation takes `deg` off every pose angle,
+    so add it back to the keyed track."""
+    a = copy.deepcopy(attach)
+    if a.get('sword', {}).get('angle'):
+        a['sword']['angle'] = [[t, d + deg] for t, d in a['sword']['angle']]
+    return a
+
+
 BRONZE = 0.62
 
 
@@ -221,6 +236,11 @@ def sword(end_angle, start_angle=None, end_frame=None, scale=None):
     return swordk([[0, start_angle], [max(1, end_frame), end_angle]], scale)
 
 
+def stowed():
+    """Hide the hand sword and show it sheathed on his back for this phase (casting, grabbing, wind loops)."""
+    return {'sword': {'hide': [0, 4294967295]}, 'swordBack': {'show': [0, 4294967295]}}
+
+
 # ---------------------------------------------------------------- poses and bodies
 stand = {'head': [2, 64], 'shoulder': [0, 50], 'hip': [0, 30], 'elbowF': [11, 43], 'handF': [20, 39],
          'elbowB': [-11, 43], 'handB': [-19, 37], 'kneeF': [4, 16], 'footF': [6, 1], 'kneeB': [-5, 16],
@@ -230,6 +250,18 @@ poses = {
     'thrust': {'head': [4, 62], 'shoulder': [2, 49], 'hip': [-2, 29], 'elbowF': [18, 47], 'handF': [34, 47],
                'elbowB': [-10, 44], 'handB': [-16, 41], 'kneeF': [12, 15], 'footF': [20, 1], 'kneeB': [-6, 15],
                'footB': [-12, 1]},
+    # Fitted body shapes: a deep lunge for the smash/dash cut, a raised-blade windup, and airborne leans.
+    'lunge': {'from': 'stand', 'head': [6, 60], 'shoulder': [3, 48], 'hip': [2, 28], 'elbowF': [20, 46],
+              'handF': [38, 46], 'elbowB': [-12, 42], 'handB': [-20, 38], 'kneeF': [17, 14], 'footF': [30, 1],
+              'kneeB': [-10, 14], 'footB': [-24, 2]},
+    'windup': {'from': 'stand', 'head': [0, 62], 'shoulder': [-2, 49], 'hip': [3, 28], 'elbowF': [6, 54],
+               'handF': [0, 69], 'elbowB': [-13, 44], 'handB': [-21, 40], 'kneeF': [9, 15], 'footF': [13, 1],
+               'kneeB': [-8, 14], 'footB': [-17, 2]},
+    # Both hands out at chest height: the Thunder tiers are thrown from the forward hand.
+    'castForward': {'from': 'stand', 'head': [2, 63], 'shoulder': [1, 50], 'hip': [0, 30], 'elbowF': [18, 52],
+                    'handF': [36, 55], 'elbowB': [4, 50], 'handB': [20, 53], 'kneeF': [5, 16], 'footF': [8, 1],
+                    'kneeB': [-6, 16], 'footB': [-10, 1]},
+
     'sweepLow': {'head': [6, 50], 'shoulder': [2, 38], 'hip': [-2, 20], 'elbowF': [20, 34], 'handF': [40, 26],
                  'elbowB': [-12, 32], 'handB': [-18, 24], 'kneeF': [18, 11], 'footF': [30, 1], 'kneeB': [-8, 10],
                  'footB': [-14, 1]},
@@ -283,18 +315,26 @@ def circle(at, r, fill=None, **kw):
     return s
 
 
+poses['dive'] = tilted('air', 50)
+poses['arch'] = tilted('air', 20)
+poses['tuck'] = tilted('air', 40)
+poses['guard'] = tilted('air', 15)
+
 blade = 58  # Levin Sword blade length in px (fitted)
+sword_shapes = [
+    line((-11, 0), (2, 0), 5, '#4a3b2d'),
+    line((2, -7), (2, 7), 5, '#c9a24a'),
+    line((4, 0), (blade, 0), 3.2, '#8d93a8'),
+    line((4, 2), (blade - 3, 2), 1.2, '#dfe4f2'),
+    line((4, 0), (blade, 0), 8, '#ffdd6a', alpha=0.5, when='glow'),
+    line((4, 0), (blade, 0), 2.4, '#fff7cf', when='glow'),
+]
 attachments = [
     {'id': 'sword', 'joint': 'handF', 'angle': 95, 'trail': {'inner': 20, 'outer': 74},
-     'glow': 'active', 'hold': {'elbow': 14, 'hand': 26, 'bend': 18},
-     'shapes': [
-         line((-11, 0), (2, 0), 5, '#4a3b2d'),
-         line((2, -7), (2, 7), 5, '#c9a24a'),
-         line((4, 0), (blade, 0), 3.2, '#8d93a8'),
-         line((4, 2), (blade - 3, 2), 1.2, '#dfe4f2'),
-         line((4, 0), (blade, 0), 8, '#ffdd6a', alpha=0.5, when='glow'),
-         line((4, 0), (blade, 0), 2.4, '#fff7cf', when='glow'),
-     ]},
+     'glow': 'active', 'hold': {'elbow': 14, 'hand': 26, 'bend': 18}, 'shapes': sword_shapes},
+    # The source sheathes the Levin Sword to cast or grab: it rides diagonally on his back.
+    {'id': 'swordBack', 'joint': 'shoulder', 'angle': 238, 'behind': True, 'hidden': True,
+     'shapes': sword_shapes},
     {'id': 'tome', 'joint': 'handB', 'angle': 20, 'behind': True,
      'shapes': [
          poly(((-7, -9), (0, -6), (7, -9), (7, 8), (0, 11), (-7, 8)), '#3b2a52'),
@@ -390,14 +430,14 @@ j1 = raw('jab', 'reflet', 'Attack11')
 jab1 = [b for b in root(take(j1, 2.0, 0)['source'], frame(4), frame(5))]
 jab1.append(hit(take(j1, 2.0, 1)['source'], frame(4), frame(5), 58, 42, 15))
 moves['jab'] = {'name': 'Bronze Jab', 'phases': [
-    phase('jab1', 31, jab1, anim=swing('thrust', frame(4), frame(5), 31),
+    phase('jab1', 31, jab1, anim=swing('thrust', 4, 9, 31),
           attach=swordk([[0, 95], [2, 60], [4, 0], [30, 95]], BRONZE), transitions=[
               {'on': 'attackHeld', 'from': frame(13), 'to': 'jab2'}, wait('end')]),
-    phase('jab2', 34, [], anim=swing('thrust', 4, 5, 34), attach=swordk([[0, 95], [2, 60], [4, 0], [30, 95]], BRONZE), transitions=[
+    phase('jab2', 34, [], anim=swing('thrust', 4, 9, 34), attach=swordk([[0, 95], [2, 60], [4, 0], [30, 95]], BRONZE), transitions=[
         {'on': 'attackHeld', 'from': frame(9), 'needs': {'charge': 'fire', 'uses': 1}, 'to': 'jab3'},
         # No Fire tome: skip the burst and its Fire-only follow-up (the source produces no hitboxes).
         {'on': 'attackHeld', 'from': frame(9), 'to': 'jabEmpty'}, wait('end')]),
-    phase('jabEmpty', 35, [], anim=swing('thrust', 4, 6, 35),
+    phase('jabEmpty', 35, [], anim=swing('thrust', 4, 9, 35),
           attach=swordk([[0, 95], [2, 60], [4, 0], [30, 95]], BRONZE))]}
 j2 = raw('jab2', 'reflet', 'Attack12')
 jab2 = [b for b in root(take(j2, 1.5, 0)['source'], frame(5), frame(6))]
@@ -405,7 +445,7 @@ moves['jab']['phases'][1]['hitboxes'] = jab2
 j3 = raw('jab3', 'reflet', 'Attack13')
 jab3 = root(take(j3, 5.0)['source'], frame(6), frame(7))
 moves['jab']['phases'].append(phase('jab3', 35, jab3, cost={'charge': 'fire', 'uses': 1},
-                                   anim=swing('cast', frame(6), frame(7), 35), attach=swordk([[0, 95], [5, 60], [7, 20], [35, 95]], BRONZE),
+                                   anim=swing('cast', frame(6), frame(7), 35), attach=stowed(),
                                    events=[{'at': frame(6), 'sfx': 'slash'}],
                                    transitions=[
                                        {'on': 'attackHeld', 'from': frame(9), 'needs': {'charge': 'wind', 'uses': 1},
@@ -415,10 +455,10 @@ rapid = [hit(rr[0]['source'], 0, 0, 60, 42, 40, rehit=2)]
 rapid[0].pop('end')  # active for the whole loop: the source hits every other frame while attack is held
 moves['jab']['phases'] += [
     phase('rapidStart', 4, [], cost={'charge': 'wind', 'uses': 1}, anim=[{'at': 0, 'pose': 'cast'}],
-          attach=sword(0, scale=BRONZE), transitions=[wait('rapid')]),
+          attach=stowed(), transitions=[wait('rapid')]),
     # One Wind use per 60-tick loop (the source drains about one per second); the loop exits when it empties.
     phase('rapid', 60, rapid, cost={'charge': 'wind', 'uses': 1}, anim=[{'at': 0, 'pose': 'cast'}],
-          attach=sword(0, scale=BRONZE), events=[{'at': 0, 'sfx': 'swing'}],
+          attach=stowed(), events=[{'at': 0, 'sfx': 'swing'}],
           transitions=[{'on': 'release', 'to': 'rapidEnd'},
                        {'on': 'timeout', 'needs': {'charge': 'wind', 'uses': 1}, 'to': 'rapid'},
                        wait('rapidEnd')]),
@@ -433,7 +473,7 @@ moves['jab']['phases'].append(phase('rapidEnd', 47, rapid_end, anim=swing('castH
 ft = raw('ftilt', 'reflet', 'AttackS3')
 moves['ftilt'] = {'name': 'Cinder Slash', 'phases': [phase(
     'main', 32, root(take(ft, 7.5)['source'], frame(9), frame(10)),
-    anim=swing('thrust', frame(9), frame(10), 32), attach=swordk([[0, 150], [6, 60], [9, 8], [32, 95]], BRONZE),
+    anim=swing('lunge', 8, 12, 32), attach=swordk([[0, 150], [6, 60], [9, 8], [32, 95]], BRONZE),
     events=[{'at': frame(9), 'sfx': 'slash'}])]}
 ut = raw('utilt', 'reflet', 'AttackHi3')
 utilt = [swept(take(ut, 6.0, 0)['source'], [(frame(6), 40, 58), (frame(9), 44, 82), (frame(12), 30, 104),
@@ -442,43 +482,69 @@ utilt = [swept(take(ut, 6.0, 0)['source'], [(frame(6), 40, 58), (frame(9), 44, 8
                                             (frame(14), 10, 100)], 18),
          hit(take(ut, 6.0, 2)['source'], frame(6), frame(14), 24, 56, 15)]
 moves['utilt'] = {'name': 'Rising Arc', 'phases': [phase(
-    'main', 32, utilt, anim=swing('sweepUp', frame(6), frame(14), 32),
-    attach=swordk([[0, 150], [3, 340], [6, 30], [9, 80], [14, 120], [32, 95]], BRONZE), events=[{'at': frame(6), 'sfx': 'slash'}])]}
+    'main', 32, utilt, anim=swing('sweepUp', 6, 16, 32),
+    attach=swordk([[0, 150], [3, -20], [6, 30], [9, 80], [14, 120], [32, 95]], BRONZE), events=[{'at': frame(6), 'sfx': 'slash'}])]}
 dt = raw('dtilt', 'reflet', 'AttackLw3')
 moves['dtilt'] = {'name': 'Low Sweep', 'phases': [phase(
     'main', 21, root(take(dt, 6.0)['source'], frame(7), frame(8)),
-    anim=swing('sweepLow', frame(7), frame(8), 21), attach=swordk([[0, 150], [4, 300], [8, 330], [21, 95]], BRONZE),
+    anim=swing('sweepLow', 5, 12, 21), attach=swordk([[0, 150], [4, 300], [8, 330], [21, 455]], BRONZE),
     events=[{'at': frame(7), 'sfx': 'slash'}])]}
 da = raw('dashatk', 'reflet', 'AttackDash')
 moves['dashatk'] = {'name': 'Rush Cut', 'phases': [phase(
     'main', 41, [hit(take(da, 10.0)['source'], frame(8), frame(10), 76, 46, 20),
                         hit(take(da, 6.0)['source'], frame(11), frame(18), 66, 40, 18)],
-    slide=frame(20), anim=swing('thrust', frame(8), frame(18), 41),
-    attach={'sword': {'angle': [[0, 130], [frame(8), 40], [frame(18), 100], [frame(41), 95]], 'scale': [[0, BRONZE]]}},
+    slide=frame(20), anim=swing('lunge', 7, 20, 41),
+    attach={'sword': {'angle': [[0, 130], [frame(8), 10], [frame(18), 20], [frame(30), 95], [frame(41), 95]],
+                      'scale': [[0, BRONZE]]}},
     events=[{'at': frame(8), 'sfx': 'slash'}, {'at': 0, 'setVel': {'x': 4.2}}])]}
 
 # --- smashes: Levin when the sword has a use left, otherwise the Bronze fallback
-def smash(slot, name, total, charge_frame, levin, bronze, pose, angle_keys):
+def smash(slot, name, total, charge_frame, levin, bronze, pose, angle_keys, anim=None):
     def attach(scale):
         a = copy.deepcopy(angle_keys)
         a['sword']['scale'] = [[0, scale]]
         return a
+    anim = anim or swing(pose, frame(charge_frame) + 2, frame(total) - 8, frame(total))
     return {'name': name, 'variants': [{'needs': {'charge': 'levin', 'uses': 1}, 'phases': [phase(
         'levin', total, levin, cost={'charge': 'levin', 'uses': 1}, charge={'frame': frame(charge_frame)},
-        anim=swing(pose, frame(charge_frame) + 2, frame(total) - 8, frame(total)), attach=attach(1.0),
+        anim=copy.deepcopy(anim), attach=attach(1.0),
         events=[{'at': frame(charge_frame), 'sfx': 'smash'}])]}],
         'phases': [phase('bronze', total, bronze, charge={'frame': frame(charge_frame)},
-                         anim=swing(pose, frame(charge_frame) + 2, frame(total) - 8, frame(total)),
-                         attach=attach(BRONZE), events=[{'at': frame(charge_frame), 'sfx': 'smash'}])]}
+                         anim=copy.deepcopy(anim), attach=attach(BRONZE),
+                         events=[{'at': frame(charge_frame), 'sfx': 'smash'}])]}
 
+
+fsmash_anim = [
+    {'at': 0, 'pose': 'stand'},
+    {'at': 2, 'pose': 'windup', 'lerp': True},
+    {'at': 12, 'pose': 'windup'},
+    {'at': 15, 'pose': 'lunge', 'lerp': True},
+    {'at': 30, 'pose': 'lunge'},
+    {'at': 48, 'pose': 'stand', 'lerp': True},
+]
+usmash_anim = [
+    {'at': 0, 'pose': 'stand'},
+    {'at': 3, 'pose': 'sweepLow', 'lerp': True},
+    {'at': 8, 'pose': 'sweepLow'},
+    {'at': 12, 'pose': 'overhead', 'lerp': True},
+    {'at': 28, 'pose': 'overhead'},
+    {'at': 46, 'pose': 'stand', 'lerp': True},
+]
+dsmash_anim = [
+    {'at': 0, 'pose': 'stand'},
+    {'at': 4, 'pose': 'windup', 'lerp': True},
+    {'at': 12, 'pose': 'sweepLow', 'lerp': True},
+    {'at': 32, 'pose': 'sweepLow'},
+    {'at': 48, 'pose': 'stand', 'lerp': True},
+]
 
 fs = raw('fsmash', 'reflet', 'AttackS4')
 levin_fsmash = root(take(fs, 16.0, tag='levin')['source'], frame(16), frame(18)) + \
     [hit(take(fs, 10.0)['source'], frame(19), frame(27), 96, 50, 10)]
 bronze_fsmash = root(take(fs, 9.6)['source'], frame(16), frame(18))
-moves['fsmash'] = smash('fsmash', 'Levin Smash', 57, 6, levin_fsmash, bronze_fsmash, 'thrust',
-                        {'sword': {'angle': [[0, 150], [frame(6), 190], [frame(15), 60], [frame(16), 10], [frame(27), 350],
-                                             [frame(57), 95]]}})
+moves['fsmash'] = smash('fsmash', 'Levin Smash', 57, 6, levin_fsmash, bronze_fsmash, 'lunge',
+                        {'sword': {'angle': [[0, 150], [frame(6), 190], [frame(15), 60], [frame(16), 10], [frame(27), -10],
+                                             [frame(57), 95]]}}, anim=fsmash_anim)
 us = raw('usmash', 'reflet', 'AttackHi4')
 levin_usmash = [swept(take(us, 15.0, tag='levin')['source'], [(frame(12), 30, 96), (frame(13), 26, 108),
                                                              (frame(16), 16, 118)], 24),
@@ -489,7 +555,7 @@ bronze_usmash = [swept(take(us, 9.0)['source'], [(frame(12), 30, 92), (frame(13)
                        21)]
 moves['usmash'] = smash('usmash', 'Levin Rising', 52, 5, levin_usmash, bronze_usmash, 'overhead',
                         {'sword': {'angle': [[0, 170], [frame(5), 175], [frame(11), 120], [frame(13), 80], [frame(16), 30],
-                                             [frame(52), 95]]}})
+                                             [frame(52), 95]]}}, anim=usmash_anim)
 ds = raw('dsmash', 'reflet', 'AttackLw4')
 levin_dsmash = [swept(take(ds, 15.0, 0)['source'], [(frame(16), 26, 62), (frame(17), 46, 40)], 23),
                 swept(take(ds, 15.0, 1)['source'], [(frame(16), 34, 64), (frame(17), 56, 42)], 23),
@@ -503,7 +569,7 @@ bronze_dsmash = [swept(take(ds, 8.0, 0)['source'], [(frame(16), 24, 60), (frame(
                  swept(take(ds, 8.0, 1)['source'], [(frame(16), 32, 62), (frame(17), 52, 40)], 15)]
 moves['dsmash'] = smash('dsmash', 'Levin Sweep', 56, 3, levin_dsmash, bronze_dsmash, 'sweepLow',
                         {'sword': {'angle': [[0, 150], [frame(3), 190], [frame(15), 320], [frame(19), 320], [frame(22), 200],
-                                             [frame(28), 210], [frame(56), 95]]}})
+                                             [frame(28), 210], [frame(56), 95]]}}, anim=dsmash_anim)
 
 # --- aerials: Levin variants when the sword has uses, Bronze otherwise
 an = raw('nair', 'reflet', 'AttackAirN')
@@ -518,11 +584,11 @@ bronze_nair = [hit(take(an, 6.9, 0)['source'], frame(7), frame(10), 42, 28, 16),
                hit(take_bone(an, 'armr', 6.9)['source'], frame(7), frame(10), 22, 28, 14)]
 moves['nair'] = {'name': 'Levin Sweep', 'air': 'aerial', 'variants': [
     {'needs': {'charge': 'levin', 'uses': 1}, 'phases': aerial(
-        'nair', 'Levin Sweep', frame(48), 11, 4, 40, levin_nair, 'air',
-        swordk([[0, 300], [5, 340], [8, 20], [16, 120], [20, 200], [24, 215], [48, 95]], 1.0),
+        'nair', 'Levin Sweep', frame(48), 11, 4, 40, levin_nair, 'tuck',
+        tilt_attach(swordk([[0, 300], [5, 340], [8, 380], [16, 480], [20, 560], [24, 575], [48, 455]], 1.0), 40),
         split=frame(20)).get('phases')}],
-    'phases': aerial('nair', 'Levin Sweep', frame(48), 11, 4, 32, bronze_nair, 'air',
-                     swordk([[0, 300], [5, 340], [8, 20], [16, 120], [20, 200], [24, 215], [48, 95]], BRONZE),
+    'phases': aerial('nair', 'Levin Sweep', frame(48), 11, 4, 32, bronze_nair, 'tuck',
+                     tilt_attach(swordk([[0, 300], [5, 340], [8, 380], [16, 480], [20, 560], [24, 575], [48, 455]], BRONZE), 40),
                      split=frame(20)).get('phases')}
 for i, ph in enumerate(moves['nair']['variants'][0]['phases']):
     ph['cost'] = {'charge': 'levin', 'uses': 1} if i == 0 else ph.get('cost')
@@ -534,10 +600,10 @@ bronze_fair = [hit(take(af, 7.5, 0)['source'], frame(12), frame(15), 48, 38, 15)
                hit(take_bone(af, 'armr', 7.5)['source'], frame(12), frame(15), 24, 36, 14)]
 moves['fair'] = {'name': 'Levin Cut', 'air': 'aerial', 'variants': [
     {'needs': {'charge': 'levin', 'uses': 1}, 'phases': aerial(
-        'fair', 'Levin Cut', frame(34), 11, 4, 28, levin_fair, 'airHigh',
-        swordk([[0, 270], [8, 120], [12, 30], [34, 95]], 1.0)).get('phases')}],
-    'phases': aerial('fair', 'Levin Cut', frame(34), 11, 4, 27, bronze_fair, 'airHigh',
-                     swordk([[0, 270], [8, 120], [12, 30], [34, 95]], BRONZE)).get('phases')}
+        'fair', 'Levin Cut', frame(34), 11, 4, 28, levin_fair, 'dive',
+        tilt_attach(swordk([[0, 270], [8, 120], [12, 30], [34, 95]], 1.0), 50)).get('phases')}],
+    'phases': aerial('fair', 'Levin Cut', frame(34), 11, 4, 27, bronze_fair, 'dive',
+                     tilt_attach(swordk([[0, 270], [8, 120], [12, 30], [34, 95]], BRONZE), 50)).get('phases')}
 for i, ph in enumerate(moves['fair']['variants'][0]['phases']):
     ph['cost'] = {'charge': 'levin', 'uses': 1} if i == 0 else ph.get('cost')
 ab = raw('bair', 'reflet', 'AttackAirB')
@@ -548,10 +614,10 @@ bronze_bair = [hit(take(ab, 9.0, 0)['source'], frame(9), frame(10), -48, 38, 15)
                hit(take_bone(ab, 'armr', 9.0)['source'], frame(9), frame(10), -24, 36, 14)]
 moves['bair'] = {'name': 'Reverse Levin', 'air': 'aerial', 'variants': [
     {'needs': {'charge': 'levin', 'uses': 1}, 'phases': aerial(
-        'bair', 'Reverse Levin', frame(40), 11, 1, 32, levin_bair, 'air',
-        swordk([[0, 95], [6, 60], [9, 200], [40, 95]], 1.0)).get('phases')}],
-    'phases': aerial('bair', 'Reverse Levin', frame(40), 11, 1, 32, bronze_bair, 'air',
-                     swordk([[0, 95], [6, 60], [9, 200], [40, 95]], BRONZE)).get('phases')}
+        'bair', 'Reverse Levin', frame(40), 11, 1, 32, levin_bair, 'guard',
+        tilt_attach(swordk([[0, 95], [6, 60], [9, 200], [40, 95]], 1.0), 15)).get('phases')}],
+    'phases': aerial('bair', 'Reverse Levin', frame(40), 11, 1, 32, bronze_bair, 'guard',
+                     tilt_attach(swordk([[0, 95], [6, 60], [9, 200], [40, 95]], BRONZE), 15)).get('phases')}
 for i, ph in enumerate(moves['bair']['variants'][0]['phases']):
     ph['cost'] = {'charge': 'levin', 'uses': 1} if i == 0 else ph.get('cost')
 au = raw('uair', 'reflet', 'AttackAirHi')
@@ -562,10 +628,10 @@ bronze_uair = [hit(take(au, 7.8, 0)['source'], frame(10), frame(13), 13, 96, 18)
                hit(take_bone(au, 'armr', 7.8)['source'], frame(10), frame(13), 11, 62, 15)]
 moves['uair'] = {'name': 'Levin Arc', 'air': 'aerial', 'variants': [
     {'needs': {'charge': 'levin', 'uses': 1}, 'phases': aerial(
-        'uair', 'Levin Arc', frame(46), 11, 5, 28, levin_uair, 'airHigh',
-        swordk([[0, 150], [6, 60], [10, 105], [46, 95]], 1.0)).get('phases')}],
-    'phases': aerial('uair', 'Levin Arc', frame(46), 11, 5, 27, bronze_uair, 'airHigh',
-                     swordk([[0, 150], [6, 60], [10, 105], [46, 95]], BRONZE)).get('phases')}
+        'uair', 'Levin Arc', frame(46), 11, 5, 28, levin_uair, 'arch',
+        tilt_attach(swordk([[0, 150], [6, 60], [10, 105], [46, 95]], 1.0), 20)).get('phases')}],
+    'phases': aerial('uair', 'Levin Arc', frame(46), 11, 5, 27, bronze_uair, 'arch',
+                     tilt_attach(swordk([[0, 150], [6, 60], [10, 105], [46, 95]], BRONZE), 20)).get('phases')}
 for i, ph in enumerate(moves['uair']['variants'][0]['phases']):
     ph['cost'] = {'charge': 'levin', 'uses': 1} if i == 0 else ph.get('cost')
 ad = raw('dair', 'reflet', 'AttackAirLw')
@@ -583,9 +649,9 @@ bronze_dair = [swept(take(ad, 7.2)['source'], [(frame(13), 14, 30), (frame(15), 
 moves['dair'] = {'name': 'Levin Drop', 'air': 'aerial', 'variants': [
     {'needs': {'charge': 'levin', 'uses': 1}, 'phases': aerial(
         'dair', 'Levin Drop', frame(60), 16, 2, 48, levin_dair, 'airLow',
-        swordk([[0, 60], [8, 250], [13, 300], [24, 320], [60, 95]], 1.0)).get('phases')}],
+        swordk([[0, 60], [8, -110], [13, -60], [24, -40], [60, 95]], 1.0)).get('phases')}],
     'phases': aerial('dair', 'Levin Drop', frame(60), 16, 2, 48, bronze_dair, 'airLow',
-                     swordk([[0, 60], [8, 250], [13, 300], [24, 320], [60, 95]], BRONZE)).get('phases')}
+                     swordk([[0, 60], [8, -110], [13, -60], [24, -40], [60, 95]], BRONZE)).get('phases')}
 for i, ph in enumerate(moves['dair']['variants'][0]['phases']):
     ph['cost'] = {'charge': 'levin', 'uses': 1} if i == 0 else ph.get('cost')
 
@@ -595,35 +661,43 @@ grab_box = root({'Damage': '0', 'Angle': '0', 'KBG': '0', 'BKB': '0', 'Size': '3
                  'Z2': '9.2', 'Y2': '8.0', 'FacingRestrict': 'F', 'Ground_or_Air': 'GA', 'Bone': 'top'},
                 frame(7), frame(8), type='grab')
 moves['grab'] = {'name': 'Grab', 'phases': [phase(
-    'main', 39, grab_box, anim=swing('thrust', frame(7), frame(8), 39), attach=sword(0, scale=BRONZE))]}
+    'main', 39, grab_box, anim=swing('thrust', 7, 12, 39), attach=stowed())]}
 dg = raw('dashgrab', 'reflet', 'CatchDash')
 dash_grab_box = root({'Damage': '0', 'Angle': '0', 'KBG': '0', 'BKB': '0', 'Size': '3.0', 'Z': '4.0', 'Y': '7.0',
                       'Z2': '11.0', 'Y2': '7.0', 'FacingRestrict': 'F', 'Ground_or_Air': 'GA', 'Bone': 'top'},
                      frame(10), frame(11), type='grab')
 moves['dashgrab'] = {'name': 'Dash Grab', 'phases': [phase(
-    'main', 47, dash_grab_box, slide=frame(18), anim=swing('thrust', frame(10), frame(11), 47),
-    attach=sword(0, scale=BRONZE))]}
+    'main', 47, dash_grab_box, slide=frame(18), anim=swing('thrust', 10, 16, 47),
+    attach=stowed())]}
 
 # --- specials
 moves['nspec'] = {
     'name': 'Thunder', 'bReverse': True, 'variants': [
         {'needs': {'charge': 'thunder', 'uses': 1}, 'phases': [
-            phase('charge', None, anim=[{'at': 0, 'pose': 'cast'}], attach=sword(0),
-                  events=[{'at': 0, 'sfx': 'charge'}]),
-            phase('thunder', 32, anim=[{'at': 0, 'pose': 'castHigh'}], attach=sword(0),
+            phase('charge', None, anim=[{'at': 0, 'pose': 'cast'}], attach=stowed(),
+                  events=[{'at': 0, 'sfx': 'charge'},
+                          {'from': 4, 'every': 5,
+                           'fx': [{'type': 'part', 'x': 46, 'y': 56, 'vx': 0, 'vy': 1.6, 'life': 10,
+                                   'size': 2.4, 'color': '#ffe066'},
+                                  {'type': 'ring', 'x': 46, 'y': 56, 'r': 8, 'grow': 3, 'life': 6,
+                                   'color': '#ffe066'}]}]),
+            phase('thunder', 32, anim=[{'at': 0, 'pose': 'castForward'}], attach=stowed(),
                   cost={'charge': 'thunder', 'uses': 1},
                   events=[{'at': frame(8), 'spawn': 'thunder', 'sfx': 'shoot'}]),
-            phase('elthunder', 38, anim=[{'at': 0, 'pose': 'castHigh'}], attach=sword(0),
+            phase('elthunder', 38, anim=[{'at': 0, 'pose': 'castForward'}], attach=stowed(),
                   cost={'charge': 'thunder', 'uses': 3},
                   events=[{'at': frame(8), 'spawn': 'elthunder', 'sfx': 'shoot'}]),
-            phase('arcthunder', 38, anim=[{'at': 0, 'pose': 'castHigh'}], attach=sword(0),
+            phase('arcthunder', 38, anim=[{'at': 0, 'pose': 'castForward'}], attach=stowed(),
                   cost={'charge': 'thunder', 'uses': 5},
                   events=[{'at': frame(8), 'spawn': 'arcthunder', 'sfx': 'shoot'}]),
-            phase('thoron', 74, anim=[{'at': 0, 'pose': 'castHigh'}], attach=sword(0),
+            phase('thoron', 74, anim=[{'at': 0, 'pose': 'castForward'}], attach=stowed(),
                   cost={'charge': 'thunder', 'uses': 8},
-                  events=[{'at': frame(23), 'spawn': 'thoron', 'sfx': 'shoot'}]),
+                  events=[{'at': frame(23), 'spawn': 'thoron', 'sfx': 'shoot',
+                           'fx': [{'type': 'shake', 'k': 5},
+                                  {'type': 'burst', 'x': 46, 'y': 58, 'color': '#ffe066', 'n': 12,
+                                   'speed': 4.5, 'life': 14, 'size': 3.5}]}]),
         ]}],
-    'phases': [phase('empty', 39, anim=[{'at': 0, 'pose': 'castHigh'}], attach=sword(0),
+    'phases': [phase('empty', 39, anim=[{'at': 0, 'pose': 'castForward'}], attach=stowed(),
                      events=[{'at': 0, 'sfx': 'charge'}])]}
 # The tier a charge release picks: charge frame 8, Elthunder 33, Arcthunder 73, Thoron 133 source frames.
 charge = moves['nspec']['variants'][0]['phases'][0]
@@ -638,40 +712,53 @@ charge['transitions'] = [
 
 moves['sspec'] = {'name': 'Arcfire', 'bReverse': True, 'variants': [
     {'needs': {'charge': 'fire', 'uses': 1}, 'phases': [phase(
-        'main', 63, cost={'charge': 'fire', 'uses': 1}, anim=[{'at': 0, 'pose': 'cast'}], attach=sword(0),
-        events=[{'at': frame(17), 'spawn': 'arcfire', 'sfx': 'shoot'},
-                {'at': frame(23), 'spawn': 'arcfireFlame'},
-                {'at': frame(57), 'spawn': 'arcfireBurst'}])]}],
-    'phases': [phase('empty', 50, anim=[{'at': 0, 'pose': 'cast'}], attach=sword(0),
+        'main', 63, cost={'charge': 'fire', 'uses': 1}, anim=[{'at': 0, 'pose': 'cast'},
+        {'at': 12, 'pose': 'castHigh', 'lerp': True}, {'at': 22, 'pose': 'castHigh'},
+        {'at': 30, 'pose': 'cast', 'lerp': True}], attach=stowed(),
+        events=[{'at': frame(17), 'spawn': 'arcfire', 'sfx': 'shoot',
+                 'fx': [{'type': 'burst', 'x': 58, 'y': 50, 'color': '#ff8a2a', 'n': 8, 'speed': 3.0,
+                         'life': 12, 'size': 3.0}]},
+                {'at': frame(23), 'spawn': 'arcfireFlame',
+                 'fx': [{'type': 'ring', 'x': 96, 'y': 22, 'r': 12, 'grow': 6, 'life': 10, 'color': '#ffb04a'}]},
+                {'at': frame(57), 'spawn': 'arcfireBurst',
+                 'fx': [{'type': 'shake', 'k': 4},
+                        {'type': 'burst', 'x': 96, 'y': 22, 'color': '#ff8a2a', 'n': 14, 'speed': 4.0,
+                         'life': 16, 'size': 4.0}]}])]}],
+    'phases': [phase('empty', 50, anim=[{'at': 0, 'pose': 'cast'}], attach=stowed(),
                      events=[{'at': frame(17), 'sfx': 'swing'}])]}
 
 def elwind(first_blade: bool, second_blade: bool):
     """Source timing: blade 1 on frame 8, blade 2 on frame 28, 85 frames total. Each blade costs one Wind use,
     so one remaining use still gives the first (single-blade) recovery."""
-    startup = [phase('startup', frame(8), airAccelMult=0.2, anim=[{'at': 0, 'pose': 'cast'}], attach=sword(0),
+    startup = [phase('startup', frame(8), airAccelMult=0.2, anim=[{'at': 0, 'pose': 'cast'}], attach=stowed(),
                      events=[{'at': 0, 'setVel': {'x': 0, 'y': 0}, 'sfx': 'charge'}],
                      transitions=[wait('rise1')])]
     # Source: the ledge can be caught from frame 14 on, which is inside the first rise phase.
     rise1 = phase('rise1', frame(28) - frame(8), airAccelMult=0.4, anim=[{'at': 0, 'pose': 'castHigh'}],
-                  attach=sword(0), ledgeGrab=frame(14) - frame(8), events=[{'at': 0, 'leaveGround': True}],
+                  attach=stowed(), ledgeGrab=frame(14) - frame(8), events=[{'at': 0, 'leaveGround': True}],
                   transitions=[wait('rise2')])
     if first_blade:
         rise1['cost'] = {'charge': 'wind', 'uses': 1}
-        rise1['events'] = [{'at': 0, 'spawn': 'elwind1', 'sfx': 'slash', 'leaveGround': True},
+        rise1['events'] = [{'at': 0, 'spawn': 'elwind1', 'sfx': 'slash', 'leaveGround': True,
+                            'fx': [{'type': 'ring', 'x': 26, 'y': 24, 'r': 10, 'grow': 6, 'life': 10,
+                                    'color': '#8af0bf'}]},
                            {'at': 0, 'setVel': {'y': 12.5}}]
     rise2 = phase('rise2', frame(85) - frame(28) + 1, airAccelMult=0.4, anim=[{'at': 0, 'pose': 'castHigh'}],
-                  attach=sword(0), ledgeGrab=0,
+                  attach=stowed(), ledgeGrab=0,
                   transitions=[{'on': 'land', 'to': 'landing', 'lag': 25}, wait('helpless')])
     if second_blade:
         rise2['cost'] = {'charge': 'wind', 'uses': 1}
-        rise2['events'] = [{'at': 0, 'spawn': 'elwind2', 'sfx': 'slash'}, {'at': 0, 'setVel': {'y': 10.5}}]
+        rise2['events'] = [{'at': 0, 'spawn': 'elwind2', 'sfx': 'slash',
+                            'fx': [{'type': 'ring', 'x': 26, 'y': 24, 'r': 10, 'grow': 6, 'life': 10,
+                                    'color': '#8af0bf'}]},
+                           {'at': 0, 'setVel': {'y': 10.5}}]
     return startup + [rise1, rise2]
 
 
 moves['uspec'] = {'name': 'Elwind', 'air': 'upSpecial', 'variants': [
     {'needs': {'charge': 'wind', 'uses': 2}, 'phases': elwind(True, True)},
     {'needs': {'charge': 'wind', 'uses': 1}, 'phases': elwind(True, False)}],
-    'phases': [phase('empty', 51, airAccelMult=0.2, anim=[{'at': 0, 'pose': 'cast'}], attach=sword(0),
+    'phases': [phase('empty', 51, airAccelMult=0.2, anim=[{'at': 0, 'pose': 'cast'}], attach=stowed(),
                      events=[{'at': 0, 'sfx': 'swing'}],
                      transitions=[{'on': 'land', 'to': 'landing', 'lag': 25}, wait('helpless')])]}
 
@@ -679,26 +766,34 @@ moves['dspec'] = {'name': 'Nosferatu', 'variants': [
     {'needs': {'charge': 'dark', 'uses': 1}, 'phases': [
         # Source: intangibility and grabboxes 15-18 (engine 14-17), interruptible 50 (engine 49).
         phase('startup', frame(15), cost={'charge': 'dark', 'uses': 1}, anim=[{'at': 0, 'pose': 'drain'}],
-              attach=sword(0), events=[{'at': 0, 'sfx': 'charge'}],
+              attach=stowed(), events=[{'at': 0, 'sfx': 'charge'}],
               transitions=[wait('capture')]),
-        phase('capture', 4, airAccelMult=0.2, anim=[{'at': 0, 'pose': 'drain'}], attach=sword(0),
+        phase('capture', 4, airAccelMult=0.2, anim=[{'at': 0, 'pose': 'drain'}], attach=stowed(),
               hitboxes=[{'start': 0, 'end': 3, 'x': 58, 'y': 46, 'r': 34, 'damage': 1.0, 'bkb': 30.0, 'kbg': 1.0,
                          'angle': 60, 'type': 'paralyze', 'setKb': True, 'bkb': 22.0, 'unblockable': True,
                          'hitlagMult': 0.2}],
-              events=[{'at': 0, 'sfx': 'grab', 'invuln': 4}],
+              events=[{'at': 0, 'sfx': 'grab', 'invuln': 4,
+                       'fx': [{'type': 'ring', 'x': 58, 'y': 46, 'r': 16, 'grow': 5, 'life': 8,
+                               'color': '#b05ce0'},
+                              {'type': 'burst', 'x': 58, 'y': 46, 'color': '#c05ce0', 'n': 8, 'speed': 2.5,
+                               'life': 10, 'size': 3.0}]}],
               transitions=[{'on': 'hit', 'to': 'drain'}, wait('whiff')]),
         phase('drain', 35, airAccelMult=0.1, anim=[{'at': 0, 'pose': 'drain'},
                                                    {'at': 20, 'pose': {'from': 'drain', 'handF': [52, 56]}}],
-              attach=sword(0),
+              attach=stowed(),
               hitboxes=[{'start': 0, 'end': 34, 'x': 56, 'y': 44, 'r': 30, 'damage': 2.0, 'bkb': 0.0, 'kbg': 1.0,
                          'angle': 60, 'type': 'electric', 'setKb': True, 'bkb': 18.0, 'rehit': 8, 'heal': 1.5,
                          'unblockable': True, 'hitlagMult': 0.0}],
-              events=[{'at': 0, 'sfx': 'slash'}], transitions=[wait('end')]),
+              events=[{'at': 0, 'sfx': 'slash'},
+                      {'from': 2, 'every': 6,
+                       'fx': [{'type': 'part', 'x': 56, 'y': 44, 'vx': 0, 'vy': 2.0, 'life': 12,
+                               'size': 2.6, 'color': '#c05ce0'}]}],
+              transitions=[wait('end')]),
         # Whiffed capture: the source spends the animation with no further hitboxes.
-        phase('whiff', 31, airAccelMult=0.2, anim=[{'at': 0, 'pose': 'drain'}], attach=sword(0),
+        phase('whiff', 31, airAccelMult=0.2, anim=[{'at': 0, 'pose': 'drain'}], attach=stowed(),
               transitions=[wait('end')]),
     ]}],
-    'phases': [phase('empty', 49, anim=[{'at': 0, 'pose': 'drain'}], attach=sword(0),
+    'phases': [phase('empty', 49, anim=[{'at': 0, 'pose': 'drain'}], attach=stowed(),
                      events=[{'at': 0, 'sfx': 'swing'}])]}
 
 # ---------------------------------------------------------------- throws
@@ -745,7 +840,7 @@ tron = {'name': 'Thoron', 'Damage': '2.6', 'Angle': '45', 'BKB': '75', 'KBG': '1
         'FacingRestrict': 'F', 'Ground_or_Air': 'GA', 'Effect': 'elec', 'Hitlag': '1.0'}
 p_thoron = projectile('Thoron', (46, 58), (22, 0), 15, 46, fire_hit(tron, rehit=4))
 gf = {s['Name']: args(re.search(r'ATTACK\((.*)\)', s['Data'])[1]) for s in source['scripts']['reflet_gigafire']}
-arcfire_bolt = projectile('Arcfire', (58, 50), (9.5, 2.2), 9, 30, fire_hit(gf['Shoot0']), gravity=0.16,
+arcfire_bolt = projectile('Arcfire', (44, 68), (9.5, 2.2), 9, 30, fire_hit(gf['Shoot0']), gravity=0.16,
                           spawnSfx='shoot')
 flame = fire_hit(gf['Burn'])
 flame['rehit'] = 8
@@ -763,9 +858,87 @@ elwind_early = {'Damage': '7.0', 'Angle': '255', 'BKB': '10', 'KBG': '100', 'Siz
 p_elwind1 = projectile('Elwind 1', (26, 30), (2.0, 15.0), 20, 24, fire_hit(elwind_early), spawnSfx='slash')
 p_elwind2 = projectile('Elwind 2', (26, 30), (1.4, 14.0), 20, 24, fire_hit(e2, damage=None), spawnSfx='slash')
 
+# ---------------------------------------------------------------- spell visuals
+# The imported hit data is invisible on its own: give each article the shape the source draws. Colors and
+# proportions follow the spell (yellow Thunder tiers, purple Arcthunder, orange Arcfire, green Elwind).
+def glow(c, r, core, alpha=0.35):
+    return [circle((0, 0), r, c, alpha=alpha), circle((0, 0), r * 0.66, c, alpha=min(1., alpha + 0.35)),
+            circle((0, 0), r * 0.3, core)]
+
+
+def spark_trail(color, size=2.2, life=9, vx=-2.5, vy=1.2, every=2):
+    return [{'every': every, 'fx': [{'type': 'part', 'x': -5, 'y': 0, 'vx': vx, 'vy': vy,
+                                     'life': life, 'size': size, 'color': color}]}]
+
+
+def flame_poly(points, fill, alpha):
+    return poly(points, fill, alpha=alpha)
+
+
+p_thunder['shapes'] = glow('#ffe066', 8, '#fffbe0', 0.3) + \
+    [line((-10, 0), (10, 0), 1.4, '#fff7cf', alpha=0.9)]
+p_thunder['trail'] = spark_trail('#ffe066')
+
+p_elthunder['shapes'] = glow('#ffd84a', 16, '#fffbe0', 0.32) + \
+    [line((-16, 0), (16, 0), 2.0, '#fff7cf', alpha=0.85),
+     line((-6, -10), (2, 6), 1.6, '#fffbe0', alpha=0.8),
+     line((6, 10), (12, -4), 1.6, '#fffbe0', alpha=0.8)]
+p_elthunder['trail'] = spark_trail('#ffd84a', 2.8, 10, -3.0, 2.0)
+
+p_arcthunder['shapes'] = glow('#7b3fd6', 15, '#efe0ff', 0.4) + \
+    [{'shape': 'circle', 'at': [0, 0], 'r': 12, 'stroke': '#d9b6ff', 'width': 1.6},
+     line((-13, -7), (-3, 3), 1.6, '#e6c9ff', alpha=0.8),
+     line((5, -9), (10, 2), 1.6, '#e6c9ff', alpha=0.8)]
+p_arcthunder['trail'] = spark_trail('#b07cf0', 3.0, 12, -2.0, 1.5)
+
+p_thoron['shapes'] = [
+    poly(((-46, -10), (36, -12), (48, 0), (36, 12), (-46, 10)), '#ffe066', alpha=0.35),
+    poly(((-42, -5), (34, -6), (44, 0), (34, 6), (-42, 5)), '#fff3b0', alpha=0.9),
+    poly(((-34, -2), (34, -2), (40, 0), (34, 2), (-34, 2)), '#ffffff'),
+    circle((42, 0), 11, '#fffbe0', alpha=0.85),
+]
+p_thoron['trail'] = spark_trail('#ffe066', 2.6, 8, -6.0, 0.0, 1)
+
+p_arcfire = arcfire_bolt
+p_arcfire['shapes'] = [
+    circle((0, 0), 9, '#d63b1a', alpha=0.85),
+    circle((0, 0), 6, '#ff7a2a', alpha=0.9),
+    circle((0, 0), 3, '#ffe08a'),
+    flame_poly(((-7, 2), (-11, 8), (-4, 6), (-2, 10), (2, 4)), '#ff9a3a', 0.8),
+]
+p_arcfire['trail'] = [{'every': 1, 'fx': [{'type': 'part', 'x': -4, 'y': 2, 'vx': -2.0, 'vy': 1.6,
+                                           'life': 12, 'size': 3.2, 'color': '#ff8a2a', 'gravity': 0.05}]}]
+
+arcfire_flame['shapes'] = [
+    flame_poly(((-14, -8), (-6, -42), (4, -26), (10, -36), (14, -6), (18, 12), (8, 20), (-8, 20), (-17, 4)),
+               '#d63b1a', 0.6),
+    flame_poly(((-8, -2), (-2, -30), (4, -14), (8, -22), (9, 2), (10, 12), (4, 14), (-4, 14), (-9, 4)),
+               '#ff8a2a', 0.85),
+    flame_poly(((0, 2), (0, -18), (4, -6), (5, 4), (2, 8), (-2, 6)), '#ffe08a', 0.95),
+]
+arcfire_flame['trail'] = [{'every': 2, 'fx': [{'type': 'part', 'x': 0, 'y': 12, 'vx': 0.8, 'vy': 2.2,
+                                               'life': 14, 'size': 3.4, 'color': '#ffb04a'}]}]
+
+arcfire_burst['shapes'] = [
+    circle((0, 0), 26, '#ff7a2a', alpha=0.3),
+    circle((0, 0), 20, '#ffb04a', alpha=0.45),
+    circle((0, 0), 11, '#ffe08a', alpha=0.7),
+    {'shape': 'star', 'at': [0, 0], 'r': 18, 'fill': '#fff3c0', 'alpha': 0.8},
+]
+
+for el in (p_elwind1, p_elwind2):
+    el['shapes'] = [
+        flame_poly(((-7, -28), (2, -18), (8, 0), (2, 18), (-7, 28), (0, 0)), '#4fc98f', 0.55),
+        flame_poly(((-2, -22), (4, -12), (8, 0), (4, 12), (-2, 22), (3, 0)), '#b9ffe0', 0.9),
+        line((-9, -20), (-3, -8), 1.6, '#e6fff2', alpha=0.8),
+        line((8, 8), (3, 20), 1.6, '#e6fff2', alpha=0.8),
+    ]
+    el['trail'] = [{'every': 1, 'fx': [{'type': 'part', 'x': 0, 'y': -18, 'vx': 0.4, 'vy': -2.0,
+                                        'life': 10, 'size': 2.6, 'color': '#8af0bf'}]}]
+
 projectiles = {}
 for key, p in [('thunder', p_thunder), ('elthunder', p_elthunder), ('arcthunder', p_arcthunder),
-               ('thoron', p_thoron), ('arcfire', arcfire_bolt), ('arcfireFlame', arcfire_flame),
+               ('thoron', p_thoron), ('arcfire', p_arcfire), ('arcfireFlame', arcfire_flame),
                ('arcfireBurst', arcfire_burst),
                ('elwind1', p_elwind1), ('elwind2', p_elwind2)]:
     projectiles[key] = {k: v for k, v in p.items() if v is not None}

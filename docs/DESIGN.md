@@ -119,9 +119,14 @@ model later. See [FORMAT.md](FORMAT.md#moves) for exact frame timing, events and
   order, swaps changed picks in place, and plays a lock-in flourish before the ready win pose. UI is laid out for
   720 logical pixels high and scaled with the window.
 - **Flow.** Title → Versus → join + character select → stage vote/roulette → match → results (rematch, character
-  select, main menu, replay). Training goes from its select screen directly to the match. Pause from any player's Start; the pausing device drives the pause menu, with ownership transferred on disconnect. Training uses
-  the same select screen (one player + a dummy card) and an egui panel; dummy behavior and damage are also in the
-  pause menu for gamepad players.
+  select, main menu, replay). The end banner ("GAME!" / "TIME!") and the results handoff run on a real-time clock
+  (`render.hud.endBanner`): the banner slams in, holds and fades out over `secs`, then the results enter, so the end
+  freeze (`match.endFrames`) only paces the winner's pose and can neither stretch nor skip the banner. The results
+  enter with a slide/scale and a darkening backdrop (`render.hud.resultsEnter`), and their buttons need a short hold
+  (`render.hud.resultsHoldSecs`), so a press buffered from the match picks nothing. Training goes from its select
+  screen directly to the match. Pause from any player's Start; the pausing device drives the pause menu, with
+  ownership transferred on disconnect. Training uses the same select screen (one player + a dummy card) and an egui
+  panel; dummy behavior and damage are also in the pause menu for gamepad players.
 - **Teams in the renderer.** Each match gets a copy of `GameData` with the palette reordered per player (team
   color in team matches). The renderer and HUD color player *i* with palette *i*, so no render changes were
   needed. The content hash is unaffected (computed at load).
@@ -130,8 +135,8 @@ model later. See [FORMAT.md](FORMAT.md#moves) for exact frame timing, events and
 - **HUD safe area.** The game measures the HUD panels after layout and passes the reserved top and bottom
   fractions to the renderer (`Scene::top_safe_area` / `bottom_safe_area`). The camera fits the remaining
   rectangle; tags share its world mapping and offscreen bubbles stop above the panels.
-- **Presentation tuning** (damage color ramp, hit shake, end-of-match slow motion, results delay) lives in
-  `global.render.hud`; the sim never reads it. Name-tag and offscreen-bubble placement plus HUD text pops are
+- **Presentation tuning** (damage color ramp, hit shake, end-of-match slow motion, the end banner's pace, the
+  results entrance and button hold) lives in `global.render.hud`; the sim never reads it. Name-tag and offscreen-bubble placement plus HUD text pops are
   tuned separately in `render.hud.look`.
 - **Editor** is a mode of the same executable, reached from the main menu (see "Editor" below).
 

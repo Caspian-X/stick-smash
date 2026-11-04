@@ -968,3 +968,90 @@ fn raw_input_routing_starts_the_expected_moves() {
         assert_eq!(m.slot, slot);
     }
 }
+
+fn sword_angle_at(keys: &[[f64; 2]], t: f64) -> f64 {
+    for k in 1..keys.len() {
+        let ([t0, a0], [t1, a1]) = (keys[k - 1], keys[k]);
+        if t <= t1 && t1 > t0 {
+            return a0 + (a1 - a0) * ((t - t0) / (t1 - t0)).clamp(0., 1.);
+        }
+    }
+    keys.last().map_or(0., |k| k[1])
+}
+
+/// The fitted sword tracks use unwrapped degrees. A jump past half a turn is a wrapped key (`20` written after
+/// `340`), which spins the blade the long way around instead of continuing the swing.
+#[test]
+fn sword_keys_never_wrap_the_swing() {
+    let d = common::data();
+    let f = d.fighters.iter().find(|f| f.id == "throbbin").unwrap();
+    for slot in sim::data::Moves::SLOTS {
+        let Some(m) = f.moves.get(slot) else { continue };
+        for (tl, phases) in m.timelines().enumerate() {
+            for p in phases {
+                let Some(a) = p.attach.get("sword") else { continue };
+                for k in a.angle.windows(2) {
+                    let (t0, a0, t1, a1) = (k[0][0], k[0][1], k[1][0], k[1][1]);
+                    assert!(
+                        (a1 - a0).abs() <= 180.,
+                        "{slot} timeline {tl} phase {}: sword turns {a0} -> {a1} between frames {t0} and {t1}",
+                        p.name
+                    );
+                }
+            }
+        }
+    }
+}
+
+/// A smash's blade should lie along its forward hitbox capsule through the clean and late windows.
+#[test]
+fn smash_blades_follow_the_forward_hitboxes() {
+    let d = common::data();
+    let f = d.fighters.iter().find(|f| f.id == "throbbin").unwrap();
+    for phases in f.moves.fsmash.timelines() {
+        let keys = &phases[0].attach["sword"].angle;
+        for t in [15., 16., 17., 20., 26.] {
+            let a = sword_angle_at(keys, t);
+            assert!(a.abs() <= 25., "fsmash blade at frame {t} points {a}° (expected forward)");
+        }
+    }
+}
+
+/// Casting and grabbing need both hands: the hand sword is hidden and its back copy shown for those phases.
+#[test]
+fn casting_and_grabbing_stow_the_sword() {
+    let d = common::data();
+    let f = d.fighters.iter().find(|f| f.id == "throbbin").unwrap();
+    let stowed = |p: &sim::data::Phase| {
+        p.attach.get("sword").is_some_and(|a| a.hide.is_some())
+            && p.attach.get("swordBack").is_some_and(|a| a.show.is_some())
+    };
+    for slot in ["nspec", "sspec", "uspec", "dspec", "grab", "dashgrab"] {
+        let m = f.moves.get(slot).unwrap();
+        for phases in m.timelines() {
+            for p in phases {
+                assert!(stowed(p), "{slot} phase {} keeps the sword in hand", p.name);
+            }
+        }
+    }
+    for p in &f.moves.jab.phases {
+        if matches!(p.name.as_str(), "jab3" | "rapidStart" | "rapid") {
+            assert!(stowed(p), "jab phase {} keeps the sword in hand", p.name);
+        } else {
+            assert!(!stowed(p), "jab phase {} should hold the sword", p.name);
+        }
+    }
+    for phases in f.moves.fsmash.timelines() {
+        assert!(!stowed(&phases[0]), "normal attacks keep the sword in hand");
+    }
+}
+
+/// The imported hit data is invisible on its own; every article also carries vector shapes to draw.
+#[test]
+fn every_spell_article_is_drawn() {
+    let d = common::data();
+    let f = d.fighters.iter().find(|f| f.id == "throbbin").unwrap();
+    for (id, p) in &f.projectiles {
+        assert!(!p.shapes.is_empty() || p.article.is_some(), "projectile {id} has nothing to draw");
+    }
+}
