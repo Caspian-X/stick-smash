@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebuild Verdant (SSBU Byleth) from pinned 13.0.1 scripts and documented authoring rules.
+"""Rebuild Bleth (SSBU Byleth) from pinned 13.0.1 scripts and documented authoring rules.
 
 Numbers come from the pinned attack scripts (damage, launch fields, masks, hitlag, rehit, armour) and the
 pinned Ultimate Frame Data rows (startup, active windows, totals, landing lag, autocancel, charge frames,
@@ -815,7 +815,7 @@ doc = {
     '$schema': '../../schema/fighter.schema.json',
     'schemaVersion': 1,
     'extends': 'base',
-    'name': 'Verdant',
+    'name': 'Bleth',
     'tagline': 'Wielder of four relics',
     'blurb': 'Very long reach and heavy reads at the cost of speed. Areadbhar stabs and Aymr slams, Failnaught '
              'charges a piercing arrow and the Sword of the Creator tethers a ledge.',

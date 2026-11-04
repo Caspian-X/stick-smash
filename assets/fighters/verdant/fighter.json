@@ -2,7 +2,7 @@
   "$schema": "../../schema/fighter.schema.json",
   "schemaVersion": 1,
   "extends": "base",
-  "name": "Verdant",
+  "name": "Bleth",
   "tagline": "Wielder of four relics",
   "blurb": "Very long reach and heavy reads at the cost of speed. Areadbhar stabs and Aymr slams, Failnaught charges a piercing arrow and the Sword of the Creator tethers a ledge.",
   "stats": {

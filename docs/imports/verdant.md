@@ -1,13 +1,13 @@
-# Verdant reference and conversion record
+# Bleth reference and conversion record
 
-Playable SSBU **Byleth** adaptation, packaged as **Verdant**. It is the first import that draws four separate
+Playable SSBU **Byleth** adaptation, packaged as **Bleth**. It is the first import that draws four separate
 weapons from one kit: the **Sword of the Creator** (whip-sword), **Areadbhar** (lance), **Aymr** (axe) and
 **Failnaught** (bow). It uses one hidden attachment per weapon, shown per phase, so each move visibly wields the
 weapon the source gives it.
 
 ## Target and status
 
-- Package/id: `assets/fighters/verdant/fighter.json`; display name **Verdant** (`verdant`), inheriting only the
+- Package/id: `assets/fighters/verdant/fighter.json`; display name **Bleth** (`verdant`), inheriting only the
   abstract `base` package.
 - Branch: `t3/db74d87e` (this worktree). Source game: Super Smash Bros. Ultimate, patch **13.0.1**.
 - Intended identity: very long range, slow, high-damage reads. Areadbhar stabs, Aymr slams, Failnaught charges a
@@ -213,3 +213,6 @@ The shared loop-seam rule gives the finisher its own identity: the coverage-foll
 rehit followed by a tie-off were probed: up smash stays `2 + 2 + 2 + 2 + 10`, neutral air stays
 `2.5 + 2.5 + 2.5 + 3`. The rule adds an identity at up smash's rehit-7 → rehit-4 seam without changing its
 complete damage sequence. No other import's base non-jab/non-recovery timeline declares rehit.
+
+Naming decision (2026-11-04): the display name changed from Verdant to **Bleth**. Package id `verdant`,
+directory, tools, pinned sources and `34a`–`34o` screenshot names deliberately remain unchanged.

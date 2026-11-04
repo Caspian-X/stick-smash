@@ -1,4 +1,4 @@
-//! Verdant (SSBU Byleth) reference behavior, per-move weapon attachment, tether recovery and raw-input coverage.
+//! Bleth (SSBU Byleth) reference behavior, per-move weapon attachment, tether recovery and raw-input coverage.
 mod common;
 
 use sim::data::HitType;
@@ -73,7 +73,7 @@ fn package_identity_and_slots() {
     let d = common::data();
     let f = d.fighter("verdant").expect("verdant package");
     assert_eq!(f.id, "verdant");
-    assert_eq!(f.name, "Verdant");
+    assert_eq!(f.name, "Bleth");
     assert_eq!(f.extends.as_deref(), Some("base"));
     assert!(!f.is_abstract);
     for slot in [
