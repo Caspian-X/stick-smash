@@ -44,13 +44,17 @@ sends the pointer back to the roster, and on the roster leaves. With your hands 
 
 When everyone has dropped their chip, press start (or attack on your own chip).
 
-**Stage select.** Everyone votes with their pointer by dropping a vote on a stage; Stocks are set here too.
-Special takes your vote back (or, with no vote, returns to character select). Once everyone has voted, or someone
-presses start once there is a vote (or attack on their own vote), a roulette spins over the voted stages, weighted
-by votes, and the match begins. Stages without enough start positions for everyone are dimmed.
+**Stage select.** Everyone votes with their pointer by dropping a vote on a stage; Stocks and the Time limit
+(Off, or 1:00 to 10:00 in 30-second steps) are set here too. Special takes your vote back (or, with no vote,
+returns to character select). Once everyone has voted, or someone presses start once there is a vote (or attack on
+their own vote), a roulette spins over the voted stages, weighted by votes, and the match begins. Stages without
+enough start positions for everyone are dimmed.
 
 **In a match**, knock opponents past the edge of the screen. The more damage they have, the farther they fly.
-Start / Esc pauses; only the device that paused controls the pause menu. F1 toggles the hitbox overlay.
+With a time limit, the clock counts down at the top of the screen, turns red and beeps through its last ten
+seconds, and at zero the side with the most stocks (then the least damage) wins; the sides still tied go to sudden
+death, where they start again at 300% with one stock. Start / Esc pauses; only the device that paused controls
+the pause menu. F1 toggles the hitbox overlay.
 
 **After a match**: rematch, back to character select, main menu, save the replay or watch it. Every completed versus
 match is auto-saved (the last 10 are kept, `global.replay.autoSaveCount`; editor test matches aren't recorded);

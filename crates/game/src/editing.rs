@@ -102,7 +102,7 @@ fn requests(
             } else {
                 (Mode::Training, 1, slot(None, dummy, None, "Dummy", 1))
             };
-            let rules = Rules { stocks, stage, friendly_fire: false };
+            let rules = Rules { stocks, stage, friendly_fire: false, time_limit: None };
             match Match::new(&d, mode, vec![slot(Some(p1), fi, None, "P1", 0), other], rules, play::seed()) {
                 Ok(mut m) => {
                     m.unrecord();

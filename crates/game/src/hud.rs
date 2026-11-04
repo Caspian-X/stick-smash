@@ -1,8 +1,9 @@
 //! In-match HUD: player panels along the bottom (percent with damage color and hit shake, stocks), name tags,
-//! offscreen bubbles at the screen edge, the countdown / GO! / GAME! text, and the pause menu.
+//! offscreen bubbles at the screen edge, the match timer at the top, the countdown / GO! / TIME! / GAME! text, and
+//! the pause menu.
 
 use bevy::prelude::*;
-use bevy::text::LineHeight;
+use bevy::text::{FontSize, LineHeight};
 use bevy::window::PrimaryWindow;
 use render::Framing;
 use sim::world::State as FState;
@@ -26,7 +27,7 @@ impl Plugin for HudPlugin {
                 (
                     (play::match_flow, pause).chain().in_set(UiSystems::Input).run_if(in_match.clone()),
                     draw_pause.in_set(UiSystems::Draw).run_if(in_match.clone()),
-                    (percents, stocks, tags, bubbles, big)
+                    (percents, stocks, tags, bubbles, big, timer)
                         .in_set(UiSystems::Animate)
                         .run_if(in_match.or_else(in_state(Screen::Playback))),
                 ),
@@ -53,10 +54,18 @@ pub struct BubbleNub(usize);
 #[derive(Component)]
 pub struct Big;
 #[derive(Component)]
+pub struct TimerBox;
+#[derive(Component)]
+pub struct TimerText;
+#[derive(Component)]
 pub struct HudRoot;
 
 const MAX_STOCK_ICONS: i32 = 5;
 const BUBBLE: f32 = 54.;
+/// The match timer's box, top centre: width, height and top margin, logical UI pixels.
+const TIMER_W: f32 = 150.;
+const TIMER_H: f32 = 46.;
+const TIMER_TOP: f32 = 12.;
 
 fn spawn(mut commands: Commands, m: Res<Match>, fonts: Res<Fonts>, screen: Res<State<Screen>>) {
     let f = &*fonts;
@@ -64,6 +73,8 @@ fn spawn(mut commands: Commands, m: Res<Match>, fonts: Res<Fonts>, screen: Res<S
     let n = m.slots.len();
     let w = card_width(n, 236.);
     let training = m.mode == Mode::Training;
+    // Sudden death shows a single stock however many the rules set.
+    let stocks = m.world.cfg.stocks;
     commands.spawn((root(), HudRoot, DespawnOnExit(*screen.get()), GlobalZIndex(z::HUD))).with_children(|p| {
         for (i, s) in m.slots.iter().enumerate() {
             let (main, _, _) = pal(d, i);
@@ -190,11 +201,11 @@ fn spawn(mut commands: Commands, m: Res<Match>, fonts: Res<Fonts>, screen: Res<S
                             .with_children(|p| {
                                 if training {
                                     p.spawn(txt(&f.label, 15., FAINT, if i == 0 { "Training" } else { "Dummy" }));
-                                } else if m.rules.stocks > MAX_STOCK_ICONS {
+                                } else if stocks > MAX_STOCK_ICONS {
                                     stock_icon(p, main, i, 1);
                                     p.spawn((txt(&f.heavy, 18., STAR, ""), Stock(i, 0)));
                                 } else {
-                                    for k in 1..=m.rules.stocks {
+                                    for k in 1..=stocks {
                                         stock_icon(p, main, i, k);
                                     }
                                 }
@@ -214,6 +225,44 @@ fn spawn(mut commands: Commands, m: Res<Match>, fonts: Res<Fonts>, screen: Res<S
                     });
                 });
             }
+        });
+        // The match timer, top centre; the animation shows and styles it.
+        p.spawn((
+            node(|n| {
+                n.position_type = PositionType::Absolute;
+                n.top = Val::Px(TIMER_TOP);
+                n.left = Val::Px(0.);
+                n.right = Val::Px(0.);
+                n.justify_content = JustifyContent::Center;
+                n.align_items = AlignItems::Center;
+            }),
+            TimerBox,
+            Visibility::Hidden,
+            Pickable::IGNORE,
+        ))
+        .with_children(|p| {
+            p.spawn((
+                node(|n| {
+                    n.width = Val::Px(TIMER_W);
+                    n.height = Val::Px(TIMER_H);
+                    n.justify_content = JustifyContent::Center;
+                    n.align_items = AlignItems::Center;
+                    n.border = UiRect::all(Val::Px(2.));
+                    n.border_radius = BorderRadius::all(Val::Px(12.));
+                }),
+                BackgroundColor(INK),
+                BorderColor::all(LINE),
+                BoxShadow::new(NIGHT.with_alpha(0.6), Val::Px(0.), Val::Px(0.), Val::Px(0.), Val::Px(14.)),
+            ))
+            .with_children(|p| {
+                p.spawn((
+                    txt(&f.display, 32., STAR, ""),
+                    TextShadow { offset: Vec2::new(0., 2.), color: NIGHT.with_alpha(0.8) },
+                    LineHeight::RelativeToFont(1.),
+                    TimerText,
+                    UiTransform::default(),
+                ));
+            });
         });
         p.spawn((
             node(|n| {
@@ -387,8 +436,11 @@ fn bubbles(
     }
 }
 
-/// The countdown, GO! and GAME!, popping in.
-fn big(m: Res<Match>, mut q: Query<(&mut Text, &mut TextColor, &mut UiTransform, &mut Visibility), With<Big>>) {
+/// The countdown, GO!, TIME! and GAME!, popping in.
+fn big(
+    m: Res<Match>,
+    mut q: Query<(&mut Text, &mut TextColor, &mut TextFont, &mut UiTransform, &mut Visibility), With<Big>>,
+) {
     let w = &m.world;
     let g = &m.data.global.match_;
     let look = &m.data.global.render.hud.look;
@@ -397,22 +449,66 @@ fn big(m: Res<Match>, mut q: Query<(&mut Text, &mut TextColor, &mut UiTransform,
         (String::new(), STAR, 0.)
     } else if w.count > 0 {
         let into = 1. - (w.count % hz) as f32 / hz as f32;
-        (w.count.div_ceil(hz).to_string(), STAR, if w.count.is_multiple_of(hz) { 0. } else { into })
+        if w.cfg.sudden_death {
+            ("SUDDEN DEATH".into(), ALERT, into)
+        } else {
+            (w.count.div_ceil(hz).to_string(), STAR, if w.count.is_multiple_of(hz) { 0. } else { into })
+        }
     } else if w.go_t > 0 {
         ("GO!".into(), GOLD, 1. - w.go_t as f32 / g.go_frames as f32)
+    } else if w.time_up && w.end_t > 0 {
+        ("TIME!".into(), ALERT, 1. - w.end_t as f32 / g.end_frames as f32)
     } else if w.end_t > 0 && !w.over {
         ("GAME!".into(), STAR, 1. - w.end_t as f32 / g.end_frames as f32)
     } else {
         (String::new(), STAR, 0.)
     };
-    for (mut text, mut tc, mut tf, mut vis) in &mut q {
+    let size = if s == "SUDDEN DEATH" { 72. } else { 180. };
+    for (mut text, mut tc, mut font, mut tf, mut vis) in &mut q {
         *vis = if s.is_empty() { Visibility::Hidden } else { Visibility::Inherited };
-        text.0.clone_from(&s);
+        if text.0 != s {
+            text.0.clone_from(&s);
+        }
+        if font.font_size != FontSize::Px(size) {
+            font.font_size = FontSize::Px(size);
+        }
         let fade = if s == "GO!" { (1. - pop) * 2. } else { 1. };
         tc.0 = color.with_alpha(fade.clamp(0., 1.));
         let e = (pop * look.pop_speed).min(1.);
         tf.scale = Vec2::splat(look.pop_scale - (look.pop_scale - 1.) * (1. - (1. - e).powi(3)));
-        tf.rotation = Rot2::degrees(if s == "GAME!" { -4. } else { 0. });
+        tf.rotation = Rot2::degrees(if matches!(s.as_str(), "GAME!" | "TIME!") { -4. } else { 0. });
+    }
+}
+
+/// The match timer, top centre: `M:SS`, turning red and pulsing once a second for its last
+/// `match.timerWarnSeconds`. Hidden without a time limit, before GO! and in training.
+fn timer(
+    m: Res<Match>,
+    mut boxes: Query<&mut Visibility, With<TimerBox>>,
+    mut texts: Query<(&mut Text, &mut TextColor, &mut UiTransform), With<TimerText>>,
+) {
+    let w = &m.world;
+    let g = &m.data.global.match_;
+    let pulse = m.data.global.render.hud.look.timer_pulse;
+    let show = w.time_left.is_some() && !w.cfg.training && w.count == 0;
+    for mut vis in &mut boxes {
+        *vis = if show { Visibility::Inherited } else { Visibility::Hidden };
+    }
+    let left = w.time_left.unwrap_or(0);
+    let warn = left <= g.timer_warn_seconds.saturating_mul(sim::TICK_HZ);
+    let label = play::time_remaining(left);
+    // Pops on each whole second (the timer's beep), decaying over that second.
+    let k = (left % sim::TICK_HZ) as f32 / sim::TICK_HZ as f32;
+    let e = if warn { k * k } else { 0. };
+    for (mut text, mut color, mut tf) in &mut texts {
+        if text.0 != label {
+            text.0.clone_from(&label);
+        }
+        let c = if warn { ALERT } else { STAR };
+        if color.0 != c {
+            color.0 = c;
+        }
+        tf.scale = Vec2::splat(1. + pulse * e);
     }
 }
 

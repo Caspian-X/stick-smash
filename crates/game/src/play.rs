@@ -56,6 +56,31 @@ pub struct Rules {
     pub stocks: i32,
     pub stage: String,
     pub friendly_fire: bool,
+    /// Time limit in seconds; `None` plays until one side runs out of stocks.
+    pub time_limit: Option<u32>,
+}
+
+/// Time limit choices, SSBU style: Off, then 1:00 to 10:00 in 30-second steps.
+pub fn time_choices() -> impl Iterator<Item = Option<u32>> {
+    std::iter::once(None).chain((2..=20).map(|half_minutes| Some(half_minutes * 30)))
+}
+
+/// The choice `by` steps from `t` (wrapping).
+pub fn cycle_time(t: Option<u32>, by: i32) -> Option<u32> {
+    let all: Vec<_> = time_choices().collect();
+    let at = all.iter().position(|c| *c == t).unwrap_or(0) as i32;
+    all[(at + by).rem_euclid(all.len() as i32) as usize]
+}
+
+/// "Off" or "M:SS".
+pub fn time_label(t: Option<u32>) -> String {
+    t.map_or_else(|| "Off".into(), |s| format!("{}:{:02}", s / 60, s % 60))
+}
+
+/// The timer's remaining time as HUD text: `M:SS`, rounded up so the limit shows in full at the start.
+pub fn time_remaining(ticks: u32) -> String {
+    let s = ticks.div_ceil(sim::TICK_HZ);
+    format!("{}:{:02}", s / 60, s % 60)
 }
 
 /// Training dummy settings.
@@ -114,6 +139,20 @@ pub fn seed() -> u32 {
 
 impl Match {
     pub fn new(base: &Arc<GameData>, mode: Mode, slots: Vec<Slot>, rules: Rules, seed: u32) -> Result<Self, String> {
+        Self::build(base, mode, slots, rules, seed, false, &[])
+    }
+
+    /// Sudden death gives one stock at `match.suddenDeathDamage` and no timer, whatever `rules` say; `out` (the
+    /// slots that lost the time-up) start eliminated.
+    fn build(
+        base: &Arc<GameData>,
+        mode: Mode,
+        slots: Vec<Slot>,
+        rules: Rules,
+        seed: u32,
+        sudden_death: bool,
+        out: &[usize],
+    ) -> Result<Self, String> {
         if base.global.palette.is_empty() {
             return Err("content palette must not be empty".into());
         }
@@ -124,17 +163,21 @@ impl Match {
         let cfg = MatchConfig {
             seed,
             stage: rules.stage.clone(),
-            stocks: rules.stocks,
+            stocks: if sudden_death { 1 } else { rules.stocks },
             training: matches!(mode, Mode::Training | Mode::Showcase),
             friendly_fire: rules.friendly_fire,
+            time_limit: rules.time_limit.filter(|_| !sudden_death),
+            sudden_death,
             players: slots
                 .iter()
-                .map(|s| PlayerConfig {
+                .enumerate()
+                .map(|(i, s)| PlayerConfig {
                     fighter: base.fighters[s.fighter].id.clone(),
                     cpu: s.cpu,
                     team: s.team,
                     tap_jump: s.tap_jump,
                     controls: s.controls,
+                    eliminated: out.contains(&i),
                 })
                 .collect(),
         };
@@ -169,6 +212,11 @@ impl Match {
         })
     }
 
+    pub fn unrecord(&mut self) {
+        self.unrecorded = true;
+        self.recording = None;
+    }
+
     /// Same players and rules, fresh world.
     pub fn restart(&mut self, base: &Arc<GameData>, seed: u32) {
         let Ok(mut m) = Match::new(base, self.mode, self.slots.clone(), self.rules.clone(), seed) else { return };
@@ -185,9 +233,31 @@ impl Match {
         }
     }
 
-    pub fn unrecord(&mut self) {
-        self.unrecorded = true;
-        self.recording = None;
+    /// Sudden death after a time-up tie: the sides still tied for the lead start at `match.suddenDeathDamage` with
+    /// one stock each and no timer; everyone else starts out. Returns false (and changes nothing) when nobody is
+    /// left to fight. Replaces the recording, so a replay of a time-up tie only covers the sudden death.
+    pub fn start_sudden_death(&mut self, base: &Arc<GameData>, seed: u32) -> bool {
+        // Who tied is fixed when the clock hit zero, not recomputed after the ending animation.
+        let leaders = self.world.time_tied.clone();
+        if leaders.is_empty() {
+            return false;
+        }
+        let out: Vec<usize> = (0..self.slots.len()).filter(|i| !leaders.contains(i)).collect();
+        let Ok(mut m) = Self::build(base, self.mode, self.slots.clone(), self.rules.clone(), seed, true, &out) else {
+            return false;
+        };
+        m.debug = self.debug;
+        m.speed = self.speed;
+        // Regulation stats carry over; the sides that lost the time up are out from the first frame.
+        m.stats = self.stats.clone();
+        for i in &out {
+            m.stats[*i].out_at = Some(0);
+        }
+        if self.unrecorded {
+            m.unrecord();
+        }
+        *self = m;
+        true
     }
 
     /// Training: the dummy behaves like `mode` from now on (and next time).
@@ -221,7 +291,7 @@ impl Match {
                 color: i,
             })
             .collect();
-        let rules = Rules { stocks: 2, stage: stage.id.clone(), friendly_fire: false };
+        let rules = Rules { stocks: 2, stage: stage.id.clone(), friendly_fire: false, time_limit: None };
         Match::new(base, Mode::Attract, slots, rules, seed)
     }
 
@@ -429,14 +499,15 @@ pub fn attract(mut commands: Commands, m: Option<Res<Match>>, data: Res<Data>, m
     }
 }
 
-/// Pause on Start from a player's device; the pause menu takes over from there. Also the F1 debug toggle and
-/// the move to the results screen.
+/// Pause on Start from a player's device; the pause menu takes over from there. Also the F1 debug toggle, sudden
+/// death after a time-up tie, and the move to the results screen.
 pub fn match_flow(
     mut m: ResMut<Match>,
     mut devs: ResMut<Devices>,
     saved: Res<crate::settings::Saved>,
     keys: Res<ButtonInput<KeyCode>>,
     mut scene: ResMut<Scene>,
+    data: Res<Data>,
     mut next: ResMut<NextState<Screen>>,
 ) {
     if keys.just_pressed(KeyCode::F1) {
@@ -464,6 +535,18 @@ pub fn match_flow(
             m.clear_input(&mut devs);
         }
     }
+    // Time up with the tied sides level: they start again at 300%, one stock each.
+    if m.mode == Mode::Versus
+        && m.world.over
+        && m.world.time_up
+        && m.world.winner.is_none()
+        && !m.world.cfg.sudden_death
+        && m.start_sudden_death(&data.0, seed())
+    {
+        scene.reset(&m.world);
+        m.clear_input(&mut devs);
+        return;
+    }
     if m.mode == Mode::Versus && m.world.over && m.over_t >= m.data.global.render.hud.results_delay {
         next.set(Screen::Results);
     }
@@ -472,6 +555,110 @@ pub fn match_flow(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn time_labels_and_choices() {
+        assert_eq!(time_label(None), "Off");
+        assert_eq!(time_label(Some(60)), "1:00");
+        assert_eq!(time_label(Some(450)), "7:30");
+        assert_eq!(cycle_time(None, 1), Some(60));
+        assert_eq!(cycle_time(Some(60), -1), None);
+        assert_eq!(cycle_time(Some(60), 18), Some(600));
+        assert_eq!(cycle_time(Some(600), 1), None);
+        assert_eq!(time_remaining(60 * 180), "3:00");
+        assert_eq!(time_remaining(60 * 60 - 1), "1:00");
+        assert_eq!(time_remaining(1), "0:01");
+        assert_eq!(time_remaining(0), "0:00");
+    }
+
+    #[test]
+    fn a_time_up_tie_starts_sudden_death_and_a_decision_does_not() {
+        let data = crate::test_data();
+        let slot = |i: usize| Slot {
+            dev: None,
+            fighter: i,
+            cpu: Some(1),
+            team: None,
+            tap_jump: true,
+            controls: Default::default(),
+            tag: "CPU".into(),
+            color: i,
+        };
+        let rules = || Rules { stocks: 2, stage: "arena".into(), friendly_fire: false, time_limit: Some(60) };
+        let m = Match::new(&data, Mode::Versus, (0..3).map(slot).collect(), rules(), 7).unwrap();
+        let (devs, scene) = (Devices::default(), Scene::new(data.clone()));
+        let mut app = App::new();
+        app.insert_resource(m)
+            .insert_resource(devs)
+            .insert_resource(scene)
+            .insert_resource(Data(data.clone()))
+            .init_resource::<crate::settings::Saved>()
+            .init_resource::<ButtonInput<KeyCode>>()
+            .insert_resource(State::new(Screen::Match))
+            .insert_resource(NextState::<Screen>::default())
+            .add_systems(Update, match_flow);
+        // Two sides level on stocks and damage; the third is out of stocks.
+        {
+            let mut m = app.world_mut().resource_mut::<Match>();
+            m.world.fighters[2].stocks = 0;
+            m.world.over = true;
+            m.world.time_up = true;
+            m.world.winner = None;
+            m.world.time_tied = vec![0, 1];
+            m.stats[0].kos = 4;
+        }
+        app.update();
+        {
+            let m = app.world().resource::<Match>();
+            assert!(m.world.cfg.sudden_death, "a time-up tie goes to sudden death");
+            assert_eq!(m.world.cfg.time_limit, None);
+            assert!(!m.world.over);
+            assert_eq!(m.world.time_left, None);
+            for f in &m.world.fighters[..2] {
+                assert_eq!(f.dmg, m.data.global.match_.sudden_death_damage);
+                assert_eq!(f.stocks, 1);
+            }
+            let out = &m.world.fighters[2];
+            assert_eq!(out.stocks, 0, "only the tied sides play it");
+            assert_eq!(out.state, sim::world::State::Out);
+            assert_eq!(m.stats[0].kos, 4, "regulation stats carry over");
+            let place = m.placements();
+            assert_eq!(place[2], 3, "the side that lost the time up places last");
+        }
+        // Everyone tied (no eliminated slot) is still sudden death, not a second timed match.
+        let m = Match::new(&data, Mode::Versus, (0..2).map(slot).collect(), rules(), 7).unwrap();
+        app.world_mut().insert_resource(m);
+        {
+            let mut m = app.world_mut().resource_mut::<Match>();
+            m.world.over = true;
+            m.world.time_up = true;
+            m.world.winner = None;
+            m.world.time_tied = vec![0, 1];
+        }
+        app.update();
+        {
+            let m = app.world().resource::<Match>();
+            assert!(m.world.cfg.sudden_death);
+            assert_eq!(m.world.cfg.stocks, 1);
+            assert!(m.world.fighters.iter().all(|f| f.stocks == 1));
+        }
+        // A decided time up ends the match instead.
+        let m = Match::new(&data, Mode::Versus, (0..3).map(slot).collect(), rules(), 7).unwrap();
+        app.world_mut().insert_resource(m);
+        {
+            let mut m = app.world_mut().resource_mut::<Match>();
+            m.world.over = true;
+            m.world.time_up = true;
+            m.world.winner = Some(1);
+            m.over_t = m.data.global.render.hud.results_delay;
+        }
+        app.update();
+        {
+            let m = app.world().resource::<Match>();
+            assert!(!m.world.cfg.sudden_death);
+            assert!(matches!(app.world().resource::<NextState<Screen>>(), NextState::Pending(Screen::Results)));
+        }
+    }
 
     #[test]
     fn fast_forward_discards_countdown_sounds_but_live_ticks_keep_them() {
@@ -531,7 +718,7 @@ mod tests {
             tag: "CPU".into(),
             color: i,
         };
-        let rules = Rules { stocks: 1, stage: "arena".into(), friendly_fire: false };
+        let rules = Rules { stocks: 1, stage: "arena".into(), friendly_fire: false, time_limit: None };
         let mut m = Match::new(&data, Mode::Versus, (0..4).map(slot).collect(), rules, 7).unwrap();
         m.world.winner = Some(0);
         (m.stats[2].out_at, m.stats[1].out_at, m.stats[3].out_at) = (Some(50), Some(10), Some(90));
@@ -551,7 +738,7 @@ mod tests {
             tag: "CPU".into(),
             color: i,
         };
-        let rules = Rules { stocks: 1, stage: "arena".into(), friendly_fire: false };
+        let rules = Rules { stocks: 1, stage: "arena".into(), friendly_fire: false, time_limit: None };
         let mut m = Match::new(&data, Mode::Versus, (0..3).map(slot).collect(), rules, 7).unwrap();
         let (mut devs, mut scene) = (Devices::default(), Scene::new(data.clone()));
         while !m.world.over && m.world.frame < 60 * 60 * 10 {

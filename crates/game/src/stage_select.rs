@@ -12,9 +12,9 @@ use sim::GameData;
 use crate::grid::{self, Area, Chip};
 use crate::hints::{self, Ctl};
 use crate::input::{Dev, Devices};
-use crate::play::Match;
+use crate::play::{self, Match};
 use crate::pointer::{self, Grid, Look, Pointers};
-use crate::select::{self, FromStages, STOCKS, Select, Step};
+use crate::select::{self, FromStages, STOCKS, Select, Step, TIME};
 use crate::settings::Saved;
 use crate::showcase;
 use crate::ui::{self, *};
@@ -151,14 +151,7 @@ impl Vote {
         let screen = ptrs.screen;
         for (v, x) in self.voters.iter_mut().enumerate() {
             let Some(st) = devs.map.get(&x.dev) else { continue };
-            let exit = ptrs.hold_back(
-                x.dev,
-                st,
-                x.vote.is_some(),
-                dt,
-                d.global.render.select.back_hold_secs,
-                format!("{} · back to fighters", sel.tag(x.slot)),
-            );
+            let exit = ptrs.hold_back(x.dev, st, x.vote.is_some(), dt, d.global.render.select.back_hold_secs);
             leave |= exit;
             let ptr = ptrs.of(x.dev, v, &x.cursor, spots);
             let (acts, moved) = pointer::drive(ptr, &mut x.cursor, st, spots, Some(g), cfg, dt, screen);
@@ -171,7 +164,7 @@ impl Vote {
                         self.preview = kind(k).1;
                         ptr.bump(cfg.drop);
                     }
-                    Action::Activate(k) | Action::Spin(k, _) if kind(k).0 != STOCKS => {}
+                    Action::Activate(k) | Action::Spin(k, _) if !matches!(kind(k).0, STOCKS | TIME) => {}
                     Action::Activate(k) => sel.spin(k, 1, d),
                     Action::Spin(k, by) => sel.spin(k, by, d),
                     Action::Back if x.vote.is_some() => {
@@ -206,7 +199,7 @@ impl Vote {
         let mut hints = vec![];
         if on.0 == TILE {
             hints.push((Ctl::Confirm, if x.vote == Some(on.1) { "roll" } else { "vote" }));
-        } else if on.0 == STOCKS {
+        } else if matches!(on.0, STOCKS | TIME) {
             hints.push((Ctl::Confirm, "change"));
         }
         hints.push(match x.vote {
@@ -340,6 +333,7 @@ fn stage(
 pub struct VoteKey {
     vote: Vote,
     stocks: i32,
+    time: Option<u32>,
 }
 
 /// The landed tile's bounce.
@@ -390,7 +384,7 @@ fn draw(
     thumbs: Res<StageThumbs>,
     (devs, saved): (Res<Devices>, Res<Saved>),
 ) {
-    let shown = VoteKey { vote: vote.clone(), stocks: sel.stocks };
+    let shown = VoteKey { vote: vote.clone(), stocks: sel.stocks, time: sel.time };
     let Some(mut root) = ui::rebuild(&mut commands, &roots, &shown, Screen::Stages, z::SCREEN) else { return };
     let (d, f, v, s) = (&data.0, &*fonts, &*vote, &*sel);
     let fit = s.fitting(d);
@@ -401,24 +395,35 @@ fn draw(
     };
     root.insert(BackgroundColor(NIGHT.with_alpha(0.8))).with_children(|p| {
         title_band(p, f, d, "Stage", |p| {
-            let k = key(STOCKS, 0);
-            let on = v.voters.iter().find(|x| x.cursor.key == k);
-            p.spawn((
-                node(|n| {
-                    n.flex_direction = FlexDirection::Row;
-                    n.align_items = AlignItems::Center;
-                    n.justify_content = JustifyContent::SpaceBetween;
-                    n.width = Val::Px(PANEL_W);
-                    n.padding = UiRect::axes(Val::Px(14.), Val::Px(6.));
-                    n.border_radius = BorderRadius::all(Val::Px(10.));
-                }),
-                BackgroundColor(on.map_or(INK.with_alpha(1.), |x| color(x).0.mix(&NIGHT, 0.75))),
-                Focusable { key: k, owner: None, spin: true },
-            ))
+            p.spawn(node(|n| {
+                n.flex_direction = FlexDirection::Column;
+                n.row_gap = Val::Px(5.);
+                n.width = Val::Px(PANEL_W);
+            }))
             .with_children(|p| {
-                p.spawn(txt(&f.label, 20., DIM, "Stocks"));
-                let value = if on.is_some() { format!("‹ {} ›", s.stocks) } else { s.stocks.to_string() };
-                p.spawn(txt(&f.display, 26., STAR, value));
+                // Stocks and the time limit, like SSBU's rules screen; any pointer rolls them.
+                for (k, label, value) in
+                    [(STOCKS, "Stocks", s.stocks.to_string()), (TIME, "Time", play::time_label(s.time))]
+                {
+                    let k = key(k, 0);
+                    let on = v.voters.iter().find(|x| x.cursor.key == k);
+                    p.spawn((
+                        node(|n| {
+                            n.flex_direction = FlexDirection::Row;
+                            n.align_items = AlignItems::Center;
+                            n.justify_content = JustifyContent::SpaceBetween;
+                            n.padding = UiRect::axes(Val::Px(14.), Val::Px(5.));
+                            n.border_radius = BorderRadius::all(Val::Px(10.));
+                        }),
+                        BackgroundColor(on.map_or(INK.with_alpha(1.), |x| color(x).0.mix(&NIGHT, 0.75))),
+                        Focusable { key: k, owner: None, spin: true },
+                    ))
+                    .with_children(|p| {
+                        p.spawn(txt(&f.label, 20., DIM, label));
+                        let value = if on.is_some() { format!("‹ {value} ›") } else { value };
+                        p.spawn(txt(&f.display, 26., STAR, value));
+                    });
+                }
             });
         });
         // The stage grid.

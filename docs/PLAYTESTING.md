@@ -13,6 +13,9 @@ Controls and the basic flow are in the [README](../README.md#how-to-play).
   on the right. Devices join with attack or jump (any button but special / back). Up to 8 players.
 - **Filling the lobby**: on character select, point at **Add CPU** and press attack. Each CPU card has a fighter,
   a level (Easy, Normal, Hard) and, with Teams on, a team. Your picks, CPUs and rules are remembered for next time.
+- **Rules**: Stocks and the **Time** limit (Off, or 1:00 to 10:00 in 30-second steps) are on the stage select
+  screen. With a clock, the HUD timer beeps through its last ten seconds; at zero the most stocks win, then the
+  lowest damage, and an exact tie starts sudden death at 300% with one stock.
 - Turn on Settings → *Hitboxes in versus* if you want the debug overlay in every match, or press **F1** in a match
   to toggle it.
 
@@ -187,4 +190,4 @@ After changing gameplay numbers in `assets/`:
 
 Player numbers and free-for-all colors stay with each selection pick when cards compact. New humans receive the lowest unused identity; CPUs also reserve identities (the initial CPU starts blue, leaving red P1 available). A ready disconnected pick keeps its identity when reclaimed. Team colors continue to follow the team. Device reconnect profile allocation remains a separate limitation.
 
-Hold Back for 1.5 seconds to leave an unlocked roster pick, return from stage select without a vote, or return to the title with no joined player. The overlay names the player and destination and shows progress. Releasing cancels progress. Closing options, returning a carried CPU chip, unlocking a fighter, and unvoting happen immediately and consume that press until release. Back suppresses Start while held. Timing uses UI frame time with a 50 ms hitch cap; `render.select.backHoldSecs` tunes the threshold.
+Hold Back for 1.5 seconds to leave an unlocked roster pick, return from stage select without a vote, or return to the title with no joined player. The hold shows as a ring of dashes around the player's pointer arrow in their color: it pops in, fills clockwise from the top with a spark riding the filled end, and drains away if you let go. No text is involved; a device with no pointer (nobody has joined yet) fills a ring mid-screen. Releasing cancels progress. Closing options, returning a carried CPU chip, unlocking a fighter, and unvoting happen immediately and consume that press until release. Back suppresses Start while held. Timing uses UI frame time with a 50 ms hitch cap; `render.select.backHoldSecs` tunes the threshold and `render.select.backRing` the ring.
