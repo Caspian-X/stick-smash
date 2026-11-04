@@ -1190,7 +1190,12 @@
           "const": "bury",
           "description": "Trap grounded targets in place; airborne targets launch normally."
         },
-        { "type": "string", "const": "grab", "description": "Grabs instead of hitting." }
+        { "type": "string", "const": "grab", "description": "Grabs instead of hitting." },
+        {
+          "type": "string",
+          "const": "damageOnly",
+          "description": "Damage and shield damage only: no hitstun, hitlag, launch or state change. Used by lingering\nno-flinch hazards such as Poison Breath."
+        }
       ],
       "description": "Hitbox behavior, modeled on Smash."
     },

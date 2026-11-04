@@ -1533,7 +1533,7 @@ fn insert_key(p: &mut Phase, t: u32) {
         Some(PoseRef::Named(n)) => PoseRef::Inline(Box::new(Pose { from: Some(n), ..Default::default() })),
         None => PoseRef::Inline(Box::new(Pose { from: Some("stand".into()), ..Default::default() })),
     };
-    p.anim.push(AnimKey { at: f64::from(t), pose, lerp: false, cond: None });
+    p.anim.push(AnimKey { at: f64::from(t), pose, lerp: false, cond: None, min_charge: 0 });
     p.anim.sort_by(|a, b| a.at.total_cmp(&b.at));
 }
 

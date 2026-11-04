@@ -411,15 +411,21 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
                 w.sfx("jet");
             }
         }
-    } else {
+        // A charging move can still aim once within its own window (Long-Stem Strike's direction input).
         let m = f.mov.as_ref().unwrap();
-        if def.b_reverse && !m.reversed && m.elapsed < mv.b_reverse_window && dir == -f.face {
+        if def.b_reverse && !m.reversed && (phase(d, f).aim || m.elapsed < mv.b_reverse_window) && dir == -f.face {
             f.mov.as_mut().unwrap().reversed = true;
             reverse(f, dir);
         }
+    } else {
         let m = f.mov.as_mut().unwrap();
         m.t += 1;
         m.elapsed += 1;
+        let m = f.mov.as_ref().unwrap();
+        if def.b_reverse && !m.reversed && (phase(d, f).aim || m.elapsed < mv.b_reverse_window) && dir == -f.face {
+            f.mov.as_mut().unwrap().reversed = true;
+            reverse(f, dir);
+        }
         events(w, d, i, f);
         let p = phase(d, f);
         let t = f.mov.as_ref().unwrap().t;

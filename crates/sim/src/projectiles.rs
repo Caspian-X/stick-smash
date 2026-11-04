@@ -22,6 +22,9 @@ pub fn spawn(w: &mut World, d: &GameData, i: usize, f: &Fighter, id: &str) {
         hit.bkb *= 1. + charge * c.bkb;
         radius *= 1. + charge * c.radius;
         life = libm::round(f64::from(life) * (1. + charge * c.life)) as u32;
+        if let Some(rehit) = hit.rehit {
+            hit.rehit = Some(libm::round((f64::from(rehit) + charge * c.rehit).max(1.)) as u32);
+        }
         if c.angle_to.is_some() || c.ground_angle_to.is_some() {
             let max = crate::moves::definition(d, f)
                 .phases
@@ -235,6 +238,7 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                 || !w.fighters[v].hittable()
                 || !p.hit.targets(w.fighters[v].ground)
                 || p.life <= 0 && !detonate
+                || p.hit.rehit.is_some_and(|n| p.hits.iter().any(|&(i, at)| i == v && p.age.saturating_sub(at) < n))
                 || !combat::circle_hurt(d, &w.fighters[v], w.frame, p.x, p.y, p.r)
             {
                 continue;
@@ -286,8 +290,12 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                     combat::HitSource { attacker: p.owner, direction, point: (p.x, p.y), projectile: true, label },
                 );
             }
+            // Rehitting hazards stay in play for their next contact window; single hits are consumed.
             if !detonate {
-                p.life = 0;
+                p.hits.push((v, p.age));
+                if p.hit.rehit.is_none() {
+                    p.life = 0;
+                }
             }
         }
         if detonate {

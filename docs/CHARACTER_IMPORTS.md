@@ -12,6 +12,8 @@ semantics. Copy the [reference-record template](templates/FIGHTER_REFERENCE.md) 
 animated bone fitting and independent controlled projectiles.
 [Whiplash's Zero Suit Samus record](imports/whiplash.md) covers aerial grab/tether attacks, once-per-airtime
 specials, follow-up input windows, paralysis and grounded bury effects.
+[Piranha Plant's record](imports/plant.md) covers a nonhumanoid named rig, charge-tiered joint-bound reach,
+a held/controlled projectile and a damage-only lingering hazard.
 
 ## 1. Establish the target
 
@@ -80,7 +82,7 @@ Choose and document units once per import:
 - Bone-local offsets require the bone's animated transform. With no original skeleton animation, fit a
   2D hand/weapon track from visuals, transform the offsets, and label the result **fitted**. Do not silently
   apply root-space conversion to a sword-bone offset.
-- Approximate capsules with overlapping circles; record the spacing/coverage rule. Preserve first-hitbox
+- Use native capsules for capsule geometry; when an approximation is necessary, record its spacing/coverage rule. Preserve first-hitbox
   priority where sour spots, spikes or masks overlap. Hurtboxes and the stage collision body are separate.
 - Document movement scaling independently from geometry. Weight here multiplies knockback taken (lower
   means heavier). Source knockback formulas and numeric fields are not necessarily interchangeable.

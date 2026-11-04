@@ -125,7 +125,13 @@ elapsed clock, so resetting the phase frame does not reset those cooldowns. Othe
 
 `{ "on": <trigger>, "if": <cond>, "from": <min phase frame>, "to": <phase|end|helpless|landing>, "lag": <frames> }`.
 Triggers: `timeout`, `land`, `grounded`, `airborne`, `falling` (vertical speed ≥ 0, y down), `release` (charge
-button, else attack, not held), `attackHeld` (attack held), `targetNear`, `shieldPress`, `counter`, `hit`.
+button, else attack, not held), `attackHeld` (attack held), `attackPress`, `specialPress`, `upHeld`, `targetNear`,
+`shieldPress`, `articleRelease` (a held controlled projectile was launched), `articleEnd` (it ended without a
+launch, e.g. the caster let go), `counter`, `hit`.
+
+`Phase.aim` keeps the move's single `bReverse` turnaround open for that phase, after the shared opening
+window has closed. A charged move can therefore accept a direction during its charge (Long-Stem Strike) while
+the committed strike phases ignore it. The one-turn lock is unchanged.
 
 `targetNear` needs a phase `detection` rectangle (`x1 < x2`, `y1 < y2`), in fighter-local space
 (x forward, y up). It fires when a hittable opponent's hurtbox overlaps that rectangle; facing, teams,
@@ -169,7 +175,12 @@ direction).
 
 Optional `chargeScale: { "speed": 0.024, "damage": 0.035 }` multiplies spawn velocity and damage
 by `1 + held charge ticks × coefficient`. It reads the spawning move's charge; it does not change lifetime,
-gravity, or radius. Omit it for unscaled projectiles.
+gravity, or radius. Omit it for unscaled projectiles. Optional `bkb`, `radius`, `life`, `rehit`, `angleTo` and
+`groundAngleTo` scale those properties too; `rehit` adds whole frames per held tick (rounded, at least 1). A
+projectile whose `hit.rehit` is set stays in play between contact windows and cannot hit the same victim again
+until the interval elapses; a projectile without it is consumed by its first contact. `hit.type: "damageOnly"`
+deals damage and shield damage but skips hitstun, hitlag, launch, state changes and combo linking, which is
+useful for lingering no-flinch hazards such as Poison Breath.
 
 Optional `explosion: { "armTicks": 30, "proximity": 42, "radius": 52, "sfx": "quake", "fx": [...] }`
 suppresses contact hits. After `armTicks` elapsed ticks, an opposing hittable hurtbox within `proximity`
@@ -188,18 +199,23 @@ this age; fuse expiry still detonates even before arming.
 
 - **Poses** (`poses.<name>`): joints `head, shoulder, hip, elbowF, handF, elbowB, handB, kneeF, footF, kneeB,
   footB`, plus `rot`, `pivot` (rotation center height) and `offsetY`. Missing joints come from `from` or `stand`.
-- **Animations**: a list of keys `{ "at": t, "pose": <name or inline pose>, "lerp": bool, "if": cond }`. A key
-  holds until the next one. With `lerp` the figure blends from the previous key. A key with `if` (`grounded`,
-  `airborne`, `countered`) is skipped while the condition is false. Move phases animate in phase frames
+- **Animations**: a list of keys `{ "at": t, "pose": <name or inline pose>, "lerp": bool, "if": cond, "minCharge": n }`.
+  A key holds until the next one. With `lerp` the figure blends from the previous key. A key with `if` (`grounded`,
+  `airborne`, `countered`) is skipped while the condition is false; a key with `minCharge` is skipped below that
+  many held charge ticks, which lets one phase change its posed reach as charge grows. Move phases animate in phase frames
   (`anim`). State animations (`anims.<name>`) pick a `clock`: `state` (frames in state), `world`, `run` (run
   cycle degrees), or `spin` (tumble spin degrees, signed), and may `loop`. Exceptions: `air.flip` counts frames
   since the flip started, `pummel` frames since the pummel started. `idle` above `render.overlays.runSpeed`
   shows `run`.
-- **State animation names**: `idle`, `crouch`, `run`, `jumpsquat`, `landing`, `air.rise`, `air.fall`, `air.flip`, `helpless`,
-  `shield`, `shieldDrop`, `roll`, `spot`, `airdodge`, `hold`, `pummel`, `throw.f`, `throw.b`, `throw.u`,
+- **State animation names**: `idle`, `walk`, `crawl`, `run`, `turn`, `brake`, `crouch`, `jumpsquat`, `landing`,
+  `air.rise`, `air.fall`, `air.flip`, `helpless`, `shield`, `shieldDrop`, `roll`, `spot`, `airdodge`, `hold`,
+  `pummel`, `throw.f`, `throw.b`, `throw.u`,
   `throw.d`, `grabbed`, `hitstun`, `tumble`, `shieldbreak`, `knockdown`, `getup`, `getupAttack`, `tech`, `ledge`,
   `climb`, `ledgeAttack`, `ledgeRoll`, `ledgeJump`, `dizzy`, `win`, `respawn`.
-  Holding down while grounded selects `crouch` through the ground gait; horizontal movement
+  `walk`, `crawl`, `turn` and `brake` are optional authored gait clips; a package without them keeps the
+  legacy `idle`/`run`/`crouch` selection. `turn` and `brake` sample the gait clock (`gait_t`, reset by every
+  gait change), not the idle state clock, so the one-shot transition starts at its first key after any idle age;
+  `walk`/`crawl` keep their authored clock and `run` uses the run-cycle phase. Holding down while grounded selects `crouch` through the ground gait; horizontal movement
   retains the stance when `global.gait.crawlSpeed` is enabled. Its
   animation blends with `idle` over `global.gait.crouchFrames` on entry and release; reversing the input
   reverses the blend from its current depth. The base fighter supplies a breathing loop inherited by the roster.
@@ -475,6 +491,18 @@ means indestructible. Melee, direct projectiles and explosions damage that body 
 Owner stock loss removes an article. These timelines cannot combine with legacy `explosion`, `bounce`, `bat`
 or `chargeScale`; ordinary projectiles keep their existing behavior.
 
+Simulation recordings use `sim-25` after the held-article, damage-only hit and optional gait-clip additions;
+the replay container stays version 2.
+
+Optional `releaseOnDir` launches the article when a left/right stick direction is held while special is still
+held; letting go of special instead fires `articleEnd` (the caster swallows the article). The launch captures
+the stick direction as the article's facing, so a held ball can be blown in front of or behind the caster.
+Optional `hold: { "offset": [x,y], "bob": 6, "period": 24, "hitboxes": [...] }` keeps an unreleased article at
+a fighter-local point (x forward, y up) and bobs it vertically on its construction clock. The held hitboxes are
+active while the article is unreleased, share the article's contact history, and use construction age for
+`start`/`end`. The first stage still supplies the standby shapes, and the last stage reached at construction age
+is frozen on release.
+
 `Phase.reflector` is an inclusive frame window with radius/height, projectile speed and damage multipliers.
 It operates during invulnerability and preserves the phase, unlike a counter stance. `Phase.travelSpeed`
 captures a normalized movement-stick direction once on phase entry (neutral means up), then travels at that
@@ -697,3 +725,5 @@ rule, rather than a claim that every reference fighter can crawl.
 `global.render.overlays.grabbed` optionally draws persistent binding bands on a captured fighter.
 Each `bands` entry is [height above feet, horizontal radius, vertical radius] in fractions of body height; `width`, `color`
 and `alpha` control the stroke. It appears whenever the fighter is grabbed and disappears on release.
+
+`projectiles.*.article.reflectCooldown` defaults to zero and sets how many ticks any reflector is ignored after article reflection or a counter steals a held article. The old caster receives `articleEnd` when its held article becomes an independently owned shot.

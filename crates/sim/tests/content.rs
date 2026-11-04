@@ -39,6 +39,7 @@ fn all_assets_load() {
             "lancer",
             "mike",
             "ninja",
+            "plant",
             "swordfighter",
             "tinker",
             "whiplash",

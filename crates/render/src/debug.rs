@@ -20,6 +20,7 @@ pub fn hit_type_color(t: HitType) -> u32 {
         HitType::Paralyze => 0xffee65,
         HitType::Bury => 0xc89666,
         HitType::Grab => 0xb070ff,
+        HitType::DamageOnly => 0xc06ade,
     }
 }
 

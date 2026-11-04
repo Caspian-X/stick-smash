@@ -358,13 +358,13 @@ fn invalid_regions_and_projectile_article_throw_bindings_report_paths() {
             assert!(sim::data::load::check_fighter("fixture", &f).unwrap_err().path.ends_with("hit.geometry"));
             if projectile.article.is_some() {
                 let mut f = source.clone();
-                f.projectiles.get_mut(id).unwrap().article.as_mut().unwrap().stages[0].hitboxes[0].geometry =
-                    Some(circle(0., 0.));
+                let article = f.projectiles.get_mut(id).unwrap().article.as_mut().unwrap();
+                let Some(stage) = article.stages.iter_mut().find(|s| !s.hitboxes.is_empty()) else {
+                    continue;
+                };
+                stage.hitboxes[0].geometry = Some(circle(0., 0.));
                 assert!(
-                    sim::data::load::check_fighter("fixture", &f)
-                        .unwrap_err()
-                        .path
-                        .contains("article.stages[0].hitboxes[0].geometry")
+                    sim::data::load::check_fighter("fixture", &f).unwrap_err().path.contains("hitboxes[0].geometry")
                 );
             }
         }

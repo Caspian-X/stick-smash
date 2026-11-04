@@ -105,6 +105,15 @@ import-king:
 king-visuals dir="/tmp/king-reference":
     python3 tools/import-dedede/visuals.py "{{dir}}"
 
+# Rebuild the Piranha Plant package (SSBU 13.0.1) from pinned UFD/Rubendal inputs
+import-plant:
+    python3 tools/import-plant/import.py
+    just bless
+
+# Download hash-checked Piranha Plant reference GIFs and make per-frame inspection sheets (Pillow)
+plant-visuals dir="/tmp/plant-reference":
+    python3 tools/import-plant/visuals.py "{{dir}}"
+
 # Capture character-select layout selection and Controls profile management
 layout-shots dir="/tmp/stick-smash-layout-shots":
     cargo run -p game -- --layout-shots "{{dir}}"

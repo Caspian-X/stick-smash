@@ -21,13 +21,20 @@ Grabs were just given dedicated hold/grabbed bands. Those poses are deliberately
 - **Helpless**: a slow one-second limp sway replaces the static fall pose. It is cosmetic and does not imply control.
 - **Hitstun**: switched from a world-clock flail loop to a state-clock recoil. The first frame is the largest lean-back, the body settles over the next two frames, and it recovers toward `stand` by frame 24. State timing means hitlag now holds the recoil instead of wobbling during freeze, and every new hit restarts the visible reaction. Tumble still uses its spin animation for launches above the tumble threshold.
 
-## Deliberate engine gaps
+## Deliberate engine gaps and later gait clips
 
-These states are not visually distinguishable from data yet; changing the assets cannot select a different clip:
+These states are not visually distinguishable from data for packages without dedicated clips:
 
-- **Walk** reuses `idle`. `state_anim` selects `run` only above `gait.poseRunSpeed`, so walking has no stride. A `walk` state animation with `Clock::Run` for `State::Idle + Gait::Walk` would fix it without new gameplay.
-- **Crouch crawl** reuses the crouch breathing clip even while `run_ph` advances. A `crawl` state animation with `Clock::Run` while `Gait::Crouch` is moving would distinguish it.
-- **Turnaround and braking** keep showing `run` until speed falls below the run-pose threshold, then snap to `idle`. Separate `turn` / `brake` clips (or a short state clock) would let the skid read.
+- **Walk** reuses `idle` unless the package authors a `walk` state animation. `state_anim` selects `run` above
+  `gait.poseRunSpeed`.
+- **Crouch crawl** reuses the crouch breathing clip unless the package authors `crawl`; moving while crouched
+  then selects `crawl`.
+- **Turnaround and braking** keep showing `run` until speed falls below the run-pose threshold, then snap to
+  `idle`, unless the package authors `turn` / `brake`. Those two clips sample the gait clock (`gait_t`), which
+  resets on the gait change, so they enter at their first key instead of inheriting an arbitrary idle state time.
+
+The optional `walk`, `crawl`, `turn` and `brake` clips added for Piranha Plant use this selector; packages that
+do not define them (the original roster) keep the previous fallback exactly.
 - **State animation changes do not cross-fade**. Rise → fall at the apex, landing → idle and shield-drop → idle are direct clip swaps. The data was brought closer at those boundaries, but a presentation-only blend over a few ticks would remove the remaining pop.
 - **Tumble spin is not reset when a new tumble starts**. `Fighter::spin` accumulates and is reset only on respawn, so a fresh launch can begin the tumble clip part-way around. Resetting it on entering tumble would make the spin start consistently; it changes snapshot state, so it needs the normal `SIM_VERSION`/replay review.
 

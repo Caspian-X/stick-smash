@@ -199,6 +199,26 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     let HitSource { attacker, direction: sgn, point, projectile: proj, label } = source;
     let g = &d.global;
     let ht = &g.hit_types;
+    if b.kind == HitType::DamageOnly {
+        // Chip damage without any reaction: no hitlag, hitstun, launch, state change or combo link.
+        credit_damage(w, d, attacker, v, b.damage);
+        let (px, py) = point;
+        let hx = (px + w.fighters[v].x) / 2.;
+        let hy = (py + w.fighters[v].y - 40.) / 2.;
+        w.fx.push(Fx::Burst {
+            x: hx,
+            y: hy,
+            color: Color::Rgb(0xb45ad0),
+            player: attacker,
+            n: 4.,
+            speed: 2.,
+            life: 10.,
+            size: 3.,
+            gravity: 0.,
+        });
+        w.fx.push(Fx::Sfx { name: "hit".into(), arg: Some(0.), x: Some(hx) });
+        return;
+    }
     let grounded = w.fighters[v].ground;
     let armored = armors_hit(d, &w.fighters[v], b.damage);
     release_grab(w, d, v);

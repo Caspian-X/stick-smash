@@ -492,6 +492,10 @@
           "items": { "$ref": "#/$defs/HurtRegionWindow" },
           "description": "Inclusive phase-tick activation overrides of named fighter hurt regions."
         },
+        "aim": {
+          "type": "boolean",
+          "description": "This phase still accepts the move's single `bReverse` turnaround (a charged move can aim after the\nshared opening window)."
+        },
         "name": {
           "type": "string",
           "description": "Unique within the move. Transitions refer to it. `end`, `helpless` and `landing` are reserved."
@@ -784,7 +788,12 @@
           "const": "bury",
           "description": "Trap grounded targets in place; airborne targets launch normally."
         },
-        { "type": "string", "const": "grab", "description": "Grabs instead of hitting." }
+        { "type": "string", "const": "grab", "description": "Grabs instead of hitting." },
+        {
+          "type": "string",
+          "const": "damageOnly",
+          "description": "Damage and shield damage only: no hitstun, hitlag, launch or state change. Used by lingering\nno-flinch hazards such as Poison Breath."
+        }
       ],
       "description": "Hitbox behavior, modeled on Smash."
     },
@@ -1050,6 +1059,11 @@
           "const": "articleRelease",
           "description": "An owned controlled projectile was manually released."
         },
+        {
+          "type": "string",
+          "const": "articleEnd",
+          "description": "A held projectile ended without being launched (its caster let go or lost control)."
+        },
         { "type": "string", "const": "counter", "description": "A hit was countered in the phase's `counter` window." },
         { "type": "string", "const": "hit", "description": "A hitbox of this phase connected (hit or shield)." }
       ]
@@ -1141,6 +1155,12 @@
             { "type": "null" }
           ],
           "description": "Only used while this holds (`grounded` / `airborne` / `countered`); otherwise the key is skipped."
+        },
+        "minCharge": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Skip this key below this many held charge ticks. Lets a move's reach tier follow its charge without\nduplicating phases (the selected pose also moves any joint-bound collision)."
         }
       },
       "required": ["at", "pose"],
@@ -1501,6 +1521,11 @@
         "speed": { "type": "number", "format": "double" },
         "damage": { "type": "number", "format": "double" },
         "bkb": { "type": "number", "format": "double" },
+        "rehit": {
+          "type": "number",
+          "format": "double",
+          "description": "Frames added to `hit.rehit` per held charge tick (rounds at each hit check)."
+        },
         "radius": { "type": "number", "format": "double" },
         "life": { "type": "number", "format": "double" },
         "angleTo": {
@@ -1548,6 +1573,25 @@
           "description": "Release the special button to launch; otherwise a second special press launches.",
           "default": false
         },
+        "releaseOnDir": {
+          "type": "boolean",
+          "description": "A fresh left/right stick input while still holding special launches the article in that direction;\nletting go of special ends it instead (Ptooie's blow-away and swallow).",
+          "default": false
+        },
+        "reflectCooldown": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks during which any reflector is ignored after reflection.",
+          "default": 0
+        },
+        "hold": {
+          "anyOf": [
+            { "$ref": "#/$defs/ArticleHold" },
+            { "type": "null" }
+          ],
+          "description": "While unreleased, keep the article at this fighter-local point and let it breathe."
+        },
         "steer": {
           "type": "number",
           "format": "double",
@@ -1567,6 +1611,33 @@
         }
       },
       "required": ["slot", "minRelease", "autoRelease", "stages"]
+    },
+    "ArticleHold": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "offset": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Fighter-local point (x forward, y up) for the article's origin."
+        },
+        "bob": { "type": "number", "format": "double", "description": "Vertical breathing amplitude in pixels." },
+        "period": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Breathing period in ticks. Required when `bob` is non-zero."
+        },
+        "hitboxes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Hitbox" },
+          "description": "Active while the article is held (inclusive `start`/`end` are construction-age ticks)."
+        }
+      },
+      "required": ["offset"],
+      "description": "Standby placement of a held article. The point follows the caster, so a held ball stays at the mouth\nwhile the fighter moves or turns."
     },
     "ArticleStage": {
       "type": "object",
@@ -2390,7 +2461,12 @@
           "const": "bury",
           "description": "Trap grounded targets in place; airborne targets launch normally."
         },
-        { "type": "string", "const": "grab", "description": "Grabs instead of hitting." }
+        { "type": "string", "const": "grab", "description": "Grabs instead of hitting." },
+        {
+          "type": "string",
+          "const": "damageOnly",
+          "description": "Damage and shield damage only: no hitstun, hitlag, launch or state change. Used by lingering\nno-flinch hazards such as Poison Breath."
+        }
       ],
       "description": "Hitbox behavior, modeled on Smash."
     },
@@ -2586,6 +2662,11 @@
         "speed": { "type": "number", "format": "double" },
         "damage": { "type": "number", "format": "double" },
         "bkb": { "type": "number", "format": "double" },
+        "rehit": {
+          "type": "number",
+          "format": "double",
+          "description": "Frames added to `hit.rehit` per held charge tick (rounds at each hit check)."
+        },
         "radius": { "type": "number", "format": "double" },
         "life": { "type": "number", "format": "double" },
         "angleTo": {
@@ -2631,6 +2712,25 @@
           "description": "Release the special button to launch; otherwise a second special press launches.",
           "default": false
         },
+        "releaseOnDir": {
+          "type": "boolean",
+          "description": "A fresh left/right stick input while still holding special launches the article in that direction;\nletting go of special ends it instead (Ptooie's blow-away and swallow).",
+          "default": false
+        },
+        "reflectCooldown": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks during which any reflector is ignored after reflection.",
+          "default": 0
+        },
+        "hold": {
+          "anyOf": [
+            { "$ref": "#/$defs/ArticleHoldPartial" },
+            { "type": "null" }
+          ],
+          "description": "While unreleased, keep the article at this fighter-local point and let it breathe."
+        },
         "steer": {
           "type": "number",
           "format": "double",
@@ -2649,6 +2749,32 @@
           "items": { "$ref": "#/$defs/ArticleStage" }
         }
       }
+    },
+    "ArticleHoldPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "offset": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Fighter-local point (x forward, y up) for the article's origin."
+        },
+        "bob": { "type": "number", "format": "double", "description": "Vertical breathing amplitude in pixels." },
+        "period": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Breathing period in ticks. Required when `bob` is non-zero."
+        },
+        "hitboxes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Hitbox" },
+          "description": "Active while the article is held (inclusive `start`/`end` are construction-age ticks)."
+        }
+      },
+      "description": "Standby placement of a held article. The point follows the caster, so a held ball stays at the mouth\nwhile the fighter moves or turns."
     },
     "FighterFxPartial": {
       "type": "object",

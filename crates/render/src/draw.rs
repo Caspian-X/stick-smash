@@ -519,6 +519,10 @@ pub fn draw_projectile(cv: &mut Canvas, d: &GameData, p: &Projectile, x: f64, y:
     cv.scale(1., -1.);
     if let Some(a) = &pd.article {
         cv.scale(p.face, 1.);
+        if pd.spin != 0. {
+            // Article projectiles don't carry a travel-direction ring; spin them on their own age.
+            cv.rotate((pd.spin * p.age as f64).to_radians());
+        }
         let stage = &a.stages[p.stage];
         let startup = if p.automatic { stage.auto_startup.unwrap_or(stage.startup) } else { stage.startup };
         let attacking = p.released.is_some_and(|age| p.age - age >= startup);

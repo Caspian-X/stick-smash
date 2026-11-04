@@ -145,6 +145,10 @@ pub struct Phase {
     /// Inclusive phase-tick activation overrides of named fighter hurt regions.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub hurt_regions: Vec<super::hitbox::HurtRegionWindow>,
+    /// This phase still accepts the move's single `bReverse` turnaround (a charged move can aim after the
+    /// shared opening window).
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub aim: bool,
     /// Unique within the move. Transitions refer to it. `end`, `helpless` and `landing` are reserved.
     pub name: String,
     /// Phase length (see the frame convention). Omit for a phase that loops until a transition fires.
@@ -389,6 +393,8 @@ pub enum Trigger {
     ShieldPress,
     /// An owned controlled projectile was manually released.
     ArticleRelease,
+    /// A held projectile ended without being launched (its caster let go or lost control).
+    ArticleEnd,
     /// A hit was countered in the phase's `counter` window.
     Counter,
     /// A hitbox of this phase connected (hit or shield).

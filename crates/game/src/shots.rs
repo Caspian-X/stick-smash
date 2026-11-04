@@ -62,7 +62,7 @@ pub enum Step {
 type Entry = (&'static str, fn() -> Vec<Step>);
 
 /// Every section in full-tour order; `--shots` picks a subset in the order given.
-const TOUR: [Entry; 14] = [
+const TOUR: [Entry; 15] = [
     ("menus", menus),
     ("fighter-editor", fighter_editor),
     ("stage-editor", stage_editor),
@@ -77,6 +77,7 @@ const TOUR: [Entry; 14] = [
     ("stages", stages),
     ("interactions", interaction_shots),
     ("animations", animation_shots),
+    ("plant", plant_shots),
 ];
 
 pub fn section_names() -> String {
@@ -607,6 +608,8 @@ fn blast_zones() -> Vec<Step> {
 }
 
 fn training() -> Vec<Step> {
+    // Fast-forward move waits: without a presenting display the update count does not track fixed ticks,
+    // so counting frames here makes section captures timing-dependent.
     let mut v = Vec::new();
     v.extend([Step::Select(Mode::Training, 2), Step::Wait(20)]);
     press(&mut v, 0, Attack);
@@ -614,12 +617,12 @@ fn training() -> Vec<Step> {
     press(&mut v, 0, Start);
     v.push(Step::Until(screen_is(Screen::Match), 10));
     v.push(Step::Set(0, Right, true));
-    v.push(Step::Until(|m, _, _| m.world.fighters[0].x > m.world.fighters[1].x - 60., 200));
+    v.push(Step::Fast(|m, _, _| m.world.fighters[0].x > m.world.fighters[1].x - 60., 200));
     v.push(Step::Set(0, Right, false));
     press(&mut v, 0, Attack);
-    v.push(Step::Until(|m, _, _| m.world.trace.as_ref().is_some_and(|t| t.done), 120));
+    v.push(Step::Fast(|m, _, _| m.world.trace.as_ref().is_some_and(|t| t.done), 120));
     press(&mut v, 0, Special);
-    v.push(Step::Until(
+    v.push(Step::Fast(
         |m, _, _| {
             m.world.fighters[0].state == FState::Attack
                 && m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.elapsed > 6)
@@ -637,7 +640,7 @@ fn training() -> Vec<Step> {
         v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training(id), Step::Wait(30)]);
         shot(&mut v, idle);
         v.push(Step::Set(0, Special, true));
-        v.push(Step::Until(
+        v.push(Step::Fast(
             |m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.charge >= 24 || mv.elapsed >= 24),
             100,
         ));
@@ -650,7 +653,7 @@ fn training() -> Vec<Step> {
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("king"), Step::Wait(30)]);
     v.push(Step::Set(0, Down, true));
     v.push(Step::Set(0, Special, true));
-    v.push(Step::Until(
+    v.push(Step::Fast(
         |m, _, _| {
             m.world.fighters[0].state == FState::Attack
                 && m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.slot == "dspec" && mv.charge >= 90)
@@ -664,7 +667,7 @@ fn training() -> Vec<Step> {
     v.push(Step::Set(0, Right, true));
     v.push(Step::Wait(4));
     v.push(Step::Set(0, Special, true));
-    v.push(Step::Until(|m, _, _| !m.world.projs.is_empty(), 80));
+    v.push(Step::Fast(|m, _, _| !m.world.projs.is_empty(), 80));
     v.push(Step::Wait(10));
     v.push(Step::Shot("25m-king-gordo"));
     v.push(Step::Set(0, Special, false));
@@ -672,12 +675,12 @@ fn training() -> Vec<Step> {
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("king"), Step::Wait(30)]);
     v.push(Step::Set(0, Up, true));
     v.push(Step::Set(0, Special, true));
-    v.push(Step::Until(
+    v.push(Step::Fast(
         |m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.slot == "uspec" && mv.phase >= 2),
         200,
     ));
     v.push(Step::Shot("25n-king-super-jump"));
-    v.push(Step::Until(|m, _, _| m.world.projs.len() >= 2, 500));
+    v.push(Step::Fast(|m, _, _| m.world.projs.len() >= 2, 500));
     v.push(Step::Shot("25o-king-landing-stars"));
     v.push(Step::Set(0, Up, false));
     v.push(Step::Set(0, Special, false));
@@ -688,9 +691,9 @@ fn training() -> Vec<Step> {
     v.push(Step::Set(0, Special, false));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("mike"), Step::Wait(30)]);
     v.push(Step::Set(0, Special, true));
-    v.push(Step::Until(|m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.charge == 209), 260));
+    v.push(Step::Fast(|m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.charge == 209), 260));
     v.push(Step::Set(0, Special, false));
-    v.push(Step::Until(|m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.t >= 39), 80));
+    v.push(Step::Fast(|m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.t >= 39), 80));
     v.push(Step::Shot("21i-mike-full-eruption"));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Wait(4), Step::OpenEditor, Step::Wait(20)]);
     for (id, slot, frame, name) in [
@@ -793,6 +796,99 @@ fn fighter_kits() -> Vec<Step> {
         shot(&mut v, name);
     }
     ed(&mut v, Cmd::Undo);
+    v
+}
+
+fn plant_shots() -> Vec<Step> {
+    use crate::select::{FIGHTER, TILE};
+    use crate::ui::key;
+    use editor::preview::Subject;
+    let mut v = vec![Step::Select(Mode::Training, 2), Step::Wait(20)];
+    v.push(Step::PointAt(0, key(FIGHTER, 8)));
+    v.push(Step::Wait(30));
+    shot(&mut v, "29a-select-plant-hover");
+    // Training: plant's own movement clips and the held/growing/rising specials.
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("plant"), Step::Wait(30)]);
+    shot(&mut v, "29b-plant-idle");
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("plant"), Step::Wait(20)]);
+    v.push(Step::Set(0, Right, true));
+    v.push(Step::Wait(32));
+    shot(&mut v, "29s-plant-walk");
+    v.push(Step::Wait(60));
+    shot(&mut v, "29t-plant-run");
+    v.push(Step::Set(0, Right, false));
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("plant"), Step::Wait(20)]);
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Wait(18));
+    v.push(Step::Shot("29l-plant-ptooie-hold"));
+    // Blow the held ball with a direction; letting go of special would swallow it instead.
+    v.push(Step::Set(0, Right, true));
+    v.push(Step::Wait(8));
+    v.push(Step::Shot("29m-plant-ptooie-shot"));
+    v.push(Step::Set(0, Right, false));
+    v.push(Step::Set(0, Special, false));
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("plant"), Step::Wait(20)]);
+    v.push(Step::Set(0, Right, true));
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Wait(80));
+    v.push(Step::Shot("29n-plant-poison-charge"));
+    v.push(Step::Set(0, Special, false));
+    v.push(Step::Wait(24));
+    v.push(Step::Shot("29o-plant-poison-cloud"));
+    v.push(Step::Set(0, Right, false));
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("plant"), Step::Wait(20)]);
+    v.push(Step::Set(0, Up, true));
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Wait(20));
+    v.push(Step::Shot("29p-plant-copter"));
+    v.push(Step::Set(0, Up, false));
+    v.push(Step::Set(0, Special, false));
+    // Nonhumanoid hold and ledge interaction anchors.
+    v.push(Step::Interaction(4));
+    v.push(Step::Wait(20));
+    v.push(Step::Shot("29q-plant-hold-brawler"));
+    v.push(Step::Interaction(5));
+    v.push(Step::Wait(20));
+    v.push(Step::Shot("29r-plant-ledge"));
+    // Editor: startup/contact/recovery, the extending stem, and the mouth grab.
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Wait(4), Step::OpenEditor, Step::Wait(20)]);
+    ed(&mut v, Cmd::Fighter("plant".into()));
+    ed(&mut v, Cmd::Subject(Subject::Move("fsmash".into())));
+    ed(&mut v, Cmd::Dummy(true));
+    v.push(Step::Wait(4));
+    for (frame, name) in
+        [(0, "29c-plant-fsmash-startup"), (15, "29g-plant-fsmash-contact"), (34, "29h-plant-fsmash-recovery")]
+    {
+        ed(&mut v, Cmd::Frame(frame));
+        if frame == 15 {
+            ed(&mut v, Cmd::Hitbox(Some(2)));
+        } else {
+            ed(&mut v, Cmd::Hitbox(None));
+        }
+        shot(&mut v, name);
+    }
+    ed(&mut v, Cmd::Subject(Subject::Move("dspec".into())));
+    ed(&mut v, Cmd::Hitbox(None));
+    for (frame, name) in [(6, "29i-plant-stem-charge"), (26, "29j-plant-stem-extend")] {
+        ed(&mut v, Cmd::Frame(frame));
+        shot(&mut v, name);
+    }
+    ed(&mut v, Cmd::Subject(Subject::Move("grab".into())));
+    ed(&mut v, Cmd::Frame(8));
+    shot(&mut v, "29k-plant-grab");
+    // Animation boundaries through the shared freeze step.
+    for (state, tick, vy, name) in [
+        (FState::Jumpsquat, 0, 0., "29u-plant-jump-load"),
+        (FState::Jumpsquat, 2, 0., "29v-plant-jump-extend"),
+        (FState::Air, 3, -6., "29w-plant-air-rise"),
+        (FState::Air, 24, 5., "29x-plant-air-fall"),
+        (FState::Landing, 0, 0., "29y-plant-landing-impact"),
+        (FState::Landing, 2, 0., "29z-plant-landing-recover"),
+    ] {
+        v.push(Step::Animation("plant", state, tick, vy));
+        shot(&mut v, name);
+    }
+    let _ = key(TILE, 0);
     v
 }
 
@@ -1104,8 +1200,52 @@ pub fn run(
         Step::Interaction(kind) => {
             use sim::data::fighter::{GrabInteraction, Interactions, LedgeInteraction};
             let mut content = (*data.0).clone();
-            let a = content.fighters.iter().position(|f| f.id == "brawler").unwrap();
-            let v = content.fighters.iter().position(|f| f.id == "ninja").unwrap();
+            let (aid, vid) = if *kind >= 4 { ("plant", "brawler") } else { ("brawler", "ninja") };
+            let a = content.fighters.iter().position(|f| f.id == aid).unwrap();
+            let v = content.fighters.iter().position(|f| f.id == vid).unwrap();
+            if *kind >= 4 {
+                let content = std::sync::Arc::new(content);
+                let slots = [a, v]
+                    .into_iter()
+                    .enumerate()
+                    .map(|(i, fighter)| Slot {
+                        dev: Some(Dev::Bot(i as u8)),
+                        fighter,
+                        cpu: None,
+                        team: None,
+                        tap_jump: false,
+                        controls: Default::default(),
+                        tag: String::new(),
+                        color: i,
+                    })
+                    .collect();
+                let mut m = Match::new(
+                    &content,
+                    Mode::Training,
+                    slots,
+                    Rules { stocks: 3, stage: "arena".into(), friendly_fire: false },
+                    7,
+                )
+                .unwrap();
+                m.world.count = 0;
+                if *kind == 4 {
+                    sim::combat::start_hold(&mut m.world, &content, 0, 1);
+                } else {
+                    let f = &mut m.world.fighters[0];
+                    f.face = 1.;
+                    f.ground = false;
+                    f.set_state(FState::Ledge);
+                    f.sd.side = -1.;
+                    f.sd.ledge_block = 0;
+                    sim::states::update_fighter(&mut m.world, &content, 0, sim::input::Intent::default());
+                }
+                m.frozen = true;
+                commands.remove_resource::<Select>();
+                play::install(&mut commands, &mut scene, m);
+                next.set(Screen::Match);
+                s.at += 1;
+                return;
+            }
             content.fighters[a].interactions = Some(Interactions {
                 grab: Some(GrabInteraction { hold_point: Some([39., 75.]), ..Default::default() }),
                 ..Default::default()
@@ -1542,7 +1682,30 @@ mod tests {
 28b-whiplash-takeoff
 28c-whiplash-fall
 28d-whiplash-landing-impact
-28e-whiplash-landing-recover";
+28e-whiplash-landing-recover
+29a-select-plant-hover
+29b-plant-idle
+29c-plant-fsmash-startup
+29g-plant-fsmash-contact
+29h-plant-fsmash-recovery
+29i-plant-stem-charge
+29j-plant-stem-extend
+29k-plant-grab
+29l-plant-ptooie-hold
+29m-plant-ptooie-shot
+29n-plant-poison-charge
+29o-plant-poison-cloud
+29p-plant-copter
+29q-plant-hold-brawler
+29r-plant-ledge
+29s-plant-walk
+29t-plant-run
+29u-plant-jump-load
+29v-plant-jump-extend
+29w-plant-air-rise
+29x-plant-air-fall
+29y-plant-landing-impact
+29z-plant-landing-recover";
         assert_eq!(names, expected.lines().collect::<Vec<_>>());
     }
 }

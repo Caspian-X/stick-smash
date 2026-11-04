@@ -27,6 +27,9 @@ pub enum HitType {
     Bury,
     /// Grabs instead of hitting.
     Grab,
+    /// Damage and shield damage only: no hitstun, hitlag, launch or state change. Used by lingering
+    /// no-flinch hazards such as Poison Breath.
+    DamageOnly,
 }
 
 /// Launch direction rule.

@@ -841,7 +841,7 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
         if let Some(c) = &p.charge_scale {
             nonnegative(file, &format!("{path}.chargeScale.speed"), c.speed)?;
             nonnegative(file, &format!("{path}.chargeScale.damage"), c.damage)?;
-            for (name, n) in [("bkb", c.bkb), ("radius", c.radius), ("life", c.life)] {
+            for (name, n) in [("bkb", c.bkb), ("radius", c.radius), ("life", c.life), ("rehit", c.rehit)] {
                 nonnegative(file, &format!("{path}.chargeScale.{name}"), n)?;
             }
             if let Some(angle) = c.angle_to {
@@ -892,6 +892,21 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
                 return Err(err(file, format!("{path}.article.autoRelease"), "needs minRelease <= autoRelease < life"));
             }
             nonnegative(file, &format!("{path}.article.steer"), a.steer)?;
+            if let Some(h) = &a.hold {
+                for n in h.offset {
+                    finite(file, &format!("{path}.article.hold.offset"), n)?;
+                }
+                nonnegative(file, &format!("{path}.article.hold.bob"), h.bob)?;
+                if h.bob != 0. && h.period == 0 {
+                    return Err(err(file, format!("{path}.article.hold.period"), "must be positive with bob"));
+                }
+                if h.period != 0 && h.bob == 0. {
+                    return Err(err(file, format!("{path}.article.hold.bob"), "needs a bob for a non-zero period"));
+                }
+                for (j, b) in h.hitboxes.iter().enumerate() {
+                    check_hitbox(file, &format!("{path}.article.hold.hitboxes[{j}]"), b, true)?;
+                }
+            }
             if let Some(r) = a.hurtbox {
                 for n in [r.x1, r.x2, r.y1, r.y2] {
                     finite(file, &format!("{path}.article.hurtbox"), n)?;

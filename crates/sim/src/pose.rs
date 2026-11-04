@@ -193,7 +193,8 @@ pub fn sample(fd: &FighterData, keys: &[AnimKey], t: f64, period: Option<f64>, f
         Some(p) if p > 0. => t.rem_euclid(p),
         _ => t,
     };
-    let live: Vec<&AnimKey> = keys.iter().filter(|k| crate::moves::cond(f, k.cond)).collect();
+    let charge = f.mov.as_ref().map_or(0, |m| m.charge);
+    let live: Vec<&AnimKey> = keys.iter().filter(|k| k.min_charge <= charge && crate::moves::cond(f, k.cond)).collect();
     let Some(first) = live.first() else {
         return resolve(fd, &Pose::default());
     };
@@ -208,11 +209,31 @@ pub fn sample(fd: &FighterData, keys: &[AnimKey], t: f64, period: Option<f64>, f
     }
 }
 
+/// Optional gait clip when a package defines it; legacy figures keep the previous selection.
+fn has_clip(d: &GameData, f: &Fighter, name: &str) -> bool {
+    d.fighters[f.data].anims.contains_key(name)
+}
+
 /// State animation name and its clock value, per `docs/FORMAT.md`.
 pub fn state_anim(d: &GameData, f: &Fighter) -> (String, Option<f64>) {
     let g = &d.global;
     let name: String = match f.state {
-        State::Idle if f.ground && matches!(f.gait, Gait::Crouch | Gait::Rise) => "crouch".into(),
+        State::Idle if f.ground && matches!(f.gait, Gait::Crouch | Gait::Rise) => {
+            if f.gait == Gait::Crouch && f.vx.abs() > 0.1 && d.fighters[f.data].anims.contains_key("crawl") {
+                "crawl".into()
+            } else {
+                "crouch".into()
+            }
+        }
+        State::Idle if f.ground && f.gait == Gait::Walk && has_clip(d, f, "walk") => "walk".into(),
+        // Optional gait clips are one-shot per gait transition: sample them from the gait clock, not from the
+        // state clock, so entering them after any amount of idle time starts at their first key.
+        State::Idle if f.ground && f.gait == Gait::Turn && has_clip(d, f, "turn") => {
+            return ("turn".into(), Some(f64::from(f.gait_t)));
+        }
+        State::Idle if f.ground && f.gait == Gait::Brake && has_clip(d, f, "brake") => {
+            return ("brake".into(), Some(f64::from(f.gait_t)));
+        }
         State::Idle if f.vx.abs() > g.gait.pose_run_speed => "run".into(),
         State::Air if f.flip_t > 0 => {
             return ("air.flip".into(), Some(f64::from(g.sim.flip_frames.saturating_sub(f.flip_t))));
@@ -366,7 +387,8 @@ pub fn sample_rig(
         Some(p) if p > 0. => t.rem_euclid(p),
         _ => t,
     };
-    let live: Vec<&AnimKey> = keys.iter().filter(|k| crate::moves::cond(f, k.cond)).collect();
+    let charge = f.mov.as_ref().map_or(0, |m| m.charge);
+    let live: Vec<&AnimKey> = keys.iter().filter(|k| k.min_charge <= charge && crate::moves::cond(f, k.cond)).collect();
     let Some(first) = live.first() else { return resolve_rig_pose(fd, &Pose::default()) };
     let i = live.iter().rposition(|k| k.at <= t).unwrap_or(0);
     let cur = if t < first.at { first } else { live[i] };
@@ -601,9 +623,15 @@ mod tests {
             ..Default::default()
         };
         let keys = vec![
-            AnimKey { at: 0., pose: PoseRef::Inline(Box::default()), lerp: false, cond: None },
-            AnimKey { at: 5., pose: PoseRef::Inline(Box::default()), lerp: false, cond: Some(Cond::Airborne) },
-            AnimKey { at: 10., pose: PoseRef::Inline(Box::new(target)), lerp: true, cond: None },
+            AnimKey { at: 0., pose: PoseRef::Inline(Box::default()), lerp: false, cond: None, min_charge: 0 },
+            AnimKey {
+                at: 5.,
+                pose: PoseRef::Inline(Box::default()),
+                lerp: false,
+                cond: Some(Cond::Airborne),
+                min_charge: 0,
+            },
+            AnimKey { at: 10., pose: PoseRef::Inline(Box::new(target)), lerp: true, cond: None, min_charge: 0 },
         ];
         let sampled = sample_rig(fd, &keys, 5., None, &f);
         assert_eq!(sampled["tail"].translation, Some([6., 14.]));

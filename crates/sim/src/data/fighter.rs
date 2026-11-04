@@ -206,6 +206,16 @@ pub struct Article {
     /// Release the special button to launch; otherwise a second special press launches.
     #[serde(default)]
     pub release_on_up: bool,
+    /// A fresh left/right stick input while still holding special launches the article in that direction;
+    /// letting go of special ends it instead (Ptooie's blow-away and swallow).
+    #[serde(default)]
+    pub release_on_dir: bool,
+    /// Ticks during which any reflector is ignored after reflection.
+    #[serde(default)]
+    pub reflect_cooldown: u32,
+    /// While unreleased, keep the article at this fighter-local point and let it breathe.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hold: Option<ArticleHold>,
     /// Vertical speed selected by the live stick during travel, zero for stationary construction.
     #[serde(default)]
     pub steer: f64,
@@ -213,6 +223,24 @@ pub struct Article {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub hurtbox: Option<Rect>,
     pub stages: Vec<ArticleStage>,
+}
+
+/// Standby placement of a held article. The point follows the caster, so a held ball stays at the mouth
+/// while the fighter moves or turns.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ArticleHold {
+    /// Fighter-local point (x forward, y up) for the article's origin.
+    pub offset: Pt,
+    /// Vertical breathing amplitude in pixels.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub bob: f64,
+    /// Breathing period in ticks. Required when `bob` is non-zero.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub period: u32,
+    /// Active while the article is held (inclusive `start`/`end` are construction-age ticks).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub hitboxes: Vec<Hitbox>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -253,6 +281,9 @@ pub struct ProjectileCharge {
     pub damage: f64,
     #[serde(default, skip_serializing_if = "is_default")]
     pub bkb: f64,
+    /// Frames added to `hit.rehit` per held charge tick (rounds at each hit check).
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub rehit: f64,
     #[serde(default, skip_serializing_if = "is_default")]
     pub radius: f64,
     #[serde(default, skip_serializing_if = "is_default")]
