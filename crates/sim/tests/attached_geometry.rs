@@ -163,6 +163,7 @@ fn projectile_hits_explosion_and_proximity_reach_only_new_regions() {
         def.bounce = None;
         def.vel = [0., 0.];
         def.explosion = explosion.then(|| sim::data::fighter::Explosion {
+            manual: false,
             arm_ticks: 0,
             proximity: Some(2.),
             radius: 10.,

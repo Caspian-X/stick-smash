@@ -144,6 +144,16 @@ fn events(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) {
         if let Some(id) = &e.spawn {
             crate::projectiles::spawn(w, d, i, f, id);
         }
+        if let Some(need) = &e.restore
+            && let Some(s) = crate::charges::restore(d, f, need)
+        {
+            w.sfx(s);
+        }
+        if e.detonate {
+            w.fighters[i] = f.clone();
+            crate::projectiles::detonate(w, d, i);
+            *f = w.fighters[i].clone();
+        }
         if let Some(s) = &e.sfx {
             w.sfx(s.clone());
         }

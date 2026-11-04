@@ -1078,6 +1078,15 @@ fn check_phase(
         if ev.at.is_some() && (ev.from.is_some() || ev.to.is_some()) {
             return Err(e(format!("{pp}.events[{i}]"), "use either `at` or `from`/`to`".into()));
         }
+        if let Some(need) = &ev.restore {
+            let path = format!("{pp}.events[{i}].restore");
+            if !f.charges.iter().any(|c| c.id == need.charge) {
+                return Err(e(format!("{path}.charge"), format!("no charge pool {:?}", need.charge)));
+            }
+            if need.uses == 0 {
+                return Err(e(format!("{path}.uses"), "must be positive".into()));
+            }
+        }
         if let Some(s) = &ev.spawn
             && !f.projectiles.contains_key(s)
         {
@@ -1589,6 +1598,9 @@ fn check_stats(file: &str, v: &super::Stats) -> Result<(), ContentError> {
         ("fastFallSpeed", v.fast_fall_speed),
     ] {
         positive(file, &format!("stats.{name}"), n)?;
+    }
+    if let Some(n) = v.float_speed {
+        positive(file, "stats.floatSpeed", n)?;
     }
     Ok(())
 }

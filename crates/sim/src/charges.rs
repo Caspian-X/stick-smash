@@ -96,3 +96,20 @@ pub fn refill(d: &GameData, f: &mut Fighter) {
     f.charges = full(d, f.data);
     f.charge_wait = vec![0; d.fighters[f.data].charges.len()];
 }
+
+/// Add uses without resetting an ongoing recharge (including empty-to-nonempty). Full pools stop recharging.
+/// Play the refill sound only when this restoration reaches capacity.
+pub fn restore(d: &GameData, f: &mut Fighter, need: &ChargeNeed) -> Option<String> {
+    let (at, pool) = d.fighters[f.data].charges.iter().enumerate().find(|(_, c)| c.id == need.charge)?;
+    f.charges.resize(d.fighters[f.data].charges.len(), 0);
+    f.charge_wait.resize(f.charges.len(), 0);
+    let before = f.charges[at];
+    f.charges[at] = before.saturating_add(need.uses).min(pool.uses);
+    if f.charges[at] == pool.uses {
+        f.charge_wait[at] = 0;
+        if before < pool.uses {
+            return pool.refill_sfx.clone();
+        }
+    }
+    None
+}

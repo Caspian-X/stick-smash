@@ -770,3 +770,35 @@ Each `bands` entry is [height above feet, horizontal radius, vertical radius] in
 and `alpha` control the stroke. It appears whenever the fighter is grabbed and disappears on release.
 
 `projectiles.*.article.reflectCooldown` defaults to zero and sets how many ticks any reflector is ignored after article reflection or a counter steals a held article. The old caster receives `articleEnd` when its held article becomes an independently owned shot.
+
+### Resource restore, remote gadgets and float
+
+Move events may use `restore: {"charge": "<pool id>", "uses": 1}` to add uses, capped at the pool's
+capacity. The pool must exist and uses must be at least 1. Restore preserves an active recharge countdown,
+including when an empty pool becomes nonempty; reaching capacity clears the countdown and plays
+`refillSfx` once. A pool with no active countdown stays inactive. This also permits explicit refill of
+`recharge: 0` pools. Within an event, spawn runs before restore, then detonate, then sfx and fx.
+Phase entry costs still run before frame-zero events.
+
+`detonate: true` immediately explodes every live projectile currently owned by the fighter that has
+an `explosion`, in projectile order, even before its arm time. No gadget is a no-op. Each uses the normal
+blast radius, hit, target masks, opponent/team eligibility, shield/counter handling, article contacts,
+damage/healing credit, hit records, fx and sfx, then is removed. It does not advance movement or age.
+A reflected gadget belongs to its current owner.
+
+`explosion.manual: true` (default false) disables proximity and fuse detonation and freezes the life
+countdown. It still moves, collides, can be reflected/batted, clashes with opposing projectiles and is removed
+outside the stage bounds as usual. External removal is still possible. With manual false, existing proximity
+and fuse behavior is unchanged. For a planted remote bomb, declare a normal projectile with `vel: [0, 0]`,
+an `explosion` containing `manual: true`, `armTicks` and `radius`, plus its ordinary `hit`, positive
+`life`, radius and presentation fields. Use existing gravity/bounce data to settle it on terrain if needed;
+trigger it from another move's detonate event. This is a remote blast gadget, not a pickup or trip-item system.
+
+Optional `stats.floatSpeed` is a finite positive downward speed in px/tick. Holding jump caps gravity's
+result at the smaller of this value and the normal/fast-fall cap only while airborne in normal `Air` control.
+Release restores the ordinary cap immediately; rising velocity remains rising. Hitstun, helplessness,
+ledge hang/climb, attacks, airdodge and every other non-Air state are excluded. Float has no duration,
+fuel or activation latch; fast-fall state is preserved.
+
+These opt-in fields add no rollback snapshot state. Existing content omits them and keeps its behavior;
+the replay SIM_VERSION and golden world hash are unchanged.

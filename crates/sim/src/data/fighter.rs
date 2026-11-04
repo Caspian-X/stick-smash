@@ -97,6 +97,10 @@ pub struct Stats {
     pub gravity: f64,
     pub fall_speed: f64,
     pub fast_fall_speed: f64,
+    /// Positive downward speed cap while holding jump in normal Air control. Excludes attacks, hitstun,
+    /// helplessness, ledge/climb, airdodge and every other non-Air state. Omit to disable float.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub float_speed: Option<f64>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -301,7 +305,10 @@ pub struct ProjectileCharge {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Explosion {
-    /// Ticks before proximity can trigger. The fuse still expires at projectile life zero.
+    /// Ignore proximity and freeze the fuse; only a detonate event explodes this gadget.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub manual: bool,
+    /// Ticks before proximity can trigger. Unless manual, the fuse expires at projectile life zero.
     pub arm_ticks: u32,
     /// Distance to an opponent's hurtbox that triggers; omit for fuse only.
     #[serde(default, skip_serializing_if = "Option::is_none")]

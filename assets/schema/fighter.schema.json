@@ -106,7 +106,12 @@
         "airAccel": { "type": "number", "format": "double" },
         "gravity": { "type": "number", "format": "double" },
         "fallSpeed": { "type": "number", "format": "double" },
-        "fastFallSpeed": { "type": "number", "format": "double" }
+        "fastFallSpeed": { "type": "number", "format": "double" },
+        "floatSpeed": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Positive downward speed cap while holding jump in normal Air control. Excludes attacks, hitstun,\nhelplessness, ledge/climb, airdodge and every other non-Air state. Omit to disable float."
+        }
       },
       "required": [
         "weight",
@@ -951,13 +956,24 @@
           "type": ["string", "null"],
           "description": "Spawn a projectile by id (from the fighter's `projectiles`)."
         },
+        "restore": {
+          "anyOf": [
+            { "$ref": "#/$defs/ChargeNeed" },
+            { "type": "null" }
+          ],
+          "description": "Restore uses to a charge pool, capped at capacity. Keeps recharge running until full."
+        },
+        "detonate": {
+          "type": "boolean",
+          "description": "Explode every owned projectile with an explosion, including unarmed manual gadgets."
+        },
         "sfx": { "type": ["string", "null"] },
         "fx": {
           "type": "array",
           "items": { "$ref": "#/$defs/Fx" }
         }
       },
-      "description": "Frame-scoped actions. Use `at` for one frame, or `from`/`to` (inclusive) for a range. `from` alone means\nfrom there on; neither means every frame from 1. Actions in one event run in field order (velocity, then\n`leaveGround`, `invuln`, `spawn`, `sfx`, `fx`); events on the same frame run in list order."
+      "description": "Frame-scoped actions. Use `at` for one frame, or `from`/`to` (inclusive) for a range. `from` alone means\nfrom there on; neither means every frame from 1. Actions in one event run in field order (velocity, then\n`leaveGround`, `invuln`, `spawn`, `restore`, `detonate`, `sfx`, `fx`); events on the same frame run in list order."
     },
     "Cond": {
       "oneOf": [
@@ -1633,11 +1649,15 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "manual": {
+          "type": "boolean",
+          "description": "Ignore proximity and freeze the fuse; only a detonate event explodes this gadget."
+        },
         "armTicks": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Ticks before proximity can trigger. The fuse still expires at projectile life zero."
+          "description": "Ticks before proximity can trigger. Unless manual, the fuse expires at projectile life zero."
         },
         "proximity": {
           "type": ["number", "null"],
@@ -2185,7 +2205,12 @@
         "airAccel": { "type": "number", "format": "double" },
         "gravity": { "type": "number", "format": "double" },
         "fallSpeed": { "type": "number", "format": "double" },
-        "fastFallSpeed": { "type": "number", "format": "double" }
+        "fastFallSpeed": { "type": "number", "format": "double" },
+        "floatSpeed": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Positive downward speed cap while holding jump in normal Air control. Excludes attacks, hitstun,\nhelplessness, ledge/climb, airdodge and every other non-Air state. Omit to disable float."
+        }
       }
     },
     "BodyPartial": {
@@ -2787,11 +2812,15 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "manual": {
+          "type": "boolean",
+          "description": "Ignore proximity and freeze the fuse; only a detonate event explodes this gadget."
+        },
         "armTicks": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Ticks before proximity can trigger. The fuse still expires at projectile life zero."
+          "description": "Ticks before proximity can trigger. Unless manual, the fuse expires at projectile life zero."
         },
         "proximity": {
           "type": ["number", "null"],
