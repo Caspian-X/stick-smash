@@ -61,6 +61,11 @@ pub fn step_world(w: &mut World, d: &GameData, inputs: &[Input]) {
         if !frozen && crate::articles::control(w, d, i, inp) {
             inp.sp = false;
         }
+        if !frozen && !matches!(w.fighters[i].state, State::Out | State::Dead) {
+            for sfx in crate::charges::tick(d, &mut w.fighters[i]) {
+                w.sfx(sfx);
+            }
+        }
         crate::states::update_fighter(w, d, i, inp);
     }
     crate::combat::hit_pass(w, d);
@@ -108,6 +113,26 @@ pub fn step_world(w: &mut World, d: &GameData, inputs: &[Input]) {
         }
         if f.x < b.left || f.x > b.right || f.y > b.bottom || f.y < b.top {
             crate::states::ko(w, d, i);
+        }
+    }
+    if !w.cfg.training
+        && w.count == 0
+        && w.end_t == 0
+        && !w.over
+        && let Some(t) = w.time_left
+        && t > 0
+    {
+        // Beeps on the whole seconds left (0:10 down to 0:01), matching the HUD's warning pulse.
+        if t.is_multiple_of(crate::TICK_HZ) && t <= g.match_.timer_warn_seconds.saturating_mul(crate::TICK_HZ) {
+            w.sfx("tick");
+        }
+        let t = t - 1;
+        w.time_left = Some(t);
+        if t == 0 {
+            w.time_up = true;
+            w.winner = w.time_winner();
+            w.time_tied = w.time_leaders();
+            w.end_t = g.match_.end_frames;
         }
     }
     if !w.cfg.training && w.end_t == 0 && !w.over {

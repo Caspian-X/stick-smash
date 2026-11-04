@@ -165,6 +165,35 @@ state and recovery resources. Stronger hits react normally. Grabs bypass armor; 
 Armor also blocks windbox pushes. Armored hits emit a small ring and never chain into or out of training combos.
 Use a separate startup phase to limit armor to wind-up (charge holds retain that phase).
 
+## Durability resources and move variants
+
+A fighter may declare limited-use resources and moves may pick a whole phase timeline from them. This models
+weapons and tomes that break after a number of uses and come back later (Throbbin's Levin Sword and four
+tomes). Nothing here is fighter-specific.
+
+```json
+"charges": [{ "id": "levin", "uses": 8, "recharge": 600, "emptySfx": "toss", "refillSfx": "ready" }]
+```
+
+- `uses`: capacity. `recharge`: ticks from empty back to full. Uses return one at a time every
+  `ceil(recharge / uses)` ticks, so a pool is full after `uses × that step` (at most one tick per use longer than
+  `recharge`). Zero stays spent until respawn. `discardDelay`: ticks added before the first restored use.
+  `emptySfx` / `refillSfx` are sound names. Spending a use while the pool recharges never refunds it: the
+  countdown to the next restored use keeps running.
+- `moves.<slot>.variants[]`: `{ "needs": { "charge": "levin", "uses": 1 }, "phases": [...] }`. The first
+  variant whose need is satisfied is chosen **once, when the move starts**, and runs instead of `phases`. A
+  move without variants uses `phases`.
+- `phases[].cost`: `{ "charge": "...", "uses": n }` is spent when the phase is entered. A pool with fewer
+  uses left spends what it has and is emptied (the item is used up) but the phase still runs.
+- `transitions[].minCharge`: the transition only fires with at least that many held charge ticks. Transitions
+  are checked in list order, so a charged special lists its highest tier first and the uncharged fallback last.
+- Respawning refills every pool. The runtime state (`Fighter::charges`, `charge_wait`) is part of the rollback
+  snapshot; `moves.*.variants` phase lists are validated exactly like the default timeline.
+
+Two combat fields support resource-limited attacks: `hitboxes[].heal` (fraction of the damage dealt that heals
+**the attacker**, capped at their current damage) and `hitboxes[].unblockable` (skips shields, counters and
+parries, so a command grab such as Nosferatu still lands on a guarding victim).
+
 ## Projectiles
 
 Defined per fighter under `projectiles.<id>` and spawned by a `spawn` event. Each tick a projectile moves by its
@@ -324,6 +353,18 @@ a prior elimination. Winner is the last surviving team (or individual in free-fo
 winning teammates enter the win state. Simultaneous elimination is a draw. Training replenishes stocks and
 never ends. Once the result is committed and `end_t` starts, KO processing is disabled (also after `over`);
 movement, combat, and effects continue, but stocks cannot change during the ending animation. Pair passes run in player-index order, and overlapping push pairs run in lexicographic order.
+
+`MatchConfig::time_limit` (seconds) runs a clock: `World::time_left` counts down once the countdown reaches GO
+and stops during the ending animation or after `over`. `None` (and training) plays until stocks run out. With
+`match.timerWarnSeconds` seconds left the sim emits a `tick` sfx on each whole second. At zero the match ends like a
+stock ending, with `World::time_up = true`; `World::time_winner()` picks the side with the most stocks left, then
+the lowest pooled damage (teams pool both, and a fighter in the death sequence no longer counts the damage of the
+stock they just lost) and returns `None` on a tie or when nobody has a stock left. `World::time_leaders()` lists
+the fighters on the sides tied for the lead; that list is fixed into `World::time_tied` when the clock hits zero,
+so hits during the ending animation cannot change who plays sudden death.
+`MatchConfig::sudden_death` starts every fighter at `match.suddenDeathDamage` with one stock and no timer; players
+whose `PlayerConfig::eliminated` is set (the sides that lost the time-up) start with no stocks and out. It is the
+same config with `sudden_death: true` (see `MatchConfig::sudden_death()`), so replays reproduce the start.
 
 Raw `Input` is `(i8,i8)` stick (y up) and button bits jump=1, attack=2, special=4, grab=8, shield=16. Human
 history advances during countdown, hitlag, respawn/death, and match ending. Rising direction edges update
@@ -711,6 +752,8 @@ This slice does not resize pushing, shields, cameras or effects, retarget throw 
 Simulation recordings now use `sim-21`; the replay container version is unchanged.
 
 `global.render.select.backHoldSecs` is the positive real-time hold duration for leaving selection screens (default 1.5 seconds for older embedded presentation data). UI updates cap each contribution at 50 ms. Contextual Back actions consume the hold until release.
+
+`global.render.select.backRing` draws that hold as a ring of `ticks` dashes around the player's pointer arrow (`offset` from the arrow's tip, `radius`, `thickness`, `dash` length, the unfilled `track` opacity, and each dash's dark `rim`), the `hot` dashes behind the filled end whitening like a comet head around the `spark`. It pops in from `pop` scale on the `grow` spring as a hold starts, follows the hold on the `follow` spring, and swings `wobble` radians every `wobbleSecs`. A released hold drains the ring, which then shrinks away; no text is drawn.
 
 `moves.*.phases[].groundSpeed` (default 0) enables grounded stick-controlled movement during
 an attack phase, in pixels per tick at full tilt. It preserves facing and stored charge; zero

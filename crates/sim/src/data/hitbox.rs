@@ -118,6 +118,13 @@ pub struct Hitbox {
     /// Counter strike: damage comes from the countered hit (see `Counter`). Inactive if nothing was countered.
     #[serde(default, skip_serializing_if = "is_default")]
     pub counter_damage: bool,
+    /// Fraction of the damage dealt that heals the attacker (Nosferatu drains health). Capped at the
+    /// attacker's current damage.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub heal: f64,
+    /// Ignores shields, counters and parries (a command grab such as Nosferatu still lands on a guarding victim).
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub unblockable: bool,
     /// In a move, inactive below this many held charge ticks.
     #[serde(default, skip_serializing_if = "is_default")]
     pub min_charge: u32,

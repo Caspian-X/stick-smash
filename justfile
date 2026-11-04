@@ -110,6 +110,15 @@ import-plant:
     python3 tools/import-plant/import.py
     just bless
 
+# Rebuild Throbbin (SSBU Robin, 13.0.1) from pinned Rubendal scripts and UFD rows
+import-robin:
+    python3 tools/import-robin/import.py
+    just bless
+
+# Download hash-checked Robin hitbox GIFs and write per-frame montages (Pillow)
+robin-visuals dir="/tmp/robin-reference":
+    python3 tools/import-robin/visuals.py "{{dir}}"
+
 # Download hash-checked Piranha Plant reference GIFs and make per-frame inspection sheets (Pillow)
 plant-visuals dir="/tmp/plant-reference":
     python3 tools/import-plant/visuals.py "{{dir}}"

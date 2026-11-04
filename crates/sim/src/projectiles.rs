@@ -26,13 +26,8 @@ pub fn spawn(w: &mut World, d: &GameData, i: usize, f: &Fighter, id: &str) {
             hit.rehit = Some(libm::round((f64::from(rehit) + charge * c.rehit).max(1.)) as u32);
         }
         if c.angle_to.is_some() || c.ground_angle_to.is_some() {
-            let max = crate::moves::definition(d, f)
-                .phases
-                .iter()
-                .filter_map(|p| p.charge.as_ref())
-                .map(|c| c.max)
-                .max()
-                .unwrap_or(1);
+            let max =
+                crate::moves::timeline(d, f).iter().filter_map(|p| p.charge.as_ref()).map(|c| c.max).max().unwrap_or(1);
             let fraction = (charge / f64::from(max.max(1))).min(1.);
             if let Some(angle) = c.angle_to {
                 hit.angle += (angle - hit.angle) * fraction;
@@ -243,11 +238,13 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
             {
                 continue;
             }
-            if detonate && combat::countering(d, &w.fighters[v]).is_some() {
+            if !p.hit.unblockable && detonate && combat::countering(d, &w.fighters[v]).is_some() {
                 combat::counter(w, d, v, None, 0.);
                 continue;
             }
-            if let Some(c) = combat::countering(d, &w.fighters[v]) {
+            if !p.hit.unblockable
+                && let Some(c) = combat::countering(d, &w.fighters[v])
+            {
                 p.owner = v;
                 p.surf = None;
                 p.vx = -p.vx * c.reflect_speed;
@@ -271,7 +268,17 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                 sign(p.vx)
             };
             let label = Some(def.name.clone());
-            if combat::parrying(d, &w.fighters[v]) {
+            if p.hit.unblockable {
+                // Command-grab hits ignore guards, parries and counters, exactly like the melee path, but they
+                // still take part in the usual contact bookkeeping below (rehit intervals, single-hit expiry).
+                combat::apply_hit(
+                    w,
+                    d,
+                    v,
+                    &p.hit,
+                    combat::HitSource { attacker: p.owner, direction, point: (p.x, p.y), projectile: true, label },
+                );
+            } else if combat::parrying(d, &w.fighters[v]) {
                 combat::parry(w, d, v, None);
             } else if w.fighters[v].state == State::Shield {
                 combat::shield_hit(

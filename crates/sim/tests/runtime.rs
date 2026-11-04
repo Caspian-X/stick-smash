@@ -182,6 +182,8 @@ fn hit_history_tracks_each_victim_rehit_tick_and_resets_on_phase_entry() {
             on: sim::data::Trigger::Release,
             cond: None,
             from: None,
+            min_charge: 0,
+            needs: None,
             to: "again".into(),
             lag: None,
             preserve_hits,
@@ -284,6 +286,9 @@ fn cpu_match_golden_world_hash() {
         w.hits.clear();
         w.acts.clear();
     }
-    // Updated deliberately for shared launch/movement tuning and concurrent roster content changes.
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xa7595d379a195bc0);
+    // Updated deliberately for shared launch/movement tuning, new snapshot fields and concurrent roster content
+    // changes. This bump covers the wrap charge resources (`Fighter::charges`, `Fighter::charge_wait`) and the
+    // per-move phase timeline choice (`MoveState::variant`); both appear in the debug snapshot, and the per-tick
+    // charge tick is a no-op for fighters without pools.
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xa990a75d4fa27ad4);
 }

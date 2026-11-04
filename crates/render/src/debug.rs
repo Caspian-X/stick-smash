@@ -118,10 +118,11 @@ pub fn info(d: &GameData, f: &Fighter) -> String {
         && let Some(m) = &f.mov
     {
         let def = sim::moves::definition(d, f);
-        let ph = &def.phases[m.phase];
+        let tl = def.timeline(m.variant);
+        let ph = &tl[m.phase];
         let total = ph.frames.map(|n| format!("/{n}")).unwrap_or_default();
         let charge = if m.charge > 0 { format!(" +{}ch", m.charge) } else { String::new() };
-        let phase = if def.phases.len() > 1 { format!(" [{}]", ph.name) } else { String::new() };
+        let phase = if tl.len() > 1 { format!(" [{}]", ph.name) } else { String::new() };
         lines.push(format!("{}{phase} {}{total}{charge}", def.name, m.t));
     }
     let mut extra = vec![];

@@ -41,6 +41,7 @@ fn all_assets_load() {
             "ninja",
             "plant",
             "swordfighter",
+            "throbbin",
             "tinker",
             "whiplash",
             "wizard",

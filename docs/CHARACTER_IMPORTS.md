@@ -14,6 +14,8 @@ animated bone fitting and independent controlled projectiles.
 specials, follow-up input windows, paralysis and grounded bury effects.
 [Piranha Plant's record](imports/plant.md) covers a nonhumanoid named rig, charge-tiered joint-bound reach,
 a held/controlled projectile and a damage-only lingering hazard.
+[Throbbin's Robin record](imports/throbbin.md) covers limited-use charge resources with timed recharge,
+resource-selected move variants, charge-tiered specials, a healing unblockable hit and a Bronze fallback.
 
 ## 1. Establish the target
 

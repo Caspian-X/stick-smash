@@ -1,7 +1,7 @@
 # Original roster vs imported references: experimental normalization
 
 Status: experimental normalization implemented; human balance acceptance is pending. The first pass is implemented in the ten original fighter packages (King excluded, see below), measured with a
-targeted CPU matrix. Imported packages (`mike`, `whiplash`, `wizard`) and shared `base`/`global` content are
+targeted CPU matrix. Imported packages (`mike`, `whiplash`, `wizard`, `throbbin`) and shared `base`/`global` content are
 unchanged. This records what was measured, what was changed and why, and what remains unproven. It is not a claim
 of competitive parity, especially not for human play.
 
@@ -10,7 +10,7 @@ of competitive parity, especially not for human play.
 | Package | Role in this pass |
 | --- | --- |
 | `archer`, `brawler`, `dancer`, `golem`, `lancer`, `ninja`, `swordfighter`, `tinker`, `wrangler`, `yoyo` | Original roster. Tuned here. |
-| `mike` (Ike), `wizard` (Zelda), `whiplash` (Zero Suit Samus) | SSBU-derived references. Read-only. Provenance is recorded in [MIKE.md](MIKE.md), [imports/wizard.md](imports/wizard.md) and [imports/whiplash.md](imports/whiplash.md). |
+| `mike` (Ike), `wizard` (Zelda), `whiplash` (Zero Suit Samus), `throbbin` (Robin) | SSBU-derived references. Read-only. Provenance is recorded in [MIKE.md](MIKE.md), [imports/wizard.md](imports/wizard.md) and [imports/whiplash.md](imports/whiplash.md), and [imports/throbbin.md](imports/throbbin.md). |
 | `king` | **Excluded at the user's request.** Another agent is replacing the package with a King Dedede import while this pass runs. No King data was read for tuning or used as a reference. |
 | `base` | Shared abstract template (stats, grabs, throws, hurtboxes, poses, state anims), including the inherited throws. Not tuned. |
 

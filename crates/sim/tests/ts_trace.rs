@@ -105,6 +105,7 @@ fn matches_typescript_traces() {
                 team: None,
                 tap_jump: p["tapJump"].as_bool().unwrap_or(false),
                 controls: Default::default(),
+                eliminated: false,
             })
             .collect();
         let mut w = World::new(
@@ -115,6 +116,8 @@ fn matches_typescript_traces() {
                 training: cfg["training"].as_bool().unwrap_or(false),
                 players,
                 friendly_fire: false,
+                time_limit: None,
+                sudden_death: false,
             },
             &d,
         )

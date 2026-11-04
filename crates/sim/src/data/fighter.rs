@@ -35,6 +35,9 @@ pub struct Fighter {
     pub stats: Stats,
     /// Collision body for stage geometry.
     pub body: Body,
+    /// Limited-use resources (weapons, tomes). Moves reference them by id for variants, costs and gates.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub charges: Vec<super::moves::ChargePool>,
     pub hurtboxes: Hurtboxes,
     /// Nonempty regions replace both legacy rectangle groups.
     #[serde(default, skip_serializing_if = "Option::is_none")]

@@ -208,6 +208,8 @@ fn fighter_editor() -> Vec<Step> {
                     on: sim::data::Trigger::Timeout,
                     cond: None,
                     from: None,
+                    min_charge: 0,
+                    needs: None,
                     to: "nowhere".into(),
                     lag: None,
                     preserve_hits: false,
@@ -775,12 +777,31 @@ fn fighter_kits() -> Vec<Step> {
         ("king", "dspec", 28, "25f-king-jet"),
         ("king", "grab", 8, "25g-king-grab"),
         ("king", "utilt", 8, "25h-king-head-lift"),
+        ("throbbin", "fsmash", 16, "30a-throbbin-levin-smash"),
+        ("throbbin", "usmash", 14, "30b-throbbin-levin-rising"),
+        ("throbbin", "dsmash", 20, "30c-throbbin-levin-sweep"),
+        ("throbbin", "nair", 9, "30d-throbbin-levin-nair"),
+        ("throbbin", "fair", 12, "30e-throbbin-levin-fair"),
+        ("throbbin", "dair", 15, "30f-throbbin-levin-drop"),
+        ("throbbin", "nspec", 8, "30g-throbbin-thunder-charge"),
+        ("throbbin", "nspec", 20, "30h-throbbin-thunder-cast"),
+        ("throbbin", "sspec", 20, "30i-throbbin-arcfire"),
+        ("throbbin", "uspec", 12, "30j-throbbin-elwind"),
+        ("throbbin", "dspec", 18, "30k-throbbin-nosferatu"),
+        ("throbbin", "jab", 5, "30l-throbbin-jab"),
     ] {
         ed(&mut v, Cmd::Subject(Subject::Move(slot.into())));
         ed(&mut v, Cmd::Fighter(fighter.into()));
         ed(&mut v, Cmd::Frame(frame));
         shot(&mut v, name);
     }
+    // Pin the preview to the move's default (Bronze) timeline instead of the resource-selected Levin one.
+    ed(&mut v, Cmd::Fighter("throbbin".into()));
+    ed(&mut v, Cmd::Subject(Subject::Move("fsmash".into())));
+    ed(&mut v, Cmd::Variant(Some(0)));
+    ed(&mut v, Cmd::Frame(16));
+    shot(&mut v, "30m-throbbin-bronze-smash");
+    ed(&mut v, Cmd::Variant(None));
     ed(&mut v, Cmd::Fighter("whiplash".into()));
     ed(&mut v, Cmd::Subject(Subject::Move("dspec".into())));
     ed(
@@ -1223,7 +1244,7 @@ pub fn run(
                     &content,
                     Mode::Training,
                     slots,
-                    Rules { stocks: 3, stage: "arena".into(), friendly_fire: false },
+                    Rules { stocks: 3, stage: "arena".into(), friendly_fire: false, time_limit: None },
                     7,
                 )
                 .unwrap();
@@ -1282,7 +1303,7 @@ pub fn run(
                 &content,
                 Mode::Training,
                 slots,
-                Rules { stocks: 3, stage: "arena".into(), friendly_fire: false },
+                Rules { stocks: 3, stage: "arena".into(), friendly_fire: false, time_limit: None },
                 7,
             )
             .unwrap();
@@ -1323,7 +1344,7 @@ pub fn run(
                     color: i,
                 })
                 .collect();
-            let rules = Rules { stocks: 3, stage: "arena".into(), friendly_fire: false };
+            let rules = Rules { stocks: 3, stage: "arena".into(), friendly_fire: false, time_limit: None };
             let mut m = Match::new(&data.0, Mode::Training, slots, rules, 7).unwrap();
             m.world.count = 0;
             if let Step::Animation(_, state, tick, vy) = step {
@@ -1363,7 +1384,8 @@ pub fn run(
                     color: i,
                 })
                 .collect();
-            let rules = Rules { stocks, stage: id.into(), friendly_fire: false };
+            // Three minutes on the clock, so the HUD shots show the timer.
+            let rules = Rules { stocks, stage: id.into(), friendly_fire: false, time_limit: Some(180) };
             match Match::new(&data.0, Mode::Versus, slots, rules, 7) {
                 Ok(m) => {
                     // Otherwise the select screen would put its showcase back this frame.
@@ -1705,7 +1727,20 @@ mod tests {
 29w-plant-air-rise
 29x-plant-air-fall
 29y-plant-landing-impact
-29z-plant-landing-recover";
+29z-plant-landing-recover
+30a-throbbin-levin-smash
+30b-throbbin-levin-rising
+30c-throbbin-levin-sweep
+30d-throbbin-levin-nair
+30e-throbbin-levin-fair
+30f-throbbin-levin-drop
+30g-throbbin-thunder-charge
+30h-throbbin-thunder-cast
+30i-throbbin-arcfire
+30j-throbbin-elwind
+30k-throbbin-nosferatu
+30l-throbbin-jab
+30m-throbbin-bronze-smash";
         assert_eq!(names, expected.lines().collect::<Vec<_>>());
     }
 }

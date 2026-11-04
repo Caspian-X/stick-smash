@@ -14,10 +14,20 @@ pub struct PlayerConfig {
     pub tap_jump: bool,
     #[serde(default)]
     pub controls: Controls,
+    /// Sudden death only: this side lost the time-up and starts out (no stocks, out of the fight).
+    #[serde(default)]
+    pub eliminated: bool,
 }
 impl PlayerConfig {
     pub fn human(fighter: &str) -> Self {
-        Self { fighter: fighter.into(), cpu: None, team: None, tap_jump: true, controls: Controls::default() }
+        Self {
+            fighter: fighter.into(),
+            cpu: None,
+            team: None,
+            tap_jump: true,
+            controls: Controls::default(),
+            eliminated: false,
+        }
     }
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -28,6 +38,19 @@ pub struct MatchConfig {
     pub training: bool,
     pub players: Vec<PlayerConfig>,
     pub friendly_fire: bool,
+    /// Time limit in seconds; `None` plays until one side has stocks left (training always does).
+    #[serde(default)]
+    pub time_limit: Option<u32>,
+    /// Sudden death (SSBU): one stock each at `match.suddenDeathDamage`, no time limit.
+    #[serde(default)]
+    pub sudden_death: bool,
+}
+impl MatchConfig {
+    /// The same lineup as sudden death: one stock each at `match.suddenDeathDamage` and no timer. The seed is kept,
+    /// so the same inputs play out the same way.
+    pub fn sudden_death(&self) -> Self {
+        Self { stocks: 1, time_limit: None, sudden_death: true, ..self.clone() }
+    }
 }
 impl MatchConfig {
     /// Distinct teams plus one side per unteamed player. Match lobbies should require at least two.
@@ -39,7 +62,16 @@ impl MatchConfig {
 impl MatchConfig {
     /// One-stock training world with the supplied stage, lineup and deterministic seed.
     pub fn sandbox(stage: impl Into<String>, players: Vec<PlayerConfig>, seed: u32) -> Self {
-        Self { stage: stage.into(), players, seed, training: true, stocks: 1, friendly_fire: false }
+        Self {
+            stage: stage.into(),
+            players,
+            seed,
+            training: true,
+            stocks: 1,
+            friendly_fire: false,
+            time_limit: None,
+            sudden_death: false,
+        }
     }
 }
 impl Default for MatchConfig {
@@ -51,6 +83,8 @@ impl Default for MatchConfig {
             training: false,
             players: vec![PlayerConfig::human("brawler"), PlayerConfig { cpu: Some(2), ..PlayerConfig::human("king") }],
             friendly_fire: false,
+            time_limit: None,
+            sudden_death: false,
         }
     }
 }
@@ -171,6 +205,9 @@ pub struct MoveState {
     #[serde(default)]
     pub started: u64,
     pub phase: usize,
+    /// Phase timeline chosen at move start from `Move.variants` (0 = the default `phases`).
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub variant: u8,
     pub t: u32,
     pub elapsed: u32,
     pub charge: u32,
@@ -251,6 +288,12 @@ pub struct Fighter {
     pub used_air_moves: Vec<String>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub paralyze_used: bool,
+    /// Remaining uses of each content charge pool, in content order.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub charges: Vec<u32>,
+    /// Ticks until each pool is full again (0 = not recharging).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub charge_wait: Vec<u32>,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -379,13 +422,23 @@ pub struct World {
     pub projs: Vec<Projectile>,
     pub count: u32,
     pub go_t: u32,
+    /// Ticks left on the match timer (`None`: no time limit, out of time, or training).
+    #[serde(default)]
+    pub time_left: Option<u32>,
+    /// The timer ran out; the winner came from the time-up standings.
+    #[serde(default)]
+    pub time_up: bool,
+    /// The fighters tied for the lead at the moment the timer ran out, fixed then so the end animation cannot
+    /// change who plays sudden death. Empty when the time up was decided (see [`World::time_leaders`]).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub time_tied: Vec<usize>,
     pub end_t: u32,
     pub winner: Option<usize>,
     pub over: bool,
     pub trace: Option<Trace>,
 }
 impl World {
-    /// Fails for unknown content ids, no players, nonpositive stocks, or insufficient stage capacity.
+    /// Fails for unknown content ids, no players, nonpositive stocks or time limit, or insufficient stage capacity.
     /// One-side configurations are allowed for training; lobbies should check `opposing_sides()`.
     pub fn new(cfg: MatchConfig, data: &GameData) -> Result<Self, String> {
         let stage = data
@@ -405,6 +458,11 @@ impl World {
         if cfg.stocks <= 0 {
             return Err("stocks must be positive".into());
         }
+        let time_left = match cfg.time_limit {
+            None => None,
+            Some(0) => return Err("time limit must be positive".into()),
+            Some(s) => Some(s.checked_mul(crate::TICK_HZ).ok_or("time limit is too long")?),
+        };
         for p in &cfg.players {
             if data.fighter(&p.fighter).is_none() {
                 return Err(format!("unknown fighter {:?}", p.fighter));
@@ -429,6 +487,7 @@ impl World {
                             })
                             .map(|i| i + s.blocks.len())
                     });
+                let out = cfg.sudden_death && p.eliminated;
                 Fighter {
                     data: di,
                     x: sp.x,
@@ -436,13 +495,19 @@ impl World {
                     vx: 0.,
                     vy: 0.,
                     face: f64::from(sp.face),
-                    dmg: 0.,
+                    dmg: if !out && cfg.sudden_death { data.global.match_.sudden_death_damage } else { 0. },
                     last_hit_by: None,
-                    stocks: cfg.stocks,
+                    stocks: if cfg.sudden_death { i32::from(!out) } else { cfg.stocks },
                     ground: surf.is_some(),
                     surf,
                     jumps: d.stats.air_jumps,
-                    state: if surf.is_some() { State::Idle } else { State::Air },
+                    state: if out {
+                        State::Out
+                    } else if surf.is_some() {
+                        State::Idle
+                    } else {
+                        State::Air
+                    },
                     t: 0,
                     sd: StateData::default(),
                     mov: None,
@@ -474,6 +539,8 @@ impl World {
                     ledge_inv: true,
                     used_air_moves: Vec::new(),
                     paralyze_used: false,
+                    charges: crate::charges::full(data, di),
+                    charge_wait: vec![0; data.fighters[di].charges.len()],
                 }
             })
             .collect();
@@ -489,6 +556,9 @@ impl World {
             projs: vec![],
             count: if cfg.training { 0 } else { data.global.match_.countdown },
             go_t: 0,
+            time_left: time_left.filter(|_| !cfg.training && !cfg.sudden_death),
+            time_up: false,
+            time_tied: vec![],
             end_t: 0,
             winner: None,
             over: false,
@@ -504,6 +574,44 @@ impl World {
             && (self.cfg.friendly_fire
                 || self.cfg.players[a].team.is_none()
                 || self.cfg.players[a].team != self.cfg.players[b].team)
+    }
+    /// One entry per side, in deterministic key order: (stocks left, pooled damage, the side's fighters). Teamed
+    /// players share a key; unteamed players are alone. A fighter in the death sequence has already spent the stock
+    /// they died on, so their damage no longer counts.
+    fn time_sides(&self) -> Vec<(i32, f64, Vec<usize>)> {
+        let mut sides: std::collections::BTreeMap<(u8, usize), (i32, f64, Vec<usize>)> = Default::default();
+        for (i, f) in self.fighters.iter().enumerate() {
+            let key = self.cfg.players[i].team.map_or((1, i), |t| (0, usize::from(t)));
+            let side = sides.entry(key).or_default();
+            side.0 += f.stocks;
+            if f.stocks > 0 && f.state != State::Dead {
+                side.1 += f.dmg;
+            }
+            side.2.push(i);
+        }
+        sides.into_values().collect()
+    }
+    /// Time up (SSBU): the side with the most stocks left wins, then the side with the lowest pooled damage; `None`
+    /// on a tie or when nobody has a stock left. The winner is a surviving member of that side.
+    pub fn time_winner(&self) -> Option<usize> {
+        let sides = self.time_sides();
+        let best = sides.iter().map(|s| (s.0, s.1)).reduce(time_better)?;
+        let mut leaders = sides.iter().filter(|s| (s.0, s.1) == best);
+        let lead = leaders.next()?;
+        if best.0 <= 0 || leaders.next().is_some() {
+            return None;
+        }
+        lead.2.iter().copied().find(|&i| self.fighters[i].stocks > 0).or_else(|| lead.2.first().copied())
+    }
+    /// The fighters still tied for the lead when time runs out, for sudden death: every member of each tied side.
+    /// Empty when the sides are not tied or nobody has a stock left.
+    pub fn time_leaders(&self) -> Vec<usize> {
+        let sides = self.time_sides();
+        let Some(best) = sides.iter().map(|s| (s.0, s.1)).reduce(time_better) else { return vec![] };
+        if best.0 <= 0 || sides.iter().filter(|s| (s.0, s.1) == best).count() < 2 {
+            return vec![];
+        }
+        sides.iter().filter(|s| (s.0, s.1) == best).flat_map(|s| s.2.iter().copied()).collect()
     }
     pub(crate) fn effect_rng(&mut self) -> &mut Rng {
         self.cosmetic_rng.as_mut().unwrap_or(&mut self.rng)
@@ -529,4 +637,8 @@ pub fn sign(v: f64) -> f64 {
     } else {
         0.
     }
+}
+/// Time-up order between two sides' `(stocks, damage)` scores: more stocks, then less damage.
+fn time_better(a: (i32, f64), b: (i32, f64)) -> (i32, f64) {
+    if (b.0, -b.1) > (a.0, -a.1) { b } else { a }
 }

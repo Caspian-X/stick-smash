@@ -14,6 +14,11 @@
     "tagline": { "type": "string", "description": "One-line pitch on the character select card.", "default": "" },
     "stats": { "$ref": "#/$defs/StatsPartial" },
     "body": { "$ref": "#/$defs/BodyPartial", "description": "Collision body for stage geometry." },
+    "charges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ChargePool" },
+      "description": "Limited-use resources (weapons, tomes). Moves reference them by id for variants, costs and gates."
+    },
     "hurtboxes": { "$ref": "#/$defs/HurtboxesPartial" },
     "hurtRegions": {
       "type": ["array", "null"],
@@ -128,6 +133,33 @@
         "height": { "type": "number", "format": "double" }
       },
       "required": ["halfWidth", "height"]
+    },
+    "ChargePool": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Referenced by `moves.*.variants[].needs`, `phases[].cost` and `hitboxes[].needs`."
+        },
+        "uses": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Uses at full." },
+        "recharge": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks from empty back to full. Zero keeps it spent until respawn."
+        },
+        "discardDelay": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks after using the pool's last charge before its refill starts (a tome is thrown away first)."
+        },
+        "emptySfx": { "type": ["string", "null"] },
+        "refillSfx": { "type": ["string", "null"] }
+      },
+      "required": ["id", "uses"],
+      "description": "A charge resource (a weapon, tome or other limited-use tool) and its recharge behavior."
     },
     "Hurtboxes": {
       "type": "object",
@@ -467,6 +499,11 @@
           "format": "double",
           "description": "Damage bonus per held charge tick. Omit to use the global smash-charge divisor."
         },
+        "variants": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/MoveVariant" },
+          "description": "Alternate timelines picked once when the move starts, by the fighter's charge resources (a weapon or tome\nwith uses left). The first variant whose `needs` is satisfied wins; otherwise `phases` runs."
+        },
         "phases": {
           "type": "array",
           "items": { "$ref": "#/$defs/Phase" },
@@ -482,6 +519,32 @@
         { "type": "string", "const": "upSpecial", "description": "`upSpecialAccel`." }
       ],
       "description": "Which global air acceleration a move uses while airborne (`global.movement`)."
+    },
+    "MoveVariant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "needs": {
+          "$ref": "#/$defs/ChargeNeed",
+          "description": "The charge resource that must still have uses for this variant to be picked."
+        },
+        "phases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Phase" }
+        }
+      },
+      "required": ["needs", "phases"],
+      "description": "An alternate phase timeline, chosen at move start by a charge resource."
+    },
+    "ChargeNeed": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "charge": { "type": "string" },
+        "uses": { "type": "integer", "format": "uint32", "minimum": 0, "default": 1 }
+      },
+      "required": ["charge"],
+      "description": "A charge requirement: a resource id and how many uses it takes."
     },
     "Phase": {
       "type": "object",
@@ -510,6 +573,13 @@
           "type": "number",
           "format": "double",
           "description": "Extra phase frames per stored charge tick (rounded to the nearest whole frame)."
+        },
+        "cost": {
+          "anyOf": [
+            { "$ref": "#/$defs/ChargeNeed" },
+            { "type": "null" }
+          ],
+          "description": "Spent from the fighter's charge resources when the phase is entered. A pool with fewer uses left than\nthis spends what remains (and starts recharging); the phase still runs."
         },
         "hitboxes": {
           "type": "array",
@@ -709,6 +779,15 @@
         "counterDamage": {
           "type": "boolean",
           "description": "Counter strike: damage comes from the countered hit (see `Counter`). Inactive if nothing was countered."
+        },
+        "heal": {
+          "type": "number",
+          "format": "double",
+          "description": "Fraction of the damage dealt that heals the attacker (Nosferatu drains health). Capped at the\nattacker's current damage."
+        },
+        "unblockable": {
+          "type": "boolean",
+          "description": "Ignores shields, counters and parries (a command grab such as Nosferatu still lands on a guarding victim)."
         },
         "minCharge": {
           "type": "integer",
@@ -1005,6 +1084,19 @@
           "format": "uint32",
           "minimum": 0,
           "description": "Only from this phase frame on."
+        },
+        "minCharge": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Only fires with at least this many held charge ticks (a charged move can pick a phase per tier)."
+        },
+        "needs": {
+          "anyOf": [
+            { "$ref": "#/$defs/ChargeNeed" },
+            { "type": "null" }
+          ],
+          "description": "Only fires while this charge resource still has uses (a jab can fall back when its tome is empty).\nList the resource-gated transition before its fallback: the first match wins."
         },
         "to": { "type": "string" },
         "lag": {
@@ -2267,6 +2359,11 @@
           "format": "double",
           "description": "Damage bonus per held charge tick. Omit to use the global smash-charge divisor."
         },
+        "variants": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/MoveVariant" },
+          "description": "Alternate timelines picked once when the move starts, by the fighter's charge resources (a weapon or tome\nwith uses left). The first variant whose `needs` is satisfied wins; otherwise `phases` runs."
+        },
         "phases": {
           "type": "array",
           "items": { "$ref": "#/$defs/Phase" },
@@ -2383,6 +2480,15 @@
         "counterDamage": {
           "type": "boolean",
           "description": "Counter strike: damage comes from the countered hit (see `Counter`). Inactive if nothing was countered."
+        },
+        "heal": {
+          "type": "number",
+          "format": "double",
+          "description": "Fraction of the damage dealt that heals the attacker (Nosferatu drains health). Capped at the\nattacker's current damage."
+        },
+        "unblockable": {
+          "type": "boolean",
+          "description": "Ignores shields, counters and parries (a command grab such as Nosferatu still lands on a guarding victim)."
         },
         "minCharge": {
           "type": "integer",

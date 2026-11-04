@@ -741,6 +741,7 @@ pub fn respawn(w: &World, d: &GameData, i: usize, f: &mut Fighter) {
     f.ledge_inv = true;
     f.used_air_moves.clear();
     f.paralyze_used = false;
+    crate::charges::refill(d, f);
     f.set_state(State::Respawn);
 }
 pub fn ko(w: &mut World, d: &GameData, i: usize) {

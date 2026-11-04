@@ -23,7 +23,7 @@ pub use hitbox::{HitType, Hitbox, LaunchDir};
 #[cfg(feature = "fs")]
 pub use load::sources;
 pub use load::{ContentError, ContentKind, Source, load, migrate_kind, validate};
-pub use moves::{Event, Move, Moves, Phase, Transition, Trigger};
+pub use moves::{ChargeNeed, ChargePool, Event, Move, MoveVariant, Moves, Phase, Transition, Trigger};
 pub use stage::Stage;
 
 /// Current stage format version; fighter/global version histories are independent.

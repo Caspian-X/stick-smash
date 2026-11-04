@@ -1,0 +1,248 @@
+{
+  "url": "https://ultimateframedata.com/robin/",
+  "accessed": "2026-11-03",
+  "pageSha256": "670c4b5b807f11e82c3552f1bc20ffb9ee2efdf65a5384620766fac2dfe6e6ae",
+  "note": "Per-move hitbox visualisations live under `https://ultimateframedata.com/hitboxes/robin/<Name>.gif` (the character page only links the generic getup/ledge/trip GIFs; resolving its relative links returns HTML). The 37 files downloaded here are listed with sha256s in visuals.json and are reacquired by `just robin-visuals`.",
+  "rows": {
+    "jab": {
+      "startup": 4,
+      "active": "4-5",
+      "total": 31,
+      "damage": [
+        2.0,
+        1.5,
+        5.0
+      ],
+      "note": "jab2 continues at 9, jab3 at 9, rapid from 8 in jab 2"
+    },
+    "rapid": {
+      "active": "4,6,8...",
+      "damage": 0.9
+    },
+    "rapidEnd": {
+      "startup": 5,
+      "total": 47,
+      "damage": 2.0,
+      "landing": 41
+    },
+    "ftilt": {
+      "startup": 9,
+      "active": "9-10",
+      "total": 32,
+      "damage": 7.5,
+      "landing": 22
+    },
+    "utilt": {
+      "startup": 6,
+      "active": "6-14",
+      "total": 32,
+      "damage": 6.0,
+      "landing": 18
+    },
+    "dtilt": {
+      "startup": 7,
+      "active": "7-8",
+      "total": 21,
+      "damage": 6.0,
+      "landing": 13
+    },
+    "dashatk": {
+      "startup": 8,
+      "active": "8-10 (11-18)",
+      "total": 41,
+      "damage": [
+        10.0,
+        6.0
+      ],
+      "landing": 23
+    },
+    "fsmash": {
+      "startup": 16,
+      "active": "16-18 (19-27)",
+      "total": 57,
+      "damage": [
+        16.0,
+        10.0,
+        9.6
+      ],
+      "charge": 6,
+      "landing": 30
+    },
+    "usmash": {
+      "startup": 12,
+      "active": "12, 13-16 (17-32)",
+      "total": 52,
+      "damage": [
+        10.0,
+        15.0,
+        9.0
+      ],
+      "charge": 5,
+      "landing": 20
+    },
+    "dsmash": {
+      "startup": 16,
+      "active": "16-17 (19-22/23-28)",
+      "total": 56,
+      "damage": [
+        15.0,
+        12.0,
+        8.0
+      ],
+      "charge": 3,
+      "landing": 28
+    },
+    "nair": {
+      "startup": 7,
+      "active": "7-10/20-23 (24-28)",
+      "total": 47,
+      "damage": [
+        11.5,
+        6.9
+      ],
+      "landing": 11,
+      "autocancel": "1-3, 32+ bronze / 40+ levin"
+    },
+    "fair": {
+      "startup": 12,
+      "active": "12-15 (16-19)",
+      "total": 33,
+      "damage": [
+        12.5,
+        7.5
+      ],
+      "landing": 11,
+      "autocancel": "1-3, 27+ bronze / 28+ levin"
+    },
+    "bair": {
+      "startup": 9,
+      "active": "9-10 (11-16)",
+      "total": 39,
+      "damage": [
+        15.0,
+        5.0,
+        9.0
+      ],
+      "landing": 11,
+      "autocancel": "32+"
+    },
+    "uair": {
+      "startup": 10,
+      "active": "10-13 (14-23)",
+      "total": 45,
+      "damage": [
+        13.0,
+        5.0,
+        7.8
+      ],
+      "landing": 11,
+      "autocancel": "1-4, 27+ bronze / 28+ levin"
+    },
+    "dair": {
+      "startup": 13,
+      "active": "13-15 (16-17/18-24)",
+      "total": 59,
+      "damage": [
+        11.0,
+        8.0,
+        7.2,
+        6.0
+      ],
+      "landing": 16,
+      "autocancel": "48+"
+    },
+    "grab": {
+      "startup": 7,
+      "active": "7-8",
+      "total": 39,
+      "landing": 31
+    },
+    "dashgrab": {
+      "startup": 10,
+      "active": "10-11",
+      "total": 47,
+      "landing": 36
+    },
+    "pummel": {
+      "startup": 1,
+      "total": 21,
+      "damage": 1.5
+    },
+    "fthrow": {
+      "release": 16,
+      "total": 31,
+      "damage": 8.0
+    },
+    "bthrow": {
+      "release": 25,
+      "total": 44,
+      "damage": 11.0
+    },
+    "uthrow": {
+      "release": 15,
+      "total": 47,
+      "damage": 9.0
+    },
+    "dthrow": {
+      "release": 16,
+      "total": 37,
+      "damage": 6.0
+    },
+    "nspec": {
+      "startup": 8,
+      "total": [
+        32,
+        38,
+        38
+      ],
+      "damage": [
+        5.5,
+        11.0
+      ],
+      "note": "charge frame 8; Elthunder 33, Arcthunder 73, Thoron 133 frames from press; empty tome 39 total"
+    },
+    "sspec": {
+      "startup": 17,
+      "total": 63,
+      "damage": [
+        2.0,
+        1.3,
+        4.0
+      ],
+      "note": "pillar rehits every 8 frames ending frame 50"
+    },
+    "uspec": {
+      "startup": [
+        8,
+        28
+      ],
+      "total": 85,
+      "damage": [
+        7.0,
+        5.0
+      ],
+      "note": "empty tome 51 total"
+    },
+    "dspec": {
+      "startup": 15,
+      "active": "15-18",
+      "total": 49,
+      "note": "intangible 15-18, 31 frames releasing the victim"
+    }
+  },
+  "stats": {
+    "weight": 95,
+    "gravity": 0.089,
+    "walk": 0.936,
+    "run": 1.265,
+    "dash": 1.815,
+    "air": 1.05,
+    "airAccel": 0.08,
+    "jumpFrames": [
+      38,
+      52
+    ],
+    "fall": 1.5,
+    "fastFall": 2.4
+  }
+}
