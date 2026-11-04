@@ -791,3 +791,34 @@ fn late_windows_stop_at_the_pinned_inclusive_endpoints() {
         assert!(late.iter().all(|&(s, e, _)| s == start && e == end), "{slot}: {late:?}");
     }
 }
+
+#[test]
+fn continuous_tiers_hit_once() {
+    let d = common::data();
+    let run = |slot: &str, dx: f64, y: f64| -> f64 {
+        let mut w = start(&d, slot);
+        w.fighters[1].x = 640. + dx;
+        w.fighters[1].y = y;
+        for _ in 0..70 {
+            w.fighters[1].x = 640. + dx;
+            w.fighters[1].y = y;
+            w.fighters[1].vx = 0.;
+            w.fighters[1].vy = 0.;
+            step_world(&mut w, &d, &[Input::default(), Input::default()]);
+            w.fx.clear();
+            w.hits.clear();
+            w.acts.clear();
+            if w.fighters[0].mov.is_none() {
+                break;
+            }
+        }
+        w.fighters[1].dmg
+    };
+    // Back air sits behind; the dummy is parked there.
+    let bair = run("bair", -70., 520.);
+    close(bair, 13.0);
+    let dash = run("dashatk", 60., 520.);
+    assert!(dash <= 11.0 + 1e-6, "dash attack must not add its 8% late tier to the same victim ({dash})");
+    let usmash = run("usmash", 35., 520.);
+    assert!(usmash <= 13.0 + 1e-6, "up smash must not add 12%/8% after the 13% tier ({usmash})");
+}

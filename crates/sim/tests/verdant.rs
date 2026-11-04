@@ -646,3 +646,59 @@ fn loop_seam_finisher_has_an_independent_identity() {
     assert_eq!(common::contact_sequence(&d, "verdant", "uair"), [3., 3., 5.5]);
     assert_eq!(common::contact_sequence(&d, "verdant", "usmash"), [2., 2., 2., 2., 10.]);
 }
+
+#[test]
+fn air_side_special_takes_its_own_branch() {
+    let d = common::data();
+    let mut w = start(&d, "sspec");
+    w.fighters[0].ground = false;
+    w.fighters[0].surf = None;
+    // Well above every platform so the wind-up cannot land during the test.
+    w.fighters[0].y = -400.;
+    let mut seen = false;
+    for _ in 0..20 {
+        step_move(&mut w, &d, sim::input::Intent::default());
+        if phase_name(&d, &w).as_deref() == Some("airThrust") {
+            seen = true;
+            break;
+        }
+    }
+    assert!(seen, "an airborne side special must reach airThrust");
+    let boxes = combat::active_boxes_at(&d, &w.fighters[0], w.frame);
+    assert!(boxes.iter().any(|b| (b.hit.damage - 14.25).abs() < 1e-9), "{boxes:?}");
+    assert!(boxes.iter().any(|b| (b.hit.damage - 9.5).abs() < 1e-9), "{boxes:?}");
+    for _ in 0..50 {
+        step_move(&mut w, &d, sim::input::Intent::default());
+        if w.fighters[0].mov.is_none() {
+            break;
+        }
+    }
+    assert!(w.fighters[0].mov.is_none(), "the aerial branch must end");
+}
+
+#[test]
+fn down_special_armour_absorbs_weak_hits() {
+    let d = common::data();
+    for (damage, armored) in [(30., true), (36., true), (40., false)] {
+        let mut w = start(&d, "dspec");
+        for _ in 0..80 {
+            if phase_name(&d, &w).as_deref() == Some("slam") {
+                break;
+            }
+            step_move(&mut w, &d, sim::input::Intent::default());
+        }
+        assert_eq!(phase_name(&d, &w).as_deref(), Some("slam"));
+        let before = w.fighters[0].dmg;
+        let hit = sim::data::Hitbox { damage, bkb: 60., kbg: 0.9, angle: 45., ..Default::default() };
+        combat::apply_hit(
+            &mut w,
+            &d,
+            0,
+            &hit,
+            combat::HitSource { attacker: 1, direction: 1., point: (640., 480.), projectile: false, label: None },
+        );
+        assert!(w.fighters[0].dmg > before, "the hit still deals damage");
+        assert_eq!(w.fighters[0].state == State::Attack, armored, "{damage}% armoured");
+        assert_eq!(w.fighters[0].mov.is_some(), armored, "{damage}% keeps the move");
+    }
+}

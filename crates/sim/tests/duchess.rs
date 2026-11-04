@@ -763,3 +763,75 @@ fn parasol_rising_contacts_keep_the_loop_cooldown_across_phase_splits() {
     }
     assert_eq!(hits, [(6, 3.), (10, 1.), (15, 1.), (20, 1.), (22, 1.), (27, 1.), (31, 4.)]);
 }
+
+#[test]
+fn closed_parasol_can_still_grab_a_ledge() {
+    let d = common::data();
+    // `every_ledge_is_recoverable` covers the open parasol on every stage; this checks the closed special-fall
+    // phase still runs the shared ledge check (it only runs when the phase declares a ledge-grab window).
+    let s = &d.stages[0];
+    let b = &s.blocks[0];
+    assert!(b.right_ledge);
+    let mut w = start_air(&d, "uspec");
+    w.fighters[1].x = 1500.;
+    for _ in 0..45 {
+        if phase_name(&d, &w).as_deref() == Some("open") {
+            break;
+        }
+        step_move(&mut w, &d, Intent { sp_held: true, ..Default::default() });
+        stay_air(&mut w, 300.);
+    }
+    assert_eq!(phase_name(&d, &w).as_deref(), Some("open"));
+    step_move(&mut w, &d, Intent { sp: true, ..Default::default() });
+    stay_air(&mut w, 300.);
+    assert_eq!(phase_name(&d, &w).as_deref(), Some("closed"));
+    let (x, y) = (b.right + 30., b.top + s.ledge.hand_y + s.ledge.cy);
+    let mut caught = false;
+    for _ in 0..20 {
+        {
+            let f = &mut w.fighters[0];
+            f.x = x;
+            f.y = y;
+            f.vx = 0.;
+            f.vy = 2.;
+        }
+        step_move(&mut w, &d, Intent::default());
+        if w.fighters[0].state == State::Ledge {
+            caught = true;
+            break;
+        }
+    }
+    assert!(caught, "closed parasol grabs the ledge");
+}
+
+#[test]
+fn parasol_rise_landing_does_not_trap() {
+    let d = common::data();
+    let uspec = &d.fighter("duchess").unwrap().moves.uspec;
+    for p in uspec.phases.iter().filter(|p| p.name.starts_with("rise")) {
+        assert!(
+            p.transitions.iter().any(|t| t.on == sim::data::Trigger::Land && t.lag.is_some()),
+            "{} needs a landing transition",
+            p.name
+        );
+    }
+    // A real landing during the rise (before the parasol opens) must enter landing lag, not continue on the ground.
+    for ticks in [2, 12] {
+        let mut w = start_air(&d, "uspec");
+        for _ in 0..ticks {
+            step_move(&mut w, &d, Intent { sp_held: true, ..Default::default() });
+            stay_air(&mut w, 300.);
+        }
+        assert!(phase_name(&d, &w).as_deref().is_some_and(|name| name.starts_with("rise")));
+        {
+            let f = &mut w.fighters[0];
+            f.ground = false;
+            f.surf = None;
+            f.y = 516.;
+            f.vy = 8.;
+        }
+        step_move(&mut w, &d, Intent { sp_held: true, ..Default::default() });
+        assert_eq!(w.fighters[0].state, State::Landing, "rise landing after {ticks} ticks");
+        assert_eq!(w.fighters[0].sd.n, 26.);
+    }
+}
