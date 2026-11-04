@@ -12,7 +12,7 @@ semantics. Copy the [reference-record template](templates/FIGHTER_REFERENCE.md) 
 animated bone fitting and independent controlled projectiles.
 [Whiplash's Zero Suit Samus record](imports/whiplash.md) covers aerial grab/tether attacks, once-per-airtime
 specials, follow-up input windows, paralysis and grounded bury effects.
-[Piranha Plant's record](imports/plant.md) covers a nonhumanoid named rig, charge-tiered joint-bound reach,
+[Planty's record](imports/plant.md) covers a nonhumanoid named rig, charge-tiered joint-bound reach,
 a held/controlled projectile and a damage-only lingering hazard.
 [Throbbin's Robin record](imports/throbbin.md) covers limited-use charge resources with timed recharge,
 resource-selected move variants, charge-tiered specials, a healing unblockable hit and a Bronze fallback.

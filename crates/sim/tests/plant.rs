@@ -44,7 +44,7 @@ fn start_at(d: &sim::GameData, slot: &str, phase: usize, t: u32, charge: u32) ->
 fn package_identity_ledger_and_projectiles() {
     let d = common::data();
     let f = fdata(&d);
-    assert_eq!(f.name, "Piranha Plant");
+    assert_eq!(f.name, "Planty");
     assert_eq!(f.id, "plant");
     for slot in [
         "jab", "ftilt", "utilt", "dtilt", "dashatk", "fsmash", "usmash", "dsmash", "nair", "fair", "bair", "uair",

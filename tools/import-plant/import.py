@@ -281,15 +281,23 @@ def phase(name, frames=None, **kw):
 # ---------------------------------------------------------------------------
 # Rig and appearance
 # ---------------------------------------------------------------------------
+def leaf(points, mid, veins, fill="#50a94a"):
+    shapes = [{"shape": "poly", "points": points, "fill": fill, "stroke": "#245e2d", "width": 1.5},
+              {"shape": "line", "from": mid[0], "to": mid[1], "width": 1.2, "color": "#286c32"}]
+    shapes.extend({"shape": "line", "from": a, "to": b, "width": 0.8, "color": "#347c3b"} for a, b in veins)
+    return shapes
+
+
 rig = {
     "joints": [
         {
-            "id": "pot",
-            "translation": [0, 0],
+            "id": "pot", "translation": [0, 0],
             "shapes": [
-                {"shape": "poly", "points": [[-20, 0], [-15, 26], [15, 26], [20, 0]], "fill": "#8a4b2a", "stroke": "#3a2013", "width": 2},
-                {"shape": "rect", "x": -16, "y": 24, "w": 32, "h": 4, "fill": "#2c1a12"},
-                {"shape": "line", "from": [-13, 4], "to": [13, 4], "width": 2, "color": "#b06a42", "alpha": 0.7},
+                {"shape": "poly", "points": [[-15, 0], [15, 0], [20, 26], [-20, 26]], "fill": "#b45e40", "stroke": "#633528", "width": 2},
+                {"shape": "line", "from": [-12, 4], "to": [-15, 21], "width": 1.5, "color": "#d88965", "alpha": 0.8},
+                {"shape": "poly", "points": [[-20, 21], [20, 21], [21, 29], [-21, 29]], "fill": "#c77350", "stroke": "#633528", "width": 2},
+                {"shape": "poly", "points": [[-20, 28], [-16, 30], [-8, 31], [8, 31], [16, 30], [20, 28], [16, 26], [8, 25], [-8, 25], [-16, 26]], "fill": "#493429", "stroke": "#633528", "width": 1.5},
+                {"shape": "line", "from": [-17, 23], "to": [17, 23], "width": 1, "color": "#e39870", "alpha": 0.7},
             ],
         },
         {"id": "stem0", "parent": "pot", "translation": [0, 24]},
@@ -297,67 +305,42 @@ rig = {
         {"id": "stem2", "parent": "stem1", "translation": [0, 20]},
         {"id": "neck", "parent": "stem2", "translation": [0, 14]},
         {
-            "id": "head",
-            "parent": "neck",
-            "translation": [0, 18],
-            "shapes": [
-                {"shape": "circle", "at": [0, 0], "r": 19, "fill": "#cf3b36", "stroke": "#6f171a", "width": 2},
-                {"shape": "circle", "at": [-7, 7], "r": 3.6, "fill": "#f7e9df"},
-                {"shape": "circle", "at": [6, -6], "r": 3.0, "fill": "#f7e9df"},
-                {"shape": "circle", "at": [9, 9], "r": 2.4, "fill": "#f7e9df"},
-                {"shape": "poly", "points": [[5, -8], [24, -4], [22, 2], [4, 2]], "fill": "#f4e7df", "stroke": "#8b3b37", "width": 1.5},
-                {"shape": "poly", "points": [[8, -8], [11, -2], [14, -8]], "fill": "#ffffff"},
-                {"shape": "poly", "points": [[15, -7], [18, -1], [21, -6]], "fill": "#ffffff"},
-            ],
+            "id": "head", "parent": "neck", "translation": [0, 18],
+            "shapes": leaf([[0, -6], [-8, 0], [-10, 8], [-8, 15], [-4, 20], [0, 22], [5, 19], [9, 13], [9, 6], [6, 0]],
+                [[0, -5], [0, 20]], [[[0, 2], [-7, 7]], [[0, 6], [7, 11]], [[0, 11], [-6, 15]], [[0, 15], [4, 18]]], "#54af4f")
+                + leaf([[0, -5], [-8, -6], [-16, -3], [-22, 3], [-24, 8], [-17, 9], [-10, 7], [-4, 2]],
+                [[-1, -4], [-22, 7]], [[[-7, -1], [-12, -2]], [[-11, 1], [-15, 5]], [[-15, 3], [-19, 4]]], "#429744"),
         },
         {
-            "id": "jaw",
-            "parent": "head",
-            "translation": [18, -8],
-            "angle": -6,
-            "shapes": [
-                {"shape": "poly", "points": [[-3, -6], [20, -8], [25, -2], [20, 4], [-3, 2]], "fill": "#f1e3db", "stroke": "#8b3b37", "width": 1.5},
-                {"shape": "poly", "points": [[5, 2], [7, 8], [9, 2]], "fill": "#ffffff"},
-                {"shape": "poly", "points": [[12, 2], [14, 8], [16, 2]], "fill": "#ffffff"},
-                {"shape": "poly", "points": [[19, 2], [21, 7], [23, 2]], "fill": "#ffffff"},
-                {"shape": "circle", "at": [10, -3], "r": 3.5, "fill": "#c05b63", "alpha": 0.8},
-            ],
+            "id": "jaw", "parent": "head", "translation": [18, -8], "angle": -6,
+            "shapes": leaf([[-18, 4], [-12, 2], [-4, 2], [3, 5], [7, 10], [1, 13], [-6, 13], [-13, 10]],
+                [[-17, 5], [5, 10]], [[[-11, 6], [-7, 3]], [[-6, 7], [-3, 11]], [[-2, 8], [1, 6]]], "#63b653"),
         },
         {"id": "mouth", "parent": "head", "translation": [22, 0]},
         {"id": "top", "parent": "head", "translation": [0, 16]},
         {"id": "leafBase", "parent": "stem2", "translation": [0, 4]},
         {
-            "id": "leafL",
-            "parent": "leafBase",
-            "translation": [-2, 2],
-            "angle": 150,
-            "shapes": [
-                {"shape": "poly", "points": [[0, 0], [14, 6], [30, 0], [14, -6]], "fill": "#3f8f3a", "stroke": "#255c22", "width": 1.5},
-                {"shape": "line", "from": [2, 0], "to": [26, 0], "width": 1, "color": "#78bd58"},
-            ],
+            "id": "leafL", "parent": "leafBase", "translation": [-2, 2], "angle": 150,
+            "shapes": leaf([[0, 0], [5, 5], [13, 7], [21, 5], [27, 0], [21, -4], [13, -6], [5, -4]],
+                [[0, 0], [25, 0]], [[[8, 0], [12, 4]], [[13, 0], [17, -3]], [[18, 0], [21, 3]]]),
         },
         {
-            "id": "leafR",
-            "parent": "leafBase",
-            "translation": [2, 2],
-            "angle": 30,
-            "shapes": [
-                {"shape": "poly", "points": [[0, 0], [14, 6], [30, 0], [14, -6]], "fill": "#3f8f3a", "stroke": "#255c22", "width": 1.5},
-                {"shape": "line", "from": [2, 0], "to": [26, 0], "width": 1, "color": "#78bd58"},
-            ],
+            "id": "leafR", "parent": "leafBase", "translation": [2, 2], "angle": 30,
+            "shapes": leaf([[0, 0], [5, 5], [13, 7], [21, 5], [27, 0], [21, -4], [13, -6], [5, -4]],
+                [[0, 0], [25, 0]], [[[8, 0], [12, 4]], [[13, 0], [17, -3]], [[18, 0], [21, 3]]]),
         },
     ],
     "bones": [
-        {"from": "stem0", "to": "stem1", "width": 8, "color": "player"},
-        {"from": "stem1", "to": "stem2", "width": 8, "color": "player"},
-        {"from": "stem2", "to": "neck", "width": 7, "color": "player"},
-        {"from": "neck", "to": "head", "width": 7, "color": "player"},
-        {"from": "leafBase", "to": "leafL", "width": 4, "color": "player"},
-        {"from": "leafBase", "to": "leafR", "width": 4, "color": "player"},
+        {"from": "stem0", "to": "stem1", "width": 6, "color": "#367e3b"},
+        {"from": "stem1", "to": "stem2", "width": 6, "color": "#367e3b"},
+        {"from": "stem2", "to": "neck", "width": 5, "color": "#367e3b"},
+        {"from": "neck", "to": "head", "width": 5, "color": "#367e3b"},
+        {"from": "leafBase", "to": "leafL", "width": 3, "color": "#367e3b"},
+        {"from": "leafBase", "to": "leafR", "width": 3, "color": "#367e3b"},
     ],
 }
 
-# Rest angle of the jaw is -6; opening drops it further. The upper skull is the head shape.
+# The jaw joint carries the forward leaf; its existing motion fans the crown open.
 poses = {
     "stand": pose(),
     "crouch": pose(
@@ -1219,9 +1202,9 @@ fighter = {
     "$schema": "../../schema/fighter.schema.json",
     "schemaVersion": 1,
     "extends": "base",
-    "name": "Piranha Plant",
-    "blurb": "A potted brawler with a stretching stem, a bone-crushing jaw and a floating spiked ball.",
-    "tagline": "Potted menace",
+    "name": "Planty",
+    "blurb": "A leafy potted fighter with a stretching stem and a floating spiked ball.",
+    "tagline": "Small pot, big reach",
     "stats": {
         "weight": 100.0 / 112.0,
         "pummelDamage": 1.4,
@@ -1263,15 +1246,15 @@ fighter = {
     "throws": throws,
     "projectiles": projectiles,
     "style": {
-        "headRadius": 19,
+        "headRadius": 24,
         "torsoWidth": 8,
         "frontLimbWidth": 4,
         "backLimbWidth": 4,
         "glowWidth": 16,
         "torsoGlowWidth": 18,
-        "headGlowRadius": 24,
+        "headGlowRadius": 27,
         "headRing": 2,
-        "headFill": "#cf3b36",
+        "headFill": "#54af4f",
         "eye": [4, 4, 3, 3],
     },
     "rig": rig,

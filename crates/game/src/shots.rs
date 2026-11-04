@@ -821,11 +821,11 @@ fn fighter_kits() -> Vec<Step> {
 }
 
 fn plant_shots() -> Vec<Step> {
-    use crate::select::{FIGHTER, TILE};
+    use crate::select::TILE;
     use crate::ui::key;
     use editor::preview::Subject;
     let mut v = vec![Step::Select(Mode::Training, 2), Step::Wait(20)];
-    v.push(Step::PointAt(0, key(FIGHTER, 8)));
+    v.push(Step::PointAt(0, key(TILE, 8)));
     v.push(Step::Wait(30));
     shot(&mut v, "29a-select-plant-hover");
     // Training: plant's own movement clips and the held/growing/rising specials.

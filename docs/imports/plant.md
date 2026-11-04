@@ -1,21 +1,17 @@
-# Piranha Plant reference and conversion record
+# Planty (Piranha Plant) reference and conversion record
 
-Piranha Plant is the first built-in package authored around the optional **named rig**, its charged reach and
+Planty, adapted from Piranha Plant, is the first built-in package authored around the optional **named rig**, its charged reach and
 its held/controlled projectiles. It is an original-roster addition, not a replacement of an existing slot.
 
 ## Target and status
 
-- Package/id: `assets/fighters/plant/fighter.json`; display name: Piranha Plant (`plant`).
-- Branch: `char-tune` (SSBU source 13.0.1). Visual confirmation remains pending; the user authorized committing the import without it.
+- Package/id: `assets/fighters/plant/fighter.json`; display name: Planty (`plant`).
+- Source import branch: `char-tune` (SSBU source 13.0.1).
 - Intended identity: a potted nonhumanoid with a short but fast close game, a chargeable long-stem snipe, a
   held spike-ball projectile, a lingering damage cloud, and a long spinning recovery. The pot, stem segments,
-  head, jaw/teeth and leaves are separate named joints so reach, hurt exposure and jaw contact all follow the
+  head, front leaf (formerly jaw) and side leaves are separate named joints so reach, hurt exposure and jaw contact all follow the
   same tick pose.
-- State: implementation and automated validation complete, including a review pass that fixed the jab-chain
-  windows, root-space contact conversion/capsules and the fitted contact poses, held-Ptooie reflection, and the
-  turn/brake gait clip clock (six new regressions). Hardware playtesting was not performed. Bevy screenshots
-  could not be inspected in this agent session (the display was unavailable and every capture was black); the
-  shot section runs and is listed below for the parent/reviewer to open on a live display.
+- State: implementation and automated validation complete; hardware playtesting was not performed.
 - Remaining work: controller feel pass; source-accurate proximity-triggered Long-Stem bite, cloud
   windbox/growth, Ptooie after-bounce, bounce physics and damage-to-ball interactions; physical pot topple and
   the source 0.8× damage-taken multiplier. See "Known approximations".
@@ -129,8 +125,8 @@ source footstool attack is a crouch-shaped interaction rather than a normal move
 
 Rig (`rig.joints`): `pot → stem0 → stem1 → stem2 → neck → head → jaw`, plus `mouth`, `top`, `leafBase`, `leafL`,
 `leafR`. The pot is the root and stays at the floor (`pot` world y = fighter feet y in every state tested).
-Stem segments are drawn as bones; leaves are separate bones/shapes. The head carries the skull, spots and
-teeth; the jaw is a child with its own teeth and tongue shape; the mouth joint is the grab/throw/bite anchor.
+Stem segments are drawn as bones; leaves are separate bones/shapes. The head carries the upright and rear
+leaves, and the jaw carries the front leaf; the mouth joint remains the grab/throw/bite anchor.
 `hurtRegions` follow `pot`, `stem0..neck`, `head/top` and `jaw/mouth`; `body` remains the stage collision body.
 
 Named poses cover stand/crouch/coil/strike/bite/air/charge/stretch tier/grab/throw/ledge/guard/win. All 41 state
@@ -151,6 +147,20 @@ slants up-forward, and fsmash/up-tilt place their head/mouth boxes on the animat
 jump/landing, hitstun and the exact stem bends are **fitted presentation**. The Long-Stem reach tiers and the
 copter leaf spin are **fitted** from the source silhouette/promo, not measured bone animation. No source
 animation files were available or claimed.
+
+## Visual refinement
+
+The display name is **Planty**; the `plant` package id, source filenames and import paths remain unchanged to
+preserve references and regeneration. The head is now a three-leaf crown, with the former jaw carrying its
+forward blade. A wider terracotta pot has a rim, dark soil and a highlight. Stem and side leaves are green.
+The joint hierarchy and translations, poses, hitboxes, hurtboxes, timing and damage are unchanged; the jaw's
+existing animation fans the front leaf as the stem lunges.
+
+Bevy captures `29a`–`29z` (the filenames present in the Plant tour) were inspected, including select, idle, fsmash, extension, Ptooie, poison, copter,
+grab and ledge. The crown and pot read clearly in editor close-ups; gameplay-scale veins are subtle and the
+training hitbox overlay obscures the silhouette. The walk/run captures show idle after reaching the dummy,
+so they do not establish gait quality. The tour does not capture neutral or down aerial poses. No controller
+playtest was performed.
 
 ## Validation and handoff
 
@@ -199,21 +209,6 @@ revert used to prove the six regressions fail was restored; the fixed tree is wh
 `crates/sim/tests/stages.rs` includes Plant on every built-in stage in both seat orders (12 matches per stage),
 and the ordinary stage CPU tests still finish.
 
-Because no Bevy frame could be captured, a temporary PIL pose proxy (not committed) rendered the package's
-rig joints and shapes for stand/crouch/charge/grab, every Long-Stem reach tier in both facings, and the Ptooie
-hold offset (`/tmp/plant-stand.png`, `/tmp/plant-stretch{0,15,30,45}.png`, `/tmp/plant-stretch45-back.png`,
-`/tmp/plant-ptooie.png`, `/tmp/plant-grab.png`). It confirmed the pot sits on the floor line, the stem arches
-above it rather than through it, the head mirrors correctly, and the held ball clears the head; it is a
-geometry check, not a substitute for the Bevy renderer.
-
-Visual inspection: retained UFD frame sheets were opened (`PiranhaPlantLong-StemStrike-sheet.png`,
-`PiranhaPlantPoisonBreathMin-sheet.png`, `PiranhaPlantPiranhacopter-sheet.png`, `PiranhaPlantPtooie-sheet.png`,
-plus individual Long-Stem gameplay frames and the SmashWiki promo/gallery frames). The local Bevy capture run
-(`just shots /tmp/plant-import-shots`) passed but every PNG was solid black because this session had no display;
-do not treat those files as visual verification. Captures to inspect on a live display:
-`29a` plant select hover, `29b` idle, `29s/t` walk/run, `29u–29z` jump/land, `29c/g/h` fsmash startup/contact/
-recovery, `29i/j` LSS charge/extend, `29l/m` Ptooie hold/shot, `29n/o` poison charge/cloud, `29p` copter,
-`29k` grab, `29q` hold anchor, `29r` ledge. Controller playtest was not performed; no hardware claim is made.
 
 ## Known approximations / remaining work
 
@@ -242,12 +237,12 @@ recovery, `29i/j` LSS charge/extend, `29l/m` Ptooie hold/shot, `29n/o` poison ch
 - Head/stem intangibility windows from UFD are authored as hurt-region windows for up tilt, forward smash, up
   smash and up air (see the ledger rows); the LSS head/jaw windows come from its script. Other UFD notes are not
   separately investigated. These are region windows on the shared hit pipeline, not per-fighter code.
-- The rig silhouette, jaw/teeth, leaf shapes, state loops and stem bends are fitted presentation. No source
+- The rig silhouette, crown and leaf shapes, state loops and stem bends are fitted presentation. No source
   skeleton animation was available. Hardware calibration (controller deadzones, DI feel) was not measured.
 
 ## Delivery
 
-Developed on branch `char-tune` from `bd5363f`. The user authorized a branch commit before visual confirmation; no push or merge is part of that authorization. No source was reset. `SIM_VERSION` was bumped once from `sim-24` to `sim-25` for this package; the
+The original import was developed on branch `char-tune` from `bd5363f`. `SIM_VERSION` was bumped once from `sim-24` to `sim-25` for this package; the
 review fixes (jab windows, root-space contacts, reflected-hold release, gait clip clock) stay within the same
 unreleased batch, so it was not bumped again. The generator remains the source of the package and ledger:
 `just import-plant` rewrites both from the pinned UFD/Rubendal inputs.
