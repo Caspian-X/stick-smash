@@ -132,6 +132,16 @@ import-robin:
 robin-visuals dir="/tmp/robin-reference":
     python3 tools/import-robin/visuals.py "{{dir}}"
 
+# Rebuild Stratus (SSBU Cloud, 13.0.1) from pinned Rubendal scripts and UFD rows
+import-stratus:
+    python3 tools/import-stratus/fetch.py
+    python3 tools/import-stratus/import.py
+    just bless
+
+# Download hash-checked Cloud hitbox GIFs and write per-frame montages (Pillow)
+stratus-visuals dir="/tmp/stratus-reference":
+    python3 tools/import-stratus/visuals.py "{{dir}}"
+
 # Download hash-checked Piranha Plant reference GIFs and make per-frame inspection sheets (Pillow)
 plant-visuals dir="/tmp/plant-reference":
     python3 tools/import-plant/visuals.py "{{dir}}"

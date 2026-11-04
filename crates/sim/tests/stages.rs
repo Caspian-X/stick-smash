@@ -316,7 +316,7 @@ fn cpu_matches_finish_on_every_stage() {
 fn new_fighter_cpu_matchups() {
     let d = common::data();
     for stage in &d.stages {
-        for fighter in ["golem", "lancer", "dancer", "plant", "throbbin", "sneak", "bongo", "stratus"] {
+        for fighter in ["golem", "lancer", "dancer", "plant", "throbbin", "sneak", "bongo", "stratus", "duchess"] {
             let mut wins = 0;
             let mut kos = 0;
             let mut self_kos = 0;

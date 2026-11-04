@@ -1,0 +1,855 @@
+{
+ "url": "https://ultimateframedata.com/cloud/",
+ "accessed": "2026-11-04",
+ "pageSha256": "c77ee4c1b4c2bd4b13f499c482ced75ceb96ed992523a29f9f60f9c50081bbca",
+ "note": "Extracted move rows. Per-move hitbox GIFs live under https://ultimateframedata.com/hitboxes/cloud/<Name>.gif; the character page only links the generic getup/ledge/trip clips. `just stratus-visuals` downloads and hashes the 41 move GIFs.",
+ "rows": {
+  "Jab 1": {
+   "startup": "4",
+   "total": "29",
+   "landing": "--",
+   "notes": "Transitions to jab 2 as early as frame 8",
+   "damage": [
+    2.5
+   ],
+   "shieldlag": [
+    7.0
+   ],
+   "shieldstun": [
+    4.0
+   ],
+   "hits": "--",
+   "advantage": "-21",
+   "active": "4\u20145",
+   "endlag": "24",
+   "gif": "CloudJab1"
+  },
+  "Jab 2": {
+   "startup": "5",
+   "total": "32",
+   "landing": "--",
+   "notes": "Transitions to jab 3 as early as frame 9",
+   "damage": [
+    2.0
+   ],
+   "shieldlag": [
+    5.0
+   ],
+   "shieldstun": [
+    3.0
+   ],
+   "hits": "--",
+   "advantage": "-24",
+   "active": "5\u20146",
+   "endlag": "26",
+   "gif": "CloudJab2"
+  },
+  "Jab 3": {
+   "startup": "6",
+   "total": "37",
+   "landing": "--",
+   "notes": "--",
+   "damage": [
+    3.5
+   ],
+   "shieldlag": [
+    10.0
+   ],
+   "shieldstun": [
+    4.0
+   ],
+   "hits": "--",
+   "advantage": "-27",
+   "active": "6\u20147",
+   "endlag": "30",
+   "gif": "CloudJab3"
+  },
+  "Forward Tilt": {
+   "startup": "9",
+   "total": "35",
+   "landing": "--",
+   "notes": "--",
+   "damage": [
+    11.0
+   ],
+   "shieldlag": [
+    8.0
+   ],
+   "shieldstun": [
+    10.0
+   ],
+   "hits": "--",
+   "advantage": "-16",
+   "active": "9\u201410",
+   "endlag": "25",
+   "gif": "CloudFTilt"
+  },
+  "Up Tilt": {
+   "startup": "6",
+   "total": "32",
+   "landing": "--",
+   "notes": "--",
+   "damage": [
+    8.0
+   ],
+   "shieldlag": [
+    7.0
+   ],
+   "shieldstun": [
+    8.0
+   ],
+   "hits": "--",
+   "advantage": "-18",
+   "active": "6\u20149",
+   "endlag": "23",
+   "gif": "CloudUTilt"
+  },
+  "Down Tilt": {
+   "startup": "7",
+   "total": "40",
+   "landing": "--",
+   "notes": "Back leg intangibility on frames 7-17.",
+   "damage": [
+    7.0
+   ],
+   "shieldlag": [
+    7.0
+   ],
+   "shieldstun": [
+    7.0
+   ],
+   "hits": "--",
+   "advantage": "-26",
+   "active": "7\u20148(9\u201417)",
+   "endlag": "23",
+   "gif": "CloudDTilt"
+  },
+  "Dash Attack": {
+   "startup": "9",
+   "total": "45",
+   "landing": "--",
+   "notes": "--",
+   "damage": [
+    11.0,
+    8.0
+   ],
+   "shieldlag": [
+    8.0,
+    7.0
+   ],
+   "shieldstun": [
+    10.0,
+    8.0
+   ],
+   "hits": "Early/Late",
+   "advantage": "-26",
+   "active": "9\u201413(14\u201418)",
+   "endlag": "27",
+   "gif": "CloudDashAttack"
+  },
+  "Forward Smash": {
+   "startup": "19/24/28",
+   "total": "66",
+   "landing": "--",
+   "notes": "Charge hold is frame 5",
+   "damage": [
+    3.0,
+    2.0,
+    13.0,
+    12.0
+   ],
+   "shieldlag": [
+    7.0,
+    7.0,
+    16.0,
+    15.0
+   ],
+   "shieldstun": [
+    3.0,
+    3.0,
+    9.0,
+    8.0
+   ],
+   "hits": "First/Second/(Final Close/Far)",
+   "advantage": "-29/-30",
+   "active": "19/24/28",
+   "endlag": "38",
+   "gif": "CloudFSmash"
+  },
+  "Up Smash": {
+   "startup": "12",
+   "total": "45",
+   "landing": "--",
+   "notes": "Charge hold is frame 5",
+   "damage": [
+    13.0,
+    8.0
+   ],
+   "shieldlag": [
+    10.0,
+    7.0
+   ],
+   "shieldstun": [
+    9.0,
+    6.0
+   ],
+   "hits": "--",
+   "advantage": "-24",
+   "active": "12(13\u201414/15\u201416)",
+   "endlag": "29",
+   "gif": "CloudUSmash"
+  },
+  "Down Smash": {
+   "startup": "8/21",
+   "total": "49",
+   "landing": "--",
+   "notes": "Charge hold is frame 2",
+   "damage": [
+    3.0,
+    11.0
+   ],
+   "shieldlag": [
+    5.0,
+    11.0
+   ],
+   "shieldstun": [
+    3.0,
+    8.0
+   ],
+   "hits": "--",
+   "advantage": "-38/-20",
+   "active": "8\u20149/21\u201423",
+   "endlag": "26",
+   "gif": "CloudDSmash"
+  },
+  "Neutral Air": {
+   "startup": "5",
+   "total": "38",
+   "landing": "9",
+   "notes": "Autocancels on frame 31 onward",
+   "damage": [
+    8.0
+   ],
+   "shieldlag": [
+    7.0
+   ],
+   "shieldstun": [
+    4.0
+   ],
+   "hits": "--",
+   "advantage": "-5",
+   "active": "5\u201415",
+   "endlag": "23",
+   "gif": "CloudNAir"
+  },
+  "Forward Air": {
+   "startup": "18",
+   "total": "53",
+   "landing": "11",
+   "notes": "Autocancels on frame 1-2 and 43 onward",
+   "damage": [
+    13.0,
+    14.0,
+    11.0
+   ],
+   "shieldlag": [
+    12.0,
+    12.0,
+    8.0
+   ],
+   "shieldstun": [
+    5.0,
+    5.0,
+    4.0
+   ],
+   "hits": "Early/Tipper/Late",
+   "advantage": "-6/-6/-7",
+   "active": "18\u201419(20\u201425)",
+   "endlag": "28",
+   "gif": "CloudFAir"
+  },
+  "Back Air": {
+   "startup": "11",
+   "total": "42",
+   "landing": "8",
+   "notes": "Autocancels on frame 1-4 and 37 onward",
+   "damage": [
+    13.0
+   ],
+   "shieldlag": [
+    9.0
+   ],
+   "shieldstun": [
+    5.0
+   ],
+   "hits": "--",
+   "advantage": "-3",
+   "active": "11\u201412",
+   "endlag": "30",
+   "gif": "CloudBAir"
+  },
+  "Up Air": {
+   "startup": "8",
+   "total": "44",
+   "landing": "9",
+   "notes": "Autocancels on frame 32 onward",
+   "damage": [
+    11.0,
+    8.0
+   ],
+   "shieldlag": [
+    10.0,
+    7.0
+   ],
+   "shieldstun": [
+    4.0,
+    4.0
+   ],
+   "hits": "Early/Late",
+   "advantage": "-5/-5",
+   "active": "8\u20149(10\u201423)",
+   "endlag": "21",
+   "gif": "CloudUAir"
+  },
+  "Down Air": {
+   "startup": "11",
+   "total": "64",
+   "landing": "16",
+   "notes": "Autocancels on frame 1-4 and 46 onward",
+   "damage": [
+    13.0,
+    8.0
+   ],
+   "shieldlag": [
+    14.0,
+    9.0
+   ],
+   "shieldstun": [
+    5.0,
+    4.0
+   ],
+   "hits": "Early/Late",
+   "advantage": "-11/-12",
+   "active": "11\u201413(14\u201439)",
+   "endlag": "25",
+   "gif": "CloudDAir"
+  },
+  "Neutral B (Blade Beam)": {
+   "startup": "18(18)",
+   "total": "53(60)",
+   "landing": "--",
+   "notes": "Windbox on 16\u201317.",
+   "damage": [
+    8.0,
+    6.0,
+    6.4,
+    4.8
+   ],
+   "shieldlag": [
+    7.0,
+    6.0,
+    6.0,
+    6.0
+   ],
+   "shieldstun": [
+    3.0,
+    3.0,
+    3.0,
+    3.0
+   ],
+   "hits": "Ground Early/Late (Air Early/Late)",
+   "advantage": "-25(-33)",
+   "active": "18\u201435(36\u201467)",
+   "endlag": "--",
+   "gif": "CloudBladeBeamG"
+  },
+  "Limit Blade Beam": {
+   "startup": "16 (1/7/13/19/25/28)",
+   "total": "60",
+   "landing": "--",
+   "notes": "Invulnerable on frame 10-17",
+   "damage": [
+    6.0,
+    2.0,
+    3.0,
+    4.8,
+    1.6,
+    2.4
+   ],
+   "shieldlag": [
+    4.0,
+    5.0
+   ],
+   "shieldstun": [
+    2.0,
+    2.0
+   ],
+   "hits": "First/Multi/Final",
+   "advantage": "-9",
+   "active": "16\u201462, Multihits: (1\u201428 (Rehit : 6)/29\u201430)",
+   "endlag": "--",
+   "gif": "CloudBladeBeamLimitG"
+  },
+  "Side B, Hit 1 (Cross Slash, Hit 1)": {
+   "startup": "10",
+   "total": "40",
+   "landing": "--",
+   "notes": "Transitions to next slash as early as frame 10 if you hit",
+   "damage": [
+    4.0
+   ],
+   "shieldlag": [
+    5.0
+   ],
+   "shieldstun": [
+    5.0
+   ],
+   "hits": "--",
+   "advantage": "-25",
+   "active": "10\u201411",
+   "endlag": "29",
+   "gif": "CloudCrossSlash1Left"
+  },
+  "Cross Slash, Hit 2": {
+   "startup": "2",
+   "total": "31",
+   "landing": "--",
+   "notes": "Transitiions to next slash as early as frame 14 if you hit",
+   "damage": [
+    3.0
+   ],
+   "shieldlag": [
+    5.0
+   ],
+   "shieldstun": [
+    4.0
+   ],
+   "hits": "--",
+   "advantage": "-25",
+   "active": "2\u20143",
+   "endlag": "28",
+   "gif": "CloudCrossSlash2Left"
+  },
+  "Cross Slash, Hit 3": {
+   "startup": "2/11/25",
+   "total": "55",
+   "landing": "--",
+   "notes": "--",
+   "damage": [
+    3.0,
+    3.0,
+    6.0
+   ],
+   "shieldlag": [
+    0.0,
+    5.0,
+    12.0
+   ],
+   "shieldstun": [
+    4.0,
+    4.0,
+    6.0
+   ],
+   "hits": "--",
+   "advantage": "-24",
+   "active": "2\u20143/11\u201412/25\u201426",
+   "endlag": "29",
+   "gif": "CloudCrossSlash3Left"
+  },
+  "Limit Cross Slash": {
+   "startup": "10/15/21/28/38",
+   "total": "60",
+   "landing": "--",
+   "notes": "Invulnerable on frame 6-11",
+   "damage": [
+    5.0,
+    3.0,
+    10.0
+   ],
+   "shieldlag": [
+    6.0,
+    5.0,
+    19.0
+   ],
+   "shieldstun": [
+    4.0,
+    10.0
+   ],
+   "hits": "Hits 1-2/3-4/Final",
+   "advantage": "-12",
+   "active": "10\u201411/15\u201416/21\u201422/28/38\u201439",
+   "endlag": "21",
+   "gif": "CloudCrossSlashLimitLeft"
+  },
+  "Up B (Climhazzard)": {
+   "startup": "7/10",
+   "total": "--",
+   "landing": "20",
+   "notes": "Transitions to followup as early as frame 20",
+   "damage": [
+    3.0,
+    4.0
+   ],
+   "shieldlag": [
+    12.0,
+    6.0
+   ],
+   "shieldstun": [
+    5.0
+   ],
+   "hits": "--",
+   "advantage": "**",
+   "active": "7/10(11/12\u201415/**)",
+   "endlag": "--",
+   "gif": "CloudClimhazzard"
+  },
+  "Climhazzard, Followup": {
+   "startup": "12",
+   "total": "--",
+   "landing": "26",
+   "notes": "--",
+   "damage": [
+    6.0,
+    7.0
+   ],
+   "shieldlag": [
+    15.0,
+    16.0
+   ],
+   "shieldstun": [
+    7.0
+   ],
+   "hits": "--",
+   "advantage": "**",
+   "active": "12\u2014**",
+   "endlag": "--",
+   "gif": "CloudClimhazzardFall"
+  },
+  "Limit Climhazzard": {
+   "startup": "7/10",
+   "total": "--",
+   "landing": "20",
+   "notes": "Invulnerable on frame 5-12 Transitions to followup as early as frame 33",
+   "damage": [
+    4.5,
+    3.5
+   ],
+   "shieldlag": [
+    7.0,
+    7.0
+   ],
+   "shieldstun": [
+    5.0,
+    4.0
+   ],
+   "hits": "Falling/Landing",
+   "advantage": "-21",
+   "active": "7\u20149/10(11\u201416)/1\u20143",
+   "endlag": "--",
+   "gif": "CloudClimhazzardLimit"
+  },
+  "Down B (Limit Charge)": {
+   "startup": "--",
+   "total": "--",
+   "landing": "--",
+   "notes": "Takes 7 frames to cancel. Has a 100 Unit cap and fills by 0.3 Units per frame, so 18 Units a second (was 0.25 Pre-7.0.0.).",
+   "damage": [],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "--",
+   "advantage": "--",
+   "active": "**",
+   "endlag": "--",
+   "gif": null
+  },
+  "Down B (Finishing Touch)": {
+   "startup": "12 (ground) // 14 (air)",
+   "total": "84/87",
+   "landing": "--",
+   "notes": "--",
+   "damage": [
+    1.0
+   ],
+   "shieldlag": [
+    8.0
+   ],
+   "shieldstun": [
+    2.0
+   ],
+   "hits": "--",
+   "advantage": "-70/-71",
+   "active": "12(13\u201414)/22\u201426 // 14\u201415(17)/25\u201429",
+   "endlag": "55",
+   "gif": "CloudFinishingTouchG"
+  },
+  "Grab": {
+   "startup": "9",
+   "total": "36",
+   "landing": "--",
+   "notes": "--",
+   "damage": [],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "9\u201410",
+   "endlag": "26",
+   "gif": "CloudGrab"
+  },
+  "Dash Grab": {
+   "startup": "12",
+   "total": "44",
+   "landing": "--",
+   "notes": "--",
+   "damage": [],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "12\u201413",
+   "endlag": "31",
+   "gif": "CloudDashGrab"
+  },
+  "Pivot Grab": {
+   "startup": "13",
+   "total": "39",
+   "landing": "--",
+   "notes": "--",
+   "damage": [],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "13\u201414",
+   "endlag": "25",
+   "gif": "CloudPivotGrab"
+  },
+  "Pummel": {
+   "startup": "1",
+   "total": "18",
+   "landing": "--",
+   "notes": "Total frames includes 12 frames of hitlag",
+   "damage": [
+    1.3
+   ],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "",
+   "endlag": "",
+   "gif": "CloudPummel"
+  },
+  "Forward Throw": {
+   "startup": "7/9",
+   "total": "35",
+   "landing": "--",
+   "notes": "--",
+   "damage": [
+    4.0,
+    3.0
+   ],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "",
+   "endlag": "",
+   "gif": "CloudFThrow"
+  },
+  "Backward Throw": {
+   "startup": "13/15",
+   "total": "31",
+   "landing": "--",
+   "notes": "--",
+   "damage": [
+    3.0,
+    3.0
+   ],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "",
+   "endlag": "",
+   "gif": "CloudBThrow"
+  },
+  "Up Throw": {
+   "startup": "8/13/15",
+   "total": "50",
+   "landing": "--",
+   "notes": "--",
+   "damage": [
+    2.0,
+    2.5,
+    4.0
+   ],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "",
+   "endlag": "",
+   "gif": "CloudUThrow"
+  },
+  "Down Throw": {
+   "startup": "18",
+   "total": "43",
+   "landing": "--",
+   "notes": "--",
+   "damage": [
+    7.0
+   ],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "",
+   "endlag": "",
+   "gif": "CloudDThrow"
+  },
+  "Spot Dodge": {
+   "startup": "",
+   "total": "20/25",
+   "landing": "--",
+   "notes": "Intangible on frame 3-17",
+   "damage": [],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "",
+   "endlag": "",
+   "gif": null
+  },
+  "Forward Roll": {
+   "startup": "",
+   "total": "29",
+   "landing": "--",
+   "notes": "Intangible on frame 4-15",
+   "damage": [],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "",
+   "endlag": "",
+   "gif": null
+  },
+  "Backward Roll": {
+   "startup": "",
+   "total": "34",
+   "landing": "--",
+   "notes": "Intangible on frame 5-16",
+   "damage": [],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "",
+   "endlag": "",
+   "gif": null
+  },
+  "Neutral Air Dodge": {
+   "startup": "",
+   "total": "47",
+   "landing": "10",
+   "notes": "Intangible on frame 3-30",
+   "damage": [],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "",
+   "endlag": "",
+   "gif": null
+  },
+  "Air Dodge, Down": {
+   "startup": "",
+   "total": "64",
+   "landing": "11-19",
+   "notes": "Intangible on frame 3-21",
+   "damage": [],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "",
+   "endlag": "",
+   "gif": null
+  },
+  "Air Dodge, Diagonally Down": {
+   "startup": "",
+   "total": "72",
+   "landing": "11-19",
+   "notes": "Intangible on frame 3-21",
+   "damage": [],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "",
+   "endlag": "",
+   "gif": null
+  },
+  "Air Dodge, Left/Right": {
+   "startup": "",
+   "total": "79",
+   "landing": "11-19",
+   "notes": "Intangible on frame 3-21",
+   "damage": [],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "",
+   "endlag": "",
+   "gif": null
+  },
+  "Air Dodge, Diagonally Up": {
+   "startup": "",
+   "total": "94",
+   "landing": "11-19",
+   "notes": "Intangible on frame 3-21",
+   "damage": [],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "",
+   "endlag": "",
+   "gif": null
+  },
+  "Air Dodge, Up": {
+   "startup": "",
+   "total": "104",
+   "landing": "11-19",
+   "notes": "Intangible on frame 3-21",
+   "damage": [],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "",
+   "endlag": "",
+   "gif": null
+  },
+  "Getup Attacks": {
+   "startup": "",
+   "total": "",
+   "landing": "",
+   "notes": "",
+   "damage": [],
+   "shieldlag": [],
+   "shieldstun": [],
+   "hits": "",
+   "advantage": "",
+   "active": "",
+   "endlag": "",
+   "gif": "cloudGetupAttackU"
+  },
+  "stats": {
+   "text": "Hitbox Images: Hitbox Type: Choose Another Character Ground Attacks (adsbygoogle = window.adsbygoogle || []).push({}); Jab 1 4 29 -- Transitions to jab 2 as early as frame 8 2.5 7 4 -- -21 4\u20145 24 Jab 2 5 32 -- Transitions to jab 3 as early as frame 9 2.0 5 3 -- -24 5\u20146 26 Jab 3 6 37 -- -- 3.5 10 4 -- -27 6\u20147 30 Forward Tilt 9 35 -- -- 11.0 8 10 -- -16 9\u201410 25 Up Tilt 6 32 -- -- 8.0 7 8 -- -18 6\u20149 23 Down Tilt 7 40 -- Back leg intangibility on frames 7-17. 7.0 7 7 -- -26 7\u20148(9\u201417) 23 Dash Attack 9 45 -- -- 11.0/8.0 8/7 10/8 Early/Late -26 9\u201413(14\u201418) 27 Forward Smash 19/24/28 66 -- Charge hold is frame 5 3.0/2.0/(13.0/12.0) 7/7/(16/15) 3/3/(9/8) First/Second/(Final Close/Far) -29/-30 19/24/28 38 Up Smash 12 45 -- Charge hold is frame 5 13.0/8.0 10/7 9/6 -- -24 12(13\u201414/15\u201416) 29 Down Smash 8/21 49 -- Charge hold is frame 2 3.0/11.0 5/11 3/8 -- -38/-20 8\u20149/21\u201423 26 Aerial Attacks (adsbygoogle = window.adsbygoogle || []).push({}); Neutral Air 5 38 9 Autocancels on frame 31 onward 8.0 7 4 -- -5 5\u201415 SH, FH, FHFF SH, FH 23 Forward Air 18 53 11 Autocancels on frame 1-2 and 43 onward 13.0/14.0/11.0 12/12/8 5/5/4 Early/Tipper/Late -6/-6/-7 18\u201419(20\u201425) FH -- 28 Back Air 11 42 8 Autocancels on frame 1-4 and 37 onward 13.0 9 5 -- -3 11\u201412 SH, FH FH 30 Up Air 8 44 9 Autocancels on frame 32 onward 11.0/8.0 10/7 4/4 Early/Late -5/-5 8\u20149(10\u201423) SH, FH, FHFF FH 21 Down Air 11 64 16 Autocancels on frame 1-4 and 46 onward 13.0/8.0 14/9 5/4 Early/Late -11/-12 11\u201413(14\u201439) FH -- 25 Special Attacks (adsbygoogle = window.adsbygoogle || []).push({}); Ground Air Comparison Neutral B (Blade Beam) 18(18) 53(60) -- Windbox on 16\u201317. 8.0/6.0(6.4/4.8) 7/6(6/6) 3/3(3/3) Ground Early/Late (Air Early/Late) -25(-33) 18\u201435(36\u201467) -- Ground Air Comparison Limit Blade Beam 16 (1/7/13/19/25/28) 60 -- Invulnerable on frame 10-17 6.0/2.0/3.0 (Air: 4.8/1.6/2.4) -/4/5 -/2/2 First/Multi/Final -9 16\u201462, Multihits: (1\u201428 (Rehit : 6)/29\u201430) -- Left Right Side B, Hit 1 (Cross Slash, Hit 1) 10 40 -- Transitions to next slash as early as frame 10 if you hit 4.0 5 5 -- -25 10\u201411 29 Left Right Cross Slash, Hit 2 2 31 -- Transitiions to next slash as early as frame 14 if you hit 3.0 5 4 -- -25 2\u20143 28 Left Right Cross Slash, Hit 3 2/11/25 55 -- -- 3.0/3.0/6.0 0/5/12 4/4/6 -- -24 2\u20143/11\u201412/25\u201426 29 Left Right Limit Cross Slash 10/15/21/28/38 60 -- Invulnerable on frame 6-11 5.0/3.0/10.0 6/5/19 -/4/10 Hits 1-2/3-4/Final -12 10\u201411/15\u201416/21\u201422/28/38\u201439 21 Up B (Climhazzard) 7/10 -- 20 Transitions to followup as early as frame 20 3.0/4.0 12/6 -/5 -- ** 7/10(11/12\u201415/**) -- Falling Landing Climhazzard, Followup 12 -- 26 -- 6.0/7.0 15/16 -/7 -- ** 12\u2014** -- Limit Climhazzard 7/10 -- 20 Invulnerable on frame 5-12 Transitions to followup as early as frame 33 4.5/3.5 7/7 5/4 Falling/Landing -21 7\u20149/10(11\u201416)/1\u20143 -- Down B (Limit Charge) -- -- -- Takes 7 frames to cancel. Has a 100 Unit cap and fills by 0.3 Units per frame, so 18 Units a second (was 0.25 Pre-7.0.0.). -- -- -- -- -- ** -- Down B (Finishing Touch) 12 (ground) // 14 (air) 84/87 -- -- 1.0 8 2 -- -70/-71 12(13\u201414)/22\u201426 // 14\u201415(17)/25\u201429 55 Grabs / Throws (adsbygoogle = window.adsbygoogle || []).push({}); Grab 9 36 -- -- -- 9\u201410 26 Dash Grab 12 44 -- -- -- 12\u201413 31 Pivot Grab 13 39 -- -- -- 13\u201414 25 Pummel 1 18 -- Total frames includes 12 frames of hitlag 1.3 Forward Throw 7/9 35 -- -- 4.0/3.0 Backward Throw 13/15 31 -- -- 3.0/3.0 Up Throw 8/13/15 50 -- -- 2.0/2.5/4.0 Down Throw 18 43 -- -- 7.0 Dodges / Rolls (adsbygoogle = window.adsbygoogle || []).push({}); Spot Dodge 20/25 -- Intangible on frame 3-17 Forward Roll 29 -- Intangible on frame 4-15 Backward Roll 34 -- Intangible on frame 5-16 Neutral Air Dodge 47 10 Intangible on frame 3-30 Air Dodge, Down 64 11-19 Intangible on frame 3-21 Air Dodge, Diagonally Down 72 11-19 Intangible on frame 3-21 Air Dodge, Left/Right 79 11-19 Intangible on frame 3-21 Air Dodge, Diagonally Up 94 11-19 Intangible on frame 3-21 Air Dodge, Up 104 11-19 Intangible on frame 3-21 Misc Info (adsbygoogle = window.adsbygoogle || []).push({}); Stats Weight \u2014 100 Gravity \u2014 0.098 (Limit \u2014 0.1078) Walk Speed \u2014 1.155 (Limit \u2014 1.32825) Run Speed \u2014 2.167 (Limit \u2014 2.3837) Initial Dash \u2014 2.145 (Limit \u2014 2.3595) Air Speed \u2014 1.155 (Limit \u2014 1.386) Total Air Acceleration \u2014 0.07 (Limit \u2014 0.084) SH / FH / SHFF / FHFF Frames \u2014 37 / 49 / 26 / 34 Fall Speed / Fast Fall Speed \u2014 1.68 (Limit \u2014 1.848) / 2.688 (Limit \u2014 2.9568) Out of Shield, Up B \u2014 7 frames Out of Shield, Neutral Air \u2014 8 frames Out of Shield, Up Air \u2014 11 frames Shield Grab (Grab, post-Shieldstun) \u2014 13 frames Shield Drop \u2014 11 frames (universal) Jump Squat (pre-Jump frames) \u2014 3 frames (universal)"
+  }
+ }
+}
