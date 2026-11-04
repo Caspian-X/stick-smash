@@ -289,6 +289,7 @@ fn cpu_match_golden_world_hash() {
     // Updated deliberately for shared launch/movement tuning, new snapshot fields and concurrent roster content
     // changes. This bump covers the wrap charge resources (`Fighter::charges`, `Fighter::charge_wait`) and the
     // per-move phase timeline choice (`MoveState::variant`); both appear in the debug snapshot, and the per-tick
-    // charge tick is a no-op for fighters without pools.
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xa990a75d4fa27ad4);
+    // charge tick is a no-op for fighters without pools. The Duchess import adds a package id, which shifts the
+    // resolved `Fighter::data` indices of the brawler/ninja used here.
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x7b6281b152cd794f);
 }

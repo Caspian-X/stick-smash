@@ -16,6 +16,8 @@ specials, follow-up input windows, paralysis and grounded bury effects.
 a held/controlled projectile and a damage-only lingering hazard.
 [Throbbin's Robin record](imports/throbbin.md) covers limited-use charge resources with timed recharge,
 resource-selected move variants, charge-tiered specials, a healing unblockable hit and a Bronze fallback.
+[Duchess's Peach record](imports/duchess.md) covers a `floatSpeed` hover, a deterministic item-projectile throw
+tier, a counter that answers with reflectable projectile spores, and a lunge that searches for its target.
 
 ## 1. Establish the target
 

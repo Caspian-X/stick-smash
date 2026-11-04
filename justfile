@@ -115,6 +115,15 @@ import-robin:
     python3 tools/import-robin/import.py
     just bless
 
+# Rebuild Duchess (SSBU Peach, 13.0.1) from pinned Rubendal scripts and UFD rows
+import-duchess:
+    python3 tools/import-duchess/import.py
+    just bless
+
+# Download hash-checked Peach hitbox clips and write per-frame montages (Pillow)
+duchess-visuals dir="/tmp/duchess-reference":
+    python3 tools/import-duchess/visuals.py "{{dir}}"
+
 # Download hash-checked Robin hitbox GIFs and write per-frame montages (Pillow)
 robin-visuals dir="/tmp/robin-reference":
     python3 tools/import-robin/visuals.py "{{dir}}"

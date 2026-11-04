@@ -1,0 +1,38 @@
+{
+ "repository": "https://github.com/rubendal/ssbu",
+ "commit": "2e8f0d245481cb0c936524b6ffe1cdea867c4f68",
+ "patch": "13.0.1",
+ "source": "public/data/patch/13.0.1/items.json",
+ "url": "https://raw.githubusercontent.com/rubendal/ssbu/2e8f0d245481cb0c936524b6ffe1cdea867c4f68/public/data/patch/13.0.1/items.json",
+ "accessed": "2026-11-04",
+ "sha256": "bf8806de2ce69030f19904ddda022e45f3a1968c835683761e677c076cc2684e",
+ "note": "Only the two daikon (Vegetable) item entries are retained; the upstream file holds every item.",
+ "items": {
+  "peachdaikon": {
+   "Name": "peachdaikon",
+   "ScriptNames": [
+    "game_Throw"
+   ],
+   "Scripts": [
+    {
+     "Id": 0,
+     "Name": "game_Throw",
+     "Data": "if(is_excute()){\r\n\tATTACK(ID=0,Part=0,Bone=top,Damage=WorkModule::get_int64(ITEM_PEACHDAIKON_INSTANCE_WORK_INT_ATTACK_POWER),Angle=30,KBG=45,FKB=0,BKB=25,Size=2.1,X=0,Y=-1,Z=0,Hitlag=0.8,SDI=1,Clang_Rebound=ATTACK_SETOFF_KIND_ON,FacingRestrict=ATTACK_LR_CHECK_SPEED,SetWeight=false,ShieldDamage=-2.5,Trip=0,Rehit=100,Reflectable=true,Absorbable=false,Flinchless=false,DisableHitlag=false,Direct_Hitbox=false,Ground_or_Air=COLLISION_SITUATION_MASK_GA,Hitbits=COLLISION_CATEGORY_MASK_NO_STAGE,CollisionPart=COLLISION_PART_MASK_ALL,FriendlyFire=false,Effect=collision_attr_normal,SFXLevel=ATTACK_SOUND_LEVEL_M,SFXType=COLLISION_SOUND_ATTR_KAMEHIT,Type=ATTACK_REGION_NONE)\r\n\tAttackModule::enable_safe_pos()\r\n}\r\n"
+    }
+   ]
+  },
+  "daisydaikon": {
+   "Name": "daisydaikon",
+   "ScriptNames": [
+    "game_Throw"
+   ],
+   "Scripts": [
+    {
+     "Id": 0,
+     "Name": "game_Throw",
+     "Data": "if(is_excute()){\r\n\tATTACK(ID=0,Part=0,Bone=top,Damage=WorkModule::get_int64(ITEM_DAISYDAIKON_INSTANCE_WORK_INT_ATTACK_POWER),Angle=30,KBG=45,FKB=0,BKB=25,Size=2.1,X=0,Y=-1,Z=0,Hitlag=0.8,SDI=1,Clang_Rebound=ATTACK_SETOFF_KIND_ON,FacingRestrict=ATTACK_LR_CHECK_SPEED,SetWeight=false,ShieldDamage=-2.5,Trip=0,Rehit=100,Reflectable=true,Absorbable=false,Flinchless=false,DisableHitlag=false,Direct_Hitbox=false,Ground_or_Air=COLLISION_SITUATION_MASK_GA,Hitbits=COLLISION_CATEGORY_MASK_NO_STAGE,CollisionPart=COLLISION_PART_MASK_ALL,FriendlyFire=false,Effect=collision_attr_normal,SFXLevel=ATTACK_SOUND_LEVEL_M,SFXType=COLLISION_SOUND_ATTR_KAMEHIT,Type=ATTACK_REGION_NONE)\r\n\tAttackModule::enable_safe_pos()\r\n}\r\n"
+    }
+   ]
+  }
+ }
+}
