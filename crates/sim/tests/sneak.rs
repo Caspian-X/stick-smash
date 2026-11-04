@@ -598,3 +598,25 @@ fn remote_switch_only_detonates_c4_among_live_explosives() {
     assert_eq!(w.fighters[1].dmg, 17.);
     assert_eq!(w.fighters[0].charges[0], 1);
 }
+
+#[test]
+fn dropped_grenade_keeps_its_exact_fuse_through_bounces() {
+    let d = common::data();
+    let mut w = setup(&d, &["sneak", "brawler"]);
+    w.fighters[1].x = 1400.;
+    let f = w.fighters[0].clone();
+    sim::projectiles::spawn(&mut w, &d, 0, &f, "grenadeDrop");
+    let fuse = d.fighter("sneak").unwrap().projectiles["grenadeDrop"].life;
+    assert_eq!(fuse, 129);
+    for tick in 1..fuse {
+        sim::projectiles::step_projectiles(&mut w, &d);
+        assert_eq!(w.projs.len(), 1, "grenade expired on projectile tick {tick}");
+        assert_eq!(w.projs[0].life, (fuse - tick) as i32);
+        assert_eq!(w.projs[0].age, tick);
+    }
+    assert!(w.projs[0].bounces > 3, "exercise the old premature-fizzle path");
+    assert!(!w.fx.iter().any(|fx| matches!(fx, sim::Fx::Sfx { name, .. } if name == "quake")));
+    sim::projectiles::step_projectiles(&mut w, &d);
+    assert!(w.projs.is_empty(), "fuse explodes on projectile tick 129");
+    assert_eq!(w.fx.iter().filter(|fx| matches!(fx, sim::Fx::Sfx { name, .. } if name == "quake")).count(), 1);
+}

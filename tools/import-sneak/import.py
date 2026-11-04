@@ -742,7 +742,7 @@ def grenade(name, vel, life, maxn=1, spawn=(22, 52)):
     return proj(name, spawn, vel, 9, life, blast_hit(),
                 max=maxn, gravity=0.30, maxFall=13.0,
                 bounce={'restitution': 0.45, 'minSpeed': 1.2, 'friction': 0.72, 'wallRestitution': 0.5,
-                        'maxBounces': 3, 'fizzleLife': 40, 'sfx': 'land'},
+                        'maxBounces': 3, 'fizzleLife': life, 'sfx': 'land'},
                 explosion={'armTicks': 0, 'radius': 80, 'sfx': 'quake',
                            'fx': [{'type': 'burst', 'color': '#ffd27a', 'n': 16, 'speed': 5.0, 'life': 18,
                                    'size': 4.5}]},

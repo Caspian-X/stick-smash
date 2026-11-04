@@ -75,7 +75,7 @@ confirms the duration convention below. The grenade, Cypher, C4, mortar and Niki
 All four gadget identities are content data; no code dispatches on fighter or move id.
 
 **Grenade (neutral special).** The pin pull is a 21-frame phase that cannot throw; it then holds with no frame
-limit (source: Snake may keep cooking and walk while holding). While held the grenade is an attached prop.
+limit (source: Snake may cook and walk while holding; elapsed cooking is omitted here). While held the grenade is an attached prop.
 The throw is selected on release:
 
 | Input on release | Projectile | Throw animation | Arc (vel, gravity 0.30) |
@@ -85,8 +85,8 @@ The throw is selected on release:
 | neutral (`release`) or a fresh attack press | `grenadeMid` | 27 frames, spawn on source frame 8 | mid arc `[4.6, 5.2]` |
 | shield during the hold | `grenadeDrop` | 21-frame drop | zero velocity at the feet |
 
-All four share the source fuse: 129 ticks of `life` after the 21-tick pull ≈ 150 ticks from unpinning
-(2.5 s). They bounce (restitution 0.45, friction 0.72, max 3 bounces, wall restitution 0.5) and detonate on
+All four use a fixed 129-tick projectile fuse from spawning. The source fuse runs about 150 frames from
+unpinning (2.5 s); held/throw-animation time is not subtracted here, so elapsed cooking is omitted. They bounce (restitution 0.45, friction 0.72, max 3 counted before the fizzle cap, which equals the full fuse, wall restitution 0.5) and detonate on
 fuse expiry with a fuse-only `explosion` (`armTicks: 0`, no proximity, radius 80 px, 9% at angle 80, BKB 60,
 KBG 0.69, 0.5× shield damage). The `max` field is per projectile id, so the source's two-grenade cap is
 modelled as two mid-arc plus one of each other arc (four in play at most).
@@ -244,9 +244,8 @@ Controller playtest: not performed.
   fuse only: the source's 2.0–3.1% no-flinch contact is dropped because `explosion` suppresses contact hits,
   they do not detonate on contact, and they cannot be picked up, thrown back or batted. The source caps two
   grenades in play; the engine's per-projectile-id `max` gives two mid-arc and one of each other arc (four at
-  most). The fuse is fixed
-  at 129 ticks from the throw, so cooking only changes *when* it is thrown, not the remaining fuse (which is
-  the same thing in practice because the fuse starts at the unpin).
+  most). **Elapsed cooking is omitted:** the fuse is fixed at 129 projectile ticks from spawning, regardless
+  of the time held or spent in the throw animation. Bounces preserve that remaining fuse.
 - **C4.** Only the ground plant exists: no sticking to walls or opponents, no transfer, no auto-explosion after
   1600 frames (a `manual` explosion freezes the fuse by definition), and the blast does not damage Snake.
   A C4 that falls out of bounds is removed without a blast.

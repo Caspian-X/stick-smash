@@ -2387,7 +2387,7 @@
         "friction": 0.72,
         "wallRestitution": 0.5,
         "maxBounces": 3,
-        "fizzleLife": 40,
+        "fizzleLife": 129,
         "sfx": "land"
       },
       "explosion": {
@@ -2433,7 +2433,7 @@
         "friction": 0.72,
         "wallRestitution": 0.5,
         "maxBounces": 3,
-        "fizzleLife": 40,
+        "fizzleLife": 129,
         "sfx": "land"
       },
       "explosion": {
@@ -2479,7 +2479,7 @@
         "friction": 0.72,
         "wallRestitution": 0.5,
         "maxBounces": 3,
-        "fizzleLife": 40,
+        "fizzleLife": 129,
         "sfx": "land"
       },
       "explosion": {
@@ -2525,7 +2525,7 @@
         "friction": 0.72,
         "wallRestitution": 0.5,
         "maxBounces": 3,
-        "fizzleLife": 40,
+        "fizzleLife": 129,
         "sfx": "land"
       },
       "explosion": {
