@@ -1150,6 +1150,16 @@
           "const": "release",
           "description": "The charge button (or attack, without `charge`) isn't held."
         },
+        {
+          "type": "string",
+          "const": "releaseToward",
+          "description": "Like `release`, and the live movement stick points toward the fighter's facing (a forward throw)."
+        },
+        {
+          "type": "string",
+          "const": "releaseAway",
+          "description": "Like `release`, and the live movement stick points away from the fighter's facing (a back throw)."
+        },
         { "type": "string", "const": "attackHeld", "description": "Attack is held (jab follow-ups)." },
         {
           "type": "string",

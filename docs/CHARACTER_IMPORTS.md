@@ -16,6 +16,9 @@ specials, follow-up input windows, paralysis and grounded bury effects.
 a held/controlled projectile and a damage-only lingering hazard.
 [Throbbin's Robin record](imports/throbbin.md) covers limited-use charge resources with timed recharge,
 resource-selected move variants, charge-tiered specials, a healing unblockable hit and a Bronze fallback.
+[Sneak's Snake record](imports/sneak.md) covers exploding gadgets: a bouncing fused grenade thrown along a
+stick-selected arc (`releaseToward` / `releaseAway`), a planted remote C4 (`explosion.manual` + `detonate`
+driven by a charge pool), a steered `article` missile and a ballistic mortar shell.
 
 ## 1. Establish the target
 

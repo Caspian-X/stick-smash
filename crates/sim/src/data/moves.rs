@@ -462,6 +462,10 @@ pub enum Trigger {
     Falling,
     /// The charge button (or attack, without `charge`) isn't held.
     Release,
+    /// Like `release`, and the live movement stick points toward the fighter's facing (a forward throw).
+    ReleaseToward,
+    /// Like `release`, and the live movement stick points away from the fighter's facing (a back throw).
+    ReleaseAway,
     /// Attack is held (jab follow-ups).
     AttackHeld,
     /// A new attack press; held buttons alone do not retrigger it.

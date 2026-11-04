@@ -136,6 +136,20 @@ fn screen_is(s: Screen) -> Pred {
     }
 }
 
+fn sneak_projectile(m: &Match, _: &Framing, screen: Screen) -> bool {
+    screen == Screen::Match && m.world.projs.iter().any(|p| p.id.starts_with("grenade") && p.age > 12)
+}
+
+fn sneak_missile(m: &Match, _: &Framing, screen: Screen) -> bool {
+    screen == Screen::Match && m.world.projs.iter().any(|p| p.id == "nikita" && p.age > 10)
+}
+
+fn sneak_c4_blast(m: &Match, _: &Framing, screen: Screen) -> bool {
+    screen == Screen::Match
+        && !m.world.projs.iter().any(|p| p.id == "c4")
+        && m.world.fighters[0].mov.as_ref().is_some_and(|m| m.slot == "dspec" && m.t >= 25)
+}
+
 fn offscreen(m: &Match, fr: &Framing, _: Screen) -> bool {
     let [x0, y0, x1, _] = fr.view;
     let w = &m.world;
@@ -789,9 +803,24 @@ fn fighter_kits() -> Vec<Step> {
         ("throbbin", "uspec", 12, "30j-throbbin-elwind"),
         ("throbbin", "dspec", 18, "30k-throbbin-nosferatu"),
         ("throbbin", "jab", 5, "30l-throbbin-jab"),
+        ("sneak", "jab", 2, "32a-sneak-jab"),
+        ("sneak", "ftilt", 3, "32b-sneak-knee"),
+        ("sneak", "utilt", 7, "32d-sneak-rising-kick"),
+        ("sneak", "fsmash", 41, "32e-sneak-rpg"),
+        ("sneak", "usmash", 37, "32f-sneak-mortar"),
+        ("sneak", "dsmash", 8, "32g-sneak-double-kick"),
+        ("sneak", "nair", 36, "32h-sneak-air-kick"),
+        ("sneak", "fair", 24, "32i-sneak-knee-drop"),
+        ("sneak", "dair", 25, "32j-sneak-drill"),
+        ("sneak", "nspec", 8, "32k-sneak-grenade-pull"),
+        ("sneak", "sspec", 45, "32l-sneak-nikita"),
+        ("sneak", "uspec", 20, "32m-sneak-cypher"),
+        ("sneak", "dspec", 4, "32n-sneak-c4-plant"),
     ] {
         ed(&mut v, Cmd::Subject(Subject::Move(slot.into())));
         ed(&mut v, Cmd::Fighter(fighter.into()));
+        // Keep the editor's launch-angle handle out of the capture.
+        ed(&mut v, Cmd::Hitbox(None));
         ed(&mut v, Cmd::Frame(frame));
         shot(&mut v, name);
     }
@@ -802,6 +831,59 @@ fn fighter_kits() -> Vec<Step> {
     ed(&mut v, Cmd::Frame(16));
     shot(&mut v, "30m-throbbin-bronze-smash");
     ed(&mut v, Cmd::Variant(None));
+    // The detonate timeline is only previewed by forcing it; the pool would plant a C4 instead.
+    ed(&mut v, Cmd::Fighter("sneak".into()));
+    ed(&mut v, Cmd::Subject(Subject::Move("dspec".into())));
+    ed(&mut v, Cmd::Variant(Some(0)));
+    ed(&mut v, Cmd::Frame(25));
+    shot(&mut v, "32o-sneak-c4-detonate");
+    ed(&mut v, Cmd::Variant(None));
+    // The forward tilt's second blow only follows a held attack; preview it by trimming the knee phase.
+    ed(&mut v, Cmd::Fighter("sneak".into()));
+    ed(&mut v, Cmd::Subject(Subject::Move("ftilt".into())));
+    ed(
+        &mut v,
+        Cmd::Edit(|f| {
+            f.moves.ftilt.phases.remove(0);
+        }),
+    );
+    ed(&mut v, Cmd::Frame(7));
+    shot(&mut v, "32c-sneak-body-blow");
+    ed(&mut v, Cmd::Undo);
+    // Live reads of the thrown gadgets, which the editor preview cannot hold or steer.
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("sneak"), Step::Wait(20)]);
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Wait(26));
+    v.push(Step::Set(0, Special, false));
+    v.push(Step::Until(sneak_projectile, 240));
+    v.push(Step::Shot("32p-sneak-grenade-flight"));
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("sneak"), Step::Wait(20)]);
+    v.push(Step::Set(0, Right, true));
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Until(sneak_missile, 240));
+    v.push(Step::Shot("32q-sneak-nikita-flight"));
+    v.push(Step::Set(0, Right, false));
+    v.push(Step::Set(0, Special, false));
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("sneak"), Step::Wait(20)]);
+    v.push(Step::Set(0, Up, true));
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Wait(22));
+    v.push(Step::Shot("32r-sneak-cypher-rise"));
+    v.push(Step::Set(0, Up, false));
+    v.push(Step::Set(0, Special, false));
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("sneak"), Step::Wait(20)]);
+    v.push(Step::Set(0, Down, true));
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Wait(30));
+    v.push(Step::Set(0, Down, false));
+    v.push(Step::Set(0, Special, false));
+    v.push(Step::Wait(24));
+    v.push(Step::Set(0, Down, true));
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Until(sneak_c4_blast, 240));
+    v.push(Step::Shot("32s-sneak-c4-blast"));
+    v.push(Step::Set(0, Down, false));
+    v.push(Step::Set(0, Special, false));
     ed(&mut v, Cmd::Fighter("whiplash".into()));
     ed(&mut v, Cmd::Subject(Subject::Move("dspec".into())));
     ed(
@@ -1740,7 +1822,26 @@ mod tests {
 30j-throbbin-elwind
 30k-throbbin-nosferatu
 30l-throbbin-jab
-30m-throbbin-bronze-smash";
+30m-throbbin-bronze-smash
+32a-sneak-jab
+32b-sneak-knee
+32c-sneak-body-blow
+32d-sneak-rising-kick
+32e-sneak-rpg
+32f-sneak-mortar
+32g-sneak-double-kick
+32h-sneak-air-kick
+32i-sneak-knee-drop
+32j-sneak-drill
+32k-sneak-grenade-pull
+32l-sneak-nikita
+32m-sneak-cypher
+32n-sneak-c4-plant
+32o-sneak-c4-detonate
+32p-sneak-grenade-flight
+32q-sneak-nikita-flight
+32r-sneak-cypher-rise
+32s-sneak-c4-blast";
         assert_eq!(names, expected.lines().collect::<Vec<_>>());
     }
 }

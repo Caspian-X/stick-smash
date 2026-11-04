@@ -19,13 +19,15 @@ use crate::style::{self, DIM, FAINT, GOLD, RED, STAR, caps, faint, heading};
 use crate::ui::at_playhead;
 use crate::{Dialog, Editor, doc, form, throw_mut};
 
-const TRIGGERS: [(Trigger, &str); 15] = [
+const TRIGGERS: [(Trigger, &str); 17] = [
     (Trigger::Timeout, "timeout"),
     (Trigger::Land, "land"),
     (Trigger::Grounded, "grounded"),
     (Trigger::Airborne, "airborne"),
     (Trigger::Falling, "falling"),
     (Trigger::Release, "release"),
+    (Trigger::ReleaseToward, "releaseToward"),
+    (Trigger::ReleaseAway, "releaseAway"),
     (Trigger::AttackHeld, "attackHeld"),
     (Trigger::AttackPress, "attackPress"),
     (Trigger::SpecialPress, "specialPress"),

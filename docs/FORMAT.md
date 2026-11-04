@@ -125,7 +125,9 @@ elapsed clock, so resetting the phase frame does not reset those cooldowns. Othe
 
 `{ "on": <trigger>, "if": <cond>, "from": <min phase frame>, "to": <phase|end|helpless|landing>, "lag": <frames> }`.
 Triggers: `timeout`, `land`, `grounded`, `airborne`, `falling` (vertical speed ≥ 0, y down), `release` (charge
-button, else attack, not held), `attackHeld` (attack held), `attackPress`, `specialPress`, `upHeld`, `targetNear`,
+button, else attack, not held), `releaseToward` / `releaseAway` (the same release, additionally requiring the
+live movement stick to point toward / away from the fighter's facing, so a held special can pick a throw arc),
+`attackHeld` (attack held), `attackPress`, `specialPress`, `upHeld`, `targetNear`,
 `shieldPress`, `articleRelease` (a held controlled projectile was launched), `articleEnd` (it ended without a
 launch, e.g. the caster let go), `counter`, `hit`.
 
