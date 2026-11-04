@@ -440,7 +440,10 @@ fn hitbox_panel(
         }
         ui.horizontal(|ui| {
             if ui.button("+ Hitbox").on_hover_text("New hitbox active from the playhead  N").clicked() {
-                p.hitboxes.push(new_hitbox(playhead_t.unwrap_or(0)));
+                let g = next_group(p);
+                let mut b = new_hitbox(playhead_t.unwrap_or(0));
+                b.group = g;
+                p.hitboxes.push(b);
                 hb = Some(p.hitboxes.len() - 1);
             }
             if ui.add_enabled(hb.is_some(), egui::Button::new("Duplicate")).on_hover_text("⌘D").clicked()
@@ -656,6 +659,11 @@ fn sub(ui: &mut egui::Ui, title: &str, tip: &str) {
     }
 }
 
+/// A new hitbox starts a new hit identity, so adding one never silently merges it into an existing hit.
+fn next_group(p: &sim::data::moves::Phase) -> u8 {
+    p.hitboxes.iter().map(|b| b.group).max().map_or(0, |g| g.saturating_add(1))
+}
+
 pub fn new_hitbox(t: u32) -> Hitbox {
     Hitbox {
         start: t,
@@ -719,6 +727,9 @@ fn hit_fields(ui: &mut egui::Ui, b: &mut Hitbox, geometry: bool, data: Option<&G
     }
     grid(ui, "hit", |ui| {
         if geometry {
+            let mut g = u32::from(b.group);
+            int(ui, "group", &d("Hitbox", "group"), &mut g);
+            b.group = g.min(u32::from(u8::MAX)) as u8;
             int(ui, "start", &d("Hitbox", "start"), &mut b.start);
             let start = b.start;
             row(ui, "end", &d("Hitbox", "end"), |ui| {
