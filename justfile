@@ -105,6 +105,19 @@ import-king:
 king-visuals dir="/tmp/king-reference":
     python3 tools/import-dedede/visuals.py "{{dir}}"
 
+# Rebuild Sneak (SSBU Snake, 13.0.1) from pinned Rubendal scripts and UFD rows
+import-sneak:
+    python3 tools/import-sneak/import.py
+    just bless
+
+# Re-download and hash-pin the Snake attack scripts and UFD rows
+sneak-sources:
+    python3 tools/import-sneak/fetch.py
+
+# Download hash-checked Snake hitbox GIFs and write per-frame montages (Pillow)
+sneak-visuals dir="/tmp/sneak-reference":
+    python3 tools/import-sneak/visuals.py "{{dir}}"
+
 # Rebuild the Piranha Plant package (SSBU 13.0.1) from pinned UFD/Rubendal inputs
 import-plant:
     python3 tools/import-plant/import.py

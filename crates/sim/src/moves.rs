@@ -495,6 +495,9 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
                     Trigger::Airborne => !f.ground,
                     Trigger::Falling => f.vy >= 0.,
                     Trigger::Release => !held,
+                    // A directional throw: the same release, gated on which way the stick points.
+                    Trigger::ReleaseToward => !held && inp.x * f.face > 0.,
+                    Trigger::ReleaseAway => !held && inp.x * f.face < 0.,
                     Trigger::AttackHeld => attack_held(f, &inp),
                     Trigger::AttackPress => inp.atk,
                     Trigger::SpecialPress => inp.sp,

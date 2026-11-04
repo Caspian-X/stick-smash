@@ -1,0 +1,537 @@
+{
+ "base": "https://ultimateframedata.com/hitboxes/snake/",
+ "files": {
+  "C4 Explosion (Snake for Scale).png": {
+   "slot": "c4",
+   "size": 152075,
+   "sha256": "d6ff9a4bf8778c8a5ba38b4e3feadba04734d1e041a5ff8405885b8de01f0232",
+   "frames": 1,
+   "montage": "C4 Explosion (Snake for Scale)-frames.png",
+   "kept": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Nikita Explosion (Strong).png": {
+   "slot": "nikita",
+   "size": 26119,
+   "sha256": "6c99f227c21b1c67ea651835e23dd3da529e934fc21fc192e90ddcce12e0827f",
+   "frames": 1,
+   "montage": "Nikita Explosion (Strong)-frames.png",
+   "kept": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Nikita Explosion (Weak).png": {
+   "slot": "nikita",
+   "size": 22535,
+   "sha256": "619a75093c016f389d8d4aa22680f24f310afd46b8813450e0cb8678b5807f9f",
+   "frames": 1,
+   "montage": "Nikita Explosion (Weak)-frames.png",
+   "kept": [
+    0,
+    0,
+    0
+   ]
+  },
+  "Nikita Hurtbox (Weak).png": {
+   "slot": "nikita",
+   "size": 64076,
+   "sha256": "ef72a147a654c586856faf31a495c44138b1813b58f6f883ef0c8d86b7dd5aa1",
+   "frames": 1,
+   "montage": "Nikita Hurtbox (Weak)-frames.png",
+   "kept": [
+    0,
+    0,
+    0
+   ]
+  },
+  "NikitaSearch.png": {
+   "slot": "nikita",
+   "size": 64622,
+   "sha256": "c7d11172caec0e75bedff3e1f20566e54c9ba8c45ab9466bc6e4165dedb076b4",
+   "frames": 1,
+   "montage": "NikitaSearch-frames.png",
+   "kept": [
+    0,
+    0,
+    0
+   ]
+  },
+  "SnakeBAir.gif": {
+   "slot": "bair",
+   "size": 2742938,
+   "sha256": "c17fc511d095740dce81d28097b3330afb5a7d2447add00ec30ab3b9a27f8967",
+   "frames": 42,
+   "montage": "SnakeBAir-frames.png",
+   "kept": [
+    5,
+    6,
+    8,
+    10,
+    14,
+    24
+   ]
+  },
+  "SnakeBThrow.gif": {
+   "slot": "throws",
+   "size": 1543452,
+   "sha256": "5ea016802ecf451e48433ea108a7409477c0da094fb2556481e652e36b005919",
+   "frames": 39,
+   "montage": "SnakeBThrow-frames.png",
+   "kept": [
+    8,
+    14,
+    19,
+    20,
+    26
+   ]
+  },
+  "SnakeC4.png": {
+   "slot": "c4",
+   "size": 25451,
+   "sha256": "66577d34337df8de8e23bd612182e71040c18d4770624a6ec94ab7470a3f2e1b",
+   "frames": 1,
+   "montage": "SnakeC4-frames.png",
+   "kept": [
+    0,
+    0,
+    0
+   ]
+  },
+  "SnakeCypher.png": {
+   "slot": "cypher",
+   "size": 138239,
+   "sha256": "36516620537c9c1498f928051157aa76496852171b03b843f91b2862653a0127",
+   "frames": 1,
+   "montage": "SnakeCypher-frames.png",
+   "kept": [
+    0,
+    0,
+    0
+   ]
+  },
+  "SnakeDAir.gif": {
+   "slot": "dair",
+   "size": 2361881,
+   "sha256": "b8b9b33a7b02db93e16b2474313212aecb315a265a2bab255f8d803dcde54fb4",
+   "frames": 59,
+   "montage": "SnakeDAir-frames.png",
+   "kept": [
+    2,
+    3,
+    9,
+    16,
+    24,
+    26,
+    40
+   ]
+  },
+  "SnakeDSmash.gif": {
+   "slot": "dsmash",
+   "size": 1843124,
+   "sha256": "752c964405c36f4c90d95b6f0b7766a142dfbe7c2a1dcb689ea8dceb0ab52eb2",
+   "frames": 44,
+   "montage": "SnakeDSmash-frames.png",
+   "kept": [
+    4,
+    6,
+    7,
+    9,
+    18,
+    21,
+    30
+   ]
+  },
+  "SnakeDThrow.gif": {
+   "slot": "throws",
+   "size": 1464665,
+   "sha256": "6f3f016c10467c965ad4cf7a790e893f293ad16db334992cfe10d44fd7ab490f",
+   "frames": 41,
+   "montage": "SnakeDThrow-frames.png",
+   "kept": [
+    10,
+    20,
+    30,
+    34,
+    35,
+    40
+   ]
+  },
+  "SnakeDTilt.gif": {
+   "slot": "dtilt",
+   "size": 999541,
+   "sha256": "892ca755039d4869e0380bfd747d9f4996416a26f339696ed7cea18db2fb540e",
+   "frames": 30,
+   "montage": "SnakeDTilt-frames.png",
+   "kept": [
+    4,
+    5,
+    6,
+    7,
+    12,
+    18
+   ]
+  },
+  "SnakeDashAttack.gif": {
+   "slot": "dashatk",
+   "size": 941209,
+   "sha256": "ca14b59d769db12d886d0401ea47b25b5b092a55ec8d765c1f2a3770e6901f7e",
+   "frames": 41,
+   "montage": "SnakeDashAttack-frames.png",
+   "kept": [
+    3,
+    4,
+    6,
+    8,
+    10,
+    16
+   ]
+  },
+  "SnakeDashGrab.gif": {
+   "slot": "grab",
+   "size": 1859898,
+   "sha256": "33c9f9ffe95dce4304b7a1155a0865c571e8075700ab029f704c468123c57d88",
+   "frames": 42,
+   "montage": "SnakeDashGrab-frames.png",
+   "kept": [
+    9,
+    10,
+    11,
+    16
+   ]
+  },
+  "SnakeFAir.gif": {
+   "slot": "fair",
+   "size": 3179737,
+   "sha256": "e89f7fab97b3785cb526c8ae393d6343370fa7ab103e47cffb7ec18346daed58",
+   "frames": 69,
+   "montage": "SnakeFAir-frames.png",
+   "kept": [
+    10,
+    18,
+    22,
+    24,
+    26,
+    34
+   ]
+  },
+  "SnakeFSmash.gif": {
+   "slot": "fsmash",
+   "size": 3250120,
+   "sha256": "1d88717f2f50d264a1203e4f7f2266bb40416608762f3f03589e0bd1b0c0909c",
+   "frames": 73,
+   "montage": "SnakeFSmash-frames.png",
+   "kept": [
+    4,
+    20,
+    38,
+    40,
+    41,
+    44,
+    60
+   ]
+  },
+  "SnakeFThrow.gif": {
+   "slot": "throws",
+   "size": 1280401,
+   "sha256": "46789c8c67bbd2245fc880ca91bbcfeefe54c44dd3e2d596df879d641875538a",
+   "frames": 30,
+   "montage": "SnakeFThrow-frames.png",
+   "kept": [
+    8,
+    15,
+    20,
+    21,
+    26
+   ]
+  },
+  "SnakeFTilt1.gif": {
+   "slot": "ftilt1",
+   "size": 1372070,
+   "sha256": "2b6d6209c1bff09cbb3bc97257315ab03b62592a86c366e4975ae599c208f283",
+   "frames": 31,
+   "montage": "SnakeFTilt1-frames.png",
+   "kept": [
+    2,
+    3,
+    4,
+    10,
+    18
+   ]
+  },
+  "SnakeFTilt2.gif": {
+   "slot": "ftilt2",
+   "size": 1587864,
+   "sha256": "ac85c13953d754e87ada3844bc145689a6a3396281969c62243dca4a6ee7ebd8",
+   "frames": 39,
+   "montage": "SnakeFTilt2-frames.png",
+   "kept": [
+    5,
+    6,
+    7,
+    10,
+    20
+   ]
+  },
+  "SnakeGrab.gif": {
+   "slot": "grab",
+   "size": 1567111,
+   "sha256": "d360a7b101240f2673dc6192d45553012f153cc6f075a505f3783b411c552c16",
+   "frames": 34,
+   "montage": "SnakeGrab-frames.png",
+   "kept": [
+    6,
+    7,
+    8,
+    12
+   ]
+  },
+  "SnakeGrenade.png": {
+   "slot": "grenade",
+   "size": 93363,
+   "sha256": "eea5cf8d972a6460a2b6eca4917ea43ceb7bd2036a054b641c305fee77b18d75",
+   "frames": 1,
+   "montage": "SnakeGrenade-frames.png",
+   "kept": [
+    0,
+    0,
+    0
+   ]
+  },
+  "SnakeGrenadeBurst.gif": {
+   "slot": "grenade",
+   "size": 19282,
+   "sha256": "eb15314116b3c2326c8228d8187455d67ba6daf200e730237826ad1338c02b65",
+   "frames": 2,
+   "montage": "SnakeGrenadeBurst-frames.png",
+   "kept": [
+    0,
+    1
+   ]
+  },
+  "SnakeJab1.gif": {
+   "slot": "jab1",
+   "size": 561244,
+   "sha256": "eaddb227f1e0cdce694ba3e408466886f57f9f4dc856ca470273492c93096064",
+   "frames": 15,
+   "montage": "SnakeJab1-frames.png",
+   "kept": [
+    1,
+    2,
+    3,
+    6,
+    10
+   ]
+  },
+  "SnakeJab2.gif": {
+   "slot": "jab2",
+   "size": 2003307,
+   "sha256": "0b7ebea0a3ac34a57d54e5d75c5839bf2e8d7ad393f4c8fa2a577fe351e18eec",
+   "frames": 24,
+   "montage": "SnakeJab2-frames.png",
+   "kept": [
+    2,
+    3,
+    4,
+    8,
+    14
+   ]
+  },
+  "SnakeJab3.gif": {
+   "slot": "jab3",
+   "size": 1602454,
+   "sha256": "439c351ff47b92a8bd95d25d0b8dbbb43aaa891e751143b58845df631a454522",
+   "frames": 46,
+   "montage": "SnakeJab3-frames.png",
+   "kept": [
+    6,
+    7,
+    8,
+    12,
+    20
+   ]
+  },
+  "SnakeNAir.gif": {
+   "slot": "nair",
+   "size": 2524885,
+   "sha256": "1ec4856afe64cbc3f36d66f77c956b2e3a3bfd3b3c3c2b1f0c889267687070cd",
+   "frames": 59,
+   "montage": "SnakeNAir-frames.png",
+   "kept": [
+    6,
+    9,
+    10,
+    17,
+    25,
+    35,
+    38
+   ]
+  },
+  "SnakePivotGrab.gif": {
+   "slot": "grab",
+   "size": 1282383,
+   "sha256": "59fb51d21c5b0bd604446224c80978b00b915f9c4affdebc76a3d8659351c57c",
+   "frames": 31,
+   "montage": "SnakePivotGrab-frames.png",
+   "kept": [
+    7,
+    8,
+    9,
+    14
+   ]
+  },
+  "SnakePummel.gif": {
+   "slot": "pummel",
+   "size": 279251,
+   "sha256": "ecb7fe4a23177311a93dbc7e3b260471d6f764aaf78cb972c5c45dd9aee5fafb",
+   "frames": 6,
+   "montage": "SnakePummel-frames.png",
+   "kept": [
+    0,
+    1,
+    3
+   ]
+  },
+  "SnakeUAir.gif": {
+   "slot": "uair",
+   "size": 1964141,
+   "sha256": "9cd5d9562e1948758fcfabf5535a30941b709b542e542a380ea7661a71f1237d",
+   "frames": 47,
+   "montage": "SnakeUAir-frames.png",
+   "kept": [
+    6,
+    9,
+    10,
+    13,
+    16,
+    22
+   ]
+  },
+  "SnakeUSmash.gif": {
+   "slot": "usmash",
+   "size": 3964822,
+   "sha256": "0d00d691e4f9c60e4a4eeae7bc47fb4ee451608cbba44b6093b69f3e5ce1d4a9",
+   "frames": 54,
+   "montage": "SnakeUSmash-frames.png",
+   "kept": [
+    4,
+    10,
+    11,
+    24,
+    34,
+    40,
+    50
+   ]
+  },
+  "SnakeUSmashExplosion.png": {
+   "slot": "usmash",
+   "size": 29616,
+   "sha256": "5cb1c56177a96eb06ce1feb7d62d25ea65a5b6628bc13ecb86d16eaf39c1f549",
+   "frames": 1,
+   "montage": "SnakeUSmashExplosion-frames.png",
+   "kept": [
+    0,
+    0,
+    0
+   ]
+  },
+  "SnakeUSmashSearch.png": {
+   "slot": "usmash",
+   "size": 58399,
+   "sha256": "efc48f2e837b1f6ea871c287aa0b6dca070bac1b98aff3b71d8b835c2bd41c1b",
+   "frames": 1,
+   "montage": "SnakeUSmashSearch-frames.png",
+   "kept": [
+    0,
+    0,
+    0
+   ]
+  },
+  "SnakeUThrow.gif": {
+   "slot": "throws",
+   "size": 1930639,
+   "sha256": "81c1c31841341cfcf2c033a5ccea3b29de11d2c713a0ec93d031b1aee5dc542a",
+   "frames": 47,
+   "montage": "SnakeUThrow-frames.png",
+   "kept": [
+    10,
+    18,
+    21,
+    22,
+    23,
+    30
+   ]
+  },
+  "SnakeUTilt.gif": {
+   "slot": "utilt",
+   "size": 1786189,
+   "sha256": "41f21f1b7e274aba5f0e1b296474c7dcfe5342103d57b8014889310b1d7c4f2a",
+   "frames": 37,
+   "montage": "SnakeUTilt-frames.png",
+   "kept": [
+    4,
+    5,
+    6,
+    8,
+    11,
+    18
+   ]
+  },
+  "snakeGetupAttackD.gif": {
+   "slot": "getup",
+   "size": 2212106,
+   "sha256": "495555b6624fcdd3952c0702804daa570bd7de9945786d64533e36e12acbf938",
+   "frames": 45,
+   "montage": "snakeGetupAttackD-frames.png",
+   "kept": [
+    0,
+    4,
+    8,
+    14
+   ]
+  },
+  "snakeGetupAttackU.gif": {
+   "slot": "getup",
+   "size": 2073156,
+   "sha256": "c794043222148cae917f0d9b77b54260b86552af0714fe30f13c347b6affcf03",
+   "frames": 45,
+   "montage": "snakeGetupAttackU-frames.png",
+   "kept": [
+    0,
+    4,
+    8,
+    14
+   ]
+  },
+  "snakeLedgeAttack.gif": {
+   "slot": "getup",
+   "size": 1417124,
+   "sha256": "ea0f948fa539b7f373ea414f5888c8676d2016031a5be2b90caa8a9f4301e582",
+   "frames": 55,
+   "montage": "snakeLedgeAttack-frames.png",
+   "kept": [
+    0,
+    6,
+    12,
+    22
+   ]
+  },
+  "snakeTripAttack.gif": {
+   "slot": "getup",
+   "size": 2452672,
+   "sha256": "3bdcfdbe6fad9263d7985960562482663aaaadd1d4fd48aa15d1cf3c42a7df25",
+   "frames": 49,
+   "montage": "snakeTripAttack-frames.png",
+   "kept": [
+    0,
+    4,
+    8,
+    14
+   ]
+  }
+ }
+}
