@@ -802,6 +802,39 @@ fn fighter_kits() -> Vec<Step> {
     ed(&mut v, Cmd::Frame(16));
     shot(&mut v, "30m-throbbin-bronze-smash");
     ed(&mut v, Cmd::Variant(None));
+    ed(&mut v, Cmd::Fighter("stratus".into()));
+    ed(&mut v, Cmd::Dummy(true));
+    for (slot, frame, variant, name) in [
+        ("fsmash", 27, None, "31a-stratus-fsmash"),
+        ("usmash", 12, None, "31b-stratus-usmash"),
+        ("dsmash", 21, None, "31c-stratus-dsmash"),
+        ("nair", 8, None, "31d-stratus-nair"),
+        ("fair", 18, None, "31e-stratus-fair"),
+        ("bair", 11, None, "31f-stratus-bair"),
+        ("uair", 9, None, "31g-stratus-uair"),
+        ("dair", 12, None, "31h-stratus-dair"),
+        ("jab", 6, None, "31i-stratus-jab"),
+        ("ftilt", 9, None, "31j-stratus-ftilt"),
+        ("utilt", 7, None, "31k-stratus-utilt"),
+        ("dtilt", 7, None, "31l-stratus-dtilt"),
+        ("dashatk", 10, None, "31m-stratus-dashatk"),
+        ("grab", 9, None, "31n-stratus-grab"),
+        ("nspec", 20, Some(0), "31o-stratus-blade-beam"),
+        ("nspec", 20, Some(1), "31p-stratus-limit-blade-beam"),
+        ("sspec", 11, Some(0), "31q-stratus-cross-slash"),
+        ("sspec", 38, Some(1), "31r-stratus-limit-cross-slash"),
+        ("uspec", 12, Some(0), "31s-stratus-climhazzard"),
+        ("uspec", 12, Some(1), "31t-stratus-limit-climhazzard"),
+        ("dspec", 10, Some(0), "31u-stratus-limit-charge"),
+        ("dspec", 14, Some(1), "31v-stratus-finishing-touch"),
+    ] {
+        ed(&mut v, Cmd::Subject(Subject::Move(slot.into())));
+        ed(&mut v, Cmd::Variant(variant));
+        ed(&mut v, Cmd::Frame(frame));
+        shot(&mut v, name);
+    }
+    ed(&mut v, Cmd::Variant(None));
+    ed(&mut v, Cmd::Dummy(false));
     ed(&mut v, Cmd::Fighter("whiplash".into()));
     ed(&mut v, Cmd::Subject(Subject::Move("dspec".into())));
     ed(
@@ -1740,7 +1773,29 @@ mod tests {
 30j-throbbin-elwind
 30k-throbbin-nosferatu
 30l-throbbin-jab
-30m-throbbin-bronze-smash";
+30m-throbbin-bronze-smash
+31a-stratus-fsmash
+31b-stratus-usmash
+31c-stratus-dsmash
+31d-stratus-nair
+31e-stratus-fair
+31f-stratus-bair
+31g-stratus-uair
+31h-stratus-dair
+31i-stratus-jab
+31j-stratus-ftilt
+31k-stratus-utilt
+31l-stratus-dtilt
+31m-stratus-dashatk
+31n-stratus-grab
+31o-stratus-blade-beam
+31p-stratus-limit-blade-beam
+31q-stratus-cross-slash
+31r-stratus-limit-cross-slash
+31s-stratus-climhazzard
+31t-stratus-limit-climhazzard
+31u-stratus-limit-charge
+31v-stratus-finishing-touch";
         assert_eq!(names, expected.lines().collect::<Vec<_>>());
     }
 }
