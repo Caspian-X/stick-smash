@@ -126,7 +126,7 @@ less. Every row is authored by `tools/import-stratus/import.py`; the raw parsed 
 | Back throw | ThrowB | release 15 / 31 | release 3.0 at 38°, BKB 48/KBG 1.10; 3.0 tick at source 13 | shared | `ticks` |
 | Up throw | ThrowHi | release 15 / 50 | release 4.0 at 80°, BKB 78/KBG 0.97; 2.0 and 2.5 ticks at source 8/13 | shared | `ticks` |
 | Down throw | ThrowLw | release 18 / 43 | 7.0 at 122°, BKB 40/KBG 1.10 | shared | — |
-| Neutral special | SpecialN / SpecialAirN | 18 / 53 ground, 60 air | wave 8.0 ground / 6.4 air at 55°, BKB 38/KBG 0.60, shield damage 0.5×; ground windbox on 16–17 | spawn at source 18 | `startup` 18 → `groundTail` 35 / `airTail` 42 |
+| Neutral special | SpecialN / SpecialAirN | 18 / 53 ground, 60 air | wave 8.0 ground / 6.4 air at 55°, BKB 38/KBG 0.60, shield damage 0.5×; ground windbox on 15–16 | spawn at source 18 | `startup` 18 → `groundTail` 35 / `airTail` 42 |
 | Side special | SpecialS1–3 | 10 / 40; 2 / 31; 2,11,25 / 55 | 4.0 (75°/112°/autolink), 3.0 (95°/60°), 3.0+3.0 fixed-KB then 6.0 at 50° | auto-chained at the earliest cancel | `slash1` 12 → `slash2` 14 → third slash: `windup` 1, `hit1` 2, `link` 7, `hit2` 2, `link2` 12, `hit3` 2, `recovery` 29 |
 | Up special | SpecialHi / Hi2 / Hi2Landing | 7 / 10 / 20+ | 3.0 (FKB 80) thrust, 4.0 rise (FKB 121 then BKB 98/50), 4.5 plunge (270° air spike / 45°), 3.5 landing hit at 64° | rise 17 px/tick from move frame 8 (fitted so the rise clears a full hop; Limit 21), ledge grab from source 7; special press from move frame 19 (Limit 32) starts the plunge; otherwise helpless | `thrust` 9, rise split into 1 + 1 + 5 + 17 (Limit 1 + 1 + 4 + 30), `plunge` 26 (hitbox persists to landing), `landHit` 26 |
 | Down special | SpecialLw | — | no hitboxes | charge 6, max 334, restore at phase 12 when the hold reached the cap; shield cancels | `charge` 13 |
@@ -221,3 +221,6 @@ Inclusive source creation/clear windows that overlap transitively are one hit id
 `group` across the whole timeline before splitting presentation/landing phases, then preserves history on
 timeout transitions. Coverage and damage-tier changes cannot hit the same victim again; separated windows
 retain independent groups. Full-move contact probes cover the continuous swings and genuine multi-hits.
+
+The late-window regression reads `sources/stratus/ufd.json` directly: up smash's 8% tier is source 15–16,
+up air ends on 23, and down air ends on 39. Engine endpoints are each one less; no phase split extends them.

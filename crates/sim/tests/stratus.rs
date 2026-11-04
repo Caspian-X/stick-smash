@@ -164,11 +164,11 @@ fn reference_windows_and_damage_match_the_ledger() {
     );
 
     let dair = windows(&f.moves.dair.phases);
-    assert_eq!(dair, vec![(10, 12, 15.0), (10, 12, 13.0), (13, 39, 8.0)]);
+    assert_eq!(dair, vec![(10, 12, 15.0), (10, 12, 13.0), (13, 38, 8.0)]);
 
     let uair = windows(&f.moves.uair.phases);
     assert!(uair.iter().any(|&(_, e, d)| (e, d) == (8, 11.0)));
-    assert!(uair.iter().any(|&(s, e, d)| (s, e, d) == (9, 23, 8.0)), "8.0 tier source 10-24");
+    assert!(uair.iter().any(|&(s, e, d)| (s, e, d) == (9, 22, 8.0)), "8.0 tier source 10-23");
 
     let usmash = windows(&f.moves.usmash.phases);
     assert!(usmash.iter().any(|&(s, _, d)| (s, d) == (11, 13.0)));
@@ -177,7 +177,7 @@ fn reference_windows_and_damage_match_the_ledger() {
             && usmash.iter().any(|&(s, e, d)| (s, e, d) == (14, 14, 13.0)),
         "the 13.0 rows persist into the 12.0/11.0 window: {usmash:?}"
     );
-    assert!(usmash.iter().any(|&(s, _, d)| (s, d) == (15, 8.0)));
+    assert!(usmash.iter().any(|&(s, _, d)| (s, d) == (14, 8.0)));
 
     let dsmash = windows(&f.moves.dsmash.phases);
     assert!(dsmash.iter().any(|&(s, e, d)| (s, e, d) == (7, 9, 3.0)));
@@ -765,5 +765,29 @@ fn continuous_swings_contact_once_across_phase_splits() {
     let d = common::data();
     for (slot, damage) in [("bair", 13.), ("usmash", 13.), ("fair", 14.), ("uair", 11.), ("dair", 15.)] {
         assert_eq!(common::contact_sequence(&d, "stratus", slot), [damage], "{slot}");
+    }
+}
+
+#[test]
+fn late_windows_stop_at_the_pinned_inclusive_endpoints() {
+    let d = common::data();
+    let ledger: serde_json::Value =
+        serde_json::from_str(include_str!("../../../docs/imports/sources/stratus/ufd.json")).unwrap();
+    for (slot, row, active) in [
+        ("usmash", "Up Smash", "12(13—14/15—16)"),
+        ("uair", "Up Air", "8—9(10—23)"),
+        ("dair", "Down Air", "11—13(14—39)"),
+    ] {
+        let source = ledger["rows"][row]["active"].as_str().unwrap();
+        assert_eq!(source, active);
+        let numbers: Vec<u32> =
+            source.split(|c: char| !c.is_ascii_digit()).filter(|s| !s.is_empty()).map(|s| s.parse().unwrap()).collect();
+        let (start, end) = (numbers[numbers.len() - 2] - 1, numbers[numbers.len() - 1] - 1);
+        let late: Vec<_> = windows(&d.fighter("stratus").unwrap().moves.get(slot).unwrap().phases)
+            .into_iter()
+            .filter(|&(_, _, damage)| damage == 8.)
+            .collect();
+        assert!(!late.is_empty());
+        assert!(late.iter().all(|&(s, e, _)| s == start && e == end), "{slot}: {late:?}");
     }
 }
