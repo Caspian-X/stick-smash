@@ -281,10 +281,10 @@ def phase(name, frames=None, **kw):
 # ---------------------------------------------------------------------------
 # Rig and appearance
 # ---------------------------------------------------------------------------
-def leaf(points, mid, veins, fill="#50a94a"):
-    shapes = [{"shape": "poly", "points": points, "fill": fill, "stroke": "#245e2d", "width": 1.5},
-              {"shape": "line", "from": mid[0], "to": mid[1], "width": 1.2, "color": "#286c32"}]
-    shapes.extend({"shape": "line", "from": a, "to": b, "width": 0.8, "color": "#347c3b"} for a, b in veins)
+def leaf(points, mid, veins, fill="#6ddd58"):
+    shapes = [{"shape": "poly", "points": points, "fill": fill, "stroke": "#348f3d", "width": 1.5},
+              {"shape": "line", "from": mid[0], "to": mid[1], "width": 1.2, "color": "#246d31"}]
+    shapes.extend({"shape": "line", "from": a, "to": b, "width": 0.8, "color": "#2d7937"} for a, b in veins)
     return shapes
 
 
@@ -307,14 +307,14 @@ rig = {
         {
             "id": "head", "parent": "neck", "translation": [0, 18],
             "shapes": leaf([[0, -6], [-8, 0], [-10, 8], [-8, 15], [-4, 20], [0, 22], [5, 19], [9, 13], [9, 6], [6, 0]],
-                [[0, -5], [0, 20]], [[[0, 2], [-7, 7]], [[0, 6], [7, 11]], [[0, 11], [-6, 15]], [[0, 15], [4, 18]]], "#54af4f")
+                [[0, -5], [0, 20]], [[[0, 2], [-7, 7]], [[0, 6], [7, 11]], [[0, 11], [-6, 15]], [[0, 15], [4, 18]]], "#79eb62")
                 + leaf([[0, -5], [-8, -6], [-16, -3], [-22, 3], [-24, 8], [-17, 9], [-10, 7], [-4, 2]],
-                [[-1, -4], [-22, 7]], [[[-7, -1], [-12, -2]], [[-11, 1], [-15, 5]], [[-15, 3], [-19, 4]]], "#429744"),
+                [[-1, -4], [-22, 7]], [[[-7, -1], [-12, -2]], [[-11, 1], [-15, 5]], [[-15, 3], [-19, 4]]], "#5bd65b"),
         },
         {
             "id": "jaw", "parent": "head", "translation": [18, -8], "angle": -6,
             "shapes": leaf([[-18, 4], [-12, 2], [-4, 2], [3, 5], [7, 10], [1, 13], [-6, 13], [-13, 10]],
-                [[-17, 5], [5, 10]], [[[-11, 6], [-7, 3]], [[-6, 7], [-3, 11]], [[-2, 8], [1, 6]]], "#63b653"),
+                [[-17, 5], [5, 10]], [[[-11, 6], [-7, 3]], [[-6, 7], [-3, 11]], [[-2, 8], [1, 6]]], "#91f270"),
         },
         {"id": "mouth", "parent": "head", "translation": [22, 0]},
         {"id": "top", "parent": "head", "translation": [0, 16]},
@@ -331,12 +331,12 @@ rig = {
         },
     ],
     "bones": [
-        {"from": "stem0", "to": "stem1", "width": 6, "color": "#367e3b"},
-        {"from": "stem1", "to": "stem2", "width": 6, "color": "#367e3b"},
-        {"from": "stem2", "to": "neck", "width": 5, "color": "#367e3b"},
-        {"from": "neck", "to": "head", "width": 5, "color": "#367e3b"},
-        {"from": "leafBase", "to": "leafL", "width": 3, "color": "#367e3b"},
-        {"from": "leafBase", "to": "leafR", "width": 3, "color": "#367e3b"},
+        {"from": "stem0", "to": "stem1", "width": 6, "color": "#48ac48"},
+        {"from": "stem1", "to": "stem2", "width": 6, "color": "#48ac48"},
+        {"from": "stem2", "to": "neck", "width": 5, "color": "#48ac48"},
+        {"from": "neck", "to": "head", "width": 5, "color": "#48ac48"},
+        {"from": "leafBase", "to": "leafL", "width": 3, "color": "#48ac48"},
+        {"from": "leafBase", "to": "leafR", "width": 3, "color": "#48ac48"},
     ],
 }
 
@@ -1254,7 +1254,7 @@ fighter = {
         "torsoGlowWidth": 18,
         "headGlowRadius": 27,
         "headRing": 2,
-        "headFill": "#54af4f",
+        "headFill": "#79eb62",
         "eye": [4, 4, 3, 3],
     },
     "rig": rig,
