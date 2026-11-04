@@ -578,14 +578,13 @@
               "start": 4,
               "end": 7,
               "x": 28,
-              "y": 62,
+              "y": 38,
               "r": 22,
               "damage": 2.5,
-              "bkb": 40.4,
+              "bkb": 54.4,
               "kbg": 1.0,
-              "angle": 125.0,
+              "angle": 95.0,
               "dir": "away",
-              "situation": "air",
               "setKb": true
             },
             {
@@ -1175,7 +1174,7 @@
         },
         {
           "name": "shot",
-          "frames": 32,
+          "frames": 33,
           "hitboxes": [
             {
               "start": 0,
@@ -1369,6 +1368,7 @@
       "name": "Rocketbarrel Boost",
       "air": "upSpecial",
       "bReverse": true,
+      "chargeDamage": 0.0,
       "phases": [
         {
           "name": "charge",

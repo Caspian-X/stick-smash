@@ -515,7 +515,7 @@ moves['fsmash'] = {'name': 'Slap & Beat', 'phases': [phase(
             {'at': frame(21), 'sfx': 'smash', 'setVel': {'x': 4.0}}])]}
 us = raw('usmash', 'diddy', 'AttackHi4')
 usmash = [
-    hit(pick(us, 2.5, 1)['source'], frame(5), frame(8), 28, 62, 22),
+    hit(pick(us, 2.5, 2)['source'], frame(5), frame(8), 28, 38, 22),
     hit(pick(us, 2.5, 8)['source'], frame(12), frame(15), 24, 45, 23),
     hit(pick(us, 6.0)['source'], frame(19), frame(23), 18, 65, 28),
 ]
@@ -596,7 +596,7 @@ moves['nspec'] = {
               attach={'popgun': {'show': [0, 15], 'angle': [[0, 0]]}},
               events=[{'at': frame(16), 'sfx': 'charge'}],
               transitions=[{'on': 'release', 'from': frame(16), 'to': 'shot'}, wait('overcharge')]),
-        phase('shot', 32, [{'start': 0, 'end': 1, 'x': 34, 'y': 44, 'r': 16, 'damage': 2.0, 'bkb': 40,
+        phase('shot', 33, [{'start': 0, 'end': 1, 'x': 34, 'y': 44, 'r': 16, 'damage': 2.0, 'bkb': 40,
                             'kbg': 0.7, 'angle': 45, 'type': 'sakurai'},
                            ],
               anim=[{'at': 0, 'pose': 'gun'}, {'at': 6, 'pose': {'from': 'gun', 'head': [4, 60]}},
@@ -642,7 +642,7 @@ moves['sspec'] = {
 
 # Up special: charge frames 1-8 (held to 68), then the boost and the surface/landing explosion.
 moves['uspec'] = {
-    'name': 'Rocketbarrel Boost', 'air': 'upSpecial', 'bReverse': True,
+    'name': 'Rocketbarrel Boost', 'air': 'upSpecial', 'bReverse': True, 'chargeDamage': 0.0,
     'phases': [
         phase('charge', 8, aim=True, fallCap=2.5, airAccelMult=0.25,
               charge={'frame': frame(8), 'max': 60, 'button': 'special', 'jet': True},

@@ -160,8 +160,7 @@ fn durations_and_damage_match_the_source_ledger() {
             assert_eq!(total(&v.phases), total_frames, "{slot} variant {}", i + 1);
         }
     }
-    assert_eq!(16 + 32, 48, "neutral special reaches its shot at the source total");
-    assert_eq!(total(&f.moves.nspec.phases), 16 + 32 + 104, "charge + shot + overcharge");
+    assert_eq!(total(&f.moves.nspec.phases), 16 + 33 + 104, "charge + shot + overcharge");
     assert_eq!(17 + 19 + 11, 47, "default Monkey Flip path");
     assert_eq!(total(&f.moves.sspec.as_ref().unwrap().phases), 17 + 19 + 32 + 11, "leap + flip + kick + recover");
     assert_eq!(total(f.moves.uspec.variants.first().map_or(&f.moves.uspec.phases, |v| &v.phases)), 8 + 34 + 59 + 30);
@@ -292,27 +291,49 @@ fn banana_generation_cooldown_and_one_at_a_time_pool() {
     assert_eq!(w.fighters[0].charges[0], 0, "the pool is spent on use");
     for _ in 0..19 {
         assert_eq!(w.projs.len(), 0, "the peel appears at source frame 20");
-        step_move(&mut w, &d, sim::input::Intent::default());
-    }
-    assert_eq!(w.projs.len(), 1, "the peel spawns at source frame 20");
-    for _ in 19..39 {
-        step_move(&mut w, &d, sim::input::Intent::default());
-    }
-    assert!(w.fighters[0].mov.is_none());
-    begin(&mut w, &d, "dspec");
-    assert_eq!(w.fighters[0].mov.as_ref().unwrap().variant, 0, "during the cooldown the empty animation runs");
-    assert_eq!(w.projs.len(), 1, "and no second peel appears");
-    for _ in 0..85 {
         step_world(&mut w, &d, &[]);
         w.fx.clear();
         w.hits.clear();
         w.acts.clear();
     }
-    assert_eq!(w.fighters[0].charges[0], 1, "one use returns after 85 ticks");
-    // The peel is still out: the pool is full but max=1 blocks the spawn.
+    assert_eq!(w.projs.len(), 1, "the peel spawns at source frame 20");
+    // Reach tick 50 from the spend, then try the move during the cooldown: it runs the empty animation
+    // and does not spawn a second peel.
+    for _ in 19..50 {
+        step_world(&mut w, &d, &[]);
+        w.fx.clear();
+        w.hits.clear();
+        w.acts.clear();
+    }
+    begin(&mut w, &d, "dspec");
+    assert_eq!(w.fighters[0].mov.as_ref().unwrap().variant, 0, "during the cooldown the empty animation runs");
+    for _ in 0..34 {
+        step_world(&mut w, &d, &[]);
+        w.fx.clear();
+        w.hits.clear();
+        w.acts.clear();
+    }
+    assert_eq!(w.fighters[0].charges[0], 0, "still empty at tick 84");
+    assert_eq!(w.projs.len(), 1, "the empty animation spawned nothing");
+    step_world(&mut w, &d, &[]);
+    w.fx.clear();
+    w.hits.clear();
+    w.acts.clear();
+    assert_eq!(w.fighters[0].charges[0], 1, "one use returns at tick 85");
+    for _ in 0..5 {
+        step_world(&mut w, &d, &[]);
+    }
+    assert!(w.fighters[0].mov.is_none());
+    // The pool is full but the first peel is still out: `max: 1` blocks the replacement.
     begin(&mut w, &d, "dspec");
     assert_eq!(w.fighters[0].mov.as_ref().unwrap().variant, 1);
-    assert_eq!(w.projs.len(), 1);
+    for _ in 0..19 {
+        step_world(&mut w, &d, &[]);
+        w.fx.clear();
+        w.hits.clear();
+        w.acts.clear();
+    }
+    assert_eq!(w.projs.len(), 1, "a second peel cannot replace the live one");
 }
 
 fn cast_peanut(held: u32) -> (sim::world::Projectile, World) {
@@ -532,6 +553,172 @@ fn banana_has_the_source_trip_hit_without_damage() {
     close(b.hit.bkb, 50.0);
     assert_eq!(b.max, 1);
     assert_eq!(b.life, 600);
+}
+
+#[test]
+fn successive_hits_connect_on_the_same_victim() {
+    let d = common::data();
+    // Pin a grounded dummy so each move's successive phases can reach it again. Contact history must be
+    // cleared by phase entry for the later hits to deal damage.
+    let dealt = |slot: &str, dx: f64| -> f64 {
+        let mut w = sandbox(&d, &["bongo", "brawler"]);
+        w.count = 0;
+        w.fighters[0].x = 640.;
+        w.fighters[0].y = 520.;
+        w.fighters[0].face = 1.;
+        w.fighters[1].x = 640. + dx;
+        w.fighters[1].y = 520.;
+        let mut f = w.fighters[0].clone();
+        moves::start_move(&mut w, &d, 0, &mut f, slot);
+        w.fighters[0] = f;
+        for t in 0..60 {
+            w.fighters[1].x = 640. + dx;
+            w.fighters[1].y = 520.;
+            w.fighters[1].vx = 0.;
+            w.fighters[1].vy = 0.;
+            w.fighters[1].ground = true;
+            w.fighters[1].inv = 0;
+            let inputs = vec![Input { buttons: if t == 0 { 2 } else { 0 }, ..Default::default() }, Input::default()];
+            step_world(&mut w, &d, &inputs);
+            w.fx.clear();
+            w.hits.clear();
+            w.acts.clear();
+            if w.fighters[0].mov.is_none() && t > 2 {
+                break;
+            }
+        }
+        w.fighters[1].dmg
+    };
+    // Source f-smash: 5% first hit then 11% second; dash attack 2+2+3; up smash 2.5+2.5+6.
+    assert!(dealt("fsmash", 50.) >= 14., "f-smash successive hits must both land");
+    assert!(dealt("dashatk", 50.) >= 6.5, "dash attack's three hits must all land");
+    assert!(dealt("usmash", 40.) >= 10., "up smash's multihit and final hit must all land");
+}
+
+#[test]
+fn up_smash_first_hit_reaches_a_grounded_victim() {
+    let d = common::data();
+    let mut w = sandbox(&d, &["bongo", "brawler"]);
+    w.count = 0;
+    w.fighters[0].x = 640.;
+    w.fighters[0].y = 520.;
+    w.fighters[0].face = 1.;
+    w.fighters[1].x = 680.;
+    w.fighters[1].y = 520.;
+    let mut f = w.fighters[0].clone();
+    moves::start_move(&mut w, &d, 0, &mut f, "usmash");
+    w.fighters[0] = f;
+    let mut hit = false;
+    for t in 0..8 {
+        w.fighters[1].x = 680.;
+        w.fighters[1].y = 520.;
+        w.fighters[1].vx = 0.;
+        w.fighters[1].vy = 0.;
+        w.fighters[1].ground = true;
+        w.fighters[1].inv = 0;
+        let inputs = vec![Input { buttons: if t == 0 { 2 } else { 0 }, ..Default::default() }, Input::default()];
+        step_world(&mut w, &d, &inputs);
+        w.fx.clear();
+        w.hits.clear();
+        w.acts.clear();
+        if w.fighters[1].dmg > 0. {
+            hit = true;
+            break;
+        }
+    }
+    assert!(hit, "the first up-smash tier must connect on a grounded victim");
+}
+
+#[test]
+fn rocketbarrel_charge_does_not_scale_hit_damage() {
+    let d = common::data();
+    let mut w = start(&d, "uspec");
+    for _ in 0..200 {
+        let m = w.fighters[0].mov.as_ref().unwrap();
+        if m.t == 7 && m.charge == 60 {
+            break;
+        }
+        step_move(&mut w, &d, sim::input::Intent { sp_held: true, ..Default::default() });
+    }
+    step_move(&mut w, &d, sim::input::Intent::default());
+    assert_eq!(phase_name(&d, &w).as_deref(), Some("boost"));
+    assert_eq!(w.fighters[0].mov.as_ref().unwrap().charge, 60);
+    let boxes = combat::active_boxes_at(&d, &w.fighters[0], w.frame);
+    let damages: Vec<f64> = boxes.iter().map(|b| b.hit.damage).collect();
+    assert_eq!(damages, vec![10.0], "full charge leaves the 10% boost hit unscaled");
+    // The landing explosion is also fixed at 18%.
+    w.fighters[0].y = 514.;
+    w.fighters[0].vy = 6.;
+    w.fighters[0].ground = false;
+    w.fighters[0].surf = None;
+    step_world(&mut w, &d, &[]);
+    w.fx.clear();
+    w.hits.clear();
+    w.acts.clear();
+    assert_eq!(phase_name(&d, &w).as_deref(), Some("explosion"));
+    let boxes = combat::active_boxes_at(&d, &w.fighters[0], w.frame);
+    assert_eq!(boxes[0].hit.damage, 18.0);
+}
+
+#[test]
+fn tapped_popgun_runs_the_source_total() {
+    let d = common::data();
+    let mut w = start(&d, "nspec");
+    let mut ticks = 0;
+    while w.fighters[0].mov.is_some() && ticks < 100 {
+        step_move(&mut w, &d, sim::input::Intent::default());
+        ticks += 1;
+    }
+    assert_eq!(ticks, 48, "a tapped neutral special lasts 48 ticks, not 47");
+}
+
+#[test]
+fn raw_jump_attack_attack_stick_hold_and_buffer() {
+    let d = common::data();
+    let mut w = common::fighters(&d, "bongo", &["brawler"]);
+    w.count = 0;
+    w.fighters[1].x = 1400.;
+    // Jump + attack arrives as a short-hop aerial.
+    tick(&mut w, &d, Input { buttons: sim::input::JUMP | sim::input::ATTACK, ..Default::default() });
+    for _ in 0..8 {
+        tick(&mut w, &d, Input::default());
+    }
+    assert_eq!(w.fighters[0].mov.as_ref().map(|m| m.slot.as_str()), Some("nair"));
+    // The right stick selects a fixed aerial.
+    w.fighters[0].set_state(State::Air);
+    w.fighters[0].ground = false;
+    w.fighters[0].surf = None;
+    w.fighters[0].history = Default::default();
+    tick(&mut w, &d, Input { attack_stick: (127, 0), ..Default::default() });
+    assert_eq!(w.fighters[0].mov.as_ref().map(|m| m.slot.as_str()), Some("fair"));
+    // Hold and release the special: the charged peanut is stronger than the tapped one.
+    let mut w = common::fighters(&d, "bongo", &["brawler"]);
+    w.count = 0;
+    w.fighters[1].x = 1400.;
+    for _ in 0..24 {
+        tick(&mut w, &d, Input { buttons: sim::input::SPECIAL, ..Default::default() });
+    }
+    let mut charged = false;
+    for _ in 0..12 {
+        tick(&mut w, &d, Input::default());
+        if let Some(p) = w.projs.first() {
+            assert!(p.hit.damage > 3.3, "held shot damage {}", p.hit.damage);
+            charged = true;
+            break;
+        }
+    }
+    assert!(charged, "the held shot must fire");
+    // A press during landing lag is buffered and starts a jab once the landing ends.
+    let mut w = common::fighters(&d, "bongo", &["brawler"]);
+    w.count = 0;
+    w.fighters[0].set_state(State::Landing);
+    w.fighters[0].t = 0;
+    w.fighters[0].sd.n = 3.;
+    tick(&mut w, &d, Input { buttons: sim::input::ATTACK, ..Default::default() });
+    for _ in 0..8 {
+        tick(&mut w, &d, Input::default());
+    }
+    assert_eq!(w.fighters[0].mov.as_ref().map(|m| m.slot.as_str()), Some("jab"));
 }
 
 #[test]
