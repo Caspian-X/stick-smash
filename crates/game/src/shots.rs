@@ -711,6 +711,18 @@ fn training() -> Vec<Step> {
     v.push(Step::Set(0, Special, false));
     v.push(Step::Fast(|m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.t >= 39), 80));
     v.push(Step::Shot("21i-mike-full-eruption"));
+    // A settled banana is a world state, not a pose: throw one and wait for it to come to rest.
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("bongo"), Step::Wait(30)]);
+    v.push(Step::Set(0, Down, true));
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Wait(6));
+    v.push(Step::Set(0, Special, false));
+    v.push(Step::Set(0, Down, false));
+    v.push(Step::Fast(
+        |m, _, _| m.world.projs.iter().any(|p| p.id.starts_with("banana") && p.age > 40 && p.vy == 0.),
+        300,
+    ));
+    v.push(Step::Shot("33r-bongo-banana-settled"));
     // Duchess float, turnip flight and parasol descent are state/timing captures, not move poses.
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("duchess"), Step::Wait(30)]);
     v.push(Step::Set(0, Jump, true));
@@ -856,7 +868,6 @@ fn fighter_kits() -> Vec<Step> {
         ("bongo", "sspec", 22, "33m-bongo-monkey-flip"),
         ("bongo", "uspec", 20, "33n-bongo-rocketbarrel"),
         ("bongo", "dspec", 20, "33o-bongo-banana"),
-        ("bongo", "dspec", 50, "33r-bongo-banana-settled"),
         ("bongo", "grab", 7, "33p-bongo-grab"),
         ("duchess", "fsmash", 15, "35a-duchess-golf-club"),
         ("duchess", "fair", 17, "35b-duchess-crown-knuckle"),
