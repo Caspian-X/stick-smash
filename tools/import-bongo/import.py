@@ -465,46 +465,55 @@ moves['dtilt'] = {'name': 'Hand Clap', 'phases': [phase(
                  hit(pick(dt, 5.5, 1)['source'], frame(4), frame(5), 42, 17, 17)],
     anim=swing('clap', 3, 4, 18), events=[{'at': frame(4), 'sfx': 'swing'}])]}
 da = raw('dashatk', 'diddy', 'AttackDash')
-moves['dashatk'] = {'name': 'Rolling Slap', 'phases': [phase(
-    'main', 40, [hit(pick(da, 2.0, 2)['source'], frame(8), frame(9), 38, 46, 18),
-                 hit(pick(da, 2.0, 5)['source'], frame(16), frame(17), 38, 47, 18),
-                 hit(pick(da, 3.0)['source'], frame(22), frame(23), 40, 44, 26)],
-    slide=20, anim=[{'at': 0, 'pose': 'stand'}, {'at': frame(7), 'pose': 'spinLow', 'lerp': True},
-                    {'at': frame(16), 'pose': {'from': 'spinLow', 'rot': 180}, 'lerp': True},
-                    {'at': frame(24), 'pose': 'spinLow'}, {'at': 39, 'pose': 'stand', 'lerp': True}],
-    events=[{'at': frame(8), 'sfx': 'swing'}, {'at': 0, 'setVel': {'x': 4.2}}])]}
+# Three hits in separate phases so each can connect on the same victim; phase entry clears contact history.
+moves['dashatk'] = {'name': 'Rolling Slap', 'phases': [
+    phase('hit1', 9, [hit(pick(da, 2.0, 2)['source'], frame(8), frame(9), 38, 46, 18)],
+          slide=20, anim=[{'at': 0, 'pose': 'stand'}, {'at': frame(7), 'pose': 'spinLow', 'lerp': True}],
+          events=[{'at': 0, 'setVel': {'x': 4.2}}, {'at': frame(8), 'sfx': 'swing'}],
+          transitions=[wait('hit2')]),
+    phase('hit2', 8, [hit(pick(da, 2.0, 5)['source'], frame(16) - 9, frame(17) - 9, 38, 47, 18)],
+          slide=8, anim=[{'at': 0, 'pose': 'spinLow'},
+                         {'at': frame(7), 'pose': {'from': 'spinLow', 'rot': 180}, 'lerp': True}],
+          transitions=[wait('hit3')]),
+    phase('hit3', 23, [hit(pick(da, 3.0)['source'], frame(22) - 17, frame(23) - 17, 40, 44, 26)],
+          slide=3, anim=[{'at': 0, 'pose': {'from': 'spinLow', 'rot': 180}},
+                         {'at': frame(7), 'pose': 'spinLow'}, {'at': 22, 'pose': 'stand', 'lerp': True}],
+          events=[{'at': frame(22) - 17, 'sfx': 'smash'}])]}
 
 # --- smashes
 fs = raw('fsmash', 'diddy', 'AttackS4')
-fsmash = [
-    hit(pick(fs, 5.0, 1)['source'], frame(12), frame(13), 44, 48, 23),
-    hit(pick(fs, 11.0, 0)['source'], frame(21), frame(23), 42, 50, 22),
-    hit(pick(fs, 9.0)['source'], frame(21), frame(23), 16, 50, 17),
-]
-moves['fsmash'] = {'name': 'Slap & Beat', 'phases': [phase(
-    'main', 50, fsmash, charge={'frame': frame(4)}, slide=30, anim=[{'at': 0, 'pose': 'stand'},
-                                                          {'at': frame(4), 'pose': 'charge'},
-                                                          {'at': frame(11), 'pose': 'spinLow', 'lerp': True},
-                                                          {'at': frame(21), 'pose': 'spinLow'},
-                                                          {'at': frame(24), 'pose': 'spinHigh', 'lerp': True},
-                                                          {'at': frame(35), 'pose': 'stand', 'lerp': True}],
-    events=[{'at': frame(12), 'sfx': 'swing', 'setVel': {'x': 6.5}},
-            {'at': frame(21), 'sfx': 'smash', 'setVel': {'x': 4.0}}])]}
+moves['fsmash'] = {'name': 'Slap & Beat', 'phases': [
+    phase('hit1', 14, [hit(pick(fs, 5.0, 1)['source'], frame(12), frame(13), 44, 48, 23)],
+          charge={'frame': frame(4)}, slide=14,
+          anim=[{'at': 0, 'pose': 'stand'}, {'at': frame(4), 'pose': 'charge'},
+                {'at': frame(11), 'pose': 'spinLow', 'lerp': True}],
+          events=[{'at': frame(12), 'sfx': 'swing', 'setVel': {'x': 6.5}}],
+          transitions=[wait('hit2')]),
+    phase('hit2', 36,
+          [hit(pick(fs, 11.0, 0)['source'], frame(21) - 14, frame(23) - 14, 42, 50, 22),
+           hit(pick(fs, 9.0)['source'], frame(21) - 14, frame(23) - 14, 16, 50, 17)],
+          slide=36, anim=[{'at': 0, 'pose': 'spinLow'},
+                          {'at': frame(24) - 14, 'pose': 'spinHigh', 'lerp': True},
+                          {'at': 35, 'pose': 'stand', 'lerp': True}],
+          events=[{'at': frame(21) - 14, 'sfx': 'smash', 'setVel': {'x': 4.0}}])]}
 us = raw('usmash', 'diddy', 'AttackHi4')
-usmash = [
-    hit(pick(us, 2.5, 1)['source'], frame(5), frame(8), 28, 62, 22),
-    hit(pick(us, 2.5, 8)['source'], frame(12), frame(15), 24, 45, 23),
-    hit(pick(us, 6.0)['source'], frame(19), frame(23), 18, 65, 28),
-]
-moves['usmash'] = {'name': 'Triple Attack', 'phases': [phase(
-    'main', 53, usmash, charge={'frame': frame(1)}, anim=[{'at': 0, 'pose': 'crouch'},
-                                                         {'at': frame(5), 'pose': 'spinLow', 'lerp': True},
-                                                         {'at': frame(12), 'pose': {'from': 'spinLow', 'rot': 180}, 'lerp': True},
-                                                         {'at': frame(19), 'pose': 'spinHigh', 'lerp': True},
-                                                         {'at': frame(30), 'pose': 'stand', 'lerp': True}],
-    events=[{'at': 0, 'setVel': {'y': 8.0}, 'leaveGround': True},
-            {'at': frame(5), 'sfx': 'swing'}, {'at': frame(19), 'sfx': 'smash'}],
-    transitions=[{'on': 'land', 'from': frame(23), 'to': 'landing', 'lag': 30}, wait('end')])]}
+# Three hits in separate phases so the multihit and the final uppercut can all connect on one victim.
+moves['usmash'] = {'name': 'Triple Attack', 'phases': [
+    phase('hit1', 8, [hit(pick(us, 2.5, 2)['source'], frame(5), frame(8), 28, 38, 22)],
+          charge={'frame': frame(1)}, anim=[{'at': 0, 'pose': 'crouch'},
+                                            {'at': frame(5), 'pose': 'spinLow', 'lerp': True}],
+          events=[{'at': 0, 'setVel': {'y': 8.0}, 'leaveGround': True}, {'at': frame(5), 'sfx': 'swing'}],
+          transitions=[wait('hit2')]),
+    phase('hit2', 7, [hit(pick(us, 2.5, 8)['source'], frame(12) - 8, frame(15) - 8, 24, 45, 23)],
+          anim=[{'at': 0, 'pose': 'spinLow'},
+                {'at': frame(12) - 8, 'pose': {'from': 'spinLow', 'rot': 180}, 'lerp': True}],
+          transitions=[wait('hit3')]),
+    phase('hit3', 38, [hit(pick(us, 6.0)['source'], frame(19) - 15, frame(23) - 15, 18, 65, 28)],
+          anim=[{'at': 0, 'pose': {'from': 'spinLow', 'rot': 180}},
+                {'at': frame(19) - 15, 'pose': 'spinHigh', 'lerp': True},
+                {'at': frame(30) - 15, 'pose': 'stand', 'lerp': True}],
+          events=[{'at': frame(19) - 15, 'sfx': 'smash'}],
+          transitions=[{'on': 'land', 'from': frame(23) - 15, 'to': 'landing', 'lag': 30}, wait('end')])]}
 ds = raw('dsmash', 'diddy', 'AttackLw4')
 dsmash = [
     hit(pick(ds, 12.0, 0)['source'], frame(7), frame(8), 54, 18, 20),
@@ -573,7 +582,7 @@ moves['nspec'] = {
               attach={'popgun': {'show': [0, 15], 'angle': [[0, 0]]}},
               events=[{'at': frame(16), 'sfx': 'charge'}],
               transitions=[{'on': 'release', 'from': frame(16), 'to': 'shot'}, wait('overcharge')]),
-        phase('shot', 32, [{'start': 0, 'end': 1, 'x': 34, 'y': 44, 'r': 16, 'damage': 2.0, 'bkb': 40,
+        phase('shot', 33, [{'start': 0, 'end': 1, 'x': 34, 'y': 44, 'r': 16, 'damage': 2.0, 'bkb': 40,
                             'kbg': 0.7, 'angle': 45, 'type': 'sakurai'},
                            ],
               anim=[{'at': 0, 'pose': 'gun'}, {'at': 6, 'pose': {'from': 'gun', 'head': [4, 60]}},
@@ -619,7 +628,7 @@ moves['sspec'] = {
 
 # Up special: charge frames 1-8 (held to 68), then the boost and the surface/landing explosion.
 moves['uspec'] = {
-    'name': 'Rocketbarrel Boost', 'air': 'upSpecial', 'bReverse': True,
+    'name': 'Rocketbarrel Boost', 'air': 'upSpecial', 'bReverse': True, 'chargeDamage': 0.0,
     'phases': [
         phase('charge', 8, aim=True, fallCap=2.5, airAccelMult=0.25,
               charge={'frame': frame(8), 'max': 60, 'button': 'special', 'jet': True},

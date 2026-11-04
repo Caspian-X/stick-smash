@@ -71,7 +71,9 @@ def fetch(name: str) -> bytes:
 
 
 def main() -> int:
-    out = Path(sys.argv[1] if len(sys.argv) > 1 else '/tmp/bongo-reference')
+    refresh = '--refresh' in sys.argv
+    args = [a for a in sys.argv[1:] if a != '--refresh']
+    out = Path(args[0] if args else '/tmp/bongo-reference')
     out.mkdir(parents=True, exist_ok=True)
     old = json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {'base': BASE, 'files': {}}
     try:
@@ -91,6 +93,9 @@ def main() -> int:
             before = old['files'].get(name, {}).get('sha256')
             if before and before != digest:
                 print(f'changed upstream: {name} {before} -> {digest}', file=sys.stderr)
+                if not refresh:
+                    print('refusing to overwrite the pinned visual manifest; pass --refresh to accept', file=sys.stderr)
+                    return 1
             im = Image.open(local)
             frames = []
             for i in range(getattr(im, 'n_frames', 1)):

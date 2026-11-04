@@ -431,8 +431,8 @@
       "name": "Rolling Slap",
       "phases": [
         {
-          "name": "main",
-          "frames": 40,
+          "name": "hit1",
+          "frames": 9,
           "hitboxes": [
             {
               "start": 7,
@@ -446,10 +446,31 @@
               "angle": 43.0,
               "setKb": true,
               "hitlagMult": 0.5
-            },
+            }
+          ],
+          "slide": 20,
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 6, "pose": "spinLow", "lerp": true }
+          ],
+          "events": [
             {
-              "start": 15,
-              "end": 16,
+              "at": 0,
+              "setVel": { "x": 4.2 }
+            },
+            { "at": 7, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "hit2" }
+          ]
+        },
+        {
+          "name": "hit2",
+          "frames": 8,
+          "hitboxes": [
+            {
+              "start": 6,
+              "end": 7,
               "x": 38,
               "y": 47,
               "r": 18,
@@ -459,37 +480,38 @@
               "angle": 40.0,
               "setKb": true,
               "hitlagMult": 0.8
-            },
-            {
-              "start": 21,
-              "end": 22,
-              "x": 40,
-              "y": 44,
-              "r": 26,
-              "damage": 3.0,
-              "bkb": 80.0,
-              "kbg": 0.9,
-              "angle": 83.0
             }
           ],
-          "slide": 20,
+          "slide": 8,
           "anim": [
-            { "at": 0, "pose": "stand" },
-            { "at": 6, "pose": "spinLow", "lerp": true },
+            { "at": 0, "pose": "spinLow" },
             {
-              "at": 15,
+              "at": 6,
               "pose": { "from": "spinLow", "rot": 180 },
               "lerp": true
-            },
-            { "at": 23, "pose": "spinLow" },
-            { "at": 39, "pose": "stand", "lerp": true }
+            }
           ],
-          "events": [
-            { "at": 7, "sfx": "swing" },
+          "transitions": [
+            { "on": "timeout", "to": "hit3" }
+          ]
+        },
+        {
+          "name": "hit3",
+          "frames": 23,
+          "hitboxes": [
+            { "start": 4, "end": 5, "x": 40, "y": 44, "r": 26, "damage": 3.0, "bkb": 80.0, "kbg": 0.9, "angle": 83.0 }
+          ],
+          "slide": 3,
+          "anim": [
             {
               "at": 0,
-              "setVel": { "x": 4.2 }
-            }
+              "pose": { "from": "spinLow", "rot": 180 }
+            },
+            { "at": 6, "pose": "spinLow" },
+            { "at": 22, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 4, "sfx": "smash" }
           ]
         }
       ]
@@ -498,8 +520,8 @@
       "name": "Slap & Beat",
       "phases": [
         {
-          "name": "main",
-          "frames": 50,
+          "name": "hit1",
+          "frames": 14,
           "hitboxes": [
             {
               "start": 11,
@@ -512,10 +534,33 @@
               "kbg": 1.0,
               "angle": 45.0,
               "setKb": true
-            },
+            }
+          ],
+          "charge": { "frame": 3 },
+          "slide": 14,
+          "anim": [
+            { "at": 0, "pose": "stand" },
+            { "at": 3, "pose": "charge" },
+            { "at": 10, "pose": "spinLow", "lerp": true }
+          ],
+          "events": [
             {
-              "start": 20,
-              "end": 22,
+              "at": 11,
+              "sfx": "swing",
+              "setVel": { "x": 6.5 }
+            }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "hit2" }
+          ]
+        },
+        {
+          "name": "hit2",
+          "frames": 36,
+          "hitboxes": [
+            {
+              "start": 6,
+              "end": 8,
               "x": 42,
               "y": 50,
               "r": 22,
@@ -526,8 +571,8 @@
               "hitlagMult": 1.2
             },
             {
-              "start": 20,
-              "end": 22,
+              "start": 6,
+              "end": 8,
               "x": 16,
               "y": 50,
               "r": 17,
@@ -538,24 +583,15 @@
               "hitlagMult": 1.2
             }
           ],
-          "charge": { "frame": 3 },
-          "slide": 30,
+          "slide": 36,
           "anim": [
-            { "at": 0, "pose": "stand" },
-            { "at": 3, "pose": "charge" },
-            { "at": 10, "pose": "spinLow", "lerp": true },
-            { "at": 20, "pose": "spinLow" },
-            { "at": 23, "pose": "spinHigh", "lerp": true },
-            { "at": 34, "pose": "stand", "lerp": true }
+            { "at": 0, "pose": "spinLow" },
+            { "at": 9, "pose": "spinHigh", "lerp": true },
+            { "at": 35, "pose": "stand", "lerp": true }
           ],
           "events": [
             {
-              "at": 11,
-              "sfx": "swing",
-              "setVel": { "x": 6.5 }
-            },
-            {
-              "at": 20,
+              "at": 6,
               "sfx": "smash",
               "setVel": { "x": 4.0 }
             }
@@ -567,26 +603,47 @@
       "name": "Triple Attack",
       "phases": [
         {
-          "name": "main",
-          "frames": 53,
+          "name": "hit1",
+          "frames": 8,
           "hitboxes": [
             {
               "start": 4,
               "end": 7,
               "x": 28,
-              "y": 62,
+              "y": 38,
               "r": 22,
               "damage": 2.5,
-              "bkb": 40.4,
+              "bkb": 54.4,
               "kbg": 1.0,
-              "angle": 125.0,
+              "angle": 95.0,
               "dir": "away",
-              "situation": "air",
               "setKb": true
-            },
+            }
+          ],
+          "charge": { "frame": 0 },
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 4, "pose": "spinLow", "lerp": true }
+          ],
+          "events": [
             {
-              "start": 11,
-              "end": 14,
+              "at": 0,
+              "setVel": { "y": 8.0 },
+              "leaveGround": true
+            },
+            { "at": 4, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "hit2" }
+          ]
+        },
+        {
+          "name": "hit2",
+          "frames": 7,
+          "hitboxes": [
+            {
+              "start": 3,
+              "end": 6,
               "x": 24,
               "y": 45,
               "r": 23,
@@ -596,42 +653,39 @@
               "angle": 125.0,
               "dir": "away",
               "setKb": true
-            },
-            {
-              "start": 18,
-              "end": 22,
-              "x": 18,
-              "y": 65,
-              "r": 28,
-              "damage": 6.0,
-              "bkb": 55.0,
-              "kbg": 1.31,
-              "angle": 85.0
             }
           ],
-          "charge": { "frame": 0 },
           "anim": [
-            { "at": 0, "pose": "crouch" },
-            { "at": 4, "pose": "spinLow", "lerp": true },
+            { "at": 0, "pose": "spinLow" },
             {
-              "at": 11,
+              "at": 3,
               "pose": { "from": "spinLow", "rot": 180 },
               "lerp": true
-            },
-            { "at": 18, "pose": "spinHigh", "lerp": true },
-            { "at": 29, "pose": "stand", "lerp": true }
-          ],
-          "events": [
-            {
-              "at": 0,
-              "setVel": { "y": 8.0 },
-              "leaveGround": true
-            },
-            { "at": 4, "sfx": "swing" },
-            { "at": 18, "sfx": "smash" }
+            }
           ],
           "transitions": [
-            { "on": "land", "from": 22, "to": "landing", "lag": 30 },
+            { "on": "timeout", "to": "hit3" }
+          ]
+        },
+        {
+          "name": "hit3",
+          "frames": 38,
+          "hitboxes": [
+            { "start": 3, "end": 7, "x": 18, "y": 65, "r": 28, "damage": 6.0, "bkb": 55.0, "kbg": 1.31, "angle": 85.0 }
+          ],
+          "anim": [
+            {
+              "at": 0,
+              "pose": { "from": "spinLow", "rot": 180 }
+            },
+            { "at": 3, "pose": "spinHigh", "lerp": true },
+            { "at": 14, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 3, "sfx": "smash" }
+          ],
+          "transitions": [
+            { "on": "land", "from": 7, "to": "landing", "lag": 30 },
             { "on": "timeout", "to": "end" }
           ]
         }
@@ -1167,7 +1221,7 @@
         },
         {
           "name": "shot",
-          "frames": 32,
+          "frames": 33,
           "hitboxes": [
             {
               "start": 0,
@@ -1361,6 +1415,7 @@
       "name": "Rocketbarrel Boost",
       "air": "upSpecial",
       "bReverse": true,
+      "chargeDamage": 0.0,
       "phases": [
         {
           "name": "charge",
