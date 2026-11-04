@@ -287,8 +287,8 @@ fn cpu_match_golden_world_hash() {
         w.acts.clear();
     }
     // Updated deliberately for shared launch/movement tuning, new snapshot fields and concurrent roster content
-    // changes. This bump adds the `bongo` package, which sorts before `brawler` and shifts the fighter data and
-    // snapshot indices used by this fixed Brawler/Ninja scenario. No snapshot field or per-tick behaviour changed,
-    // so `SIM_VERSION` is unchanged.
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xb34d6a2af8638744);
+    // changes. This bump adds the `bongo` and `duchess` packages, which sort before the brawler and ninja used by
+    // this fixed scenario and shift their resolved fighter data and snapshot indices. No snapshot field or
+    // per-tick behaviour changed, so `SIM_VERSION` is unchanged.
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xee8d4651f40e65c5);
 }
