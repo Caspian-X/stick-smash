@@ -43,6 +43,7 @@ fn all_assets_load() {
             "swordfighter",
             "throbbin",
             "tinker",
+            "verdant",
             "whiplash",
             "wizard",
             "wrangler",

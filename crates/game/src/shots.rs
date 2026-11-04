@@ -789,6 +789,21 @@ fn fighter_kits() -> Vec<Step> {
         ("throbbin", "uspec", 12, "30j-throbbin-elwind"),
         ("throbbin", "dspec", 18, "30k-throbbin-nosferatu"),
         ("throbbin", "jab", 5, "30l-throbbin-jab"),
+        ("verdant", "fsmash", 22, "34a-verdant-areadbhar-smash"),
+        ("verdant", "usmash", 16, "34b-verdant-creator-pillar"),
+        ("verdant", "dsmash", 18, "34c-verdant-aymr-sweep"),
+        ("verdant", "dtilt", 13, "34d-verdant-whip-sweep"),
+        ("verdant", "ftilt", 8, "34e-verdant-creator-slash"),
+        ("verdant", "fair", 12, "34f-verdant-lance-cut"),
+        ("verdant", "bair", 13, "34g-verdant-reverse-lance"),
+        ("verdant", "dair", 7, "34h-verdant-aymr-drop"),
+        ("verdant", "nair", 8, "34i-verdant-quiver-spin"),
+        ("verdant", "nspec", 40, "34j-verdant-failnaught-draw"),
+        ("verdant", "nspec", 46, "34k-verdant-failnaught-loose"),
+        ("verdant", "sspec", 21, "34l-verdant-areadbhar-rush"),
+        ("verdant", "uspec", 12, "34m-verdant-creator-tether"),
+        ("verdant", "dspec", 63, "34n-verdant-aymr-slam"),
+        ("verdant", "jab", 4, "34o-verdant-creator-jab"),
     ] {
         ed(&mut v, Cmd::Subject(Subject::Move(slot.into())));
         ed(&mut v, Cmd::Fighter(fighter.into()));
@@ -1740,7 +1755,23 @@ mod tests {
 30j-throbbin-elwind
 30k-throbbin-nosferatu
 30l-throbbin-jab
-30m-throbbin-bronze-smash";
+30m-throbbin-bronze-smash
+34a-verdant-areadbhar-smash
+34b-verdant-creator-pillar
+34c-verdant-aymr-sweep
+34d-verdant-whip-sweep
+34e-verdant-creator-slash
+34f-verdant-lance-cut
+34g-verdant-reverse-lance
+34h-verdant-aymr-drop
+34i-verdant-quiver-spin
+34j-verdant-failnaught-draw
+34k-verdant-failnaught-loose
+34l-verdant-areadbhar-rush
+34m-verdant-creator-tether
+34n-verdant-aymr-slam
+34o-verdant-creator-jab
+";
         assert_eq!(names, expected.lines().collect::<Vec<_>>());
     }
 }
