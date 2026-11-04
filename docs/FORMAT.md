@@ -112,10 +112,11 @@ ground or helpless in the air. `landing` goes to landing lag for `lag` frames. A
 `at: N` fires on frame N. `from`/`to` (inclusive) fire on a range. `from` alone fires from that frame on, and
 neither fires on every frame from 1. Frame-0 events must use `at: 0`. `every: K` also requires the world frame to
 be divisible by K. `if` restricts to `grounded`, `airborne` or `countered`. One event's actions run in this order:
-`mulVel`, `setVel`, `addVel`, `capFall`, `leaveGround`, `invuln`, `spawn`, `restore`, `detonate`, `sfx`, `fx`. `restore: {"charge": "id", "uses": N}` restores
-uses capped at capacity while preserving a pending recharge until full. `detonate: ["c4"]` immediately
-explodes live owned explosives with those projectile ids; `detonate: []` selects every owned explosive,
-including unarmed manual gadgets. Omit the field to leave explosives alone. Detonation does not move or age
+`mulVel`, `setVel`, `addVel`, `capFall`, `leaveGround`, `invuln`, `spawn`, `restore`, `detonate`, `sfx`, `fx`.
+`restore: {"charge": "id", "uses": N}` restores uses capped at capacity while preserving a pending recharge
+until full. `detonate: ["c4"]` immediately explodes live owned explosives with those projectile ids;
+`detonate: []` selects every owned remote (`explosion.manual`) gadget, so a timed fuse such as a grenade is
+never fired by accident. Omit the field to leave explosives alone. Detonation does not move or age
 projectiles and uses their current owner (including reflection), teams, shields and counters. Random ranges (`[a, b]`)
 in effects draw in field order (x, y, vx, vy, life, size). With `global.sim.separateCosmeticRng` (default true),
 effect ranges and charge particles use a separate rollback-owned RNG seeded from the match seed, leaving the
