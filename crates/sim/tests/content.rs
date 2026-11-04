@@ -32,6 +32,7 @@ fn all_assets_load() {
         ids,
         [
             "archer",
+            "bongo",
             "brawler",
             "dancer",
             "golem",
@@ -559,7 +560,7 @@ fn resolved_validation_covers_packages_and_duplicate_ids() {
     for (file, path) in [
         ("fighters/archer/fighter.json", "moves.jab.phases"),
         ("stages/arena/stage.json", "blocks"),
-        ("fighters/brawler/fighter.json", "id"),
+        ("fighters/bongo/fighter.json", "id"),
         ("stages/citadel/stage.json", "id"),
     ] {
         assert!(errors.iter().any(|e| e.file == file && e.path == path), "{errors:?}");

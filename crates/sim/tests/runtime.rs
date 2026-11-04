@@ -287,8 +287,8 @@ fn cpu_match_golden_world_hash() {
         w.acts.clear();
     }
     // Updated deliberately for shared launch/movement tuning, new snapshot fields and concurrent roster content
-    // changes. This bump covers the wrap charge resources (`Fighter::charges`, `Fighter::charge_wait`) and the
-    // per-move phase timeline choice (`MoveState::variant`); both appear in the debug snapshot, and the per-tick
-    // charge tick is a no-op for fighters without pools.
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xa990a75d4fa27ad4);
+    // changes. This bump adds the `bongo` package, which sorts before `brawler` and shifts the fighter data and
+    // snapshot indices used by this fixed Brawler/Ninja scenario. No snapshot field or per-tick behaviour changed,
+    // so `SIM_VERSION` is unchanged.
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xb34d6a2af8638744);
 }

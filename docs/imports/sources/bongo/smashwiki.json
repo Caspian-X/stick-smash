@@ -1,0 +1,36 @@
+{
+ "accessed": "2026-11-04",
+ "note": "Supporting behavior text; the pinned UFD/Rubendal files drive timing and numbers.",
+ "pages": {
+  "Peanut_Popgun": {
+   "url": "https://www.ssbwiki.com/Peanut_Popgun",
+   "sha256": "c04b0148ec60794fdb06eedf0add61e17cbf24c2f47afaa43b606cac0707971e"
+  },
+  "Monkey_Flip": {
+   "url": "https://www.ssbwiki.com/Monkey_Flip",
+   "sha256": "90a51636bcd95c76606304223b1dc2b03da3dee4c16e1e2a4bddb5e434ef41d2"
+  },
+  "Rocketbarrel_Boost": {
+   "url": "https://www.ssbwiki.com/Rocketbarrel_Boost",
+   "sha256": "a8b1134458ce85541ec800ef3e289e082c043af0affe801ed15c5ec442956fff"
+  },
+  "Banana_Peel_(move)": {
+   "url": "https://www.ssbwiki.com/Banana_Peel_(move)",
+   "sha256": "5de7334fd9d5a77d4f054bb734bedeeb1833c74f844ec0574661ed3d5de4a463"
+  }
+ },
+ "facts": {
+  "peanutPopgun": [
+   "Charge raises projectile speed and damage and lowers the arc; overcharging explodes for 23% after the held limit."
+  ],
+  "monkeyFlip": [
+   "Leap; no additional input is a command grab, attack switches to the kick, and the kick branch does not allow Rocketbarrel Boost before landing."
+  ],
+  "rocketbarrelBoost": [
+   "Charge on the ground or in the air, then release to boost; touching a solid surface during the boost explodes for 18%."
+  ],
+  "bananaPeel": [
+   "Thrown behind at 105 degrees, one peel at a time, 85-tick generation cooldown in Ultimate, two slips/throws before it disappears."
+  ]
+ }
+}

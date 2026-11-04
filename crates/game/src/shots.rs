@@ -816,6 +816,23 @@ fn fighter_kits() -> Vec<Step> {
         ("sneak", "sspec", 45, "32l-sneak-nikita"),
         ("sneak", "uspec", 20, "32m-sneak-cypher"),
         ("sneak", "dspec", 4, "32n-sneak-c4-plant"),
+        ("bongo", "jab", 4, "33a-bongo-jab"),
+        ("bongo", "ftilt", 10, "33b-bongo-double-arm"),
+        ("bongo", "fsmash", 21, "33c-bongo-slap-beat"),
+        ("bongo", "usmash", 19, "33d-bongo-triple-attack"),
+        ("bongo", "dsmash", 12, "33e-bongo-turning-leg"),
+        ("bongo", "nair", 10, "33f-bongo-roll"),
+        ("bongo", "fair", 7, "33g-bongo-screw-kick"),
+        ("bongo", "bair", 5, "33h-bongo-backspin"),
+        ("bongo", "uair", 5, "33i-bongo-turn-kick"),
+        ("bongo", "dair", 15, "33j-bongo-meteor"),
+        ("bongo", "nspec", 12, "33k-bongo-peanut-charge"),
+        ("bongo", "nspec", 20, "33l-bongo-peanut-shot"),
+        ("bongo", "sspec", 22, "33m-bongo-monkey-flip"),
+        ("bongo", "uspec", 20, "33n-bongo-rocketbarrel"),
+        ("bongo", "dspec", 20, "33o-bongo-banana"),
+        ("bongo", "dspec", 50, "33r-bongo-banana-settled"),
+        ("bongo", "grab", 7, "33p-bongo-grab"),
     ] {
         ed(&mut v, Cmd::Subject(Subject::Move(slot.into())));
         ed(&mut v, Cmd::Fighter(fighter.into()));
@@ -884,6 +901,21 @@ fn fighter_kits() -> Vec<Step> {
     v.push(Step::Shot("32s-sneak-c4-blast"));
     v.push(Step::Set(0, Down, false));
     v.push(Step::Set(0, Special, false));
+    // The kick branch needs an attack press, which the preview does not send: drop the leap and flip phases
+    // from the preview copy so the kick timeline is visible.
+    ed(&mut v, Cmd::Fighter("bongo".into()));
+    ed(&mut v, Cmd::Subject(Subject::Move("sspec".into())));
+    ed(
+        &mut v,
+        Cmd::Edit(|f| {
+            let phases = &mut f.moves.sspec.as_mut().unwrap().phases;
+            phases.remove(0);
+            phases.remove(0);
+        }),
+    );
+    ed(&mut v, Cmd::Frame(10));
+    shot(&mut v, "33q-bongo-monkey-kick");
+    ed(&mut v, Cmd::Undo);
     ed(&mut v, Cmd::Fighter("whiplash".into()));
     ed(&mut v, Cmd::Subject(Subject::Move("dspec".into())));
     ed(
@@ -1842,6 +1874,24 @@ mod tests {
 32q-sneak-nikita-flight
 32r-sneak-cypher-rise
 32s-sneak-c4-blast";
+33a-bongo-jab
+33b-bongo-double-arm
+33c-bongo-slap-beat
+33d-bongo-triple-attack
+33e-bongo-turning-leg
+33f-bongo-roll
+33g-bongo-screw-kick
+33h-bongo-backspin
+33i-bongo-turn-kick
+33j-bongo-meteor
+33k-bongo-peanut-charge
+33l-bongo-peanut-shot
+33m-bongo-monkey-flip
+33n-bongo-rocketbarrel
+33o-bongo-banana
+33p-bongo-grab
+33q-bongo-monkey-kick
+33r-bongo-banana-settled";
         assert_eq!(names, expected.lines().collect::<Vec<_>>());
     }
 }
