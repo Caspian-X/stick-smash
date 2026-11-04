@@ -2,7 +2,7 @@
   "$schema": "schema/global.schema.json",
   "schemaVersion": 1,
   "movement": {
-    "jumpsquat": 4,
+    "jumpsquat": 3,
     "airDrag": 0.96,
     "airDragHeld": 0.99,
     "fastFallMinVy": 0,
@@ -25,7 +25,7 @@
   },
   "knockback": {
     "kbPercentScale": 1.4,
-    "ultimate": { "percentScale": 0.1, "damageScale": 0.05, "weightScale": 1.4, "base": 18, "launchSpeed": 0.105 },
+    "ultimate": { "percentScale": 0.1, "damageScale": 0.05, "weightScale": 1.4, "base": 18, "launchSpeed": 0.14 },
     "tumbleThreshold": 13,
     "groundBounce": 0.6,
     "chargeDamageDivisor": 150,
@@ -180,17 +180,18 @@
     "poseRunSpeed": 0.8,
     "enabled": true,
     "walkSpeed": 0.55,
-    "walkAccel": 0.7,
+    "walkAccel": 1,
     "runThreshold": 0.75,
     "walkThreshold": 0.6,
-    "dashLock": true,
+    "dashLock": false,
     "dashSpeed": 1,
     "dashFrames": 10,
-    "turnFrames": 9,
+    "turnFrames": 4,
     "turnFriction": 0.9,
-    "brakeFrames": 8,
+    "brakeFrames": 5,
     "brakeFriction": 0.86,
-    "crouchFrames": 6
+    "crouchFrames": 6,
+    "crawlSpeed": 0.35
   },
   "sim": {
     "separateCosmeticRng": true,
@@ -360,7 +361,8 @@
       "dizzy": { "stars": 3, "y": 84, "rx": 18, "ry": 5, "r": 7, "speed": 6.875, "color": "#ffe680" },
       "respawn": { "y": 4, "w": 68, "h": 14, "alpha": 0.5, "pulse": 0.2, "speed": 11.459 },
       "trail": { "frames": 5, "fade": 4, "alpha": 0.45, "color": "playerLight" },
-      "xEyeWidth": 1.8
+      "xEyeWidth": 1.8,
+      "grabbed": { "bands": [[0.62, 0.28, 0.095], [0.42, 0.26, 0.08]], "width": 3, "color": "#ffd76b", "alpha": 0.95 }
     },
     "fx": {
       "drag": 0.95,

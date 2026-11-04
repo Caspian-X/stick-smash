@@ -458,7 +458,8 @@ fn gradual_push_reaches_the_same_run_as_a_flick_and_easing_off_walks() {
 #[test]
 fn initial_dash_defers_standing_attacks_and_shield_but_allows_dash_cancels() {
     use sim::input::Controls;
-    let d = common::data();
+    let mut d = common::data();
+    d.global.gait.dash_lock = true;
     let dash = || {
         let mut w = mike(&d);
         w.fighters[1].x = 2000.;
@@ -513,7 +514,8 @@ fn initial_dash_defers_standing_attacks_and_shield_but_allows_dash_cancels() {
 
 #[test]
 fn walk_run_thresholds_have_hysteresis_and_early_dash_commands_expire() {
-    let d = common::data();
+    let mut d = common::data();
+    d.global.gait.dash_lock = true;
     let mut w = mike(&d);
     for x in [20, 40, 60, 80, 99] {
         tick(&mut w, &d, inp(x, 0, 0));
@@ -536,4 +538,51 @@ fn walk_run_thresholds_have_hysteresis_and_early_dash_commands_expire() {
     assert_eq!(w.fighters[0].gait, Gait::Run);
     assert!(slot(&w).is_none(), "a standing attack pressed outside the buffer window expires");
     assert!(w.fighters[0].buffer.cmd.is_none());
+}
+
+#[test]
+fn roster_raw_inputs_move_jump_and_shield_without_dash_delay() {
+    let d = common::data();
+    for fighter in &d.fighters {
+        let mut w = common::fighters(&d, &fighter.id, &["brawler"]);
+        w.fighters[0].x = 640.;
+        w.fighters[1].x = 2000.;
+        let x = w.fighters[0].x;
+        assert!(tick(&mut w, &d, inp(127, 0, 0)).contains(&Action::Dash), "{}", fighter.id);
+        assert!(w.fighters[0].x > x + fighter.stats.run_speed * 0.9, "{}", fighter.id);
+        let mut jump = w.clone();
+        tick(&mut w, &d, inp(127, 0, SHIELD));
+        assert_eq!(w.fighters[0].state, State::Shield, "{}: shield on the next tick", fighter.id);
+        tick(&mut jump, &d, inp(127, 0, JUMP));
+        assert_eq!(jump.fighters[0].state, State::Jumpsquat, "{}", fighter.id);
+        run(&mut jump, &d, 3, inp(127, 0, JUMP));
+        assert_eq!(jump.fighters[0].state, State::Air, "{}: airborne within three ticks", fighter.id);
+        assert!(jump.fighters[0].vy < 0., "{}", fighter.id);
+    }
+}
+
+#[test]
+fn raw_grab_escape_rewards_repeated_buttons_and_stick_changes_not_holding() {
+    let d = common::data();
+    let escape = |mode| {
+        let mut w = mike(&d);
+        combat::start_hold(&mut w, &d, 1, 0);
+        for t in 0..600 {
+            let input = match mode {
+                1 => inp(0, 0, if t % 2 == 0 { JUMP } else { 0 }),
+                2 => inp(if t % 2 == 0 { 127 } else { -127 }, 0, 0),
+                3 => inp(127, 0, JUMP),
+                _ => Input::default(),
+            };
+            tick(&mut w, &d, input);
+            if w.fighters[0].state != State::Grabbed {
+                return t;
+            }
+        }
+        panic!("grab never expired")
+    };
+    let passive = escape(0);
+    assert!(escape(1) < passive / 2);
+    assert!(escape(2) < passive / 2);
+    assert!(escape(3) > passive * 3 / 4);
 }

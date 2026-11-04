@@ -9,7 +9,7 @@ use std::{
 
 pub(super) const FORMAT_VERSION: u32 = 2;
 // Bump when simulation behavior or the checksum representation changes.
-pub(super) const SIM_VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), "-sim-22");
+pub(super) const SIM_VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), "-sim-24");
 pub(super) fn interval(data: &GameData) -> u64 {
     data.global.replay.checkpoint_ticks.max(u64::from(sim::TICK_HZ))
 }

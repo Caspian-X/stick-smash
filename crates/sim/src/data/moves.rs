@@ -164,6 +164,9 @@ pub struct Phase {
     /// Hold to charge (smash attacks, chargeable specials).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub charge: Option<Charge>,
+    /// Grounded: horizontal stick speed while retaining the move and its facing.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub ground_speed: f64,
     /// Counter stance: hits received during the window are countered.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub counter: Option<Counter>,

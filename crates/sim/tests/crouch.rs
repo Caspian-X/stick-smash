@@ -49,7 +49,8 @@ fn holding_down_crouches_and_releasing_rises_without_locking_actions() {
     let mut w = world(&d);
     tick(&mut w, &d, 0, -127, 0);
     tick(&mut w, &d, 127, -127, 0);
-    assert_eq!(w.fighters[0].gait, Gait::Dash);
+    assert_eq!(w.fighters[0].gait, Gait::Crouch);
+    assert!(w.fighters[0].vx > 0.);
 }
 
 #[test]
@@ -71,4 +72,31 @@ fn slow_down_on_a_platform_crouches_and_a_flick_still_drops() {
     tick(&mut w, &d, 0, -127, 0);
     assert!(!w.fighters[0].ground);
     assert_eq!(w.fighters[0].state, State::Air);
+}
+
+#[test]
+fn crouched_motion_is_slow_analog_reversible_and_keeps_actions_available() {
+    let d = common::data();
+    for id in ["whiplash", "king", "mike"] {
+        let mut w = common::fighters(&d, id, &["brawler"]);
+        w.fighters[0].x = 640.;
+        w.fighters[1].x = 2000.;
+        for _ in 0..10 {
+            tick(&mut w, &d, 0, -127, 0);
+        }
+        let x = w.fighters[0].x;
+        for _ in 0..10 {
+            tick(&mut w, &d, 127, -127, 0);
+        }
+        let f = &w.fighters[0];
+        assert_eq!(f.gait, Gait::Crouch);
+        assert!(f.x > x && f.vx < sim::gait::walk_speed(&d, f));
+        let mut restored = w.clone();
+        tick(&mut w, &d, -80, -127, 0);
+        tick(&mut restored, &d, -80, -127, 0);
+        assert_eq!(format!("{w:?}"), format!("{restored:?}"));
+        assert!(w.fighters[0].vx < 0.);
+        tick(&mut w, &d, -80, -127, JUMP);
+        assert_eq!(w.fighters[0].state, State::Jumpsquat);
+    }
 }

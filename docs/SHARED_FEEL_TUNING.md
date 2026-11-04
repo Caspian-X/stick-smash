@@ -1,0 +1,11 @@
+# Shared responsiveness and launch tuning
+
+The roster uses one Ultimate knockback equation, including original fighters whose hitboxes were migrated and subsequently balanced. There is no per-fighter formula switch. Imports and originals still have different authored growth and damage; this pass preserves those differences.
+
+The shared launch conversion was 0.105 pixels/tick per reference unit. At 200% the median authored non-fixed hitbox launch ranged from roughly 10–24 pixels/tick across packages (a content audit, not weighted by move usage). Horizontal hitstun drag of 0.97 further attenuates travel. Raising launchSpeed to 0.14 increases launch speeds by one third without changing damage, angles, relative growth or fighter weight. Fixed hits also use that conversion. This needs human testing for multi-hit retention and recovery difficulty; launch measurements alone do not establish KO percentages or competitive balance.
+
+Bundled movement now uses three jumpsquat frames (was four), four turnaround frames (was nine), five braking frames (was eight), and walking acceleration equal to run acceleration (was 0.7 times). Initial dash no longer blocks shield or standing commands. The optional dashLock mechanic remains available and covered by explicit opt-in tests. Top speeds, gravity, air acceleration, fighter stats and move startup/recovery remain authored per character.
+
+`feel::roster_raw_inputs_move_jump_and_shield_without_dash_delay` drives actual raw stick/button inputs for every playable fighter, requiring first-tick displacement, next-tick shield and takeoff after three startup ticks. `knockback::roster_finishers_launch_at_multiple_percents_through_real_hit_application` applies each fighter's strongest smash hit through combat at 0/100/200/400%, checking increasing launch, a 200% speed floor, and proportional percent scaling. Measured 200% launch speeds were 35–56 pixels/tick in the shared checkout. Concurrent fighter edits may change those values.
+
+This pass changes bundled content only, so it does not require a SIM_VERSION change: old replay content retains its original settings. TS traces explicitly restore four-frame jumpsquat and disable gait/Ultimate knockback. The linear-content fixture restores damage as well as BKB/growth, keeping later damage edits out of the historical launch contract.

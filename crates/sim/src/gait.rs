@@ -74,7 +74,7 @@ pub fn step(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent)
         0.
     };
     if inp.down
-        && inp.x == 0.
+        && (inp.x == 0. || g.crawl_speed > 0.)
         && matches!(f.gait, Gait::Stand | Gait::Walk | Gait::Crouch | Gait::Rise | Gait::Run | Gait::Brake)
     {
         if f.gait != Gait::Crouch {
@@ -83,7 +83,12 @@ pub fn step(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent)
             f.gait_t = t;
         }
         f.gait_t = f.gait_t.saturating_add(1);
-        f.vx *= s.ground_friction;
+        if inp.x != 0. && g.crawl_speed > 0. {
+            f.face = sign(inp.x);
+            f.vx = inp.x * walk_speed(d, f) * g.crawl_speed;
+        } else {
+            f.vx *= s.ground_friction;
+        }
         f.run_ph += f.vx.abs() * 0.07;
         return;
     }

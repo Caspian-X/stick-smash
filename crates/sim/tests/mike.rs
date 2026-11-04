@@ -26,9 +26,9 @@ fn tick(w: &mut World, d: &GameData, input: Intent) {
 #[test]
 fn imported_knockback_uses_damage_percent_and_reference_weight_formula() {
     let d = common::data();
-    // Independent fixtures from the no-staleness/no-rage Ultimate equation, converted at .03 × 3.5.
+    // Independent fixtures from the no-staleness/no-rage Ultimate equation, converted at the tuned .14 launch scale.
     let b = sim::data::Hitbox { damage: 19., bkb: 40., kbg: 0.85, ..Default::default() };
-    for (after, expected) in [(19., 8.2992525), (69., 14.8591275), (119., 21.4190025), (169., 27.9788775)] {
+    for (after, expected) in [(19., 11.06567), (69., 19.81217), (119., 28.55867), (169., 37.30517)] {
         assert!((combat::knockback(&d, &b, after, 1.) - expected).abs() < 1e-9);
     }
     let light = combat::knockback(&d, &b, 119., 100. / 80.);
@@ -49,7 +49,7 @@ fn imported_knockback_uses_damage_percent_and_reference_weight_formula() {
         combat::HitSource { attacker: 0, direction: 1., point: (0., 0.), projectile: false, label: None },
     );
     assert_eq!(w.fighters[1].dmg, 119.);
-    assert!((w.fighters[1].vx - 21.4190025).abs() < 1e-9);
+    assert!((w.fighters[1].vx - 28.55867).abs() < 1e-9);
 }
 
 #[test]

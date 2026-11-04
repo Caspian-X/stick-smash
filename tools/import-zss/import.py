@@ -139,6 +139,27 @@ upshot={'head':[-4,68],'shoulder':[-2,53],'hip':[-2,31],'elbowF':[7,75],'handF':
 dive={'head':[-8,64],'shoulder':[-3,50],'hip':[0,33],'kneeF':[8,10],'footF':[18,-15],'kneeB':[-10,24],'footB':[-13,12],'elbowF':[8,52],'handF':[3,65],'elbowB':[-15,48],'handB':[-9,60]}
 flipkick={'head':[-13,64],'shoulder':[-6,48],'hip':[0,32],'kneeF':[25,19],'footF':[61,-16],'kneeB':[-18,29],'footB':[-33,38],'elbowF':[12,55],'handF':[8,68],'elbowB':[-21,48],'handB':[-25,61]}
 poses={'stand':stand,'jabOne':punch,'jabTwo':{**punch,'handF':[42,47],'elbowF':[19,46],'handB':[17,64]},'jabThree':elbow,'sideKick':kick,'sweep':sweep,'handstand':handstand,'verticalKick':vertical,'reverseKick':backkick,'airKick':airkick,'shoot':shoot,'upShot':upshot,'dive':dive,'flipKick':flipkick}
+# Fitted locomotion states: a compact crouch, trailing airborne limbs, a light absorb-and-rise landing,
+# and a stride with her weight over the planted foot. Authored for this game; the reference GIFs above
+# only establish attack poses, so these are not claimed as source bone animation.
+crouch={'from':'stand','head':[-4,52],'shoulder':[-3,40],'hip':[0,20],'elbowF':[10,32],'handF':[22,36],'elbowB':[-11,34],'handB':[-10,45],'kneeF':[16,10],'footF':[24,0],'kneeB':[-14,8],'footB':[-22,0],'pivot':24}
+air={'from':'stand','head':[-3,62],'shoulder':[-2,49],'hip':[0,30],'elbowF':[17,42],'handF':[30,48],'elbowB':[-17,44],'handB':[-28,56],'kneeF':[22,26],'footF':[34,18],'kneeB':[-17,21],'footB':[-30,12]}
+airFall={'from':'locomotionAir','head':[-2,60],'shoulder':[-1,48],'kneeF':[18,18],'footF':[28,6],'kneeB':[-20,16],'footB':[-34,8],'elbowF':[20,44],'handF':[34,52],'elbowB':[-20,46],'handB':[-32,58],'pivot':27}
+airSway={'from':'airFall','head':[-4,59],'handF':[32,54],'handB':[-34,56],'footF':[26,8],'footB':[-32,10]}
+riseA={'from':'stand','head':[-1,71],'shoulder':[0,56],'hip':[0,33],'elbowF':[13,66],'handF':[17,84],'elbowB':[-14,64],'handB':[-19,82],'kneeF':[15,20],'footF':[21,4],'kneeB':[-15,18],'footB':[-25,2],'pivot':33}
+fallA={'from':'airFall','head':[-2,61],'kneeF':[26,24],'footF':[36,14],'kneeB':[-22,16],'footB':[-34,4]}
+landA={'from':'locomotionCrouch','head':[-9,46],'shoulder':[-5,34],'hip':[0,14],'elbowF':[14,26],'handF':[28,22],'elbowB':[-14,26],'handB':[-26,20],'kneeF':[18,7],'footF':[27,0],'kneeB':[-16,6],'footB':[-26,0],'pivot':18}
+landB={'from':'locomotionCrouch','head':[-5,56],'shoulder':[-3,43],'hip':[0,23],'elbowF':[12,36],'handF':[25,40],'elbowB':[-12,38],'handB':[-12,49]}
+jumpHalf={'from':'stand','head':[-4,58],'shoulder':[-3,46],'hip':[0,24],'elbowF':[11,36],'handF':[23,40],'elbowB':[-12,38],'handB':[-12,49],'kneeF':[15,12],'footF':[23,0],'kneeB':[-13,10],'footB':[-22,0],'pivot':26}
+jumpCoil={'from':'locomotionCrouch','head':[-7,47],'shoulder':[-4,36],'hip':[0,16],'elbowF':[2,28],'handF':[8,18],'elbowB':[-14,30],'handB':[-22,22],'kneeF':[19,8],'footF':[28,0],'kneeB':[-17,7],'footB':[-27,0],'pivot':20}
+helplessA={'from':'airFall','head':[-4,58],'elbowF':[12,40],'handF':[6,30],'elbowB':[-12,42],'handB':[0,32],'kneeF':[10,16],'footF':[14,2],'kneeB':[-8,14],'footB':[-6,2]}
+helplessB={'from':'helplessA','head':[2,58],'handF':[10,32],'handB':[-6,30],'footF':[18,4],'footB':[-12,2]}
+shieldA={'from':'locomotionCrouch','head':[-3,54],'shoulder':[-2,42],'elbowF':[14,38],'handF':[8,54],'elbowB':[12,36],'handB':[4,50]}
+runA={'from':'stand','head':[-6,64],'shoulder':[-3,50],'hip':[0,30],'elbowF':[-2,44],'handF':[-14,48],'elbowB':[16,42],'handB':[28,40],'kneeF':[24,14],'footF':[36,0],'kneeB':[-18,12],'footB':[-30,4]}
+runB={'from':'stand','head':[-4,68],'shoulder':[-2,54],'hip':[0,32],'elbowF':[-4,46],'handF':[-12,50],'elbowB':[10,46],'handB':[20,52],'kneeF':[14,26],'footF':[18,12],'kneeB':[-12,20],'footB':[-18,6]}
+runC={'from':'stand','head':[-7,64],'shoulder':[-4,50],'hip':[0,30],'elbowF':[16,44],'handF':[28,48],'elbowB':[-2,42],'handB':[-14,40],'kneeF':[-14,12],'footF':[-26,4],'kneeB':[20,14],'footB':[32,0]}
+runD={'from':'stand','head':[-4,68],'shoulder':[-2,54],'hip':[0,32],'elbowF':[10,46],'handF':[20,50],'elbowB':[-4,44],'handB':[-12,48],'kneeF':[-10,20],'footF':[-16,6],'kneeB':[16,26],'footB':[20,12]}
+poses.update(locomotionCrouch=crouch,locomotionAir=air,airFall=airFall,airSway=airSway,riseA=riseA,fallA=fallA,landA=landA,landB=landB,jumpHalf=jumpHalf,jumpCoil=jumpCoil,helplessA=helplessA,helplessB=helplessB,shieldA=shieldA,runA=runA,runB=runB,runC=runC,runD=runD)
 def keys(p,start,end,total,air=False):return [{'at':0,'pose':'air' if air else 'stand'},{'at':max(0,start-2),'pose':p,'lerp':True},{'at':end,'pose':p},{'at':min(total-1,end+10),'pose':'air' if air else 'stand','lerp':True}]
 moves={}
 for slot,name,script,total,p,charge in [('jab','Snap Combination','Attack11',23,'jabOne',None),('ftilt','High Side Kick','AttackS3',28,'sideKick',None),('utilt','Handstand Split','AttackHi3',45,'handstand',None),('dtilt','Sliding Sweep','AttackLw3',29,'sweep',None),('dashatk','Flying Knee','AttackDash',51,'airKick',None),('fsmash','Jet Double Kick','AttackS4',64,'sideKick',9),('usmash','Plasma Fountain','AttackHi4',48,'upShot',4),('dsmash','Paralyzing Burst','AttackLw4',41,'shoot',15)]:
@@ -242,25 +263,61 @@ kickbs=boxes('kick','SpecialAirLwKick')
 for b in kickbs:b['dir']='forward'
 stompbs=boxes('stomp','SpecialAirLwFlip')
 for b in stompbs:b['dir']='away'
-flipanim=[{'at':0,'pose':'air'},{'at':8,'pose':{'from':'air','rot':-100},'lerp':True},{'at':16,'pose':{'from':'air','rot':-200},'lerp':True},{'at':25,'pose':{'from':'air','rot':-300},'lerp':True},{'at':37,'pose':{'from':'air','rot':-360},'lerp':True}]
+flipstretch={'head':[-3,70],'shoulder':[-2,54],'hip':[0,32],'kneeF':[3,15],'footF':[5,-3],'kneeB':[-5,15],'footB':[-7,-3],'elbowF':[5,70],'handF':[2,88],'elbowB':[-8,69],'handB':[-6,86],'pivot':38}
+fliptuck={'head':[-12,62],'shoulder':[-5,48],'hip':[0,32],'kneeF':[23,44],'footF':[12,28],'kneeB':[13,45],'footB':[-1,28],'elbowF':[15,49],'handF':[23,43],'elbowB':[5,48],'handB':[14,43],'pivot':38}
+fliprecover={**fliptuck,'kneeF':[15,22],'footF':[21,4],'kneeB':[-9,22],'footB':[-15,7],'elbowF':[12,50],'handF':[21,43],'elbowB':[-13,50],'handB':[-21,43]}
+poses.update(flipStretch=flipstretch,flipTuck=fliptuck,flipRecover=fliprecover)
+flipanim=[{'at':0,'pose':'flipRecover'},{'at':5,'pose':{'from':'flipStretch','rot':-55},'lerp':True},{'at':12,'pose':{'from':'flipStretch','rot':-145},'lerp':True},{'at':20,'pose':{'from':'flipStretch','rot':-225},'lerp':True},{'at':28,'pose':{'from':'flipTuck','rot':-310},'lerp':True},{'at':37,'pose':{'from':'flipRecover','rot':-360},'lerp':True}]
+# Kick bounce recoil: the fitted flip poses give the rebound its own silhouette instead of a rotated air pose.
+flipbounce={**fliptuck,'head':[-18,56],'shoulder':[-10,44],'hip':[0,30],'kneeF':[8,22],'footF':[14,10],'kneeB':[-20,26],'footB':[-34,32],'elbowF':[6,54],'handF':[-4,64],'elbowB':[-24,48],'handB':[-34,58]}
+poses['flipBounce']=flipbounce
+# State animations: light landing absorb, trailing airborne limbs, a compact coil and a taut fall loop.
+anims={
+ 'idle':{'clock':'world','loop':72,'keys':[{'at':0,'pose':'stand'},{'at':18,'pose':{'from':'stand','head':[-4,68.2],'shoulder':[-3,54.2],'handF':[27,49],'handB':[-13,60]},'lerp':True},{'at':36,'pose':'stand','lerp':True},{'at':54,'pose':{'from':'stand','head':[-2,66],'shoulder':[-1,52]},'lerp':True},{'at':72,'pose':'stand','lerp':True}]},
+ 'crouch':{'clock':'world','loop':54,'keys':[{'at':0,'pose':'locomotionCrouch'},{'at':27,'pose':{'from':'locomotionCrouch','head':[-2,53.4],'shoulder':[-1,41.4]},'lerp':True},{'at':54,'pose':'locomotionCrouch','lerp':True}]},
+ 'run':{'clock':'run','loop':360,'keys':[{'at':0,'pose':'runA'},{'at':45,'pose':'runB','lerp':True},{'at':90,'pose':'runC','lerp':True},{'at':135,'pose':'runD','lerp':True},{'at':180,'pose':'runA','lerp':True},{'at':225,'pose':'runB','lerp':True},{'at':270,'pose':'runC','lerp':True},{'at':315,'pose':'runD','lerp':True},{'at':360,'pose':'runA','lerp':True}]},
+ 'jumpsquat':{'keys':[{'at':0,'pose':'jumpHalf'},{'at':2,'pose':'jumpCoil','lerp':True}]},
+ 'landing':{'keys':[{'at':0,'pose':'landA'},{'at':1,'pose':'landB','lerp':True},{'at':2,'pose':{'from':'stand','head':[-3,65],'shoulder':[-2,52],'hip':[0,30]},'lerp':True},{'at':9,'pose':'stand','lerp':True}]},
+ 'air.rise':{'keys':[{'at':0,'pose':'riseA'},{'at':5,'pose':'locomotionAir','lerp':True}]},
+ 'air.fall':{'clock':'world','loop':54,'keys':[{'at':0,'pose':'fallA'},{'at':27,'pose':'airSway','lerp':True},{'at':54,'pose':'fallA','lerp':True}]},
+ 'air.flip':{'loop':20,'keys':[{'at':0,'pose':{'from':'flipTuck','rot':0}},{'at':20,'pose':{'from':'flipTuck','rot':360},'lerp':True}]},
+ 'helpless':{'clock':'world','loop':44,'keys':[{'at':0,'pose':'helplessA'},{'at':22,'pose':'helplessB','lerp':True},{'at':44,'pose':'helplessA','lerp':True}]},
+ 'shield':{'keys':[{'at':0,'pose':'shieldA'}]},
+}
+
 moves['dspec']={'name':'Flip Jump','oncePerAirtime':True,'phases':[
- phase('flip',38,airAccelMult=.7,passPlatforms=True,ledgeGrab=13,detection={'x1':-16,'x2':16,'y1':-22,'y2':5},events=[{'at':0,'setVel':{'x':7.5,'y':12.6},'leaveGround':True,'sfx':'jump'},{'at':3,'invuln':10},{'at':38,'turn':True}],anim=flipanim,transitions=[{'on':'attackPress','from':14,'to':'kick'},{'on':'specialPress','from':14,'to':'kick'},{'on':'targetNear','from':19,'to':'stomp'},timeout('end')]),
- phase('kick',59,kickbs,airAccelMult=.3,fallCap=20,anim=[{'at':0,'pose':'air'},{'at':8,'pose':'flipKick','lerp':True},{'at':13,'pose':'flipKick'},{'at':38,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':7,'y':-3}},{'at':9,'setVel':{'x':10,'y':-8},'sfx':'smash'}],transitions=[{'on':'hit','to':'kickBounce'}, {'on':'land','to':'land'}]),
+ phase('flip',38,airAccelMult=3,passPlatforms=True,ledgeGrab=13,detection={'x1':-16,'x2':16,'y1':-22,'y2':5},events=[{'at':0,'setVel':{'x':7.5,'y':12.6},'leaveGround':True,'sfx':'jump'},{'at':3,'invuln':10},{'at':38,'turn':True}],anim=flipanim,transitions=[{'on':'attackPress','from':14,'to':'kick'},{'on':'specialPress','from':14,'to':'kick'},{'on':'targetNear','from':19,'to':'stomp'},timeout('end')]),
+ phase('kick',59,kickbs,airAccelMult=.3,fallCap=20,anim=[{'at':0,'pose':'flipTuck'},{'at':7,'pose':'flipTuck'},{'at':9,'pose':'flipKick','lerp':True},{'at':12,'pose':'flipKick'},{'at':18,'pose':'flipTuck','lerp':True},{'at':28,'pose':'flipTuck'},{'at':38,'pose':'flipRecover','lerp':True},{'at':50,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':7,'y':-3}},{'at':9,'setVel':{'x':10,'y':-8},'sfx':'smash'}],transitions=[{'on':'hit','to':'kickBounce'}, {'on':'land','to':'land'}]),
  phase('stomp',58,stompbs,airAccelMult=.8,ledgeGrab=2,anim=[{'at':0,'pose':'dive'},{'at':10,'pose':{'from':'air','rot':-180},'lerp':True},{'at':35,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':2,'y':12},'sfx':'djump'}],transitions=[{'on':'land','to':'end'}]),
- phase('kickBounce',49,airAccelMult=.8,ledgeGrab=1,anim=[{'at':0,'pose':{'from':'air','rot':-90}},{'at':28,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':-3,'y':11}}],transitions=[{'on':'land','to':'land'}]),
+ phase('kickBounce',49,airAccelMult=.8,ledgeGrab=1,anim=[{'at':0,'pose':'flipBounce'},{'at':20,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':-3,'y':11}}],transitions=[{'on':'land','to':'land'}]),
  phase('land',35,anim=[{'at':0,'pose':'sweep'},{'at':23,'pose':'stand','lerp':True}]) ]}
 throws={}
 for key,script,release,total,pre,dmg in [('f','ThrowF',9,25,8,5),('b','ThrowB',11,27,9,2),('u','ThrowHi',5,40,3,2),('d','ThrowLw',22,51,20,4)]:
     a=args(re.search(r'ATTACK_ABS\((Kind=FIGHTER_ATTACK_ABSOLUTE_KIND_THROW,.*?)\)\r?\n',scripts['szerosuit'][script])[1]);a.update(Size='1',X='0',Y='0',Z='0')
     throws[key]={'release':release,'total':total,'hit':hit(a),'ticks':[{'at':pre,'damage':dmg}]}
 # Crouched firing stance, compact blaster, jet heels and a long bright hair ribbon identify Whiplash.
+def lash_shapes(start,end):
+    points=[]
+    dx,dy=end[0]-start[0],end[1]-start[1]
+    length=math.hypot(dx,dy)
+    for i in range(25):
+        t=i/24
+        wave=math.sin(t*math.pi*3)*math.sin(t*math.pi)*12
+        points.append([start[0]+dx*t-wave*dy/length, start[1]+dy*t+wave*dx/length])
+    shapes=[]
+    for i in range(24):
+        taper=1-i/32
+        shapes.extend([line(points[i],points[i+1],7*taper,'#ffb52d',.35),line(points[i],points[i+1],3*taper,'#fff0a8')])
+    shapes.append(circle(end,4,'#fff3aa'))
+    return shapes
+
 attachments=[
  {'id':'ribbon','joint':'head','behind':True,'shapes':[line([-6,5],[-20,10],7,'#f2df82'),line([-20,10],[-35,3],6,'#e6c862'),poly([[-19,13],[-40,7],[-31,-1]],'#f2df82')]},
  {'id':'blaster','joint':'handF','angle':0,'shapes':[poly([[0,-4],[18,-4],[22,2],[18,6],[0,6]],'#314463'),line([3,3],[19,3],2,'#e2e5ed'),circle([20,1],3,'#ffe77d')]},
  {'id':'heelF','joint':'footF','shapes':[line([-5,0],[7,0],5,'#e5cd72'),circle([2,-2],3,'#a5e9ff')]},
  {'id':'heelB','joint':'footB','shapes':[line([-5,0],[7,0],5,'#e5cd72'),circle([2,-2],3,'#a5e9ff')]},
- {'id':'whip','joint':'root','hidden':True,'shapes':[line([0,0],[160,0],7,'#ffb52d',.3),line([0,0],[160,0],2,'#fff0a8'),circle([160,0],4,'#fff3aa')]},
- {'id':'whipUp','joint':'root','hidden':True,'shapes':[line([10,80],[10,170],7,'#ffb52d',.3),line([10,80],[10,170],2,'#fff0a8'),circle([10,170],7,'#fff3aa')]},
+ {'id':'whip','joint':'root','hidden':True,'shapes':lash_shapes([0,0],[160,0])},
+ {'id':'whipUp','joint':'root','hidden':True,'shapes':lash_shapes([10,80],[10,170])},
  {'id':'lashFront','joint':'root','hidden':True,'shapes':[line([30,55],[95,35],4,'#ffc347'),line([30,55],[95,35],1.5,'#fff2c0')]},
  {'id':'lashBack','joint':'root','hidden':True,'shapes':[line([-15,65],[-75,82.5],4,'#ffc347'),line([-15,65],[-75,82.5],1.5,'#fff2c0')]}
 ]
@@ -280,7 +337,14 @@ moves['usmash']['phases'][0]['attach']={'whipUp':{'show':[10,29]}}
 for ph in moves['nair']['phases']:
  if ph['name']=='active':ph['attach']={'lashFront':{'show':[6,7]},'lashBack':{'show':[11,12]}}
 projectiles={'paralyzer':{'name':'Paralyzer','spawn':[50,45],'vel':[12,0],'r':6.5,'life':24,'max':3,'hit':{'x':0,'y':0,'r':6.5,'damage':4,'bkb':34.1,'kbg':1,'angle':45,'groundAngle':0,'type':'paralyze','setKb':True,'hitlagMult':.7},'chargeScale':{'speed':.014,'damage':.5/22,'bkb':(68.4/34.1-1)/22,'radius':(10/6.5-1)/22,'life':1/22,'angleTo':60,'groundAngleTo':-45},'shapes':[circle([0,0],6.5,'#fff3b5'),line([-12,0],[5,0],3,'#ffce4b')],'trail':[{'every':2,'fx':[{'type':'part','x':0,'y':0,'vx':-.8,'vy':0,'life':8,'size':3,'color':'#ffed9a'}]}]}}
-fighter={'$schema':'../../schema/fighter.schema.json','schemaVersion':1,'extends':'base','name':'Whiplash','tagline':'Never where you expected','blurb':'A Zero Suit Samus-inspired acrobat: swift kicks, plasma tethers, paralysis and a slippery Flip Jump. Use grab in the air for a tether attack; press attack or special during Flip Jump for its diving kick.','stats':{'weight':1.25,'pummelDamage':1.3,'walkSpeed':1.47*3.5,'runSpeed':2.31*3.5,'dashSpeed':2.42*3.5,'dashFrames':13,'runAccel':.45,'groundFriction':.84,'airSpeed':1.26*3.5,'airAccel':.095*3.5,'gravity':.12*6,'fallSpeed':1.7*6,'fastFallSpeed':2.72*6,'jumpSpeed':18.1,'shortHopSpeed':12.4,'airJumpSpeed':18.0,'airJumpDrift':4.41},'body':{'halfWidth':13,'height':74},'hurtboxes':{'default':{'x1':-14,'x2':14,'y1':0,'y2':77},'knockdown':{'x1':-29,'x2':29,'y1':0,'y2':16}},'style':{'torsoWidth':5,'frontLimbWidth':5,'backLimbWidth':4.5},'ai':{'reach':72,'counterChance':0,'specials':[{'minDistance':160,'maxDistance':390,'height':75,'chance':.2,'grounded':True,'noProjectile':False,'down':False,'hold':[0,22]}]},'poses':poses,'moves':moves,'throws':throws,'projectiles':projectiles,'attachments':attachments}
+for slot in ['grab','dashgrab']:
+    ph=moves[slot]['phases'][0]
+    track=ph['attach']['whip']
+    end=track['show'][1]
+    track['show'][1]=end+12
+    track['scale'].extend([[end+6, .35], [end+12, .02]])
+
+fighter={'$schema':'../../schema/fighter.schema.json','schemaVersion':1,'extends':'base','name':'Whiplash','tagline':'Never where you expected','blurb':'A Zero Suit Samus-inspired acrobat: swift kicks, plasma tethers, paralysis and a slippery Flip Jump. Use grab in the air for a tether attack; press attack or special during Flip Jump for its diving kick.','stats':{'weight':1.25,'pummelDamage':1.3,'walkSpeed':1.47*3.5,'runSpeed':2.31*3.5,'dashSpeed':2.42*3.5,'dashFrames':13,'runAccel':.45,'groundFriction':.84,'airSpeed':1.26*3.5,'airAccel':.095*3.5,'gravity':.12*6,'fallSpeed':1.7*6,'fastFallSpeed':2.72*6,'jumpSpeed':18.1,'shortHopSpeed':12.4,'airJumpSpeed':18.0,'airJumpDrift':4.41},'body':{'halfWidth':13,'height':74},'hurtboxes':{'default':{'x1':-14,'x2':14,'y1':0,'y2':77},'knockdown':{'x1':-29,'x2':29,'y1':0,'y2':16}},'style':{'torsoWidth':5,'frontLimbWidth':5,'backLimbWidth':4.5},'ai':{'reach':72,'counterChance':0,'specials':[{'minDistance':160,'maxDistance':390,'height':75,'chance':.2,'grounded':True,'noProjectile':False,'down':False,'hold':[0,22]}]},'poses':poses,'anims':anims,'moves':moves,'throws':throws,'projectiles':projectiles,'attachments':attachments}
 (ROOT/'assets/fighters/whiplash/fighter.json').write_text(json.dumps(fighter,indent=2)+'\n')
 (SOURCES/'ledger.json').write_text(json.dumps({'sourceCommit':source['commit'],'geometryScale':5,'rawAttackLedger':ledger,'gameplay':{'url':'https://ultimateframedata.com/zero_suit_samus','accessed':'2026-11-02','moves':{slot:{'name':m['name'],'phases':[(p['name'],p['frames']) for p in m['phases']]} for slot,m in moves.items()}}},indent=2)+'\n')
 print('Rebuilt Whiplash from pinned scripts and fitted poses; run just bless to normalize content.')

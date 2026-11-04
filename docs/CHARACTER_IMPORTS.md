@@ -165,3 +165,5 @@ For SSBU-style damage-dependent knockback, use the shared formula described in
 [FORMAT.md](FORMAT.md#knockback-models), with unscaled source BKB and KBG divided by 100. Do not use
 Mike's superseded BKB × 0.1 / KBG × 0.001 linear conversion for a new import. Test weak and strong hits
 at multiple post-hit percentages, charge scaling and target weights; fixed/autolink hits need separate treatment.
+
+Animation polish rationale: [shared movement](ANIMATION_MOVEMENT.md), [original roster](ANIMATION_ROSTER.md), and [imported fighters](ANIMATION_IMPORTS.md). These passes preserve gameplay timing and distinguish authored presentation from source fitting.

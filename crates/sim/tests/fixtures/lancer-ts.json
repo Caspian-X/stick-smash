@@ -1,0 +1,1196 @@
+{
+  "$schema": "../../schema/fighter.schema.json",
+  "schemaVersion": 1,
+  "extends": "base",
+  "name": "Lancer",
+  "tagline": "Keep the point between you and trouble",
+  "blurb": "Spear tips hit hardest · hold neutral special to charge · side: lunge · up: spinning vault · down: planted riposte · down-air: pogo",
+  "moves": {
+    "jab": {
+      "name": "Butt and Point",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 17,
+          "hitboxes": [
+            {
+              "start": 4,
+              "end": 8,
+              "x": 100,
+              "y": 50,
+              "r": 13,
+              "damage": 6,
+              "bkb": 16.6666666667,
+              "kbg": 0.5,
+              "angle": 30
+            },
+            {
+              "start": 4,
+              "end": 8,
+              "x": 58.0,
+              "y": 50.0,
+              "r": 17,
+              "damage": 5,
+              "bkb": 13.6054421769,
+              "kbg": 0.5714285714,
+              "angle": 30
+            },
+            {
+              "start": 4,
+              "end": 8,
+              "x": 32,
+              "y": 48,
+              "r": 20,
+              "damage": 5,
+              "bkb": 8.7074829932,
+              "kbg": 0.6857142857,
+              "angle": 25
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 4, "pose": "spearLunge", "lerp": true },
+            { "at": 8, "pose": "spearLunge" },
+            { "at": 16, "pose": "spearGuard", "lerp": true }
+          ],
+          "events": [
+            { "at": 4, "sfx": "slash" }
+          ],
+          "attach": {
+            "spear": {
+              "angle": [[0, -25], [4, 0], [8, 0], [16, 65]],
+              "offset": [[0, 0, 0], [4, -8, 0], [8, -8, 0], [16, 0, 0]]
+            }
+          }
+        }
+      ]
+    },
+    "ftilt": {
+      "name": "Measuring Thrust",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 24,
+          "hitboxes": [
+            {
+              "start": 6,
+              "end": 10,
+              "x": 113,
+              "y": 50,
+              "r": 18,
+              "damage": 12,
+              "bkb": 29.9319727891,
+              "kbg": 0.8571428571,
+              "angle": 38
+            },
+            {
+              "start": 6,
+              "end": 10,
+              "x": 65.54,
+              "y": 50.0,
+              "r": 17,
+              "damage": 9,
+              "bkb": 19.5670995671,
+              "kbg": 0.6545454545,
+              "angle": 38
+            },
+            {
+              "start": 6,
+              "end": 10,
+              "x": 32,
+              "y": 48,
+              "r": 20,
+              "damage": 9,
+              "bkb": 19.3939393939,
+              "kbg": 0.4363636364,
+              "angle": 25
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 6, "pose": "spearLunge", "lerp": true },
+            { "at": 10, "pose": "spearLunge" },
+            { "at": 23, "pose": "spearGuard", "lerp": true }
+          ],
+          "events": [
+            { "at": 6, "sfx": "slash" }
+          ],
+          "attach": {
+            "spear": {
+              "angle": [[0, -25], [6, 0], [10, 0], [23, 65]],
+              "offset": [[0, 0, 0], [6, -8, 0], [10, -8, 0], [23, 0, 0]]
+            }
+          }
+        }
+      ]
+    },
+    "utilt": {
+      "name": "Sky Needle",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 23,
+          "hitboxes": [
+            {
+              "start": 5,
+              "end": 9,
+              "x": 0,
+              "y": 157,
+              "r": 18,
+              "damage": 11,
+              "bkb": 30.7692307692,
+              "kbg": 0.6153846154,
+              "angle": 88
+            },
+            {
+              "start": 5,
+              "end": 9,
+              "x": 0.0,
+              "y": 112.06,
+              "r": 17,
+              "damage": 9,
+              "bkb": 19.5670995671,
+              "kbg": 0.6545454545,
+              "angle": 88
+            },
+            {
+              "start": 5,
+              "end": 9,
+              "x": 0,
+              "y": 66,
+              "r": 22,
+              "damage": 6,
+              "bkb": 12.380952381,
+              "kbg": 0.6,
+              "angle": 80
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 5, "pose": "spearOverhead", "lerp": true },
+            { "at": 9, "pose": "spearOverhead" },
+            { "at": 22, "pose": "spearGuard", "lerp": true }
+          ],
+          "events": [
+            { "at": 5, "sfx": "slash" }
+          ],
+          "attach": {
+            "spear": { "angle": [[0, 65], [5, 90], [9, 90], [22, 65]] }
+          }
+        }
+      ]
+    },
+    "dtilt": {
+      "name": "Ankle Prick",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 21,
+          "hitboxes": [
+            {
+              "start": 5,
+              "end": 9,
+              "x": 116,
+              "y": 13,
+              "r": 18,
+              "damage": 9,
+              "bkb": 22.683982684,
+              "kbg": 0.5818181818,
+              "angle": 25
+            },
+            {
+              "start": 5,
+              "end": 9,
+              "x": 64,
+              "y": 17,
+              "r": 17,
+              "damage": 7,
+              "bkb": 13.3333333333,
+              "kbg": 0.8,
+              "angle": 25
+            },
+            {
+              "start": 5,
+              "end": 9,
+              "x": 30,
+              "y": 14,
+              "r": 18,
+              "damage": 5,
+              "bkb": 8.7074829932,
+              "kbg": 0.6857142857,
+              "angle": 25
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 5, "pose": "spearLow", "lerp": true },
+            { "at": 9, "pose": "spearLow" },
+            { "at": 20, "pose": "spearGuard", "lerp": true }
+          ],
+          "events": [
+            { "at": 5, "sfx": "slash" }
+          ],
+          "attach": {
+            "spear": { "angle": [[0, -45], [5, -6], [9, -6], [20, 65]] }
+          }
+        }
+      ]
+    },
+    "dashatk": {
+      "name": "Running Skewer",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 29,
+          "hitboxes": [
+            {
+              "start": 6,
+              "end": 10,
+              "x": 111,
+              "y": 48,
+              "r": 18,
+              "damage": 10,
+              "bkb": 31.4285714286,
+              "kbg": 0.6,
+              "angle": 50
+            },
+            {
+              "start": 6,
+              "end": 10,
+              "x": 64.38,
+              "y": 48.84,
+              "r": 17,
+              "damage": 8,
+              "bkb": 16.7619047619,
+              "kbg": 0.72,
+              "angle": 50
+            },
+            {
+              "start": 6,
+              "end": 10,
+              "x": 32,
+              "y": 48,
+              "r": 20,
+              "damage": 8,
+              "bkb": 17.5238095238,
+              "kbg": 0.48,
+              "angle": 25
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 6, "pose": "spearLunge", "lerp": true },
+            { "at": 10, "pose": "spearLunge" },
+            { "at": 28, "pose": "spearGuard", "lerp": true }
+          ],
+          "events": [
+            { "at": 6, "sfx": "slash" },
+            {
+              "at": 6,
+              "setVel": { "x": 4 }
+            }
+          ],
+          "attach": {
+            "spear": {
+              "angle": [[0, -25], [6, 0], [10, 0], [28, 65]],
+              "offset": [[0, 0, 0], [6, -8, 0], [10, -8, 0], [28, 0, 0]]
+            }
+          },
+          "slide": 12
+        }
+      ]
+    },
+    "fsmash": {
+      "name": "Horizon Piercer",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 42,
+          "hitboxes": [
+            {
+              "start": 12,
+              "end": 16,
+              "x": 118,
+              "y": 50,
+              "r": 18,
+              "damage": 20,
+              "bkb": 43.29004329,
+              "kbg": 0.5454545455,
+              "angle": 36
+            },
+            {
+              "start": 12,
+              "end": 16,
+              "x": 68.44,
+              "y": 50.0,
+              "r": 17,
+              "damage": 14,
+              "bkb": 28.3333333333,
+              "kbg": 0.45,
+              "angle": 36
+            },
+            {
+              "start": 12,
+              "end": 16,
+              "x": 32,
+              "y": 48,
+              "r": 20,
+              "damage": 14,
+              "bkb": 25.2380952381,
+              "kbg": 0.3,
+              "angle": 25
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 12, "pose": "spearLunge", "lerp": true },
+            { "at": 16, "pose": "spearLunge" },
+            { "at": 41, "pose": "spearGuard", "lerp": true }
+          ],
+          "events": [
+            { "at": 12, "sfx": "slash" },
+            {
+              "at": 12,
+              "setVel": { "x": 3 }
+            }
+          ],
+          "attach": {
+            "spear": {
+              "angle": [[0, -25], [12, 0], [16, 0], [41, 65]],
+              "offset": [[0, 0, 0], [12, -8, 0], [16, -8, 0], [41, 0, 0]]
+            }
+          },
+          "charge": { "frame": 6 }
+        }
+      ]
+    },
+    "usmash": {
+      "name": "Spire",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 39,
+          "hitboxes": [
+            {
+              "start": 10,
+              "end": 14,
+              "x": 0,
+              "y": 162,
+              "r": 18,
+              "damage": 19,
+              "bkb": 42.1768707483,
+              "kbg": 0.5714285714,
+              "angle": 88
+            },
+            {
+              "start": 10,
+              "end": 14,
+              "x": 0.0,
+              "y": 114.96,
+              "r": 17,
+              "damage": 13,
+              "bkb": 27.0476190476,
+              "kbg": 0.48,
+              "angle": 88
+            },
+            {
+              "start": 10,
+              "end": 14,
+              "x": 0,
+              "y": 66,
+              "r": 22,
+              "damage": 6,
+              "bkb": 12.380952381,
+              "kbg": 0.6,
+              "angle": 80
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 10, "pose": "spearOverhead", "lerp": true },
+            { "at": 14, "pose": "spearOverhead" },
+            { "at": 38, "pose": "spearGuard", "lerp": true }
+          ],
+          "events": [
+            { "at": 10, "sfx": "slash" }
+          ],
+          "attach": {
+            "spear": { "angle": [[0, 65], [10, 90], [14, 90], [38, 65]] }
+          },
+          "charge": { "frame": 6 }
+        }
+      ]
+    },
+    "dsmash": {
+      "name": "Reaping Arc",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 37,
+          "hitboxes": [
+            {
+              "start": 9,
+              "end": 13,
+              "x": 116,
+              "y": 12,
+              "r": 18,
+              "damage": 16,
+              "bkb": 38.0952380952,
+              "kbg": 0.6666666667,
+              "angle": 28
+            },
+            {
+              "start": 9,
+              "end": 13,
+              "x": 64,
+              "y": 17,
+              "r": 17,
+              "damage": 11,
+              "bkb": 23.8827838828,
+              "kbg": 0.5538461539,
+              "angle": 28
+            },
+            {
+              "start": 17,
+              "end": 21,
+              "x": -116,
+              "y": 16,
+              "r": 18,
+              "damage": 16,
+              "bkb": 38.0952380952,
+              "kbg": 0.6666666667,
+              "angle": 28,
+              "dir": "away"
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 9, "pose": "spearLow", "lerp": true },
+            { "at": 13, "pose": "spearLow" },
+            { "at": 36, "pose": "spearGuard", "lerp": true }
+          ],
+          "events": [
+            { "at": 9, "sfx": "slash" }
+          ],
+          "attach": {
+            "spear": { "angle": [[0, 20], [9, -6], [13, -6], [17, 184], [21, 184], [36, 65]] }
+          },
+          "charge": { "frame": 6 }
+        }
+      ]
+    },
+    "nair": {
+      "name": "Shaft Wheel",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 24,
+          "hitboxes": [
+            {
+              "start": 4,
+              "end": 8,
+              "x": 90,
+              "y": 79,
+              "r": 18,
+              "damage": 8,
+              "bkb": 16.7619047619,
+              "kbg": 0.72,
+              "angle": 50
+            },
+            {
+              "start": 4,
+              "end": 8,
+              "x": 52.2,
+              "y": 66.82,
+              "r": 17,
+              "damage": 7,
+              "bkb": 13.3333333333,
+              "kbg": 0.8,
+              "angle": 50
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearAir" },
+            { "at": 4, "pose": "spearAir", "lerp": true },
+            { "at": 8, "pose": "spearAir" },
+            { "at": 23, "pose": "spearAir", "lerp": true }
+          ],
+          "events": [
+            { "at": 4, "sfx": "slash" }
+          ],
+          "attach": {
+            "spear": { "angle": [[0, -5], [4, 20], [8, 20], [23, 65]] }
+          },
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 7 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "fair": {
+      "name": "Air Needle",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 25,
+          "hitboxes": [
+            {
+              "start": 6,
+              "end": 10,
+              "x": 113,
+              "y": 50,
+              "r": 18,
+              "damage": 10,
+              "bkb": 16.1904761905,
+              "kbg": 0.7333333333,
+              "angle": 42
+            },
+            {
+              "start": 6,
+              "end": 10,
+              "x": 65.54,
+              "y": 50.0,
+              "r": 17,
+              "damage": 8,
+              "bkb": 16.7619047619,
+              "kbg": 0.72,
+              "angle": 42
+            },
+            {
+              "start": 6,
+              "end": 10,
+              "x": 32,
+              "y": 48,
+              "r": 20,
+              "damage": 8,
+              "bkb": 17.5238095238,
+              "kbg": 0.48,
+              "angle": 25
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearAir" },
+            { "at": 6, "pose": "spearLunge", "lerp": true },
+            { "at": 10, "pose": "spearLunge" },
+            { "at": 24, "pose": "spearAir", "lerp": true }
+          ],
+          "events": [
+            { "at": 6, "sfx": "slash" }
+          ],
+          "attach": {
+            "spear": {
+              "angle": [[0, -25], [6, 0], [10, 0], [24, 65]],
+              "offset": [[0, 0, 0], [6, -8, 0], [10, -8, 0], [24, 0, 0]]
+            }
+          },
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 9 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "bair": {
+      "name": "Reverse Point",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 28,
+          "hitboxes": [
+            {
+              "start": 7,
+              "end": 11,
+              "x": -110,
+              "y": 60,
+              "r": 18,
+              "damage": 12,
+              "bkb": 25.306122449,
+              "kbg": 0.7428571429,
+              "angle": 40,
+              "dir": "back"
+            },
+            {
+              "start": 7,
+              "end": 11,
+              "x": -63.8,
+              "y": 55.8,
+              "r": 17,
+              "damage": 10,
+              "bkb": 21.9047619048,
+              "kbg": 0.6,
+              "angle": 40,
+              "dir": "back"
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearAir" },
+            { "at": 7, "pose": "spearAir", "lerp": true },
+            { "at": 11, "pose": "spearAir" },
+            { "at": 27, "pose": "spearAir", "lerp": true }
+          ],
+          "events": [
+            { "at": 7, "sfx": "slash" }
+          ],
+          "attach": {
+            "spear": { "angle": [[0, 150], [7, 175], [11, 175], [27, 65]] }
+          },
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 10 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "uair": {
+      "name": "Cloud Pierce",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 23,
+          "hitboxes": [
+            {
+              "start": 5,
+              "end": 9,
+              "x": 10,
+              "y": 155,
+              "r": 18,
+              "damage": 10,
+              "bkb": 19.0476190476,
+              "kbg": 0.6666666667,
+              "angle": 85
+            },
+            {
+              "start": 5,
+              "end": 9,
+              "x": 5.8,
+              "y": 110.9,
+              "r": 17,
+              "damage": 8,
+              "bkb": 16.7619047619,
+              "kbg": 0.72,
+              "angle": 85
+            },
+            {
+              "start": 5,
+              "end": 9,
+              "x": 0,
+              "y": 66,
+              "r": 22,
+              "damage": 6,
+              "bkb": 12.380952381,
+              "kbg": 0.6,
+              "angle": 80
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearAir" },
+            { "at": 5, "pose": "spearOverhead", "lerp": true },
+            { "at": 9, "pose": "spearOverhead" },
+            { "at": 22, "pose": "spearAir", "lerp": true }
+          ],
+          "events": [
+            { "at": 5, "sfx": "slash" }
+          ],
+          "attach": {
+            "spear": { "angle": [[0, 60], [5, 85], [9, 85], [22, 65]] }
+          },
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 7 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "dair": {
+      "name": "Pogo Point",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 34,
+          "hitboxes": [
+            {
+              "start": 8,
+              "end": 12,
+              "x": 0,
+              "y": -63,
+              "r": 18,
+              "damage": 11,
+              "bkb": 11.7216117216,
+              "kbg": 0.6153846154,
+              "angle": -70,
+              "type": "spike"
+            },
+            {
+              "start": 8,
+              "end": 12,
+              "x": 0.0,
+              "y": -32,
+              "r": 17,
+              "damage": 9,
+              "bkb": 19.5670995671,
+              "kbg": 0.6545454545,
+              "angle": -70
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearAir" },
+            { "at": 8, "pose": "pogo", "lerp": true },
+            { "at": 12, "pose": "pogo" },
+            { "at": 33, "pose": "spearAir", "lerp": true }
+          ],
+          "events": [
+            { "at": 8, "sfx": "slash" }
+          ],
+          "attach": {
+            "spear": { "angle": [[0, -115], [8, -90], [12, -90], [33, 65]] }
+          },
+          "transitions": [
+            { "on": "hit", "to": "bounce" },
+            { "on": "land", "to": "landing", "lag": 13 }
+          ]
+        },
+        {
+          "name": "bounce",
+          "frames": 16,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "pogo" }
+          ],
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "y": 12 },
+              "leaveGround": true,
+              "sfx": "djump"
+            }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 13 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "nspec": {
+      "name": "Coiled Thrust",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 45,
+          "hitboxes": [
+            {
+              "start": 14,
+              "end": 18,
+              "x": 119,
+              "y": 50,
+              "r": 13,
+              "damage": 15,
+              "bkb": 32.9411764706,
+              "kbg": 0.5647058823,
+              "angle": 38
+            },
+            {
+              "start": 14,
+              "end": 18,
+              "x": 69.02,
+              "y": 50.0,
+              "r": 17,
+              "damage": 13,
+              "bkb": 27.0476190476,
+              "kbg": 0.48,
+              "angle": 38
+            },
+            {
+              "start": 14,
+              "end": 18,
+              "x": 32,
+              "y": 48,
+              "r": 20,
+              "damage": 13,
+              "bkb": 24.380952381,
+              "kbg": 0.32,
+              "angle": 25
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 14, "pose": "spearLunge", "lerp": true },
+            { "at": 18, "pose": "spearLunge" },
+            { "at": 44, "pose": "spearGuard", "lerp": true }
+          ],
+          "events": [
+            { "at": 14, "sfx": "slash" }
+          ],
+          "attach": {
+            "spear": {
+              "angle": [[0, -25], [14, 0], [18, 0], [44, 65]],
+              "offset": [[0, 0, 0], [14, -8, 0], [18, -8, 0], [44, 0, 0]]
+            }
+          },
+          "charge": { "frame": 8, "button": "special", "max": 50 }
+        }
+      ]
+    },
+    "sspec": {
+      "name": "Lunge",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 34,
+          "hitboxes": [
+            {
+              "start": 6,
+              "end": 10,
+              "x": 115,
+              "y": 50,
+              "r": 18,
+              "damage": 11,
+              "bkb": 28.1318681319,
+              "kbg": 0.6769230769,
+              "angle": 35
+            },
+            {
+              "start": 6,
+              "end": 10,
+              "x": 66.7,
+              "y": 50.0,
+              "r": 17,
+              "damage": 9,
+              "bkb": 19.5670995671,
+              "kbg": 0.6545454545,
+              "angle": 35
+            },
+            {
+              "start": 6,
+              "end": 10,
+              "x": 32,
+              "y": 48,
+              "r": 20,
+              "damage": 9,
+              "bkb": 19.3939393939,
+              "kbg": 0.4363636364,
+              "angle": 25
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 6, "pose": "spearLunge", "lerp": true },
+            { "at": 10, "pose": "spearLunge" },
+            { "at": 33, "pose": "spearGuard", "lerp": true }
+          ],
+          "events": [
+            { "at": 6, "sfx": "slash" },
+            {
+              "at": 6,
+              "setVel": { "x": 10 }
+            }
+          ],
+          "attach": {
+            "spear": {
+              "angle": [[0, -25], [6, 0], [10, 0], [33, 65]],
+              "offset": [[0, 0, 0], [6, -8, 0], [10, -8, 0], [33, 0, 0]]
+            }
+          },
+          "slide": 17
+        }
+      ]
+    },
+    "uspec": {
+      "name": "Spinning Vault",
+      "phases": [
+        {
+          "name": "vault",
+          "frames": 38,
+          "hitboxes": [
+            {
+              "start": 4,
+              "end": 18,
+              "x": 0,
+              "y": 88,
+              "r": 47,
+              "damage": 7,
+              "bkb": 19.0476190476,
+              "kbg": 0.8888888889,
+              "angle": 85,
+              "rehit": 7
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearLow" },
+            { "at": 3, "pose": "spearOverhead", "lerp": true },
+            { "at": 12, "pose": "spearAir", "lerp": true }
+          ],
+          "events": [
+            {
+              "at": 3,
+              "setVel": { "x": 3.5, "y": 21 },
+              "leaveGround": true,
+              "sfx": "djump"
+            }
+          ],
+          "attach": {
+            "spear": { "angle": [[0, -80], [4, 0], [18, 540], [38, 620]] }
+          },
+          "ledgeGrab": 5,
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 12 },
+            { "on": "timeout", "to": "helpless" }
+          ],
+          "airAccelMult": 1.2
+        }
+      ],
+      "air": "upSpecial"
+    },
+    "dspec": {
+      "name": "Planted Riposte",
+      "phases": [
+        {
+          "name": "plant",
+          "frames": 30,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "crouch" }
+          ],
+          "counter": {
+            "from": 4,
+            "to": 17,
+            "damageMult": 1.1,
+            "minDamage": 7,
+            "attackerFreeze": 14,
+            "invuln": 14,
+            "reflectSpeed": 1.25,
+            "reflectLife": 75
+          },
+          "attach": {
+            "spear": { "angle": [[0, -75], [4, -90]] }
+          },
+          "transitions": [
+            { "on": "counter", "to": "poke" },
+            { "on": "timeout", "to": "poke" }
+          ]
+        },
+        {
+          "name": "poke",
+          "frames": 27,
+          "hitboxes": [
+            {
+              "start": 4,
+              "end": 8,
+              "x": 100,
+              "y": 60,
+              "r": 16,
+              "damage": 7,
+              "bkb": 11.4285714286,
+              "kbg": 1.0666666667,
+              "angle": 65
+            },
+            {
+              "start": 4,
+              "end": 8,
+              "x": 66,
+              "y": 54,
+              "r": 18,
+              "damage": 6,
+              "bkb": 9.0476190476,
+              "kbg": 0.9,
+              "angle": 65
+            },
+            {
+              "start": 4,
+              "end": 8,
+              "x": 32,
+              "y": 48,
+              "r": 20,
+              "damage": 5,
+              "bkb": 8.7074829932,
+              "kbg": 0.6857142857,
+              "angle": 25
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "spearCoil" },
+            { "at": 4, "pose": "spearLunge", "lerp": true },
+            { "at": 9, "pose": "spearAir", "lerp": true }
+          ],
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "y": 7 },
+              "leaveGround": true,
+              "sfx": "djump"
+            }
+          ],
+          "attach": {
+            "spear": { "angle": [[0, -90], [4, 5], [8, 5], [27, 65]] }
+          }
+        }
+      ]
+    }
+  },
+  "stats": { "weight": 0.98, "runSpeed": 5.6, "jumpSpeed": 15.3, "airSpeed": 4.7 },
+  "ai": {
+    "reach": 90,
+    "counterChance": 0.08,
+    "specials": [
+      {
+        "minDistance": 90,
+        "maxDistance": 190,
+        "height": 55,
+        "chance": 0.5,
+        "grounded": true,
+        "noProjectile": false,
+        "down": false,
+        "hold": null
+      },
+      {
+        "minDistance": 40,
+        "maxDistance": 100,
+        "height": 50,
+        "chance": 0.12,
+        "grounded": true,
+        "noProjectile": false,
+        "down": true,
+        "hold": null
+      },
+      {
+        "minDistance": 300,
+        "maxDistance": null,
+        "height": 80,
+        "chance": 0.05,
+        "grounded": true,
+        "noProjectile": false,
+        "down": false,
+        "hold": null
+      }
+    ]
+  },
+  "attachments": [
+    {
+      "id": "spear",
+      "joint": "handF",
+      "angle": 65,
+      "hold": { "elbow": 17, "hand": 30, "bend": -25 },
+      "trail": { "inner": 35, "outer": 117 },
+      "shapes": [
+        { "shape": "line", "from": [-30, 0], "to": [75, 0], "width": 3.5, "color": "#ba9063" },
+        {
+          "shape": "poly",
+          "points": [[72, -6], [88, 0], [72, 6], [76, 0]],
+          "fill": "#e3f4ff",
+          "stroke": "playerLight",
+          "width": 2
+        },
+        { "shape": "line", "from": [66, -7], "to": [66, 7], "width": 3, "color": "player" }
+      ]
+    },
+    {
+      "id": "crest",
+      "joint": "head",
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[-7, 9], [-17, 23], [3, 16], [10, 8]],
+          "fill": "player",
+          "stroke": "playerLight",
+          "width": 2
+        }
+      ]
+    }
+  ],
+  "poses": {
+    "spearGuard": {
+      "elbowF": [19, 43],
+      "handF": [31, 49],
+      "elbowB": [-12, 42],
+      "handB": [13, 45],
+      "kneeF": [14, 15],
+      "footF": [24, 0],
+      "footB": [-25, 0]
+    },
+    "pogo": { "from": "air", "kneeF": [17, 24], "footF": [23, 10], "kneeB": [-14, 29], "footB": [-19, 15] },
+    "spearCoil": {
+      "from": "spearGuard",
+      "head": [-7, 65],
+      "shoulder": [-5, 50],
+      "hip": [-9, 28],
+      "kneeF": [13, 15],
+      "footF": [25, 0],
+      "kneeB": [-23, 15],
+      "footB": [-33, 0]
+    },
+    "spearLunge": {
+      "from": "spearGuard",
+      "head": [14, 64],
+      "shoulder": [8, 50],
+      "hip": [-6, 29],
+      "elbowB": [-10, 41],
+      "handB": [14, 47],
+      "kneeF": [24, 17],
+      "footF": [39, 0],
+      "kneeB": [-24, 15],
+      "footB": [-35, 0]
+    },
+    "spearOverhead": {
+      "from": "spearGuard",
+      "head": [-8, 67],
+      "shoulder": [0, 50],
+      "hip": [0, 28],
+      "elbowB": [-18, 64],
+      "handB": [-4, 82],
+      "kneeF": [14, 15],
+      "footF": [24, 0],
+      "footB": [-24, 0]
+    },
+    "spearLow": {
+      "from": "crouch",
+      "head": [5, 37],
+      "shoulder": [0, 24],
+      "hip": [-9, 17],
+      "elbowB": [-16, 26],
+      "handB": [7, 27],
+      "kneeF": [19, 13],
+      "footF": [34, 0],
+      "kneeB": [-23, 10],
+      "footB": [-35, 0]
+    },
+    "spearAir": {
+      "from": "air",
+      "head": [-5, 65],
+      "shoulder": [0, 50],
+      "kneeF": [19, 24],
+      "footF": [31, 12],
+      "kneeB": [-20, 26],
+      "footB": [-27, 13]
+    }
+  },
+  "anims": {
+    "idle": {
+      "keys": [
+        { "at": 0, "pose": "spearGuard" }
+      ]
+    }
+  },
+  "throws": {
+    "f": {
+      "release": 8,
+      "total": 24,
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 7, "bkb": 32.380952381, "kbg": 0.8, "angle": 40 }
+    },
+    "b": {
+      "release": 12,
+      "total": 28,
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 9, "bkb": 26.1471861472, "kbg": 0.9454545455, "angle": 40 }
+    },
+    "u": {
+      "release": 12,
+      "total": 28,
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 6, "bkb": 39.7619047619, "kbg": 0.85, "angle": 90 }
+    },
+    "d": {
+      "release": 10,
+      "total": 26,
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 5, "bkb": 35.1020408163, "kbg": 0.5142857143, "angle": 75 }
+    }
+  }
+}

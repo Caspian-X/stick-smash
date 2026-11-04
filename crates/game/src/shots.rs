@@ -28,6 +28,8 @@ pub enum Step {
     LeaveRoster(u8, Act),
     Match(i32),
     Training(&'static str),
+    /// Freeze a state at an exact tick for animation boundary inspection.
+    Animation(&'static str, FState, u32, f64),
     Interaction(u8),
     /// Expand Arena's camera to expose all four KO boundaries.
     WideCamera,
@@ -60,7 +62,7 @@ pub enum Step {
 type Entry = (&'static str, fn() -> Vec<Step>);
 
 /// Every section in full-tour order; `--shots` picks a subset in the order given.
-const TOUR: [Entry; 13] = [
+const TOUR: [Entry; 14] = [
     ("menus", menus),
     ("fighter-editor", fighter_editor),
     ("stage-editor", stage_editor),
@@ -74,6 +76,7 @@ const TOUR: [Entry; 13] = [
     ("fighter-kits", fighter_kits),
     ("stages", stages),
     ("interactions", interaction_shots),
+    ("animations", animation_shots),
 ];
 
 pub fn section_names() -> String {
@@ -144,6 +147,9 @@ fn offscreen(m: &Match, fr: &Framing, _: Screen) -> bool {
 
 fn interaction_shots() -> Vec<Step> {
     vec![
+        Step::Interaction(3),
+        Step::Wait(20),
+        Step::Shot("24d-standard-hold"),
         Step::Interaction(0),
         Step::Wait(20),
         Step::Shot("24a-unequal-hold"),
@@ -583,6 +589,10 @@ fn crouch() -> Vec<Step> {
     v.push(Step::Set(0, Down, true));
     v.push(Step::Until(|m, _, _| m.world.fighters[0].gait == sim::world::Gait::Crouch, 30));
     shot(&mut v, "14l-crouch-held");
+    v.push(Step::Set(0, Right, true));
+    v.push(Step::Wait(12));
+    shot(&mut v, "14o-crouch-moving");
+    v.push(Step::Set(0, Right, false));
     v.push(Step::Set(0, Down, false));
     v.push(Step::Until(|m, _, _| m.world.fighters[0].gait == sim::world::Gait::Stand, 30));
     shot(&mut v, "14m-crouch-released");
@@ -710,6 +720,7 @@ fn fighter_kits() -> Vec<Step> {
     let mut v = vec![Step::OpenEditor, Step::Wait(20)];
     for (fighter, slot, frame, name) in [
         ("golem", "fsmash", 20, "18a-golem-smash"),
+        ("golem", "ftilt", 5, "18e-golem-coil"),
         ("golem", "nspec", 18, "18b-golem-pound"),
         ("golem", "dspec", 12, "18c-golem-skin"),
         ("golem", "dspec", 22, "18d-golem-retaliation"),
@@ -718,6 +729,9 @@ fn fighter_kits() -> Vec<Step> {
         ("lancer", "dair", 11, "19c-lancer-pogo"),
         ("lancer", "dtilt", 8, "19d-lancer-low-thrust"),
         ("dancer", "fsmash", 14, "20a-dancer-kick"),
+        ("dancer", "nair", 4, "20e-dancer-spin-contact"),
+        ("dancer", "sspec", 5, "20f-dancer-cartwheel-contact"),
+        ("dancer", "uspec", 4, "20g-dancer-recovery-spin"),
         ("dancer", "usmash", 13, "20b-dancer-handstand"),
         ("dancer", "dspec", 9, "20c-dancer-sweep"),
         ("dancer", "nspec", 10, "20d-dancer-travelling-spin"),
@@ -737,12 +751,18 @@ fn fighter_kits() -> Vec<Step> {
         ("wizard", "dspec", 127, "22g-wizard-phantom-strike"),
         ("wizard", "sspec", 44, "22f-wizard-fire"),
         ("whiplash", "nair", 10, "23a-whiplash-nair"),
+        ("whiplash", "nair", 16, "23p-whiplash-nair-late"),
+        ("whiplash", "zair", 22, "23q-whiplash-tether-late"),
         ("whiplash", "fair", 13, "23b-whiplash-fair"),
         ("whiplash", "usmash", 23, "23c-whiplash-up-smash"),
         ("whiplash", "sspec", 31, "23d-whiplash-plasma"),
         ("whiplash", "uspec", 22, "23e-whiplash-boost"),
         ("whiplash", "dspec", 10, "23f-whiplash-flip"),
+        ("whiplash", "dspec", 28, "23i-whiplash-flip-tuck"),
+        ("whiplash", "dspec", 37, "23j-whiplash-flip-open"),
         ("whiplash", "zair", 15, "23g-whiplash-tether"),
+        ("whiplash", "grab", 20, "23n-whiplash-grab-extend"),
+        ("whiplash", "grab", 31, "23o-whiplash-grab-retract"),
         ("whiplash", "nspec", 22, "23h-whiplash-paralyzer"),
         ("king", "fsmash", 39, "25a-king-smash"),
         ("king", "sspec", 31, "25b-king-gordo"),
@@ -756,6 +776,52 @@ fn fighter_kits() -> Vec<Step> {
         ed(&mut v, Cmd::Subject(Subject::Move(slot.into())));
         ed(&mut v, Cmd::Fighter(fighter.into()));
         ed(&mut v, Cmd::Frame(frame));
+        shot(&mut v, name);
+    }
+    ed(&mut v, Cmd::Fighter("whiplash".into()));
+    ed(&mut v, Cmd::Subject(Subject::Move("dspec".into())));
+    ed(
+        &mut v,
+        Cmd::Edit(|f| {
+            f.moves.dspec.phases.remove(0);
+        }),
+    );
+    for (frame, name) in
+        [(7, "23k-whiplash-kick-coil"), (9, "23l-whiplash-kick-strike"), (18, "23m-whiplash-kick-recoil")]
+    {
+        ed(&mut v, Cmd::Frame(frame));
+        shot(&mut v, name);
+    }
+    ed(&mut v, Cmd::Undo);
+    v
+}
+
+fn animation_shots() -> Vec<Step> {
+    let mut v = Vec::new();
+    for (fighter, state, tick, vy, name) in [
+        ("brawler", FState::Jumpsquat, 0, 0., "26a-brawler-jump-load"),
+        ("brawler", FState::Jumpsquat, 1, 0., "26b-brawler-jump-compress"),
+        ("brawler", FState::Jumpsquat, 2, 0., "26c-brawler-jump-extend"),
+        ("brawler", FState::Air, 0, -5., "26d-brawler-takeoff"),
+        ("brawler", FState::Landing, 0, 0., "26e-brawler-landing-impact"),
+        ("brawler", FState::Landing, 2, 0., "26f-brawler-landing-recover"),
+        ("brawler", FState::Spot, 0, 0., "26g-brawler-spot-entry"),
+        ("brawler", FState::Spot, 25, 0., "26h-brawler-spot-exit"),
+        ("brawler", FState::Airdodge, 3, 0., "26i-brawler-airdodge-fold"),
+        ("brawler", FState::Airdodge, 29, 0., "26j-brawler-airdodge-exit"),
+        ("king", FState::Jumpsquat, 2, 0., "27a-king-jump-load"),
+        ("king", FState::Air, 0, -5., "27b-king-takeoff"),
+        ("king", FState::Air, 4, -5., "27c-king-rise"),
+        ("king", FState::Air, 24, 5., "27d-king-fall"),
+        ("king", FState::Landing, 0, 0., "27e-king-landing-impact"),
+        ("king", FState::Landing, 2, 0., "27f-king-landing-recover"),
+        ("whiplash", FState::Jumpsquat, 2, 0., "28a-whiplash-jump-load"),
+        ("whiplash", FState::Air, 0, -5., "28b-whiplash-takeoff"),
+        ("whiplash", FState::Air, 24, 5., "28c-whiplash-fall"),
+        ("whiplash", FState::Landing, 0, 0., "28d-whiplash-landing-impact"),
+        ("whiplash", FState::Landing, 2, 0., "28e-whiplash-landing-recover"),
+    ] {
+        v.push(Step::Animation(fighter, state, tick, vy));
         shot(&mut v, name);
     }
     v
@@ -1057,7 +1123,7 @@ pub fn run(
                     ..Default::default()
                 }),
             });
-            let content = std::sync::Arc::new(content);
+            let content = std::sync::Arc::new(if *kind == 3 { (*data.0).clone() } else { content });
             let slots = [a, v]
                 .into_iter()
                 .enumerate()
@@ -1081,7 +1147,7 @@ pub fn run(
             )
             .unwrap();
             m.world.count = 0;
-            if *kind == 0 {
+            if *kind == 0 || *kind == 3 {
                 sim::combat::start_hold(&mut m.world, &content, 0, 1);
             } else {
                 let f = &mut m.world.fighters[1];
@@ -1102,7 +1168,7 @@ pub fn run(
             next.set(Screen::Match);
             s.at += 1;
         }
-        Step::Training(id) => {
+        Step::Training(id) | Step::Animation(id, _, _, _) => {
             let slots = [*id, "brawler"]
                 .into_iter()
                 .enumerate()
@@ -1120,6 +1186,20 @@ pub fn run(
             let rules = Rules { stocks: 3, stage: "arena".into(), friendly_fire: false };
             let mut m = Match::new(&data.0, Mode::Training, slots, rules, 7).unwrap();
             m.world.count = 0;
+            if let Step::Animation(_, state, tick, vy) = step {
+                let f = &mut m.world.fighters[0];
+                f.set_state(*state);
+                f.t = *tick;
+                f.vy = *vy;
+                f.face = 1.;
+                f.ground = !matches!(state, FState::Air | FState::Airdodge);
+                if !f.ground {
+                    f.y -= 120.;
+                    f.surf = None;
+                }
+                m.world.frame = u64::from(*tick);
+                m.frozen = true;
+            }
             commands.remove_resource::<Select>();
             play::install(&mut commands, &mut scene, m);
             next.set(Screen::Match);
@@ -1357,6 +1437,7 @@ mod tests {
 14l-crouch-held
 14m-crouch-released
 14n-blast-zones
+14o-crouch-moving
 15-select-eight
 15b-select-teams
 15c-select-roster-30
@@ -1373,6 +1454,7 @@ mod tests {
 18b-golem-pound
 18c-golem-skin
 18d-golem-retaliation
+18e-golem-coil
 19a-lancer-thrust
 19b-lancer-vault
 19c-lancer-pogo
@@ -1381,6 +1463,9 @@ mod tests {
 20b-dancer-handstand
 20c-dancer-sweep
 20d-dancer-travelling-spin
+20e-dancer-spin-contact
+20f-dancer-cartwheel-contact
+20g-dancer-recovery-spin
 21a-mike-smash
 21b-mike-aerial
 21c-mike-eruption
@@ -1405,12 +1490,22 @@ mod tests {
 23f-whiplash-flip
 23g-whiplash-tether
 23h-whiplash-paralyzer
+23i-whiplash-flip-tuck
+23j-whiplash-flip-open
+23k-whiplash-kick-coil
+23l-whiplash-kick-strike
+23m-whiplash-kick-recoil
+23n-whiplash-grab-extend
+23o-whiplash-grab-retract
+23p-whiplash-nair-late
+23q-whiplash-tether-late
 24a-unequal-hold
 24a-whiplash-training
 24b-unequal-ledge
 24b-whiplash-charge
 24c-unequal-climb
 24c-whiplash-recovery
+24d-standard-hold
 25a-king-smash
 25b-king-gordo
 25c-king-inhale
@@ -1426,7 +1521,28 @@ mod tests {
 25m-king-gordo
 25n-king-super-jump
 25o-king-landing-stars
-25p-king-inhale";
+25p-king-inhale
+26a-brawler-jump-load
+26b-brawler-jump-compress
+26c-brawler-jump-extend
+26d-brawler-takeoff
+26e-brawler-landing-impact
+26f-brawler-landing-recover
+26g-brawler-spot-entry
+26h-brawler-spot-exit
+26i-brawler-airdodge-fold
+26j-brawler-airdodge-exit
+27a-king-jump-load
+27b-king-takeoff
+27c-king-rise
+27d-king-fall
+27e-king-landing-impact
+27f-king-landing-recover
+28a-whiplash-jump-load
+28b-whiplash-takeoff
+28c-whiplash-fall
+28d-whiplash-landing-impact
+28e-whiplash-landing-recover";
         assert_eq!(names, expected.lines().collect::<Vec<_>>());
     }
 }

@@ -407,6 +407,8 @@ pub struct Gait {
     pub brake_friction: f64,
     /// Frames to lower into a crouch or rise back to idle. Zero switches immediately.
     pub crouch_frames: u32,
+    /// Crouched movement as a fraction of walk speed; zero disables crawling.
+    pub crawl_speed: f64,
 }
 
 impl Default for Gait {
@@ -426,6 +428,7 @@ impl Default for Gait {
             brake_frames: 0,
             brake_friction: 0.,
             crouch_frames: 0,
+            crawl_speed: 0.,
         }
     }
 }

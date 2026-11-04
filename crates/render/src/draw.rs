@@ -323,6 +323,15 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
     }
     cv.restore();
 
+    if f.state == State::Grabbed
+        && let Some(g) = &o.grabbed
+    {
+        for [y, rx, ry] in &g.bands {
+            let height = fd.body.height;
+            let pts = cv.ellipse_pts([v.x, v.y - y * height], rx * height, ry * height);
+            cv.stroke_closed(&pts, g.width, pal(g.color, g.alpha));
+        }
+    }
     if f.state == State::Shield {
         let s = &o.shield;
         let stun = f.sd.stun > 0;

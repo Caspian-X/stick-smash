@@ -511,3 +511,96 @@ fn cpu_matches_finish_with_king_in_either_seat_on_every_stage() {
         }
     }
 }
+
+#[test]
+fn jet_hammer_raw_movement_carries_partial_and_full_charge() {
+    for ticks in [20, 140] {
+        for direction in [-127, 127] {
+            let (d, mut w) = arena();
+            raw(&mut w, &d, (0, 0), 0);
+            raw(&mut w, &d, (0, -127), 4);
+            for _ in 0..17 + ticks {
+                raw(&mut w, &d, (0, 0), 4);
+            }
+            let x = w.fighters[0].x;
+            let face = w.fighters[0].face;
+            let charge = w.fighters[0].mov.as_ref().unwrap().charge;
+            for _ in 0..5 {
+                raw(&mut w, &d, (direction, 0), 4);
+            }
+            let f = &w.fighters[0];
+            assert_eq!(f.state, State::Attack);
+            assert_eq!(f.mov.as_ref().unwrap().phase, 1);
+            assert!(f.mov.as_ref().unwrap().charge >= charge);
+            assert_eq!(f.face, face);
+            assert!((f.x - x) * f64::from(direction) > 0.);
+            raw(&mut w, &d, (direction, 0), 0);
+            assert_eq!(w.fighters[0].mov.as_ref().unwrap().phase, 2);
+            assert!(w.fighters[0].mov.as_ref().unwrap().charge >= charge);
+        }
+    }
+}
+
+#[test]
+fn jet_hammer_raw_release_preserves_charge_and_cannot_cancel_swing() {
+    let (d, mut w) = arena();
+    raw(&mut w, &d, (0, 0), 0);
+    raw(&mut w, &d, (0, -127), 4);
+    for _ in 0..37 {
+        raw(&mut w, &d, (0, 0), 4);
+    }
+    let charge = w.fighters[0].mov.as_ref().unwrap().charge;
+    raw(&mut w, &d, (0, 0), 0);
+    assert_eq!(w.fighters[0].mov.as_ref().unwrap().phase, 2);
+    raw(&mut w, &d, (127, 0), 18);
+    let m = w.fighters[0].mov.as_ref().unwrap();
+    assert_eq!(m.phase, 2);
+    assert_eq!(m.charge, charge);
+}
+
+#[test]
+fn jet_hammer_raw_air_drift_preserves_charge() {
+    let (d, mut w) = arena();
+    raw(&mut w, &d, (0, 0), 0);
+    raw(&mut w, &d, (0, -127), 4);
+    for _ in 0..37 {
+        raw(&mut w, &d, (0, 0), 4);
+    }
+    let charge = w.fighters[0].mov.as_ref().unwrap().charge;
+    let f = &mut w.fighters[0];
+    f.y = 100.;
+    f.ground = false;
+    f.surf = None;
+    f.vx = 0.;
+    for _ in 0..5 {
+        raw(&mut w, &d, (127, 0), 4);
+    }
+    let f = &w.fighters[0];
+    assert_eq!(f.state, State::Attack);
+    assert!(f.vx > 0.);
+    assert!(f.mov.as_ref().unwrap().charge >= charge);
+}
+
+#[test]
+fn raw_jump_ascent_is_measured_and_midair_jumps_are_gentler() {
+    let (d, mut w) = arena();
+    raw(&mut w, &d, (0, 0), 0);
+    raw(&mut w, &d, (0, 0), 1);
+    for _ in 0..3 {
+        raw(&mut w, &d, (0, 0), 1);
+    }
+    assert_eq!(w.fighters[0].state, State::Air);
+    assert!((w.fighters[0].vy + 13.5).abs() < 0.001);
+    raw(&mut w, &d, (0, 0), 0);
+    raw(&mut w, &d, (0, 0), 1);
+    assert_eq!(w.fighters[0].jumps, 3);
+    assert!(w.fighters[0].vy < -12. && w.fighters[0].vy >= -13.);
+    let (d, mut w) = arena();
+    raw(&mut w, &d, (0, 0), 0);
+    raw(&mut w, &d, (0, 0), 1);
+    for _ in 0..3 {
+        raw(&mut w, &d, (0, 0), 0);
+    }
+    assert_eq!(w.fighters[0].state, State::Air);
+    assert!((w.fighters[0].vy + 9.4).abs() < 0.001);
+}

@@ -171,3 +171,68 @@ windows; the tests assert the engine-relative equivalents.
   Landing stars have mirrored spawn offsets as well as velocities. Dedicated runtime and geometry tests cover
   these boundaries; the refreshed kit capture samples Jet Hammer's active release rather than entry startup.
 - **Delivery**: committed locally with the source record, generator, tests and captures workflow; not pushed.
+
+## Dedicated hammer polish (2026-11-03)
+
+Jet Hammer now permits slow grounded movement while carrying partial or full charge (1.6 pixels/tick),
+without changing facing or discarding charge. Airborne drift also retains charge. Releasing special
+swings with accumulated power. This uses reusable opt-in `Phase.groundSpeed`; other phases keep
+ordinary attack movement. The generator retains the authored speed.
+
+Kit audit used the retained UFD rows, pinned 13.0.1 scripts and move ledger across jab phases,
+five grounded attacks, smashes, all aerials, grabs/throws and four specials. Existing boundary tests
+check their authored timing, damage and landing semantics. The release GIF frame sheet was inspected
+again: its frame 9 contact and subsequent recovery support the fitted hammer swing, but its release
+animation must not be interpreted as the entry-plus-charge timeline. Remaining differences listed
+above are still adaptations, not newly claimed source-exact behavior. In particular UFD up tilt lists
+10/8 damage while the pinned script supplies 11.5/9.5 (script retained); full Jet Hammer shares the
+partial release coverage/timeline rather than modeling a separate max animation, and the source air
+Jet Hammer damage/ground-only armor remain gaps. No shared movement or knockback tuning changed.
+
+Raw-input regressions cover carrying partial and capped charge in both horizontal directions,
+airborne drift, and release retaining charge through the swing.
+
+### Jump ascent tuning
+
+Tester feedback identified an overly abrupt ascent. Full-hop speed is now 13.5 (was 15.1468),
+short-hop 9.4 (was 10.5775), and midair jump 13 (was 15.1468) pixels/tick. These are fitted gameplay
+values replacing the height-derived import approximation, not source-exact speeds. Gravity and fall
+caps stay unchanged, so apex height is lower too; four midair jumps remain. The original conversion
+and source heights above record the import baseline. Raw-input tests cover takeoff and midair reset;
+stage reach/recovery tests check the reduced heights.
+
+### Jump, landing and carry presentation
+
+The retained material contains attack GIFs plus the Super Dedede Jump and Jet Hammer captures; it has no
+ordinary jump, crouch, landing or idle animation, so the locomotion states in this section are **fitted
+presentation**, not imported source animation. See [animation passes](../ANIMATION_IMPORTS.md) for the
+general rules.
+
+- Takeoff now runs through a half crouch into a deeper load with the arms swept back (`jumpHalf`,
+  `jumpLoad`), then a full-body launch extension (`launchReach`) that settles into the existing airborne
+  pose. The timing is unchanged: jumpsquat is still the shared 3 ticks and the pose only shows inside it.
+- The fall braces the legs and pumps the arms on a 48-tick world loop, and helpless flails on a 40-tick
+  loop instead of holding one frozen pose. The retimed jump ascent (above) makes this loop visible for
+  longer, which was the main reason to add it.
+- Landing absorbs well below any stance (`landAbsorb`), settles through `landSettle` and stands by the
+  tenth tick. Hard landings are 3 ticks, so ordinary jump landings show the absorb and start of the
+  settle; move landing lags (9–18) play the full recovery. The first key is the readable compression.
+- Idle gained a wider weight shift (hips and hammer arm, not just the head) and the run cycle lowers at
+  foot contact and lifts through the pass, so the super-heavy read comes from the body, not from speed.
+- Jet Hammer carry is a braced stance (`jetBrace` → `jetStrain`) over the ten ticks after entry, plus a
+  small strain wobble on the keyed hammer angle (105 → 102 → 108 → 103.5 → 105 through the charge) that
+  ends on the entry angle so the release starts from the grip the player saw. The braced pose keeps the
+  crouch shoulder height, which is what the keyed-angle `hold` anchor hangs the hammer from, so the drawn
+  grip does not slide relative to the fitted swing path. The charge phase still has no hitboxes and the
+  swing/recovery attachment keys and fit are untouched.
+- Super Dedede Jump's 18-tick `squat` now uses the retained GIF's settle pose: the crouch plants the
+  hammer, leans back into `uspecWind`/`uspecWindHold`, and `launch` starts from that same wind-up before
+  extending overhead. Neither phase carries hitboxes (the fitted falling hits live in `plungeArmor`/
+  `plunge`), so this is presentation only.
+- `crates/sim/tests/animation_response.rs` checks the height ordering (load below idle, launch above
+  standing, absorb below the load, settle to standing), that the fall loop is live, that the carry keeps
+  a fixed grip anchor, that the charge wobble returns to 105°, that the Super Jump wind-up is non-offensive and hands its
+  pose to the leap, and that neither package has a named rig
+  that could turn these poses into collision. `--test king` still passes; `--test content` loads and
+  validates every package and leaves formatting to `just bless`. No gameplay value, timing, hitbox or
+  attachment contact changed, and the golden world hash is untouched.

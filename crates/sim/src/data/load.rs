@@ -976,6 +976,7 @@ fn check_move(
             finite(file, &format!("{pp}.reflector.height"), r.height)?;
         }
         nonnegative(file, &format!("{pp}.airAccelMult"), p.air_accel_mult)?;
+        nonnegative(file, &format!("{pp}.groundSpeed"), p.ground_speed)?;
         nonnegative(file, &format!("{pp}.chargeFrames"), p.charge_frames)?;
         if p.charge_frames != 0. && p.frames.is_none() {
             return Err(e(format!("{pp}.chargeFrames"), "needs a finite phase length".into()));
@@ -1207,6 +1208,7 @@ fn check_event(file: &str, path: &str, ev: &super::Event) -> Result<(), ContentE
 pub fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
     check_audio(file, &g.audio)?;
     nonnegative(file, "gait.poseRunSpeed", g.gait.pose_run_speed)?;
+    range(file, "gait.crawlSpeed", g.gait.crawl_speed, 0., 1.)?;
     range(file, "gait.runThreshold", g.gait.run_threshold, 0., 1.)?;
     range(file, "gait.walkThreshold", g.gait.walk_threshold, 0., 1.)?;
     if g.gait.run_threshold > 0. && g.gait.walk_threshold > g.gait.run_threshold {
@@ -1288,6 +1290,15 @@ pub fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
 }
 
 fn check_render(file: &str, r: &super::render::Render) -> Result<(), ContentError> {
+    if let Some(g) = &r.overlays.grabbed {
+        positive(file, "render.overlays.grabbed.width", g.width)?;
+        range(file, "render.overlays.grabbed.alpha", g.alpha, 0., 1.)?;
+        for (i, [y, rx, ry]) in g.bands.iter().enumerate() {
+            nonnegative(file, &format!("render.overlays.grabbed.bands[{i}][0]"), *y)?;
+            positive(file, &format!("render.overlays.grabbed.bands[{i}][1]"), *rx)?;
+            positive(file, &format!("render.overlays.grabbed.bands[{i}][2]"), *ry)?;
+        }
+    }
     if let Some(b) = &r.blast_zone {
         range(file, "render.blastZone.alpha", b.alpha, 0., 1.)?;
         positive(file, "render.blastZone.width", b.width)?;

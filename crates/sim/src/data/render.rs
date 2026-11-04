@@ -273,6 +273,8 @@ pub struct Overlays {
     pub dodge: DodgeLook,
     pub shield: ShieldLook,
     pub dizzy: DizzyLook,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub grabbed: Option<GrabLook>,
     pub respawn: RespawnLook,
     pub trail: TrailLook,
     /// Line width of the X eyes (knocked down, dizzy).
@@ -421,4 +423,14 @@ pub struct RingLook {
 
 fn back_hold_secs() -> f32 {
     1.5
+}
+
+/// Binding bands [height, horizontal radius, vertical radius], as fractions of fighter body height.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct GrabLook {
+    pub bands: Vec<[f64; 3]>,
+    pub width: f64,
+    pub color: Color,
+    pub alpha: f64,
 }

@@ -318,15 +318,22 @@ poses = {
         "kneeF": [14, 14], "footF": [24, 0], "kneeB": [-12, 14], "footB": [-22, 0],
         "pivot": 32,
     },
+    # Two alternating foot contacts (runA/runB, same height) with one pass pose between them, so a
+    # heavy waddle never limps on one side.
     "runA": {
-        "from": "stand", "head": [6, 82], "shoulder": [4, 62], "hip": [0, 40],
-        "elbowF": [20, 58], "handF": [28, 52], "elbowB": [-14, 58], "handB": [-24, 52],
-        "kneeF": [16, 18], "footF": [28, 2], "kneeB": [-12, 16], "footB": [-20, 0],
+        "from": "stand", "head": [6, 81], "shoulder": [4, 61], "hip": [0, 39],
+        "elbowF": [20, 57], "handF": [28, 51], "elbowB": [-14, 57], "handB": [-24, 51],
+        "kneeF": [16, 16], "footF": [30, 2], "kneeB": [-12, 15], "footB": [-20, 0],
     },
     "runB": {
-        "from": "stand", "head": [6, 82], "shoulder": [4, 62], "hip": [0, 40],
-        "elbowF": [12, 58], "handF": [20, 56], "elbowB": [-18, 60], "handB": [-28, 58],
-        "kneeF": [-8, 18], "footF": [-18, 0], "kneeB": [12, 20], "footB": [22, 4],
+        "from": "stand", "head": [6, 81], "shoulder": [4, 61], "hip": [0, 39],
+        "elbowF": [12, 57], "handF": [20, 55], "elbowB": [-18, 57], "handB": [-28, 55],
+        "kneeF": [-8, 18], "footF": [-18, 0], "kneeB": [12, 17], "footB": [22, 4],
+    },
+    "runPass": {
+        "from": "stand", "head": [6, 85], "shoulder": [4, 65], "hip": [0, 43],
+        "elbowF": [16, 60], "handF": [26, 56], "elbowB": [-16, 60], "handB": [-26, 56],
+        "kneeF": [18, 22], "footF": [12, 16], "kneeB": [-16, 18], "footB": [-22, 4],
     },
     "air": {
         "from": "stand", "head": [2, 82], "shoulder": [0, 62], "hip": [0, 40],
@@ -350,6 +357,73 @@ poses = {
         "from": "stand", "head": [2, 82], "elbowF": [22, 60], "handF": [38, 58],
         "elbowB": [18, 58], "handB": [34, 56],
     },
+    # Fitted jump/landing/charge weights: the takeoff squashes deeper than a crouch, the launch stretches,
+    # and the landing absorbs further than any attack stance. Presentation only: no hurt region or rig
+    # follows these, and no move phase references them.
+    "jumpHalf": {
+        "from": "stand", "head": [3, 74], "shoulder": [1, 58], "hip": [0, 34],
+        "elbowF": [14, 52], "handF": [24, 46], "elbowB": [-16, 52], "handB": [-24, 48],
+        "kneeF": [14, 16], "footF": [22, 0], "kneeB": [-12, 16], "footB": [-22, 0], "pivot": 34,
+    },
+    "jumpLoad": {
+        "from": "crouch", "head": [6, 64], "shoulder": [2, 48], "hip": [0, 26],
+        "elbowF": [4, 40], "handF": [0, 28], "elbowB": [-20, 38], "handB": [-30, 28],
+        "kneeF": [20, 12], "footF": [30, 0], "kneeB": [-18, 12], "footB": [-30, 0], "pivot": 26,
+    },
+    "launchReach": {
+        "from": "stand", "head": [0, 90], "shoulder": [0, 70], "hip": [0, 46],
+        "elbowF": [12, 84], "handF": [16, 102], "elbowB": [-12, 82], "handB": [-18, 100],
+        "kneeF": [4, 24], "footF": [0, 6], "kneeB": [-6, 22], "footB": [-10, 4], "pivot": 46,
+    },
+    "riseTuck": {
+        "from": "air", "head": [2, 84], "elbowF": [18, 66], "handF": [26, 76],
+        "elbowB": [-18, 64], "handB": [-26, 72], "kneeF": [18, 32], "footF": [26, 22],
+        "kneeB": [-14, 28], "footB": [-22, 20],
+    },
+    "fallBrace": {
+        "from": "air", "head": [0, 82], "kneeF": [16, 24], "footF": [28, 10],
+        "kneeB": [-14, 22], "footB": [-28, 8], "elbowF": [26, 58], "handF": [40, 52],
+        "elbowB": [-28, 56], "handB": [-42, 50],
+    },
+    "fallSway": {
+        "from": "fallBrace", "head": [-2, 81], "handF": [38, 54], "handB": [-40, 52],
+        "kneeB": [-16, 24], "footB": [-26, 10],
+    },
+    "helplessLoose": {
+        "from": "airFall", "head": [-4, 80], "elbowF": [8, 54], "handF": [2, 42],
+        "elbowB": [-8, 52], "handB": [0, 42], "kneeF": [8, 20], "footF": [4, 6],
+        "kneeB": [-8, 18], "footB": [-6, 4],
+    },
+    "helplessFlail": {
+        "from": "helplessLoose", "head": [4, 80], "handF": [10, 44], "handB": [-8, 42],
+        "footF": [10, 8], "footB": [-12, 4],
+    },
+    "landAbsorb": {
+        "from": "crouch", "head": [8, 54], "shoulder": [2, 40], "hip": [0, 16],
+        "elbowF": [18, 30], "handF": [30, 20], "elbowB": [-16, 30], "handB": [-28, 18],
+        "kneeF": [24, 8], "footF": [32, 0], "kneeB": [-20, 8], "footB": [-30, 0], "pivot": 20,
+    },
+    "landSettle": {
+        "from": "crouch", "head": [2, 70], "shoulder": [0, 52], "hip": [0, 30],
+        "elbowF": [16, 46], "handF": [26, 40], "elbowB": [-14, 46], "handB": [-24, 38],
+        "kneeF": [14, 14], "footF": [24, 0], "kneeB": [-12, 14], "footB": [-22, 0], "pivot": 32,
+    },
+    # Super Dedede Jump wind-up: the retained GIF's settle frame plants the hammer and leans back before
+    # the leap (no hitboxes exist during these phases).
+    "uspecWind": {
+        "from": "crouch", "head": [-6, 68], "shoulder": [-4, 50], "hip": [0, 30],
+        "elbowF": [-10, 44], "handF": [-28, 36], "elbowB": [-18, 42], "handB": [-34, 34],
+        "kneeF": [16, 15], "footF": [26, 0], "kneeB": [-14, 15], "footB": [-26, 0], "pivot": 32,
+    },
+    "uspecWindHold": {"from": "uspecWind", "head": [-8, 67], "hip": [0, 29], "pivot": 31},
+    # Jet Hammer carry: a braced stance that keeps the crouch shoulder height, so the keyed hammer angle
+    # (and the drawn grip) stays where the release swing expects it.
+    "jetBrace": {
+        "from": "crouch", "head": [6, 66], "hip": [0, 28],
+        "elbowF": [18, 48], "handF": [30, 42], "elbowB": [-12, 46], "handB": [-22, 38],
+        "kneeF": [18, 14], "footF": [30, 0], "kneeB": [-16, 14], "footB": [-28, 0], "pivot": 30,
+    },
+    "jetStrain": {"from": "jetBrace", "head": [8, 64], "hip": [0, 27]},
     "hurt": {
         "from": "stand", "head": [-6, 80], "shoulder": [-4, 60], "hip": [-2, 40],
         "elbowF": [8, 70], "handF": [16, 80], "elbowB": [-16, 68], "handB": [-24, 78],
@@ -387,9 +461,12 @@ anims = {
         "clock": "world", "loop": 90,
         "keys": [
             {"at": 0, "pose": "stand"},
-            {"at": 22.5, "pose": {"from": "stand", "head": [0, 85.2], "shoulder": [0, 65.2]}, "lerp": True},
+            {"at": 22.5, "pose": {"from": "stand", "head": [0, 85.8], "shoulder": [0, 65.8], "hip": [0, 43],
+                                  "elbowF": [19, 60], "handF": [32, 55], "elbowB": [-17, 59],
+                                  "handB": [-27, 51]}, "lerp": True},
             {"at": 45, "pose": "stand", "lerp": True},
-            {"at": 67.5, "pose": {"from": "stand", "head": [0, 83]}, "lerp": True},
+            {"at": 67.5, "pose": {"from": "stand", "head": [-1, 82.4], "shoulder": [-1, 62.4], "hip": [0, 41],
+                                    "elbowF": [17, 58], "handF": [28, 53], "elbowB": [-15, 57]}, "lerp": True},
             {"at": 90, "pose": "stand", "lerp": True},
         ],
     },
@@ -400,13 +477,20 @@ anims = {
     },
     "run": {
         "clock": "run", "loop": 360,
-        "keys": [{"at": 0, "pose": "runA"}, {"at": 90, "pose": "runB", "lerp": True},
-                 {"at": 180, "pose": "runA", "lerp": True}, {"at": 270, "pose": "runB", "lerp": True},
+        "keys": [{"at": 0, "pose": "runA"}, {"at": 45, "pose": "runPass", "lerp": True},
+                 {"at": 90, "pose": "runB", "lerp": True}, {"at": 135, "pose": "runPass", "lerp": True},
+                 {"at": 180, "pose": "runA", "lerp": True}, {"at": 225, "pose": "runPass", "lerp": True},
+                 {"at": 270, "pose": "runB", "lerp": True}, {"at": 315, "pose": "runPass", "lerp": True},
                  {"at": 360, "pose": "runA", "lerp": True}],
     },
-    "jumpsquat": {"keys": [{"at": 0, "pose": "crouch"}]},
-    "landing": {"keys": [{"at": 0, "pose": "crouch"}]},
-    "helpless": {"keys": [{"at": 0, "pose": "airFall"}]},
+    "jumpsquat": {"keys": [{"at": 0, "pose": "jumpHalf"}, {"at": 2, "pose": "jumpLoad", "lerp": True}]},
+    "landing": {"keys": [{"at": 0, "pose": "landAbsorb"}, {"at": 1, "pose": "landSettle", "lerp": True},
+                         {"at": 2, "pose": {"from": "stand", "head": [0, 82], "shoulder": [0, 63], "hip": [0, 41]}, "lerp": True},
+                         {"at": 10, "pose": "stand", "lerp": True}]},
+    "helpless": {"clock": "world", "loop": 40,
+                 "keys": [{"at": 0, "pose": "helplessLoose"},
+                          {"at": 20, "pose": "helplessFlail", "lerp": True},
+                          {"at": 40, "pose": "helplessLoose", "lerp": True}]},
     "shield": {"keys": [{"at": 0, "pose": {"from": "crouch", "elbowF": [18, 56], "handF": [10, 70],
                                          "elbowB": [14, 54], "handB": [6, 68]}}]},
     "spot": {"keys": [{"at": 0, "pose": "crouch"}]},
@@ -415,8 +499,11 @@ anims = {
     "knockdown": {"keys": [{"at": 0, "pose": {"from": "hurt", "rot": -90, "offsetY": -34}}]},
     "respawn": {"keys": [{"at": 0, "pose": "stand"}]},
     "shieldDrop": {"keys": [{"at": 0, "pose": "crouch"}]},
-    "air.rise": {"keys": [{"at": 0, "pose": "air"}]},
-    "air.fall": {"keys": [{"at": 0, "pose": "airFall"}]},
+    "air.rise": {"keys": [{"at": 0, "pose": "launchReach"}, {"at": 4, "pose": "riseTuck", "lerp": True},
+                          {"at": 16, "pose": "air", "lerp": True}]},
+    "air.fall": {"clock": "world", "loop": 48,
+                 "keys": [{"at": 0, "pose": "fallBrace"}, {"at": 24, "pose": "fallSway", "lerp": True},
+                          {"at": 48, "pose": "fallBrace", "lerp": True}]},
     "air.flip": {"loop": 20, "keys": [{"at": 0, "pose": {"from": "airFall", "rot": 0}},
                                      {"at": 20, "pose": {"from": "airFall", "rot": 360}}]},
     "roll": {"keys": [{"at": 0, "pose": {"from": "crouch", "rot": -20}}, {"at": 8, "pose": "crouch"}]},
@@ -992,11 +1079,12 @@ moves["uspec"] = {
     "name": "Super Dedede Jump", "air": "upSpecial",
     "phases": [
         phase("squat", 18, events=[{"at": 0, "sfx": "charge"}, {"from": 1, "to": 17, "mulVel": {"x": 0.7}}],
-              anim=[{"at": 0, "pose": "crouch"}], transitions=[timeout("launch")]),
+              anim=[{"at": 0, "pose": "crouch"}, {"at": 7, "pose": "uspecWind", "lerp": True},
+                    {"at": 13, "pose": "uspecWindHold", "lerp": True}], transitions=[timeout("launch")]),
         phase("launch", 17, armorThreshold=9999,
               events=[{"at": 0, "setVel": {"x": 0, "y": 22}, "leaveGround": True, "invuln": 4, "sfx": "djump",
                        "fx": [{"type": "dust", "x": 0, "y": 0, "n": 10}]}],
-              attach=attach([[0, 100]]), anim=[{"at": 0, "pose": "crouch"}, {"at": 2, "pose": "win", "lerp": True}],
+              attach=attach([[0, 100]]), anim=[{"at": 0, "pose": "uspecWindHold"}, {"at": 3, "pose": "win", "lerp": True}],
               transitions=[timeout("rise")]),
         phase("rise", None, ledgeGrab=1, attach=attach([[0, 100]]), anim=[{"at": 0, "pose": "win"}],
               events=[{"from": 0, "capFall": 12}], transitions=[{"on": "falling", "to": "plungeArmor"},
@@ -1042,8 +1130,12 @@ moves["dspec"] = {
         phase("start", JET_ENTRY, events=[{"at": 0, "sfx": "jet"}], attach=attach([[0, 100]]),
               anim=[{"at": 0, "pose": "swing"}, {"at": 10, "pose": "crouch", "lerp": True}],
               transitions=[timeout("charge")]),
-        phase("charge", None, charge={"frame": 0, "max": JET_MAX, "button": "special", "jet": True},
-              attach=attach([[0, 105]]), anim=[{"at": 0, "pose": "crouch"}],
+        phase("charge", None, groundSpeed=1.6, charge={"frame": 0, "max": JET_MAX, "button": "special", "jet": True},
+              # Braced carry: a slow settle into the charge and a strain wobble on the held hammer. The
+              # last key returns to the resting 105 degrees the entry animation left it at.
+              attach=attach([[0, 105], [12, 102], [24, 108], [36, 102.5], [48, 107], [60, 103.5], [JET_MAX, 105]]),
+              anim=[{"at": 0, "pose": "crouch"}, {"at": 10, "pose": "jetBrace", "lerp": True},
+                    {"at": 40, "pose": "jetStrain", "lerp": True}],
               transitions=[{"on": "release", "to": "swing"}]),
         phase("swing", 14, jet_hit, armorThreshold=14,
               attach=attach(jet_keys), events=[{"at": 9, "sfx": "smash"}, {"at": 9, "sfx": "whack"}],
@@ -1114,9 +1206,9 @@ fighter = {
         "dashFrames": 15,
         "runAccel": 0.72,
         "groundFriction": 0.86,
-        "jumpSpeed": round(math.sqrt(2 * (0.097 * VERTICAL) * (32.85 * VERTICAL)), 4),
-        "shortHopSpeed": round(math.sqrt(2 * (0.097 * VERTICAL) * (16.02 * VERTICAL)), 4),
-        "airJumpSpeed": round(math.sqrt(2 * (0.097 * VERTICAL) * (32.85 * VERTICAL)), 4),
+        "jumpSpeed": 13.5,  # fitted slower ascent after controller playtesting feedback
+        "shortHopSpeed": 9.4,
+        "airJumpSpeed": 13.0,
         "airJumpDrift": 3.8,
         "airJumps": 4,
         "airSpeed": round(0.735 * MOBILITY, 5),
@@ -1175,7 +1267,7 @@ ledger["mobility"] = {
                "airAccel": 0.05, "gravity": 0.097, "fall": 1.95, "fastFall": 3.12,
                "jumpHeight": 32.85, "shortHopHeight": 16.02, "airJumps": 4},
     "conversion": {"groundAirScale": MOBILITY, "verticalScale": VERTICAL,
-                   "jumpSpeed": "sqrt(2 * gravity * height)"},
+                   "jumpSpeed": "fitted full/short/air speeds 13.5/9.4/13; original sqrt(2 * gravity * height) baseline retained in import record"},
     "result": fighter["stats"],
 }
 

@@ -284,6 +284,6 @@ fn cpu_match_golden_world_hash() {
         w.hits.clear();
         w.acts.clear();
     }
-    // Updated deliberately for the original-roster knockback/throw balance pass (content-only tuning).
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xe85ae82a53b74406);
+    // Updated deliberately for shared launch/movement tuning and concurrent roster content changes.
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xa7595d379a195bc0);
 }

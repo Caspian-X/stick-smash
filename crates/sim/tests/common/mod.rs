@@ -32,7 +32,13 @@ fn load_data(linear: bool) -> GameData {
     if linear {
         let baseline = knockback_baseline();
         for s in &mut sources {
-            let text = if s.path == "fighters/wizard/fighter.json" {
+            let text = if s.path == "fighters/lancer/fighter.json" {
+                include_str!("../fixtures/lancer-ts.json")
+            } else if s.path == "fighters/ninja/fighter.json" {
+                include_str!("../fixtures/ninja-ts.json")
+            } else if s.path == "fighters/dancer/fighter.json" {
+                include_str!("../fixtures/dancer-ts.json")
+            } else if s.path == "fighters/wizard/fighter.json" {
                 include_str!("../fixtures/wizard-linear.json")
             } else if s.path == "fighters/king/fighter.json" {
                 // The production King package is a King Dedede import; keep the original TS King for baseline traces.
@@ -44,6 +50,7 @@ fn load_data(linear: bool) -> GameData {
             if let Some(hits) = baseline.get(&s.path) {
                 for (path, values) in hits {
                     let h = json.pointer_mut(path).unwrap();
+                    h["damage"] = values[0].into();
                     h["bkb"] = values[1].into();
                     h["kbg"] = values[2].into();
                 }

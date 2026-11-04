@@ -57,3 +57,41 @@ fn shared_formula_handles_damage_charge_weight_and_fixed_hits() {
         assert_eq!(combat::knockback(&d, &b, 0., 1.), combat::knockback(&d, &b, 250., 1.));
     }
 }
+
+#[test]
+fn roster_finishers_launch_at_multiple_percents_through_real_hit_application() {
+    let d = common::data();
+    for fighter in &d.fighters {
+        let hit = ["fsmash", "usmash", "dsmash"]
+            .into_iter()
+            .flat_map(|slot| fighter.moves.get(slot).unwrap().phases.iter())
+            .flat_map(|phase| &phase.hitboxes)
+            .filter(|b| !b.set_kb && b.damage > 0.)
+            .max_by(|a, b| combat::knockback(&d, a, 200., 1.).total_cmp(&combat::knockback(&d, b, 200., 1.)))
+            .unwrap();
+        let mut speeds = Vec::new();
+        for pct in [0., 100., 200., 400.] {
+            let mut w = common::fighters(&d, &fighter.id, &["brawler"]);
+            let v = &mut w.fighters[1];
+            v.dmg = pct;
+            v.ground = false;
+            v.surf = None;
+            combat::apply_hit(
+                &mut w,
+                &d,
+                1,
+                hit,
+                combat::HitSource { attacker: 0, direction: 1., point: (640., 300.), projectile: false, label: None },
+            );
+            let v = &w.fighters[1];
+            let speed = libm::hypot(v.vx, v.vy);
+            assert!(v.hitstun > 0 && v.lag > 0, "{} at {pct}", fighter.id);
+            speeds.push(speed);
+        }
+        eprintln!("{} finisher speeds at 0/100/200/400%: {speeds:.1?}", fighter.id);
+        assert!(speeds.windows(2).all(|s| s[1] > s[0]), "{}", fighter.id);
+        assert!(speeds[2] > 25., "{}: meaningful 200% launch", fighter.id);
+        assert!(speeds[2] > speeds[0] * 1.7, "{}: percent scaling", fighter.id);
+        assert!(speeds[3] > speeds[2] * 1.4, "{}: high percent scaling", fighter.id);
+    }
+}

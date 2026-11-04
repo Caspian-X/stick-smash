@@ -199,7 +199,8 @@ this age; fuse expiry still detonates even before arming.
   `shield`, `shieldDrop`, `roll`, `spot`, `airdodge`, `hold`, `pummel`, `throw.f`, `throw.b`, `throw.u`,
   `throw.d`, `grabbed`, `hitstun`, `tumble`, `shieldbreak`, `knockdown`, `getup`, `getupAttack`, `tech`, `ledge`,
   `climb`, `ledgeAttack`, `ledgeRoll`, `ledgeJump`, `dizzy`, `win`, `respawn`.
-  Holding down without horizontal movement while grounded selects `crouch` through the ground gait. Its
+  Holding down while grounded selects `crouch` through the ground gait; horizontal movement
+  retains the stance when `global.gait.crawlSpeed` is enabled. Its
   animation blends with `idle` over `global.gait.crouchFrames` on entry and release; reversing the input
   reverses the blend from its current depth. The base fighter supplies a breathing loop inherited by the roster.
   Override `anims.crouch` and `poses.crouch` to customize it. Attacks, jumps and platform drops interrupt it normally.
@@ -242,7 +243,7 @@ hitstun and tumble still collide with them. Solid blocks always collide. `global
 `global.gait.runThreshold` is the deadzoned horizontal tilt that promotes a walk to a run (0..1;
 0 retains flick-only running and ignores `walkThreshold`). `walkThreshold` is the lower return-to-walk
 threshold, no greater than a nonzero `runThreshold`. Between them the current gait is retained to avoid jitter. `dashLock` restricts standing
-attacks and shield during initial dash: tilts and forward/down smashes queue within `bufferFrames`, while
+attacks and shield during initial dash when enabled (bundled tuning disables it): tilts and forward/down smashes queue within `bufferFrames`, while
 jump, dash attack, up smash, grab and specials can cancel. Opposite flicks still dash back. Crouching can
 cancel a run after initial dash. The settings affect all fighters; they are not per-character speed fixes.
 `global.input.bufferFrames` is the human press buffer lifetime in ticks (u32, currently 5); age equal to
@@ -682,3 +683,17 @@ This slice does not resize pushing, shields, cameras or effects, retarget throw 
 Simulation recordings now use `sim-21`; the replay container version is unchanged.
 
 `global.render.select.backHoldSecs` is the positive real-time hold duration for leaving selection screens (default 1.5 seconds for older embedded presentation data). UI updates cap each contribution at 50 ms. Contextual Back actions consume the hold until release.
+
+`moves.*.phases[].groundSpeed` (default 0) enables grounded stick-controlled movement during
+an attack phase, in pixels per tick at full tilt. It preserves facing and stored charge; zero
+uses ordinary attack friction. Airborne phases retain their existing drift control.
+
+`global.gait.crawlSpeed` enables movement while crouching, as a fraction of walk speed
+(default zero for older content; bundled tuning uses 0.35). Down plus horizontal stick keeps
+the crouched pose and proportional low movement speed. Release down to resume normal gait.
+Jump, attacks and platform-drop inputs retain their normal priority. This is a shared game
+rule, rather than a claim that every reference fighter can crawl.
+
+`global.render.overlays.grabbed` optionally draws persistent binding bands on a captured fighter.
+Each `bands` entry is [height above feet, horizontal radius, vertical radius] in fractions of body height; `width`, `color`
+and `alpha` control the stroke. It appears whenever the fighter is grabbed and disappears on release.

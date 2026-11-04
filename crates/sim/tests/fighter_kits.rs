@@ -21,7 +21,7 @@ fn start(w: &mut World, d: &GameData, slot: &str) {
 fn ninja_throws_three_separate_stars() {
     let (d, mut w) = setup("ninja", 400.);
     start(&mut w, &d, "nspec");
-    for _ in 0..18 {
+    for _ in 0..26 {
         common::step_preserving(&mut w, &d, &[Input::default(); 2]);
     }
     assert_eq!(w.projs.len(), 3);
@@ -195,4 +195,117 @@ fn ninja_projectile_substitution_does_not_dash_off_a_ledge() {
     assert!(reflected);
     assert_eq!(w.fighters[0].x, x);
     assert!(w.fighters[0].ground);
+}
+
+fn kit_tick(w: &mut World, d: &GameData) {
+    let mut f = w.fighters[0].clone();
+    moves::st_attack(w, d, 0, &mut f, Default::default(), 0.);
+    w.fighters[0] = f;
+    w.frame += 1;
+}
+
+#[test]
+fn ninja_star_spacing_leaves_a_break_in_low_percent_hitstun() {
+    let (d, mut w) = setup("ninja", 1000.);
+    start(&mut w, &d, "nspec");
+    let mut spawned = vec![];
+    let mut count = 0;
+    for t in 0..45 {
+        if w.projs.len() > count {
+            spawned.push(t);
+            count = w.projs.len();
+        }
+        kit_tick(&mut w, &d);
+    }
+    assert_eq!(spawned, [7, 16, 25]);
+    assert!(w.fighters[0].mov.is_none());
+    let star = &d.fighter("ninja").unwrap().projectiles["star"].hit;
+    let kb = sim::combat::knockback(&d, star, star.damage, 1.);
+    let stun = sim::combat::hitstun_of(&d, star, kb);
+    assert!(stun > 0 && stun < 9, "stun {stun} must end before the next star");
+}
+
+#[test]
+fn lancer_thrusts_reward_exact_tip_spacing_and_only_the_first_active_frame() {
+    for (slot, first, end, sweet, late, shaft) in [
+        ("ftilt", 6, 10, 17., 12., 9.),
+        ("fair", 6, 10, 18., 10., 8.),
+        ("fsmash", 12, 16, 25., 20., 14.),
+        ("nspec", 14, 18, 22., 15., 13.),
+    ] {
+        for face in [-1., 1.] {
+            let (d, mut base) = setup("lancer", 1000.);
+            base.fighters[0].face = face;
+            start(&mut base, &d, slot);
+            for t in 0..=end + 1 {
+                let mut w = base.clone();
+                w.fighters[0].mov.as_mut().unwrap().t = t;
+                let boxes = sim::combat::active_boxes(&d, &w.fighters[0]);
+                assert_eq!(!boxes.is_empty(), (first..=end).contains(&t), "{slot} {t}");
+                if boxes.is_empty() {
+                    continue;
+                }
+                let tip = &boxes[0];
+                assert_eq!(tip.hit.damage, if t == first { sweet } else { late });
+                let shaft_box = &boxes[1];
+                let tip_kb = sim::combat::knockback(&d, &tip.hit, 80. + tip.hit.damage, 1.);
+                let shaft_kb = sim::combat::knockback(&d, &shaft_box.hit, 80. + shaft_box.hit.damage, 1.);
+                assert!(tip_kb > shaft_kb, "{slot}: tip must launch harder");
+                for (x, y, expected) in [(tip.x, tip.y, tip.hit.damage), (shaft_box.x, shaft_box.y, shaft)] {
+                    let mut contact = w.clone();
+                    let victim = &mut contact.fighters[1];
+                    victim.x = x;
+                    victim.y = y + 45.;
+                    victim.inv = 0;
+                    sim::combat::hit_pass(&mut contact, &d);
+                    assert_eq!(contact.fighters[1].dmg, expected, "{slot} frame {t} face {face}");
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn dancer_spiral_has_bounded_hits_and_punishable_endings() {
+    use sim::world::State;
+    let (d, mut w) = setup("dancer", 1000.);
+    w.fighters[0].ground = false;
+    w.fighters[0].y = -1000.;
+    start(&mut w, &d, "uspec");
+    let mut contacts = vec![];
+    for t in 0..43 {
+        let boxes = sim::combat::active_boxes(&d, &w.fighters[0]);
+        assert_eq!(!boxes.is_empty(), (4..=18).contains(&t) || (20..=23).contains(&t), "frame {t}");
+        if let Some(b) = boxes.first() {
+            assert!(b.hit.r <= 38.);
+            if t < 20 {
+                assert_eq!(b.hit.rehit, Some(7));
+                assert_eq!(b.hit.damage, 1.5);
+            } else {
+                assert_eq!(b.hit.damage, 6.);
+            }
+        }
+        if let Some(b) = boxes.first() {
+            w.fighters[0].lag = 0;
+            let victim = &mut w.fighters[1];
+            victim.x = b.x;
+            victim.y = b.y + 45.;
+            victim.inv = 0;
+            sim::combat::hit_pass(&mut w, &d);
+            if w.hits.drain(..).any(|h| h.attacker == Some(0)) {
+                contacts.push(t);
+            }
+        }
+        if t == 10 || t == 25 {
+            let mut landed = w.fighters[0].clone();
+            landed.ground = true;
+            moves::trigger(&mut w, &d, 0, &mut landed, sim::data::Trigger::Land);
+            assert_eq!(landed.state, State::Landing);
+            assert_eq!(landed.sd.n, 16.);
+        }
+        kit_tick(&mut w, &d);
+    }
+    assert_eq!(w.fighters[0].state, State::Helpless);
+    assert_eq!(contacts, [4, 11, 18, 20]);
+    assert_eq!(w.fighters[1].dmg, 10.5);
 }

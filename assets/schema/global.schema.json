@@ -23,7 +23,8 @@
         "turnFriction": 0.0,
         "brakeFrames": 0,
         "brakeFriction": 0.0,
-        "crouchFrames": 0
+        "crouchFrames": 0,
+        "crawlSpeed": 0.0
       }
     },
     "sim": { "$ref": "#/$defs/SimRules" },
@@ -333,6 +334,12 @@
           "minimum": 0,
           "description": "Frames to lower into a crouch or rise back to idle. Zero switches immediately.",
           "default": 0
+        },
+        "crawlSpeed": {
+          "type": "number",
+          "format": "double",
+          "description": "Crouched movement as a fraction of walk speed; zero disables crawling.",
+          "default": 0.0
         }
       },
       "description": "Ground gait. Speeds are fractions of the fighter's runSpeed (walkSpeed may be overridden per fighter)."
@@ -1584,6 +1591,12 @@
         "dodge": { "$ref": "#/$defs/DodgeLook" },
         "shield": { "$ref": "#/$defs/ShieldLook" },
         "dizzy": { "$ref": "#/$defs/DizzyLook" },
+        "grabbed": {
+          "anyOf": [
+            { "$ref": "#/$defs/GrabLook" },
+            { "type": "null" }
+          ]
+        },
         "respawn": { "$ref": "#/$defs/RespawnLook" },
         "trail": { "$ref": "#/$defs/TrailLook" },
         "xEyeWidth": {
@@ -1678,6 +1691,26 @@
       },
       "required": ["stars", "y", "rx", "ry", "r", "speed", "color"],
       "description": "Stars circling the head while dizzy: an ellipse `rx`×`ry` centered `y` above the feet."
+    },
+    "GrabLook": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bands": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": { "type": "number", "format": "double" },
+            "minItems": 3,
+            "maxItems": 3
+          }
+        },
+        "width": { "type": "number", "format": "double" },
+        "color": { "$ref": "#/$defs/Color" },
+        "alpha": { "type": "number", "format": "double" }
+      },
+      "required": ["bands", "width", "color", "alpha"],
+      "description": "Binding bands [height, horizontal radius, vertical radius], as fractions of fighter body height."
     },
     "RespawnLook": {
       "type": "object",

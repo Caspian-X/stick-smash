@@ -14,9 +14,9 @@
     "dashFrames": 15,
     "runAccel": 0.72,
     "groundFriction": 0.86,
-    "jumpSpeed": 15.1468,
-    "shortHopSpeed": 10.5775,
-    "airJumpSpeed": 15.1468,
+    "jumpSpeed": 13.5,
+    "shortHopSpeed": 9.4,
+    "airJumpSpeed": 13.0,
     "airJumpDrift": 3.8,
     "airJumps": 4,
     "airSpeed": 2.5725,
@@ -114,31 +114,45 @@
     },
     "runA": {
       "from": "stand",
-      "head": [6, 82],
-      "shoulder": [4, 62],
-      "hip": [0, 40],
-      "elbowF": [20, 58],
-      "handF": [28, 52],
-      "elbowB": [-14, 58],
-      "handB": [-24, 52],
-      "kneeF": [16, 18],
-      "footF": [28, 2],
-      "kneeB": [-12, 16],
+      "head": [6, 81],
+      "shoulder": [4, 61],
+      "hip": [0, 39],
+      "elbowF": [20, 57],
+      "handF": [28, 51],
+      "elbowB": [-14, 57],
+      "handB": [-24, 51],
+      "kneeF": [16, 16],
+      "footF": [30, 2],
+      "kneeB": [-12, 15],
       "footB": [-20, 0]
     },
     "runB": {
       "from": "stand",
-      "head": [6, 82],
-      "shoulder": [4, 62],
-      "hip": [0, 40],
-      "elbowF": [12, 58],
-      "handF": [20, 56],
-      "elbowB": [-18, 60],
-      "handB": [-28, 58],
+      "head": [6, 81],
+      "shoulder": [4, 61],
+      "hip": [0, 39],
+      "elbowF": [12, 57],
+      "handF": [20, 55],
+      "elbowB": [-18, 57],
+      "handB": [-28, 55],
       "kneeF": [-8, 18],
       "footF": [-18, 0],
-      "kneeB": [12, 20],
+      "kneeB": [12, 17],
       "footB": [22, 4]
+    },
+    "runPass": {
+      "from": "stand",
+      "head": [6, 85],
+      "shoulder": [4, 65],
+      "hip": [0, 43],
+      "elbowF": [16, 60],
+      "handF": [26, 56],
+      "elbowB": [-16, 60],
+      "handB": [-26, 56],
+      "kneeF": [18, 22],
+      "footF": [12, 16],
+      "kneeB": [-16, 18],
+      "footB": [-22, 4]
     },
     "air": {
       "from": "stand",
@@ -175,6 +189,164 @@
       "elbowB": [18, 58],
       "handB": [34, 56]
     },
+    "jumpHalf": {
+      "from": "stand",
+      "head": [3, 74],
+      "shoulder": [1, 58],
+      "hip": [0, 34],
+      "elbowF": [14, 52],
+      "handF": [24, 46],
+      "elbowB": [-16, 52],
+      "handB": [-24, 48],
+      "kneeF": [14, 16],
+      "footF": [22, 0],
+      "kneeB": [-12, 16],
+      "footB": [-22, 0],
+      "pivot": 34
+    },
+    "jumpLoad": {
+      "from": "crouch",
+      "head": [6, 64],
+      "shoulder": [2, 48],
+      "hip": [0, 26],
+      "elbowF": [4, 40],
+      "handF": [0, 28],
+      "elbowB": [-20, 38],
+      "handB": [-30, 28],
+      "kneeF": [20, 12],
+      "footF": [30, 0],
+      "kneeB": [-18, 12],
+      "footB": [-30, 0],
+      "pivot": 26
+    },
+    "launchReach": {
+      "from": "stand",
+      "head": [0, 90],
+      "shoulder": [0, 70],
+      "hip": [0, 46],
+      "elbowF": [12, 84],
+      "handF": [16, 102],
+      "elbowB": [-12, 82],
+      "handB": [-18, 100],
+      "kneeF": [4, 24],
+      "footF": [0, 6],
+      "kneeB": [-6, 22],
+      "footB": [-10, 4],
+      "pivot": 46
+    },
+    "riseTuck": {
+      "from": "air",
+      "head": [2, 84],
+      "elbowF": [18, 66],
+      "handF": [26, 76],
+      "elbowB": [-18, 64],
+      "handB": [-26, 72],
+      "kneeF": [18, 32],
+      "footF": [26, 22],
+      "kneeB": [-14, 28],
+      "footB": [-22, 20]
+    },
+    "fallBrace": {
+      "from": "air",
+      "head": [0, 82],
+      "kneeF": [16, 24],
+      "footF": [28, 10],
+      "kneeB": [-14, 22],
+      "footB": [-28, 8],
+      "elbowF": [26, 58],
+      "handF": [40, 52],
+      "elbowB": [-28, 56],
+      "handB": [-42, 50]
+    },
+    "fallSway": {
+      "from": "fallBrace",
+      "head": [-2, 81],
+      "handF": [38, 54],
+      "handB": [-40, 52],
+      "kneeB": [-16, 24],
+      "footB": [-26, 10]
+    },
+    "helplessLoose": {
+      "from": "airFall",
+      "head": [-4, 80],
+      "elbowF": [8, 54],
+      "handF": [2, 42],
+      "elbowB": [-8, 52],
+      "handB": [0, 42],
+      "kneeF": [8, 20],
+      "footF": [4, 6],
+      "kneeB": [-8, 18],
+      "footB": [-6, 4]
+    },
+    "helplessFlail": {
+      "from": "helplessLoose",
+      "head": [4, 80],
+      "handF": [10, 44],
+      "handB": [-8, 42],
+      "footF": [10, 8],
+      "footB": [-12, 4]
+    },
+    "landAbsorb": {
+      "from": "crouch",
+      "head": [8, 54],
+      "shoulder": [2, 40],
+      "hip": [0, 16],
+      "elbowF": [18, 30],
+      "handF": [30, 20],
+      "elbowB": [-16, 30],
+      "handB": [-28, 18],
+      "kneeF": [24, 8],
+      "footF": [32, 0],
+      "kneeB": [-20, 8],
+      "footB": [-30, 0],
+      "pivot": 20
+    },
+    "landSettle": {
+      "from": "crouch",
+      "head": [2, 70],
+      "shoulder": [0, 52],
+      "hip": [0, 30],
+      "elbowF": [16, 46],
+      "handF": [26, 40],
+      "elbowB": [-14, 46],
+      "handB": [-24, 38],
+      "kneeF": [14, 14],
+      "footF": [24, 0],
+      "kneeB": [-12, 14],
+      "footB": [-22, 0],
+      "pivot": 32
+    },
+    "uspecWind": {
+      "from": "crouch",
+      "head": [-6, 68],
+      "shoulder": [-4, 50],
+      "hip": [0, 30],
+      "elbowF": [-10, 44],
+      "handF": [-28, 36],
+      "elbowB": [-18, 42],
+      "handB": [-34, 34],
+      "kneeF": [16, 15],
+      "footF": [26, 0],
+      "kneeB": [-14, 15],
+      "footB": [-26, 0],
+      "pivot": 32
+    },
+    "uspecWindHold": { "from": "uspecWind", "head": [-8, 67], "hip": [0, 29], "pivot": 31 },
+    "jetBrace": {
+      "from": "crouch",
+      "head": [6, 66],
+      "hip": [0, 28],
+      "elbowF": [18, 48],
+      "handF": [30, 42],
+      "elbowB": [-12, 46],
+      "handB": [-22, 38],
+      "kneeF": [18, 14],
+      "footF": [30, 0],
+      "kneeB": [-16, 14],
+      "footB": [-28, 0],
+      "pivot": 30
+    },
+    "jetStrain": { "from": "jetBrace", "head": [8, 64], "hip": [0, 27] },
     "hurt": {
       "from": "stand",
       "head": [-6, 80],
@@ -259,13 +431,30 @@
         { "at": 0, "pose": "stand" },
         {
           "at": 22.5,
-          "pose": { "from": "stand", "head": [0, 85.2], "shoulder": [0, 65.2] },
+          "pose": {
+            "from": "stand",
+            "head": [0, 85.8],
+            "shoulder": [0, 65.8],
+            "hip": [0, 43],
+            "elbowF": [19, 60],
+            "handF": [32, 55],
+            "elbowB": [-17, 59],
+            "handB": [-27, 51]
+          },
           "lerp": true
         },
         { "at": 45, "pose": "stand", "lerp": true },
         {
           "at": 67.5,
-          "pose": { "from": "stand", "head": [0, 83] },
+          "pose": {
+            "from": "stand",
+            "head": [-1, 82.4],
+            "shoulder": [-1, 62.4],
+            "hip": [0, 41],
+            "elbowF": [17, 58],
+            "handF": [28, 53],
+            "elbowB": [-15, 57]
+          },
           "lerp": true
         },
         { "at": 90, "pose": "stand", "lerp": true }
@@ -289,25 +478,41 @@
       "loop": 360,
       "keys": [
         { "at": 0, "pose": "runA" },
+        { "at": 45, "pose": "runPass", "lerp": true },
         { "at": 90, "pose": "runB", "lerp": true },
+        { "at": 135, "pose": "runPass", "lerp": true },
         { "at": 180, "pose": "runA", "lerp": true },
+        { "at": 225, "pose": "runPass", "lerp": true },
         { "at": 270, "pose": "runB", "lerp": true },
+        { "at": 315, "pose": "runPass", "lerp": true },
         { "at": 360, "pose": "runA", "lerp": true }
       ]
     },
     "jumpsquat": {
       "keys": [
-        { "at": 0, "pose": "crouch" }
+        { "at": 0, "pose": "jumpHalf" },
+        { "at": 2, "pose": "jumpLoad", "lerp": true }
       ]
     },
     "landing": {
       "keys": [
-        { "at": 0, "pose": "crouch" }
+        { "at": 0, "pose": "landAbsorb" },
+        { "at": 1, "pose": "landSettle", "lerp": true },
+        {
+          "at": 2,
+          "pose": { "from": "stand", "head": [0, 82], "shoulder": [0, 63], "hip": [0, 41] },
+          "lerp": true
+        },
+        { "at": 10, "pose": "stand", "lerp": true }
       ]
     },
     "helpless": {
+      "clock": "world",
+      "loop": 40,
       "keys": [
-        { "at": 0, "pose": "airFall" }
+        { "at": 0, "pose": "helplessLoose" },
+        { "at": 20, "pose": "helplessFlail", "lerp": true },
+        { "at": 40, "pose": "helplessLoose", "lerp": true }
       ]
     },
     "shield": {
@@ -353,12 +558,18 @@
     },
     "air.rise": {
       "keys": [
-        { "at": 0, "pose": "air" }
+        { "at": 0, "pose": "launchReach" },
+        { "at": 4, "pose": "riseTuck", "lerp": true },
+        { "at": 16, "pose": "air", "lerp": true }
       ]
     },
     "air.fall": {
+      "clock": "world",
+      "loop": 48,
       "keys": [
-        { "at": 0, "pose": "airFall" }
+        { "at": 0, "pose": "fallBrace" },
+        { "at": 24, "pose": "fallSway", "lerp": true },
+        { "at": 48, "pose": "fallBrace", "lerp": true }
       ]
     },
     "air.flip": {
@@ -2181,7 +2392,9 @@
             }
           ],
           "anim": [
-            { "at": 0, "pose": "crouch" }
+            { "at": 0, "pose": "crouch" },
+            { "at": 7, "pose": "uspecWind", "lerp": true },
+            { "at": 13, "pose": "uspecWindHold", "lerp": true }
           ],
           "transitions": [
             { "on": "timeout", "to": "launch" }
@@ -2207,8 +2420,8 @@
             "hammer": { "angle": [[0, 100]] }
           },
           "anim": [
-            { "at": 0, "pose": "crouch" },
-            { "at": 2, "pose": "win", "lerp": true }
+            { "at": 0, "pose": "uspecWindHold" },
+            { "at": 3, "pose": "win", "lerp": true }
           ],
           "transitions": [
             { "on": "timeout", "to": "rise" }
@@ -2412,12 +2625,15 @@
         },
         {
           "name": "charge",
+          "groundSpeed": 1.6,
           "charge": { "frame": 0, "max": 136, "button": "special", "jet": true },
           "attach": {
-            "hammer": { "angle": [[0, 105]] }
+            "hammer": { "angle": [[0, 105], [12, 102], [24, 108], [36, 102.5], [48, 107], [60, 103.5], [136, 105]] }
           },
           "anim": [
-            { "at": 0, "pose": "crouch" }
+            { "at": 0, "pose": "crouch" },
+            { "at": 10, "pose": "jetBrace", "lerp": true },
+            { "at": 40, "pose": "jetStrain", "lerp": true }
           ],
           "transitions": [
             { "on": "release", "to": "swing" }

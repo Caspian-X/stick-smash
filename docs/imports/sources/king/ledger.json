@@ -4962,7 +4962,7 @@
   "conversion": {
    "groundAirScale": 3.5,
    "verticalScale": 6.0,
-   "jumpSpeed": "sqrt(2 * gravity * height)"
+   "jumpSpeed": "fitted full/short/air speeds 13.5/9.4/13; original sqrt(2 * gravity * height) baseline retained in import record"
   },
   "result": {
    "weight": 0.78740157,
@@ -4973,9 +4973,9 @@
    "dashFrames": 15,
    "runAccel": 0.72,
    "groundFriction": 0.86,
-   "jumpSpeed": 15.1468,
-   "shortHopSpeed": 10.5775,
-   "airJumpSpeed": 15.1468,
+   "jumpSpeed": 13.5,
+   "shortHopSpeed": 9.4,
+   "airJumpSpeed": 13.0,
    "airJumpDrift": 3.8,
    "airJumps": 4,
    "airSpeed": 2.5725,

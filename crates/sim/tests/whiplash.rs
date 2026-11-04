@@ -588,3 +588,49 @@ fn flip_footstool_detection_and_manual_kick_contacts_enter_their_bounces() {
     assert_eq!(moves::phase(&d, &w.fighters[0]).frames, Some(49));
     assert!(w.fighters[0].vy < 0.);
 }
+
+#[test]
+fn raw_flip_steering_can_brake_reverse_and_extend_the_arc_without_turning() {
+    for face in [-1., 1.] {
+        let (d, mut base) = setup("dspec");
+        base.fighters[0].face = face;
+        base.fighters[0].vx = 7.5 * face;
+        let run = |x: i8| {
+            let mut w = base.clone();
+            for _ in 0..16 {
+                raw(&mut w, &d, (x, 0), 0);
+            }
+            w
+        };
+        let forward = run((127. * face) as i8);
+        let neutral = run(0);
+        let backward = run((-127. * face) as i8);
+        assert!(backward.fighters[0].vx * face < 0., "pulling back reverses travel before the apex");
+        assert!((forward.fighters[0].x - neutral.fighters[0].x) * face >= 0.);
+        assert!((neutral.fighters[0].x - backward.fighters[0].x) * face > 45.);
+        for w in [&forward, &neutral, &backward] {
+            assert_eq!(w.fighters[0].face, face);
+            assert_eq!(w.fighters[0].mov.as_ref().unwrap().phase, 0);
+            assert_eq!(w.fighters[0].vy, neutral.fighters[0].vy);
+        }
+    }
+}
+
+#[test]
+fn flip_kick_visibly_coils_then_extends_the_foot_at_the_active_window() {
+    let (d, mut w) = setup("dspec");
+    let f = &mut w.fighters[0];
+    let m = f.mov.as_mut().unwrap();
+    m.phase = 1;
+    m.t = 7;
+    let coiled = sim::pose::fighter_pose(&d, f, w.frame);
+    f.mov.as_mut().unwrap().t = 9;
+    let strike = sim::pose::fighter_pose(&d, f, w.frame);
+    assert!(coiled.foot_f[0] < 20. && coiled.foot_f[1] > 20.);
+    assert_eq!(strike.foot_f, [61., -16.]);
+    let boxes = combat::active_boxes(&d, f);
+    assert!(boxes.iter().any(|b| libm::hypot(b.hit.x - 61., b.hit.y + 16.) < b.hit.r));
+    f.mov.as_mut().unwrap().t = 18;
+    let recoil = sim::pose::fighter_pose(&d, f, w.frame);
+    assert!(recoil.foot_f[0] < 20.);
+}

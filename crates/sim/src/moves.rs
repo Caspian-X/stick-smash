@@ -505,7 +505,11 @@ fn movement(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent,
         return;
     }
     if f.ground {
-        f.vx *= if t < p.slide { mv.attack_slide_friction } else { mv.attack_friction };
+        if p.ground_speed > 0. {
+            f.vx = inp.x * p.ground_speed;
+        } else {
+            f.vx *= if t < p.slide { mv.attack_slide_friction } else { mv.attack_friction };
+        }
         fall(w, d, i, f, true, None);
         return;
     }

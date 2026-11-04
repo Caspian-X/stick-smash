@@ -527,6 +527,11 @@
           ],
           "description": "Hold to charge (smash attacks, chargeable specials)."
         },
+        "groundSpeed": {
+          "type": "number",
+          "format": "double",
+          "description": "Grounded: horizontal stick speed while retaining the move and its facing."
+        },
         "counter": {
           "anyOf": [
             { "$ref": "#/$defs/Counter" },

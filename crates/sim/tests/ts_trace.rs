@@ -59,6 +59,7 @@ fn matches_typescript_traces() {
     d.global.movement.platform_pass = false;
     d.global.movement.fast_fall_min_vy = -3.;
     d.global.gait.enabled = false;
+    d.global.movement.jumpsquat = 4;
     d.global.shield.up_smash = false;
     d.global.parry.window = 0;
     d.global.di.max_angle = 0.;
