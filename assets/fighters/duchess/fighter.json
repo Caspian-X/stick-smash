@@ -2654,7 +2654,7 @@
             }
           ],
           "transitions": [
-            { "on": "timeout", "to": "rise2" }
+            { "on": "timeout", "to": "rise2", "preserveHits": true }
           ]
         },
         {
@@ -2672,7 +2672,8 @@
               "kbg": 1.0,
               "angle": 93.0,
               "setKb": true,
-              "rehit": 5
+              "rehit": 5,
+              "group": 1
             },
             {
               "start": 0,
@@ -2685,7 +2686,8 @@
               "kbg": 1.0,
               "angle": 87.0,
               "setKb": true,
-              "rehit": 5
+              "rehit": 5,
+              "group": 1
             },
             {
               "start": 0,
@@ -2699,7 +2701,8 @@
               "angle": 90,
               "type": "autolink",
               "setKb": true,
-              "rehit": 5
+              "rehit": 5,
+              "group": 1
             }
           ],
           "anim": [
@@ -2709,7 +2712,7 @@
             "parasol": { "show": [0, 5], "angle": [[0, 0]] }
           },
           "transitions": [
-            { "on": "timeout", "to": "rise3" }
+            { "on": "timeout", "to": "rise3", "preserveHits": true }
           ]
         },
         {
@@ -2727,7 +2730,8 @@
               "kbg": 1.0,
               "angle": 87.0,
               "setKb": true,
-              "rehit": 5
+              "rehit": 5,
+              "group": 1
             },
             {
               "start": 0,
@@ -2741,7 +2745,8 @@
               "angle": 90,
               "type": "autolink",
               "setKb": true,
-              "rehit": 5
+              "rehit": 5,
+              "group": 1
             }
           ],
           "anim": [
@@ -2752,7 +2757,7 @@
             "parasol": { "show": [0, 5], "angle": [[0, 0]] }
           },
           "transitions": [
-            { "on": "timeout", "to": "rise4" }
+            { "on": "timeout", "to": "rise4", "preserveHits": true }
           ]
         },
         {
@@ -2771,7 +2776,8 @@
               "angle": 90,
               "type": "autolink",
               "setKb": true,
-              "rehit": 5
+              "rehit": 5,
+              "group": 2
             },
             {
               "start": 0,
@@ -2785,7 +2791,8 @@
               "angle": 90,
               "type": "autolink",
               "setKb": true,
-              "rehit": 5
+              "rehit": 5,
+              "group": 2
             }
           ],
           "anim": [
@@ -2796,7 +2803,7 @@
             "parasol": { "show": [0, 5], "angle": [[0, 0]] }
           },
           "transitions": [
-            { "on": "timeout", "to": "rise5" }
+            { "on": "timeout", "to": "rise5", "preserveHits": true }
           ]
         },
         {
@@ -2813,7 +2820,8 @@
               "bkb": 90.0,
               "kbg": 0.7,
               "angle": 81.0,
-              "hitlagMult": 3.0
+              "hitlagMult": 3.0,
+              "group": 3
             }
           ],
           "anim": [

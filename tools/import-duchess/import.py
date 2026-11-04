@@ -361,7 +361,11 @@ def chain_ground(parts):
             if group:
                 b['group'] = group
     for a, b in zip(parts, parts[1:]):
-        a.setdefault('transitions', []).append({**wait(b['name']), 'preserveHits': True})
+        transition = next((t for t in a.get('transitions', []) if t['on'] == 'timeout' and t['to'] == b['name']), None)
+        if transition is None:
+            transition = wait(b['name'])
+            a.setdefault('transitions', []).append(transition)
+        transition['preserveHits'] = True
     return parts
 
 
@@ -658,6 +662,9 @@ moves['uspec'] = {'name': 'Peach Parasol', 'air': 'upSpecial', 'oncePerAirtime':
           attach={'parasol': {'show': [0, 14], 'angle': [[0, 0]]}},
           events=[{'at': 0, 'sfx': 'swing'}], transitions=[land(40)]),
 ]}
+
+# The rising timeline changes coverage without resetting a continuing loop's cooldown.
+chain_ground(moves['uspec']['phases'][:5])
 
 # Vegetable: the 39-frame pluck, then a turnip throw whose tier is chosen by how long the button is held.
 raw('dspec', 'SpecialLw')

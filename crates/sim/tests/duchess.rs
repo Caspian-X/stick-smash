@@ -736,3 +736,30 @@ fn continuous_swings_contact_once_across_phase_splits() {
         assert_eq!(common::contact_sequence(&d, "duchess", slot), [damage], "{slot}");
     }
 }
+
+#[test]
+fn parasol_rising_contacts_keep_the_loop_cooldown_across_phase_splits() {
+    let d = common::data();
+    let mut w = start_air(&d, "uspec");
+    let mut hits = vec![];
+    for _ in 0..39 {
+        w.fighters[0].x = 640.;
+        w.fighters[0].y = 100.;
+        w.fighters[0].lag = 0;
+        if let Some(b) = combat::active_boxes_at(&d, &w.fighters[0], w.frame).first() {
+            let v = &mut w.fighters[1];
+            v.set_state(State::Idle);
+            v.inv = 0;
+            v.blink = 0;
+            v.lag = 0;
+            v.x = b.x;
+            v.y = b.y + 35.;
+            v.ground = true;
+        }
+        combat::hit_pass(&mut w, &d);
+        let elapsed = w.fighters[0].mov.as_ref().unwrap().elapsed;
+        hits.extend(w.hits.drain(..).filter(|h| h.attacker == Some(0)).map(|h| (elapsed, h.damage)));
+        step_move(&mut w, &d, Intent::default());
+    }
+    assert_eq!(hits, [(6, 3.), (10, 1.), (15, 1.), (20, 1.), (22, 1.), (27, 1.), (31, 4.)]);
+}

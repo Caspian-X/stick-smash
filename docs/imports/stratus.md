@@ -161,9 +161,9 @@ Special notes:
   follow-up landing phase; aerial landing lag and ending autocancel; Blade Beam spawning on phase 17 and not
   before; contact reach at close range with nothing at 220 px; raw-input routing for jab/tilts/specials/grab;
   respawn refill.
-- Multi-hit structure: a phase entry clears victim contact history, so each source attack row that must hit the
-  same victim again (drag hits, late tiers, re-created script boxes) is its own phase. Durations are preserved;
-  the ledger lists the phase splits.
+- Multi-hit structure: groups distinguish separated source windows. Continuous swings preserve contact
+  history through coverage/tier phase splits, so re-created boxes do not grant extra hits. Durations are
+  preserved; the ledger lists the presentation phase splits.
 - Contact coverage: `move_reach_matches_fitted_geometry` pins both fighters and asserts jab 45/60, forward tilt
   60/80, forward smash 70/85, down tilt 45/60, neutral air 40/55, forward/back air 60/80, up air and down air 35,
   and nothing at 220 px.

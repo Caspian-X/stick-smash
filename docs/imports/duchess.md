@@ -179,9 +179,9 @@ Mr. Saturn, Bob-omb, holding/regrabbing the turnip and throwing it in other dire
   package (no schema or other asset changes). The CPU golden world hash was re-blessed because a new package id
   shifts the resolved `Fighter::data` indices in the debug snapshot (`0xa990a75d4fa27ad4` → `0x7b6281b152cd794f`).
   `SIM_VERSION` is unchanged: no snapshot field or behaviour of existing content changed.
-- Multi-part attacks (dash attack, down smash, ftilt, the aerials and the parasol rise) are split into one phase per
-  source window: the engine only clears a victim's contact history on phase entry, so a single-phase multi-hit
-  could never re-hit the same target. `independent_hit_windows_rehit_the_same_victim` covers that contract.
+- Multi-part attacks retain presentation phases, with groups distinguishing independent windows and
+  `preserveHits` keeping continuous swings and loop cooldowns intact. The independent-window and
+  continuous-swing contact tests cover both contracts.
 - Visual inspection (window captures, `just shots /tmp/duchess-shots fighter-kits,training`): **35a golf club,
   35b crown knuckle, 35g Toad guard, 35i parasol rise, 35j pluck, 35k turnip toss, 35o float, 35p turnip flight,
   35q parasol descent** were opened and compared with the UFD montages. That pass fixed three presentation bugs
@@ -192,7 +192,7 @@ Mr. Saturn, Bob-omb, holding/regrabbing the turnip and throwing it in other dire
   two editor shot frames moved to the new hit phases) three re-capture attempts returned flat black frames
   (window occluded in this session), so those two frame values were verified only through the data/tests.
 - The review pass (independent reviewer, then a self-check of its must-fix list) also corrected: multi-part
-  attacks split into one phase per source window (the engine only clears victim contact history on phase entry),
+  attacks split into presentation phases (contact identity is now assigned across those splits),
   Toad's source intangibility removed because it would skip the counter check, the closed parasol kept as an
   endless special fall with its own 40-frame landing lag, jab/up-air windows derived from the ledger rows,
   the parasol rise split to carry the real script rows (including the frame-22 autolink replacement), the search
@@ -233,3 +233,8 @@ Inclusive source creation/clear windows that overlap transitively are one hit id
 `group` across the whole timeline before splitting presentation/landing phases, then preserves history on
 timeout transitions. Coverage and damage-tier changes cannot hit the same victim again; separated windows
 retain independent groups. Full-move contact probes cover the continuous swings and genuine multi-hits.
+
+Parasol's rising phases also use whole-timeline grouping. The rehit-5 loop continues through `rise2` →
+`rise3`; a real gap before `rise4` starts a new identity. The coverage-following rising probe retains
+`3 + 1 + 1 + 1 + 1 + 1 + 4`, but its loop contacts move from elapsed ticks `10,15,16,22,27` to
+`10,15,20,22,27`, preserving the five-tick cooldown through the presentation seam. The final 4% hit still lands.

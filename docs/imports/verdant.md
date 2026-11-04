@@ -128,10 +128,9 @@ Special notes:
   uncharged arrow.
 - The down special's shockwave is a phase, not a projectile: the engine's projectile model would have needed a
   fixed spawn and the shockwave is anchored to the axe impact.
-- Where a move has a multi-hit window followed by a single finisher, or two separate single hits (up smash,
-  neutral/up air, down smash), each distinct hit is its own phase. Contact history is cleared on phase entry, so
-  a finisher can hit a victim its multihit already touched; keeping them in one phase would make the second hit
-  unusable against that victim.
+- Groups distinguish separate hits and loop-to-finisher seams, while `preserveHits` retains contact history
+  across presentation phase splits. A finisher can therefore hit after its multihit loop without granting
+  extra contacts to ordinary damage/coverage changes.
 - Neutral special's charge hold ends on the source's 45th frame even if the button is released earlier. A held
   full charge fires automatically on source frame 114 and completes after 160 ticks, with no extra saturated hold.
 - The up special's tether is the shared `Phase.tether`/`ledgeGrab` system; no rope simulation.
