@@ -21,7 +21,7 @@ pub fn spawn(w: &mut World, d: &GameData, i: usize, f: &Fighter, id: &str) {
     if let Some(c) = &p.charge_scale {
         hit.bkb *= 1. + charge * c.bkb;
         radius *= 1. + charge * c.radius;
-        life = libm::round(f64::from(life) * (1. + charge * c.life)) as u32;
+        life = libm::round(f64::from(life) * (1. + charge * c.life)).max(1.) as u32;
         if let Some(rehit) = hit.rehit {
             hit.rehit = Some(libm::round((f64::from(rehit) + charge * c.rehit).max(1.)) as u32);
         }
@@ -241,15 +241,17 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
     w.projs.retain(|p| p.life > 0 && p.x > b.left && p.x < b.right && p.y < b.bottom);
 }
 
-/// Immediately blast live owned gadgets in projectile order. No movement, aging or fuse tick.
+/// Immediately blast live owned gadgets in projectile order. Named ids fire whether or not they are remote;
+/// an empty list fires only remote (`explosion.manual`) gadgets, so a timed fuse such as a grenade is never
+/// triggered by accident. No movement, aging or fuse tick.
 pub fn detonate(w: &mut World, d: &GameData, owner: usize, ids: &[String]) {
     for pi in 0..w.projs.len() {
         let mut p = w.projs[pi].clone();
-        if p.owner == owner
-            && p.life > 0
-            && (ids.is_empty() || ids.contains(&p.id))
-            && d.fighters[p.fighter_data].projectiles[&p.id].explosion.is_some()
-        {
+        let Some(e) = d.fighters[p.fighter_data].projectiles[&p.id].explosion.as_ref() else {
+            continue;
+        };
+        let fires = ids.is_empty() && e.manual || ids.contains(&p.id);
+        if p.owner == owner && p.life > 0 && fires {
             contacts(w, d, &mut p, true);
             w.projs[pi] = p;
         }

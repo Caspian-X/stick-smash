@@ -422,8 +422,8 @@ moves['jab'] = {'name': 'Snake Jab', 'phases': [
 # --- forward tilt: knee then a straight body blow (AttackS3, AttackS3S2)
 ft1 = raw('ftilt1', 'snake', 'AttackS3')
 knee_a = row(ft1, 4.0, 0)['source']
-ftilt1 = fitted(knee_a, src(4), src(5), 44, 38, 22, situation='ground') + \
-    fitted(knee_a, src(4), src(5), 44, 38, 22, situation='air')
+ftilt1 = fitted(row(ft1, 4.0, 0)['source'], src(4), src(5), 44, 38, 22, situation='ground') + \
+    fitted(row(ft1, 4.0, 1)['source'], src(4), src(5), 44, 38, 22, situation='air')
 ft2 = raw('ftilt2', 'snake', 'AttackS3S2')
 ftilt2 = root(row(ft2, 9.0)['source'], src(8), src(8)) + root(row(ft2, 11.0)['source'], src(8), src(8)) + \
     root(row(ft2, 10.0)['source'], src(8), src(8))
@@ -615,6 +615,8 @@ moves['dashgrab'] = {'name': 'Dash Grab', 'phases': [phase(
 # --- neutral special: pull the pin, hold it, then throw it as an arc chosen by the stick
 GRENADE_FUSE = 129  # 150 frames from unpin minus the 21-frame pull
 HOLD_SPECIAL = {'frame': 0, 'max': 0, 'hold_after_max': 0, 'button': 'special'}
+# The held tick count is the cooking clock: the fuse starts at the unpin (see the grenade's chargeScale).
+COOK_HOLD = {'frame': 0, 'max': GRENADE_FUSE, 'hold_after_max': 0, 'button': 'special'}
 pull = phase('pull', 21, charge=HOLD_SPECIAL, anim=[
     {'at': 0, 'pose': 'guard'}, {'at': 3, 'pose': 'pullPin', 'lerp': True}, {'at': 20, 'pose': 'pullPin'}],
     attach={'grenade': {'show': [0, 20]}},
@@ -623,7 +625,7 @@ pull = phase('pull', 21, charge=HOLD_SPECIAL, anim=[
                  {'on': 'releaseToward', 'from': src(21), 'to': 'throwSmash'},
                  {'on': 'release', 'from': src(21), 'to': 'throwMid'},
                  {'on': 'timeout', 'to': 'hold'}])
-hold = phase('hold', None, ground_speed=1.7, charge=HOLD_SPECIAL,
+hold = phase('hold', None, ground_speed=1.7, charge=COOK_HOLD,
              anim=[{'at': 0, 'pose': 'pullPin'}], attach={'grenade': {'show': [0, 400]}},
              transitions=[{'on': 'shieldPress', 'to': 'drop'},
                           {'on': 'releaseAway', 'to': 'throwLob'},
@@ -749,6 +751,8 @@ def grenade(name, vel, life, maxn=1, spawn=(22, 52)):
                            'fx': [{'type': 'burst', 'color': '#ffd27a', 'n': 16, 'speed': 5.0, 'life': 18,
                                    'size': 4.5}]},
                 spawnSfx='shoot', spin=8.0,
+                # Cooking: the source fuse starts at the unpin, so every held tick removes one tick of life.
+                chargeScale={'speed': 0.0, 'damage': 0.0, 'life': -1.0 / GRENADE_FUSE},
                 shapes=[circle((0, 0), 9, '#3f5233', stroke='#9aa878', width=1.6),
                         circle((0, 0), 8.4, '#4c6140'),
                         line((-4, 2), (4, 2), 1.6, '#2b3624'),
@@ -797,9 +801,10 @@ projectiles['nikita'] = proj(
     article={'slot': 'sspec', 'minRelease': 0, 'autoRelease': 150, 'releaseOnUp': True, 'steer': 2.6,
              'stages': [{'from': 0, 'startup': 0, 'frames': 100, 'vel': [4.4, 0],
                          'hitboxes': [
-                             {'start': 0, 'x': 0, 'y': 0, 'r': 45, 'damage': 14.0, 'bkb': 75, 'kbg': 0.7,
-                              'angle': 50},
-                             {'start': 0, 'x': 0, 'y': 0, 'r': 65, 'damage': 7.0, 'bkb': 50, 'kbg': 0.9, 'angle': 50}],
+                             # One box: the source has a single 14% explosion, and a second outer ring
+                             # would steal straight hits from the strong box.
+                             {'start': 0, 'x': 0, 'y': 0, 'r': 65, 'damage': 14.0, 'bkb': 75, 'kbg': 0.7,
+                              'angle': 50}],
                          'shapes': [circle((0, 0), 11, '#5a604c', stroke='#99a082', width=1.6),
                                     line((-10, 0), (12, 0), 5, '#7d8a6a'),
                                     line((12, -5), (18, -5), 4, '#3b4133'),

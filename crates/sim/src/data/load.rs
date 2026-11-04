@@ -861,9 +861,11 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
         if let Some(c) = &p.charge_scale {
             nonnegative(file, &format!("{path}.chargeScale.speed"), c.speed)?;
             nonnegative(file, &format!("{path}.chargeScale.damage"), c.damage)?;
-            for (name, n) in [("bkb", c.bkb), ("radius", c.radius), ("life", c.life), ("rehit", c.rehit)] {
+            for (name, n) in [("bkb", c.bkb), ("radius", c.radius), ("rehit", c.rehit)] {
                 nonnegative(file, &format!("{path}.chargeScale.{name}"), n)?;
             }
+            // A negative life coefficient shortens the fuse per held charge tick (cooking).
+            finite(file, &format!("{path}.chargeScale.life"), c.life)?;
             if let Some(angle) = c.angle_to {
                 finite(file, &format!("{path}.chargeScale.angleTo"), angle)?;
             }

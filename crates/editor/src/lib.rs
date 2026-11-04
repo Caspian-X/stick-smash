@@ -93,6 +93,8 @@ pub enum Cmd {
     Frame(usize),
     Hitbox(Option<usize>),
     Dummy(bool),
+    /// Start the preview this high above the ground (`None`: grounded).
+    Airborne(Option<f64>),
     /// Leave, asking first if anything is unsaved.
     Back,
     Help(bool),
@@ -634,6 +636,10 @@ fn frame(params: Frame) -> Result {
             Cmd::Hitbox(h) => ed.hitbox = h,
             Cmd::Dummy(on) => {
                 ed.setup.dummy = on;
+                ed.pane.stale = true;
+            }
+            Cmd::Airborne(h) => {
+                ed.setup.air = h;
                 ed.pane.stale = true;
             }
             Cmd::Back => ed.leave(false, &mut out),

@@ -80,7 +80,7 @@ fn gadgets(d: &mut GameData, w: &mut World, manual: bool) -> String {
 }
 
 #[test]
-fn detonate_event_blasts_all_owned_gadgets_and_no_gadget_is_noop() {
+fn detonate_event_blasts_owned_remote_gadgets_and_no_gadget_is_noop() {
     let mut d = common::data();
     let mut w = setup(&d);
     let di = w.fighters[0].data;
@@ -107,6 +107,23 @@ fn detonate_event_blasts_all_owned_gadgets_and_no_gadget_is_noop() {
     }
     event(&mut w, &d);
     assert!(w.fighters[0].dmg < 50., "blast healing must survive the move's local fighter update");
+}
+
+#[test]
+fn detonate_leaves_timed_fuses_running() {
+    let mut d = common::data();
+    let mut w = setup(&d);
+    let di = w.fighters[0].data;
+    let id = gadgets(&mut d, &mut w, false);
+    let _ = id;
+    d.fighters[di].moves.jab.phases[0].events =
+        vec![Event { at: Some(0), detonate: Some(vec![]), ..Default::default() }];
+    let before: Vec<_> = w.projs.iter().filter(|p| p.owner == 0).map(|p| (p.x, p.y)).collect();
+    assert!(!before.is_empty());
+    event(&mut w, &d);
+    let after: Vec<_> = w.projs.iter().filter(|p| p.owner == 0).map(|p| (p.x, p.y)).collect();
+    assert_eq!(before, after, "a timed fuse is not fired by the remote detonator");
+    assert!(w.fighters[1].dmg == 0. && w.fighters[2].dmg == 0.);
 }
 
 #[test]

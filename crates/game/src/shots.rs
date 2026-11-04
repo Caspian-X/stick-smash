@@ -859,9 +859,9 @@ fn fighter_kits() -> Vec<Step> {
         ("sneak", "fsmash", 41, "32e-sneak-rpg"),
         ("sneak", "usmash", 37, "32f-sneak-mortar"),
         ("sneak", "dsmash", 8, "32g-sneak-double-kick"),
-        ("sneak", "nair", 36, "32h-sneak-air-kick"),
-        ("sneak", "fair", 24, "32i-sneak-knee-drop"),
-        ("sneak", "dair", 25, "32j-sneak-drill"),
+        ("sneak", "nair", 9, "32h-sneak-air-kick"),
+        ("sneak", "fair", 23, "32i-sneak-knee-drop"),
+        ("sneak", "dair", 3, "32j-sneak-drill"),
         ("sneak", "nspec", 8, "32k-sneak-grenade-pull"),
         ("sneak", "sspec", 45, "32l-sneak-nikita"),
         ("sneak", "uspec", 20, "32m-sneak-cypher"),
@@ -916,6 +916,9 @@ fn fighter_kits() -> Vec<Step> {
         ed(&mut v, Cmd::Fighter(fighter.into()));
         // Keep the editor's launch-angle handle out of the capture.
         ed(&mut v, Cmd::Hitbox(None));
+        // Aerials are captured from high enough (max start height) that the contact frame is still airborne.
+        let air = matches!(slot, "nair" | "fair" | "bair" | "uair" | "dair");
+        ed(&mut v, Cmd::Airborne(air.then_some(170.)));
         ed(&mut v, Cmd::Frame(frame));
         shot(&mut v, name, Screen::Editor);
     }
@@ -933,6 +936,7 @@ fn fighter_kits() -> Vec<Step> {
     ed(&mut v, Cmd::Frame(25));
     shot(&mut v, "32o-sneak-c4-detonate", Screen::Editor);
     ed(&mut v, Cmd::Variant(None));
+    ed(&mut v, Cmd::Airborne(None));
     // The forward tilt's second blow only follows a held attack; preview it by trimming the knee phase.
     ed(&mut v, Cmd::Fighter("sneak".into()));
     ed(&mut v, Cmd::Subject(Subject::Move("ftilt".into())));
