@@ -40,7 +40,7 @@ pub enum Step {
     Wait(u32),
     /// Run the match fast until the condition holds (or `max` ticks pass).
     Until(Pred, u32),
-    Shot(&'static str),
+    Shot(&'static str, Screen),
     /// Scripted editor command.
     Editor(editor::Cmd),
     /// Show this stage behind the select cards.
@@ -120,8 +120,8 @@ fn press(v: &mut Vec<Step>, bot: u8, act: Act) {
     v.extend([Step::Set(bot, act, true), Step::Wait(3), Step::Set(bot, act, false), Step::Wait(4)]);
 }
 
-fn shot(v: &mut Vec<Step>, name: &'static str) {
-    v.extend([Step::Wait(6), Step::Shot(name)]);
+fn shot(v: &mut Vec<Step>, name: &'static str, screen: Screen) {
+    v.extend([Step::Wait(6), Step::Shot(name, screen)]);
 }
 
 fn screen_is(s: Screen) -> Pred {
@@ -164,27 +164,27 @@ fn interaction_shots() -> Vec<Step> {
     vec![
         Step::Interaction(3),
         Step::Wait(20),
-        Step::Shot("24d-standard-hold"),
+        Step::Shot("24d-standard-hold", Screen::Match),
         Step::Interaction(0),
         Step::Wait(20),
-        Step::Shot("24a-unequal-hold"),
+        Step::Shot("24a-unequal-hold", Screen::Match),
         Step::Interaction(1),
         Step::Wait(20),
-        Step::Shot("24b-unequal-ledge"),
+        Step::Shot("24b-unequal-ledge", Screen::Match),
         Step::Interaction(2),
         Step::Wait(20),
-        Step::Shot("24c-unequal-climb"),
+        Step::Shot("24c-unequal-climb", Screen::Match),
     ]
 }
 
 fn menus() -> Vec<Step> {
     let mut v = vec![Step::Wait(40)];
-    shot(&mut v, "01-title");
+    shot(&mut v, "01-title", Screen::Title);
     for _ in 0..4 {
         press(&mut v, 0, Down);
     }
     press(&mut v, 0, Attack);
-    shot(&mut v, "02-settings");
+    shot(&mut v, "02-settings", Screen::Settings);
     press(&mut v, 0, Special);
     for _ in 0..3 {
         press(&mut v, 0, Down);
@@ -192,7 +192,7 @@ fn menus() -> Vec<Step> {
     press(&mut v, 0, Attack);
     press(&mut v, 0, Down);
     press(&mut v, 0, Down);
-    shot(&mut v, "03-controls");
+    shot(&mut v, "03-controls", Screen::Controls);
     press(&mut v, 0, Special);
     v
 }
@@ -208,11 +208,11 @@ fn fighter_editor() -> Vec<Step> {
         v.push(Step::Wait(4));
         ed(&mut v, Cmd::Frame(SHOT_FRAME));
         ed(&mut v, Cmd::Hitbox(Some(0)));
-        shot(&mut v, "03b-editor-move");
+        shot(&mut v, "03b-editor-move", Screen::Editor);
         ed(&mut v, Cmd::Onion(true));
         ed(&mut v, Cmd::Frame(SHOT_FRAME - 8));
         ed(&mut v, Cmd::Hitbox(None));
-        shot(&mut v, "03b2-editor-onion");
+        shot(&mut v, "03b2-editor-onion", Screen::Editor);
         ed(&mut v, Cmd::Onion(false));
         // A broken transition: inline problem, dirty markers, then the leave prompt.
         ed(
@@ -230,26 +230,26 @@ fn fighter_editor() -> Vec<Step> {
                 })
             }),
         );
-        shot(&mut v, "03b3-editor-problem");
+        shot(&mut v, "03b3-editor-problem", Screen::Editor);
         ed(&mut v, Cmd::Back);
-        shot(&mut v, "03b4-editor-leave");
+        shot(&mut v, "03b4-editor-leave", Screen::Editor);
         ed(&mut v, Cmd::Dismiss);
         ed(&mut v, Cmd::Undo);
-        shot(&mut v, "03b4b-editor-toast");
+        shot(&mut v, "03b4b-editor-toast", Screen::Editor);
         // Let the toast expire (it lives a few seconds) so the next shots show only what they're about.
         v.push(Step::Wait(800));
         ed(&mut v, Cmd::Help(true));
-        shot(&mut v, "03b5-editor-help");
+        shot(&mut v, "03b5-editor-help", Screen::Editor);
         ed(&mut v, Cmd::Help(false));
         ed(&mut v, Cmd::Subject(Subject::Data(Section::Attachments)));
         ed(&mut v, Cmd::Search("a".into()));
-        shot(&mut v, "03b6-editor-attachments");
+        shot(&mut v, "03b6-editor-attachments", Screen::Editor);
         ed(&mut v, Cmd::Search(String::new()));
         ed(&mut v, Cmd::Fighter("brawler".into()));
         ed(&mut v, Cmd::Subject(Subject::Data(Section::Projectiles)));
-        shot(&mut v, "03b7-editor-projectiles");
+        shot(&mut v, "03b7-editor-projectiles", Screen::Editor);
         ed(&mut v, Cmd::Subject(Subject::Pose("stand".into())));
-        shot(&mut v, "03c-editor-pose");
+        shot(&mut v, "03c-editor-pose", Screen::Editor);
         ed(&mut v, Cmd::Subject(Subject::Fighter));
         ed(
             &mut v,
@@ -260,9 +260,9 @@ fn fighter_editor() -> Vec<Step> {
                 error: None,
             }),
         );
-        shot(&mut v, "03d-editor-new-fighter");
+        shot(&mut v, "03d-editor-new-fighter", Screen::Editor);
         ed(&mut v, Cmd::Dismiss);
-        shot(&mut v, "03e-editor-stats");
+        shot(&mut v, "03e-editor-stats", Screen::Editor);
         ed(
             &mut v,
             Cmd::Edit(|f| {
@@ -271,7 +271,7 @@ fn fighter_editor() -> Vec<Step> {
             }),
         );
         ed(&mut v, Cmd::Subject(Subject::Data(Section::Rig)));
-        shot(&mut v, "03e2-editor-humanoid-rig");
+        shot(&mut v, "03e2-editor-humanoid-rig", Screen::Editor);
         ed(
             &mut v,
             Cmd::Edit(|f| {
@@ -279,7 +279,7 @@ fn fighter_editor() -> Vec<Step> {
                     Some(serde_json::from_str(include_str!("../../../assets/templates/rigs/quadruped.json")).unwrap());
             }),
         );
-        shot(&mut v, "03e3-editor-quadruped-rig");
+        shot(&mut v, "03e3-editor-quadruped-rig", Screen::Editor);
         ed(
             &mut v,
             Cmd::Edit(|f| {
@@ -289,9 +289,9 @@ fn fighter_editor() -> Vec<Step> {
             }),
         );
         ed(&mut v, Cmd::Subject(Subject::Pose("rigTail".into())));
-        shot(&mut v, "03e4-editor-named-pose-handles");
+        shot(&mut v, "03e4-editor-named-pose-handles", Screen::Editor);
         ed(&mut v, Cmd::Subject(Subject::Data(Section::Rig)));
-        shot(&mut v, "03e5-editor-rest-despite-pose");
+        shot(&mut v, "03e5-editor-rest-despite-pose", Screen::Editor);
         ed(
             &mut v,
             Cmd::Edit(|f| {
@@ -333,7 +333,7 @@ fn fighter_editor() -> Vec<Step> {
         );
         ed(&mut v, Cmd::Subject(Subject::Move("jab".into())));
         ed(&mut v, Cmd::Hitbox(Some(0)));
-        shot(&mut v, "03e6-editor-attached-collision");
+        shot(&mut v, "03e6-editor-attached-collision", Screen::Editor);
         ed(
             &mut v,
             Cmd::Edit(|f| {
@@ -342,9 +342,9 @@ fn fighter_editor() -> Vec<Step> {
             }),
         );
         ed(&mut v, Cmd::Frame(1));
-        shot(&mut v, "03e7-editor-region-disabled");
+        shot(&mut v, "03e7-editor-region-disabled", Screen::Editor);
         ed(&mut v, Cmd::Frame(2));
-        shot(&mut v, "03e8-editor-region-restored");
+        shot(&mut v, "03e8-editor-region-restored", Screen::Editor);
     }
     v
 }
@@ -357,7 +357,7 @@ fn stage_editor() -> Vec<Step> {
         use editor::stage_view::Part;
         ed(&mut v, Cmd::Mode(editor::Mode::Stages));
         ed(&mut v, Cmd::Stage("arena".into()));
-        shot(&mut v, "03f-stage-overview");
+        shot(&mut v, "03f-stage-overview", Screen::Editor);
         ed(&mut v, Cmd::Grid(true));
         ed(&mut v, Cmd::Symmetry(true));
         ed(&mut v, Cmd::Part(Some(Part::Platform(0))));
@@ -368,26 +368,26 @@ fn stage_editor() -> Vec<Step> {
                 s.platforms[1].y -= 30.;
             }),
         );
-        shot(&mut v, "03g-stage-platform");
+        shot(&mut v, "03g-stage-platform", Screen::Editor);
         ed(&mut v, Cmd::Undo);
         ed(&mut v, Cmd::Grid(false));
         ed(&mut v, Cmd::Symmetry(false));
         ed(&mut v, Cmd::EditStage(|s| s.spawns.truncate(6)));
         ed(&mut v, Cmd::Part(Some(Part::Spawn(1))));
-        shot(&mut v, "03h-stage-spawns");
+        shot(&mut v, "03h-stage-spawns", Screen::Editor);
         ed(&mut v, Cmd::Undo);
         v.push(Step::Wait(800));
         ed(&mut v, Cmd::Part(Some(Part::Blast)));
-        shot(&mut v, "03i-stage-bounds");
+        shot(&mut v, "03i-stage-bounds", Screen::Editor);
         ed(&mut v, Cmd::Part(None));
         ed(&mut v, Cmd::Section(S::Art));
-        shot(&mut v, "03j-stage-art");
+        shot(&mut v, "03j-stage-art", Screen::Editor);
         ed(&mut v, Cmd::Section(S::Background));
-        shot(&mut v, "03k-stage-background");
+        shot(&mut v, "03k-stage-background", Screen::Editor);
         ed(&mut v, Cmd::Section(S::Overview));
         ed(&mut v, Cmd::Sandbox(3));
         v.push(Step::Wait(150));
-        shot(&mut v, "03l-stage-sandbox");
+        shot(&mut v, "03l-stage-sandbox", Screen::Editor);
         ed(&mut v, Cmd::Sandbox(0));
         ed(
             &mut v,
@@ -398,10 +398,10 @@ fn stage_editor() -> Vec<Step> {
                 error: None,
             }),
         );
-        shot(&mut v, "03m-stage-new");
+        shot(&mut v, "03m-stage-new", Screen::Editor);
         ed(&mut v, Cmd::Dismiss);
         ed(&mut v, Cmd::Help(true));
-        shot(&mut v, "03n-stage-help");
+        shot(&mut v, "03n-stage-help", Screen::Editor);
         ed(&mut v, Cmd::Help(false));
         // Format 2: a raised centre between two blocks (inner ledges off) and a platform on a path.
         ed(
@@ -429,14 +429,14 @@ fn stage_editor() -> Vec<Step> {
         ed(&mut v, Cmd::Symmetry(true));
         ed(&mut v, Cmd::Part(Some(Part::Block(1))));
         ed(&mut v, Cmd::Reframe);
-        shot(&mut v, "03o-stage-blocks");
+        shot(&mut v, "03o-stage-blocks", Screen::Editor);
         ed(&mut v, Cmd::Symmetry(false));
         ed(&mut v, Cmd::Part(Some(Part::Waypoint(2, 1))));
         v.push(Step::Wait(90));
-        shot(&mut v, "03p-stage-moving");
+        shot(&mut v, "03p-stage-moving", Screen::Editor);
         ed(&mut v, Cmd::Sandbox(2));
         v.push(Step::Wait(200));
-        shot(&mut v, "03q-stage-moving-sandbox");
+        shot(&mut v, "03q-stage-moving-sandbox", Screen::Editor);
         ed(&mut v, Cmd::Sandbox(0));
         ed(&mut v, Cmd::Undo);
         ed(&mut v, Cmd::Part(None));
@@ -452,7 +452,7 @@ fn select() -> Vec<Step> {
     // Versus: bot 0 opens it (and joins); its pointer starts on its fighter's tile, hints showing.
     press(&mut v, 0, Attack);
     v.push(Step::Wait(20));
-    shot(&mut v, "04a-select-solo");
+    shot(&mut v, "04a-select-solo", Screen::Select);
     // Bot 1 joins. Bot 0 hops down to "Add CPU", adds two, then Special slides it home to the roster.
     press(&mut v, 1, Attack);
     v.push(Step::LeaveRoster(0, Down));
@@ -462,12 +462,12 @@ fn select() -> Vec<Step> {
     v.extend([
         Step::Set(0, Special, true),
         Step::Wait(80),
-        Step::Shot("04d-back-progress"),
+        Step::Shot("04d-back-progress", Screen::Select),
         Step::Wait(300),
         Step::Set(0, Special, false),
         Step::Wait(5),
     ]);
-    shot(&mut v, "04e-stable-p2");
+    shot(&mut v, "04e-stable-p2", Screen::Select);
     press(&mut v, 0, Attack);
     // Bot 0 previews the next tile and drops its chip there; bot 1 opens its card options.
     press(&mut v, 0, Right);
@@ -476,15 +476,19 @@ fn select() -> Vec<Step> {
     press(&mut v, 1, Down);
     // Bot 0's free pointer glides off toward the cards.
     v.extend([Step::Stick(0, Vec2::new(0.45, -0.85)), Step::Wait(8)]);
-    shot(&mut v, "04-select-choosing");
+    shot(&mut v, "04-select-choosing", Screen::Select);
     v.extend([Step::Stick(0, Vec2::ZERO), Step::Wait(30)]);
     // Bot 0 picks up the first CPU's chip and carries it over the roster, then drops it.
     v.extend([Step::PointAt(0, key(FIGHTER, 2)), Step::Wait(20)]);
     press(&mut v, 0, Attack);
     v.extend([Step::PointAt(0, key(TILE, 6)), Step::Wait(20)]);
-    shot(&mut v, "04b-select-carry-cpu");
+    shot(&mut v, "04b-select-carry-cpu", Screen::Select);
     // Mid-glide the arrow leans and stretches, the chip trailing; it comes back to drop the chip.
-    v.extend([Step::Stick(0, Vec2::new(-1., 0.1)), Step::Wait(9), Step::Shot("04c-select-carry-glide")]);
+    v.extend([
+        Step::Stick(0, Vec2::new(-1., 0.1)),
+        Step::Wait(9),
+        Step::Shot("04c-select-carry-glide", Screen::Select),
+    ]);
     v.extend([Step::Stick(0, Vec2::ZERO), Step::PointAt(0, key(TILE, 6)), Step::Wait(20)]);
     press(&mut v, 0, Attack);
     // Bot 1 closes the options, changes its pick and locks in. Bot 0's pointer rests mouse-like on the stage strip.
@@ -494,28 +498,28 @@ fn select() -> Vec<Step> {
     press(&mut v, 1, Attack);
     v.push(Step::Mouse(0, Vec2::new(700., 430.)));
     v.push(Step::Wait(40));
-    shot(&mut v, "05-select-ready");
+    shot(&mut v, "05-select-ready", Screen::Select);
     // Start: on to the stage vote. Bot 0 votes for the stage its chip starts on, bot 1 moves on.
     press(&mut v, 0, Start);
     v.push(Step::Until(screen_is(Screen::Stages), 10));
     v.push(Step::Wait(10));
     press(&mut v, 0, Attack);
     press(&mut v, 1, Right);
-    shot(&mut v, "05b-stage-votes");
+    shot(&mut v, "05b-stage-votes", Screen::Stages);
     // Bot 1's vote completes the votes: the roulette runs, lands, and the match starts.
     press(&mut v, 1, Attack);
     v.push(Step::Spin(0.9));
-    v.push(Step::Shot("05c-stage-roulette"));
+    v.push(Step::Shot("05c-stage-roulette", Screen::Stages));
     v.push(Step::Spin(2.5));
-    v.push(Step::Shot("05d-stage-landed"));
+    v.push(Step::Shot("05d-stage-landed", Screen::Stages));
     v.push(Step::Until(screen_is(Screen::Match), 300));
     // Keep title → select → match navigation covered by real button presses.
     v.extend([Step::Select(Mode::Versus, 8), Step::Wait(20)]);
-    shot(&mut v, "15-select-eight");
+    shot(&mut v, "15-select-eight", Screen::Select);
     // Up from the roster reaches the rules: CPU cards gain a Team row.
     v.push(Step::LeaveRoster(0, Up));
     press(&mut v, 0, Attack);
-    shot(&mut v, "15b-select-teams");
+    shot(&mut v, "15b-select-teams", Screen::Select);
     v
 }
 
@@ -536,39 +540,39 @@ fn roster() -> Vec<Step> {
     press(&mut v, 0, Down);
     press(&mut v, 0, Left);
     v.push(Step::Wait(20));
-    shot(&mut v, "15c-select-roster-30");
+    shot(&mut v, "15c-select-roster-30", Screen::Select);
     for b in 0..4 {
         press(&mut v, b, Attack);
     }
     v.push(Step::Wait(20));
-    shot(&mut v, "15e-select-four-ready");
+    shot(&mut v, "15e-select-four-ready", Screen::Select);
     press(&mut v, 0, Start);
     v.push(Step::Until(screen_is(Screen::Stages), 10));
     v.push(Step::Wait(10));
     press(&mut v, 0, Down);
     press(&mut v, 0, Right);
     press(&mut v, 0, Right);
-    shot(&mut v, "15d-stage-select-30");
+    shot(&mut v, "15d-stage-select-30", Screen::Stages);
     v
 }
 
 fn match_shots() -> Vec<Step> {
     let mut v = Vec::new();
     v.extend([Step::Match(3), Step::Wait(70)]);
-    shot(&mut v, "06-countdown");
+    shot(&mut v, "06-countdown", Screen::Match);
     v.push(Step::Until(|m, _, _| m.world.go_t > 0 && m.world.go_t < 40, 400));
-    shot(&mut v, "07-go");
+    shot(&mut v, "07-go", Screen::Match);
     v.push(Step::Until(offscreen, 5000));
-    v.push(Step::Shot("08-hud-offscreen"));
+    v.push(Step::Shot("08-hud-offscreen", Screen::Match));
     v.push(Step::Until(|m, _, _| m.world.fighters.iter().map(|f| f.dmg).sum::<f64>() > 200., 4000));
-    shot(&mut v, "09-hud");
+    shot(&mut v, "09-hud", Screen::Match);
     press(&mut v, 0, Start);
     press(&mut v, 0, Down);
-    shot(&mut v, "10-pause");
+    shot(&mut v, "10-pause", Screen::Match);
     press(&mut v, 0, Start);
     v.push(Step::Fast(|m, _, _| m.world.end_t > 0, 60 * 60 * 6));
     v.push(Step::Wait(20));
-    v.push(Step::Shot("11-game"));
+    v.push(Step::Shot("11-game", Screen::Match));
     v
 }
 
@@ -578,7 +582,7 @@ fn results_replay() -> Vec<Step> {
         Step::Fast(|m, _, _| m.world.over && m.over_t >= m.data.global.render.hud.results_delay, 60 * 60 * 6),
         Step::Until(screen_is(Screen::Results), 30),
         Step::Wait(30),
-        Step::Shot("12-results"),
+        Step::Shot("12-results", Screen::Results),
     ];
     for _ in 0..4 {
         press(&mut v, 0, Right);
@@ -587,39 +591,39 @@ fn results_replay() -> Vec<Step> {
     v.push(Step::Until(screen_is(Screen::Playback), 30));
     v.push(Step::Fast(|m, _, _| m.playback.as_ref().is_some_and(|p| p.position >= 600), 2000));
     press(&mut v, 0, Start);
-    shot(&mut v, "12b-replay-controls");
+    shot(&mut v, "12b-replay-controls", Screen::Playback);
     press(&mut v, 0, Right);
     press(&mut v, 0, Right);
     press(&mut v, 0, Left);
     press(&mut v, 0, Down);
     press(&mut v, 0, Right);
-    shot(&mut v, "12c-replay-seek");
+    shot(&mut v, "12c-replay-seek", Screen::Playback);
     press(&mut v, 0, Special);
     v.push(Step::Until(screen_is(Screen::Results), 30));
-    shot(&mut v, "12d-results-return");
+    shot(&mut v, "12d-results-return", Screen::Results);
     v
 }
 
 fn crouch() -> Vec<Step> {
     let mut v = vec![Step::Training("mike"), Step::Wait(120)];
-    shot(&mut v, "14k-crouch-standing");
+    shot(&mut v, "14k-crouch-standing", Screen::Match);
     v.push(Step::Set(0, Down, true));
     v.push(Step::Until(|m, _, _| m.world.fighters[0].gait == sim::world::Gait::Crouch, 30));
-    shot(&mut v, "14l-crouch-held");
+    shot(&mut v, "14l-crouch-held", Screen::Match);
     v.push(Step::Set(0, Right, true));
     v.push(Step::Wait(12));
-    shot(&mut v, "14o-crouch-moving");
+    shot(&mut v, "14o-crouch-moving", Screen::Match);
     v.push(Step::Set(0, Right, false));
     v.push(Step::Set(0, Down, false));
     v.push(Step::Until(|m, _, _| m.world.fighters[0].gait == sim::world::Gait::Stand, 30));
-    shot(&mut v, "14m-crouch-released");
+    shot(&mut v, "14m-crouch-released", Screen::Match);
     v
 }
 
 fn blast_zones() -> Vec<Step> {
     let mut v = vec![Step::WideCamera, Step::Wait(4), Step::Training("mike"), Step::Wait(120)];
     v.push(Step::Debug(false));
-    shot(&mut v, "14n-blast-zones");
+    shot(&mut v, "14n-blast-zones", Screen::Match);
     v
 }
 
@@ -629,7 +633,7 @@ fn training() -> Vec<Step> {
     let mut v = Vec::new();
     v.extend([Step::Select(Mode::Training, 2), Step::Wait(20)]);
     press(&mut v, 0, Attack);
-    shot(&mut v, "13-training-select");
+    shot(&mut v, "13-training-select", Screen::Select);
     press(&mut v, 0, Start);
     v.push(Step::Until(screen_is(Screen::Match), 10));
     v.push(Step::Set(0, Right, true));
@@ -645,7 +649,7 @@ fn training() -> Vec<Step> {
         },
         60,
     ));
-    shot(&mut v, "14-training");
+    shot(&mut v, "14-training", Screen::Match);
     for (id, idle, special, recovery) in [
         ("archer", "14a-archer", "14b-archer-draw", "14c-archer-kite"),
         ("wizard", "14d-wizard", "14e-wizard-love", "14f-wizard-wind"),
@@ -654,16 +658,16 @@ fn training() -> Vec<Step> {
         ("whiplash", "24a-whiplash-training", "24b-whiplash-charge", "24c-whiplash-recovery"),
     ] {
         v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training(id), Step::Wait(30)]);
-        shot(&mut v, idle);
+        shot(&mut v, idle, Screen::Match);
         v.push(Step::Set(0, Special, true));
         v.push(Step::Fast(
             |m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.charge >= 24 || mv.elapsed >= 24),
             100,
         ));
-        shot(&mut v, special);
+        shot(&mut v, special, Screen::Match);
         v.extend([Step::Set(0, Special, false), Step::Wait(70)]);
         v.extend([Step::Set(0, Up, true), Step::Set(0, Special, true), Step::Wait(8)]);
-        shot(&mut v, recovery);
+        shot(&mut v, recovery, Screen::Match);
         v.extend([Step::Set(0, Up, false), Step::Set(0, Special, false)]);
     }
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("king"), Step::Wait(30)]);
@@ -676,7 +680,7 @@ fn training() -> Vec<Step> {
         },
         180,
     ));
-    v.push(Step::Shot("25l-king-jet-charge"));
+    v.push(Step::Shot("25l-king-jet-charge", Screen::Match));
     v.push(Step::Set(0, Special, false));
     v.push(Step::Set(0, Down, false));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("king"), Step::Wait(30)]);
@@ -685,7 +689,7 @@ fn training() -> Vec<Step> {
     v.push(Step::Set(0, Special, true));
     v.push(Step::Fast(|m, _, _| !m.world.projs.is_empty(), 80));
     v.push(Step::Wait(10));
-    v.push(Step::Shot("25m-king-gordo"));
+    v.push(Step::Shot("25m-king-gordo", Screen::Match));
     v.push(Step::Set(0, Special, false));
     v.push(Step::Set(0, Right, false));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("king"), Step::Wait(30)]);
@@ -695,22 +699,22 @@ fn training() -> Vec<Step> {
         |m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.slot == "uspec" && mv.phase >= 2),
         200,
     ));
-    v.push(Step::Shot("25n-king-super-jump"));
+    v.push(Step::Shot("25n-king-super-jump", Screen::Match));
     v.push(Step::Fast(|m, _, _| m.world.projs.len() >= 2, 500));
-    v.push(Step::Shot("25o-king-landing-stars"));
+    v.push(Step::Shot("25o-king-landing-stars", Screen::Match));
     v.push(Step::Set(0, Up, false));
     v.push(Step::Set(0, Special, false));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("king"), Step::Wait(30)]);
     v.push(Step::Set(0, Special, true));
     v.push(Step::Wait(24));
-    v.push(Step::Shot("25p-king-inhale"));
+    v.push(Step::Shot("25p-king-inhale", Screen::Match));
     v.push(Step::Set(0, Special, false));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("mike"), Step::Wait(30)]);
     v.push(Step::Set(0, Special, true));
     v.push(Step::Fast(|m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.charge == 209), 260));
     v.push(Step::Set(0, Special, false));
     v.push(Step::Fast(|m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.t >= 39), 80));
-    v.push(Step::Shot("21i-mike-full-eruption"));
+    v.push(Step::Shot("21i-mike-full-eruption", Screen::Match));
     // A settled banana is a world state, not a pose: throw one and wait for it to come to rest.
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("bongo"), Step::Wait(30)]);
     v.push(Step::Set(0, Down, true));
@@ -722,12 +726,12 @@ fn training() -> Vec<Step> {
         |m, _, _| m.world.projs.iter().any(|p| p.id.starts_with("banana") && p.age > 40 && p.vy == 0.),
         300,
     ));
-    v.push(Step::Shot("33r-bongo-banana-settled"));
+    v.push(Step::Shot("33r-bongo-banana-settled", Screen::Match));
     // Duchess float, turnip flight and parasol descent are state/timing captures, not move poses.
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("duchess"), Step::Wait(30)]);
     v.push(Step::Set(0, Jump, true));
     v.push(Step::Fast(|m, _, _| m.world.fighters[0].state == FState::Air && m.world.fighters[0].vy > 0.9, 160));
-    v.push(Step::Shot("35o-duchess-float"));
+    v.push(Step::Shot("35o-duchess-float", Screen::Match));
     v.push(Step::Set(0, Jump, false));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("duchess"), Step::Wait(30)]);
     v.push(Step::Set(0, Down, true));
@@ -737,7 +741,7 @@ fn training() -> Vec<Step> {
     v.push(Step::Set(0, Down, false));
     v.push(Step::Fast(|m, _, _| m.world.projs.iter().any(|p| p.id.starts_with("turnip")), 200));
     v.push(Step::Wait(10));
-    v.push(Step::Shot("35p-duchess-turnip-flight"));
+    v.push(Step::Shot("35p-duchess-turnip-flight", Screen::Match));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("duchess"), Step::Wait(30)]);
     v.push(Step::Set(0, Up, true));
     v.push(Step::Set(0, Special, true));
@@ -746,7 +750,7 @@ fn training() -> Vec<Step> {
         200,
     ));
     v.push(Step::Wait(16));
-    v.push(Step::Shot("35q-duchess-parasol-descent"));
+    v.push(Step::Shot("35q-duchess-parasol-descent", Screen::Match));
     v.extend([Step::Set(0, Up, false), Step::Set(0, Special, false)]);
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Wait(4), Step::OpenEditor, Step::Wait(20)]);
     for (id, slot, frame, name) in [
@@ -766,7 +770,7 @@ fn training() -> Vec<Step> {
         v.push(Step::Wait(4));
         ed(&mut v, Cmd::Frame(frame));
         ed(&mut v, Cmd::Hitbox(None));
-        shot(&mut v, name);
+        shot(&mut v, name, Screen::Editor);
     }
     v
 }
@@ -904,21 +908,21 @@ fn fighter_kits() -> Vec<Step> {
         // Keep the editor's launch-angle handle out of the capture.
         ed(&mut v, Cmd::Hitbox(None));
         ed(&mut v, Cmd::Frame(frame));
-        shot(&mut v, name);
+        shot(&mut v, name, Screen::Editor);
     }
     // Pin the preview to the move's default (Bronze) timeline instead of the resource-selected Levin one.
     ed(&mut v, Cmd::Fighter("throbbin".into()));
     ed(&mut v, Cmd::Subject(Subject::Move("fsmash".into())));
     ed(&mut v, Cmd::Variant(Some(0)));
     ed(&mut v, Cmd::Frame(16));
-    shot(&mut v, "30m-throbbin-bronze-smash");
+    shot(&mut v, "30m-throbbin-bronze-smash", Screen::Editor);
     ed(&mut v, Cmd::Variant(None));
     // The detonate timeline is only previewed by forcing it; the pool would plant a C4 instead.
     ed(&mut v, Cmd::Fighter("sneak".into()));
     ed(&mut v, Cmd::Subject(Subject::Move("dspec".into())));
     ed(&mut v, Cmd::Variant(Some(0)));
     ed(&mut v, Cmd::Frame(25));
-    shot(&mut v, "32o-sneak-c4-detonate");
+    shot(&mut v, "32o-sneak-c4-detonate", Screen::Editor);
     ed(&mut v, Cmd::Variant(None));
     // The forward tilt's second blow only follows a held attack; preview it by trimming the knee phase.
     ed(&mut v, Cmd::Fighter("sneak".into()));
@@ -930,7 +934,7 @@ fn fighter_kits() -> Vec<Step> {
         }),
     );
     ed(&mut v, Cmd::Frame(7));
-    shot(&mut v, "32c-sneak-body-blow");
+    shot(&mut v, "32c-sneak-body-blow", Screen::Editor);
     ed(&mut v, Cmd::Undo);
     // Live reads of the thrown gadgets, which the editor preview cannot hold or steer.
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("sneak"), Step::Wait(20)]);
@@ -938,19 +942,19 @@ fn fighter_kits() -> Vec<Step> {
     v.push(Step::Wait(26));
     v.push(Step::Set(0, Special, false));
     v.push(Step::Until(sneak_projectile, 240));
-    v.push(Step::Shot("32p-sneak-grenade-flight"));
+    v.push(Step::Shot("32p-sneak-grenade-flight", Screen::Match));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("sneak"), Step::Wait(20)]);
     v.push(Step::Set(0, Right, true));
     v.push(Step::Set(0, Special, true));
     v.push(Step::Until(sneak_missile, 240));
-    v.push(Step::Shot("32q-sneak-nikita-flight"));
+    v.push(Step::Shot("32q-sneak-nikita-flight", Screen::Match));
     v.push(Step::Set(0, Right, false));
     v.push(Step::Set(0, Special, false));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("sneak"), Step::Wait(20)]);
     v.push(Step::Set(0, Up, true));
     v.push(Step::Set(0, Special, true));
     v.push(Step::Wait(22));
-    v.push(Step::Shot("32r-sneak-cypher-rise"));
+    v.push(Step::Shot("32r-sneak-cypher-rise", Screen::Match));
     v.push(Step::Set(0, Up, false));
     v.push(Step::Set(0, Special, false));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("sneak"), Step::Wait(20)]);
@@ -963,9 +967,10 @@ fn fighter_kits() -> Vec<Step> {
     v.push(Step::Set(0, Down, true));
     v.push(Step::Set(0, Special, true));
     v.push(Step::Until(sneak_c4_blast, 240));
-    v.push(Step::Shot("32s-sneak-c4-blast"));
+    v.push(Step::Shot("32s-sneak-c4-blast", Screen::Match));
     v.push(Step::Set(0, Down, false));
     v.push(Step::Set(0, Special, false));
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Wait(4), Step::OpenEditor, Step::Wait(20)]);
     // The kick branch needs an attack press, which the preview does not send: drop the leap and flip phases
     // from the preview copy so the kick timeline is visible.
     ed(&mut v, Cmd::Fighter("bongo".into()));
@@ -979,7 +984,7 @@ fn fighter_kits() -> Vec<Step> {
         }),
     );
     ed(&mut v, Cmd::Frame(10));
-    shot(&mut v, "33q-bongo-monkey-kick");
+    shot(&mut v, "33q-bongo-monkey-kick", Screen::Editor);
     ed(&mut v, Cmd::Undo);
     ed(&mut v, Cmd::Fighter("stratus".into()));
     ed(&mut v, Cmd::Dummy(true));
@@ -1010,7 +1015,7 @@ fn fighter_kits() -> Vec<Step> {
         ed(&mut v, Cmd::Subject(Subject::Move(slot.into())));
         ed(&mut v, Cmd::Variant(variant));
         ed(&mut v, Cmd::Frame(frame));
-        shot(&mut v, name);
+        shot(&mut v, name, Screen::Editor);
     }
     ed(&mut v, Cmd::Variant(None));
     ed(&mut v, Cmd::Dummy(false));
@@ -1026,7 +1031,7 @@ fn fighter_kits() -> Vec<Step> {
         [(7, "23k-whiplash-kick-coil"), (9, "23l-whiplash-kick-strike"), (18, "23m-whiplash-kick-recoil")]
     {
         ed(&mut v, Cmd::Frame(frame));
-        shot(&mut v, name);
+        shot(&mut v, name, Screen::Editor);
     }
     ed(&mut v, Cmd::Undo);
     v
@@ -1048,50 +1053,50 @@ fn plant_shots() -> Vec<Step> {
     let mut v = vec![Step::Select(Mode::Training, 2), Step::Wait(20)];
     v.push(Step::PointAt(0, tile("plant")));
     v.push(Step::Wait(30));
-    shot(&mut v, "29a-select-plant-hover");
+    shot(&mut v, "29a-select-plant-hover", Screen::Select);
     // Training: plant's own movement clips and the held/growing/rising specials.
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("plant"), Step::Wait(30)]);
-    shot(&mut v, "29b-plant-idle");
+    shot(&mut v, "29b-plant-idle", Screen::Match);
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("plant"), Step::Wait(20)]);
     v.push(Step::Set(0, Right, true));
     v.push(Step::Wait(32));
-    shot(&mut v, "29s-plant-walk");
+    shot(&mut v, "29s-plant-walk", Screen::Match);
     v.push(Step::Wait(60));
-    shot(&mut v, "29t-plant-run");
+    shot(&mut v, "29t-plant-run", Screen::Match);
     v.push(Step::Set(0, Right, false));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("plant"), Step::Wait(20)]);
     v.push(Step::Set(0, Special, true));
     v.push(Step::Wait(18));
-    v.push(Step::Shot("29l-plant-ptooie-hold"));
+    v.push(Step::Shot("29l-plant-ptooie-hold", Screen::Match));
     // Blow the held ball with a direction; letting go of special would swallow it instead.
     v.push(Step::Set(0, Right, true));
     v.push(Step::Wait(8));
-    v.push(Step::Shot("29m-plant-ptooie-shot"));
+    v.push(Step::Shot("29m-plant-ptooie-shot", Screen::Match));
     v.push(Step::Set(0, Right, false));
     v.push(Step::Set(0, Special, false));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("plant"), Step::Wait(20)]);
     v.push(Step::Set(0, Right, true));
     v.push(Step::Set(0, Special, true));
     v.push(Step::Wait(80));
-    v.push(Step::Shot("29n-plant-poison-charge"));
+    v.push(Step::Shot("29n-plant-poison-charge", Screen::Match));
     v.push(Step::Set(0, Special, false));
     v.push(Step::Wait(24));
-    v.push(Step::Shot("29o-plant-poison-cloud"));
+    v.push(Step::Shot("29o-plant-poison-cloud", Screen::Match));
     v.push(Step::Set(0, Right, false));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("plant"), Step::Wait(20)]);
     v.push(Step::Set(0, Up, true));
     v.push(Step::Set(0, Special, true));
     v.push(Step::Wait(20));
-    v.push(Step::Shot("29p-plant-copter"));
+    v.push(Step::Shot("29p-plant-copter", Screen::Match));
     v.push(Step::Set(0, Up, false));
     v.push(Step::Set(0, Special, false));
     // Nonhumanoid hold and ledge interaction anchors.
     v.push(Step::Interaction(4));
     v.push(Step::Wait(20));
-    v.push(Step::Shot("29q-plant-hold-brawler"));
+    v.push(Step::Shot("29q-plant-hold-brawler", Screen::Match));
     v.push(Step::Interaction(5));
     v.push(Step::Wait(20));
-    v.push(Step::Shot("29r-plant-ledge"));
+    v.push(Step::Shot("29r-plant-ledge", Screen::Match));
     // Editor: startup/contact/recovery, the extending stem, and the mouth grab.
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Wait(4), Step::OpenEditor, Step::Wait(20)]);
     ed(&mut v, Cmd::Fighter("plant".into()));
@@ -1107,17 +1112,17 @@ fn plant_shots() -> Vec<Step> {
         } else {
             ed(&mut v, Cmd::Hitbox(None));
         }
-        shot(&mut v, name);
+        shot(&mut v, name, Screen::Editor);
     }
     ed(&mut v, Cmd::Subject(Subject::Move("dspec".into())));
     ed(&mut v, Cmd::Hitbox(None));
     for (frame, name) in [(6, "29i-plant-stem-charge"), (26, "29j-plant-stem-extend")] {
         ed(&mut v, Cmd::Frame(frame));
-        shot(&mut v, name);
+        shot(&mut v, name, Screen::Editor);
     }
     ed(&mut v, Cmd::Subject(Subject::Move("grab".into())));
     ed(&mut v, Cmd::Frame(8));
-    shot(&mut v, "29k-plant-grab");
+    shot(&mut v, "29k-plant-grab", Screen::Editor);
     // Animation boundaries through the shared freeze step.
     for (state, tick, vy, name) in [
         (FState::Jumpsquat, 0, 0., "29u-plant-jump-load"),
@@ -1128,7 +1133,7 @@ fn plant_shots() -> Vec<Step> {
         (FState::Landing, 2, 0., "29z-plant-landing-recover"),
     ] {
         v.push(Step::Animation("plant", state, tick, vy));
-        shot(&mut v, name);
+        shot(&mut v, name, Screen::Match);
     }
     let _ = crate::ui::key(crate::select::TILE, 0);
     v
@@ -1160,7 +1165,7 @@ fn animation_shots() -> Vec<Step> {
         ("whiplash", FState::Landing, 2, 0., "28e-whiplash-landing-recover"),
     ] {
         v.push(Step::Animation(fighter, state, tick, vy));
-        shot(&mut v, name);
+        shot(&mut v, name, Screen::Match);
     }
     v
 }
@@ -1173,13 +1178,13 @@ fn stages() -> Vec<Step> {
     for (i, id) in STAGES.into_iter().enumerate() {
         v.push(Step::Stage(id));
         v.push(Step::Wait(20));
-        v.push(Step::Shot(["16a-select-citadel", "16b-select-isles", "16c-select-foundry"][i]));
+        v.push(Step::Shot(["16a-select-citadel", "16b-select-isles", "16c-select-foundry"][i], Screen::Select));
     }
     for (i, id) in STAGES.into_iter().enumerate() {
         v.push(Step::Versus(id));
         v.push(Step::Until(|m, _, _| m.world.go_t > 0, 400));
         v.push(Step::Until(|m, _, _| m.world.fighters.iter().map(|f| f.dmg).sum::<f64>() > 150., 4000));
-        shot(&mut v, ["17a-match-citadel", "17b-match-isles", "17c-match-foundry"][i]);
+        shot(&mut v, ["17a-match-citadel", "17b-match-isles", "17c-match-foundry"][i], Screen::Match);
         if id == "isles" {
             // Fighters on opposite islands: the zoomed-out camera still frames both.
             v.push(Step::Until(
@@ -1189,7 +1194,7 @@ fn stages() -> Vec<Step> {
                 },
                 8000,
             ));
-            shot(&mut v, "17b2-match-isles-wide");
+            shot(&mut v, "17b2-match-isles-wide", Screen::Match);
         }
     }
     v
@@ -1271,7 +1276,7 @@ pub fn run(
     }
     let Some(step) = s.sections[s.section].steps.get(s.at) else {
         let missing = s.sections[s.section].steps.iter().find_map(|step| {
-            let Step::Shot(shot) = step else { return None };
+            let Step::Shot(shot, _) = step else { return None };
             let path = s.dir.join(format!("{shot}.png"));
             (!path.metadata().is_ok_and(|m| m.len() > 0)).then_some(path)
         });
@@ -1657,7 +1662,14 @@ pub fn run(
                 s.budget += 1;
             }
         }
-        Step::Shot(name) => {
+        Step::Shot(shot, expected) => {
+            if screen.get() != expected {
+                error!("screenshot section {name}: {shot} expected {expected:?}, got {:?}", screen.get());
+                s.failures.push(name);
+                s.at = s.sections[s.section].steps.len();
+                return;
+            }
+            let name = shot;
             let path = s.dir.join(format!("{name}.png"));
             info!("screenshot {}", path.display());
             commands.spawn(Screenshot::primary_window()).observe(save_to_disk(path));
@@ -1707,30 +1719,45 @@ mod tests {
 
     #[test]
     fn failed_section_continues_and_exits_with_error() {
-        let data = crate::test_data();
-        let mut script = Script::tour(PathBuf::new(), Some("menus")).unwrap();
-        script.sections = vec![
-            Section::new("fails", vec![Step::Until(|_, _, _| false, 1)]),
-            Section::new("continues", vec![Step::Wait(0)]),
-        ];
-        let mut app = App::new();
-        app.insert_resource(script)
-            .insert_resource(Data(data.clone()))
-            .insert_resource(render::Scene::new(data))
-            .insert_resource(State::new(Screen::Title))
-            .insert_resource(NextState::<Screen>::default())
-            .init_resource::<Devices>()
-            .init_resource::<crate::pointer::Pointers>()
-            .init_resource::<Framing>()
-            .init_resource::<editor::Inbox>()
-            .add_systems(Update, run);
-        for _ in 0..100 {
-            app.update();
+        for failure in [Step::Until(|_, _, _| false, 1), Step::Shot("wrong-screen", Screen::Editor)] {
+            let data = crate::test_data();
+            let mut script = Script::tour(PathBuf::new(), Some("menus")).unwrap();
+            script.sections =
+                vec![Section::new("fails", vec![failure]), Section::new("continues", vec![Step::Wait(0)])];
+            let mut app = App::new();
+            app.insert_resource(script)
+                .insert_resource(Data(data.clone()))
+                .insert_resource(render::Scene::new(data))
+                .insert_resource(State::new(Screen::Title))
+                .insert_resource(NextState::<Screen>::default())
+                .init_resource::<Devices>()
+                .init_resource::<crate::pointer::Pointers>()
+                .init_resource::<Framing>()
+                .init_resource::<editor::Inbox>()
+                .add_systems(Update, run);
+            for _ in 0..100 {
+                app.update();
+            }
+            let script = app.world().resource::<Script>();
+            assert_eq!(script.section, 2);
+            assert_eq!(script.failures, ["fails"]);
+            assert!(app.world_mut().resource_mut::<Messages<AppExit>>().drain().any(|exit| !exit.is_success()));
         }
-        let script = app.world().resource::<Script>();
-        assert_eq!(script.section, 2);
-        assert_eq!(script.failures, ["fails"]);
-        assert!(app.world_mut().resource_mut::<Messages<AppExit>>().drain().any(|exit| !exit.is_success()));
+    }
+
+    #[test]
+    fn fighter_kits_returns_to_the_editor_before_queueing_editor_commands() {
+        let mut screen = Screen::Title;
+        for step in fighter_kits() {
+            match step {
+                Step::Home => screen = Screen::Title,
+                Step::Training(_) => screen = Screen::Match,
+                Step::OpenEditor => screen = Screen::Editor,
+                Step::Editor(_) => assert_eq!(screen, Screen::Editor),
+                Step::Shot(name, expected) => assert_eq!(screen, expected, "{name}"),
+                _ => {}
+            }
+        }
     }
 
     #[test]
@@ -1740,7 +1767,7 @@ mod tests {
             .sections
             .iter()
             .flat_map(|s| &s.steps)
-            .filter_map(|s| if let Step::Shot(name) = s { Some(*name) } else { None })
+            .filter_map(|s| if let Step::Shot(name, _) = s { Some(*name) } else { None })
             .collect();
         names.sort_unstable();
         let expected = "01-title
