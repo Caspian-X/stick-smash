@@ -299,9 +299,9 @@
               "y": 38,
               "r": 22,
               "damage": 4.0,
-              "bkb": 42.0,
+              "bkb": 20.0,
               "kbg": 0.1,
-              "angle": 78.0,
+              "angle": 65.0,
               "situation": "air",
               "hitlagMult": 1.6,
               "shieldDmgMult": 1.75
@@ -924,7 +924,7 @@
           "frames": 3,
           "transitions": [
             { "on": "land", "to": "end" },
-            { "on": "timeout", "to": "main" }
+            { "on": "timeout", "to": "hit1" }
           ],
           "anim": [
             { "at": 0, "pose": "air" },
@@ -932,8 +932,8 @@
           ]
         },
         {
-          "name": "main",
-          "frames": 47,
+          "name": "hit1",
+          "frames": 8,
           "hitboxes": [
             {
               "start": 6,
@@ -1021,10 +1021,26 @@
               "dir": "away",
               "situation": "ground",
               "setKb": true
-            },
+            }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 16 },
+            { "on": "timeout", "to": "hit2" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 4, "pose": "airKick", "lerp": true },
+            { "at": 7, "pose": "airKick" },
+            { "at": 7, "pose": "air", "lerp": true }
+          ]
+        },
+        {
+          "name": "hit2",
+          "frames": 8,
+          "hitboxes": [
             {
-              "start": 14,
-              "end": 15,
+              "start": 6,
+              "end": 7,
               "x": 20.0,
               "y": 45.0,
               "r": 20,
@@ -1038,8 +1054,8 @@
               "setKb": true
             },
             {
-              "start": 14,
-              "end": 15,
+              "start": 6,
+              "end": 7,
               "x": 37.5,
               "y": 45.0,
               "r": 20,
@@ -1053,8 +1069,8 @@
               "setKb": true
             },
             {
-              "start": 14,
-              "end": 15,
+              "start": 6,
+              "end": 7,
               "x": 55.0,
               "y": 45.0,
               "r": 20,
@@ -1068,8 +1084,8 @@
               "setKb": true
             },
             {
-              "start": 14,
-              "end": 15,
+              "start": 6,
+              "end": 7,
               "x": 20.0,
               "y": 45.0,
               "r": 20,
@@ -1082,8 +1098,8 @@
               "setKb": true
             },
             {
-              "start": 14,
-              "end": 15,
+              "start": 6,
+              "end": 7,
               "x": 37.5,
               "y": 45.0,
               "r": 20,
@@ -1096,8 +1112,8 @@
               "setKb": true
             },
             {
-              "start": 14,
-              "end": 15,
+              "start": 6,
+              "end": 7,
               "x": 55.0,
               "y": 45.0,
               "r": 20,
@@ -1108,10 +1124,26 @@
               "dir": "away",
               "situation": "ground",
               "setKb": true
-            },
+            }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 16 },
+            { "on": "timeout", "to": "hit3" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 4, "pose": "airKick", "lerp": true },
+            { "at": 7, "pose": "airKick" },
+            { "at": 7, "pose": "air", "lerp": true }
+          ]
+        },
+        {
+          "name": "hit3",
+          "frames": 16,
+          "hitboxes": [
             {
-              "start": 22,
-              "end": 23,
+              "start": 6,
+              "end": 7,
               "x": 20.0,
               "y": 45.0,
               "r": 20,
@@ -1125,8 +1157,8 @@
               "setKb": true
             },
             {
-              "start": 22,
-              "end": 23,
+              "start": 6,
+              "end": 7,
               "x": 37.5,
               "y": 45.0,
               "r": 20,
@@ -1140,8 +1172,8 @@
               "setKb": true
             },
             {
-              "start": 22,
-              "end": 23,
+              "start": 6,
+              "end": 7,
               "x": 55.0,
               "y": 45.0,
               "r": 20,
@@ -1155,8 +1187,8 @@
               "setKb": true
             },
             {
-              "start": 22,
-              "end": 23,
+              "start": 6,
+              "end": 7,
               "x": 20.0,
               "y": 45.0,
               "r": 20,
@@ -1169,8 +1201,8 @@
               "setKb": true
             },
             {
-              "start": 22,
-              "end": 23,
+              "start": 6,
+              "end": 7,
               "x": 37.5,
               "y": 45.0,
               "r": 20,
@@ -1183,8 +1215,8 @@
               "setKb": true
             },
             {
-              "start": 22,
-              "end": 23,
+              "start": 6,
+              "end": 7,
               "x": 55.0,
               "y": 45.0,
               "r": 20,
@@ -1195,10 +1227,26 @@
               "dir": "away",
               "situation": "ground",
               "setKb": true
-            },
+            }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 16 },
+            { "on": "timeout", "to": "hit4" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 4, "pose": "airKick", "lerp": true },
+            { "at": 8, "pose": "airKick" },
+            { "at": 15, "pose": "air", "lerp": true }
+          ]
+        },
+        {
+          "name": "hit4",
+          "frames": 14,
+          "hitboxes": [
             {
-              "start": 32,
-              "end": 34,
+              "start": 0,
+              "end": 2,
               "x": 35.0,
               "y": 55.0,
               "r": 37.5,
@@ -1215,27 +1263,21 @@
           ],
           "anim": [
             { "at": 0, "pose": "air" },
-            { "at": 4, "pose": "airKick", "lerp": true },
-            { "at": 8, "pose": "airKick" },
-            { "at": 12, "pose": "airKick", "lerp": true },
-            { "at": 16, "pose": "airKick" },
-            { "at": 20, "pose": "airKick", "lerp": true },
-            { "at": 24, "pose": "airKick" },
-            { "at": 30, "pose": "airKick", "lerp": true },
-            { "at": 34, "pose": "airKick" },
-            { "at": 46, "pose": "air", "lerp": true }
+            { "at": 0, "pose": "airKick", "lerp": true },
+            { "at": 2, "pose": "airKick" },
+            { "at": 13, "pose": "air", "lerp": true }
           ]
         },
         {
           "name": "late",
-          "frames": 9,
+          "frames": 10,
           "transitions": [
             { "on": "land", "to": "end" },
             { "on": "timeout", "to": "end" }
           ],
           "anim": [
             { "at": 0, "pose": "air" },
-            { "at": 8, "pose": "air", "lerp": true }
+            { "at": 9, "pose": "air", "lerp": true }
           ]
         }
       ]
@@ -1522,34 +1564,10 @@
       "air": "aerial",
       "phases": [
         {
-          "name": "main",
-          "frames": 53,
+          "name": "hit1",
+          "frames": 4,
           "hitboxes": [
             {
-              "start": 24,
-              "end": 25,
-              "x": 15,
-              "y": -5,
-              "r": 35,
-              "damage": 10.0,
-              "bkb": 50.0,
-              "kbg": 0.8,
-              "angle": 45,
-              "type": "sakurai"
-            },
-            {
-              "start": 24,
-              "end": 25,
-              "x": 7,
-              "y": 25,
-              "r": 30,
-              "damage": 10.0,
-              "bkb": 50.0,
-              "kbg": 0.8,
-              "angle": 45,
-              "type": "sakurai"
-            },
-            {
               "start": 2,
               "end": 3,
               "x": 15.0,
@@ -1587,10 +1605,26 @@
               "kbg": 1.0,
               "angle": 70.0,
               "setKb": true
-            },
+            }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 20 },
+            { "on": "timeout", "to": "hit2" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 0, "pose": "dive", "lerp": true },
+            { "at": 3, "pose": "dive" },
+            { "at": 3, "pose": "air", "lerp": true }
+          ]
+        },
+        {
+          "name": "hit2",
+          "frames": 7,
+          "hitboxes": [
             {
-              "start": 9,
-              "end": 10,
+              "start": 5,
+              "end": 6,
               "x": 15.0,
               "y": -5.0,
               "r": 27.5,
@@ -1603,8 +1637,8 @@
               "setKb": true
             },
             {
-              "start": 9,
-              "end": 10,
+              "start": 5,
+              "end": 6,
               "x": 15.0,
               "y": -5.0,
               "r": 27.5,
@@ -1616,47 +1650,8 @@
               "setKb": true
             },
             {
-              "start": 9,
-              "end": 10,
-              "x": 7.5,
-              "y": 25.0,
-              "r": 22.5,
-              "damage": 3.0,
-              "bkb": 36.9,
-              "kbg": 1.0,
-              "angle": 70.0,
-              "setKb": true
-            },
-            {
-              "start": 16,
-              "end": 17,
-              "x": 15.0,
-              "y": -5.0,
-              "r": 27.5,
-              "damage": 3.0,
-              "bkb": 54.4,
-              "kbg": 1.0,
-              "angle": -94.0,
-              "type": "spike",
-              "situation": "ground",
-              "setKb": true
-            },
-            {
-              "start": 16,
-              "end": 17,
-              "x": 15.0,
-              "y": -5.0,
-              "r": 27.5,
-              "damage": 3.0,
-              "bkb": 43.9,
-              "kbg": 1.0,
-              "angle": 80.0,
-              "situation": "air",
-              "setKb": true
-            },
-            {
-              "start": 16,
-              "end": 17,
+              "start": 5,
+              "end": 6,
               "x": 7.5,
               "y": 25.0,
               "r": 22.5,
@@ -1669,19 +1664,108 @@
           ],
           "transitions": [
             { "on": "land", "to": "landing", "lag": 20 },
+            { "on": "timeout", "to": "hit3" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 3, "pose": "dive", "lerp": true },
+            { "at": 6, "pose": "dive" },
+            { "at": 6, "pose": "air", "lerp": true }
+          ]
+        },
+        {
+          "name": "hit3",
+          "frames": 7,
+          "hitboxes": [
+            {
+              "start": 5,
+              "end": 6,
+              "x": 15.0,
+              "y": -5.0,
+              "r": 27.5,
+              "damage": 3.0,
+              "bkb": 54.4,
+              "kbg": 1.0,
+              "angle": -94.0,
+              "type": "spike",
+              "situation": "ground",
+              "setKb": true
+            },
+            {
+              "start": 5,
+              "end": 6,
+              "x": 15.0,
+              "y": -5.0,
+              "r": 27.5,
+              "damage": 3.0,
+              "bkb": 43.9,
+              "kbg": 1.0,
+              "angle": 80.0,
+              "situation": "air",
+              "setKb": true
+            },
+            {
+              "start": 5,
+              "end": 6,
+              "x": 7.5,
+              "y": 25.0,
+              "r": 22.5,
+              "damage": 3.0,
+              "bkb": 36.9,
+              "kbg": 1.0,
+              "angle": 70.0,
+              "setKb": true
+            }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 20 },
+            { "on": "timeout", "to": "hit4" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            { "at": 3, "pose": "dive", "lerp": true },
+            { "at": 6, "pose": "dive" },
+            { "at": 6, "pose": "air", "lerp": true }
+          ]
+        },
+        {
+          "name": "hit4",
+          "frames": 35,
+          "hitboxes": [
+            {
+              "start": 6,
+              "end": 7,
+              "x": 15,
+              "y": -5,
+              "r": 35,
+              "damage": 10.0,
+              "bkb": 50.0,
+              "kbg": 0.8,
+              "angle": 45,
+              "type": "sakurai"
+            },
+            {
+              "start": 6,
+              "end": 7,
+              "x": 7,
+              "y": 25,
+              "r": 30,
+              "damage": 10.0,
+              "bkb": 50.0,
+              "kbg": 0.8,
+              "angle": 45,
+              "type": "sakurai"
+            }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 20 },
             { "on": "timeout", "to": "late" }
           ],
           "anim": [
             { "at": 0, "pose": "air" },
-            { "at": 0, "pose": "dive", "lerp": true },
-            { "at": 4, "pose": "dive" },
-            { "at": 7, "pose": "dive", "lerp": true },
-            { "at": 11, "pose": "dive" },
-            { "at": 14, "pose": "dive", "lerp": true },
-            { "at": 18, "pose": "dive" },
-            { "at": 22, "pose": "dive", "lerp": true },
-            { "at": 26, "pose": "dive" },
-            { "at": 52, "pose": "air", "lerp": true }
+            { "at": 4, "pose": "dive", "lerp": true },
+            { "at": 8, "pose": "dive" },
+            { "at": 34, "pose": "air", "lerp": true }
           ]
         },
         {
@@ -2002,7 +2086,7 @@
         {
           "name": "hold",
           "groundSpeed": 1.7,
-          "charge": { "frame": 0, "max": 0, "holdAfterMax": 0, "button": "special" },
+          "charge": { "frame": 0, "max": 200, "holdAfterMax": 0, "button": "special" },
           "anim": [
             { "at": 0, "pose": "pullPin" }
           ],
@@ -2010,7 +2094,6 @@
             "grenade": { "show": [0, 400] }
           },
           "transitions": [
-            { "on": "shieldPress", "to": "drop" },
             { "on": "releaseAway", "to": "throwLob" },
             { "on": "releaseToward", "to": "throwSmash" },
             { "on": "release", "to": "throwMid" },
@@ -2060,21 +2143,6 @@
           ],
           "events": [
             { "at": 8, "spawn": "grenadeLob", "sfx": "swing" }
-          ],
-          "transitions": [
-            { "on": "timeout", "to": "end" }
-          ]
-        },
-        {
-          "name": "drop",
-          "frames": 21,
-          "anim": [
-            { "at": 0, "pose": "pullPin" },
-            { "at": 4, "pose": "plant", "lerp": true },
-            { "at": 16, "pose": "guard", "lerp": true }
-          ],
-          "events": [
-            { "at": 0, "spawn": "grenadeDrop", "sfx": "swing" }
           ],
           "transitions": [
             { "on": "timeout", "to": "end" }
@@ -2295,7 +2363,7 @@
         "damage": 9.0,
         "bkb": 65.0,
         "kbg": 0.65,
-        "angle": 140.0,
+        "angle": 40.0,
         "hitlagMult": 0.0
       },
       "ticks": []
@@ -2309,13 +2377,15 @@
         "x": 0,
         "y": 0,
         "r": 60,
-        "damage": 11.0,
+        "damage": 4.0,
         "bkb": 55.0,
         "kbg": 1.3,
         "angle": 90.0,
         "hitlagMult": 0.0
       },
-      "ticks": []
+      "ticks": [
+        { "at": 21, "damage": 7.0 }
+      ]
     },
     "d": {
       "release": 34,
@@ -2377,6 +2447,7 @@
       },
       "spawnSfx": "shoot",
       "spin": 8.0,
+      "chargeScale": { "speed": 0.0, "damage": 0.0, "life": -0.007751937984496124 },
       "shapes": [
         { "shape": "circle", "at": [0, 0], "r": 9, "stroke": "#9aa878", "width": 1.6, "fill": "#3f5233" },
         { "shape": "circle", "at": [0, 0], "r": 8.4, "fill": "#4c6140" },
@@ -2423,6 +2494,7 @@
       },
       "spawnSfx": "shoot",
       "spin": 8.0,
+      "chargeScale": { "speed": 0.0, "damage": 0.0, "life": -0.007751937984496124 },
       "shapes": [
         { "shape": "circle", "at": [0, 0], "r": 9, "stroke": "#9aa878", "width": 1.6, "fill": "#3f5233" },
         { "shape": "circle", "at": [0, 0], "r": 8.4, "fill": "#4c6140" },
@@ -2469,52 +2541,7 @@
       },
       "spawnSfx": "shoot",
       "spin": 8.0,
-      "shapes": [
-        { "shape": "circle", "at": [0, 0], "r": 9, "stroke": "#9aa878", "width": 1.6, "fill": "#3f5233" },
-        { "shape": "circle", "at": [0, 0], "r": 8.4, "fill": "#4c6140" },
-        { "shape": "line", "from": [-4, 2], "to": [4, 2], "width": 1.6, "color": "#2b3624" },
-        { "shape": "line", "from": [2, 6], "to": [5, 10], "width": 3, "color": "#b9a06a" }
-      ]
-    },
-    "grenadeDrop": {
-      "name": "Grenade (drop)",
-      "spawn": [0, 30],
-      "vel": [0.0, 0.0],
-      "r": 9,
-      "life": 129,
-      "max": 1,
-      "hit": {
-        "start": 0,
-        "x": 0,
-        "y": 0,
-        "r": 80,
-        "damage": 9.0,
-        "bkb": 60,
-        "kbg": 0.69,
-        "angle": 80,
-        "shieldDmgMult": 0.5
-      },
-      "gravity": 0.3,
-      "maxFall": 13.0,
-      "bounce": {
-        "restitution": 0.45,
-        "minSpeed": 1.2,
-        "friction": 0.72,
-        "wallRestitution": 0.5,
-        "maxBounces": 3,
-        "fizzleLife": 40,
-        "sfx": "land"
-      },
-      "explosion": {
-        "armTicks": 0,
-        "radius": 80,
-        "sfx": "quake",
-        "fx": [
-          { "type": "burst", "color": "#ffd27a", "n": 16, "speed": 5.0, "life": 18, "size": 4.5 }
-        ]
-      },
-      "spawnSfx": "shoot",
-      "spin": 8.0,
+      "chargeScale": { "speed": 0.0, "damage": 0.0, "life": -0.007751937984496124 },
       "shapes": [
         { "shape": "circle", "at": [0, 0], "r": 9, "stroke": "#9aa878", "width": 1.6, "fill": "#3f5233" },
         { "shape": "circle", "at": [0, 0], "r": 8.4, "fill": "#4c6140" },
@@ -2626,8 +2653,7 @@
             "frames": 100,
             "vel": [4.4, 0],
             "hitboxes": [
-              { "start": 0, "x": 0, "y": 0, "r": 45, "damage": 14.0, "bkb": 75, "kbg": 0.7, "angle": 50 },
-              { "start": 0, "x": 0, "y": 0, "r": 65, "damage": 7.0, "bkb": 50, "kbg": 0.9, "angle": 50 }
+              { "start": 0, "x": 0, "y": 0, "r": 65, "damage": 14.0, "bkb": 75, "kbg": 0.7, "angle": 50 }
             ],
             "shapes": [
               { "shape": "circle", "at": [0, 0], "r": 11, "stroke": "#99a082", "width": 1.6, "fill": "#5a604c" },

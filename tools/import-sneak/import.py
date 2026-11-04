@@ -401,7 +401,7 @@ moves['jab'] = {'name': 'Snake Jab', 'phases': [
 ft1 = raw('ftilt1', 'snake', 'AttackS3')
 knee_a = row(ft1, 4.0, 0)['source']
 ftilt1 = fitted(knee_a, src(4), src(5), 44, 38, 22, situation='ground') + \
-    fitted(knee_a, src(4), src(5), 44, 38, 22, situation='air')
+    fitted(row(ft1, 4.0, 1)['source'], src(4), src(5), 44, 38, 22, situation='air')
 ft2 = raw('ftilt2', 'snake', 'AttackS3S2')
 ftilt2 = root(row(ft2, 9.0)['source'], src(8), src(8)) + root(row(ft2, 11.0)['source'], src(8), src(8)) + \
     root(row(ft2, 10.0)['source'], src(8), src(8))
@@ -497,13 +497,15 @@ moves['dsmash'] = {'name': 'Double Kick', 'phases': [phase(
     transitions=[{'on': 'timeout', 'to': 'end'}])]}
 
 
-def aerial(slot, total, landing, ac_early, ac_late, boxes, contacts, pose, loop_pose='air'):
-    """Split an aerial at its autocancel boundaries so startup and ending windows land without lag."""
-    spans = [(0, ac_early, 'startup', None), (ac_early, ac_late, 'main', landing), (ac_late, total, 'late', None)]
-    spans = [s for s in spans if s[1] > s[0]]
-    parts = []
-    for k, (lo, hi, tag, lag) in enumerate(spans):
-        following = spans[k + 1][2] if k + 1 < len(spans) else 'end' 
+def aerial(slot, total, landing, ac_early, ac_late, boxes, contacts, pose, loop_pose='air', splits=()):
+    """Split an aerial at its autocancel boundaries and at every separate strike, so each strike can connect
+    (contact history is per phase). Spans inside the autocancel gap carry landing lag; empty spans merge into
+    their neighbour so the timeline stays compact."""
+    edges = sorted({0, ac_early, ac_late, total, *splits})
+    spans = []
+    for lo, hi in zip(edges, edges[1:]):
+        if hi <= lo:
+            continue
         cut = []
         for b in boxes:
             b = copy.deepcopy(b)
@@ -512,7 +514,27 @@ def aerial(slot, total, landing, ac_early, ac_late, boxes, contacts, pose, loop_
                 continue
             b['start'], b['end'] = max(lo, s) - lo, min(hi - 1, e) - lo
             cut.append(b)
-        ph = phase(tag, hi - lo, cut, transitions=[
+        lag = landing if lo >= ac_early and hi <= ac_late else None
+        # An empty span only exists to time the move: fold it into the previous span when the landing rule
+        # matches, which keeps the timeline compact without changing any window.
+        if not cut and spans and spans[-1][2] == lag:
+            prev = spans[-1]
+            spans[-1] = (prev[0], hi, prev[2], prev[3])
+            continue
+        spans.append((lo, hi, lag, cut))
+    inside = [i for i, sp in enumerate(spans) if sp[2] is not None]
+    names = []
+    for i, (lo, hi, lag, _) in enumerate(spans):
+        if lag is None:
+            names.append('startup' if i == 0 and lo == 0 else 'late')
+        elif len(inside) == 1:
+            names.append('main')
+        else:
+            names.append(f'hit{inside.index(i) + 1}')
+    parts = []
+    for i, (lo, hi, lag, cut) in enumerate(spans):
+        following = names[i + 1] if i + 1 < len(spans) else 'end'
+        ph = phase(names[i], hi - lo, cut, transitions=[
             {'on': 'land', 'to': 'landing', 'lag': lag} if lag else {'on': 'land', 'to': 'end'},
             {'on': 'timeout', 'to': following}])
         keys = [{'at': 0, 'pose': loop_pose}]
@@ -533,7 +555,8 @@ for (start, end, y) in [(10, 11, 35), (18, 19, 45), (26, 27, 45)]:
     nair += capsule(row(an, 3.0, 0)['source'], src(start), src(end), 20, y, 55, y, 20)
     nair += capsule(row(an, 3.0, 1)['source'], src(start), src(end), 20, y, 55, y, 20)
 nair += root(row(an, 12.0)['source'], src(36), src(38))
-moves['nair'] = aerial('Leaping Kick', 59, 16, 3, 50, nair, [src(10), src(18), src(26), src(36)], 'airKick')
+moves['nair'] = aerial('Leaping Kick', 59, 16, 3, src(50), nair, [src(10), src(18), src(26), src(36)], 'airKick',
+                       splits=[src(12), src(20), src(28), src(36), src(39)])
 
 # --- forward air: knee drop with a meteor (AttackAirF); total 69, land 19, AC 1-3 / 63+
 af = raw('fair', 'snake', 'AttackAirF')
@@ -569,7 +592,8 @@ for k, (start, end) in enumerate([(3, 4), (10, 11), (17, 18)]):
     dmg, base = (4.0, 0) if start == 3 else (3.0, 3)
     for n in range(3):
         dair += root(row(ad, dmg, base + n)['source'], src(start), src(end))
-moves['dair'] = aerial('Drill Kick', 59, 20, 0, 53, dair, [src(3), src(10), src(17), src(25)], 'dive')
+moves['dair'] = aerial('Drill Kick', 59, 20, 0, 53, dair, [src(3), src(10), src(17), src(25)], 'dive',
+                       splits=[src(5), src(12), src(19), src(27)])
 
 # --- grabs (Catch / CatchDash)
 cg = raw('grab', 'snake', 'Catch')
@@ -600,10 +624,10 @@ pull = phase('pull', 21, charge=HOLD_SPECIAL, anim=[
                  {'on': 'releaseToward', 'from': src(21), 'to': 'throwSmash'},
                  {'on': 'release', 'from': src(21), 'to': 'throwMid'},
                  {'on': 'timeout', 'to': 'hold'}])
-hold = phase('hold', None, ground_speed=1.7, charge=HOLD_SPECIAL,
+hold = phase('hold', None, ground_speed=1.7,
+             charge={'frame': 0, 'max': 200, 'hold_after_max': 0, 'button': 'special'},
              anim=[{'at': 0, 'pose': 'pullPin'}], attach={'grenade': {'show': [0, 400]}},
-             transitions=[{'on': 'shieldPress', 'to': 'drop'},
-                          {'on': 'releaseAway', 'to': 'throwLob'},
+             transitions=[{'on': 'releaseAway', 'to': 'throwLob'},
                           {'on': 'releaseToward', 'to': 'throwSmash'},
                           {'on': 'release', 'to': 'throwMid'},
                           {'on': 'attackPress', 'to': 'throwMid'}])
@@ -620,10 +644,6 @@ moves['nspec'] = {'name': 'Hand Grenade', 'b_reverse': True, 'phases': [
     throw_phase('throwMid', 27, src(8), 'grenadeMid', 'guard'),
     throw_phase('throwSmash', 31, src(10), 'grenadeStrong', 'guard'),
     throw_phase('throwLob', 25, src(9), 'grenadeLob', 'guard'),
-    phase('drop', 21, anim=[{'at': 0, 'pose': 'pullPin'}, {'at': 4, 'pose': 'plant', 'lerp': True},
-                            {'at': 16, 'pose': 'guard', 'lerp': True}],
-          events=[{'at': 0, 'spawn': 'grenadeDrop', 'sfx': 'swing'}],
-          transitions=[{'on': 'timeout', 'to': 'end'}]),
 ]}
 
 # --- side special: shoulder the launcher, fly the Nikita, release it (SpecialSStart / SpecialSAway)
@@ -693,13 +713,15 @@ def throw(slot, script, total, release, **kw):
 
 throws = {
     'f': throw('fthrow', 'ThrowF', 39, src(21), x=0, y=0, r=60),
-    'b': throw('bthrow', 'ThrowB', 30, src(20), x=0, y=0, r=60),
-    # UFD lists a 7% preliminary and a 4% release; they are merged into one 11% throw hit.
-    'u': throw('uthrow', 'ThrowHi', 47, src(23), x=0, y=0, r=60, damage=11.0),
+    # The engine launches a back throw along `-face`, so the source's 140 degree angle becomes 40.
+    'b': throw('bthrow', 'ThrowB', 30, src(20), x=0, y=0, r=60, angle=40.0),
+    # Source: a 7% catch-only contact on frame 22, then the 4% absolute throw on frame 23.
+    'u': throw('uthrow', 'ThrowHi', 47, src(23), x=0, y=0, r=60),
     # Source angle 270 with no knockback lays the victim down; a small downward launch approximates the
     # knockdown in this engine's throw model.
     'd': throw('dthrow', 'ThrowLw', 41, src(35), x=0, y=0, r=60, bkb=25.0, kbg=0.35, angle=-90, type='spike'),
 }
+throws['u']['ticks'] = [{'at': src(22), 'damage': 7.0}]
 
 # ---------------------------------------------------------------- projectiles
 def proj(name, spawn, vel, r, life, hitb, **kw):
@@ -724,6 +746,8 @@ def grenade(name, vel, life, maxn=1, spawn=(22, 52)):
                            'fx': [{'type': 'burst', 'color': '#ffd27a', 'n': 16, 'speed': 5.0, 'life': 18,
                                    'size': 4.5}]},
                 spawnSfx='shoot', spin=8.0,
+                # Cooking: the source fuse starts at the unpin, so each held tick removes one tick of life.
+                chargeScale={'speed': 0.0, 'damage': 0.0, 'life': -1.0 / GRENADE_FUSE},
                 shapes=[circle((0, 0), 9, '#3f5233', stroke='#9aa878', width=1.6),
                         circle((0, 0), 8.4, '#4c6140'),
                         line((-4, 2), (4, 2), 1.6, '#2b3624'),
@@ -734,7 +758,6 @@ projectiles = {
     'grenadeMid': grenade('Grenade', [4.6, 5.2], GRENADE_FUSE, maxn=2),
     'grenadeStrong': grenade('Grenade (smash throw)', [10.5, 3.0], GRENADE_FUSE),
     'grenadeLob': grenade('Grenade (underhand)', [1.8, 10.6], GRENADE_FUSE),
-    'grenadeDrop': grenade('Grenade (drop)', [0.0, 0.0], GRENADE_FUSE, spawn=(0, 30)),
     'c4': proj('C4', (0, 16), (0, 0), 10, 1600,
                {'start': 0, 'x': 0, 'y': 0, 'r': 85, 'damage': 17.0, 'bkb': 40, 'kbg': 0.9, 'angle': 80},
                gravity=0.4, maxFall=14.0,
@@ -772,9 +795,8 @@ projectiles['nikita'] = proj(
     article={'slot': 'sspec', 'minRelease': 0, 'autoRelease': 150, 'releaseOnUp': True, 'steer': 2.6,
              'stages': [{'from': 0, 'startup': 0, 'frames': 100, 'vel': [4.4, 0],
                          'hitboxes': [
-                             {'start': 0, 'x': 0, 'y': 0, 'r': 45, 'damage': 14.0, 'bkb': 75, 'kbg': 0.7,
-                              'angle': 50},
-                             {'start': 0, 'x': 0, 'y': 0, 'r': 65, 'damage': 7.0, 'bkb': 50, 'kbg': 0.9, 'angle': 50}],
+                             {'start': 0, 'x': 0, 'y': 0, 'r': 65, 'damage': 14.0, 'bkb': 75, 'kbg': 0.7,
+                              'angle': 50}],
                          'shapes': [circle((0, 0), 11, '#5a604c', stroke='#99a082', width=1.6),
                                     line((-10, 0), (12, 0), 5, '#7d8a6a'),
                                     line((12, -5), (18, -5), 4, '#3b4133'),
@@ -836,6 +858,13 @@ def camel(v):
 
 
 doc = camel(doc)
+ledger['sourceFacts'] = {'rows': {k: row for k, row in ufd['rows'].items()
+                                  if k in ('jab1', 'jab2', 'jab3', 'ftilt1', 'ftilt2', 'utilt', 'dtilt',
+                                           'dashatk', 'fsmash', 'usmash', 'dsmash', 'nair', 'fair', 'bair',
+                                           'uair', 'dair', 'grab', 'dashgrab', 'pummel', 'fthrow', 'bthrow',
+                                           'uthrow', 'dthrow', 'grenadePull', 'grenadeThrows', 'nikita', 'cypher',
+                                           'c4', 'c4Blast')},
+                        'stats': ufd['stats']}
 ledger['moves'] = {slot: [{'name': p['name'], 'frames': p.get('frames'),
                            'hits': [[h['start'], h.get('end'), h['damage'], h.get('angle')]
                                     for h in p.get('hitboxes', [])]} for p in m['phases']]

@@ -13,9 +13,9 @@ throw arc from the live stick.
 - Intended identity: a slow, heavy, mid-range tactician. Worst-in-class ground mobility and a floaty fall;
   almost every special is something he throws and then explodes. The kit cycles between trap setup (grenade,
   C4), remote pressure (Nikita) and a long, armoured recovery (Cypher).
-- State: research, authoring, focused tests, stage/CPU coverage and a `just balance` pass are complete.
-  Rendering was reviewed through a temporary stick-figure/hitbox proxy because Bevy window captures are black
-  in this agent session. No controller playtest was performed.
+- State: research, authoring, focused tests, stage/CPU coverage, a `just balance` pass and an independent
+  review (with the must-fix findings applied) are complete. Window screenshots were captured and inspected.
+  No controller playtest was performed.
 - Remaining work: see [Known approximations](#known-approximations--remaining-work).
 
 ## Sources
@@ -82,28 +82,33 @@ The throw is selected on release:
 | stick away from facing (`releaseAway`) | `grenadeLob` | 25 frames, spawn on source frame 9 | underhand lob `[1.8, 10.6]`, lands close |
 | stick toward facing (`releaseToward`) | `grenadeStrong` | 31 frames, spawn on source frame 10 | flat strong throw `[10.5, 3.0]` |
 | neutral (`release`) or a fresh attack press | `grenadeMid` | 27 frames, spawn on source frame 8 | mid arc `[4.6, 5.2]` |
-| shield during the hold | `grenadeDrop` | 21-frame drop | zero velocity at the feet |
 
-All four share the source fuse: 129 ticks of `life` after the 21-tick pull ≈ 150 ticks from unpinning
-(2.5 s). They bounce (restitution 0.45, friction 0.72, max 3 bounces, wall restitution 0.5) and detonate on
-fuse expiry with a fuse-only `explosion` (`armTicks: 0`, no proximity, radius 80 px, 9% at angle 80, BKB 60,
-KBG 0.69, 0.5× shield damage). The `max` field is per projectile id, so the source's two-grenade cap is
-modelled as two mid-arc plus one of each other arc (four in play at most).
+All three share the source fuse, which starts at the unpin: the hold phase accumulates charge ticks and each
+projectile's `chargeScale.life` is `-1/129`, so the thrown fuse is `129 − held` ticks (clamped to one) and the
+explosion lands 150 ticks after the pin was pulled. Holding past 129 ticks therefore throws a grenade that
+detonates immediately, as in the source. While cooking, the shared charge hold keeps the fighter in the phase,
+so a shield press does not drop the grenade (the source does); releasing still throws. Grenades bounce
+(restitution 0.45, friction 0.72, max 3 bounces, wall restitution 0.5) and detonate on fuse expiry with a
+fuse-only `explosion` (`armTicks: 0`, no proximity, radius 80 px, 9% at angle 80, BKB 60, KBG 0.69, 0.5× shield
+damage). The `max` field is per projectile id, so the source's two-grenade cap is modelled as two mid-arc plus
+one of each other arc (four in play at most).
 
 **C4 (down special).** A charge pool `c4` (one use, no recharge) drives a `variants` timeline: with the use
 available the down special plants, spending it; with the pool empty the same slot presses the switch. The
 plant is a zero-velocity projectile that falls 16 px and settles on the floor (gravity 0.4, zero-restitution
 bounce). Its `explosion` is `manual` with `armTicks: 0` and radius 85 px; its blast hit is 17% at angle 80,
 BKB 40, KBG 0.9. The detonate timeline's frame 24 event runs `detonate` and `restore` in one action set, so
-pressing the switch again is possible immediately. A C4 that leaves the stage is removed without a blast and
+pressing the switch again is possible immediately. `Event.detonate` now only fires *manual* gadgets (see
+[engine semantics](#validation-and-handoff)), so the switch cannot set off a live grenade or mortar shell. A C4 that leaves the stage is removed without a blast and
 the next press performs the (empty) switch animation, which restores the pool.
 
 **Nikita (side special).** An `article` on the `sspec` slot: the launcher startup is 41 frames, then the
 `guide` phase spawns the missile and keeps the fighter locked in the special (source: defenceless while
 guiding). While unreleased the missile travels forward at 2.4 px/tick and its vertical speed follows the live
 stick (`steer: 2.6`). Releasing special (or reaching `autoRelease` age 150) freezes the released stage: 100
-ticks at 4.4 px/tick with the source's two explosion boxes — 14% (BKB 75, KBG 0.7, radius 9 units → 45 px)
-inside a 7% ring (BKB 50, KBG 0.9, radius 13 units → 65 px). Shield cancels control into the 31-frame `away`
+ticks at 4.4 px/tick with the source's strong explosion box (14%, BKB 75, KBG 0.7, radius 13 units → 65 px).
+The 7% weak explosion is a separate source variant, not a ring: modelling both as concentric boxes made the
+outer ring swallow the direct hit. Shield cancels control into the 31-frame `away`
 animation.
 
 **Cypher (up special).** Startup 3 frames, then an 86-tick rise at 3.4 px/tick with `armorThreshold: 7`
@@ -127,7 +132,7 @@ authored by `tools/import-sneak/import.py`; the parsed script rows it used are i
 | Jab 1 | Attack11 | 3 / 3–4 / 15 | 2.5, 361→Sakurai, BKB 25/20/20, three root circles (Z 5.5/7.5/11.5, Y 10.4–10.8) | one phase; continues from source frame 6 while attack is held |
 | Jab 2 | Attack12 | 4 / 4–5 / 24 | 2.5, 361, BKB 28/25/25, three root circles (Z 4/6.5/10.5) | one phase; continues from source frame 7 |
 | Jab 3 | Attack13 | 8 / 8–9 / 46 | 6.0, 361, KBG 58, BKB 70, circles Z 4/7.8/13 | one phase, knee pose |
-| Forward tilt 1 | AttackS3 | 4 / 4–5 / 31 | 4.0, 78° ground / 65° air, KBG 10, BKB 42/20 | fitted knee, 22 px radius; continues from source frame 10 |
+| Forward tilt 1 | AttackS3 | 4 / 4–5 / 31 | 4.0, 78° ground (BKB 42) / 65° air (BKB 20), KBG 10 | fitted knee, 22 px radius, one box per situation mask; continues from source frame 10 |
 | Forward tilt 2 | AttackS3S2 | 8 / 8 / 39 | 9.0 close (BKB 85), 11.0 far ground, 10.0 far air, all 361 | converted root circles; **converted** |
 | Up tilt | AttackHi3 | 6 / 6–8, 9–13 / 37 | 14.5 (95°, KBG 82, BKB 65) then 13.5 (95°, KBG 88, BKB 50) | one phase, three converted root circles per window plus fitted knee/leg leg boxes; rising axe-kick pose |
 | Down tilt | AttackLw3 | 6 / 6–7 / 30 | 12.0, angles 80/75/70, KBG 62, BKB 60, `dir: away`, low attack height | two converted circle sets (the source slides the three circles forward on the second frame) |
@@ -135,16 +140,16 @@ authored by `tools/import-sneak/import.py`; the parsed script rows it used are i
 | Forward smash | AttackS4 | 41 / 41–43 / 73, charge hold 38 | 22.0, 361, KBG 75, BKB 66; 60 px ground blast circle and 35 px air circle at Z 16 | one phase; RPG-7 prop; charge frame 37 |
 | Up smash | AttackHi4 | 11 / 11–12 / 54, charge hold 24 | launcher 4.0, 96°, FKB 120, ground only; shell 14.0, 65°, BKB 87, KBG 0.6 | one phase; launcher circles at Z 1/7 and the shell spawned on frame 35 |
 | Down smash | AttackLw4 | 8 / 8–10, 20–22 / 44, charge hold 5 | 12.0 then 14.0, angles 25°/20°, KBG 87/88, BKB 30, `dir: away` | one phase; fitted front then back low kicks (20 px / 16.5 px) |
-| Neutral air | AttackAirN | 10 / 10–11, 18–19, 26–27, 36–38 / 59, land 16, AC 1–3 / 50+ | 3.0 autolink (FKV 30 airborne, 50 ground; radius 4, capsule Z 4→11) then 12.0 Sakurai (KBG 90, BKB 25) | three phases at the autocancel boundaries; every multi window keeps both masks |
+| Neutral air | AttackAirN | 10 / 10–11, 18–19, 26–27, 36–38 / 59, land 16, AC 1–3 / 50+ | 3.0 autolink (FKV 30 airborne, 50 ground; radius 4, capsule Z 4→11) then 12.0 Sakurai (KBG 90, BKB 25) | startup, one phase per multi window, the finisher, then the ending autocancel: contact history is per phase, so all four strikes can land on one victim |
 | Forward air | AttackAirF | 23 / 23–26 / 69, land 19, AC 1–3 / 63+ | 15.0 spike (269°→−89°) fitted forward-low, 14.0 at 80° fitted close, both KBG 90, BKB 35 | three phases; spike box listed first so the meteor wins overlap |
 | Back air | AttackAirB | 7 / 7–9, 10–26 / 42, land 19, AC 40+ | 16.0 far / 14.0 close (361, KBG 72, BKB 43/42), then 10.0 / 9.0 (KBG 85, BKB 25), `dir: back` | two phases; fitted body-slam heights with the source's Z offsets |
 | Up air | AttackAirHi | 10 / 10–12, 13–23 / 47, land 15, AC 1–4 / 36+ | 14.0 (80°, KBG 72, BKB 65) then 10.0 (70°, KBG 95, BKB 10), three circles above the head | three phases; converted Y 15/18/21 |
-| Down air | AttackAirLw | 3 / 3–4, 10–11, 17–18, 25–26 / 59, land 20, AC 54+ | 4.0 (ground spike 266°, air 80° FKV 35, both 70° FKV 25) then 3.0, then 10.0 Sakurai (KBG 80, BKB 50) | two phases; converted boxes below the feet, headstand pose |
+| Down air | AttackAirLw | 3 / 3–4, 10–11, 17–18, 25–26 / 59, land 20, AC 54+ | 4.0 (ground spike 266°, air 80° FKV 35, both 70° FKV 25) then 3.0, then 10.0 Sakurai (KBG 80, BKB 50) | one phase per strike plus the ending autocancel span; converted boxes below the feet, headstand pose |
 | Grab / dash grab | Catch / CatchDash | 8–9 / 34; 11–12 / 42 | grab capsules at 35→57.5 px (ground 20 px) and 25→67.5 px (air 10 px) | one phase each; dash grab slides to source frame 20 |
 | Pummel | CatchAttack | 1 | 1.3 | shared hold state |
 | Forward throw | ThrowF | release 21 / 39 | 9.0, 40°, KBG 65, BKB 60 | shared throw motion |
-| Back throw | ThrowB | release 20 / 30 | 9.0, 140°, KBG 65, BKB 65 | shared |
-| Up throw | ThrowHi | release 23 / 47 | 11.0 (7 + 4 merged), 90°, KBG 130, BKB 55 | shared |
+| Back throw | ThrowB | release 20 / 30 | 9.0, stored as 40° because the engine launches a back throw along `-face` (the source's 140° is facing-absolute), KBG 65, BKB 65 | shared |
+| Up throw | ThrowHi | release 23 / 47 | 7.0 catch-only tick on frame 22 (`Throw.ticks`) then 4.0 at release, 90°, KBG 130, BKB 55 | shared; the preliminary hit is a damage tick, so the release keeps the source's knockback |
 | Down throw | ThrowLw | release 35 / 41 | 9.0, source 270° with no knockback; here −90° with BKB 25, KBG 0.35 as a knockdown approximation | shared |
 | Neutral special | SpecialNStart / ThrowHi/M/Lw | pull 21, throws 27/31/25 | see gadgets | three throw phases + hold + shield drop |
 | Side special | SpecialSStart / Hit / Away | 41 / launch / 36, away 31 | 14.0 direct, 7.0 ring | startup, guide, fire, away |
@@ -152,11 +157,13 @@ authored by `tools/import-sneak/import.py`; the parsed script rows it used are i
 | Down special | SpecialLwStart / Blast | plant 24; detonate 32 with the blast on 25–27 | 17.0, 80°, BKB 40, KBG 0.9, radius 85 | plant (pool variant) / detonate (default) |
 
 Omissions: the pivot grab (no destination slot; the shared grab covers it), the ledge/floor attacks (shared
-ledge options), Snake's item and Final Smash animations, and the smoke/ear-cover flourish.
+ledge options), Snake's item and Final Smash animations, the shield-drop (the shared charge hold keeps the
+cooking phase from seeing the press, and it is not an input the source's recipe needs), and the smoke/ear-cover
+flourish.
 
 ## Validation and handoff
 
-`crates/sim/tests/sneak.rs` (13 tests):
+`crates/sim/tests/sneak.rs` (19 tests):
 
 - Reference windows and damage: jab/forward-tilt phase frames, up-tilt 14.5 → 13.5 windows, down-tilt pairs,
   down-smash front/back windows and directions, forward-smash 22% on phase 40–42 with the charge hold on 37,
@@ -169,7 +176,13 @@ ledge options), Snake's item and Final Smash animations, and the smoke/ear-cover
   plant; Nikita steering up and down while held, release into the 14%/7% flight, and a landed hit; the mortar
   shell arc, floor contact and 14% blast; Cypher climb (>230 px), armour preserving the ride against a 5%
   hit, and the detached 6% Cypher projectile.
-- Raw input: neutral/side/down/up special routing, ground attack → jab, jump + attack → forward air.
+- Contact and lifecycle: every nair/dair strike landing on one pinned victim in order (3+3+3+12 and
+  4+3+3+10), back-throw direction and the up throw's 7% tick plus 4% release, cooking shortening the fuse
+  (1/40/100 held ticks) and an overcooked grenade detonating at once, the C4 switch leaving a live grenade
+  alone, the Nikita's 14% blast at three distances, the missile auto-releasing at fuel end, and an interrupted
+  grenade hold leaving no projectile.
+- Raw input: neutral/side/down/up special routing, ground attack → jab, jump + attack → forward air, and
+  `Input`-driven grenade hold/release and C4 plant/detonate.
 - Identity: package fields, all 19 slots, the `c4` pool, the projectile definitions' gadget semantics, the
   throw release/damage ledger, and pummel damage.
 
@@ -179,30 +192,54 @@ plus the live training reads `32p`–`32s` (grenade flight, Nikita flight, Cyphe
 expected-name list in `shots::tests::preserves_screenshot_names` is updated in the same file.
 
 Stage and CPU coverage: `tests/content.rs` roster expectation, `tests/stages.rs` `new_fighter_cpu_matchups`
-(all four stages, three opponents, four seeds: 24/24 finished, 23 wins, 139 KOs, 11 self-KOs).
+(four stages × three opponents × four seeds = 48 matchups, all finished; see the run below).
 
-`just balance 4 sneak` (4 seeds, every opponent and stage, 256 matches): **0 unfinished**, 100 wins,
-66.1k damage dealt / 90.7k taken, 406 deaths, 49 self-KOs (12%), 121 recovery deaths. Per-move starts/hits show the
-whole kit used: up air 687 hits / 172 KOs, up tilt 370 / 105, forward tilt 1264, dash attack 834, down air
-2444 (multi), down tilt 161, neutral air 68, forward air 38, back air 246, down smash 28, forward smash 50 /
-9 KOs, up smash 46 launcher hits, Nikita 189 / 6 KOs, C4 16 / 7 KOs. Grenade hits land while Snake is already
-back in `idle`/`shield` (the balance tool attributes a delayed projectile to the attacker's current state),
-which is why the neutral special itself reports 348 whiffs.
+`just balance 4 sneak` (4 seeds, every opponent and stage, 256 matches): **0 unfinished**, 131 wins,
+74.1k damage dealt / 83.3k taken, 358 deaths, 41 self-KOs (11%), 105 recovery deaths. Per-move starts/hits show
+the whole kit used: down air 3929 (multi, 6 KOs), up air 742 / 205 KOs, up tilt 346 / 94, forward tilt 1369,
+dash attack 862, back air 235 / 10, neutral air 161, forward air 49, down tilt 141, down smash 26, forward
+smash 49 / 6, up smash 55 launcher hits, Nikita 167 / 14 KOs, C4 20 / 9 KOs, pummel 547. Grenade hits land while
+Snake is already back in `idle`/`shield` (the balance tool attributes a delayed projectile to the attacker's
+current state), which is why the neutral special itself reports whiffs. CPU matchups in `stages.rs`: 26 wins of
+48, 137 KOs, 10 self-KOs, all finished.
 
-Review: delegation to the requested `codex` / `gpt-6.1-sol` (high reasoning) reviewer was attempted four times;
-three calls failed with transport errors and the one run that started stopped at the provider's usage limit, so
-**no independent review was obtained**. The author's own review pass re-read the engine diff (both new triggers
-are gated on every step-transition evaluation; buffered follow-up commands cannot take them), confirmed the
-generator is byte-for-byte reproducible, that no `World`/projectile/article/charge source changed, that the
-package contains no fighter-id dispatch, and that every phase has an exit (the only unbounded phase, the
-grenade hold, has release/toward/away/attack/shield transitions).
+Review: the requested `codex` / `gpt-6.1-sol` (high reasoning) review was attempted four times; three calls
+failed with transport errors and the first run stopped at the provider usage limit. The limit-resumed run then
+completed and reported six must-fix findings, all fixed here:
 
-New engine semantics (shared, data-driven): `Trigger::ReleaseToward` and `Trigger::ReleaseAway` — a `release`
-that additionally requires the live movement stick to point toward or away from the fighter's facing, so a
-held special can pick a throw arc. They are checked in the same first-match transition list as `release`;
-buffered follow-up commands ignore them. The schema is regenerated and no `World` field changed, so
-`SIM_VERSION` is **not** bumped and the golden world hash is unchanged (Sneak sorts after `ninja`, so no
-existing fighter's index moves).
+1. **nair/dair could not multi-hit.** Their strikes shared one phase, and contact history is per phase. Both are
+   now split into one phase per strike (plus the ending autocancel span), and a test lands every strike on one
+   pinned victim.
+2. **Back throw launched forward.** The engine already reverses a back throw; the source's facing-absolute 140°
+   is now stored as the facing-relative 40°.
+3. **Grenades did not cook.** The hold now counts charge ticks and the fuse is scaled by `chargeScale.life`
+   (negative coefficient, clamped), so a cooked grenade explodes sooner and an overcooked one at once.
+4. **The C4 switch fired live grenades and mortar shells.** `Event.detonate` is narrowed to `explosion.manual`
+   gadgets, so a remote detonator fires only remote gadgets; timed fuses keep running.
+5. **Nikita hit its 7% outer ring before the 14% centre and never exploded on contact.** The two source
+   explosions are not concentric: the released stage now carries the single strong 14% box. Contact still ends
+   the shot only when its stage runs out (the `article` model has no hit-to-explode link); recorded below.
+6. **Forward tilt copied the grounded knee into the air mask.** The air box keeps the source's 65° / BKB 20.
+
+Should-fix items applied as well: nair's autocancel boundary (engine frame 49), the up throw's 7% tick, a
+source-facts ledger block independent of the package, `visuals.py --refresh` (hash mismatches fail otherwise),
+and real `Input`-driven gadget tests. The reviewer also verified the generator/ledger consistency, that both new
+triggers share release semantics and buffered commands cannot take them, and that no sim I/O, nondeterminism,
+fighter-id dispatch or Rust tuning constants were introduced.
+
+Engine semantics added or narrowed for this import (all data-driven, no `World` field):
+
+- `Trigger::ReleaseToward` / `ReleaseAway` — a `release` that additionally requires the live movement stick to
+  point toward or away from the fighter's facing, so a held special can pick a throw arc. Checked in the same
+  first-match transition list as `release`; buffered follow-up commands ignore them.
+- `chargeScale.life` may be **negative**: it shortens a projectile's fuse per held charge tick (cooking), and
+  the scaled life is clamped to at least one tick. Positive coefficients keep their meaning.
+- `Event.detonate` fires only owned gadgets whose `explosion` is **manual**. Timed fuses are no longer remotely
+  triggered (a remote detonator should not fire a grenade), which is a deliberate narrowing of the hook added in
+  `0adf274`; `crates/sim/tests/resources.rs` covers both directions.
+
+No `World` field changed, so `SIM_VERSION` is **not** bumped; the golden world hash is unchanged (Sneak sorts
+after `ninja`, so no existing fighter's index moves). The schema is regenerated for the two triggers.
 
 Commands run in this session:
 
@@ -251,8 +288,10 @@ Controller playtest: not performed.
   A C4 that falls out of bounds is removed without a blast.
 - **Nikita.** The missile is steerable only while it is held (construction), which is faithful in input terms
   (Snake is locked in the special while guiding) but its post-release flight is straight; shield-cancel makes
-  it fly on rather than drop, and a direct hit and a glancing hit differ only by which of the two rings was
-  touched. It is indestructible (no 25% damage body) and has no fuel-dependent slowdown.
+  it fly on rather than drop. The released stage carries one 14% strong-explosion box; the 7% weak explosion is
+  dropped rather than modelled as a ring. A contact hit does not end the shot (the `article` model has no
+  hit-to-explode link), so the missile flies through its stage lifetime. It is indestructible (no 25% damage
+  body) and has no fuel-dependent slowdown.
 - **Cypher.** The ride is a constant climb with the source's armour window collapsed to the whole rise; the
   Cypher body itself is not destructible (13 HP in Ultimate) and its 6% detach hit is a single upward
   projectile rather than a thrown article.

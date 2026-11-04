@@ -205,8 +205,9 @@ owners destroy each other on contact. `trail` events run every tick in projectil
 direction).
 
 Optional `chargeScale: { "speed": 0.024, "damage": 0.035 }` multiplies spawn velocity and damage
-by `1 + held charge ticks × coefficient`. It reads the spawning move's charge; it does not change lifetime,
-gravity, or radius. Omit it for unscaled projectiles. Optional `bkb`, `radius`, `life`, `rehit`, `angleTo` and
+by `1 + held charge ticks × coefficient`. It reads the spawning move's charge; it does not change gravity or
+radius. `life` scales the fuse the same way and may be negative, which shortens it with charge (cooking a
+grenade); the result is clamped to at least one tick. Omit it for unscaled projectiles. Optional `bkb`, `radius`, `life`, `rehit`, `angleTo` and
 `groundAngleTo` scale those properties too; `rehit` adds whole frames per held tick (rounded, at least 1). A
 projectile whose `hit.rehit` is set stays in play between contact windows and cannot hit the same victim again
 until the interval elapses; a projectile without it is consumed by its first contact. `hit.type: "damageOnly"`
@@ -782,8 +783,9 @@ including when an empty pool becomes nonempty; reaching capacity clears the coun
 `recharge: 0` pools. Within an event, spawn runs before restore, then detonate, then sfx and fx.
 Phase entry costs still run before frame-zero events.
 
-`detonate: true` immediately explodes every live projectile currently owned by the fighter that has
-an `explosion`, in projectile order, even before its arm time. No gadget is a no-op. Each uses the normal
+`detonate: true` immediately explodes every live projectile currently owned by the fighter that has a
+**manual** `explosion`, in projectile order, even before its arm time. Timed fuses are not remotely fired and
+keep running. No remote gadget is a no-op. Each uses the normal
 blast radius, hit, target masks, opponent/team eligibility, shield/counter handling, article contacts,
 damage/healing credit, hit records, fx and sfx, then is removed. It does not advance movement or age.
 A reflected gadget belongs to its current owner.

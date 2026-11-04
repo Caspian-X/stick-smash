@@ -6,6 +6,7 @@ grabs, the grenade burst and the getup attacks are animated `.gif` files; the gr
 Nikita hitboxes are single-frame `.png` images, so a "montage" for those is just the image.
 
     python3 tools/import-sneak/visuals.py /tmp/sneak-reference
+    python3 tools/import-sneak/visuals.py --refresh /tmp/sneak-reference   # accept changed upstream bytes
 """
 import hashlib
 import json
@@ -89,7 +90,9 @@ def fetch(name: str) -> bytes:
 
 
 def main() -> int:
-    out = Path(sys.argv[1] if len(sys.argv) > 1 else '/tmp/sneak-reference')
+    args = [a for a in sys.argv[1:] if not a.startswith('-')]
+    refresh = '--refresh' in sys.argv[1:]
+    out = Path(args[0] if args else '/tmp/sneak-reference')
     out.mkdir(parents=True, exist_ok=True)
     old = json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {'base': BASE, 'files': {}}
     try:
@@ -107,7 +110,11 @@ def main() -> int:
             digest = hashlib.sha256(data).hexdigest()
             before = old['files'].get(name, {}).get('sha256')
             if before and before != digest:
+                # Pinned sources must not drift silently: fail unless the caller asks to refresh them.
                 print(f'changed upstream: {name} {before} -> {digest}', file=sys.stderr)
+                if not refresh:
+                    print('refusing to rewrite the pinned manifest without --refresh', file=sys.stderr)
+                    return 1
             im = Image.open(path)
             frames = []
             for i in range(getattr(im, 'n_frames', 1)):

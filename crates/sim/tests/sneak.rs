@@ -113,8 +113,7 @@ fn package_identity_and_slots() {
     assert_eq!((f.charges[0].id.as_str(), f.charges[0].uses), ("c4", 1));
     // Weight 106 is the reciprocal knockback multiplier.
     assert!((f.stats.weight - 100. / 106.).abs() < 1e-6);
-    for id in ["grenadeMid", "grenadeStrong", "grenadeLob", "grenadeDrop", "c4", "cypherShot", "mortarShell", "nikita"]
-    {
+    for id in ["grenadeMid", "grenadeStrong", "grenadeLob", "c4", "cypherShot", "mortarShell", "nikita"] {
         assert!(f.projectiles.contains_key(id), "missing projectile {id}");
     }
     // Gadgets are data: gravity/bounce/fuse, a manual remote blast, and a steered article.
@@ -195,6 +194,9 @@ fn reference_windows_and_damage() {
     let nair = &d.fighter("sneak").unwrap().moves.nair.phases;
     assert_eq!(nair[1].transitions[0].lag, Some(16));
     assert_eq!(nair[0].transitions[0].lag, None);
+    // Source autocancel "50 onward" is engine frame 49.
+    assert_eq!(nair.last().unwrap().transitions[0].lag, None);
+    assert_eq!(nair[nair.len() - 2].transitions[0].lag, Some(16));
     assert_eq!(d.fighter("sneak").unwrap().moves.fair.phases[1].transitions[0].lag, Some(19));
     assert_eq!(d.fighter("sneak").unwrap().moves.dair.phases[0].transitions[0].lag, Some(20));
 }
@@ -228,24 +230,6 @@ fn grenade_is_pulled_held_and_thrown_by_the_stick() {
         assert!(def.bounce.as_ref().unwrap().restitution > 0.);
         assert!(def.explosion.is_some());
     }
-}
-
-#[test]
-fn grenade_drops_on_shield_and_bounces_before_its_fuse() {
-    let d = common::data();
-    let mut w = start(&d, "nspec");
-    for _ in 0..21 {
-        step_move(&mut w, &d, sim::input::Intent { sp_held: true, ..Default::default() });
-    }
-    assert_eq!(phase_name(&d, &w).as_deref(), Some("hold"));
-    // Shield during the hold places it at Snake's feet.
-    step_move(&mut w, &d, sim::input::Intent { sp_held: true, shield_p: true, ..Default::default() });
-    assert_eq!(phase_name(&d, &w).as_deref(), Some("drop"));
-    step_move(&mut w, &d, sim::input::Intent { sp_held: true, ..Default::default() });
-    assert_eq!(w.projs.len(), 1);
-    assert_eq!(w.projs[0].id, "grenadeDrop");
-    let x0 = w.projs[0].x;
-    assert!((x0 - w.fighters[0].x).abs() < 6., "dropped at the feet");
 }
 
 #[test]
@@ -367,12 +351,13 @@ fn nikita_is_steered_while_held_and_flies_when_released() {
     let x0 = w.projs[0].x;
     ticks(&mut w, &d, Input::default(), 6);
     assert!(w.projs[0].x > x0 + 20., "released missile flies forward");
-    // The released shot carries the 14% direct hit and the 7% outer ring.
+    // The released shot carries the source's strong 14% explosion, one box so a straight hit cannot be stolen
+    // by an outer ring.
     let a = d.fighter("sneak").unwrap().projectiles["nikita"].article.as_ref().unwrap();
     let stage = &a.stages[w.projs[0].stage];
+    assert_eq!(stage.hitboxes.len(), 1);
     assert_eq!(stage.hitboxes[0].damage, 14.0);
-    assert_eq!(stage.hitboxes[1].damage, 7.0);
-    assert!(stage.hitboxes[1].r > stage.hitboxes[0].r);
+    assert!(stage.hitboxes[0].r > 60.);
 }
 
 #[test]
@@ -551,18 +536,251 @@ fn cypher_climbs_far_enough_to_recover() {
 }
 
 #[test]
+fn nair_and_dair_multihit_then_finish_on_the_same_target() {
+    let d = common::data();
+    for (slot, hits) in [("nair", vec![3.0, 3.0, 3.0, 12.0]), ("dair", vec![4.0, 3.0, 3.0, 10.0])] {
+        let mut w = setup(&d, &["sneak", "brawler"]);
+        // Both fighters hang in the air inside the move's reach; the victim is pinned so only the move matters.
+        w.fighters[0].y = 320.;
+        w.fighters[0].ground = false;
+        w.fighters[0].surf = None;
+        w.fighters[0].set_state(State::Air);
+        w.fighters[1].x = 660.;
+        w.fighters[1].y = 320.;
+        w.fighters[1].ground = false;
+        w.fighters[1].surf = None;
+        w.fighters[1].set_state(State::Air);
+        w.fighters[1].dmg = 0.;
+        let mut f = w.fighters[0].clone();
+        moves::start_move(&mut w, &d, 0, &mut f, slot);
+        w.fighters[0] = f;
+        let mut seen = vec![];
+        let mut last = 0.;
+        for _ in 0..60 {
+            w.fighters[0].y = 320.;
+            w.fighters[0].vy = 0.;
+            w.fighters[1].x = 660.;
+            w.fighters[1].y = 320.;
+            w.fighters[1].vx = 0.;
+            w.fighters[1].vy = 0.;
+            tick(&mut w, &d, Input::default());
+            let dmg = w.fighters[1].dmg;
+            if dmg > last + 1e-6 {
+                seen.push((dmg - last).round());
+                last = dmg;
+            }
+        }
+        assert_eq!(seen, hits, "{slot} should land every strike on one victim: {seen:?}");
+        assert!((last - hits.iter().sum::<f64>()).abs() < 1e-6, "{slot} total damage {last}");
+    }
+}
+
+#[test]
+fn back_throw_launches_behind_and_up_throw_keeps_both_hits() {
+    let d = common::data();
+    // The engine launches a back throw along `-face`: the source's backwards angle must not be reversed twice.
+    let mut w = setup(&d, &["sneak", "brawler"]);
+    combat::start_hold(&mut w, &d, 0, 1);
+    {
+        let f = &mut w.fighters[0];
+        f.set_state(State::Throw);
+        f.sd.victim = Some(1);
+        f.sd.kind = "b".into();
+        f.t = d.fighter("sneak").unwrap().throws.b.release - 1;
+        f.lag = 0;
+    }
+    w.fighters[1].lag = 0;
+    w.fighters[1].dmg = 0.;
+    step_world(&mut w, &d, &[]);
+    w.hits.clear();
+    let vx = w.fighters[1].vx;
+    assert!(vx < -1., "back throw must send the victim behind a right-facing thrower: vx {vx}");
+    assert!((w.fighters[1].dmg - 9.0).abs() < 1e-6);
+    // Up throw: the 7% preliminary tick, then the 4% release.
+    let mut w = setup(&d, &["sneak", "brawler"]);
+    combat::start_hold(&mut w, &d, 0, 1);
+    {
+        let f = &mut w.fighters[0];
+        f.set_state(State::Throw);
+        f.sd.victim = Some(1);
+        f.sd.kind = "u".into();
+        f.t = d.fighter("sneak").unwrap().throws.u.ticks[0].at - 1;
+        f.lag = 0;
+    }
+    w.fighters[1].lag = 0;
+    w.fighters[1].dmg = 0.;
+    let mut total = 0.;
+    for _ in 0..6 {
+        w.fighters[1].lag = 0;
+        step_world(&mut w, &d, &[]);
+        w.hits.clear();
+        if (w.fighters[1].dmg - total).abs() > 1e-6 {
+            total = w.fighters[1].dmg;
+        }
+    }
+    assert!((total - 11.0).abs() < 1e-6, "up throw 7% + 4%, got {total}");
+    assert!(w.fighters[1].vy < 0., "up throw launches upward");
+}
+
+#[test]
+fn grenade_cooking_shortens_the_fuse() {
+    let d = common::data();
+    for held in [1usize, 40, 100] {
+        let mut w = start(&d, "nspec");
+        for _ in 0..20 {
+            step_move(&mut w, &d, sim::input::Intent { sp_held: true, ..Default::default() });
+        }
+        // Pull done: the next tick enters the hold, then each held tick cooks.
+        step_move(&mut w, &d, sim::input::Intent { sp_held: true, ..Default::default() });
+        for _ in 0..held {
+            step_move(&mut w, &d, sim::input::Intent { sp_held: true, ..Default::default() });
+        }
+        let charge = w.fighters[0].mov.as_ref().unwrap().charge;
+        assert_eq!(charge, held as u32, "hold should count cooking ticks");
+        step_move(&mut w, &d, sim::input::Intent::default());
+        for _ in 0..10 {
+            step_move(&mut w, &d, sim::input::Intent::default());
+        }
+        let p = w.projs.first().expect("grenade thrown");
+        let remaining = p.life;
+        // life = 129 - cooked ticks (clamped to at least one tick).
+        let expected = (129i64 - held as i64).max(1);
+        assert!(
+            (i64::from(remaining) - expected).abs() <= 1,
+            "held {held}: life {remaining}, expected about {expected}"
+        );
+    }
+    // Holding past the source's 2.5 s fuse leaves a grenade that detonates at once instead of never.
+    let mut w = start(&d, "nspec");
+    for _ in 0..170 {
+        step_move(&mut w, &d, sim::input::Intent { sp_held: true, ..Default::default() });
+    }
+    step_move(&mut w, &d, sim::input::Intent::default());
+    for _ in 0..9 {
+        step_move(&mut w, &d, sim::input::Intent::default());
+    }
+    assert!(w.projs.first().is_some_and(|p| p.life <= 2), "overcooked grenade should be about to blow");
+}
+
+#[test]
+fn c4_switch_fires_only_the_remote_gadget() {
+    let d = common::data();
+    let mut w = setup(&d, &["sneak", "brawler"]);
+    let f = w.fighters[0].clone();
+    sim::projectiles::spawn(&mut w, &d, 0, &f, "c4");
+    sim::projectiles::spawn(&mut w, &d, 0, &f, "grenadeMid");
+    assert_eq!(w.projs.len(), 2);
+    // A planted C4 leaves the pool empty, which selects the detonate timeline.
+    w.fighters[0].charges[0] = 0;
+    // The planted C4's blast should not touch a live grenade's fuse.
+    let mut f = w.fighters[0].clone();
+    moves::start_move(&mut w, &d, 0, &mut f, "dspec");
+    assert_eq!(f.mov.as_ref().unwrap().variant, 0, "detonate timeline");
+    w.fighters[0] = f;
+    for _ in 0..30 {
+        tick(&mut w, &d, Input::default());
+    }
+    assert_eq!(w.projs.len(), 1, "only the C4 explodes: {:?}", w.projs.iter().map(|p| &p.id).collect::<Vec<_>>());
+    assert_eq!(w.projs[0].id, "grenadeMid");
+}
+
+#[test]
+fn nikita_contact_is_the_strong_explosion_at_any_distance() {
+    for distance in [0., 25., 50.] {
+        let d = common::data();
+        let mut w = setup(&d, &["sneak", "brawler"]);
+        let hold = Input { buttons: 4, ..Default::default() };
+        tick(&mut w, &d, Input { buttons: 4, stick: (127, 0), ..Default::default() });
+        ticks(&mut w, &d, hold, 41);
+        tick(&mut w, &d, Input::default());
+        let p = w.projs[0].clone();
+        w.fighters[1].x = p.x + p.vx * 3. + distance;
+        w.fighters[1].y = p.y;
+        w.fighters[1].ground = false;
+        w.fighters[1].surf = None;
+        w.fighters[1].dmg = 0.;
+        ticks(&mut w, &d, Input::default(), 12);
+        assert!(
+            (w.fighters[1].dmg - 14.0).abs() < 1e-6,
+            "distance {distance}: expected the 14% blast, got {}",
+            w.fighters[1].dmg
+        );
+    }
+}
+
+#[test]
+fn raw_inputs_arm_and_fire_the_gadgets() {
+    let d = common::data();
+    // Hold special, then release forward for the strong throw.
+    let mut w = setup(&d, &["sneak", "brawler"]);
+    tick(&mut w, &d, Input { buttons: 4, ..Default::default() });
+    ticks(&mut w, &d, Input { buttons: 4, ..Default::default() }, 24);
+    tick(&mut w, &d, Input { stick: (127, 0), ..Default::default() });
+    ticks(&mut w, &d, Input::default(), 14);
+    assert!(
+        w.projs.iter().any(|p| p.id == "grenadeStrong"),
+        "raw hold + forward release should throw the strong arc: {:?}",
+        w.projs.iter().map(|p| &p.id).collect::<Vec<_>>()
+    );
+    // Down special plants, the second press fires.
+    let mut w = setup(&d, &["sneak", "brawler"]);
+    tick(&mut w, &d, Input { buttons: 4, stick: (0, -127), ..Default::default() });
+    for _ in 0..30 {
+        tick(&mut w, &d, Input::default());
+    }
+    assert_eq!(w.projs.iter().filter(|p| p.id == "c4").count(), 1, "raw down special plants a C4");
+    tick(&mut w, &d, Input { buttons: 4, stick: (0, -127), ..Default::default() });
+    for _ in 0..34 {
+        tick(&mut w, &d, Input::default());
+    }
+    assert!(w.projs.is_empty(), "the second press detonates it");
+}
+
+#[test]
+fn nikita_auto_releases_and_an_interrupted_hold_drops_the_grenade() {
+    let d = common::data();
+    let mut w = setup(&d, &["sneak", "brawler"]);
+    tick(&mut w, &d, Input { buttons: 4, stick: (127, 0), ..Default::default() });
+    let hold = Input { buttons: 4, ..Default::default() };
+    ticks(&mut w, &d, hold, 200);
+    assert_eq!(w.projs.len(), 1);
+    assert!(w.projs[0].released.is_some(), "the missile auto-releases at fuel end");
+    assert_eq!(phase_name(&d, &w).as_deref(), Some("fire"));
+    // A hit during the grenade hold interrupts it without spawning anything.
+    let mut w = start(&d, "nspec");
+    for _ in 0..24 {
+        step_move(&mut w, &d, sim::input::Intent { sp_held: true, ..Default::default() });
+    }
+    assert_eq!(phase_name(&d, &w).as_deref(), Some("hold"));
+    let hit = d.fighter("brawler").unwrap().moves.jab.phases[0].hitboxes[0].clone();
+    let point = (w.fighters[0].x, w.fighters[0].y);
+    let source = combat::HitSource { attacker: 1, direction: 1., point, projectile: false, label: None };
+    combat::apply_hit(&mut w, &d, 0, &hit, source);
+    w.hits.clear();
+    assert!(w.fighters[0].mov.is_none(), "the hit cancels the hold");
+    assert!(w.projs.is_empty(), "an interrupted hold throws nothing");
+}
+
+#[test]
 fn throws_use_the_source_release_frames_and_damage() {
     let d = common::data();
     let f = d.fighter("sneak").unwrap();
-    for (throw, release, total, damage) in [
-        (&f.throws.f, 20, 39, 9.0),
-        (&f.throws.b, 19, 30, 9.0),
-        (&f.throws.u, 22, 47, 11.0),
-        (&f.throws.d, 34, 41, 9.0),
-    ] {
+    for (throw, release, total, damage) in
+        [(&f.throws.f, 20, 39, 9.0), (&f.throws.b, 19, 30, 9.0), (&f.throws.u, 22, 47, 4.0), (&f.throws.d, 34, 41, 9.0)]
+    {
         assert_eq!(throw.release, release);
         assert_eq!(throw.total, total);
         assert!((throw.hit.damage - damage).abs() < 1e-6, "throw damage {}", throw.hit.damage);
     }
     assert!((f.stats.pummel_damage.unwrap() - 1.3).abs() < 1e-6);
+    // Up throw's preliminary hit is a throw tick, not extra release damage.
+    assert_eq!(f.throws.u.ticks.len(), 1);
+    assert_eq!(f.throws.u.ticks[0].at, 21);
+    assert!((f.throws.u.ticks[0].damage - 7.0).abs() < 1e-6);
+    // Back throw is stored facing-relative: the engine flips it.
+    assert!((f.throws.b.hit.angle - 40.0).abs() < 1e-6);
+    // The airborne half of the forward tilt keeps its own angle and base knockback.
+    let knee = &f.moves.ftilt.phases[0].hitboxes;
+    assert!(knee.iter().any(|h| h.situation == sim::data::hitbox::Situation::Ground && h.angle == 78.));
+    assert!(knee.iter().any(|h| h.situation == sim::data::hitbox::Situation::Air && h.angle == 65. && h.bkb == 20.));
 }
