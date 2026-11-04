@@ -14,8 +14,9 @@ throw arc from the live stick.
   almost every special is something he throws and then explodes. The kit cycles between trap setup (grenade,
   C4), remote pressure (Nikita) and a long, armoured recovery (Cypher).
 - State: research, authoring, focused tests, stage/CPU coverage and a `just balance` pass are complete.
-  Rendering was reviewed through a temporary stick-figure/hitbox proxy because Bevy window captures are black
-  in this agent session. No controller playtest was performed.
+  Rendering was checked against the UFD frame sheets and a run of Bevy window captures (see the visual
+  inspection section); later re-captures in that session came back black because the display was occluded.
+  No controller playtest was performed.
 - Remaining work: see [Known approximations](#known-approximations--remaining-work).
 
 ## Sources
