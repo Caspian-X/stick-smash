@@ -32,7 +32,8 @@ resource is a **single-use Limit gauge** filled by a charge special (`Event.rest
 Regeneration:
 
 ```sh
-just import-stratus               # fetch.py, import.py, then just bless
+just stratus-sources              # explicitly refresh source pins
+just import-stratus               # rebuild from local pins, then just bless
 just stratus-visuals /tmp/stratus-reference   # download + hash-check the 41 GIFs, write frame montages
 ```
 
@@ -209,7 +210,7 @@ Special notes:
     animation time is skipped, so the combined move is 81 frames.
   - Weapon and limb geometry, poses and hurtbox coverage are fitted; hurtboxes and the collision body are
     inherited from `base`.
-  - Finishing Touch's air variant is 3 frames shorter in the source (87 vs 84); one timeline is authored.
+  - Finishing Touch's air variant is 3 frames longer in the source (87 vs 84); one timeline is authored.
   - Limit Charge's cancel-on-special-press is not modeled (shield cancels instead).
   - The Buster Sword is drawn on `handF` with a pose-driven grip; it is not a two-hand IK rig.
 - Delivery: worktree branch `t3/import-stratus-fighter`, uncommitted working tree (package, sources, tools, tests, shots,

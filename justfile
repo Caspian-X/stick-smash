@@ -143,9 +143,12 @@ robin-visuals dir="/tmp/robin-reference":
 
 # Rebuild Stratus (SSBU Cloud, 13.0.1) from pinned Rubendal scripts and UFD rows
 import-stratus:
-    python3 tools/import-stratus/fetch.py
     python3 tools/import-stratus/import.py
     just bless
+
+# Refresh the pinned Cloud attack scripts and UFD rows (ordinary rebuilds use local pins)
+stratus-sources:
+    python3 tools/import-stratus/fetch.py
 
 # Download hash-checked Cloud hitbox GIFs and write per-frame montages (Pillow)
 stratus-visuals dir="/tmp/stratus-reference":

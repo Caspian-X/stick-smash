@@ -2705,6 +2705,9 @@
           "anim": [
             { "at": 0, "pose": "parasol" }
           ],
+          "attach": {
+            "parasol": { "show": [0, 5], "angle": [[0, 0]] }
+          },
           "transitions": [
             { "on": "timeout", "to": "rise3" }
           ]
@@ -2745,6 +2748,9 @@
             { "at": 0, "pose": "parasol" }
           ],
           "ledgeGrab": 0,
+          "attach": {
+            "parasol": { "show": [0, 5], "angle": [[0, 0]] }
+          },
           "transitions": [
             { "on": "timeout", "to": "rise4" }
           ]
@@ -2786,6 +2792,9 @@
             { "at": 0, "pose": "parasol" }
           ],
           "ledgeGrab": 0,
+          "attach": {
+            "parasol": { "show": [0, 5], "angle": [[0, 0]] }
+          },
           "transitions": [
             { "on": "timeout", "to": "rise5" }
           ]
@@ -2811,6 +2820,9 @@
             { "at": 0, "pose": "parasol" }
           ],
           "ledgeGrab": 0,
+          "attach": {
+            "parasol": { "show": [0, 10], "angle": [[0, 0]] }
+          },
           "events": [
             { "at": 0, "sfx": "slash" }
           ],

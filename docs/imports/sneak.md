@@ -180,7 +180,7 @@ plus the live training reads `32p`–`32s` (grenade flight, Nikita flight, Cyphe
 expected-name list in `shots::tests::preserves_screenshot_names` is updated in the same file.
 
 Stage and CPU coverage: `tests/content.rs` roster expectation, `tests/stages.rs` `new_fighter_cpu_matchups`
-(all four stages, three opponents, four seeds: 24/24 finished, 23 wins, 139 KOs, 11 self-KOs).
+(all four stages, three opponents, four seeds: 48/48 finished, 23 wins, 139 KOs, 11 self-KOs).
 
 `just balance 4 sneak` (4 seeds, every opponent and stage, 256 matches): **0 unfinished**, 100 wins,
 66.1k damage dealt / 90.7k taken, 406 deaths, 49 self-KOs (12%), 121 recovery deaths. Per-move starts/hits show the
