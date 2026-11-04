@@ -1021,12 +1021,21 @@ fn fighter_kits() -> Vec<Step> {
     v
 }
 
+/// Roster tile key for a fighter id: the grid follows the resolved content order, which grows with imports.
+fn tile(id: &str) -> u32 {
+    static DATA: std::sync::OnceLock<sim::GameData> = std::sync::OnceLock::new();
+    let d = DATA.get_or_init(|| {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets");
+        crate::load_data(&[root]).0
+    });
+    let at = d.fighters.iter().position(|f| f.id == id).unwrap_or_else(|| panic!("no fighter {id}"));
+    crate::ui::key(crate::select::TILE, at)
+}
+
 fn plant_shots() -> Vec<Step> {
-    use crate::select::TILE;
-    use crate::ui::key;
     use editor::preview::Subject;
     let mut v = vec![Step::Select(Mode::Training, 2), Step::Wait(20)];
-    v.push(Step::PointAt(0, key(TILE, 8)));
+    v.push(Step::PointAt(0, tile("plant")));
     v.push(Step::Wait(30));
     shot(&mut v, "29a-select-plant-hover");
     // Training: plant's own movement clips and the held/growing/rising specials.
@@ -1110,7 +1119,7 @@ fn plant_shots() -> Vec<Step> {
         v.push(Step::Animation("plant", state, tick, vy));
         shot(&mut v, name);
     }
-    let _ = key(TILE, 0);
+    let _ = crate::ui::key(crate::select::TILE, 0);
     v
 }
 
