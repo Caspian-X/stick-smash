@@ -716,13 +716,15 @@ def throw(slot, script, total, release, **kw):
 
 throws = {
     'f': throw('fthrow', 'ThrowF', 39, src(21), x=0, y=0, r=60),
-    'b': throw('bthrow', 'ThrowB', 30, src(20), x=0, y=0, r=60),
-    # UFD lists a 7% preliminary and a 4% release; they are merged into one 11% throw hit.
-    'u': throw('uthrow', 'ThrowHi', 47, src(23), x=0, y=0, r=60, damage=11.0),
+    # The engine launches a back throw along `-face`, so the source's 140 degree angle becomes 40.
+    'b': throw('bthrow', 'ThrowB', 30, src(20), x=0, y=0, r=60, angle=40.0),
+    # Source: a 7% catch-only contact on frame 22, then the 4% absolute throw on frame 23.
+    'u': throw('uthrow', 'ThrowHi', 47, src(23), x=0, y=0, r=60),
     # Source angle 270 with no knockback lays the victim down; a small downward launch approximates the
     # knockdown in this engine's throw model.
     'd': throw('dthrow', 'ThrowLw', 41, src(35), x=0, y=0, r=60, bkb=25.0, kbg=0.35, angle=-90, type='spike'),
 }
+throws['u']['ticks'] = [{'at': src(22), 'damage': 7.0}]
 
 # ---------------------------------------------------------------- projectiles
 def proj(name, spawn, vel, r, life, hitb, **kw):

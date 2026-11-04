@@ -554,17 +554,32 @@ fn cypher_climbs_far_enough_to_recover() {
 fn throws_use_the_source_release_frames_and_damage() {
     let d = common::data();
     let f = d.fighter("sneak").unwrap();
-    for (throw, release, total, damage) in [
-        (&f.throws.f, 20, 39, 9.0),
-        (&f.throws.b, 19, 30, 9.0),
-        (&f.throws.u, 22, 47, 11.0),
-        (&f.throws.d, 34, 41, 9.0),
-    ] {
+    for (throw, release, total, damage) in
+        [(&f.throws.f, 20, 39, 9.0), (&f.throws.b, 19, 30, 9.0), (&f.throws.u, 22, 47, 4.0), (&f.throws.d, 34, 41, 9.0)]
+    {
         assert_eq!(throw.release, release);
         assert_eq!(throw.total, total);
         assert!((throw.hit.damage - damage).abs() < 1e-6, "throw damage {}", throw.hit.damage);
     }
     assert!((f.stats.pummel_damage.unwrap() - 1.3).abs() < 1e-6);
+}
+
+#[test]
+fn back_throw_angle_is_relative_to_facing() {
+    // The engine launches a back throw along `-face` (`states::throw`), so the source's absolute 140
+    // degrees is stored mirrored; 140 here would launch the victim forward and down.
+    let d = common::data();
+    let f = d.fighter("sneak").unwrap();
+    assert_eq!(f.throws.b.hit.angle, 40.0);
+    assert_eq!(f.throws.f.hit.angle, 40.0);
+}
+
+#[test]
+fn up_throw_keeps_the_source_catch_tick() {
+    let d = common::data();
+    let t = &d.fighter("sneak").unwrap().throws.u;
+    assert_eq!(t.hit.damage, 4.0);
+    assert_eq!(t.ticks.iter().map(|h| (h.at, h.damage)).collect::<Vec<_>>(), [(21, 7.0)]);
 }
 
 #[test]
