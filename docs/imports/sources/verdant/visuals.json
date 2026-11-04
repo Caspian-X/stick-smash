@@ -1,0 +1,536 @@
+{
+ "base": "https://ultimateframedata.com/hitboxes/byleth/",
+ "files": {
+  "BylethAreadbharAerial": {
+   "slot": "sspec",
+   "size": 1383766,
+   "sha256": "a5a4c7fea86e6863143401bf327bfca2c161dc2727b783aae40bfb5750ea684c",
+   "frames": 61,
+   "montage": "BylethAreadbharAerial-frames.png",
+   "kept": [
+    0,
+    15,
+    19,
+    20,
+    22,
+    26,
+    40
+   ]
+  },
+  "BylethAreadbharGrounded": {
+   "slot": "sspec",
+   "size": 1989341,
+   "sha256": "46d70edc100fea46da623609b9d7f7082ab45e175f65a5eb21e24494c9b36bc7",
+   "frames": 65,
+   "montage": "BylethAreadbharGrounded-frames.png",
+   "kept": [
+    0,
+    15,
+    18,
+    19,
+    21,
+    24,
+    40
+   ]
+  },
+  "BylethAymr": {
+   "slot": "dspec",
+   "size": 1997934,
+   "sha256": "8b3efcfe33304502545b782dc5be00802c158fe8db4f816894cf9473759ea2c2",
+   "frames": 145,
+   "montage": "BylethAymr-frames.png",
+   "kept": [
+    0,
+    30,
+    50,
+    60,
+    63,
+    66,
+    80,
+    120
+   ]
+  },
+  "BylethAymrSuperArmour": {
+   "slot": "dspec",
+   "size": 7062604,
+   "sha256": "fd38eac818c11d66cfbd2d83b17fa4af630fb0cb3890c06890967ccf9c9e74ab",
+   "frames": 133,
+   "montage": "BylethAymrSuperArmour-frames.png",
+   "kept": [
+    0,
+    30,
+    40,
+    60,
+    100
+   ]
+  },
+  "BylethBAir": {
+   "slot": "bair",
+   "size": 2708459,
+   "sha256": "aaada26e1869bd0891f77fa520392a38a0e604c738185b29177e1c1147dcd594",
+   "frames": 46,
+   "montage": "BylethBAir-frames.png",
+   "kept": [
+    0,
+    10,
+    12,
+    14,
+    16,
+    19
+   ]
+  },
+  "BylethBThrow": {
+   "slot": "throws",
+   "size": 1889720,
+   "sha256": "380f7c6c9f1ac3ec7cf391a583876edaf7c305d89f0b5f48165032a282e1f59a",
+   "frames": 43,
+   "montage": "BylethBThrow-frames.png",
+   "kept": [
+    0,
+    10,
+    12,
+    20,
+    24,
+    29
+   ]
+  },
+  "BylethDAir": {
+   "slot": "dair",
+   "size": 1872871,
+   "sha256": "18d82e96af8d89271acbebe4b410397d540420f9068749428a6a833311d9f8ae",
+   "frames": 59,
+   "montage": "BylethDAir-frames.png",
+   "kept": [
+    0,
+    15,
+    20,
+    21,
+    23,
+    28
+   ]
+  },
+  "BylethDSmash": {
+   "slot": "dsmash",
+   "size": 3674180,
+   "sha256": "668e76fea9e73f35ff0c716667223433468b8e67fa3f8000c9da654811101924",
+   "frames": 73,
+   "montage": "BylethDSmash-frames.png",
+   "kept": [
+    0,
+    14,
+    15,
+    17,
+    25,
+    28
+   ]
+  },
+  "BylethDThrow": {
+   "slot": "throws",
+   "size": 2166526,
+   "sha256": "cc25c196ca8a99a4460be21896b83dd14ab85b68d83a7c326991f83aaf552847",
+   "frames": 31,
+   "montage": "BylethDThrow-frames.png",
+   "kept": [
+    0,
+    10,
+    11,
+    12,
+    20
+   ]
+  },
+  "BylethDTilt": {
+   "slot": "dtilt",
+   "size": 2376465,
+   "sha256": "3458f94eef4379011f3b09718a9a2ba3504f9edfd10d66c27943df449e3f6f46",
+   "frames": 35,
+   "montage": "BylethDTilt-frames.png",
+   "kept": [
+    0,
+    10,
+    11,
+    12,
+    14,
+    20
+   ]
+  },
+  "BylethDashAttack": {
+   "slot": "dashatk",
+   "size": 1862186,
+   "sha256": "e0243e509d1ea6623fc30ded34bfe519ce1ddc57621a8e2c280067e20d9969fc",
+   "frames": 44,
+   "montage": "BylethDashAttack-frames.png",
+   "kept": [
+    0,
+    6,
+    8,
+    9,
+    10,
+    20
+   ]
+  },
+  "BylethDashGrab": {
+   "slot": "grab",
+   "size": 3944114,
+   "sha256": "97eaca07d1d779e5041923d59e707e91641a0f5a503eef024ddbdcefa1e5bee3",
+   "frames": 48,
+   "montage": "BylethDashGrab-frames.png",
+   "kept": [
+    0,
+    8,
+    9,
+    10,
+    14,
+    24
+   ]
+  },
+  "BylethFAir": {
+   "slot": "fair",
+   "size": 2311514,
+   "sha256": "fc9e0f9b55f285e836c45cc59fb017735b91d36e16ed0fc453106391a22ba14d",
+   "frames": 39,
+   "montage": "BylethFAir-frames.png",
+   "kept": [
+    0,
+    8,
+    11,
+    13,
+    16
+   ]
+  },
+  "BylethFSmash": {
+   "slot": "fsmash",
+   "size": 2981803,
+   "sha256": "190871106a2fa2618316707f0bee229713a736d63dfa0b2b01f1117bc85a953b",
+   "frames": 63,
+   "montage": "BylethFSmash-frames.png",
+   "kept": [
+    0,
+    12,
+    20,
+    22,
+    24,
+    30
+   ]
+  },
+  "BylethFSmashDown": {
+   "slot": "fsmash",
+   "size": 2990510,
+   "sha256": "c84b5ff5bb9f80e0176609f1472256f0d123bd1aafc2cba2702e09b2e1eef12d",
+   "frames": 63,
+   "montage": "BylethFSmashDown-frames.png",
+   "kept": [
+    22,
+    24
+   ]
+  },
+  "BylethFSmashUp": {
+   "slot": "fsmash",
+   "size": 2981742,
+   "sha256": "65a35f8a01829bae6819c7d89b14a1390e898b96b2a34ff067f1d8b4f9154e5c",
+   "frames": 63,
+   "montage": "BylethFSmashUp-frames.png",
+   "kept": [
+    22,
+    24
+   ]
+  },
+  "BylethFThrow": {
+   "slot": "throws",
+   "size": 2611314,
+   "sha256": "6a5e75bbf11e488dc6e079adefd0e335251ed7c603452eaa95ba0a8cd4db8554",
+   "frames": 35,
+   "montage": "BylethFThrow-frames.png",
+   "kept": [
+    0,
+    10,
+    12,
+    13,
+    20
+   ]
+  },
+  "BylethFTilt": {
+   "slot": "ftilt",
+   "size": 2206946,
+   "sha256": "2c0bb6bbdf430bb5a82ae21dbddb80afe0cde0388403d1ff7c86b5086678f9c0",
+   "frames": 34,
+   "montage": "BylethFTilt-frames.png",
+   "kept": [
+    0,
+    5,
+    6,
+    7,
+    9,
+    14
+   ]
+  },
+  "BylethFailnaught": {
+   "slot": "nspec",
+   "size": 638814,
+   "sha256": "becf399f151ac03d676ec9efa9f47033cb7a1b52d48ede56f2670e864cbf9d91",
+   "frames": 80,
+   "montage": "BylethFailnaught-frames.png",
+   "kept": [
+    0,
+    20,
+    40,
+    43,
+    44,
+    46,
+    60
+   ]
+  },
+  "BylethFailnaughtMax": {
+   "slot": "nspec",
+   "size": 486239,
+   "sha256": "6f438b8f30816023cdab37ffb9d9e61ce18a393bb7541eea1c6614f9fa8f2349",
+   "frames": 160,
+   "montage": "BylethFailnaughtMax-frames.png",
+   "kept": [
+    20,
+    60,
+    100,
+    113,
+    115,
+    140
+   ]
+  },
+  "BylethGrab": {
+   "slot": "grab",
+   "size": 3374786,
+   "sha256": "36d93dfc9dd923dec803a32999c37896baa9b646767f1a87496097d83a225ad6",
+   "frames": 39,
+   "montage": "BylethGrab-frames.png",
+   "kept": [
+    0,
+    4,
+    5,
+    6,
+    10,
+    20
+   ]
+  },
+  "BylethJab1": {
+   "slot": "jab1",
+   "size": 1765326,
+   "sha256": "929d6e82ca69403da072a4ee0fcee52a570a6bf1029060b1f89733859aa8ee29",
+   "frames": 22,
+   "montage": "BylethJab1-frames.png",
+   "kept": [
+    0,
+    2,
+    3,
+    4,
+    8,
+    16
+   ]
+  },
+  "BylethJab2": {
+   "slot": "jab2",
+   "size": 1814284,
+   "sha256": "6b29c5c9163709561477ceb01eb91c1f6eb9420e86947eeb082eb279fef03efb",
+   "frames": 24,
+   "montage": "BylethJab2-frames.png",
+   "kept": [
+    0,
+    3,
+    4,
+    5,
+    9,
+    18
+   ]
+  },
+  "BylethJab3": {
+   "slot": "jab3",
+   "size": 2630949,
+   "sha256": "e1a6c1094517037c81e7f8813f28bfd1cb908094d7f861821c7660b4f4f4da40",
+   "frames": 34,
+   "montage": "BylethJab3-frames.png",
+   "kept": [
+    0,
+    4,
+    5,
+    6,
+    9,
+    20
+   ]
+  },
+  "BylethJabRapid": {
+   "slot": "rapid",
+   "size": 1441179,
+   "sha256": "7bfe74af0387e4a4b87803dd206ed6ada9798a27e0f83bc00edcbc1b0409707f",
+   "frames": 18,
+   "montage": "BylethJabRapid-frames.png",
+   "kept": [
+    0,
+    10,
+    11,
+    13,
+    16
+   ]
+  },
+  "BylethJabRapidFinisher": {
+   "slot": "rapidEnd",
+   "size": 3068497,
+   "sha256": "cc652f6dd76cba4d7072e7111eb5c47008dfd91444760258ca5e80b516ded74f",
+   "frames": 50,
+   "montage": "BylethJabRapidFinisher-frames.png",
+   "kept": [
+    0,
+    4,
+    5,
+    6,
+    10,
+    30
+   ]
+  },
+  "BylethNAir": {
+   "slot": "nair",
+   "size": 2490379,
+   "sha256": "336ae06b212d5c24b8ebbaf7191cdfc982c7f64d8b629d1b89551ff60b8ad269",
+   "frames": 51,
+   "montage": "BylethNAir-frames.png",
+   "kept": [
+    0,
+    5,
+    8,
+    14,
+    22,
+    27,
+    30
+   ]
+  },
+  "BylethNAirLanding": {
+   "slot": "nair",
+   "size": 604460,
+   "sha256": "ebed62632527a33b336b94d9c07997c4fb178751797389ac211e05881b0f3e69",
+   "frames": 13,
+   "montage": "BylethNAirLanding-frames.png",
+   "kept": [
+    0,
+    1,
+    2,
+    4,
+    8
+   ]
+  },
+  "BylethPivotGrab": {
+   "slot": "grab",
+   "size": 3005985,
+   "sha256": "8ea59ad7e5328fea3ffeba8a4ef930eaa5792c7bed3355a3ccc5ea64ac10f647",
+   "frames": 42,
+   "montage": "BylethPivotGrab-frames.png",
+   "kept": [
+    0,
+    9,
+    10,
+    11,
+    16
+   ]
+  },
+  "BylethPummel": {
+   "slot": "pummel",
+   "size": 470059,
+   "sha256": "abd5bb74009dc54945ff9cce30c9682e6695508f7c8ebcfef49ff899fb706cbf",
+   "frames": 6,
+   "montage": "BylethPummel-frames.png",
+   "kept": [
+    0,
+    3,
+    5
+   ]
+  },
+  "BylethSwordoftheCreatorAerial": {
+   "slot": "uspec",
+   "size": 764699,
+   "sha256": "5f48adbf7c5064d301aa3aab9b2ca77e8771d9f1e1a3f88cbb83ecb22d03018d",
+   "frames": 46,
+   "montage": "BylethSwordoftheCreatorAerial-frames.png",
+   "kept": [
+    0,
+    5,
+    7,
+    9,
+    14,
+    20,
+    30,
+    45
+   ]
+  },
+  "BylethSwordoftheCreatorGrounded": {
+   "slot": "uspec",
+   "size": 782228,
+   "sha256": "9077d90e9e7f3e88707a5bed51395d34c46ac985052a9262e14a1459b5fdb718",
+   "frames": 46,
+   "montage": "BylethSwordoftheCreatorGrounded-frames.png",
+   "kept": [
+    0,
+    5,
+    7,
+    9,
+    14,
+    20,
+    30,
+    45
+   ]
+  },
+  "BylethUAir": {
+   "slot": "uair",
+   "size": 1606069,
+   "sha256": "727f70bd7255051c2f03b358c31bc3ba6b92da66d12bbb54ed473d5ade930c87",
+   "frames": 48,
+   "montage": "BylethUAir-frames.png",
+   "kept": [
+    0,
+    7,
+    9,
+    12,
+    19,
+    22
+   ]
+  },
+  "BylethUSmash": {
+   "slot": "usmash",
+   "size": 2209423,
+   "sha256": "6bda5495bd668cf6e1e98f4201431e7799c1ac593be98d7b099636186d354904",
+   "frames": 56,
+   "montage": "BylethUSmash-frames.png",
+   "kept": [
+    0,
+    11,
+    12,
+    14,
+    16,
+    27
+   ]
+  },
+  "BylethUThrow": {
+   "slot": "throws",
+   "size": 2159352,
+   "sha256": "522d4dad19ae7f2bfeeedd18513b3fec99f98111be522059a0427e29fca0b303",
+   "frames": 37,
+   "montage": "BylethUThrow-frames.png",
+   "kept": [
+    0,
+    10,
+    13,
+    14,
+    20
+   ]
+  },
+  "BylethUTilt": {
+   "slot": "utilt",
+   "size": 1473925,
+   "sha256": "c11536522a8b1458415fd8f809518014e0782c4ba0911b644cdce3381f8110c7",
+   "frames": 34,
+   "montage": "BylethUTilt-frames.png",
+   "kept": [
+    0,
+    6,
+    7,
+    9,
+    14,
+    20
+   ]
+  }
+ }
+}

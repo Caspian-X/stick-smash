@@ -150,6 +150,14 @@ import-stratus:
 # Download hash-checked Cloud hitbox GIFs and write per-frame montages (Pillow)
 stratus-visuals dir="/tmp/stratus-reference":
     python3 tools/import-stratus/visuals.py "{{dir}}"
+# Rebuild Verdant (SSBU Byleth, 13.0.1) from pinned Rubendal scripts and UFD rows
+import-verdant:
+    python3 tools/import-verdant/import.py
+    just bless
+
+# Download hash-checked Byleth hitbox GIFs and write per-frame montages (Pillow)
+verdant-visuals dir="/tmp/verdant-reference":
+    python3 tools/import-verdant/visuals.py "{{dir}}"
 
 # Download hash-checked Piranha Plant reference GIFs and make per-frame inspection sheets (Pillow)
 plant-visuals dir="/tmp/plant-reference":
