@@ -1,0 +1,727 @@
+//! Duchess (SSBU Peach) reference behavior: float, Vegetable tiers, Toad, Peach Bomber, Parasol and raw input.
+mod common;
+
+use sim::data::HitType;
+use sim::input::Intent;
+use sim::world::State;
+use sim::{GameData, Input, PlayerConfig, World, combat, moves, step_world};
+
+fn sandbox(d: &GameData, fighters: &[&str]) -> World {
+    let players = fighters.iter().copied().map(PlayerConfig::human).collect();
+    common::sandbox(d, "arena", players)
+}
+
+fn tick(w: &mut World, d: &GameData, input: Input) {
+    step_world(w, d, &[input]);
+    w.fx.clear();
+    w.hits.clear();
+    w.acts.clear();
+}
+
+/// Step only the fighter's move: no opponent AI, hitlag or incidental hits can blur frame boundaries.
+fn step_move(w: &mut World, d: &GameData, input: Intent) {
+    let mut f = w.fighters[0].clone();
+    moves::st_attack(w, d, 0, &mut f, input, input.dir());
+    w.fighters[0] = f;
+    w.frame += 1;
+}
+
+fn start(d: &GameData, slot: &str) -> World {
+    let mut w = sandbox(d, &["duchess", "brawler"]);
+    w.count = 0;
+    w.fighters[0].x = 640.;
+    w.fighters[0].y = 520.;
+    w.fighters[0].face = 1.;
+    w.fighters[1].x = 1500.;
+    let mut f = w.fighters[0].clone();
+    moves::start_move(&mut w, d, 0, &mut f, slot);
+    w.fighters[0] = f;
+    w
+}
+
+fn start_air(d: &GameData, slot: &str) -> World {
+    let mut w = start(d, slot);
+    let f = &mut w.fighters[0];
+    f.ground = false;
+    f.surf = None;
+    // High above the arena floor so a 38-frame aerial cannot land during the frame-boundary walk.
+    f.y = 120.;
+    f.vy = 0.;
+    w
+}
+
+/// Keep a fighter off the stage while a frame-boundary test only cares about the move timeline.
+fn stay_air_at(w: &mut World, i: usize, y: f64) {
+    let f = &mut w.fighters[i];
+    f.ground = false;
+    f.surf = None;
+    f.y = y;
+}
+
+fn stay_air(w: &mut World, y: f64) {
+    stay_air_at(w, 0, y);
+}
+
+#[track_caller]
+fn phase_name(d: &GameData, w: &World) -> Option<String> {
+    let m = w.fighters[0].mov.as_ref()?;
+    Some(moves::timeline(d, &w.fighters[0])[m.phase].name.clone())
+}
+
+#[track_caller]
+fn close(a: f64, b: f64) {
+    assert!((a - b).abs() < 1e-6, "{a} != {b}");
+}
+
+/// Every move's total duration: `frames` may be split across phases (autocancel/aerial splits, specials).
+fn total(d: &GameData, slot: &str) -> u32 {
+    d.fighter("duchess").unwrap().moves.get(slot).unwrap().phases.iter().filter_map(|p| p.frames).sum()
+}
+
+/// Absolute (move-frame) active windows, with each phase's own offset added.
+fn windows(d: &GameData, slot: &str) -> Vec<(u32, u32, f64)> {
+    let m = d.fighter("duchess").unwrap().moves.get(slot).unwrap();
+    let mut out = vec![];
+    let mut base = 0;
+    for p in &m.phases {
+        for h in &p.hitboxes {
+            out.push((base + h.start, base + h.end.unwrap_or(base + p.frames.unwrap_or(0)), h.damage));
+        }
+        base += p.frames.unwrap_or(0);
+    }
+    out
+}
+
+#[test]
+fn package_identity_slots_and_reference_stats() {
+    let d = common::data();
+    let f = d.fighter("duchess").expect("duchess package");
+    assert_eq!(f.id, "duchess");
+    assert_eq!(f.name, "Duchess");
+    assert_eq!(f.extends.as_deref(), Some("base"));
+    for slot in [
+        "jab", "ftilt", "utilt", "dtilt", "dashatk", "fsmash", "usmash", "dsmash", "nair", "fair", "bair", "uair",
+        "dair", "grab", "dashgrab", "nspec", "sspec", "uspec", "dspec",
+    ] {
+        assert!(f.moves.get(slot).is_some(), "missing {slot}");
+    }
+    assert!(f.moves.zair.is_none(), "Peach has no tether aerial");
+    assert!(f.charges.is_empty(), "no limited-use resources");
+    assert_eq!((f.throws.f.total, f.throws.b.total, f.throws.u.total, f.throws.d.total), (39, 49, 49, 64));
+    // UFD: weight 89, air 1.029, gravity 0.070, fall 1.19 / 1.904. Movement uses x3.5, fall x6.
+    close(f.stats.weight, 100. / 89.);
+    close(f.stats.pummel_damage.unwrap(), 1.3);
+    close(f.stats.air_speed, 3.6015);
+    close(f.stats.air_accel, 0.42);
+    close(f.stats.gravity, 0.42);
+    close(f.stats.fall_speed, 7.14);
+    close(f.stats.fast_fall_speed, 11.424);
+    close(f.stats.float_speed.unwrap(), 1.2);
+    assert!(f.moves.uspec.once_per_airtime);
+}
+
+#[test]
+fn reference_durations_and_hit_windows_match_the_ledger() {
+    let d = common::data();
+    // UFD totals (phase sums), one per slot. Jab 1 + jab 2 share the jab slot.
+    for (slot, frames) in [
+        ("jab", 27 + 29),
+        ("ftilt", 36),
+        ("utilt", 37),
+        ("dtilt", 23),
+        ("dashatk", 37),
+        ("fsmash", 45),
+        ("usmash", 44),
+        ("dsmash", 54),
+        ("nair", 48),
+        ("fair", 57),
+        ("bair", 53),
+        ("uair", 45),
+        ("dair", 38),
+        ("grab", 36),
+        ("dashgrab", 44),
+        ("nspec", 62 + 60),
+        ("sspec", 12 + 24 + 25 + 26),
+        ("uspec", 39 + 480),     // closed parasol is an open-ended special fall
+        ("dspec", 39 + 22 + 22), // tap path: 39-frame pluck + one 22-frame toss
+    ] {
+        assert_eq!(total(&d, slot), frames, "{slot} total");
+    }
+    // Player-local phase frame = source frame - 1; the reference page's inclusive windows shift with it.
+    let jab = windows(&d, "jab");
+    assert!(jab.contains(&(1, 1, 2.0)), "jab 1 source frame 2 -> phase 1: {jab:?}");
+    assert!(jab.contains(&(28, 29, 3.0)), "jab 2 (its own phase) 1-2 within that phase: {jab:?}");
+    let ftilt = windows(&d, "ftilt");
+    assert!(ftilt.contains(&(6, 8, 7.0)), "ftilt close 7-9: {ftilt:?}");
+    assert!(ftilt.contains(&(9, 14, 6.0)), "ftilt late 10-15: {ftilt:?}");
+    assert!(windows(&d, "dtilt").contains(&(7, 8, 7.0)), "dtilt 8-9");
+    assert!(windows(&d, "dsmash").contains(&(5, 6, 2.0)), "dsmash first multi 6-7");
+    assert!(windows(&d, "dsmash").contains(&(25, 26, 2.0)), "dsmash last multi 26-27");
+    assert!(windows(&d, "dsmash").contains(&(29, 30, 3.0)), "dsmash final 30-31");
+    let nair = windows(&d, "nair");
+    assert!(nair.contains(&(4, 7, 13.0)), "nair clean 5-8: {nair:?}");
+    assert!(nair.contains(&(8, 18, 6.0)), "nair late 9-19");
+    assert!(nair.contains(&(8, 18, 5.0)), "nair late hip 5.0");
+    let fair = windows(&d, "fair");
+    assert!(fair.contains(&(15, 19, 15.0)), "fair arm 16-20: {fair:?}");
+    assert!(fair.contains(&(15, 19, 14.0)), "fair sourspot arm 14.0");
+    let bair = windows(&d, "bair");
+    assert!(bair.contains(&(5, 6, 12.0)), "bair early 6-7");
+    assert!(bair.contains(&(7, 12, 7.0)), "bair late 8-13");
+    let uair = windows(&d, "uair");
+    assert!(uair.iter().any(|&(s, e, dmg)| (s, e) == (9, 12) && (dmg - 4.0).abs() < 1e-9), "uair hit 1");
+    assert!(uair.contains(&(14, 16, 6.0)), "uair finisher 15-17: {uair:?}");
+    assert!(uair.contains(&(15, 18, 6.0)), "uair late finisher 16-19: {uair:?}");
+    let dair = windows(&d, "dair");
+    for (start, end, damage) in [(11, 12, 2.0), (11, 12, 1.0), (29, 30, 5.0)] {
+        assert!(dair.contains(&(start, end, damage)), "dair {start}-{end} {damage}: {dair:?}");
+    }
+    let usmash = windows(&d, "usmash");
+    assert!(usmash.contains(&(13, 15, 17.0)), "usmash arm tip 14-16");
+    assert!(usmash.contains(&(16, 19, 10.0)), "usmash late 17-20");
+    assert!(windows(&d, "fsmash").contains(&(14, 16, 15.0)), "golf club 15-17");
+    // Smash charge holds: fsmash 5, usmash 9, dsmash 2 in source frames.
+    let charge =
+        |slot: &str| d.fighter("duchess").unwrap().moves.get(slot).unwrap().phases[0].charge.as_ref().unwrap().frame;
+    assert_eq!((charge("fsmash"), charge("usmash"), charge("dsmash")), (4, 8, 1));
+}
+
+#[test]
+fn aerial_landing_lag_and_autocancel_windows() {
+    let d = common::data();
+    // UFD landing lag and autocancel windows: 1-4 / 36+ (nair), 1-9 / 41+ (fair), 1-4 / 30+ (bair),
+    // 1-4 / 41+ (uair), 1-11 / 38+ (dair).
+    for (slot, lag, early, late) in
+        [("nair", 7, 3, 35), ("fair", 13, 8, 40), ("bair", 11, 3, 29), ("uair", 7, 3, 40), ("dair", 8, 10, 37)]
+    {
+        for (frame, expected) in [(0, 0), (early, 0), (early + 1, lag), (late - 1, lag), (late, 0)] {
+            // Advance the real timeline so the move is in the phase that owns this absolute frame.
+            let mut w = start_air(&d, slot);
+            for n in 0..frame {
+                if w.fighters[0].mov.is_none() {
+                    panic!("{slot} ended at tick {n} of {frame} (last state {:?})", w.fighters[0].state);
+                }
+                step_move(&mut w, &d, Intent::default());
+                stay_air(&mut w, 120.);
+            }
+            let m = w.fighters[0].mov.as_ref().unwrap_or_else(|| panic!("{slot} ended before frame {frame}"));
+            assert_eq!(m.elapsed, frame, "{slot} elapsed");
+            let mut f = w.fighters[0].clone();
+            assert!(moves::trigger(&mut w, &d, 0, &mut f, sim::data::Trigger::Land), "{slot} frame {frame}");
+            if expected == 0 {
+                assert_ne!(f.state, State::Landing, "{slot} frame {frame} is an autocancel window");
+            } else {
+                assert_eq!(f.state, State::Landing, "{slot} frame {frame}");
+                assert_eq!(f.sd.n, f64::from(expected), "{slot} frame {frame}");
+            }
+        }
+    }
+}
+
+#[test]
+fn float_caps_descent_while_jump_is_held_and_releases_immediately() {
+    let d = common::data();
+    let mut w = sandbox(&d, &["duchess", "brawler"]);
+    w.count = 0;
+    w.fighters[1].x = 1500.;
+    let hold = |w: &mut World, d: &GameData, n: usize| {
+        for _ in 0..n {
+            tick(w, d, Input { buttons: sim::input::JUMP, ..Default::default() });
+        }
+    };
+    {
+        let f = &mut w.fighters[0];
+        f.ground = false;
+        f.surf = None;
+        f.y = 300.;
+        f.vy = 0.;
+        f.set_state(State::Air);
+    }
+    hold(&mut w, &d, 40);
+    let floating = w.fighters[0].vy;
+    assert!((floating - 1.2).abs() < 1e-9, "held jump caps the descent at floatSpeed: {floating}");
+    // Releasing jump restores the ordinary fall immediately while falling.
+    for _ in 0..6 {
+        tick(&mut w, &d, Input::default());
+    }
+    assert!(w.fighters[0].vy > 1.2, "released jump falls normally: {}", w.fighters[0].vy);
+    // Fast fall still wins over the cap while jump is held only for a normal air drift; the engine caps at
+    // floatSpeed regardless of fast-fall state (documented limitation).
+    // A move keeps its own gravity: starting the aerial leaves State::Air, so the float cap no longer applies.
+    let mut w = start_air(&d, "nair");
+    for _ in 0..20 {
+        step_move(&mut w, &d, Intent { jump_held: true, ..Default::default() });
+    }
+    assert!(w.fighters[0].vy > 1.2, "no float during an attack: {}", w.fighters[0].vy);
+}
+
+#[test]
+fn vegetable_plucks_then_throws_a_deterministic_turnip_tier() {
+    let d = common::data();
+    // The pluck is 39 frames and spawns nothing.
+    let mut w = start(&d, "dspec");
+    assert_eq!(phase_name(&d, &w), Some("pluck".into()));
+    for _ in 0..38 {
+        step_move(&mut w, &d, Intent::default());
+        assert!(w.projs.is_empty(), "no turnip before the pluck finishes");
+    }
+    step_move(&mut w, &d, Intent::default());
+    assert_eq!(phase_name(&d, &w), Some("ready".into()));
+    // A tap releases the held turnip as the common (8.3%) throw.
+    step_move(&mut w, &d, Intent::default());
+    assert_eq!(phase_name(&d, &w), Some("toss".into()));
+    let mut spawned = None;
+    for _ in 0..8 {
+        step_move(&mut w, &d, Intent::default());
+        if let Some(p) = w.projs.first() {
+            spawned = Some(p.clone());
+            break;
+        }
+    }
+    let p = spawned.expect("turnip spawned");
+    assert_eq!(p.id, "turnip");
+    close(p.hit.damage, 8.3);
+    close(p.hit.angle, 30.);
+    close(p.hit.bkb, 25.);
+    close(p.hit.kbg, 0.45);
+    // Holding past eight ticks throws the stronger tier (the source's smash item throw: +3.1%).
+    let mut w = start(&d, "dspec");
+    for _ in 0..39 {
+        step_move(&mut w, &d, Intent::default());
+    }
+    for _ in 0..9 {
+        step_move(&mut w, &d, Intent { sp_held: true, ..Default::default() });
+    }
+    step_move(&mut w, &d, Intent::default());
+    assert_eq!(phase_name(&d, &w), Some("tossStrong".into()));
+    for _ in 0..8 {
+        step_move(&mut w, &d, Intent::default());
+    }
+    let p = w.projs.first().expect("strong turnip spawned");
+    assert_eq!(p.id, "turnip_strong");
+    close(p.hit.damage, 11.4);
+    assert!((p.hit.shield_dmg_mult - 0.7807).abs() < 1e-6, "{}", p.hit.shield_dmg_mult);
+    // Deterministic: both tiers leave the gameplay RNG untouched (the pluck picks no face at random).
+    for held in [0, 9] {
+        let mut w = start(&d, "dspec");
+        let before = w.rng;
+        for _ in 0..39 {
+            step_move(&mut w, &d, Intent::default());
+        }
+        for _ in 0..held {
+            step_move(&mut w, &d, Intent { sp_held: true, ..Default::default() });
+        }
+        for _ in 0..20 {
+            step_move(&mut w, &d, Intent::default());
+        }
+        assert_eq!(w.rng, before, "turnip held {held}: gameplay RNG must not be consumed");
+        assert!(w.projs.iter().any(|p| p.id.starts_with("turnip")));
+    }
+}
+
+#[test]
+fn toad_counters_only_inside_its_window_then_sprays_spores() {
+    let d = common::data();
+    // The counter window is source 9-34 -> phase 8-33, over a 62-frame animation.
+    for frame in [7, 8, 33, 34] {
+        let mut w = start(&d, "nspec");
+        w.fighters[0].mov.as_mut().unwrap().t = frame;
+        assert_eq!(combat::countering(&d, &w.fighters[0]).is_some(), (8..=33).contains(&frame), "frame {frame}");
+    }
+    let mut w = start(&d, "nspec");
+    w.fighters[0].mov.as_mut().unwrap().t = 8;
+    w.fighters[1].x = 680.;
+    w.fighters[1].y = 520.;
+    w.fighters[1].face = -1.;
+    let mut attacker = w.fighters[1].clone();
+    moves::start_move(&mut w, &d, 1, &mut attacker, "jab");
+    attacker.mov.as_mut().unwrap().t = 3;
+    w.fighters[1] = attacker;
+    combat::hit_pass(&mut w, &d);
+    assert_eq!(phase_name(&d, &w), Some("spores".into()));
+    assert_eq!(w.fighters[1].lag, 18, "counter activation freezes the attacker");
+    // Six spores leave the Toad as independently reflectable projectiles.
+    w.fighters[1].x = 1200.;
+    let mut births = std::collections::BTreeSet::new();
+    for _ in 0..24 {
+        tick(&mut w, &d, Input::default());
+        for p in w.projs.iter().filter(|p| p.id.starts_with("spore_")) {
+            births.insert((p.id.clone(), p.born));
+        }
+    }
+    assert_eq!(births.len(), 6, "six spore births (three directions, two waves): {births:?}");
+    let ids: std::collections::BTreeSet<_> = births.iter().map(|(id, _)| id.clone()).collect();
+    assert_eq!(ids.len(), 3, "three fixed directions");
+    assert!(w.projs.iter().filter(|p| p.id.starts_with("spore_")).all(|p| (p.hit.damage - 3.5).abs() < 1e-9));
+    // A whiff runs the whole 62-frame animation.
+    let mut w = start(&d, "nspec");
+    let mut ticks = 0;
+    while w.fighters[0].mov.is_some() && ticks < 200 {
+        step_move(&mut w, &d, Intent::default());
+        ticks += 1;
+    }
+    assert_eq!(ticks, 62, "62-frame Toad animation");
+}
+
+#[test]
+fn toad_reflects_a_projectile_and_still_answers() {
+    let d = common::data();
+    let mut w = sandbox(&d, &["duchess", "throbbin"]);
+    w.count = 0;
+    w.fighters[0].x = 640.;
+    w.fighters[0].y = 520.;
+    w.fighters[0].face = 1.;
+    w.fighters[1].x = 900.;
+    let mut f = w.fighters[0].clone();
+    moves::start_move(&mut w, &d, 0, &mut f, "nspec");
+    w.fighters[0] = f;
+    w.fighters[0].mov.as_mut().unwrap().t = 8;
+    let owner = w.fighters[1].clone();
+    sim::projectiles::spawn(&mut w, &d, 1, &owner, "thunder");
+    let p = &mut w.projs[0];
+    p.x = w.fighters[0].x + 10.;
+    p.y = w.fighters[0].y - 40.;
+    p.vx = -6.;
+    p.vy = 0.;
+    assert_eq!(p.life, 16);
+    sim::projectiles::step_projectiles(&mut w, &d);
+    let p = &w.projs[0];
+    assert_eq!(p.owner, 0, "the counter steals the projectile");
+    assert!(p.vx > 0., "reflected back: {}", p.vx);
+    assert_eq!(p.life, 24, "counter reflectLife");
+    assert_eq!(phase_name(&d, &w), Some("spores".into()));
+}
+
+#[test]
+fn peach_bomber_travel_detects_targets_and_whiffs_for_the_source_total() {
+    let d = common::data();
+    // Whiff: windup 12 + thrust 24 + recovery 26 = 62, ending idle on flat ground.
+    let mut w = start(&d, "sspec");
+    let mut ticks = 0;
+    let mut travelled = 0.;
+    let start_x = w.fighters[0].x;
+    while w.fighters[0].mov.is_some() && ticks < 200 {
+        if phase_name(&d, &w) == Some("thrust".into()) && travelled == 0. {
+            travelled = w.fighters[0].x;
+        }
+        step_move(&mut w, &d, Intent::default());
+        ticks += 1;
+    }
+    assert_eq!(ticks, 62, "grounded whiff runs the whole 62-frame animation");
+    assert!(w.fighters[0].x - start_x > 200., "the lunge covers ground: {}", w.fighters[0].x - start_x);
+    assert_eq!(w.fighters[0].state, State::Idle);
+    // On contact: the search box transitions to the 12% burst and Peach rebounds.
+    let mut w = start(&d, "sspec");
+    w.fighters[1].x = 700.;
+    for _ in 0..20 {
+        step_move(&mut w, &d, Intent::default());
+        if phase_name(&d, &w) == Some("burst".into()) {
+            break;
+        }
+    }
+    assert_eq!(phase_name(&d, &w), Some("burst".into()));
+    for _ in 0..3 {
+        tick(&mut w, &d, Input::default());
+    }
+    assert!(w.fighters[1].dmg > 0., "bomber hit connects");
+    close(w.fighters[1].dmg, 12.0);
+    assert!(w.fighters[0].vx < 0., "rebound: {}", w.fighters[0].vx);
+}
+
+#[test]
+fn peach_parasol_opens_slow_descent_and_closes_on_release() {
+    let d = common::data();
+    let mut w = start_air(&d, "uspec");
+    // Rising: the attack phase launches upward and its final hit is at source 31-32.
+    for _ in 0..8 {
+        step_move(&mut w, &d, Intent { sp_held: true, ..Default::default() });
+        stay_air(&mut w, 300.);
+    }
+    assert!(w.fighters[0].vy < 0., "parasol rise (world y down): {}", w.fighters[0].vy);
+    let mut ticks = 0;
+    while phase_name(&d, &w) != Some("open".into()) && ticks < 100 {
+        step_move(&mut w, &d, Intent { sp_held: true, ..Default::default() });
+        stay_air(&mut w, 300.);
+        ticks += 1;
+    }
+    assert_eq!(phase_name(&d, &w), Some("open".into()));
+    assert_eq!(ticks + 8, 39, "39-frame rising attack");
+    for _ in 0..20 {
+        step_move(&mut w, &d, Intent { sp_held: true, ..Default::default() });
+        stay_air(&mut w, 300.);
+    }
+    let slow = w.fighters[0].vy;
+    assert!(slow <= 2.0 + 1e-9, "open parasol caps descent at fallCap: {slow}");
+    // Pressing special again closes it: normal gravity returns and the move ends in helplessness.
+    for _ in 0..4 {
+        step_move(&mut w, &d, Intent { sp: true, ..Default::default() });
+        stay_air(&mut w, 300.);
+    }
+    assert_eq!(phase_name(&d, &w), Some("closed".into()));
+    // Closed parasol keeps falling (special fall) well past the 15-frame closing animation.
+    for _ in 0..30 {
+        step_move(&mut w, &d, Intent::default());
+        stay_air(&mut w, 300.);
+    }
+    assert_eq!(phase_name(&d, &w), Some("closed".into()), "closed special fall persists");
+    assert!(w.fighters[0].vy > 2.5, "closed parasol falls: {}", w.fighters[0].vy);
+    // Landing lag: 26 with the parasol open, 40 once closed (UFD). The closed phase itself must carry 40,
+    // because shared helplessness would land with its own shorter lag.
+    let mut f = w.fighters[0].clone();
+    assert!(moves::trigger(&mut w, &d, 0, &mut f, sim::data::Trigger::Land));
+    assert_eq!(f.state, State::Landing);
+    assert_eq!(f.sd.n, 40.);
+    let open = &d.fighter("duchess").unwrap().moves.uspec.phases[5];
+    assert!(open.transitions.iter().any(|t| t.lag == Some(26)));
+    let hit = &open.hitboxes[0];
+    close(hit.damage, 2.0);
+    assert_eq!(hit.rehit, Some(18));
+}
+
+#[test]
+fn independent_hit_windows_rehit_the_same_victim() {
+    let d = common::data();
+    // (slot, aerial attacker, dx, dy (positive = victim above the attacker), minimum contacts)
+    let cases: [(&str, bool, f64, f64, usize); 6] = [
+        ("dsmash", false, 40., 0., 2),
+        ("dashatk", false, 55., 0., 2),
+        ("ftilt", false, 55., 0., 2),
+        ("nair", false, 45., 0., 2),
+        ("dair", true, 30., -40., 2),
+        ("uair", false, 10., 100., 2),
+    ];
+    for (slot, air, dx, dy, want) in cases {
+        let mut w = if air { start_air(&d, slot) } else { start(&d, slot) };
+        let ay = w.fighters[0].y;
+        let mut contacts = 0;
+        for _ in 0..90 {
+            if w.fighters[0].mov.is_none() {
+                break;
+            }
+            {
+                let f = &mut w.fighters[0];
+                if air {
+                    f.ground = false;
+                    f.surf = None;
+                    f.y = ay;
+                }
+                let (x, y) = (f.x, f.y);
+                let v = &mut w.fighters[1];
+                v.ground = false;
+                v.surf = None;
+                v.x = x + dx;
+                v.y = y - dy;
+            }
+            step_world(&mut w, &d, &[Input::default()]);
+            contacts += w.hits.iter().filter(|h| h.victim == 1 && !h.shielded).count();
+            w.fx.clear();
+            w.hits.clear();
+            w.acts.clear();
+        }
+        assert!(contacts >= want, "{slot}: separate windows must re-hit the same victim, saw {contacts}");
+    }
+}
+
+#[test]
+fn peach_bomber_search_box_window_matches_the_source() {
+    let d = common::data();
+    // A victim that arrives on the last thrust frame (source 36) is still detected.
+    let mut w = start(&d, "sspec");
+    w.fighters[1].x = 1400.;
+    for _ in 0..80 {
+        let m = w.fighters[0].mov.as_ref().unwrap();
+        if phase_name(&d, &w).as_deref() == Some("thrust") && m.t == 23 {
+            break;
+        }
+        step_move(&mut w, &d, Intent::default());
+    }
+    assert_eq!(phase_name(&d, &w).as_deref(), Some("thrust"));
+    w.fighters[1].x = w.fighters[0].x + 40.;
+    step_move(&mut w, &d, Intent::default());
+    assert_eq!(phase_name(&d, &w).as_deref(), Some("burst"), "source frame 36 still detects");
+    // After the thrust window closes (source 37) the same victim is no longer detected.
+    let mut w = start(&d, "sspec");
+    w.fighters[1].x = 1400.;
+    for _ in 0..80 {
+        if phase_name(&d, &w).as_deref() == Some("recover") {
+            break;
+        }
+        step_move(&mut w, &d, Intent::default());
+    }
+    assert_eq!(phase_name(&d, &w).as_deref(), Some("recover"));
+    w.fighters[1].x = w.fighters[0].x + 40.;
+    for _ in 0..3 {
+        step_move(&mut w, &d, Intent::default());
+    }
+    assert_eq!(phase_name(&d, &w).as_deref(), Some("recover"), "detector is off after source frame 36");
+    // The exact boundary: a victim that appears on the phase's last tick (source 37) is too late even though
+    // the timeout and the search box are both true that tick.
+    let mut w = start(&d, "sspec");
+    w.fighters[1].x = 1400.;
+    for _ in 0..80 {
+        let m = w.fighters[0].mov.as_ref().unwrap();
+        if phase_name(&d, &w).as_deref() == Some("thrust") && m.t == 24 {
+            break;
+        }
+        step_move(&mut w, &d, Intent::default());
+    }
+    assert_eq!(w.fighters[0].mov.as_ref().unwrap().t, 24);
+    w.fighters[1].x = w.fighters[0].x + 40.;
+    step_move(&mut w, &d, Intent::default());
+    assert_eq!(phase_name(&d, &w).as_deref(), Some("recover"), "source frame 37 no longer detects");
+}
+
+#[test]
+fn reference_throws_and_pummel() {
+    let d = common::data();
+    let f = d.fighter("duchess").unwrap();
+    // Source ATTACK_ABS rows: 8.0/9.0/6.0/7.0 with their pre-release catch hits.
+    for (throw, damage, angle, tick) in [
+        (&f.throws.f, 8.0, 45., 2.0),
+        (&f.throws.b, 9.0, 140., 2.0),
+        (&f.throws.u, 6.0, 88., 2.0),
+        (&f.throws.d, 7.0, 106., 1.0),
+    ] {
+        let t = throw;
+        close(t.hit.damage, damage);
+        close(t.hit.angle, if angle > 180. { angle - 360. } else { angle });
+        assert_eq!(t.ticks.len(), 1, "throw pre-hit");
+        close(t.ticks[0].damage, tick);
+    }
+    assert_eq!(f.throws.f.release, 15);
+    assert_eq!(f.throws.b.release, 21);
+    assert_eq!(f.throws.u.release, 25);
+    assert_eq!(f.throws.d.release, 42);
+    close(f.stats.pummel_damage.unwrap(), 1.3);
+}
+
+#[test]
+fn raw_input_routing_starts_the_expected_slots() {
+    let d = common::data();
+    for (input, slot) in [
+        (Input { buttons: 2, ..Default::default() }, "jab"),
+        (Input { buttons: 2, stick: (0, 127), ..Default::default() }, "utilt"),
+        (Input { buttons: 2, stick: (0, -127), ..Default::default() }, "dtilt"),
+        (Input { buttons: 4, ..Default::default() }, "nspec"),
+        (Input { buttons: 4, stick: (127, 0), ..Default::default() }, "sspec"),
+        (Input { buttons: 4, stick: (0, -127), ..Default::default() }, "dspec"),
+        (Input { buttons: 8, ..Default::default() }, "grab"),
+    ] {
+        let players = vec![
+            PlayerConfig { tap_jump: false, ..PlayerConfig::human("duchess") },
+            PlayerConfig { tap_jump: false, ..PlayerConfig::human("brawler") },
+        ];
+        let mut w = common::sandbox(&d, "arena", players);
+        w.count = 0;
+        w.fighters[1].x = 1400.;
+        if input.stick != (0, 0) {
+            for _ in 0..8 {
+                tick(&mut w, &d, Input { stick: input.stick, ..Default::default() });
+            }
+        }
+        tick(&mut w, &d, input);
+        let m = w.fighters[0].mov.as_ref().unwrap_or_else(|| panic!("{slot} did not start"));
+        assert_eq!(m.slot, slot);
+    }
+    // Up special in the air, then the float input (held jump) caps the descent.
+    let players = vec![
+        PlayerConfig { tap_jump: false, ..PlayerConfig::human("duchess") },
+        PlayerConfig { tap_jump: false, ..PlayerConfig::human("brawler") },
+    ];
+    let mut w = common::sandbox(&d, "arena", players);
+    w.count = 0;
+    w.fighters[1].x = 1400.;
+    let f = &mut w.fighters[0];
+    f.ground = false;
+    f.surf = None;
+    f.y = 300.;
+    f.set_state(State::Air);
+    tick(&mut w, &d, Input { buttons: 1, stick: (0, 127), ..Default::default() });
+    assert_eq!(w.fighters[0].state, State::Air);
+    tick(&mut w, &d, Input { buttons: 4, stick: (0, 127), ..Default::default() });
+    assert_eq!(w.fighters[0].mov.as_ref().map(|m| m.slot.as_str()), Some("uspec"));
+}
+
+#[test]
+fn contact_coverage_follows_the_fitted_reach() {
+    let d = common::data();
+    // The dummy stands still in front (or behind) at the distance each swing should cover.
+    let cases: [(&str, f64, bool, &[f64]); 6] = [
+        ("jab", 1., false, &[40., 55.]),
+        ("ftilt", 1., false, &[55., 70.]),
+        ("dtilt", 1., false, &[40., 55.]),
+        ("dsmash", 1., false, &[35., 50.]),
+        ("dsmash", -1., false, &[-35., -50.]),
+        ("bair", 1., true, &[-55., -70.]),
+    ];
+    for (slot, side, above, distances) in cases {
+        for &distance in distances {
+            let mut w = start(&d, slot);
+            if above {
+                let f = &mut w.fighters[0];
+                f.ground = false;
+                f.surf = None;
+                f.y = 400.;
+            }
+            w.fighters[1].x = w.fighters[0].x + side * distance;
+            w.fighters[1].y = w.fighters[0].y;
+            w.fighters[1].face = -1.;
+            if above {
+                stay_air_at(&mut w, 1, 400.);
+            }
+            let mut hit = false;
+            for _ in 0..45 {
+                if w.fighters[0].mov.is_none() {
+                    break;
+                }
+                tick(&mut w, &d, Input::default());
+                if above {
+                    stay_air(&mut w, 400.);
+                    stay_air_at(&mut w, 1, 400.);
+                }
+                if w.fighters[1].dmg > 0. {
+                    hit = true;
+                    break;
+                }
+            }
+            assert!(hit, "{slot} should connect at {distance} px (side {side})");
+            // Nothing reaches across the stage.
+            let mut w = start(&d, slot);
+            w.fighters[1].x = w.fighters[0].x + 240.;
+            for _ in 0..45 {
+                if w.fighters[0].mov.is_none() {
+                    break;
+                }
+                tick(&mut w, &d, Input::default());
+            }
+            close(w.fighters[1].dmg, 0.);
+        }
+    }
+}
+
+#[test]
+fn imported_moves_carry_their_source_launch_fields() {
+    let d = common::data();
+    let f = d.fighter("duchess").unwrap();
+    let all = |slot: &str| f.moves.get(slot).unwrap().phases.iter().flat_map(|p| &p.hitboxes).collect::<Vec<_>>();
+    // 361 keeps its Sakurai behavior (Robin/Whiplash convention); the golf club is a plain 45-degree hit.
+    assert!(all("bair").iter().any(|h| h.kind == HitType::Sakurai));
+    assert!(all("fsmash").iter().all(|h| h.kind == HitType::Normal && (h.angle - 45.).abs() < 1e-9));
+    // Autolink multihit on up air; spike on the grounded down-tilt box.
+    assert!(all("uair").iter().any(|h| h.kind == HitType::Autolink));
+    assert!(all("dtilt").iter().any(|h| h.kind == HitType::Spike));
+    // Down tilt's airborne box launches at 80 degrees instead.
+    assert!(
+        all("dtilt").iter().any(|h| (h.angle - 80.).abs() < 1e-9 && h.situation == sim::data::hitbox::Situation::Air)
+    );
+    // Ground/air masks from the source survive on the dash attack's two hit groups.
+    assert!(all("dashatk").iter().any(|h| h.situation == sim::data::hitbox::Situation::Ground));
+    assert!(all("dashatk").iter().any(|h| h.situation == sim::data::hitbox::Situation::Air));
+    // Fixed-knockback rows use the shared setKb adaptation.
+    assert!(all("dsmash").iter().any(|h| h.set_kb));
+    // Toad's spores are reflectable projectiles carrying the article's 3.5% row.
+    let spore = f.projectiles.get("spore_fwd").unwrap();
+    close(spore.hit.damage, 3.5);
+    close(spore.hit.kbg, 2.1);
+    assert_eq!(spore.life, 16);
+}

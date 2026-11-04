@@ -19,6 +19,8 @@ resource-selected move variants, charge-tiered specials, a healing unblockable h
 [Sneak's Snake record](imports/sneak.md) covers exploding gadgets: a bouncing fused grenade thrown along a
 stick-selected arc (`releaseToward` / `releaseAway`), a planted remote C4 (`explosion.manual` + `detonate`
 driven by a charge pool), a steered `article` missile and a ballistic mortar shell.
+[Duchess's Peach record](imports/duchess.md) covers a `floatSpeed` hover, a deterministic item-projectile throw
+tier, a counter that answers with reflectable projectile spores, and a lunge that searches for its target.
 
 ## 1. Establish the target
 

@@ -35,6 +35,7 @@ fn all_assets_load() {
             "bongo",
             "brawler",
             "dancer",
+            "duchess",
             "golem",
             "king",
             "lancer",

@@ -711,6 +711,31 @@ fn training() -> Vec<Step> {
     v.push(Step::Set(0, Special, false));
     v.push(Step::Fast(|m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.t >= 39), 80));
     v.push(Step::Shot("21i-mike-full-eruption"));
+    // Duchess float, turnip flight and parasol descent are state/timing captures, not move poses.
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("duchess"), Step::Wait(30)]);
+    v.push(Step::Set(0, Jump, true));
+    v.push(Step::Fast(|m, _, _| m.world.fighters[0].state == FState::Air && m.world.fighters[0].vy > 0.9, 160));
+    v.push(Step::Shot("35o-duchess-float"));
+    v.push(Step::Set(0, Jump, false));
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("duchess"), Step::Wait(30)]);
+    v.push(Step::Set(0, Down, true));
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Wait(6));
+    v.push(Step::Set(0, Special, false));
+    v.push(Step::Set(0, Down, false));
+    v.push(Step::Fast(|m, _, _| m.world.projs.iter().any(|p| p.id.starts_with("turnip")), 200));
+    v.push(Step::Wait(10));
+    v.push(Step::Shot("35p-duchess-turnip-flight"));
+    v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("duchess"), Step::Wait(30)]);
+    v.push(Step::Set(0, Up, true));
+    v.push(Step::Set(0, Special, true));
+    v.push(Step::Fast(
+        |m, _, _| m.world.fighters[0].mov.as_ref().is_some_and(|mv| mv.slot == "uspec" && mv.phase >= 1),
+        200,
+    ));
+    v.push(Step::Wait(16));
+    v.push(Step::Shot("35q-duchess-parasol-descent"));
+    v.extend([Step::Set(0, Up, false), Step::Set(0, Special, false)]);
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Wait(4), Step::OpenEditor, Step::Wait(20)]);
     for (id, slot, frame, name) in [
         ("ninja", "fsmash", 14, "14b-ninja-heel"),
@@ -833,6 +858,20 @@ fn fighter_kits() -> Vec<Step> {
         ("bongo", "dspec", 20, "33o-bongo-banana"),
         ("bongo", "dspec", 50, "33r-bongo-banana-settled"),
         ("bongo", "grab", 7, "33p-bongo-grab"),
+        ("duchess", "fsmash", 15, "35a-duchess-golf-club"),
+        ("duchess", "fair", 17, "35b-duchess-crown-knuckle"),
+        ("duchess", "nair", 6, "35c-duchess-royal-spin"),
+        ("duchess", "uair", 11, "35d-duchess-rainbow-arc"),
+        ("duchess", "dair", 12, "35e-duchess-piston-kick"),
+        ("duchess", "bair", 6, "35f-duchess-iron-hip"),
+        ("duchess", "nspec", 9, "35g-duchess-toad-guard"),
+        ("duchess", "sspec", 16, "35h-duchess-peach-bomber"),
+        ("duchess", "uspec", 20, "35i-duchess-parasol"),
+        ("duchess", "dspec", 25, "35j-duchess-vegetable-pluck"),
+        ("duchess", "dspec", 45, "35k-duchess-turnip-toss"),
+        ("duchess", "dtilt", 8, "35l-duchess-underfoot-kick"),
+        ("duchess", "dsmash", 13, "35m-duchess-ribbon-sweep"),
+        ("duchess", "utilt", 10, "35n-duchess-royal-wave"),
     ] {
         ed(&mut v, Cmd::Subject(Subject::Move(slot.into())));
         ed(&mut v, Cmd::Fighter(fighter.into()));
@@ -1947,6 +1986,23 @@ mod tests {
 31t-stratus-limit-climhazzard
 31u-stratus-limit-charge
 31v-stratus-finishing-touch";
+35a-duchess-golf-club
+35b-duchess-crown-knuckle
+35c-duchess-royal-spin
+35d-duchess-rainbow-arc
+35e-duchess-piston-kick
+35f-duchess-iron-hip
+35g-duchess-toad-guard
+35h-duchess-peach-bomber
+35i-duchess-parasol
+35j-duchess-vegetable-pluck
+35k-duchess-turnip-toss
+35l-duchess-underfoot-kick
+35m-duchess-ribbon-sweep
+35n-duchess-royal-wave
+35o-duchess-float
+35p-duchess-turnip-flight
+35q-duchess-parasol-descent";
         assert_eq!(names, expected.lines().collect::<Vec<_>>());
     }
 }
