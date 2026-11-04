@@ -554,15 +554,84 @@ fn cypher_climbs_far_enough_to_recover() {
 fn throws_use_the_source_release_frames_and_damage() {
     let d = common::data();
     let f = d.fighter("sneak").unwrap();
-    for (throw, release, total, damage) in [
-        (&f.throws.f, 20, 39, 9.0),
-        (&f.throws.b, 19, 30, 9.0),
-        (&f.throws.u, 22, 47, 11.0),
-        (&f.throws.d, 34, 41, 9.0),
-    ] {
+    for (throw, release, total, damage) in
+        [(&f.throws.f, 20, 39, 9.0), (&f.throws.b, 19, 30, 9.0), (&f.throws.u, 22, 47, 4.0), (&f.throws.d, 34, 41, 9.0)]
+    {
         assert_eq!(throw.release, release);
         assert_eq!(throw.total, total);
         assert!((throw.hit.damage - damage).abs() < 1e-6, "throw damage {}", throw.hit.damage);
     }
     assert!((f.stats.pummel_damage.unwrap() - 1.3).abs() < 1e-6);
+}
+
+#[test]
+fn back_throw_angle_is_relative_to_facing() {
+    // The engine launches a back throw along `-face` (`states::throw`), so the source's absolute 140
+    // degrees is stored mirrored; 140 here would launch the victim forward and down.
+    let d = common::data();
+    let f = d.fighter("sneak").unwrap();
+    assert_eq!(f.throws.b.hit.angle, 40.0);
+    assert_eq!(f.throws.f.hit.angle, 40.0);
+}
+
+#[test]
+fn up_throw_keeps_the_source_catch_tick() {
+    let d = common::data();
+    let t = &d.fighter("sneak").unwrap().throws.u;
+    assert_eq!(t.hit.damage, 4.0);
+    assert_eq!(t.ticks.iter().map(|h| (h.at, h.damage)).collect::<Vec<_>>(), [(21, 7.0)]);
+}
+
+#[test]
+fn separated_aerial_windows_each_hit_one_victim() {
+    let d = common::data();
+    for (slot, want) in [("nair", vec![3., 3., 3., 12.]), ("dair", vec![4., 3., 3., 10.])] {
+        assert_eq!(common::contact_sequence(&d, "sneak", slot), want, "{slot}");
+    }
+}
+
+#[test]
+fn remote_switch_only_detonates_c4_among_live_explosives() {
+    let d = common::data();
+    let mut w = setup(&d, &["sneak", "brawler"]);
+    for id in ["c4", "grenadeMid", "mortarShell"] {
+        let f = w.fighters[0].clone();
+        sim::projectiles::spawn(&mut w, &d, 0, &f, id);
+        let p = w.projs.last_mut().unwrap();
+        p.x = 900.;
+        p.y = 480.;
+    }
+    let survivors = w.projs[1..].to_vec();
+    w.fighters[0].charges[0] = 0;
+    let mut f = w.fighters[0].clone();
+    moves::start_move(&mut w, &d, 0, &mut f, "dspec");
+    w.fighters[0] = f;
+    for _ in 0..24 {
+        step_move(&mut w, &d, Default::default());
+    }
+    assert_eq!(w.projs, survivors, "remote detonation must not move, age or blast other ordnance");
+    assert_eq!(w.fighters[1].dmg, 17.);
+    assert_eq!(w.fighters[0].charges[0], 1);
+}
+
+#[test]
+fn dropped_grenade_keeps_its_exact_fuse_through_bounces() {
+    let d = common::data();
+    let mut w = setup(&d, &["sneak", "brawler"]);
+    w.fighters[1].x = 1400.;
+    let f = w.fighters[0].clone();
+    sim::projectiles::spawn(&mut w, &d, 0, &f, "grenadeDrop");
+    let fuse = d.fighter("sneak").unwrap().projectiles["grenadeDrop"].life;
+    assert_eq!(fuse, 129);
+    for tick in 1..fuse {
+        sim::projectiles::step_projectiles(&mut w, &d);
+        assert_eq!(w.projs.len(), 1, "grenade expired on projectile tick {tick}");
+        assert_eq!(w.projs[0].life, (fuse - tick) as i32);
+        assert_eq!(w.projs[0].age, tick);
+    }
+    assert!(w.projs[0].bounces > 3, "exercise the old premature-fizzle path");
+    assert!(!w.fx.iter().any(|fx| matches!(fx, sim::Fx::Sfx { name, .. } if name == "quake")));
+    sim::projectiles::step_projectiles(&mut w, &d);
+    assert!(w.projs.is_empty(), "fuse explodes on projectile tick 129");
+    assert_eq!(w.fx.iter().filter(|fx| matches!(fx, sim::Fx::Sfx { name, .. } if name == "quake")).count(), 1);
 }

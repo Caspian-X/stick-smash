@@ -149,9 +149,9 @@ fn events(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) {
         {
             w.sfx(s);
         }
-        if e.detonate {
+        if let Some(ids) = &e.detonate {
             w.fighters[i] = f.clone();
-            crate::projectiles::detonate(w, d, i);
+            crate::projectiles::detonate(w, d, i, ids);
             *f = w.fighters[i].clone();
         }
         if let Some(s) = &e.sfx {

@@ -484,7 +484,7 @@
           ],
           "slide": 19,
           "transitions": [
-            { "on": "timeout", "to": "early" }
+            { "on": "timeout", "to": "early", "preserveHits": true }
           ]
         },
         {
@@ -540,7 +540,7 @@
             { "at": 0, "sfx": "slash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ]
         },
         {
@@ -594,7 +594,7 @@
           },
           "events": [],
           "transitions": [
-            { "on": "timeout", "to": "recovery" }
+            { "on": "timeout", "to": "recovery", "preserveHits": true }
           ]
         },
         {
@@ -646,7 +646,7 @@
           ],
           "charge": { "frame": 4 },
           "transitions": [
-            { "on": "timeout", "to": "drag1" }
+            { "on": "timeout", "to": "drag1", "preserveHits": true }
           ]
         },
         {
@@ -725,7 +725,7 @@
             { "at": 9, "sfx": "smash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "link1" }
+            { "on": "timeout", "to": "link1", "preserveHits": true }
           ]
         },
         {
@@ -745,7 +745,7 @@
             { "at": 8, "sfx": "smash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "drag2" }
+            { "on": "timeout", "to": "drag2", "preserveHits": true }
           ]
         },
         {
@@ -763,7 +763,8 @@
               "kbg": 1.0,
               "angle": 15.0,
               "setKb": true,
-              "hitlagMult": 1.5
+              "hitlagMult": 1.5,
+              "group": 1
             },
             {
               "start": 0,
@@ -776,7 +777,8 @@
               "kbg": 1.0,
               "angle": 15.0,
               "setKb": true,
-              "hitlagMult": 1.5
+              "hitlagMult": 1.5,
+              "group": 1
             },
             {
               "start": 0,
@@ -789,7 +791,8 @@
               "kbg": 1.0,
               "angle": 170.0,
               "setKb": true,
-              "hitlagMult": 1.5
+              "hitlagMult": 1.5,
+              "group": 1
             }
           ],
           "anim": [
@@ -805,7 +808,7 @@
             { "at": 4, "sfx": "smash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "link2" }
+            { "on": "timeout", "to": "link2", "preserveHits": true }
           ]
         },
         {
@@ -823,7 +826,7 @@
             { "at": 3, "sfx": "smash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "clean" }
+            { "on": "timeout", "to": "clean", "preserveHits": true }
           ]
         },
         {
@@ -841,7 +844,8 @@
               "kbg": 1.15,
               "angle": 45,
               "type": "sakurai",
-              "hitlagMult": 1.8
+              "hitlagMult": 1.8,
+              "group": 2
             },
             {
               "start": 0,
@@ -854,7 +858,8 @@
               "kbg": 1.15,
               "angle": 45,
               "type": "sakurai",
-              "hitlagMult": 1.8
+              "hitlagMult": 1.8,
+              "group": 2
             },
             {
               "start": 0,
@@ -867,7 +872,8 @@
               "kbg": 1.15,
               "angle": 45,
               "type": "sakurai",
-              "hitlagMult": 1.8
+              "hitlagMult": 1.8,
+              "group": 2
             },
             {
               "start": 0,
@@ -880,7 +886,8 @@
               "kbg": 1.15,
               "angle": 45,
               "type": "sakurai",
-              "hitlagMult": 1.8
+              "hitlagMult": 1.8,
+              "group": 2
             },
             {
               "start": 0,
@@ -893,7 +900,8 @@
               "kbg": 1.15,
               "angle": 45,
               "type": "sakurai",
-              "hitlagMult": 1.8
+              "hitlagMult": 1.8,
+              "group": 2
             }
           ],
           "anim": [
@@ -908,7 +916,7 @@
             { "at": 0, "sfx": "smash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "recovery" }
+            { "on": "timeout", "to": "recovery", "preserveHits": true }
           ]
         },
         {
@@ -947,7 +955,7 @@
           ],
           "charge": { "frame": 4 },
           "transitions": [
-            { "on": "timeout", "to": "hits" }
+            { "on": "timeout", "to": "hits", "preserveHits": true }
           ]
         },
         {
@@ -1015,7 +1023,7 @@
             { "at": 0, "sfx": "slash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ]
         },
         {
@@ -1071,7 +1079,7 @@
               "hitlagMult": 1.2
             },
             {
-              "start": 1,
+              "start": 0,
               "end": 1,
               "x": 30,
               "y": 105,
@@ -1083,7 +1091,7 @@
               "dir": "away"
             },
             {
-              "start": 1,
+              "start": 0,
               "end": 1,
               "x": 25,
               "y": 92,
@@ -1095,7 +1103,7 @@
               "dir": "away"
             },
             {
-              "start": 1,
+              "start": 0,
               "end": 1,
               "x": 20,
               "y": 80,
@@ -1116,50 +1124,12 @@
           },
           "events": [],
           "transitions": [
-            { "on": "timeout", "to": "recovery" }
+            { "on": "timeout", "to": "recovery", "preserveHits": true }
           ]
         },
         {
           "name": "recovery",
           "frames": 29,
-          "hitboxes": [
-            {
-              "start": 0,
-              "end": 0,
-              "x": 30,
-              "y": 105,
-              "r": 15,
-              "damage": 8.0,
-              "bkb": 32.0,
-              "kbg": 1.0,
-              "angle": 60.0,
-              "dir": "away"
-            },
-            {
-              "start": 0,
-              "end": 0,
-              "x": 25,
-              "y": 92,
-              "r": 15,
-              "damage": 8.0,
-              "bkb": 32.0,
-              "kbg": 1.0,
-              "angle": 60.0,
-              "dir": "away"
-            },
-            {
-              "start": 0,
-              "end": 0,
-              "x": 20,
-              "y": 80,
-              "r": 15,
-              "damage": 8.0,
-              "bkb": 32.0,
-              "kbg": 1.0,
-              "angle": 60.0,
-              "dir": "away"
-            }
-          ],
           "anim": [
             { "at": 0, "pose": "sweepUp" },
             { "at": 4, "pose": "stand", "lerp": true }
@@ -1204,7 +1174,7 @@
           ],
           "charge": { "frame": 1 },
           "transitions": [
-            { "on": "timeout", "to": "front" }
+            { "on": "timeout", "to": "front", "preserveHits": true }
           ]
         },
         {
@@ -1279,7 +1249,7 @@
             { "at": 13, "sfx": "slash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "link" }
+            { "on": "timeout", "to": "link", "preserveHits": true }
           ]
         },
         {
@@ -1298,7 +1268,7 @@
             { "at": 10, "sfx": "slash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "back" }
+            { "on": "timeout", "to": "back", "preserveHits": true }
           ]
         },
         {
@@ -1316,7 +1286,8 @@
               "kbg": 0.92,
               "angle": 35.0,
               "dir": "back",
-              "hitlagMult": 1.4
+              "hitlagMult": 1.4,
+              "group": 1
             },
             {
               "start": 0,
@@ -1329,7 +1300,8 @@
               "kbg": 0.92,
               "angle": 35.0,
               "dir": "back",
-              "hitlagMult": 1.4
+              "hitlagMult": 1.4,
+              "group": 1
             },
             {
               "start": 0,
@@ -1342,7 +1314,8 @@
               "kbg": 0.92,
               "angle": 35.0,
               "dir": "back",
-              "hitlagMult": 1.4
+              "hitlagMult": 1.4,
+              "group": 1
             },
             {
               "start": 0,
@@ -1355,7 +1328,8 @@
               "kbg": 0.92,
               "angle": 35.0,
               "dir": "back",
-              "hitlagMult": 1.4
+              "hitlagMult": 1.4,
+              "group": 1
             }
           ],
           "anim": [
@@ -1370,7 +1344,7 @@
             { "at": 0, "sfx": "slash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "recovery" }
+            { "on": "timeout", "to": "recovery", "preserveHits": true }
           ]
         },
         {
@@ -1465,7 +1439,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 9 },
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ]
         },
         {
@@ -1504,7 +1478,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 11 },
-            { "on": "timeout", "to": "windup" }
+            { "on": "timeout", "to": "windup", "preserveHits": true }
           ]
         },
         {
@@ -1524,7 +1498,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 11 },
-            { "on": "timeout", "to": "clean" }
+            { "on": "timeout", "to": "clean", "preserveHits": true }
           ]
         },
         {
@@ -1593,7 +1567,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 11 },
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ]
         },
         {
@@ -1621,7 +1595,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 11 },
-            { "on": "timeout", "to": "recovery" }
+            { "on": "timeout", "to": "recovery", "preserveHits": true }
           ]
         },
         {
@@ -1636,7 +1610,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 11 },
-            { "on": "timeout", "to": "autocancel" }
+            { "on": "timeout", "to": "autocancel", "preserveHits": true }
           ]
         },
         {
@@ -1672,7 +1646,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 8 },
-            { "on": "timeout", "to": "windup" }
+            { "on": "timeout", "to": "windup", "preserveHits": true }
           ]
         },
         {
@@ -1689,7 +1663,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 8 },
-            { "on": "timeout", "to": "hit1" }
+            { "on": "timeout", "to": "hit1", "preserveHits": true }
           ]
         },
         {
@@ -1720,7 +1694,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 8 },
-            { "on": "timeout", "to": "hit2" }
+            { "on": "timeout", "to": "hit2", "preserveHits": true }
           ]
         },
         {
@@ -1751,7 +1725,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 8 },
-            { "on": "timeout", "to": "recovery" }
+            { "on": "timeout", "to": "recovery", "preserveHits": true }
           ]
         },
         {
@@ -1766,7 +1740,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 8 },
-            { "on": "timeout", "to": "autocancel" }
+            { "on": "timeout", "to": "autocancel", "preserveHits": true }
           ]
         },
         {
@@ -1804,7 +1778,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 9 },
-            { "on": "timeout", "to": "early" }
+            { "on": "timeout", "to": "early", "preserveHits": true }
           ]
         },
         {
@@ -2017,7 +1991,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 9 },
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ]
         },
         {
@@ -2026,7 +2000,7 @@
           "hitboxes": [
             {
               "start": 0,
-              "end": 14,
+              "end": 13,
               "x": 8,
               "y": 30,
               "r": 15,
@@ -2038,7 +2012,7 @@
             },
             {
               "start": 0,
-              "end": 14,
+              "end": 13,
               "x": 10,
               "y": 50,
               "r": 15,
@@ -2050,7 +2024,7 @@
             },
             {
               "start": 0,
-              "end": 14,
+              "end": 13,
               "x": 12,
               "y": 70,
               "r": 15,
@@ -2071,7 +2045,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 9 },
-            { "on": "timeout", "to": "recovery" }
+            { "on": "timeout", "to": "recovery", "preserveHits": true }
           ]
         },
         {
@@ -2086,7 +2060,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 9 },
-            { "on": "timeout", "to": "autocancel" }
+            { "on": "timeout", "to": "autocancel", "preserveHits": true }
           ]
         },
         {
@@ -2124,7 +2098,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 16 },
-            { "on": "timeout", "to": "windup" }
+            { "on": "timeout", "to": "windup", "preserveHits": true }
           ]
         },
         {
@@ -2142,7 +2116,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 16 },
-            { "on": "timeout", "to": "early" }
+            { "on": "timeout", "to": "early", "preserveHits": true }
           ]
         },
         {
@@ -2189,7 +2163,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 16 },
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ]
         },
         {
@@ -2198,7 +2172,7 @@
           "hitboxes": [
             {
               "start": 0,
-              "end": 26,
+              "end": 25,
               "x": 5,
               "y": -55,
               "r": 17.5,
@@ -2220,7 +2194,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 16 },
-            { "on": "timeout", "to": "recovery" }
+            { "on": "timeout", "to": "recovery", "preserveHits": true }
           ]
         },
         {
@@ -2235,7 +2209,7 @@
           },
           "transitions": [
             { "on": "land", "to": "landing", "lag": 16 },
-            { "on": "timeout", "to": "autocancel" }
+            { "on": "timeout", "to": "autocancel", "preserveHits": true }
           ]
         },
         {
@@ -2689,7 +2663,7 @@
               ],
               "cost": { "charge": "limit", "uses": 1 },
               "transitions": [
-                { "on": "timeout", "to": "hit1" }
+                { "on": "timeout", "to": "hit1", "preserveHits": true }
               ]
             },
             {
@@ -2752,7 +2726,7 @@
                 { "at": 28, "sfx": "smash" }
               ],
               "transitions": [
-                { "on": "timeout", "to": "link1" }
+                { "on": "timeout", "to": "link1", "preserveHits": true }
               ]
             },
             {
@@ -2782,7 +2756,7 @@
                 { "at": 26, "sfx": "smash" }
               ],
               "transitions": [
-                { "on": "timeout", "to": "hit2" }
+                { "on": "timeout", "to": "hit2", "preserveHits": true }
               ]
             },
             {
@@ -2801,7 +2775,8 @@
                   "angle": 90,
                   "type": "autolink",
                   "setKb": true,
-                  "hitlagMult": 0.3
+                  "hitlagMult": 0.3,
+                  "group": 1
                 }
               ],
               "anim": [
@@ -2828,7 +2803,7 @@
                 { "at": 23, "sfx": "smash" }
               ],
               "transitions": [
-                { "on": "timeout", "to": "link2" }
+                { "on": "timeout", "to": "link2", "preserveHits": true }
               ]
             },
             {
@@ -2848,7 +2823,7 @@
                 { "at": 21, "sfx": "smash" }
               ],
               "transitions": [
-                { "on": "timeout", "to": "hit3" }
+                { "on": "timeout", "to": "hit3", "preserveHits": true }
               ]
             },
             {
@@ -2867,7 +2842,8 @@
                   "angle": -80.0,
                   "type": "spike",
                   "setKb": true,
-                  "hitlagMult": 0.3
+                  "hitlagMult": 0.3,
+                  "group": 2
                 },
                 {
                   "start": 0,
@@ -2880,7 +2856,8 @@
                   "kbg": 1.0,
                   "angle": 70.0,
                   "setKb": true,
-                  "hitlagMult": 0.3
+                  "hitlagMult": 0.3,
+                  "group": 2
                 }
               ],
               "anim": [
@@ -2897,7 +2874,7 @@
                 { "at": 17, "sfx": "smash" }
               ],
               "transitions": [
-                { "on": "timeout", "to": "link3" }
+                { "on": "timeout", "to": "link3", "preserveHits": true }
               ]
             },
             {
@@ -2916,7 +2893,7 @@
                 { "at": 15, "sfx": "smash" }
               ],
               "transitions": [
-                { "on": "timeout", "to": "hit4" }
+                { "on": "timeout", "to": "hit4", "preserveHits": true }
               ]
             },
             {
@@ -2934,7 +2911,8 @@
                   "kbg": 1.0,
                   "angle": 95.0,
                   "setKb": true,
-                  "hitlagMult": 0.3
+                  "hitlagMult": 0.3,
+                  "group": 3
                 },
                 {
                   "start": 0,
@@ -2947,7 +2925,8 @@
                   "kbg": 1.0,
                   "angle": 110.0,
                   "setKb": true,
-                  "hitlagMult": 0.3
+                  "hitlagMult": 0.3,
+                  "group": 3
                 }
               ],
               "anim": [
@@ -2963,7 +2942,7 @@
                 { "at": 10, "sfx": "smash" }
               ],
               "transitions": [
-                { "on": "timeout", "to": "link4" }
+                { "on": "timeout", "to": "link4", "preserveHits": true }
               ]
             },
             {
@@ -2982,7 +2961,7 @@
                 { "at": 9, "sfx": "smash" }
               ],
               "transitions": [
-                { "on": "timeout", "to": "hit5" }
+                { "on": "timeout", "to": "hit5", "preserveHits": true }
               ]
             },
             {
@@ -2999,7 +2978,8 @@
                   "bkb": 30.0,
                   "kbg": 1.47,
                   "angle": 50.0,
-                  "hitlagMult": 2.5
+                  "hitlagMult": 2.5,
+                  "group": 4
                 }
               ],
               "anim": [
@@ -3014,7 +2994,7 @@
                 { "at": 0, "sfx": "smash" }
               ],
               "transitions": [
-                { "on": "timeout", "to": "recovery" }
+                { "on": "timeout", "to": "recovery", "preserveHits": true }
               ]
             },
             {
@@ -3155,7 +3135,7 @@
             { "at": 24, "sfx": "smash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "hit1" }
+            { "on": "timeout", "to": "hit1", "preserveHits": true }
           ]
         },
         {
@@ -3205,7 +3185,7 @@
             { "at": 23, "sfx": "smash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "link" }
+            { "on": "timeout", "to": "link", "preserveHits": true }
           ]
         },
         {
@@ -3224,7 +3204,7 @@
             { "at": 21, "sfx": "smash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "hit2" }
+            { "on": "timeout", "to": "hit2", "preserveHits": true }
           ]
         },
         {
@@ -3242,7 +3222,8 @@
               "kbg": 1.0,
               "angle": 95.0,
               "setKb": true,
-              "hitlagMult": 0.5
+              "hitlagMult": 0.5,
+              "group": 1
             },
             {
               "start": 0,
@@ -3255,7 +3236,8 @@
               "kbg": 1.0,
               "angle": 110.0,
               "setKb": true,
-              "hitlagMult": 0.5
+              "hitlagMult": 0.5,
+              "group": 1
             }
           ],
           "anim": [
@@ -3271,7 +3253,7 @@
             { "at": 14, "sfx": "smash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "link2" }
+            { "on": "timeout", "to": "link2", "preserveHits": true }
           ]
         },
         {
@@ -3289,7 +3271,7 @@
             { "at": 12, "sfx": "smash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "hit3" }
+            { "on": "timeout", "to": "hit3", "preserveHits": true }
           ]
         },
         {
@@ -3306,7 +3288,8 @@
               "bkb": 30.0,
               "kbg": 1.4,
               "angle": 50.0,
-              "hitlagMult": 2.0
+              "hitlagMult": 2.0,
+              "group": 2
             }
           ],
           "anim": [
@@ -3321,7 +3304,7 @@
             { "at": 0, "sfx": "smash" }
           ],
           "transitions": [
-            { "on": "timeout", "to": "recovery" }
+            { "on": "timeout", "to": "recovery", "preserveHits": true }
           ]
         },
         {
@@ -3450,7 +3433,7 @@
               "ledgeGrab": 0,
               "airAccelMult": 0.5,
               "transitions": [
-                { "on": "timeout", "to": "hit2" }
+                { "on": "timeout", "to": "hit2", "preserveHits": true }
               ]
             },
             {
@@ -3525,7 +3508,7 @@
                 "sword": { "angle": [[0.0, 93.75], [7.0, 120.0], [13.0, 95.0]] }
               },
               "transitions": [
-                { "on": "timeout", "to": "hit3" }
+                { "on": "timeout", "to": "hit3", "preserveHits": true }
               ]
             },
             {
@@ -3576,7 +3559,7 @@
                 "sword": { "angle": [[0.0, 97.5], [6.0, 120.0], [12.0, 95.0]] }
               },
               "transitions": [
-                { "on": "timeout", "to": "tail" }
+                { "on": "timeout", "to": "tail", "preserveHits": true }
               ]
             },
             {
@@ -3783,7 +3766,7 @@
           "ledgeGrab": 0,
           "airAccelMult": 0.5,
           "transitions": [
-            { "on": "timeout", "to": "hit2" }
+            { "on": "timeout", "to": "hit2", "preserveHits": true }
           ]
         },
         {
@@ -3810,7 +3793,7 @@
             "sword": { "angle": [[0.0, 93.75], [7.0, 120.0], [13.0, 95.0]] }
           },
           "transitions": [
-            { "on": "timeout", "to": "hit3" }
+            { "on": "timeout", "to": "hit3", "preserveHits": true }
           ]
         },
         {
@@ -3861,7 +3844,7 @@
             "sword": { "angle": [[0.0, 97.5], [6.0, 120.0], [12.0, 95.0]] }
           },
           "transitions": [
-            { "on": "timeout", "to": "tail" }
+            { "on": "timeout", "to": "tail", "preserveHits": true }
           ]
         },
         {
@@ -3997,7 +3980,7 @@
               ],
               "cost": { "charge": "limit", "uses": 1 },
               "transitions": [
-                { "on": "timeout", "to": "front" }
+                { "on": "timeout", "to": "front", "preserveHits": true }
               ]
             },
             {
@@ -4046,7 +4029,7 @@
                 { "at": 10, "sfx": "quake" }
               ],
               "transitions": [
-                { "on": "timeout", "to": "link" }
+                { "on": "timeout", "to": "link", "preserveHits": true }
               ]
             },
             {
@@ -4065,7 +4048,7 @@
                 { "at": 6, "sfx": "quake" }
               ],
               "transitions": [
-                { "on": "timeout", "to": "rear" }
+                { "on": "timeout", "to": "rear", "preserveHits": true }
               ]
             },
             {
@@ -4083,7 +4066,8 @@
                   "kbg": 4.06,
                   "angle": 80.0,
                   "dir": "away",
-                  "hitlagMult": 2.0
+                  "hitlagMult": 2.0,
+                  "group": 1
                 },
                 {
                   "start": 0,
@@ -4096,7 +4080,8 @@
                   "kbg": 4.06,
                   "angle": 80.0,
                   "dir": "away",
-                  "hitlagMult": 2.0
+                  "hitlagMult": 2.0,
+                  "group": 1
                 },
                 {
                   "start": 0,
@@ -4109,7 +4094,8 @@
                   "kbg": 0.0,
                   "angle": 10,
                   "type": "windbox",
-                  "dir": "away"
+                  "dir": "away",
+                  "group": 1
                 }
               ],
               "anim": [
@@ -4125,7 +4111,7 @@
                 { "at": 0, "sfx": "quake" }
               ],
               "transitions": [
-                { "on": "timeout", "to": "recovery" }
+                { "on": "timeout", "to": "recovery", "preserveHits": true }
               ]
             },
             {

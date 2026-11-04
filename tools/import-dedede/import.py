@@ -1192,9 +1192,9 @@ projectiles["starL"]["shapes"][0]["at"] = [0, 0]
 # Stats and interactions.
 fighter = {
     "$schema": "../../schema/fighter.schema.json", "schemaVersion": 1, "extends": "base",
-    "name": "Penguin King",
+    "name": "Gordo Ramsay",
     "tagline": "The self-made king of Dream Land",
-    "blurb": "Penguin King: a super-heavy penguin with four midair jumps, a huge hammer, a bouncing Gordo, "
+    "blurb": "Gordo Ramsay: a super-heavy penguin with four midair jumps, a huge hammer, a bouncing Gordo, "
              "armored Super Dedede Jump and a chargeable Jet Hammer. Neutral special inhales; side special "
              "throws a Gordo that any attack can bat back.",
     "stats": {

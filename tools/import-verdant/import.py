@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebuild Verdant (SSBU Byleth) from pinned 13.0.1 scripts and documented authoring rules.
+"""Rebuild Bleth (SSBU Byleth) from pinned 13.0.1 scripts and documented authoring rules.
 
 Numbers come from the pinned attack scripts (damage, launch fields, masks, hitlag, rehit, armour) and the
 pinned Ultimate Frame Data rows (startup, active windows, totals, landing lag, autocancel, charge frames,
@@ -155,10 +155,32 @@ def swept(a, pts, **kw):
     return b
 
 
+def assign_groups(boxes):
+    """Cluster inclusive source creation/clear windows; engine ends exclude the clear tick.
+    Keep identities assigned before a timeline is split into phases.
+    """
+    boxes = copy.deepcopy(list(boxes))
+    if not all('_group' in b for b in boxes):
+        group, end, rehits = -1, -1, set()
+        for b in sorted(boxes, key=lambda b: b['start']):
+            rehit = b.get('rehit', 0)
+            if b['start'] > end or b['start'] == end and any(rehits) and rehit not in rehits:
+                group += 1
+                rehits = set()
+            rehits.add(rehit)
+            end = max(end, (b['end'] + 1 if b.get('end') is not None else float('inf')))
+            b['_group'] = group
+    for b in boxes:
+        b.pop('group', None)
+        if b['_group']:
+            b['group'] = b['_group']
+    return boxes
+
+
 def phase(name, frames, boxes=(), **kw):
     p = {'name': name, 'frames': frames}
     if boxes:
-        p['hitboxes'] = list(boxes)
+        p['hitboxes'] = [{k: v for k, v in b.items() if k != '_group'} for b in assign_groups(boxes)]
     p.update(kw)
     return p
 
@@ -373,6 +395,7 @@ def rebase(keys, lo, hi):
 def aerial(slot, name, total, landing, ac_start, ac_end, boxes, pose, weapon, attach, air_pose='air', split=None):
     """Split an aerial into start (initial autocancel), main (landing lag) and late (ending autocancel)."""
     start, late = frame(ac_start), frame(ac_end)
+    boxes = assign_groups(boxes)
     spans = [(0, start, 'startup'), (start, late, 'main'), (late, total, 'late')]
     if split is not None:
         spans = [(0, start, 'startup'), (start, split, 'swing1'), (split, late, 'swing2'), (late, total, 'late')]
@@ -403,7 +426,7 @@ def aerial(slot, name, total, landing, ac_start, ac_end, boxes, pose, weapon, at
         ph['attach'] = wield(weapon, rebase(attach, lo, hi))
         parts.append(ph)
     for i in range(len(parts) - 1):
-        parts[i]['transitions'].append(wait(parts[i + 1]['name']))
+        parts[i]['transitions'].append({**wait(parts[i + 1]['name']), 'preserveHits': True})
     return {'name': name, 'air': 'aerial', 'phases': parts}
 
 
@@ -633,22 +656,25 @@ arrow_shapes = [
     line((-14, 4), (-9, 0), 2, '#66ffb2'),
     line((-14, -4), (-9, 0), 2, '#66ffb2'),
 ]
+arrow_timing = ufd['moves']['nspec']
+arrow_charge = arrow_timing['startup'][1] - arrow_timing['startup'][0]
+arrow_recovery = arrow_timing['total'][1] - (arrow_timing['startup'][1] - 1)
 moves['nspec'] = {'name': 'Failnaught', 'bReverse': True, 'phases': [
     phase('draw', 44, anim=[{'at': 0, 'pose': 'draw'}],
           attach=wield('bow', [[0, 95], [8, 0]]),
-          charge={'frame': 43, 'max': 70, 'holdAfterMax': 46, 'button': 'special'},
+          charge={'frame': 43, 'max': arrow_charge, 'button': 'special'},
           events=[{'at': 0, 'sfx': 'charge'}],
           transitions=[
-              {'on': 'release', 'from': 44, 'minCharge': 70, 'to': 'looseMax'},
+              {'on': 'release', 'from': 44, 'minCharge': arrow_charge, 'to': 'looseMax'},
               {'on': 'release', 'from': 44, 'to': 'loose'},
               {'on': 'shieldPress', 'from': 20, 'to': 'end'},
-              {'on': 'timeout', 'minCharge': 70, 'to': 'looseMax'},
+              {'on': 'timeout', 'minCharge': arrow_charge, 'to': 'looseMax'},
               wait('loose'),
           ]),
     phase('loose', 36, anim=[{'at': 0, 'pose': 'draw'}, {'at': 4, 'pose': 'thrust', 'lerp': True}],
           attach=wield('bow', [[0, 0]]),
           events=[{'at': 0, 'spawn': 'arrow', 'sfx': 'shoot'}]),
-    phase('looseMax', 46, anim=[{'at': 0, 'pose': 'draw'}, {'at': 4, 'pose': 'thrust', 'lerp': True}],
+    phase('looseMax', arrow_recovery, anim=[{'at': 0, 'pose': 'draw'}, {'at': 4, 'pose': 'thrust', 'lerp': True}],
           attach=wield('bow', [[0, 0]]),
           events=[{'at': 0, 'spawn': 'arrowMax', 'sfx': 'shoot'}]),
 ]}
@@ -789,7 +815,7 @@ doc = {
     '$schema': '../../schema/fighter.schema.json',
     'schemaVersion': 1,
     'extends': 'base',
-    'name': 'Verdant',
+    'name': 'Bleth',
     'tagline': 'Wielder of four relics',
     'blurb': 'Very long reach and heavy reads at the cost of speed. Areadbhar stabs and Aymr slams, Failnaught '
              'charges a piercing arrow and the Sword of the Creator tethers a ledge.',

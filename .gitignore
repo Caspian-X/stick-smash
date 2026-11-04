@@ -25,3 +25,6 @@ flamegraph*.svg
 # Local
 .env
 *.log
+
+# Python import tooling
+__pycache__/

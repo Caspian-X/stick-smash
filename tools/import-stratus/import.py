@@ -167,12 +167,34 @@ def swept(a, pts, r, **kw):
     return b
 
 
+def assign_groups(boxes):
+    """Cluster inclusive source creation/clear windows; engine ends exclude the clear tick.
+    Keep identities assigned before a timeline is split into phases.
+    """
+    boxes = copy.deepcopy(list(boxes))
+    if not all('_group' in b for b in boxes):
+        group, end, rehits = -1, -1, set()
+        for b in sorted(boxes, key=lambda b: b['start']):
+            rehit = b.get('rehit', 0)
+            if b['start'] > end or b['start'] == end and any(rehits) and rehit not in rehits:
+                group += 1
+                rehits = set()
+            rehits.add(rehit)
+            end = max(end, (b['end'] + 1 if b.get('end') is not None else float('inf')))
+            b['_group'] = group
+    for b in boxes:
+        b.pop('group', None)
+        if b['_group']:
+            b['group'] = b['_group']
+    return boxes
+
+
 def phase(name, frames, boxes=(), **kw):
     p = {'name': name}
     if frames is not None:
         p['frames'] = frames
     if boxes:
-        p['hitboxes'] = list(boxes)
+        p['hitboxes'] = [{k: v for k, v in b.items() if k != '_group'} for b in assign_groups(boxes)]
     p.update(kw)
     return p
 
@@ -223,6 +245,7 @@ def aerial(name, total, landing, ac_early, ac_late, boxes, poses):
     """Split an aerial into the opening autocancel, the landing-lag body and the ending autocancel. `poses` is
     (pose, rest, attach keys)."""
     pose, rest, keys = poses
+    boxes = assign_groups(boxes)
     spans = [(0, ac_early, 'startup', None), (ac_early, ac_late, 'main', landing), (ac_late, total, 'late', None)]
     parts = []
     for lo, hi, tag, lag in spans:
@@ -249,7 +272,7 @@ def aerial(name, total, landing, ac_early, ac_late, boxes, poses):
         ph['attach'] = attach(shift_keys(keys, lo))
         parts.append(ph)
     for i in range(len(parts) - 1):
-        parts[i]['transitions'].append(wait(parts[i + 1]['name']))
+        parts[i]['transitions'].append({**wait(parts[i + 1]['name']), 'preserveHits': True})
     return {'name': name, 'air': 'aerial', 'phases': parts}
 
 
@@ -412,9 +435,8 @@ def rebase_events(events, lo):
 
 
 def segments(total, cuts, names, boxes=(), anim=(), keys=(), events=(), land_lag=None, land_ends=(), **first):
-    """Cut a move timeline at `cuts`. A new phase clears victim contact history, so windows that the source
-    re-creates (drag hits, late tiers, repeated script boxes) can hit the same victim again. `first` holds
-    fields only the opening phase gets (charge, slide)."""
+    """Cut presentation/landing phases while retaining the whole timeline's contact identities."""
+    boxes = assign_groups(boxes)
     assert cuts[0] == 0 and cuts[-1] == total and len(cuts) == len(names) + 1, (total, cuts, names)
     phases = []
     for i, (lo, hi) in enumerate(zip(cuts, cuts[1:])):
@@ -441,7 +463,7 @@ def segments(total, cuts, names, boxes=(), anim=(), keys=(), events=(), land_lag
         if land_lag is not None:
             trans.append({'on': 'land', 'to': 'end'} if i in land_ends else land(land_lag))
         if i + 1 < len(names):
-            trans.append(wait(names[i + 1]))
+            trans.append({**wait(names[i + 1]), 'preserveHits': True})
         if trans:
             ph['transitions'] = trans
         phases.append(ph)
@@ -529,7 +551,7 @@ moves['fsmash'] = {'name': 'Forward Smash', 'phases': segments(
     charge={'frame': frame(5)})}
 us = raw('usmash', 'cloud', 'AttackHi4')
 # Script: the 13.0 boxes stay up while the 12.0/11.0 boxes are added (source 14-16), then every box becomes the
-# 8.0 tier on source 17. UFD's gameplay windows are one less (13-15 and 16-17).
+# 8.0 tier on source 17. UFD's gameplay windows win: 12(13-14/15-16).
 usmash = [hit(take(us, 13.0, 0, at=14)['source'], frame(12), frame(14), 30, 105, 22),
           hit(take(us, 13.0, 1, at=14)['source'], frame(12), frame(14), 30, 122, 22),
           hit(take(us, 12.0, at=15)['source'], frame(13), frame(14), 18, 88, 18),
@@ -537,14 +559,15 @@ usmash = [hit(take(us, 13.0, 0, at=14)['source'], frame(12), frame(14), 30, 105,
           hit(take(us, 8.0, 0, at=17)['source'], frame(15), frame(16), 30, 105, 15),
           hit(take(us, 8.0, 1, at=17)['source'], frame(15), frame(16), 25, 92, 15),
           hit(take(us, 8.0, 2, at=17)['source'], frame(15), frame(16), 20, 80, 15)]
-# UFD gameplay windows: 12(13-14) and 15(16) -> phases 11-13 and 14-15. The 13.0 rows stay up through the
+# UFD gameplay windows: 12(13-14/15-16). The 13.0 rows stay up through the
 # 12.0/11.0 window (the script only replaces them with the 8.0 tier on source 17).
 usmash[0]['start'] = usmash[1]['start'] = frame(12)
 usmash[0]['end'] = usmash[1]['end'] = frame(15)
 usmash[2]['start'] = usmash[3]['start'] = frame(13)
 usmash[2]['end'] = usmash[3]['end'] = frame(15)
-usmash[4]['start'] = usmash[5]['start'] = usmash[6]['start'] = frame(16)
-usmash[4]['end'] = usmash[5]['end'] = usmash[6]['end'] = frame(17)
+us_late_start, us_late_end = map(int, re.findall(r'\d+', ufd['Up Smash']['active'])[-2:])
+usmash[4]['start'] = usmash[5]['start'] = usmash[6]['start'] = frame(us_late_start)
+usmash[4]['end'] = usmash[5]['end'] = usmash[6]['end'] = frame(us_late_end)
 moves['usmash'] = {'name': 'Up Smash', 'phases': segments(
     45, [0, 11, 14, 16, 45], ['windup', 'hits', 'late', 'recovery'], usmash,
     anim=[{'at': 0, 'pose': 'stand'}, {'at': 5, 'pose': 'overhead', 'lerp': True}, {'at': 11, 'pose': 'overhead'},
@@ -599,15 +622,16 @@ moves['bair'] = {'name': 'Back Air', 'air': 'aerial', 'phases': segments(
     keys=[[0, 95], [5, 60], [9, 180], [12, 135], [41, 95]],
     land_lag=8, land_ends=(5,))}
 au = raw('uair', 'cloud', 'AttackAirHi')
+uair_end = int(re.findall(r'\d+', ufd['Up Air']['active'])[-1])
 uair = [*capsule(take(au, 11.0, 0, at=8)['source'], frame(8), frame(9), (0, 120), (45, 90), 21),
         *capsule(take(au, 11.0, 1, at=8)['source'], frame(8), frame(9), (22, 120), (52, 82), 21),
         *capsule(take(au, 11.0, 2, at=8)['source'], frame(8), frame(9), (44, 115), (60, 74), 21),
         hit(take(au, 11.0, 0, at=9)['source'], frame(9), frame(9), 10, 30, 20),
         hit(take(au, 11.0, 1, at=9)['source'], frame(9), frame(9), 12, 50, 20),
         hit(take(au, 11.0, 2, at=9)['source'], frame(9), frame(9), 14, 70, 20),
-        hit(take(au, 8.0, 0, at=10)['source'], frame(10), frame(24), 8, 30, 15),
-        hit(take(au, 8.0, 1, at=10)['source'], frame(10), frame(24), 10, 50, 15),
-        hit(take(au, 8.0, 2, at=10)['source'], frame(10), frame(24), 12, 70, 15)]
+        hit(take(au, 8.0, 0, at=10)['source'], frame(10), frame(uair_end), 8, 30, 15),
+        hit(take(au, 8.0, 1, at=10)['source'], frame(10), frame(uair_end), 10, 50, 15),
+        hit(take(au, 8.0, 2, at=10)['source'], frame(10), frame(uair_end), 12, 70, 15)]
 moves['uair'] = {'name': 'Up Air', 'air': 'aerial', 'phases': segments(
     44, [0, 7, 9, 24, 31, 44], ['windup', 'early', 'late', 'recovery', 'autocancel'], uair,
     anim=[{'at': 0, 'pose': 'air'}, {'at': 6, 'pose': 'airHigh', 'lerp': True}, {'at': 23, 'pose': 'airHigh'},
@@ -615,9 +639,10 @@ moves['uair'] = {'name': 'Up Air', 'air': 'aerial', 'phases': segments(
     keys=[[0, 150], [5, 250], [7, 330], [9, 400], [12, 460], [43, 470]],
     land_lag=9, land_ends=(4,))}
 ad = raw('dair', 'cloud', 'AttackAirLw')
+dair_end = int(re.findall(r'\d+', ufd['Down Air']['active'])[-1])
 dair = [hit(take(ad, 15.0, at=11)['source'], frame(11), frame(13), 5, -55, 18),
         hit(take(ad, 13.0, at=11)['source'], frame(11), frame(13), 5, -60, 22.5),
-        hit(take(ad, 8.0, at=14)['source'], frame(14), frame(40), 5, -55, 17.5)]
+        hit(take(ad, 8.0, at=14)['source'], frame(14), frame(dair_end), 5, -55, 17.5)]
 moves['dair'] = {'name': 'Down Air', 'air': 'aerial', 'phases': segments(
     64, [0, 4, 10, 13, 40, 45, 64], ['startup', 'windup', 'early', 'late', 'recovery', 'autocancel'], dair,
     anim=[{'at': 0, 'pose': 'air'}, {'at': 8, 'pose': 'airHigh', 'lerp': True},

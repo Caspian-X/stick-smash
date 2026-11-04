@@ -173,12 +173,34 @@ def fitted(a, start, end, x, y, r, **kw):
     return [hit(a, start, end, x, y, r, **kw)]
 
 
+def assign_groups(boxes):
+    """Cluster inclusive source creation/clear windows; engine ends exclude the clear tick.
+    Keep identities assigned before a timeline is split into phases.
+    """
+    boxes = copy.deepcopy(list(boxes))
+    if not all('_group' in b for b in boxes):
+        group, end, rehits = -1, -1, set()
+        for b in sorted(boxes, key=lambda b: b['start']):
+            rehit = b.get('rehit', 0)
+            if b['start'] > end or b['start'] == end and any(rehits) and rehit not in rehits:
+                group += 1
+                rehits = set()
+            rehits.add(rehit)
+            end = max(end, (b['end'] + 1 if b.get('end') is not None else float('inf')))
+            b['_group'] = group
+    for b in boxes:
+        b.pop('group', None)
+        if b['_group']:
+            b['group'] = b['_group']
+    return boxes
+
+
 def phase(name, frames=None, boxes=(), **kw):
     p = {'name': name}
     if frames is not None:
         p['frames'] = frames
     if boxes:
-        p['hitboxes'] = list(boxes)
+        p['hitboxes'] = [{k: v for k, v in b.items() if k != '_group'} for b in assign_groups(boxes)]
     p.update(kw)
     return p
 
@@ -499,6 +521,7 @@ moves['dsmash'] = {'name': 'Double Kick', 'phases': [phase(
 
 def aerial(slot, total, landing, ac_early, ac_late, boxes, contacts, pose, loop_pose='air'):
     """Split an aerial at its autocancel boundaries so startup and ending windows land without lag."""
+    boxes = assign_groups(boxes)
     spans = [(0, ac_early, 'startup', None), (ac_early, ac_late, 'main', landing), (ac_late, total, 'late', None)]
     spans = [s for s in spans if s[1] > s[0]]
     parts = []
@@ -514,7 +537,7 @@ def aerial(slot, total, landing, ac_early, ac_late, boxes, contacts, pose, loop_
             cut.append(b)
         ph = phase(tag, hi - lo, cut, transitions=[
             {'on': 'land', 'to': 'landing', 'lag': lag} if lag else {'on': 'land', 'to': 'end'},
-            {'on': 'timeout', 'to': following}])
+            {'on': 'timeout', 'to': following, 'preserveHits': True}])
         keys = [{'at': 0, 'pose': loop_pose}]
         for c in contacts:
             if lo <= c < hi:
@@ -676,7 +699,7 @@ moves['dspec'] = {
     'phases': [phase('detonate', 32, anim=[
         {'at': 0, 'pose': 'guard'}, {'at': 4, 'pose': 'bust', 'lerp': True}, {'at': src(25), 'pose': 'bust'},
         {'at': 31, 'pose': 'guard', 'lerp': True}],
-        events=[{'at': src(25), 'detonate': True, 'restore': {'charge': 'c4', 'uses': 1}, 'sfx': 'quake'}],
+        events=[{'at': src(25), 'detonate': ['c4'], 'restore': {'charge': 'c4', 'uses': 1}, 'sfx': 'quake'}],
         transitions=[{'on': 'timeout', 'to': 'end'}])],
 }
 
@@ -693,13 +716,15 @@ def throw(slot, script, total, release, **kw):
 
 throws = {
     'f': throw('fthrow', 'ThrowF', 39, src(21), x=0, y=0, r=60),
-    'b': throw('bthrow', 'ThrowB', 30, src(20), x=0, y=0, r=60),
-    # UFD lists a 7% preliminary and a 4% release; they are merged into one 11% throw hit.
-    'u': throw('uthrow', 'ThrowHi', 47, src(23), x=0, y=0, r=60, damage=11.0),
+    # The engine launches a back throw along `-face`, so the source's 140 degree angle becomes 40.
+    'b': throw('bthrow', 'ThrowB', 30, src(20), x=0, y=0, r=60, angle=40.0),
+    # Source: a 7% catch-only contact on frame 22, then the 4% absolute throw on frame 23.
+    'u': throw('uthrow', 'ThrowHi', 47, src(23), x=0, y=0, r=60),
     # Source angle 270 with no knockback lays the victim down; a small downward launch approximates the
     # knockdown in this engine's throw model.
     'd': throw('dthrow', 'ThrowLw', 41, src(35), x=0, y=0, r=60, bkb=25.0, kbg=0.35, angle=-90, type='spike'),
 }
+throws['u']['ticks'] = [{'at': src(22), 'damage': 7.0}]
 
 # ---------------------------------------------------------------- projectiles
 def proj(name, spawn, vel, r, life, hitb, **kw):
@@ -719,7 +744,7 @@ def grenade(name, vel, life, maxn=1, spawn=(22, 52)):
     return proj(name, spawn, vel, 9, life, blast_hit(),
                 max=maxn, gravity=0.30, maxFall=13.0,
                 bounce={'restitution': 0.45, 'minSpeed': 1.2, 'friction': 0.72, 'wallRestitution': 0.5,
-                        'maxBounces': 3, 'fizzleLife': 40, 'sfx': 'land'},
+                        'maxBounces': 3, 'fizzleLife': life, 'sfx': 'land'},
                 explosion={'armTicks': 0, 'radius': 80, 'sfx': 'quake',
                            'fx': [{'type': 'burst', 'color': '#ffd27a', 'n': 16, 'speed': 5.0, 'life': 18,
                                    'size': 4.5}]},

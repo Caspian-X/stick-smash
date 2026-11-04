@@ -563,6 +563,44 @@ mod tests {
     use super::*;
 
     #[test]
+    fn duchess_parasol_is_drawn_through_every_rising_phase() {
+        let sources = [
+            ("global.json", include_str!("../../../assets/global.json")),
+            ("stages/arena/stage.json", include_str!("../../../assets/stages/arena/stage.json")),
+            ("fighters/base/fighter.json", include_str!("../../../assets/fighters/base/fighter.json")),
+            ("fighters/duchess/fighter.json", include_str!("../../../assets/fighters/duchess/fighter.json")),
+        ]
+        .map(|(path, text)| sim::data::Source { path: path.into(), text: text.into() });
+        let (d, errors) = sim::data::load(sources).unwrap();
+        assert!(errors.is_empty(), "{errors:?}");
+        let mut w =
+            sim::World::new(sim::MatchConfig::sandbox("arena", vec![sim::PlayerConfig::human("duchess")], 1), &d)
+                .unwrap();
+        let mut f = w.fighters[0].clone();
+        f.y = 100.;
+        f.ground = false;
+        f.surf = None;
+        sim::moves::start_move(&mut w, &d, 0, &mut f, "uspec");
+        let mut without = d.clone();
+        without.fighters[f.data].attachments.retain(|a| a.id != "parasol");
+        for frame in 0..39 {
+            let view =
+                FighterView { i: 0, f: &f, x: f.x, y: f.y, skel: sim::pose::fighter_pose(&d, &f, frame), rig: None };
+            let mut shown = Canvas::new(1.);
+            let mut hidden = Canvas::new(1.);
+            draw_fighter(&mut shown, &d, frame, &view, &mut Rand(7));
+            draw_fighter(&mut hidden, &without, frame, &view, &mut Rand(7));
+            assert!(
+                shown.idx.len() > hidden.idx.len(),
+                "missing parasol on source frame {} ({})",
+                frame + 1,
+                sim::moves::phase(&d, &f).name
+            );
+            sim::moves::st_attack(&mut w, &d, 0, &mut f, Default::default(), 0.);
+        }
+    }
+
+    #[test]
     fn mike_up_smash_keeps_swinging_forward_through_zero() {
         let fighter: serde_json::Value =
             serde_json::from_str(include_str!("../../../assets/fighters/mike/fighter.json")).unwrap();

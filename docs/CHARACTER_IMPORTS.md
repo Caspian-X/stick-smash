@@ -23,7 +23,7 @@ driven by a charge pool), a steered `article` missile and a ballistic mortar she
 spent by move variants that select Limit Break timelines, plus multi-hit rows split across phases.
 [Bongo Boy's Diddy Kong record](imports/bongo.md) covers a settling trip projectile with a one-at-a-time pool,
 a charge-scaled shot with overcharge stun, a branching leap and a charge-and-boost recovery.
-[Verdant's Byleth record](imports/verdant.md) covers one hidden attachment per weapon swapped by phase, a
+[Bleth's Byleth record](imports/verdant.md) covers one hidden attachment per weapon swapped by phase, a
 whip-stretched reach, a chargeable arrow and a tether recovery.
 [Duchess's Peach record](imports/duchess.md) covers a `floatSpeed` hover, a deterministic item-projectile throw
 tier, a counter that answers with reflectable projectile spores, and a lunge that searches for its target.

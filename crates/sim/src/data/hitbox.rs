@@ -97,9 +97,14 @@ pub struct Hitbox {
     /// Fixed knockback: ignores damage/percent (launch speed = bkb × launchSpeed × victim weight multiplier).
     #[serde(default, skip_serializing_if = "is_default")]
     pub set_kb: bool,
-    /// Multi-hit: can hit the same victim again every this many frames (default: once per phase).
+    /// Multi-hit: can hit the same victim/group again every this many move ticks (default: once until history clears).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rehit: Option<u32>,
+    /// Independent hit identity within one move. A victim can be hit once per group, so later rows with the
+    /// same group are alternatives (early/late tiers, coverage changes) while a different group is a new hit
+    /// (multi-hit sequences such as Diddy Kong's forward smash).
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub group: u8,
     /// Multiplies the hitstun this box causes.
     #[serde(default = "one", skip_serializing_if = "is_one")]
     pub hitstun_mult: f64,

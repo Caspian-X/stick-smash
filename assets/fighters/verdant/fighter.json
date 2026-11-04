@@ -2,7 +2,7 @@
   "$schema": "../../schema/fighter.schema.json",
   "schemaVersion": 1,
   "extends": "base",
-  "name": "Verdant",
+  "name": "Bleth",
   "tagline": "Wielder of four relics",
   "blurb": "Very long reach and heavy reads at the cost of speed. Areadbhar stabs and Aymr slams, Failnaught charges a piercing arrow and the Sword of the Creator tethers a ledge.",
   "stats": {
@@ -661,7 +661,8 @@
               "dir": "away",
               "setKb": true,
               "rehit": 4,
-              "hitlagMult": 0.6
+              "hitlagMult": 0.6,
+              "group": 1
             },
             {
               "start": 16,
@@ -677,7 +678,8 @@
               "dir": "away",
               "setKb": true,
               "rehit": 4,
-              "hitlagMult": 0.6
+              "hitlagMult": 0.6,
+              "group": 1
             },
             {
               "start": 16,
@@ -693,7 +695,8 @@
               "dir": "away",
               "setKb": true,
               "rehit": 4,
-              "hitlagMult": 0.6
+              "hitlagMult": 0.6,
+              "group": 1
             }
           ],
           "charge": { "frame": 6 },
@@ -869,7 +872,7 @@
           "frames": 5,
           "transitions": [
             { "on": "land", "to": "end" },
-            { "on": "timeout", "to": "swing1" }
+            { "on": "timeout", "to": "swing1", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "air" }
@@ -949,7 +952,7 @@
           ],
           "transitions": [
             { "on": "land", "to": "landhit" },
-            { "on": "timeout", "to": "swing2" }
+            { "on": "timeout", "to": "swing2", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "air" },
@@ -976,12 +979,13 @@
               "kbg": 1.5,
               "angle": 51.0,
               "dir": "away",
-              "hitlagMult": 1.4
+              "hitlagMult": 1.4,
+              "group": 1
             }
           ],
           "transitions": [
             { "on": "land", "to": "landhit" },
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "air" },
@@ -1017,7 +1021,7 @@
           "frames": 2,
           "transitions": [
             { "on": "land", "to": "end" },
-            { "on": "timeout", "to": "main" }
+            { "on": "timeout", "to": "main", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "air" }
@@ -1060,7 +1064,7 @@
           ],
           "transitions": [
             { "on": "land", "to": "landing", "lag": 11 },
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "air" },
@@ -1096,7 +1100,7 @@
           "frames": 5,
           "transitions": [
             { "on": "land", "to": "end" },
-            { "on": "timeout", "to": "main" }
+            { "on": "timeout", "to": "main", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "airHigh" }
@@ -1166,7 +1170,7 @@
           ],
           "transitions": [
             { "on": "land", "to": "landing", "lag": 13 },
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "airHigh" },
@@ -1202,7 +1206,7 @@
           "frames": 3,
           "transitions": [
             { "on": "land", "to": "end" },
-            { "on": "timeout", "to": "swing1" }
+            { "on": "timeout", "to": "swing1", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "airHigh" }
@@ -1283,7 +1287,7 @@
           ],
           "transitions": [
             { "on": "land", "to": "landing", "lag": 14 },
-            { "on": "timeout", "to": "swing2" }
+            { "on": "timeout", "to": "swing2", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "airHigh" },
@@ -1310,7 +1314,8 @@
               "kbg": 1.4,
               "angle": 81.0,
               "dir": "away",
-              "hitlagMult": 1.2
+              "hitlagMult": 1.2,
+              "group": 1
             },
             {
               "start": 0,
@@ -1323,7 +1328,8 @@
               "kbg": 1.4,
               "angle": 81.0,
               "dir": "away",
-              "hitlagMult": 1.2
+              "hitlagMult": 1.2,
+              "group": 1
             },
             {
               "start": 0,
@@ -1336,12 +1342,13 @@
               "kbg": 1.4,
               "angle": 81.0,
               "dir": "away",
-              "hitlagMult": 1.2
+              "hitlagMult": 1.2,
+              "group": 1
             }
           ],
           "transitions": [
             { "on": "land", "to": "landing", "lag": 14 },
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "airHigh" },
@@ -1377,7 +1384,7 @@
           "frames": 1,
           "transitions": [
             { "on": "land", "to": "end" },
-            { "on": "timeout", "to": "main" }
+            { "on": "timeout", "to": "main", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "airLow" }
@@ -1486,7 +1493,7 @@
           ],
           "transitions": [
             { "on": "land", "to": "landing", "lag": 28 },
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "airLow" },
@@ -1633,15 +1640,15 @@
           "attach": {
             "bow": { "show": [0, 999], "angle": [[0.0, 95.0], [8.0, 0.0]] }
           },
-          "charge": { "frame": 43, "max": 70, "holdAfterMax": 46, "button": "special" },
+          "charge": { "frame": 43, "max": 69, "button": "special" },
           "events": [
             { "at": 0, "sfx": "charge" }
           ],
           "transitions": [
-            { "on": "release", "from": 44, "minCharge": 70, "to": "looseMax" },
+            { "on": "release", "from": 44, "minCharge": 69, "to": "looseMax" },
             { "on": "release", "from": 44, "to": "loose" },
             { "on": "shieldPress", "from": 20, "to": "end" },
-            { "on": "timeout", "minCharge": 70, "to": "looseMax" },
+            { "on": "timeout", "minCharge": 69, "to": "looseMax" },
             { "on": "timeout", "to": "loose" }
           ]
         },
@@ -1661,7 +1668,7 @@
         },
         {
           "name": "looseMax",
-          "frames": 46,
+          "frames": 47,
           "anim": [
             { "at": 0, "pose": "draw" },
             { "at": 4, "pose": "thrust", "lerp": true }

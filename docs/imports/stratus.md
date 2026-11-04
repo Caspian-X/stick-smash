@@ -32,7 +32,8 @@ resource is a **single-use Limit gauge** filled by a charge special (`Event.rest
 Regeneration:
 
 ```sh
-just import-stratus               # fetch.py, import.py, then just bless
+just stratus-sources              # explicitly refresh source pins
+just import-stratus               # rebuild from local pins, then just bless
 just stratus-visuals /tmp/stratus-reference   # download + hash-check the 41 GIFs, write frame montages
 ```
 
@@ -126,7 +127,7 @@ less. Every row is authored by `tools/import-stratus/import.py`; the raw parsed 
 | Back throw | ThrowB | release 15 / 31 | release 3.0 at 38°, BKB 48/KBG 1.10; 3.0 tick at source 13 | shared | `ticks` |
 | Up throw | ThrowHi | release 15 / 50 | release 4.0 at 80°, BKB 78/KBG 0.97; 2.0 and 2.5 ticks at source 8/13 | shared | `ticks` |
 | Down throw | ThrowLw | release 18 / 43 | 7.0 at 122°, BKB 40/KBG 1.10 | shared | — |
-| Neutral special | SpecialN / SpecialAirN | 18 / 53 ground, 60 air | wave 8.0 ground / 6.4 air at 55°, BKB 38/KBG 0.60, shield damage 0.5×; ground windbox on 16–17 | spawn at source 18 | `startup` 18 → `groundTail` 35 / `airTail` 42 |
+| Neutral special | SpecialN / SpecialAirN | 18 / 53 ground, 60 air | wave 8.0 ground / 6.4 air at 55°, BKB 38/KBG 0.60, shield damage 0.5×; ground windbox on 15–16 | spawn at source 18 | `startup` 18 → `groundTail` 35 / `airTail` 42 |
 | Side special | SpecialS1–3 | 10 / 40; 2 / 31; 2,11,25 / 55 | 4.0 (75°/112°/autolink), 3.0 (95°/60°), 3.0+3.0 fixed-KB then 6.0 at 50° | auto-chained at the earliest cancel | `slash1` 12 → `slash2` 14 → third slash: `windup` 1, `hit1` 2, `link` 7, `hit2` 2, `link2` 12, `hit3` 2, `recovery` 29 |
 | Up special | SpecialHi / Hi2 / Hi2Landing | 7 / 10 / 20+ | 3.0 (FKB 80) thrust, 4.0 rise (FKB 121 then BKB 98/50), 4.5 plunge (270° air spike / 45°), 3.5 landing hit at 64° | rise 17 px/tick from move frame 8 (fitted so the rise clears a full hop; Limit 21), ledge grab from source 7; special press from move frame 19 (Limit 32) starts the plunge; otherwise helpless | `thrust` 9, rise split into 1 + 1 + 5 + 17 (Limit 1 + 1 + 4 + 30), `plunge` 26 (hitbox persists to landing), `landHit` 26 |
 | Down special | SpecialLw | — | no hitboxes | charge 6, max 334, restore at phase 12 when the hold reached the cap; shield cancels | `charge` 13 |
@@ -160,9 +161,9 @@ Special notes:
   follow-up landing phase; aerial landing lag and ending autocancel; Blade Beam spawning on phase 17 and not
   before; contact reach at close range with nothing at 220 px; raw-input routing for jab/tilts/specials/grab;
   respawn refill.
-- Multi-hit structure: a phase entry clears victim contact history, so each source attack row that must hit the
-  same victim again (drag hits, late tiers, re-created script boxes) is its own phase. Durations are preserved;
-  the ledger lists the phase splits.
+- Multi-hit structure: groups distinguish separated source windows. Continuous swings preserve contact
+  history through coverage/tier phase splits, so re-created boxes do not grant extra hits. Durations are
+  preserved; the ledger lists the presentation phase splits.
 - Contact coverage: `move_reach_matches_fitted_geometry` pins both fighters and asserts jab 45/60, forward tilt
   60/80, forward smash 70/85, down tilt 45/60, neutral air 40/55, forward/back air 60/80, up air and down air 35,
   and nothing at 220 px.
@@ -209,8 +210,18 @@ Special notes:
     animation time is skipped, so the combined move is 81 frames.
   - Weapon and limb geometry, poses and hurtbox coverage are fitted; hurtboxes and the collision body are
     inherited from `base`.
-  - Finishing Touch's air variant is 3 frames shorter in the source (87 vs 84); one timeline is authored.
+  - Finishing Touch's air variant is 3 frames longer in the source (87 vs 84); one timeline is authored.
   - Limit Charge's cancel-on-special-press is not modeled (shield cancels instead).
   - The Buster Sword is drawn on `handF` with a pose-driven grip; it is not a two-hand IK rig.
 - Delivery: worktree branch `t3/import-stratus-fighter`, uncommitted working tree (package, sources, tools, tests, shots,
   docs).
+
+## Contact identity correction (2026-11-04)
+
+Inclusive source creation/clear windows that overlap transitively are one hit identity. Regeneration assigns
+`group` across the whole timeline before splitting presentation/landing phases, then preserves history on
+timeout transitions. Coverage and damage-tier changes cannot hit the same victim again; separated windows
+retain independent groups. Full-move contact probes cover the continuous swings and genuine multi-hits.
+
+The late-window regression reads `sources/stratus/ufd.json` directly: up smash's 8% tier is source 15–16,
+up air ends on 23, and down air ends on 39. Engine endpoints are each one less; no phase split extends them.

@@ -1,13 +1,13 @@
-# Verdant reference and conversion record
+# Bleth reference and conversion record
 
-Playable SSBU **Byleth** adaptation, packaged as **Verdant**. It is the first import that draws four separate
+Playable SSBU **Byleth** adaptation, packaged as **Bleth**. It is the first import that draws four separate
 weapons from one kit: the **Sword of the Creator** (whip-sword), **Areadbhar** (lance), **Aymr** (axe) and
 **Failnaught** (bow). It uses one hidden attachment per weapon, shown per phase, so each move visibly wields the
 weapon the source gives it.
 
 ## Target and status
 
-- Package/id: `assets/fighters/verdant/fighter.json`; display name **Verdant** (`verdant`), inheriting only the
+- Package/id: `assets/fighters/verdant/fighter.json`; display name **Bleth** (`verdant`), inheriting only the
   abstract `base` package.
 - Branch: `t3/db74d87e` (this worktree). Source game: Super Smash Bros. Ultimate, patch **13.0.1**.
 - Intended identity: very long range, slow, high-damage reads. Areadbhar stabs, Aymr slams, Failnaught charges a
@@ -64,7 +64,7 @@ drawn during them (recorded below).
 | Hit windows vs script frames | UFD gameplay frames (e.g. fsmash 23-25) | scripts are animation frames, retimed by `FT_MOTION_RATE(0.8)` around the smash hold | UFD gameplay frames win for every phase window and total. Script frames are only used to read the hit data order. |
 | Down special | UFD: grounded 30.0 hit / 8.0 shockwave, active 62-67 / 2-5, armour 34-63 | `master_axe` `SpecialLw` (30.0 at animation frame 61), `SpecialAirLw` (25.0) and `SpecialLwHit` (four 8.0 boxes on frames 2-5, grounded only) | The grounded and aerial impacts are separate phases (`impact` 30.0, `impactAir` 25.0). The shockwave follows the impact as its own 4-frame phase with the source's 8.0/88° grounded-only hit. |
 | Up special damage | UFD: 1.0 hit / 3.0 grab / 6.5 final | scripts: 1.0 autolink at frame 16-17, 3.0 multihits through the whip, no plain 6.5 row (the 6.5 is the `Overtake` hitgrab throw) | The whip's 1.0 autolink and 3.0 multihit are imported. The hitgrab throw is not modeled (see approximations). |
-| Neutral special charge | UFD: uncharged shot at 45, fully charged at 114, totals 80/160 | `SpecialN` / `SpecialNMax`: the second only exists once the fully charged arrow article is generated | Two tiers, matching the source. The engine's hold frame is the last draw frame (43) with a 70-tick hold; releasing earlier still looses at the minimum draw. |
+| Neutral special charge | UFD: uncharged shot at 45, fully charged at 114, totals 80/160 | `SpecialN` / `SpecialNMax`: the second only exists once the fully charged arrow article is generated | Two tiers, matching the source. The engine's hold frame is the last draw frame (43) with a 69-tick hold; releasing earlier still looses at the minimum draw. |
 | Rapid jab cadence | UFD: hits on 11, 14, 17, 20, 23… | `Attack100Sub`: 0.4 on the first frame of a restarting 1-frame window | A looping phase with a `rehit: 3` box, which reproduces the three-frame cadence (and the same damage/knockback per hit). |
 
 ## Conversion rules
@@ -116,7 +116,7 @@ less. Every row is authored by `tools/import-verdant/import.py`; the parsed atta
 | Back throw | ThrowB | release 30 / 43 | 7.0, 40°, BKB 50, KBG 0.8 | shared | shared |
 | Up throw | ThrowHi | release 15 / 37 | 9.0, 76°, BKB 60, KBG 1.1 | shared | shared |
 | Down throw | ThrowLw | release 13 / 31 | 5.0, 74°, BKB 50, KBG 1.5 | shared | shared |
-| Neutral special | SpecialN / SpecialNMax | draw hold at 43 (44-frame draw), loose 36 / max loose 46; totals 80 / 160 | arrow 12.0 (35°, BKB 39, KBG 0.78, shield 5) or fully charged 29.0 (Sakurai, BKB 53, KBG 0.56, shield 9) | Failnaught | 70 held ticks reach the 114-frame full draw; releasing earlier looses at the minimum draw. Shield cancels from phase 20. `bReverse` |
+| Neutral special | SpecialN / SpecialNMax | draw hold at 43 (44-frame draw), loose 36 / max loose 47; totals 80 / 160 | arrow 12.0 (35°, BKB 39, KBG 0.78, shield 5) or fully charged 29.0 (Sakurai, BKB 53, KBG 0.56, shield 9) | Failnaught | 69 held ticks reach the 114-frame full draw; releasing earlier looses at the minimum draw. Shield cancels from phase 20. `bReverse` |
 | Side special | SpecialSStart/SF/SFDash + SpecialAirSF/SpecialAirSFDash | ground 20 / 20-24 / 65, air 21 / 21-24 / 61 | ground 17.25 sweet (59°, BKB 115, KBG 0.40) / 11.5 sour (45°, BKB 85, KBG 0.35); air 14.25 (55°, BKB 86, KBG 0.59) / 9.5 (45°, BKB 85, KBG 0.35) | Areadbhar | Ground: 19-frame wind-up, 5-frame lunge (forward impulse x 6.0), 41-frame recovery. Air branch: 5-frame down-forward thrust and 37-frame air recovery (landing lag 16). The ground sweetspot starts one frame after its sour boxes, as the source does |
 | Up special | SpecialHi / SpecialAirHi + `master_sword` | 9 ground / 10 air / 46, tether from F7 | 3.0 multihit (75°, BKB 40) through the whip; the 1.0 autolink is folded in | Sword (whip scale 2.4) | `startup` 8 already opens the tether from its frame 6 (source frame 7) with a 30-210 px rectangle; `whip` 9 carries the 3.0 rehit-3 hit; then `rise` (29 frames, y 10.5) → landing lag 24 or helpless |
 | Down special | SpecialLw / SpecialAirLw / SpecialLwHit | 62 / 62-67 / 133, armour 34-63 | grounded 30.0 (51°, BKB 60, KBG 0.83, shield 25), aerial 25.0 (BKB 85, KBG 0.78), shockwave 8.0 (88°, BKB 100, KBG 0.30, grounded only) | Aymr | `raise` 33, `slam` 28 with the 36% armour from source frame 34, grounded/aerial `impact` 6 (62-67, armour kept through it), `wave` 4 and `recover` 62 = 133 |
@@ -128,12 +128,11 @@ Special notes:
   uncharged arrow.
 - The down special's shockwave is a phase, not a projectile: the engine's projectile model would have needed a
   fixed spawn and the shockwave is anchored to the axe impact.
-- Where a move has a multi-hit window followed by a single finisher, or two separate single hits (up smash,
-  neutral/up air, down smash), each distinct hit is its own phase. Contact history is cleared on phase entry, so
-  a finisher can hit a victim its multihit already touched; keeping them in one phase would make the second hit
-  unusable against that victim.
+- Groups distinguish separate hits and loop-to-finisher seams, while `preserveHits` retains contact history
+  across presentation phase splits. A finisher can therefore hit after its multihit loop without granting
+  extra contacts to ordinary damage/coverage changes.
 - Neutral special's charge hold ends on the source's 45th frame even if the button is released earlier. A held
-  full charge that then exceeds the 46 extra hold frames ends the phase and still looses the charged arrow.
+  full charge fires automatically on source frame 114 and completes after 160 ticks, with no extra saturated hold.
 - The up special's tether is the shared `Phase.tether`/`ledgeGrab` system; no rope simulation.
 
 ## Validation and handoff
@@ -206,3 +205,13 @@ Special notes:
   - `visuals.py` refuses to overwrite a pinned GIF whose hash changed unless rerun with `--refresh`.
 - Delivery: local worktree branch `t3/db74d87e`, uncommitted working tree (this record, the importer and visuals
   tool, the package, the source captures and tests).
+
+Contact identity review (2026-11-04): up air's rehit-5 loop and non-rehit finisher touch at source frame 20.
+The shared loop-seam rule gives the finisher its own identity: the coverage-following probe changes from
+`3 + 3` (suppressed finisher under naive overlap clustering) to `3 + 3 + 5.5`. Other base timelines with
+rehit followed by a tie-off were probed: up smash stays `2 + 2 + 2 + 2 + 10`, neutral air stays
+`2.5 + 2.5 + 2.5 + 3`. The rule adds an identity at up smash's rehit-7 → rehit-4 seam without changing its
+complete damage sequence. No other import's base non-jab/non-recovery timeline declares rehit.
+
+Naming decision (2026-11-04): the display name changed from Verdant to **Bleth**. Package id `verdant`,
+directory, tools, pinned sources and `34a`–`34o` screenshot names deliberately remain unchanged.
