@@ -1,9 +1,9 @@
-# King Dedede (SSBU 13.0.1) reference and conversion record
+# Gordo Ramsay (SSBU King Dedede, 13.0.1) reference and conversion record
 
 ## Target and status
 
 - Package/id: `assets/fighters/king/fighter.json`; package id stays **`king`** so existing selections,
-  settings, replay references and CPU rosters keep resolving. In-game display name: **Penguin King**.
+  settings, replay references and CPU rosters keep resolving. In-game display name: **Gordo Ramsay**.
 - Reference identity: **King Dedede** from *Super Smash Bros. Ultimate* patch **13.0.1**. Source facts are
   recorded under the reference's own name, `King Dedede`; only the player-facing destination name changes.
 - Branch: current local branch; this work is uncommitted in a shared checkout.
@@ -125,7 +125,7 @@ windows; the tests assert the engine-relative equivalents.
 ## Validation and handoff
 
 - **Reference tests**: `cargo test -p sim --test king` (17 tests) checks package identity/display name
-  “Penguin King”, all slots/throws/projectiles, ground and aerial active windows, autocancel landing lag,
+  “Gordo Ramsay”, all slots/throws/projectiles, ground and aerial active windows, autocancel landing lag,
   smash charge scaling and launch growth, Jet Hammer partial/full damage and armor, Gordo spawn/bat/bounce,
   Inhale pull/capture, the jab chain/rapid loop/finisher, a capture-to-throw path, Super Dedede Jump
   armor/falling hits/landing stars/cancel, throw facts, and CPU completion with King in either seat on every
@@ -236,3 +236,6 @@ general rules.
   that could turn these poses into collision. `--test king` still passes; `--test content` loads and
   validates every package and leaves formatting to `just bless`. No gameplay value, timing, hitbox or
   attachment contact changed, and the golden world hash is untouched.
+
+Naming decision (2026-11-04): the display name is **Gordo Ramsay**, formerly Penguin King. Package id
+`king`, directory, tools, pinned sources and `25*`/`27*` screenshot names remain unchanged.

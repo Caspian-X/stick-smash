@@ -101,6 +101,9 @@ import-king:
     python3 tools/import-dedede/import.py
     just bless
 
+# Alias using the upstream character name; preserves the established import-king command
+import-dedede: import-king
+
 # Download hash-checked King Dedede reference GIFs and make per-frame inspection sheets (Pillow)
 king-visuals dir="/tmp/king-reference":
     python3 tools/import-dedede/visuals.py "{{dir}}"
