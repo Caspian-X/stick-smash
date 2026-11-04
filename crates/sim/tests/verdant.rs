@@ -300,7 +300,7 @@ fn arrow_charge_tiers_pick_the_source_damage() {
     let f = d.fighter("verdant").unwrap();
     let draw = &f.moves.nspec.phases[0];
     assert_eq!(draw.charge.as_ref().unwrap().frame, 43, "charge holds on the last draw frame");
-    assert_eq!(draw.charge.as_ref().unwrap().max, 70, "70 held ticks reach the 114-frame full draw");
+    assert_eq!(draw.charge.as_ref().unwrap().max, 69, "69 held ticks reach the 114-frame full draw");
     // Hold from the start to the tier the charge picks.
     for (held, projectile, damage) in [(0, "arrow", 12.0), (130, "arrowMax", 29.0)] {
         let mut w = start(&d, "nspec");
@@ -566,17 +566,23 @@ fn saturated_charge_still_looses_the_charged_arrow() {
     let d = common::data();
     let mut w = start(&d, "nspec");
     let held = sim::input::Intent { sp: true, sp_held: true, ..Default::default() };
-    // Charge 70 ticks, then hold through the 46 extra hold frames; the phase ends on its own timeout and must
-    // still pick the full-charge tier (the source's arrow is already fully drawn).
-    for _ in 0..220 {
+    let ledger: serde_json::Value =
+        serde_json::from_str(include_str!("../../../docs/imports/sources/verdant/ufd.json")).unwrap();
+    let row = &ledger["moves"]["nspec"];
+    let mut steps = 0;
+    let mut fired = None;
+    while w.fighters[0].mov.is_some() && steps < 220 {
         step_move(&mut w, &d, held);
-        if !w.projs.is_empty() {
-            break;
+        steps += 1;
+        if fired.is_none() && !w.projs.is_empty() {
+            fired = Some(steps + 1);
+            assert_eq!(w.projs[0].id, "arrowMax");
+            assert_eq!(w.projs[0].hit.damage, 29.);
         }
     }
-    let p = w.projs.first().expect("a held full charge must still loose");
-    assert_eq!(p.id, "arrowMax");
-    assert_eq!(p.hit.damage, 29.0);
+    assert_eq!(fired, Some(row["startup"][1].as_u64().unwrap()), "full charge fires on source frame 114");
+    assert_eq!(steps, row["total"][1].as_u64().unwrap(), "held move lasts exactly 160 ticks");
+    assert!(w.fighters[0].mov.is_none());
     // Releasing before the hold frame still looses on the source's 45th move frame (the entry tick counts).
     let mut w = start(&d, "nspec");
     let mut steps = 0;

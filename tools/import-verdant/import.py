@@ -656,22 +656,25 @@ arrow_shapes = [
     line((-14, 4), (-9, 0), 2, '#66ffb2'),
     line((-14, -4), (-9, 0), 2, '#66ffb2'),
 ]
+arrow_timing = ufd['moves']['nspec']
+arrow_charge = arrow_timing['startup'][1] - arrow_timing['startup'][0]
+arrow_recovery = arrow_timing['total'][1] - (arrow_timing['startup'][1] - 1)
 moves['nspec'] = {'name': 'Failnaught', 'bReverse': True, 'phases': [
     phase('draw', 44, anim=[{'at': 0, 'pose': 'draw'}],
           attach=wield('bow', [[0, 95], [8, 0]]),
-          charge={'frame': 43, 'max': 70, 'holdAfterMax': 46, 'button': 'special'},
+          charge={'frame': 43, 'max': arrow_charge, 'button': 'special'},
           events=[{'at': 0, 'sfx': 'charge'}],
           transitions=[
-              {'on': 'release', 'from': 44, 'minCharge': 70, 'to': 'looseMax'},
+              {'on': 'release', 'from': 44, 'minCharge': arrow_charge, 'to': 'looseMax'},
               {'on': 'release', 'from': 44, 'to': 'loose'},
               {'on': 'shieldPress', 'from': 20, 'to': 'end'},
-              {'on': 'timeout', 'minCharge': 70, 'to': 'looseMax'},
+              {'on': 'timeout', 'minCharge': arrow_charge, 'to': 'looseMax'},
               wait('loose'),
           ]),
     phase('loose', 36, anim=[{'at': 0, 'pose': 'draw'}, {'at': 4, 'pose': 'thrust', 'lerp': True}],
           attach=wield('bow', [[0, 0]]),
           events=[{'at': 0, 'spawn': 'arrow', 'sfx': 'shoot'}]),
-    phase('looseMax', 46, anim=[{'at': 0, 'pose': 'draw'}, {'at': 4, 'pose': 'thrust', 'lerp': True}],
+    phase('looseMax', arrow_recovery, anim=[{'at': 0, 'pose': 'draw'}, {'at': 4, 'pose': 'thrust', 'lerp': True}],
           attach=wield('bow', [[0, 0]]),
           events=[{'at': 0, 'spawn': 'arrowMax', 'sfx': 'shoot'}]),
 ]}

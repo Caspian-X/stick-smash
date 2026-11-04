@@ -1640,15 +1640,15 @@
           "attach": {
             "bow": { "show": [0, 999], "angle": [[0.0, 95.0], [8.0, 0.0]] }
           },
-          "charge": { "frame": 43, "max": 70, "holdAfterMax": 46, "button": "special" },
+          "charge": { "frame": 43, "max": 69, "button": "special" },
           "events": [
             { "at": 0, "sfx": "charge" }
           ],
           "transitions": [
-            { "on": "release", "from": 44, "minCharge": 70, "to": "looseMax" },
+            { "on": "release", "from": 44, "minCharge": 69, "to": "looseMax" },
             { "on": "release", "from": 44, "to": "loose" },
             { "on": "shieldPress", "from": 20, "to": "end" },
-            { "on": "timeout", "minCharge": 70, "to": "looseMax" },
+            { "on": "timeout", "minCharge": 69, "to": "looseMax" },
             { "on": "timeout", "to": "loose" }
           ]
         },
@@ -1668,7 +1668,7 @@
         },
         {
           "name": "looseMax",
-          "frames": 46,
+          "frames": 47,
           "anim": [
             { "at": 0, "pose": "draw" },
             { "at": 4, "pose": "thrust", "lerp": true }
