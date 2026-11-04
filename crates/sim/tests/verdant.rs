@@ -633,3 +633,10 @@ fn down_special_impact_timing_and_armour() {
 fn separated_bow_windows_connect_in_order() {
     assert_eq!(common::contact_sequence(&common::data(), "verdant", "nair"), [2.5, 2.5, 2.5, 3.]);
 }
+
+#[test]
+fn loop_seam_finisher_has_an_independent_identity() {
+    let d = common::data();
+    assert_eq!(common::contact_sequence(&d, "verdant", "uair"), [3., 3., 5.5]);
+    assert_eq!(common::contact_sequence(&d, "verdant", "usmash"), [2., 2., 2., 2., 10.]);
+}

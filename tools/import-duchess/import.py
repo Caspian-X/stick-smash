@@ -274,10 +274,13 @@ def assign_groups(boxes):
     """
     boxes = copy.deepcopy(list(boxes))
     if not all('_group' in b for b in boxes):
-        group, end = -1, -1
+        group, end, rehits = -1, -1, set()
         for b in sorted(boxes, key=lambda b: b['start']):
-            if b['start'] > end:
+            rehit = b.get('rehit', 0)
+            if b['start'] > end or b['start'] == end and any(rehits) and rehit not in rehits:
                 group += 1
+                rehits = set()
+            rehits.add(rehit)
             end = max(end, (b['end'] + 1 if b.get('end') is not None else float('inf')))
             b['_group'] = group
     for b in boxes:
@@ -343,22 +346,30 @@ def hit_anim(pose, boxes_, frames, rest='stand'):
 
 
 def chain_ground(parts):
-    """Ground sequences: each phase times out into the next (contacts reset, so each part can hit again)."""
+    """Assign identities across the full timeline, retaining them through presentation splits."""
+    boxes, offset = [], 0
+    for p in parts:
+        for b in p.get('hitboxes', []):
+            boxes.append({**b, 'start': b['start'] + offset,
+                          'end': b['end'] + offset if b.get('end') is not None else None})
+        offset += p.get('frames', 0)
+    grouped = iter(assign_groups(boxes))
+    for p in parts:
+        for b in p.get('hitboxes', []):
+            group = next(grouped)['_group']
+            b.pop('group', None)
+            if group:
+                b['group'] = group
     for a, b in zip(parts, parts[1:]):
-        a.setdefault('transitions', []).append(wait(b['name']))
+        a.setdefault('transitions', []).append({**wait(b['name']), 'preserveHits': True})
     return parts
 
 
 def chain_air(parts, lands):
     """Aerial sequences: `lands[i]` is the landing lag during that phase (None = autocancel/no lag)."""
     for i, p in enumerate(parts):
-        if lands[i] is None:
-            p.setdefault('transitions', []).append({'on': 'land', 'to': 'end'})
-        else:
-            p.setdefault('transitions', []).append(land(lands[i]))
-        if i + 1 < len(parts):
-            p['transitions'].append(wait(parts[i + 1]['name']))
-    return parts
+        p.setdefault('transitions', []).append({'on': 'land', 'to': 'end'} if lands[i] is None else land(lands[i]))
+    return chain_ground(parts)
 
 
 # Neutral attack: forehand slap then backhand slap, continuing while attack is held.
@@ -371,7 +382,7 @@ moves['jab'] = {'name': 'Royal Slap', 'phases': [
     phase('jab2', 29, rows_at(j2, 'slapOut'), anim=hit_anim('slapOut', rows_at(j2, 'slapOut'), 29),
           events=[{'at': frame(2), 'sfx': 'hit'}])]}
 
-# Tilts: each independent hit window is its own phase so a victim can be hit by both.
+# Tilts: coverage changes may split phases while continuous swings share contact history.
 ft = raw('ftilt', 'AttackS3')
 ft_close = [b for b in ft if b['start'] < 10]
 ft_late = [b for b in ft if b['start'] >= 10]

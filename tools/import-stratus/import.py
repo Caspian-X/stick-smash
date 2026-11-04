@@ -173,10 +173,13 @@ def assign_groups(boxes):
     """
     boxes = copy.deepcopy(list(boxes))
     if not all('_group' in b for b in boxes):
-        group, end = -1, -1
+        group, end, rehits = -1, -1, set()
         for b in sorted(boxes, key=lambda b: b['start']):
-            if b['start'] > end:
+            rehit = b.get('rehit', 0)
+            if b['start'] > end or b['start'] == end and any(rehits) and rehit not in rehits:
                 group += 1
+                rehits = set()
+            rehits.add(rehit)
             end = max(end, (b['end'] + 1 if b.get('end') is not None else float('inf')))
             b['_group'] = group
     for b in boxes:
@@ -242,6 +245,7 @@ def aerial(name, total, landing, ac_early, ac_late, boxes, poses):
     """Split an aerial into the opening autocancel, the landing-lag body and the ending autocancel. `poses` is
     (pose, rest, attach keys)."""
     pose, rest, keys = poses
+    boxes = assign_groups(boxes)
     spans = [(0, ac_early, 'startup', None), (ac_early, ac_late, 'main', landing), (ac_late, total, 'late', None)]
     parts = []
     for lo, hi, tag, lag in spans:
@@ -268,7 +272,7 @@ def aerial(name, total, landing, ac_early, ac_late, boxes, poses):
         ph['attach'] = attach(shift_keys(keys, lo))
         parts.append(ph)
     for i in range(len(parts) - 1):
-        parts[i]['transitions'].append(wait(parts[i + 1]['name']))
+        parts[i]['transitions'].append({**wait(parts[i + 1]['name']), 'preserveHits': True})
     return {'name': name, 'air': 'aerial', 'phases': parts}
 
 
@@ -431,9 +435,8 @@ def rebase_events(events, lo):
 
 
 def segments(total, cuts, names, boxes=(), anim=(), keys=(), events=(), land_lag=None, land_ends=(), **first):
-    """Cut a move timeline at `cuts`. A new phase clears victim contact history, so windows that the source
-    re-creates (drag hits, late tiers, repeated script boxes) can hit the same victim again. `first` holds
-    fields only the opening phase gets (charge, slide)."""
+    """Cut presentation/landing phases while retaining the whole timeline's contact identities."""
+    boxes = assign_groups(boxes)
     assert cuts[0] == 0 and cuts[-1] == total and len(cuts) == len(names) + 1, (total, cuts, names)
     phases = []
     for i, (lo, hi) in enumerate(zip(cuts, cuts[1:])):
@@ -460,7 +463,7 @@ def segments(total, cuts, names, boxes=(), anim=(), keys=(), events=(), land_lag
         if land_lag is not None:
             trans.append({'on': 'land', 'to': 'end'} if i in land_ends else land(land_lag))
         if i + 1 < len(names):
-            trans.append(wait(names[i + 1]))
+            trans.append({**wait(names[i + 1]), 'preserveHits': True})
         if trans:
             ph['transitions'] = trans
         phases.append(ph)

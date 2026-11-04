@@ -732,7 +732,7 @@
           "frames": 3,
           "transitions": [
             { "on": "land", "to": "end" },
-            { "on": "timeout", "to": "main" }
+            { "on": "timeout", "to": "main", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "air" }
@@ -771,7 +771,7 @@
           ],
           "transitions": [
             { "on": "land", "to": "landing", "lag": 8 },
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "air" },
@@ -801,7 +801,7 @@
           "frames": 2,
           "transitions": [
             { "on": "land", "to": "end" },
-            { "on": "timeout", "to": "main" }
+            { "on": "timeout", "to": "main", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "air" }
@@ -862,7 +862,7 @@
           ],
           "transitions": [
             { "on": "land", "to": "landing", "lag": 16 },
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "air" },
@@ -892,7 +892,7 @@
           "frames": 2,
           "transitions": [
             { "on": "land", "to": "end" },
-            { "on": "timeout", "to": "main" }
+            { "on": "timeout", "to": "main", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "air" }
@@ -944,7 +944,7 @@
           ],
           "transitions": [
             { "on": "land", "to": "landing", "lag": 7 },
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "air" },
@@ -1000,7 +1000,7 @@
           ],
           "transitions": [
             { "on": "land", "to": "landing", "lag": 9 },
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "air" },
@@ -1030,7 +1030,7 @@
           "frames": 14,
           "transitions": [
             { "on": "land", "to": "end" },
-            { "on": "timeout", "to": "main" }
+            { "on": "timeout", "to": "main", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "air" }
@@ -1069,7 +1069,7 @@
           ],
           "transitions": [
             { "on": "land", "to": "landing", "lag": 17 },
-            { "on": "timeout", "to": "late" }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ],
           "anim": [
             { "at": 0, "pose": "air" },

@@ -161,10 +161,13 @@ def assign_groups(boxes):
     """
     boxes = copy.deepcopy(list(boxes))
     if not all('_group' in b for b in boxes):
-        group, end = -1, -1
+        group, end, rehits = -1, -1, set()
         for b in sorted(boxes, key=lambda b: b['start']):
-            if b['start'] > end:
+            rehit = b.get('rehit', 0)
+            if b['start'] > end or b['start'] == end and any(rehits) and rehit not in rehits:
                 group += 1
+                rehits = set()
+            rehits.add(rehit)
             end = max(end, (b['end'] + 1 if b.get('end') is not None else float('inf')))
             b['_group'] = group
     for b in boxes:
@@ -392,6 +395,7 @@ def rebase(keys, lo, hi):
 def aerial(slot, name, total, landing, ac_start, ac_end, boxes, pose, weapon, attach, air_pose='air', split=None):
     """Split an aerial into start (initial autocancel), main (landing lag) and late (ending autocancel)."""
     start, late = frame(ac_start), frame(ac_end)
+    boxes = assign_groups(boxes)
     spans = [(0, start, 'startup'), (start, late, 'main'), (late, total, 'late')]
     if split is not None:
         spans = [(0, start, 'startup'), (start, split, 'swing1'), (split, late, 'swing2'), (late, total, 'late')]
@@ -422,7 +426,7 @@ def aerial(slot, name, total, landing, ac_start, ac_end, boxes, pose, weapon, at
         ph['attach'] = wield(weapon, rebase(attach, lo, hi))
         parts.append(ph)
     for i in range(len(parts) - 1):
-        parts[i]['transitions'].append(wait(parts[i + 1]['name']))
+        parts[i]['transitions'].append({**wait(parts[i + 1]['name']), 'preserveHits': True})
     return {'name': name, 'air': 'aerial', 'phases': parts}
 
 

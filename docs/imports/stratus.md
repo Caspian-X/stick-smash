@@ -214,3 +214,10 @@ Special notes:
   - The Buster Sword is drawn on `handF` with a pose-driven grip; it is not a two-hand IK rig.
 - Delivery: worktree branch `t3/import-stratus-fighter`, uncommitted working tree (package, sources, tools, tests, shots,
   docs).
+
+## Contact identity correction (2026-11-04)
+
+Inclusive source creation/clear windows that overlap transitively are one hit identity. Regeneration assigns
+`group` across the whole timeline before splitting presentation/landing phases, then preserves history on
+timeout transitions. Coverage and damage-tier changes cannot hit the same victim again; separated windows
+retain independent groups. Full-move contact probes cover the continuous swings and genuine multi-hits.

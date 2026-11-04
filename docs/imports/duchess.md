@@ -226,3 +226,10 @@ Mr. Saturn, Bob-omb, holding/regrabbing the turnip and throwing it in other dire
 - Pivot grab has no destination slot and is omitted. Autolinks use the engine's shared pull rule.
 - No physical controller playtest; movement feel follows the fitted speeds and the UFD airtimes, not measured
   hardware input.
+
+## Contact identity correction (2026-11-04)
+
+Inclusive source creation/clear windows that overlap transitively are one hit identity. Regeneration assigns
+`group` across the whole timeline before splitting presentation/landing phases, then preserves history on
+timeout transitions. Coverage and damage-tier changes cannot hit the same victim again; separated windows
+retain independent groups. Full-move contact probes cover the continuous swings and genuine multi-hits.

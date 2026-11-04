@@ -155,6 +155,12 @@ coverage/tier rows share one group; separate hit windows use different groups. O
 victim per hit pass (first listed wins). `rehit` cooldowns apply independently to each victim/group pair;
 `preserveHits` retains all groups and their move-elapsed cooldowns across phase boundaries.
 
+Importers cluster inclusive source creation/clear windows by transitive overlap. Rows with `rehit` form a
+loop identity. A following cluster touching only the loop's final seam and declaring a different `rehit`
+(including none) starts a new identity, so a multihit finisher connects. Equal rehit, ordinary coverage/damage
+changes without rehit, and overlaps wider than the seam continue the existing identity. Engine active ends
+exclude the source clear tick; that tick still participates in source identity clustering.
+
 ### Counter
 
 A phase with `counter` counters hits received on frames `from..=to`. On a melee hit: the attacker freezes

@@ -98,7 +98,7 @@ fn limit_is_a_one_use_pool_with_no_recharge() {
 }
 
 /// Absolute hit windows, damage and launch fields come from the pinned scripts; the engine phase frame is
-/// source frame minus one. Multi-window moves are split into phases so one victim can be hit by each window.
+/// source frame minus one. Groups distinguish separate hits while continuous swings preserve contact across phase splits.
 fn windows(phases: &[sim::data::Phase]) -> Vec<(u32, u32, f64)> {
     let mut t = 0;
     let mut out = vec![];
@@ -758,4 +758,12 @@ fn limit_blade_beam_launches_harder_than_the_normal_wave() {
 #[test]
 fn separated_smash_windows_connect_in_order() {
     assert_eq!(common::contact_sequence(&common::data(), "stratus", "fsmash"), [3., 3., 13.]);
+}
+
+#[test]
+fn continuous_swings_contact_once_across_phase_splits() {
+    let d = common::data();
+    for (slot, damage) in [("bair", 13.), ("usmash", 13.), ("fair", 14.), ("uair", 11.), ("dair", 15.)] {
+        assert_eq!(common::contact_sequence(&d, "stratus", slot), [damage], "{slot}");
+    }
 }

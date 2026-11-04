@@ -206,3 +206,10 @@ Special notes:
   - `visuals.py` refuses to overwrite a pinned GIF whose hash changed unless rerun with `--refresh`.
 - Delivery: local worktree branch `t3/db74d87e`, uncommitted working tree (this record, the importer and visuals
   tool, the package, the source captures and tests).
+
+Contact identity review (2026-11-04): up air's rehit-5 loop and non-rehit finisher touch at source frame 20.
+The shared loop-seam rule gives the finisher its own identity: the coverage-following probe changes from
+`3 + 3` (suppressed finisher under naive overlap clustering) to `3 + 3 + 5.5`. Other base timelines with
+rehit followed by a tie-off were probed: up smash stays `2 + 2 + 2 + 2 + 10`, neutral air stays
+`2.5 + 2.5 + 2.5 + 3`. The rule adds an identity at up smash's rehit-7 → rehit-4 seam without changing its
+complete damage sequence. No other import's base non-jab/non-recovery timeline declares rehit.

@@ -482,11 +482,9 @@ fn peach_parasol_opens_slow_descent_and_closes_on_release() {
 fn independent_hit_windows_rehit_the_same_victim() {
     let d = common::data();
     // (slot, aerial attacker, dx, dy (positive = victim above the attacker), minimum contacts)
-    let cases: [(&str, bool, f64, f64, usize); 6] = [
+    let cases: [(&str, bool, f64, f64, usize); 4] = [
         ("dsmash", false, 40., 0., 2),
         ("dashatk", false, 55., 0., 2),
-        ("ftilt", false, 55., 0., 2),
-        ("nair", false, 45., 0., 2),
         ("dair", true, 30., -40., 2),
         ("uair", false, 10., 100., 2),
     ];
@@ -729,4 +727,12 @@ fn imported_moves_carry_their_source_launch_fields() {
 #[test]
 fn separated_spin_windows_connect_in_order() {
     assert_eq!(common::contact_sequence(&common::data(), "duchess", "dsmash"), [2., 2., 2., 2., 2., 2., 3.]);
+}
+
+#[test]
+fn continuous_swings_contact_once_across_phase_splits() {
+    let d = common::data();
+    for (slot, damage) in [("ftilt", 7.), ("nair", 13.), ("usmash", 17.)] {
+        assert_eq!(common::contact_sequence(&d, "duchess", slot), [damage], "{slot}");
+    }
 }

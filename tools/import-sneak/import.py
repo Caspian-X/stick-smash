@@ -179,10 +179,13 @@ def assign_groups(boxes):
     """
     boxes = copy.deepcopy(list(boxes))
     if not all('_group' in b for b in boxes):
-        group, end = -1, -1
+        group, end, rehits = -1, -1, set()
         for b in sorted(boxes, key=lambda b: b['start']):
-            if b['start'] > end:
+            rehit = b.get('rehit', 0)
+            if b['start'] > end or b['start'] == end and any(rehits) and rehit not in rehits:
                 group += 1
+                rehits = set()
+            rehits.add(rehit)
             end = max(end, (b['end'] + 1 if b.get('end') is not None else float('inf')))
             b['_group'] = group
     for b in boxes:
@@ -518,6 +521,7 @@ moves['dsmash'] = {'name': 'Double Kick', 'phases': [phase(
 
 def aerial(slot, total, landing, ac_early, ac_late, boxes, contacts, pose, loop_pose='air'):
     """Split an aerial at its autocancel boundaries so startup and ending windows land without lag."""
+    boxes = assign_groups(boxes)
     spans = [(0, ac_early, 'startup', None), (ac_early, ac_late, 'main', landing), (ac_late, total, 'late', None)]
     spans = [s for s in spans if s[1] > s[0]]
     parts = []
@@ -533,7 +537,7 @@ def aerial(slot, total, landing, ac_early, ac_late, boxes, contacts, pose, loop_
             cut.append(b)
         ph = phase(tag, hi - lo, cut, transitions=[
             {'on': 'land', 'to': 'landing', 'lag': lag} if lag else {'on': 'land', 'to': 'end'},
-            {'on': 'timeout', 'to': following}])
+            {'on': 'timeout', 'to': following, 'preserveHits': True}])
         keys = [{'at': 0, 'pose': loop_pose}]
         for c in contacts:
             if lo <= c < hi:
