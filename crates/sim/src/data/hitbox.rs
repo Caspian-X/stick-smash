@@ -100,6 +100,11 @@ pub struct Hitbox {
     /// Multi-hit: can hit the same victim again every this many frames (default: once per phase).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rehit: Option<u32>,
+    /// Independent hit identity within one move. A victim can be hit once per group, so later rows with the
+    /// same group are alternatives (early/late tiers, coverage changes) while a higher group is a new hit
+    /// (multi-hit sequences such as Diddy Kong's forward smash).
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub group: u8,
     /// Multiplies the hitstun this box causes.
     #[serde(default = "one", skip_serializing_if = "is_one")]
     pub hitstun_mult: f64,

@@ -881,7 +881,8 @@
               "bkb": 30.0,
               "kbg": 0.88,
               "angle": 20.0,
-              "dir": "away"
+              "dir": "away",
+              "group": 1
             },
             {
               "start": 19,
@@ -893,7 +894,8 @@
               "bkb": 30.0,
               "kbg": 0.88,
               "angle": 20.0,
-              "dir": "away"
+              "dir": "away",
+              "group": 1
             }
           ],
           "charge": { "frame": 4 },
@@ -1035,7 +1037,8 @@
               "type": "autolink",
               "dir": "away",
               "situation": "air",
-              "setKb": true
+              "setKb": true,
+              "group": 1
             },
             {
               "start": 14,
@@ -1050,7 +1053,8 @@
               "type": "autolink",
               "dir": "away",
               "situation": "air",
-              "setKb": true
+              "setKb": true,
+              "group": 1
             },
             {
               "start": 14,
@@ -1065,7 +1069,8 @@
               "type": "autolink",
               "dir": "away",
               "situation": "air",
-              "setKb": true
+              "setKb": true,
+              "group": 1
             },
             {
               "start": 14,
@@ -1079,7 +1084,8 @@
               "angle": 90.0,
               "dir": "away",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "group": 1
             },
             {
               "start": 14,
@@ -1093,7 +1099,8 @@
               "angle": 90.0,
               "dir": "away",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "group": 1
             },
             {
               "start": 14,
@@ -1107,7 +1114,8 @@
               "angle": 90.0,
               "dir": "away",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "group": 1
             },
             {
               "start": 22,
@@ -1122,7 +1130,8 @@
               "type": "autolink",
               "dir": "away",
               "situation": "air",
-              "setKb": true
+              "setKb": true,
+              "group": 2
             },
             {
               "start": 22,
@@ -1137,7 +1146,8 @@
               "type": "autolink",
               "dir": "away",
               "situation": "air",
-              "setKb": true
+              "setKb": true,
+              "group": 2
             },
             {
               "start": 22,
@@ -1152,7 +1162,8 @@
               "type": "autolink",
               "dir": "away",
               "situation": "air",
-              "setKb": true
+              "setKb": true,
+              "group": 2
             },
             {
               "start": 22,
@@ -1166,7 +1177,8 @@
               "angle": 90.0,
               "dir": "away",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "group": 2
             },
             {
               "start": 22,
@@ -1180,7 +1192,8 @@
               "angle": 90.0,
               "dir": "away",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "group": 2
             },
             {
               "start": 22,
@@ -1194,7 +1207,8 @@
               "angle": 90.0,
               "dir": "away",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "group": 2
             },
             {
               "start": 32,
@@ -1206,7 +1220,8 @@
               "bkb": 25.0,
               "kbg": 0.9,
               "angle": 45,
-              "type": "sakurai"
+              "type": "sakurai",
+              "group": 3
             }
           ],
           "transitions": [
@@ -1535,7 +1550,8 @@
               "bkb": 50.0,
               "kbg": 0.8,
               "angle": 45,
-              "type": "sakurai"
+              "type": "sakurai",
+              "group": 3
             },
             {
               "start": 24,
@@ -1547,7 +1563,8 @@
               "bkb": 50.0,
               "kbg": 0.8,
               "angle": 45,
-              "type": "sakurai"
+              "type": "sakurai",
+              "group": 3
             },
             {
               "start": 2,
@@ -1600,7 +1617,8 @@
               "angle": -94.0,
               "type": "spike",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "group": 1
             },
             {
               "start": 9,
@@ -1613,7 +1631,8 @@
               "kbg": 1.0,
               "angle": 80.0,
               "situation": "air",
-              "setKb": true
+              "setKb": true,
+              "group": 1
             },
             {
               "start": 9,
@@ -1625,7 +1644,8 @@
               "bkb": 36.9,
               "kbg": 1.0,
               "angle": 70.0,
-              "setKb": true
+              "setKb": true,
+              "group": 1
             },
             {
               "start": 16,
@@ -1639,7 +1659,8 @@
               "angle": -94.0,
               "type": "spike",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "group": 2
             },
             {
               "start": 16,
@@ -1652,7 +1673,8 @@
               "kbg": 1.0,
               "angle": 80.0,
               "situation": "air",
-              "setKb": true
+              "setKb": true,
+              "group": 2
             },
             {
               "start": 16,
@@ -1664,7 +1686,8 @@
               "bkb": 36.9,
               "kbg": 1.0,
               "angle": 70.0,
-              "setKb": true
+              "setKb": true,
+              "group": 2
             }
           ],
           "transitions": [

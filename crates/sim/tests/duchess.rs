@@ -725,3 +725,8 @@ fn imported_moves_carry_their_source_launch_fields() {
     close(spore.hit.kbg, 2.1);
     assert_eq!(spore.life, 16);
 }
+
+#[test]
+fn separated_spin_windows_connect_in_order() {
+    assert_eq!(common::contact_sequence(&common::data(), "duchess", "dsmash"), [2., 2., 2., 2., 2., 2., 3.]);
+}

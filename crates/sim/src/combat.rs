@@ -589,10 +589,10 @@ pub fn hit_pass(w: &mut World, d: &GameData) {
                     continue;
                 }
                 let f = &mut w.fighters[a];
-                if !f.sd.can_hit(v, t, b.hit.rehit) {
+                if !f.sd.can_hit(v, b.hit.group, t, b.hit.rehit) {
                     continue;
                 }
-                f.sd.record_hit(v, t);
+                f.sd.record_hit(v, b.hit.group, t);
                 hit = true;
                 let sgn = direction(&w.fighters[a], w.fighters[v].x, b.hit.dir);
                 if b.hit.kind == HitType::Grab {

@@ -768,6 +768,13 @@
           "minimum": 0,
           "description": "Multi-hit: can hit the same victim again every this many frames (default: once per phase)."
         },
+        "group": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Independent hit identity within one move. A victim can be hit once per group, so later rows with the\nsame group are alternatives (early/late tiers, coverage changes) while a higher group is a new hit\n(multi-hit sequences such as Diddy Kong's forward smash)."
+        },
         "hitstunMult": {
           "type": "number",
           "format": "double",
@@ -2498,6 +2505,13 @@
           "format": "uint32",
           "minimum": 0,
           "description": "Multi-hit: can hit the same victim again every this many frames (default: once per phase)."
+        },
+        "group": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Independent hit identity within one move. A victim can be hit once per group, so later rows with the\nsame group are alternatives (early/late tiers, coverage changes) while a higher group is a new hit\n(multi-hit sequences such as Diddy Kong's forward smash)."
         },
         "hitstunMult": {
           "type": "number",

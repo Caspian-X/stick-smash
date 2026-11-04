@@ -163,7 +163,7 @@ impl State {
 }
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct StateData {
-    hit_at: Vec<(usize, u32)>,
+    hit_at: Vec<(usize, u8, u32)>,
     pub n: f64,
     pub kind: String,
     pub side: f64,
@@ -185,14 +185,17 @@ pub struct StateData {
     pub entered: u64,
 }
 impl StateData {
-    pub(crate) fn can_hit(&self, victim: usize, tick: u32, rehit: Option<u32>) -> bool {
-        self.hit_at.iter().find(|(v, _)| *v == victim).is_none_or(|(_, at)| rehit.is_some_and(|n| tick - *at >= n))
+    pub(crate) fn can_hit(&self, victim: usize, group: u8, tick: u32, rehit: Option<u32>) -> bool {
+        self.hit_at
+            .iter()
+            .find(|(v, g, _)| *v == victim && *g == group)
+            .is_none_or(|(_, _, at)| rehit.is_some_and(|n| tick - *at >= n))
     }
-    pub(crate) fn record_hit(&mut self, victim: usize, tick: u32) {
-        if let Some((_, at)) = self.hit_at.iter_mut().find(|(v, _)| *v == victim) {
+    pub(crate) fn record_hit(&mut self, victim: usize, group: u8, tick: u32) {
+        if let Some((_, _, at)) = self.hit_at.iter_mut().find(|(v, g, _)| *v == victim && *g == group) {
             *at = tick;
         } else {
-            self.hit_at.push((victim, tick));
+            self.hit_at.push((victim, group, tick));
         }
     }
     pub(crate) fn clear_hits(&mut self) {

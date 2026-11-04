@@ -171,3 +171,39 @@ fn validation_reports_resource_paths() {
         );
     }
 }
+
+#[test]
+fn groups_share_contact_and_rehit_cooldowns_per_victim() {
+    let mut d = common::data();
+    let mut w = setup(&d);
+    let di = w.fighters[0].data;
+    let h = sim::data::Hitbox {
+        start: 0,
+        end: Some(20),
+        x: 0.,
+        y: 40.,
+        r: 100.,
+        damage: 2.,
+        rehit: Some(5),
+        ..Default::default()
+    };
+    d.fighters[di].moves.jab.phases[0].hitboxes = vec![h.clone(), h.clone(), sim::data::Hitbox { group: 1, ..h }];
+    event(&mut w, &d);
+    for f in &mut w.fighters {
+        f.x = 640.;
+        f.y = 520.;
+        f.inv = 0;
+        f.blink = 0;
+    }
+    for (at, want) in [(0, 2.), (1, 4.), (4, 4.), (5, 6.), (6, 8.)] {
+        w.fighters[0].mov.as_mut().unwrap().elapsed = at;
+        w.fighters[0].mov.as_mut().unwrap().t = at;
+        for f in &mut w.fighters {
+            f.lag = 0;
+        }
+        sim::combat::hit_pass(&mut w, &d);
+        for f in &w.fighters[1..] {
+            assert_eq!(f.dmg, want, "tick {at}");
+        }
+    }
+}

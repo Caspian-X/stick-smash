@@ -98,8 +98,8 @@ next phase's frame 0 is that same tick. A one-phase move with `frames: N` lasts 
    A connecting hit fires the attacker's `hit` transitions. A hit taken inside a `counter` window is countered
    instead and fires the defender's `counter` transition.
 
-**Entering a phase** (any transition): phase frame = 0, the "already hit" list is cleared (the new phase can hit
-everyone again), and `at: 0` events run immediately.
+**Entering a phase** (any transition): phase frame = 0, victim/group contact history is cleared unless the transition
+sets `preserveHits: true`, and `at: 0` events run immediately.
 
 **Ending tick.** When a transition ends the move during the step (step 5), that tick's movement (step 6) still uses
 the phase that just ended, then the fighter is in its new state. This matches the TS version.
@@ -112,7 +112,7 @@ ground or helpless in the air. `landing` goes to landing lag for `lag` frames. A
 `at: N` fires on frame N. `from`/`to` (inclusive) fire on a range. `from` alone fires from that frame on, and
 neither fires on every frame from 1. Frame-0 events must use `at: 0`. `every: K` also requires the world frame to
 be divisible by K. `if` restricts to `grounded`, `airborne` or `countered`. One event's actions run in this order:
-`mulVel`, `setVel`, `addVel`, `capFall`, `leaveGround`, `invuln`, `spawn`, `sfx`, `fx`. Random ranges (`[a, b]`)
+`mulVel`, `setVel`, `addVel`, `capFall`, `leaveGround`, `invuln`, `spawn`, `restore`, `detonate`, `sfx`, `fx`. Random ranges (`[a, b]`)
 in effects draw in field order (x, y, vx, vy, life, size). With `global.sim.separateCosmeticRng` (default true),
 effect ranges and charge particles use a separate rollback-owned RNG seeded from the match seed, leaving the
 gameplay RNG unchanged. Set it false to share the gameplay RNG for TS compatibility. Both streams are deterministic.
@@ -149,6 +149,11 @@ These fields default to existing behavior; projectile damage still uses its own 
 Hitboxes also accept `situation: "both" | "ground" | "air"` (default `both`), filtering victims by
 whether they are grounded. This applies to melee, grabs, windboxes and projectile contact/explosion hits;
 geometry and collision priority are otherwise unchanged.
+
+Hitboxes may set `group` (u8, default 0): contact history is keyed by victim and group. Overlapping
+coverage/tier rows share one group; separate hit windows use different groups. Only one box connects per
+victim per hit pass (first listed wins). `rehit` cooldowns apply independently to each victim/group pair;
+`preserveHits` retains all groups and their move-elapsed cooldowns across phase boundaries.
 
 ### Counter
 

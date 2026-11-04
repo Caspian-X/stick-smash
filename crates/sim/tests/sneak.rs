@@ -566,3 +566,11 @@ fn throws_use_the_source_release_frames_and_damage() {
     }
     assert!((f.stats.pummel_damage.unwrap() - 1.3).abs() < 1e-6);
 }
+
+#[test]
+fn separated_aerial_windows_each_hit_one_victim() {
+    let d = common::data();
+    for (slot, want) in [("nair", vec![3., 3., 3., 12.]), ("dair", vec![4., 3., 3., 10.])] {
+        assert_eq!(common::contact_sequence(&d, "sneak", slot), want, "{slot}");
+    }
+}

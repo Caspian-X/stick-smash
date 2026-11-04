@@ -628,3 +628,8 @@ fn down_special_impact_timing_and_armour() {
     assert_eq!((impact.hitboxes[0].start, impact.hitboxes[0].end), (0, Some(5)));
     assert_eq!(chain_frames(&d, "dspec"), 133);
 }
+
+#[test]
+fn separated_bow_windows_connect_in_order() {
+    assert_eq!(common::contact_sequence(&common::data(), "verdant", "nair"), [2.5, 2.5, 2.5, 3.]);
+}

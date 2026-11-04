@@ -754,3 +754,8 @@ fn limit_blade_beam_launches_harder_than_the_normal_wave() {
     };
     assert!(hit_power("limitBlade") > hit_power("bladeBeam") * 2.5);
 }
+
+#[test]
+fn separated_smash_windows_connect_in_order() {
+    assert_eq!(common::contact_sequence(&common::data(), "stratus", "fsmash"), [3., 3., 13.]);
+}

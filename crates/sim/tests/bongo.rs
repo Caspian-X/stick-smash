@@ -605,3 +605,11 @@ fn connects(d: &sim::GameData, slot: &str, dx: f64, above: bool) -> bool {
     }
     false
 }
+
+#[test]
+fn separated_windows_each_hit_one_victim() {
+    let d = common::data();
+    for (slot, want) in [("fsmash", vec![5., 11.]), ("usmash", vec![2.5, 2.5, 6.]), ("dashatk", vec![2., 2., 3.])] {
+        assert_eq!(common::contact_sequence(&d, "bongo", slot), want, "{slot}");
+    }
+}

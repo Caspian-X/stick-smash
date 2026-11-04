@@ -8,6 +8,7 @@ converted with the shared 5 px/unit scale. Special mechanics are documented in `
 
     just import-duchess
 """
+import copy
 import json
 import math
 import re
@@ -267,12 +268,31 @@ def flat(*xs):
     return out
 
 
+def assign_groups(boxes):
+    """Cluster inclusive source creation/clear windows; engine ends exclude the clear tick.
+    Keep identities assigned before a timeline is split into phases.
+    """
+    boxes = copy.deepcopy(list(boxes))
+    if not all('_group' in b for b in boxes):
+        group, end = -1, -1
+        for b in sorted(boxes, key=lambda b: b['start']):
+            if b['start'] > end:
+                group += 1
+            end = max(end, (b['end'] + 1 if b.get('end') is not None else float('inf')))
+            b['_group'] = group
+    for b in boxes:
+        b.pop('group', None)
+        if b['_group']:
+            b['group'] = b['_group']
+    return boxes
+
+
 def phase(name, frames=None, boxes=(), **kw):
     p = {'name': name}
     if frames is not None:
         p['frames'] = frames
     if boxes:
-        p['hitboxes'] = list(boxes)
+        p['hitboxes'] = [{k: v for k, v in b.items() if k != '_group'} for b in assign_groups(boxes)]
     p.update(kw)
     return p
 
