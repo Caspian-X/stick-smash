@@ -574,3 +574,27 @@ fn separated_aerial_windows_each_hit_one_victim() {
         assert_eq!(common::contact_sequence(&d, "sneak", slot), want, "{slot}");
     }
 }
+
+#[test]
+fn remote_switch_only_detonates_c4_among_live_explosives() {
+    let d = common::data();
+    let mut w = setup(&d, &["sneak", "brawler"]);
+    for id in ["c4", "grenadeMid", "mortarShell"] {
+        let f = w.fighters[0].clone();
+        sim::projectiles::spawn(&mut w, &d, 0, &f, id);
+        let p = w.projs.last_mut().unwrap();
+        p.x = 900.;
+        p.y = 480.;
+    }
+    let survivors = w.projs[1..].to_vec();
+    w.fighters[0].charges[0] = 0;
+    let mut f = w.fighters[0].clone();
+    moves::start_move(&mut w, &d, 0, &mut f, "dspec");
+    w.fighters[0] = f;
+    for _ in 0..24 {
+        step_move(&mut w, &d, Default::default());
+    }
+    assert_eq!(w.projs, survivors, "remote detonation must not move, age or blast other ordnance");
+    assert_eq!(w.fighters[1].dmg, 17.);
+    assert_eq!(w.fighters[0].charges[0], 1);
+}

@@ -2276,7 +2276,7 @@
           "events": [
             {
               "at": 24,
-              "detonate": true,
+              "detonate": ["c4"],
               "restore": { "charge": "c4", "uses": 1 },
               "sfx": "quake"
             }

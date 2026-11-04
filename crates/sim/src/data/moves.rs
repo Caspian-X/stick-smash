@@ -408,9 +408,9 @@ pub struct Event {
     /// Restore uses to a charge pool, capped at capacity. Keeps recharge running until full.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub restore: Option<ChargeNeed>,
-    /// Explode every owned projectile with an explosion, including unarmed manual gadgets.
-    #[serde(default, skip_serializing_if = "is_default")]
-    pub detonate: bool,
+    /// Explode owned gadgets matching these projectile ids (including unarmed ones). Empty means all.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detonate: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sfx: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]

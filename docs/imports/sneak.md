@@ -95,7 +95,7 @@ modelled as two mid-arc plus one of each other arc (four in play at most).
 available the down special plants, spending it; with the pool empty the same slot presses the switch. The
 plant is a zero-velocity projectile that falls 16 px and settles on the floor (gravity 0.4, zero-restitution
 bounce). Its `explosion` is `manual` with `armTicks: 0` and radius 85 px; its blast hit is 17% at angle 80,
-BKB 40, KBG 0.9. The detonate timeline's frame 24 event runs `detonate` and `restore` in one action set, so
+BKB 40, KBG 0.9. The detonate timeline's frame 24 event runs `detonate: ["c4"]` and `restore` in one action set, so
 pressing the switch again is possible immediately. A C4 that leaves the stage is removed without a blast and
 the next press performs the (empty) switch animation, which restores the pool.
 

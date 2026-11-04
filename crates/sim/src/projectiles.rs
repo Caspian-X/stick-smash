@@ -242,10 +242,14 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
 }
 
 /// Immediately blast live owned gadgets in projectile order. No movement, aging or fuse tick.
-pub fn detonate(w: &mut World, d: &GameData, owner: usize) {
+pub fn detonate(w: &mut World, d: &GameData, owner: usize, ids: &[String]) {
     for pi in 0..w.projs.len() {
         let mut p = w.projs[pi].clone();
-        if p.owner == owner && p.life > 0 && d.fighters[p.fighter_data].projectiles[&p.id].explosion.is_some() {
+        if p.owner == owner
+            && p.life > 0
+            && (ids.is_empty() || ids.contains(&p.id))
+            && d.fighters[p.fighter_data].projectiles[&p.id].explosion.is_some()
+        {
             contacts(w, d, &mut p, true);
             w.projs[pi] = p;
         }

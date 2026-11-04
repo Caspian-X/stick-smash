@@ -971,8 +971,9 @@
           "description": "Restore uses to a charge pool, capped at capacity. Keeps recharge running until full."
         },
         "detonate": {
-          "type": "boolean",
-          "description": "Explode every owned projectile with an explosion, including unarmed manual gadgets."
+          "type": ["array", "null"],
+          "items": { "type": "string" },
+          "description": "Explode owned gadgets matching these projectile ids (including unarmed ones). Empty means all."
         },
         "sfx": { "type": ["string", "null"] },
         "fx": {

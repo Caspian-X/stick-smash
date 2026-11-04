@@ -699,7 +699,7 @@ moves['dspec'] = {
     'phases': [phase('detonate', 32, anim=[
         {'at': 0, 'pose': 'guard'}, {'at': 4, 'pose': 'bust', 'lerp': True}, {'at': src(25), 'pose': 'bust'},
         {'at': 31, 'pose': 'guard', 'lerp': True}],
-        events=[{'at': src(25), 'detonate': True, 'restore': {'charge': 'c4', 'uses': 1}, 'sfx': 'quake'}],
+        events=[{'at': src(25), 'detonate': ['c4'], 'restore': {'charge': 'c4', 'uses': 1}, 'sfx': 'quake'}],
         transitions=[{'on': 'timeout', 'to': 'end'}])],
 }
 

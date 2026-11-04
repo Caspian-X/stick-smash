@@ -1087,6 +1087,16 @@ fn check_phase(
                 return Err(e(format!("{path}.uses"), "must be positive".into()));
             }
         }
+        if let Some(ids) = &ev.detonate {
+            for (j, id) in ids.iter().enumerate() {
+                if !f.projectiles.get(id).is_some_and(|p| p.explosion.is_some()) {
+                    return Err(e(
+                        format!("{pp}.events[{i}].detonate[{j}]"),
+                        format!("no explosive projectile {id:?}"),
+                    ));
+                }
+            }
+        }
         if let Some(s) = &ev.spawn
             && !f.projectiles.contains_key(s)
         {
