@@ -72,6 +72,13 @@ verify-replays dir:
 balance seeds="16" fighter="":
     BALANCE_SEEDS={{seeds}} BALANCE_FIGHTER="{{fighter}}" cargo test --release -p sim --test stages fighter_balance_diagnostics -- --ignored --nocapture
 
+# Feel report: jump, gait, air, landing, launch and KO numbers per fighter (FEEL json lines + markdown tables)
+feel fighter="":
+    FEEL_FIGHTER="{{fighter}}" cargo test --release -p sim --test feel_report feel_report -- --ignored --nocapture
+
+# Rewrite docs/balance/feel/baseline.{md,jsonl} from the current content
+feel-baseline:
+    FEEL_OUT=docs/balance/feel cargo test --release -p sim --test feel_report feel_report -- --ignored --nocapture
 # Throbbin against every other fighter, one seat-swapped pair per seed (stage: THROBBIN_STAGE, default arena)
 throbbin-matchups seeds="1" stage="arena":
     THROBBIN_SEEDS={{seeds}} THROBBIN_STAGE="{{stage}}" cargo test --release -p sim --test stages throbbin_vs_roster -- --ignored --nocapture
