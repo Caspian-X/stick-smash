@@ -114,20 +114,28 @@ fn hitstun_and_tumble_use_reference_knockback() {
 
 #[test]
 fn hitlag_follows_damage_only() {
-    let d = common::data();
-    for damage in [0., 1., 4.6, 10., 19.5, 30., 40., 60.] {
-        for mult in [1., 0.5, 1.45] {
-            let mut b = hit(100., 45.);
-            b.set_kb = false;
-            b.damage = damage;
-            b.hitlag_mult = mult;
-            let expected = libm::floor(libm::floor(damage * 0.65 + 6.).min(30.) * mult) as u32;
-            for kb in [0., 20.] {
-                assert_eq!(combat::hitlag_of(&d, &b, kb), expected, "{damage} × {mult}");
+    let mut d = common::data();
+    for ultimate in [true, false] {
+        d.global.hitlag.mult_before_cap = ultimate;
+        for damage in [0., 1., 4.6, 10., 19.5, 30., 40., 60.] {
+            for mult in [1., 0.5, 1.45] {
+                let mut b = hit(100., 45.);
+                b.set_kb = false;
+                b.damage = damage;
+                b.hitlag_mult = mult;
+                // Ultimate multiplies before flooring and capping (10% × 1.45: floor(12.5 × 1.45) = 18, not 12 × 1.45).
+                let expected = if ultimate {
+                    libm::floor((damage * 0.65 + 6.) * mult).min(30.) as u32
+                } else {
+                    libm::floor(libm::floor(damage * 0.65 + 6.).min(30.) * mult) as u32
+                };
+                for kb in [0., 20.] {
+                    assert_eq!(combat::hitlag_of(&d, &b, kb), expected, "{damage} × {mult}");
+                }
+                let mut w = common::fighters(&d, "brawler", &["brawler"]);
+                combat::apply_hit(&mut w, &d, 0, &b, src());
+                assert_eq!((w.fighters[0].lag, w.fighters[1].lag), (expected, expected), "{damage} × {mult}");
             }
-            let mut w = common::fighters(&d, "brawler", &["brawler"]);
-            combat::apply_hit(&mut w, &d, 0, &b, src());
-            assert_eq!((w.fighters[0].lag, w.fighters[1].lag), (expected, expected), "{damage} × {mult}");
         }
     }
 }
@@ -193,7 +201,8 @@ fn hitstun_cancel_is_off_by_default_and_opens_after_its_frames() {
 fn legacy_hitstun_is_unchanged() {
     let mut d = wide(common::linear_data());
     d.global.hitstun.ultimate = None;
-    d.global.hitlag = sim::data::global::Hitlag { base: 3., per_damage: 0.45, per_knockback: 0.1, max: 16. };
+    d.global.hitlag =
+        sim::data::global::Hitlag { base: 3., per_damage: 0.45, per_knockback: 0.1, max: 16., mult_before_cap: false };
     d.global.tech.lockout = 0;
     let mut w = sky(&d, "brawler");
     let b = hit(10., 45.);
@@ -213,5 +222,82 @@ fn legacy_hitstun_is_unchanged() {
         let f = &w.fighters[0];
         assert_eq!((f.x, f.y, f.vx, f.vy), (x, y, vx, vy), "tick {tick}");
         assert_eq!(f.state, if tick < 21 { State::Hitstun } else { State::Air });
+    }
+}
+
+#[test]
+fn sakurai_angle_ramps_with_knockback_on_the_ground() {
+    let d = common::data();
+    let mut b = hit(0., 45.);
+    b.kind = sim::data::HitType::Sakurai;
+    let scale = combat::reference_scale(&d);
+    let px = |kb: f64| kb * scale;
+    // Ultimate: 0° up to 60 reference knockback, rising linearly to 38° at 88; 38° in the air.
+    for (kb, angle) in [(40., 0.), (60., 0.), (74., 19.), (88., 38.), (150., 38.)] {
+        assert!((combat::launch_angle(&d, &b, px(kb), true) - angle).abs() < 1e-9, "KB {kb}");
+        assert_eq!(combat::launch_angle(&d, &b, px(kb), false), 38.);
+    }
+    // Without a ramp the tumble step rule remains.
+    let mut d = d;
+    d.global.hit_types.sakurai.ramp = None;
+    assert_eq!(combat::launch_angle(&d, &b, px(74.), true), d.global.hit_types.sakurai.ground_low);
+    assert_eq!(combat::launch_angle(&d, &b, px(81.), true), d.global.hit_types.sakurai.ground_high);
+}
+
+#[test]
+fn weight_based_fixed_knockback_follows_ultimate() {
+    let d = common::data();
+    let mut b = hit(20., 45.);
+    b.kbg = 1.;
+    b.fkb = Some(30.);
+    for weight in [80., 100., 127.] {
+        // ((1 + FKB / 2) × 1.4 × 200 / (W + 100) + 18) × KBG / 100 + BKB, whatever the damage and percent.
+        let reference = (16. * 1.4 * 200. / (weight + 100.) + 18.) + 20.;
+        for (pct, damage) in [(0., 1.), (150., 20.)] {
+            b.damage = damage;
+            let kb = combat::knockback(&d, &b, pct, 100. / weight) / combat::reference_scale(&d);
+            assert!((kb - reference).abs() < 1e-9, "W {weight}: {kb} vs {reference}");
+        }
+    }
+}
+
+#[test]
+fn upward_tumble_uses_launch_gravity_then_slows_to_its_own_fall_speed() {
+    let d = wide(common::data());
+    let top = d.global.hitstun.ultimate.as_ref().unwrap().top_launch.clone().unwrap();
+    let s = d.fighter("brawler").unwrap().stats.clone();
+    let g = top.gravity + top.gravity_per_weight * 100. / s.weight;
+    // A 90° tumble launch: the own component gains the launch gravity per tick, capped at the launch fall speed.
+    let mut w = sky(&d, "brawler");
+    combat::apply_hit(&mut w, &d, 0, &hit(150., 90.), src());
+    assert!(w.fighters[0].top_launch);
+    let lag = w.fighters[0].lag as usize;
+    run(&mut w, &d, lag);
+    let mut own = 0f64;
+    while w.fighters[0].state == State::Hitstun {
+        run(&mut w, &d, 1);
+        let f = &w.fighters[0];
+        if f.state != State::Hitstun {
+            break;
+        }
+        own = (own + g).min(top.fall_speed);
+        assert!((f.vy - f.launch.1 - own).abs() < 1e-9, "own {} vs {own}", f.vy - f.launch.1);
+    }
+    // After hitstun a fall faster than its own slows by its gravity per tick back to it.
+    assert!(own > s.fall_speed);
+    let mut prev = w.fighters[0].vy - w.fighters[0].launch.1;
+    for _ in 0..10 {
+        run(&mut w, &d, 1);
+        let f = &w.fighters[0];
+        let v = f.vy - f.launch.1;
+        assert!((v - (prev - s.gravity).max(s.fall_speed)).abs() < 1e-9 || prev <= s.fall_speed, "{prev} → {v}");
+        prev = v;
+    }
+    assert!((prev - s.fall_speed).abs() < 1e-9 && !w.fighters[0].top_launch);
+    // A sideways tumble or a non-tumbling upward hit keeps the victim's own gravity.
+    for (kb, angle) in [(150., 45.), (60., 90.)] {
+        let mut w = sky(&d, "brawler");
+        combat::apply_hit(&mut w, &d, 0, &hit(kb, angle), src());
+        assert!(!w.fighters[0].top_launch, "{kb} at {angle}°");
     }
 }

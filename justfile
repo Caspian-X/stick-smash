@@ -42,9 +42,18 @@ bless:
 rescale config *args:
     python3 tools/rescale.py "{{config}}" {{args}}
 
-# Unit tests for the Python content tools (rescale, canonical JSON formatting, jump speeds)
+# Unit tests for the Python content tools (rescale, canonical JSON formatting, jump speeds, reference launches)
 test-tools:
-    python3 -m unittest tools/rescale_test.py tools/units_test.py
+    python3 -m unittest tools/rescale_test.py tools/units_test.py tools/reference_ko_test.py
+
+# Smash Ultimate reference launches (KO %, hitstun, launch speed, distance) per move vs Mario; default king, duchess, stratus
+reference-ko *fighters:
+    python3 tools/reference_ko.py {{fighters}}
+
+# Engine vs Ultimate for the calibration set (king, duchess, stratus): movement table, then launches from real moves
+calibrate fighter="":
+    CALIBRATE_FIGHTER="{{fighter}}" cargo test --release -p sim --test calibration calibrate -- --ignored --nocapture
+    python3 tools/reference_ko.py --compare target/calibration.jsonl
 
 # One-time migration of pre-unification content to 5 px per source unit: factor-driven rescale of the hand-authored
 # content and stages (tools/rescale/unify-5px.json), then every import generator. Not idempotent: run it once.

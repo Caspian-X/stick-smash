@@ -1,8 +1,8 @@
 # Duchess reference and conversion record
 
 Playable SSBU **Peach** (patch 13.0.1) adaptation, packaged as **Duchess** (`duchess`). It inherits only the
-abstract `base` package and uses two shared data hooks the roster already has: `stats.floatSpeed` for the float
-and the `Counter` phase window for Toad. Vegetable is a pluck phase followed by a spawned projectile; its
+abstract `base` package and uses two shared data hooks: `stats.float` for the float and the `Counter` phase window
+for Toad. Vegetable is a pluck phase followed by a spawned projectile; its
 per-pluck random face is replaced by deterministic throw tiers (below).
 
 ## Target and status
@@ -15,7 +15,7 @@ per-pluck random face is replaced by deterministic throw tiers (below).
 - State: research, authoring, focused tests, CPU/stage coverage, balance diagnostics and window-capture visual
   inspection complete. No physical controller playtest was performed.
 - Remaining work: physical feel pass; the tool/face variants of the fsmash, held-item turnip play (catch,
-  regrab, Z-drop) and the source's float duration/latch (see "Known approximations").
+  regrab, Z-drop) (see "Known approximations").
 
 ## Sources
 
@@ -63,7 +63,7 @@ Peach Parasol 39, Peach Bomber hit 25. That is why the engine totals use those n
 | Toad counter window | UFD "Counter window 9-34 from 10-35" | SmashWiki 9-34 | 9-34 (source frames) → phase frames 8-33. |
 | Peach Bomber totals | UFD 62 grounded miss / 87 airborne miss; "hit is 25 total frames" | script `SpecialSJump` enables a 25-frame timeout, `SpecialSHitEnd` is a 4-frame script | Grounded whiff 62 (11 windup + 25 thrust + 26 recovery); on contact a 25-frame hit phase; the airborne whiff uses an open `fall` phase (ledge grab from the source's frame 16) instead of a fixed 87 so the engine can keep steering to a ledge. The windup is one tick shorter than the source's 12 so the search box is live on source frames 13-36 (phase entry does not run transition checks). |
 | Turnip damage | UFD "8.3—27.6" for the whole move | UFD/SmashWiki base faces 5/10/16/23 and the item-throw formula `d − 0.4 + speed×3` | UFD's low end 8.3 is the common smiley forward throw; a smash throw adds `(3.64 − 2.6) × 3 = 3.1` → 11.4. Special faces, Mr. Saturn and Bob-omb are omitted. |
-| Float | SmashWiki: 2.5 s, once per airtime, no vertical movement, drift at air speed, persists through aerials | engine `stats.floatSpeed` only caps a descent while jump is held in normal Air | Source documented; engine expresses a slow sink (fitted 1.0 px/tick), not a timed hover. See below. |
+| Float | SmashWiki: 2.5 s, once per airtime, no vertical movement, drift at air speed, persists through aerials | param `uniq_float_float_frame` 150 | `stats.float { speed: 0, frames: 150 }` (2026-11-05; replaced the fitted 1.0 px/tick `floatSpeed` sink). See "Float". |
 | Pivot grab | UFD lists it (startup 10, total 39) | `Moves` has no pivot-grab slot | Omitted; standing/dash grabs and the four throws are imported. |
 
 ## Conversion rules
@@ -117,24 +117,22 @@ the authored phases. The parsed rows are in `sources/duchess/ledger.json`.
 
 ## Float
 
-The source float (`Floating`, SmashWiki): performing and holding a jump input while airborne hovers for up to
-**2.5 s (150 ticks)**, with no vertical movement and full air-speed drift; it can be started once per airtime
-(touching solid ground restores it; grabbing a ledge does not), survives the whole duration of any aerial, can be
-canceled with down (which becomes a fast fall), and is not restored by being hit.
+The source float (`Floating`, SmashWiki <https://www.ssbwiki.com/Floating> and <https://www.ssbwiki.com/Peach_(SSBU)>,
+accessed 2026-11-05): holding jump in the air hovers for up to **2.5 s**; the param `uniq_float_float_frame` is **150**
+(clone_pack_workbench `owner_params.tsv`, high confidence). It has no vertical movement and full air-speed drift, can
+be started once per airtime (touching solid ground restores it; a ledge does not), survives any aerial (the float
+continues afterwards; landing inside an aerial takes its landing lag unless autocanceled), is not restored by a hit,
+and pressing down and jump together while falling starts it at once (mistimed, it spends the air jump). Neither page
+says the air jump is consumed by a normal float; the engine keeps it.
 
-The engine's hook is `stats.floatSpeed`: a positive downward speed cap applied only while airborne in normal
-`Air` control with jump held. Duchess uses a fitted **1.0 px/tick** (1.2 at the old ×6 vertical scale; her fall
-speed is 5.95, fast fall 9.52), so the float reads as a slow sink with full drift.
-
-What the stat can and cannot express:
-
-- Can: holding jump in the air caps the descent; releasing restores the ordinary cap immediately; rising velocity
-  is unaffected; hitstun, helplessness, ledge, airdodge and attacks are excluded.
-- Cannot: the 2.5 s fuel, the once-per-airtime latch, a true zero-descent hover (validation requires a positive
-  cap), persistence through aerials (the cap only applies in `Air`), and cancel-into-fast-fall (a held jump keeps
-  the cap even while fast-falling; release jump to fast-fall). Because there is no duration or latch, the chosen
-  sink is deliberately faster than a hover so permanent floating is not strictly better than the source. This is a
-  documented engine adaptation, not a claim of exact float fidelity.
+Engine (2026-11-05): `stats.float: { speed: 0, frames: 150 }` (FORMAT.md, "Resource restore, remote gadgets and
+float"). Holding jump while not rising starts it (so a full hop with jump held floats at its apex), and so does jump
+with down held; it holds the vertical speed at 0 for up to 150 ticks through aerials; releasing jump, the limit, an
+air jump, a hit, a ledge or any non-aerial move ends it; only landing restores it. Differences from the source: fast
+fall does nothing while floating (release jump first), there is no "hold up and release jump" variant, and the
+float aerial short-hop multiplier is not modelled (the engine has none). Tests: `float_holds_height_through_a_nair_
+and_ends_on_the_frame_limit` (height held through a nair, exactly 150 ticks, air jump kept) and
+`float_is_once_per_airtime_and_ends_on_release` (latch, release, landing restore, down + jump, a hit ends it).
 
 ## Vegetable determinism
 
@@ -210,8 +208,7 @@ Mr. Saturn, Bob-omb, holding/regrabbing the turnip and throwing it in other dire
 - Vegetable: the move is a single pluck-then-throw timeline (no held item, catch, regrab or Z-drop); faces are
   deterministic tiers and the special faces/items are omitted. Damage tiers follow the UFD range, not the
   per-face base table.
-- Float: no duration, no once-per-airtime latch, no zero-descent hover, no float through aerials and no
-  cancel-to-fast-fall (see "Float").
+- Float: no cancel into fast fall and no hold-up variant (see "Float").
 - Toad: six spores are three fixed-direction projectiles fired twice rather than six randomly deviated sprays; the
   source's back-hit "switch places" is the engine's shared counter turn. The spores have `Rehit=0` in the source;
   the *turnip item* row's `Rehit=100` is dropped because a projectile contact consumes it here.
@@ -254,3 +251,23 @@ airtimes: with height and gravity both source-exact the full hop lasts 64 frames
 (UFD 41). Expected: rising 30.03 units at gravity 0.070 and falling back capped at 1.19 already takes about
 63 frames, so UFD's 57 does not follow from the listed height, gravity and fall speed alone. Balance and CPU figures under "Validation" predate
 this change.
+
+## Ultimate calibration (2026-11-05)
+
+`just calibrate duchess` compares the engine with Ultimate (`tools/reference_ko.py`) on a Mario dummy at Battlefield
+centre; see DESIGN.md "Ultimate calibration". Changes for Duchess:
+
+- **Airtime**: the full hop took 64 frames against UFD's 57 because Ultimate climbs a "jump initial height"
+  (`jump_initial_y` 16.5165 = 0.55 × 30.03, ssbwiki Jump) in the first four frames without gravity and only then
+  integrates the remaining height. `stats.jumpInitialHeight` 82.5825 px, `jumpSpeed` 6.7034 (from 13.5135 units);
+  the full hop now lasts 57 airborne frames, the short hop 41 (UFD 41 / 57), heights unchanged (150.15 / 72.5 px).
+- **Traction / air friction**: `ground_brake` 0.111 / `air_brake_x` 0.01 (fighter_param dump
+  github.com/j99thoms/smash-charts `data/raw/ultimate_fighter_params.csv`, matching ssbwiki Traction / Air friction;
+  high confidence) → `stats.traction` 0.555, `stats.airFriction` 0.05.
+- **Fixed knockback**: FKB hits emit `fkb` with the source BKB/KBG (Ultimate WBKB) instead of a BKB resolved at
+  weight 100.
+- **Float**: `stats.float` (above).
+
+Result: every compared smash, tilt, aerial and throw matches the reference (hitstun and launch speed exact, KO
+percent exact); movement, airtimes, landing lag and autocancels match UFD. Multi-hit down air from a short hop picks
+a different hit at 150% (harness limitation, not a physics gap).

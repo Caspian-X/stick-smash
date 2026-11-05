@@ -101,6 +101,7 @@ fn act_text(d: &sim::GameData, fighter: usize, a: &Action) -> String {
         Action::SpotDodge => t("Spot dodge"),
         Action::AirDodge => t("Air dodge"),
         Action::FastFall => t("Fast fall"),
+        Action::Float => t("Float"),
         Action::PlatformDrop => t("Drop through"),
         Action::LedgeGrab => t("Ledge grab"),
         Action::LedgeTrump => t("Ledge trump"),

@@ -71,7 +71,8 @@ fn matches_typescript_traces() {
     d.global.hitstun.ultimate = None;
     // The reference used multiplicative ground friction and air drag with shared air accelerations.
     d.global.movement.ultimate = None;
-    d.global.hitlag = sim::data::global::Hitlag { base: 3., per_damage: 0.45, per_knockback: 0.1, max: 16. };
+    d.global.hitlag =
+        sim::data::global::Hitlag { base: 3., per_damage: 0.45, per_knockback: 0.1, max: 16., mult_before_cap: false };
     d.global.tech.lockout = 0;
     common::reference_defence(&mut d);
     // The reference froze longer after the final KO; the results screen now follows it closely.

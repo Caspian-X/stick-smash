@@ -178,3 +178,14 @@ peanut `[18.5714, 1.25]` gravity 0.1, max fall 4.1667, banana gravity 0.1333, ma
 the old shared accels by the same 5/3.5, so every `airAccelMult` is unchanged. The fitted jump speeds
 (14.2 / 9.9 / 14.0, "to clear the built-in platforms") are **superseded** by source jump heights (Jumps row).
 Balance and CPU figures under "Validation" predate this change.
+
+## Ultimate calibration (2026-11-05)
+
+- **Traction / air friction**: Diddy Kong (`diddy`) `ground_brake` 0.093 / `air_brake_x` 0.008 (fighter_param dump
+  github.com/j99thoms/smash-charts `data/raw/ultimate_fighter_params.csv`, matching ssbwiki Traction and Air
+  friction; high confidence) → `stats.traction` 0.465, `stats.airFriction` 0.04.
+- **Full hop initial height**: Ultimate climbs 0.55 × the full hop in its first four airborne frames (ssbwiki Jump, the ratio for most fighters);
+  the generator emits `stats.jumpInitialHeight` and derives `jumpSpeed` from the remaining height (`units.jumps`),
+  so the full hop keeps its height and lands on Ultimate's frame. Short hops and air jumps are unchanged.
+- **Fixed knockback**: FKB hits emit `fkb` with the source BKB/KBG (Ultimate WBKB, weight-correct) and keep `setKb`
+  as a marker; they were resolved at weight 100 into a `setKb` BKB.

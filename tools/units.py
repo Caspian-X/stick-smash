@@ -9,10 +9,17 @@ jumpsquat that way), then each later tick adds gravity `g` before moving, so aft
     height(v) = n·v − g·n(n−1)/2,  n = ceil(v/g)      ⇒  v = h/n + g(n−1)/2 for the n with (n−1)g < v ≤ n·g
 
 An air jump sets `vy` and applies gravity in the same tick, so it needs exactly one `g` more for the same rise.
+
+Ultimate's full hop also has a "jump initial height" (ssbwiki Jump, Ultimate ranking: 0.55 × the full hop height for
+most fighters, the `jump_initial_y` param): the first four airborne frames rise that far with no gravity, then the
+jump continues from the remaining height as above. `jumps` emits it as `jumpInitialHeight` (the sim climbs it in four
+equal steps, the fourth tick launching at `jumpSpeed`), which is why full hops land several frames sooner than a
+constant-gravity jump of the same height (Peach: 57 frames, not 63). Short hops and air jumps don't have it.
 `tools/units_test.py` checks both against a step-by-step integration.
 """
 
 SCALE = 5.0  # px per source unit (geometry, speed, gravity)
+INITIAL = 0.55  # Ultimate jump initial height / full hop height (ssbwiki Jump)
 
 
 def jump_speed(height, gravity, air=False):
@@ -27,9 +34,9 @@ def jump_speed(height, gravity, air=False):
         n += 1
 
 
-def apex(v, gravity, air=False):
-    """The rise `jump_speed` inverts, by stepping the sim's integration."""
-    y = top = 0.0
+def apex(v, gravity, air=False, initial=0.0):
+    """The rise `jump_speed` inverts, by stepping the sim's integration (after an `initial` four-tick rise)."""
+    y = top = initial
     vy = v
     if air:
         vy -= gravity
@@ -40,12 +47,17 @@ def apex(v, gravity, air=False):
     return top
 
 
-def jumps(full, short, air, gravity):
-    """`stats` jump speeds from source heights in units (gravity in px/tick²), rounded to 4 decimals."""
+def jumps(full, short, air, gravity, initial=INITIAL):
+    """`stats` jump speeds from source heights in units (gravity in px/tick²), rounded to 4 decimals. `initial` is the
+    full hop's initial height as a fraction of it (0 for none)."""
     h = lambda u: u * SCALE  # noqa: E731
-    return {'jumpSpeed': round(jump_speed(h(full), gravity), 4),
-            'shortHopSpeed': round(jump_speed(h(short), gravity), 4),
-            'airJumpSpeed': round(jump_speed(h(air), gravity, air=True), 4)}
+    rise = round(h(full) * initial, 4)
+    out = {'jumpSpeed': round(jump_speed(h(full) - rise, gravity), 4),
+           'shortHopSpeed': round(jump_speed(h(short), gravity), 4),
+           'airJumpSpeed': round(jump_speed(h(air), gravity, air=True), 4)}
+    if rise > 0:
+        out['jumpInitialHeight'] = rise
+    return out
 
 
 if __name__ == '__main__':

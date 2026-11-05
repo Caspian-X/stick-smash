@@ -185,21 +185,35 @@ pub fn resolve_solids(d: &GameData, s: &crate::data::Stage, f: &mut Fighter, px:
     }
 }
 pub fn fall(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, edge: bool, cap: Option<f64>) {
-    let s = &d.fighters[f.data].stats;
-    let cap = cap.unwrap_or(s.fall_speed);
-    let l = f.launch;
-    if l == (0., 0.) {
-        f.vy = (f.vy + s.gravity).min(cap);
+    if scripted_rise(d, f) {
         integrate(w, d, i, f, edge);
         return;
     }
+    let s = &d.fighters[f.data].stats;
+    let (mut g, mut cap) = (s.gravity, cap.unwrap_or(s.fall_speed));
+    let stun = f.state == State::Hitstun;
+    let top = top_launch(d, f);
+    if let Some(t) = top
+        && stun
+    {
+        (g, cap) = (t.gravity + t.gravity_per_weight * 100. / s.weight, t.fall_speed);
+    }
     // Gravity and the fall cap act on the fighter's own velocity; the launch decays on top of it.
-    let next = decay_launch(d, l);
-    f.vy = (f.vy - l.1 + s.gravity).min(cap) + next.1;
+    let l = f.launch;
+    let next = if l == (0., 0.) { l } else { decay_launch(d, l) };
+    let own = f.vy - l.1;
+    let own = if top.is_some() && !stun && own > cap { (own - g).max(cap) } else { (own + g).min(cap) };
+    if top.is_some() && !stun && own <= cap {
+        f.top_launch = false;
+    }
+    f.vy = own + next.1;
     f.vx += next.0 - l.0;
     f.launch = next;
     let v = (f.vx, f.vy);
     integrate(w, d, i, f, edge);
+    if l == (0., 0.) {
+        return;
+    }
     // Landing ends the launch; a wall or ceiling stops its component.
     if f.ground {
         f.launch = (0., 0.);
@@ -212,9 +226,51 @@ pub fn fall(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, edge: bool, 
         }
     }
 }
+/// `hitstun.ultimate.topLaunch` when the fighter's current launch uses it.
+fn top_launch<'a>(d: &'a GameData, f: &Fighter) -> Option<&'a crate::data::global::TopLaunch> {
+    if !f.top_launch {
+        return None;
+    }
+    d.global.hitstun.ultimate.as_ref().and_then(|u| u.top_launch.as_ref())
+}
+/// Vertical speed set by the jump's initial rise or a float instead of gravity this tick. True when it applied.
+pub fn scripted_rise(d: &GameData, f: &mut Fighter) -> bool {
+    let s = &d.fighters[f.data].stats;
+    if f.rise > 0 {
+        f.rise -= 1;
+        f.vy = if f.rise > 0 { -s.jump_initial_height.unwrap_or(0.) / 4. } else { -s.jump_speed };
+        return true;
+    }
+    if f.floating > 0
+        && let Some(fl) = &s.float
+    {
+        f.floating -= 1;
+        f.vy = fl.speed;
+        return true;
+    }
+    false
+}
+/// Once per airtime: a float starts holding the vertical speed at `stats.float.speed` (see `data::Float`).
+pub fn start_float(d: &GameData, f: &mut Fighter) -> bool {
+    let Some(fl) = &d.fighters[f.data].stats.float else {
+        return false;
+    };
+    if f.float_used || f.ground || f.rise > 0 {
+        return false;
+    }
+    f.float_used = true;
+    f.floating = fl.frames;
+    f.launch = (0., 0.);
+    f.ff = false;
+    true
+}
+/// Launch speed lost per tick in pixels (`hitstun.ultimate.launchDecay` × launch speed).
+pub fn decay_amount(d: &GameData) -> f64 {
+    d.global.hitstun.ultimate.as_ref().map_or(0., |u| u.launch_decay * crate::combat::reference_scale(d))
+}
 /// Shrink a launch vector's magnitude by `hitstun.ultimate.launchDecay` (reference units → pixels), never past zero.
 pub fn decay_launch(d: &GameData, (x, y): (f64, f64)) -> (f64, f64) {
-    let k = d.global.hitstun.ultimate.as_ref().map_or(0., |u| u.launch_decay * crate::combat::reference_scale(d));
+    let k = decay_amount(d);
     let speed = libm::hypot(x, y);
     if speed <= k {
         (0., 0.)
@@ -286,17 +342,10 @@ pub fn air_phys(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Int
         f.vy -= l.1;
     }
     air_drift(d, f, x, acc, if x != 0. { m.air_drag_held } else { m.air_drag });
-    if fast_fall(d, f, inp) {
+    if f.floating == 0 && fast_fall(d, f, inp) {
         accept(w, i, Action::FastFall);
     }
-    let mut cap = if f.ff { s.fast_fall_speed } else { s.fall_speed };
-    if !f.ground
-        && f.state == State::Air
-        && inp.jump_held
-        && let Some(speed) = s.float_speed
-    {
-        cap = cap.min(speed);
-    }
+    let cap = if f.ff { s.fast_fall_speed } else { s.fall_speed };
     if l != (0., 0.) {
         f.vx += l.0;
         f.vy += l.1;
@@ -309,6 +358,7 @@ pub fn landing(f: &mut Fighter, n: u32) {
 }
 pub fn on_land(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, vy: f64) {
     let g = &d.global;
+    (f.rise, f.top_launch, f.floating, f.float_used) = (0, false, 0, false);
     f.jumps = d.fighters[f.data].stats.air_jumps;
     f.up_b = false;
     f.ad_used = false;

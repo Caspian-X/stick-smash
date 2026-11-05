@@ -190,3 +190,14 @@ fitted jump speeds or × 3.5 / × 6 values are superseded. The 510 px warp (17 �
 the CPU's out-of-shield Farore's Wind, aimed horizontally from the ground, off-stage (52 self-KOs / 222 KOs in
 `stages::ranged_roster_cpu_matchups`). The shared CPU now aims a directional-warp up special up when it starts
 on the ground (`ai.rs`, SIM_VERSION -sim-32); self-KOs dropped to about 24 / 224.
+
+## Ultimate calibration (2026-11-05)
+
+- **Traction / air friction**: Zelda (`zelda`) `ground_brake` 0.116 / `air_brake_x` 0.006 (fighter_param dump
+  github.com/j99thoms/smash-charts `data/raw/ultimate_fighter_params.csv`, matching ssbwiki Traction and Air
+  friction; high confidence) → `stats.traction` 0.58, `stats.airFriction` 0.03.
+- **Full hop initial height**: Ultimate climbs 0.55 × the full hop in its first four airborne frames (ssbwiki Jump, the ratio for most fighters);
+  the generator emits `stats.jumpInitialHeight` and derives `jumpSpeed` from the remaining height (`units.jumps`),
+  so the full hop keeps its height and lands on Ultimate's frame. Short hops and air jumps are unchanged.
+- **Fixed knockback**: FKB hits emit `fkb` with the source BKB/KBG (Ultimate WBKB, weight-correct) and keep `setKb`
+  as a marker; they were resolved at weight 100 into a `setKb` BKB.

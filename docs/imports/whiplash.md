@@ -215,3 +215,14 @@ converted ×5/6 the CPU fell short of the rebuilt Arena often (10/24 self-KOs, o
 `whiplash_cpu_matches_finish_on_every_stage_in_both_seats` limit); the up-special rises are now × √(5/6) like the
 original roster's, keeping their height, and the test passes. The committed dair dive (5 px/tick sideways)
 started near an edge still carries the CPU off-stage at times.
+
+## Ultimate calibration (2026-11-05)
+
+- **Traction / air friction**: Zero Suit Samus (`szerosuit`) `ground_brake` 0.116 / `air_brake_x` 0.008 (fighter_param dump
+  github.com/j99thoms/smash-charts `data/raw/ultimate_fighter_params.csv`, matching ssbwiki Traction and Air
+  friction; high confidence) → `stats.traction` 0.58, `stats.airFriction` 0.04.
+- **Full hop initial height**: Ultimate climbs 0.55 × the full hop in its first four airborne frames (ssbwiki Jump, the ratio for most fighters);
+  the generator emits `stats.jumpInitialHeight` and derives `jumpSpeed` from the remaining height (`units.jumps`),
+  so the full hop keeps its height and lands on Ultimate's frame. Short hops and air jumps are unchanged.
+- **Fixed knockback**: FKB hits emit `fkb` with the source BKB/KBG (Ultimate WBKB, weight-correct) and keep `setKb`
+  as a marker; they were resolved at weight 100 into a `setKb` BKB.

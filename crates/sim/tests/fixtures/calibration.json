@@ -1,0 +1,30 @@
+{
+  "note": "Source references for `crates/sim/tests/calibration.rs` (source units; frames are Ultimate's 1-based frames). Movement and airtimes: Ultimate Frame Data 'Misc Info' (accessed 2026-11-05); jump heights: the fighters' import records (ssbwiki Jump / attribute pages); landing lag and autocancels: the UFD aerial rows pinned in docs/imports/sources/<fighter>/ufd.json. Airtime is UFD 'SH / FH' air frames.",
+  "victim": { "name": "Mario", "url": "https://ultimateframedata.com/mario", "weight": 98, "gravity": 0.087, "fall": 1.5, "fastFall": 2.4 },
+  "fighters": {
+    "king": {
+      "url": "https://ultimateframedata.com/king_dedede",
+      "run": 1.496, "dash": 1.815, "walk": 1.029, "air": 0.735, "airAccel": 0.05, "gravity": 0.097, "fall": 1.95, "fastFall": 3.12,
+      "jumps": { "full": 32.85, "short": 16.02, "air": 28.50284665 },
+      "airtime": { "short": 36, "full": 48 },
+      "landing": { "nair": 9, "fair": 18, "bair": 13, "uair": 13, "dair": 18 },
+      "autocancel": { "nair": [[1, 2], [35, 39]], "fair": [[1, 4], [40, 41]], "bair": [[1, 4], [33, 37]], "uair": [[1, 4], [42, 44]], "dair": [[1, 6], [44, 47]] }
+    },
+    "duchess": {
+      "url": "https://ultimateframedata.com/peach",
+      "run": 1.595, "dash": 1.826, "walk": 0.924, "air": 1.029, "airAccel": 0.12, "gravity": 0.07, "fall": 1.19, "fastFall": 1.904,
+      "jumps": { "full": 30.03, "short": 14.5, "air": 30.03 },
+      "airtime": { "short": 41, "full": 57 },
+      "landing": { "nair": 7, "fair": 13, "bair": 11, "uair": 7, "dair": 8 },
+      "autocancel": { "nair": [[1, 4], [36, 48]], "fair": [[1, 9], [41, 57]], "bair": [[1, 4], [30, 53]], "uair": [[1, 4], [41, 45]], "dair": [[1, 11], [38, 38]] }
+    },
+    "stratus": {
+      "url": "https://ultimateframedata.com/cloud",
+      "run": 2.167, "dash": 2.145, "walk": 1.155, "air": 1.155, "airAccel": 0.07, "gravity": 0.098, "fall": 1.68, "fastFall": 2.688,
+      "jumps": { "full": 32.5, "short": 17, "air": 32.5 },
+      "airtime": { "short": 37, "full": 49 },
+      "landing": { "nair": 9, "fair": 11, "bair": 8, "uair": 9, "dair": 16 },
+      "autocancel": { "nair": [[31, 38]], "fair": [[1, 2], [43, 53]], "bair": [[1, 4], [37, 42]], "uair": [[32, 44]], "dair": [[1, 4], [46, 64]] }
+    }
+  }
+}

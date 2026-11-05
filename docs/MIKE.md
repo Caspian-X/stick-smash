@@ -205,3 +205,10 @@ coverage, smash anticipation, tossed sword and Eruption captures. Repeated the t
 `/tmp/mike-tuning-reviewed` with the full-charge capture synchronized to the third column, and inspected
 that image too. Physical controller playtesting remains for the user; these changes are local on
 `char-tune`, uncommitted and unpushed alongside the Whiplash import.
+
+## Traction and air friction (2026-11-05)
+
+Ike's `ground_brake` 0.112 / `air_brake_x` 0.009 (fighter_param dump github.com/j99thoms/smash-charts
+`data/raw/ultimate_fighter_params.csv`, matching ssbwiki Traction / Air friction; high confidence) → `stats.traction`
+0.56, `stats.airFriction` 0.045 (hand-edited; Mike has no generator). The quickdraw rush's tuned ground distance is
+0.3% shorter for it (`mike_quickdraw_tuning`, now within 0.5%). Mike's jumps are hand-tuned, so no jump initial height.

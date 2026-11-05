@@ -14,16 +14,19 @@
     "dashFrames": 13,
     "runAccel": 0.8857,
     "groundFriction": 0.85,
-    "jumpSpeed": 15.7375,
+    "jumpSpeed": 10.4543,
     "shortHopSpeed": 10.8403,
     "airJumpSpeed": 16.3625,
+    "jumpInitialHeight": 113.3275,
     "airJumpDrift": 4.62,
     "airJumps": 1,
     "airSpeed": 6.1429,
     "airAccel": 0.4286,
     "gravity": 0.625,
     "fallSpeed": 8.75,
-    "fastFallSpeed": 14.0
+    "fastFallSpeed": 14.0,
+    "traction": 0.465,
+    "airFriction": 0.04
   },
   "body": { "halfWidth": 13, "height": 70 },
   "hurtboxes": {
@@ -441,10 +444,11 @@
               "y": 46,
               "r": 18,
               "damage": 2.0,
-              "bkb": 61.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 43.0,
               "setKb": true,
+              "fkb": 60.0,
               "hitlagMult": 0.5
             },
             {
@@ -454,10 +458,11 @@
               "y": 47,
               "r": 18,
               "damage": 2.0,
-              "bkb": 68.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 40.0,
               "setKb": true,
+              "fkb": 70.0,
               "hitlagMult": 0.8,
               "group": 1
             },
@@ -510,10 +515,11 @@
               "y": 48,
               "r": 23,
               "damage": 5.0,
-              "bkb": 43.9,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 45.0,
-              "setKb": true
+              "setKb": true,
+              "fkb": 35.0
             },
             {
               "start": 20,
@@ -581,11 +587,12 @@
               "y": 38,
               "r": 22,
               "damage": 2.5,
-              "bkb": 54.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 95.0,
               "dir": "away",
-              "setKb": true
+              "setKb": true,
+              "fkb": 50.0
             },
             {
               "start": 11,
@@ -594,11 +601,12 @@
               "y": 45,
               "r": 23,
               "damage": 2.5,
-              "bkb": 50.9,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 125.0,
               "dir": "away",
               "setKb": true,
+              "fkb": 45.0,
               "group": 1
             },
             {

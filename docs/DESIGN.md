@@ -56,6 +56,20 @@ hitstun cancel exists but is off until verified. Launch speed (`launchSpeed`) wa
 multiplicative drag; the unit unification made it 0.15 (Ultimate's 0.03 × 5) and Arena's blast zones Battlefield's,
 so KO percents now follow source launch speed and stage size rather than separate tuning.
 
+**Ultimate calibration** (King, Duchess and Stratus are the calibration set): `tools/reference_ko.py` (`just
+reference-ko`) computes Ultimate's launch for a hitbox on a Mario victim at Battlefield centre, and `just calibrate`
+(`crates/sim/tests/calibration.rs`) measures the same moves and the movement stats in the engine and prints both
+side by side. Gaps it exposed are closed in the engine, each data-selected and absent from the TS-trace content:
+Ultimate's full hop **initial height** (`stats.jumpInitialHeight`, four no-gravity ticks; full hops were 5–7 frames
+long), **upward-launch gravity** (`hitstun.ultimate.topLaunch`, the `damage_fly_top_*` params: 70–110° tumble
+launches fall with a weight-based gravity capped at 1.8 units in hitstun), the **Sakurai ramp** (0° below 60 KB to
+38° at 88, 38° airborne; was 0/40 by tumble and 45° airborne), **hitlag** multiplied before flooring and capping
+(`hitlag.multBeforeCap`), and **weight-based fixed knockback** (`fkb`, WBKB; generators used to resolve it at weight
+100). After them, every compared smash, tilt, aerial and throw matches the reference: hitstun and launch speed exactly,
+KO percent within one point, full / short hop air times and heights, landing lag and autocancel windows exactly.
+Not modelled (documented in FORMAT.md / the records): the first-10-frame Mario physics of weight-independent hits, the
+vertical launch cap, balloon hitstun speed-up, grounded non-tumble sliding and the grounded spike bounce factor.
+
 **Momentum model** (`movement.ultimate`, off in TS traces): speeds change by fixed amounts per frame rather than
 by multipliers, as in Ultimate. On the ground every slowdown is the fighter's `traction` (default 0.5 = Mario's 0.1 × 5, doubled above walk
 speed), so a released run skids to a stop in about 11–20 frames and running momentum carries into attacks,
@@ -88,6 +102,8 @@ Choices made on purpose; later tuning should not "fix" them back without a reaso
 - **Release-timed parry** (`parry`) with fixed defender / attacker freezes and a short invulnerability, not Ultimate's per-move parry frame data: one readable reward.
 - **Flick-only platform drop**: holding down never drops through, so crouching and down tilts on platforms are safe.
 - **Ledge trump** (`ledge.trump`) with our own push, cooldown and a minimum hang before an occupant can be trumped, so simultaneous grabs don't trade.
+- **Float** (`stats.float`): holding jump at the top of a jump floats, as well as Ultimate's down + jump; no float
+  cancel into fast fall (release jump first).
 
 Calibration values set to Ultimate in the defensive-window pass (Ultimate frame = state clock + 1):
 - Dodge windows: roll 30 frames, intangible 3–14 (Ultimate 4–15); spot dodge 26, 2–16 (3–17); neutral air dodge

@@ -248,3 +248,18 @@ Naming decision (2026-11-04): the display name is **Gordo Ramsay**, formerly Pen
 `king`, directory, tools, pinned sources and `25*`/`27*` screenshot names remain unchanged.
 
 Momentum migration (2026-11-04): no phase sets `airAccelMult`, so drift now uses the fighter's airAccel × the `movement.ultimate` kind multipliers; regeneration is unchanged.
+
+## Ultimate calibration (2026-11-05)
+
+- **Traction / air friction**: King Dedede (`dedede`) `ground_brake` 0.085 / `air_brake_x` 0.006 (fighter_param dump
+  github.com/j99thoms/smash-charts `data/raw/ultimate_fighter_params.csv`, matching ssbwiki Traction and Air
+  friction; high confidence) → `stats.traction` 0.425, `stats.airFriction` 0.03.
+- **Full hop initial height**: Ultimate climbs 0.55 × the full hop in its first four airborne frames (jump_initial_y 18.0675 = 0.55 × 32.85);
+  the generator emits `stats.jumpInitialHeight` and derives `jumpSpeed` from the remaining height (`units.jumps`),
+  so the full hop keeps its height and lands on Ultimate's frame. Short hops and air jumps are unchanged.
+- **Fixed knockback**: FKB hits emit `fkb` with the source BKB/KBG (Ultimate WBKB, weight-correct) and keep `setKb`
+  as a marker; they were resolved at weight 100 into a `setKb` BKB.
+- `just calibrate king`: hitstun and launch speed exact and KO percent exact for every compared smash, tilt,
+  aerial (short hop and full hop apex) and throw against a Mario dummy; full / short hop air time 48 / 36 frames
+  (UFD 48 / 36, were 53 / 37 counting the landing tick); landing lag and autocancels match UFD. The up smash only
+  hits above a standing dummy and the multi-hit up air from the full hop apex has no identified finishing hit.

@@ -289,6 +289,8 @@ fn cpu_match_golden_world_hash() {
     // The decaying launch model (`hitstun.ultimate`), Ultimate hitlag and tech lockout change this scenario's
     // trajectories and add `launch` / `tech_lock` to the Debug snapshot. Authored dodge / tech / getup windows and
     // dodge staling add `dodge_stale` / `dodge_at` and state `end` / `inv_at` / `inv_len`; subtractive momentum (`movement.ultimate`) changes movement too; replay SIM_VERSION -sim-31. The 5 px/unit
-    // content unification (speeds, launch 0.15, Battlefield-sized Arena) changes it again (content only).
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x027d554b151207a4);
+    // content unification (speeds, launch 0.15, Battlefield-sized Arena) changes it again (content only). The
+    // Ultimate calibration pass (-sim-33: jump initial height, upward-launch gravity, Sakurai ramp, hitlag rounding,
+    // `fkb`, float, per-fighter traction) adds `rise` / `top_launch` / `floating` / `float_used` and moves it again.
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x516185616a1deed4);
 }

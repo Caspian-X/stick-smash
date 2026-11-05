@@ -98,9 +98,7 @@ def attacks(article, name):
 
 
 def fixed_bkb(a):
-    """Bounded fixed-knockback adaptation shared with the Wizard/Whiplash records."""
-    if num(a, "FKB"):
-        return ((1 + num(a, "FKB") / 2) * 1.4 + 18) * num(a, "KBG") / 100 + num(a, "BKB")
+    """Source BKB; a fixed (FKB) hit keeps it next to `fkb` (Ultimate WBKB)."""
     return num(a, "BKB")
 
 
@@ -130,6 +128,7 @@ def hit(a, start, end, x, y, r=None, frames=None, overrides=None):
         b["type"] = kind
     if num(a, "FKB"):
         b["setKb"] = True
+        b["fkb"] = num(a, "FKB")
     if a.get("FacingRestrict", "").endswith("_POS"):
         b["dir"] = "away"
     elif a.get("FacingRestrict", "").endswith("_B"):
@@ -1217,6 +1216,7 @@ fighter = {
         "gravity": round(0.097 * SCALE, 5),
         "fallSpeed": round(1.95 * SCALE, 5),
         "fastFallSpeed": round(3.12 * SCALE, 5),
+        "traction": round(0.085 * SCALE, 5), "airFriction": round(0.006 * SCALE, 5),  # Ultimate ground_brake / air_brake_x (fighter_param dump; ssbwiki Traction, Air friction)
     },
     # Arena's lowest platform leaves 76 px of body clearance; use the shared 74 px body while
     # the visual figure and hurtboxes keep Dedede's larger proportions.

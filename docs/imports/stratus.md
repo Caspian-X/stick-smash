@@ -238,3 +238,18 @@ Blade Beam 11 / 9 → 15.7143 / 12.8571, Limit Blade Beam 14 / 11 → 20.0 / 15.
 (19), double jump 162.5 px (26). Test change: the lingering-plunge check starts at x 1000; from the centre the
 plunge now lands on the rebuilt Arena's top platform (y 248) before its hitbox opens (this failed with the
 old content too).
+
+## Ultimate calibration (2026-11-05)
+
+- **Traction / air friction**: Cloud (`cloud`) `ground_brake` 0.106 / `air_brake_x` 0.009 (fighter_param dump
+  github.com/j99thoms/smash-charts `data/raw/ultimate_fighter_params.csv`, matching ssbwiki Traction and Air
+  friction; high confidence) → `stats.traction` 0.53, `stats.airFriction` 0.045. Limit Break traction 0.1219 is not modelled.
+- **Full hop initial height**: Ultimate climbs 0.55 × the full hop in its first four airborne frames (jump_initial_y 17.875 = 0.55 × 32.5);
+  the generator emits `stats.jumpInitialHeight` and derives `jumpSpeed` from the remaining height (`units.jumps`),
+  so the full hop keeps its height and lands on Ultimate's frame. Short hops and air jumps are unchanged.
+- **Fixed knockback**: FKB hits emit `fkb` with the source BKB/KBG (Ultimate WBKB, weight-correct) and keep `setKb`
+  as a marker; they were resolved at weight 100 into a `setKb` BKB.
+- **Aerial autocancels**: forward, back and down air now autocancel on their opening frames (UFD 1–2, 1–4, 1–4);
+  the generator gave those startup phases landing lag.
+- `just calibrate stratus`: every compared move matches the reference within one KO point (down smash 133 vs
+  132), hitstun and launch speed exact; air times 49 / 37 (UFD 49 / 37); run 10.835 px/tick.

@@ -69,6 +69,7 @@ fn air_jump(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, dir: f64) {
     let fighter = &d.fighters[f.data];
     f.jumps -= 1;
     f.launch = (0., 0.);
+    (f.rise, f.floating, f.top_launch) = (0, 0, false);
     f.vy = -fighter.stats.air_jump_speed;
     if dir != 0. {
         f.vx = dir * fighter.stats.air_jump_drift;
@@ -176,6 +177,9 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
     let dir = inp.dir();
     f.in_dir = dir;
     f.in_down = inp.down;
+    if f.floating > 0 && !inp.jump_held {
+        f.floating = 0;
+    }
     let sd = f.sd.clone();
     match f.state {
         State::Respawn => {
@@ -230,6 +234,11 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
                     let aerial = f.sd.jump_aerial.take();
                     let full = inp.jump_held && aerial.is_none() && !f.sd.short;
                     f.vy = if full { -s.jump_speed } else { -s.short_hop_speed };
+                    if full && let Some(h) = s.jump_initial_height.filter(|h| *h > 0.) {
+                        // Ultimate's initial rise: the first four airborne ticks climb h/4 each (`physics::fall`).
+                        f.vy = -h / 4.;
+                        f.rise = 4;
+                    }
                     accept(w, i, if full { Action::FullHop } else { Action::ShortHop });
                     f.ground = false;
                     f.surf = None;
@@ -262,8 +271,12 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
                     }
                     let slot = moves::aerial_slot(&f, inp);
                     moves::start_attack(w, d, i, &mut f, slot, inp);
+                } else if inp.jump && inp.down && start_float(d, &mut f) {
+                    accept(w, i, Action::Float);
                 } else if inp.jump && f.jumps > 0 {
                     air_jump(w, d, i, &mut f, dir);
+                } else if inp.jump_held && f.vy >= 0. && start_float(d, &mut f) {
+                    accept(w, i, Action::Float);
                 }
                 air_phys(w, d, i, &mut f, inp, inp.x, s.air_accel);
                 if f.state == State::Air {

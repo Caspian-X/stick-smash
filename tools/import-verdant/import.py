@@ -138,7 +138,7 @@ def hit(a, start, end, x, y, r, **kw):
         b['situation'] = 'air'
     if num(a, 'FKB'):
         b['setKb'] = True
-        b['bkb'] = round(((1 + num(a, 'FKB') / 2) * 1.4 + 18) * num(a, 'KBG') / 100 + num(a, 'BKB'), 4)
+        b['fkb'] = num(a, 'FKB')  # Ultimate WBKB (`fkb`); bkb/kbg stay the source values
     if num(a, 'Rehit'):
         b['rehit'] = int(num(a, 'Rehit'))
     if num(a, 'Hitlag', 1) != 1:
@@ -842,6 +842,7 @@ doc = {
         **units.jumps(*JUMP_HEIGHTS, GRAVITY), 'airJumpDrift': round(0.89 * SCALE, 5), 'airJumps': 1,
         'airSpeed': round(0.89 * SCALE, 5), 'airAccel': AIR_ACCEL, 'gravity': GRAVITY,
         'fallSpeed': round(1.6 * SCALE, 5), 'fastFallSpeed': round(2.56 * SCALE, 5),
+        'traction': round(0.125 * SCALE, 5), 'airFriction': round(0.008 * SCALE, 5),  # Ultimate ground_brake / air_brake_x (fighter_param dump; ssbwiki Traction, Air friction)
     },
     'ai': {
         'reach': 90, 'counterChance': 0,

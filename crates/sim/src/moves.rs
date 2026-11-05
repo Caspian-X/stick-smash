@@ -176,6 +176,10 @@ pub fn start_move_as(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, slo
         None => d.fighters[f.data].moves.get(slot).map_or(0, |m| choose_variant(d, f, m)),
     };
     f.set_state(State::Attack);
+    if d.fighters[f.data].moves.get(slot).is_none_or(|m| m.air != AirControl::Aerial) {
+        // Only aerials keep a full hop's initial rise and a float.
+        (f.rise, f.floating) = (0, 0);
+    }
     f.mov = Some(MoveState {
         slot: slot.into(),
         started: w.frame,
@@ -579,12 +583,14 @@ fn movement(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent,
         AirControl::UpSpecial => air_accel(d, f, mv.up_special_accel, |u| u.up_special_accel_mult),
     } * p.air_accel_mult;
     air_drift(d, f, inp.x, acc, mv.attack_air_drag);
-    if def.air == AirControl::Aerial && fast_fall(d, f, inp) {
+    if def.air == AirControl::Aerial && f.floating == 0 && fast_fall(d, f, inp) {
         accept(w, i, Action::FastFall);
     }
     let s = &d.fighters[f.data].stats;
     let cap = p.fall_cap.unwrap_or(if f.ff { s.fast_fall_speed } else { s.fall_speed });
-    f.vy = (f.vy + s.gravity).min(cap);
+    if def.air != AirControl::Aerial || !crate::physics::scripted_rise(d, f) {
+        f.vy = (f.vy + s.gravity).min(cap);
+    }
     if p.hover {
         f.vy = 0.;
     }

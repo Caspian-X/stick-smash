@@ -17,9 +17,12 @@
     "gravity": 0.355,
     "fallSpeed": 6.75,
     "fastFallSpeed": 10.8,
-    "jumpSpeed": 10.4058,
+    "traction": 0.58,
+    "airFriction": 0.03,
+    "jumpSpeed": 6.9219,
     "shortHopSpeed": 7.1786,
     "airJumpSpeed": 10.7608,
+    "jumpInitialHeight": 86.7625,
     "airJumpDrift": 5.46
   },
   "ai": {
@@ -730,12 +733,13 @@
               "y": 45.5,
               "r": 21.0,
               "damage": 1.0,
-              "bkb": 61.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "end": 16,
               "type": "autolink",
               "setKb": true,
+              "fkb": 60.0,
               "rehit": 2
             },
             {
@@ -744,12 +748,13 @@
               "y": 45.5,
               "r": 22.5,
               "damage": 1.0,
-              "bkb": 61.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "end": 16,
               "type": "autolink",
               "setKb": true,
+              "fkb": 60.0,
               "rehit": 2
             },
             {
@@ -758,12 +763,13 @@
               "y": 45.5,
               "r": 21.0,
               "damage": 1.0,
-              "bkb": 61.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "end": 18,
               "type": "autolink",
               "setKb": true,
+              "fkb": 60.0,
               "rehit": 2
             },
             {
@@ -772,12 +778,13 @@
               "y": 45.5,
               "r": 22.5,
               "damage": 1.0,
-              "bkb": 61.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "end": 18,
               "type": "autolink",
               "setKb": true,
+              "fkb": 60.0,
               "rehit": 2
             },
             {
@@ -786,12 +793,13 @@
               "y": 45.5,
               "r": 21.0,
               "damage": 1.0,
-              "bkb": 61.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "end": 20,
               "type": "autolink",
               "setKb": true,
+              "fkb": 60.0,
               "rehit": 2
             },
             {
@@ -800,12 +808,13 @@
               "y": 45.5,
               "r": 22.5,
               "damage": 1.0,
-              "bkb": 61.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "end": 20,
               "type": "autolink",
               "setKb": true,
+              "fkb": 60.0,
               "rehit": 2
             },
             {
@@ -814,12 +823,13 @@
               "y": 45.5,
               "r": 21.0,
               "damage": 1.0,
-              "bkb": 61.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "end": 22,
               "type": "autolink",
               "setKb": true,
+              "fkb": 60.0,
               "rehit": 2
             },
             {
@@ -828,12 +838,13 @@
               "y": 45.5,
               "r": 22.5,
               "damage": 1.0,
-              "bkb": 61.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "end": 22,
               "type": "autolink",
               "setKb": true,
+              "fkb": 60.0,
               "rehit": 2
             },
             {
@@ -889,12 +900,13 @@
               "y": 60.0,
               "r": 17.5,
               "damage": 2.0,
-              "bkb": 47.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90.0,
               "end": 23,
               "dir": "away",
               "setKb": true,
+              "fkb": 40.0,
               "rehit": 4,
               "hitlagMult": 0.5
             },
@@ -904,13 +916,14 @@
               "y": 90.0,
               "r": 20.0,
               "damage": 2.0,
-              "bkb": 33.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 160.0,
               "end": 23,
               "dir": "away",
               "situation": "air",
               "setKb": true,
+              "fkb": 20.0,
               "rehit": 4,
               "hitlagMult": 0.5
             },
@@ -920,13 +933,14 @@
               "y": 90.0,
               "r": 20.0,
               "damage": 2.0,
-              "bkb": 61.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 100.0,
               "end": 23,
               "dir": "away",
               "situation": "ground",
               "setKb": true,
+              "fkb": 60.0,
               "rehit": 4,
               "hitlagMult": 0.5
             },
@@ -936,13 +950,14 @@
               "y": 90.0,
               "r": 20.0,
               "damage": 2.0,
-              "bkb": 33.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 160.0,
               "end": 23,
               "dir": "away",
               "situation": "air",
               "setKb": true,
+              "fkb": 20.0,
               "rehit": 4,
               "hitlagMult": 0.5
             },
@@ -952,13 +967,14 @@
               "y": 90.0,
               "r": 20.0,
               "damage": 2.0,
-              "bkb": 61.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 100.0,
               "end": 23,
               "dir": "away",
               "situation": "ground",
               "setKb": true,
+              "fkb": 60.0,
               "rehit": 4,
               "hitlagMult": 0.5
             },
@@ -968,13 +984,14 @@
               "y": 95.0,
               "r": 23.0,
               "damage": 2.0,
-              "bkb": 33.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "end": 23,
               "type": "autolink",
               "dir": "away",
               "setKb": true,
+              "fkb": 20.0,
               "rehit": 4,
               "hitlagMult": 0.5
             },
@@ -984,12 +1001,13 @@
               "y": 60.0,
               "r": 17.5,
               "damage": 0.8,
-              "bkb": 47.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90.0,
               "end": 32,
               "dir": "away",
               "setKb": true,
+              "fkb": 40.0,
               "rehit": 4
             },
             {
@@ -998,13 +1016,14 @@
               "y": 90.0,
               "r": 20.0,
               "damage": 0.8,
-              "bkb": 33.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 160.0,
               "end": 32,
               "dir": "away",
               "situation": "air",
               "setKb": true,
+              "fkb": 20.0,
               "rehit": 4
             },
             {
@@ -1013,13 +1032,14 @@
               "y": 90.0,
               "r": 20.0,
               "damage": 0.8,
-              "bkb": 61.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 100.0,
               "end": 32,
               "dir": "away",
               "situation": "ground",
               "setKb": true,
+              "fkb": 60.0,
               "rehit": 4
             },
             {
@@ -1028,13 +1048,14 @@
               "y": 90.0,
               "r": 20.0,
               "damage": 0.8,
-              "bkb": 33.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 160.0,
               "end": 32,
               "dir": "away",
               "situation": "air",
               "setKb": true,
+              "fkb": 20.0,
               "rehit": 4
             },
             {
@@ -1043,13 +1064,14 @@
               "y": 90.0,
               "r": 20.0,
               "damage": 0.8,
-              "bkb": 61.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 100.0,
               "end": 32,
               "dir": "away",
               "situation": "ground",
               "setKb": true,
+              "fkb": 60.0,
               "rehit": 4
             },
             {
@@ -1058,13 +1080,14 @@
               "y": 95.0,
               "r": 23.0,
               "damage": 0.8,
-              "bkb": 33.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "end": 32,
               "type": "autolink",
               "dir": "away",
               "setKb": true,
+              "fkb": 20.0,
               "rehit": 4
             },
             {
@@ -5189,6 +5212,7 @@
                 "end": 11,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 60.0,
                 "rehit": 3
               },
               {
@@ -5203,6 +5227,7 @@
                 "end": 11,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 60.0,
                 "rehit": 3
               },
               {
@@ -5217,6 +5242,7 @@
                 "end": 11,
                 "type": "windbox",
                 "situation": "air",
+                "fkb": 40.0,
                 "rehit": 3
               },
               {
@@ -5231,6 +5257,7 @@
                 "end": 11,
                 "type": "windbox",
                 "situation": "air",
+                "fkb": 40.0,
                 "rehit": 3
               },
               {
@@ -5294,6 +5321,7 @@
                 "end": 9,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 50.0,
                 "rehit": 4
               },
               {
@@ -5308,6 +5336,7 @@
                 "end": 9,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 50.0,
                 "rehit": 4
               },
               {
@@ -5322,6 +5351,7 @@
                 "end": 9,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 50.0,
                 "rehit": 4
               },
               {
@@ -5336,6 +5366,7 @@
                 "end": 9,
                 "type": "windbox",
                 "situation": "air",
+                "fkb": 40.0,
                 "rehit": 4
               },
               {
@@ -5350,6 +5381,7 @@
                 "end": 9,
                 "type": "windbox",
                 "situation": "air",
+                "fkb": 40.0,
                 "rehit": 4
               },
               {
@@ -5463,6 +5495,7 @@
                 "end": 9,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 50.0,
                 "rehit": 4
               },
               {
@@ -5477,6 +5510,7 @@
                 "end": 9,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 50.0,
                 "rehit": 4
               },
               {
@@ -5491,6 +5525,7 @@
                 "end": 9,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 50.0,
                 "rehit": 4
               },
               {
@@ -5505,6 +5540,7 @@
                 "end": 9,
                 "type": "windbox",
                 "situation": "air",
+                "fkb": 40.0,
                 "rehit": 4
               },
               {
@@ -5519,6 +5555,7 @@
                 "end": 9,
                 "type": "windbox",
                 "situation": "air",
+                "fkb": 40.0,
                 "rehit": 4
               },
               {
@@ -5632,6 +5669,7 @@
                 "end": 7,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 110.0,
                 "rehit": 3
               },
               {
@@ -5646,6 +5684,7 @@
                 "end": 7,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 110.0,
                 "rehit": 3
               },
               {
@@ -5660,6 +5699,7 @@
                 "end": 7,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 110.0,
                 "rehit": 3
               },
               {
@@ -5674,6 +5714,7 @@
                 "end": 7,
                 "type": "windbox",
                 "situation": "air",
+                "fkb": 80.0,
                 "rehit": 3
               },
               {
@@ -5688,6 +5729,7 @@
                 "end": 7,
                 "type": "windbox",
                 "situation": "air",
+                "fkb": 80.0,
                 "rehit": 3
               },
               {
@@ -5797,6 +5839,7 @@
                 "end": 7,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 110.0,
                 "rehit": 3
               },
               {
@@ -5811,6 +5854,7 @@
                 "end": 7,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 110.0,
                 "rehit": 3
               },
               {
@@ -5825,6 +5869,7 @@
                 "end": 7,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 110.0,
                 "rehit": 3
               },
               {
@@ -5839,6 +5884,7 @@
                 "end": 7,
                 "type": "windbox",
                 "situation": "air",
+                "fkb": 80.0,
                 "rehit": 3
               },
               {
@@ -5853,6 +5899,7 @@
                 "end": 7,
                 "type": "windbox",
                 "situation": "air",
+                "fkb": 80.0,
                 "rehit": 3
               },
               {
@@ -5962,6 +6009,7 @@
                 "end": 8,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 130.0,
                 "rehit": 3
               },
               {
@@ -5976,6 +6024,7 @@
                 "end": 8,
                 "type": "windbox",
                 "situation": "ground",
+                "fkb": 130.0,
                 "rehit": 3
               },
               {
@@ -5989,6 +6038,7 @@
                 "angle": 6.0,
                 "end": 8,
                 "situation": "air",
+                "fkb": 85.0,
                 "rehit": 3,
                 "type": "windbox"
               },
@@ -6003,6 +6053,7 @@
                 "angle": 6.0,
                 "end": 8,
                 "situation": "air",
+                "fkb": 85.0,
                 "rehit": 3,
                 "type": "windbox"
               },

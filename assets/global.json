@@ -49,12 +49,18 @@
     "airDrag": 0.97,
     "groundDrag": 0.85,
     "driftAccel": 0.114286,
-    "ultimate": { "perReferenceKnockback": 0.4, "base": 0, "launchDecay": 1.7, "tumbleThreshold": 80 }
+    "ultimate": {
+      "perReferenceKnockback": 0.4,
+      "base": 0,
+      "launchDecay": 1.7,
+      "tumbleThreshold": 80,
+      "topLaunch": { "minAngle": 70, "maxAngle": 110, "gravity": 0.21, "gravityPerWeight": 0.00168, "fallSpeed": 9 }
+    }
   },
-  "hitlag": { "base": 6, "perDamage": 0.65, "perKnockback": 0, "max": 30 },
+  "hitlag": { "base": 6, "perDamage": 0.65, "perKnockback": 0, "max": 30, "multBeforeCap": true },
   "hitTypes": {
     "trip": { "slide": 3.571429 },
-    "sakurai": { "groundLow": 0, "groundHigh": 40, "air": 45 },
+    "sakurai": { "groundLow": 0, "groundHigh": 38, "air": 38, "ramp": [60, 88] },
     "autolink": { "pull": 0.22, "momentum": 1 },
     "windbox": { "push": 0.857143, "maxSpeed": 12.857143 },
     "electric": { "victimHitlagMult": 1.6 },
@@ -330,10 +336,10 @@
       "padX": 110,
       "padTop": 150,
       "padBottom": 70,
-      "minHeight": 560,
-      "maxHeight": 1100,
-      "referencePlayWidth": 680,
-      "referencePlayHeight": 395,
+      "minHeight": 594,
+      "maxHeight": 1166,
+      "referencePlayWidth": 800,
+      "referencePlayHeight": 432,
       "minScaleStart": 0.8,
       "minScaleFloor": 0.5,
       "stageBias": 0.25,

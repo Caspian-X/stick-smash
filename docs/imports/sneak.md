@@ -329,3 +329,14 @@ covers about 530 px and left the 800 px Arena from the centre); the mortar test 
 surface the shell lands on (the rebuilt Arena's right platform); the Cypher rise is held each tick, so it keeps
 its per-tick climb under the lower gravity (3.4 − 0.48 + 0.4 = 3.32 px/tick); the original thresholds (30-tick rise > 80 px,
 peak > 230 px) hold; the ledge-catch check is unchanged and passes.
+
+## Ultimate calibration (2026-11-05)
+
+- **Traction / air friction**: Snake (`snake`) `ground_brake` 0.116 / `air_brake_x` 0.005 (fighter_param dump
+  github.com/j99thoms/smash-charts `data/raw/ultimate_fighter_params.csv`, matching ssbwiki Traction and Air
+  friction; high confidence) → `stats.traction` 0.58, `stats.airFriction` 0.025.
+- **Full hop initial height**: Ultimate climbs 0.55 × the full hop in its first four airborne frames (ssbwiki Jump, the ratio for most fighters);
+  the generator emits `stats.jumpInitialHeight` and derives `jumpSpeed` from the remaining height (`units.jumps`),
+  so the full hop keeps its height and lands on Ultimate's frame. Short hops and air jumps are unchanged.
+- **Fixed knockback**: FKB hits emit `fkb` with the source BKB/KBG (Ultimate WBKB, weight-correct) and keep `setKb`
+  as a marker; they were resolved at weight 100 into a `setKb` BKB.

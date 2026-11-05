@@ -142,6 +142,12 @@ pub fn release_grab(w: &mut World, d: &GameData, i: usize) {
 }
 pub fn knockback(d: &GameData, b: &Hitbox, pct: f64, weight: f64) -> f64 {
     if let Some(k) = &d.global.knockback.ultimate {
+        if let Some(fkb) = b.fkb {
+            // Ultimate's weight-based fixed knockback: percent 10 and FKB in place of the hit's damage.
+            let weighted =
+                10. * (k.percent_scale + fkb * k.damage_scale) * k.weight_scale * 2. * weight / (1. + weight);
+            return ((weighted + k.base) * b.kbg + b.bkb) * k.launch_speed;
+        }
         if b.set_kb {
             return b.bkb * k.launch_speed * weight;
         }
@@ -175,7 +181,11 @@ pub fn tumbles(d: &GameData, kb: f64) -> bool {
 }
 pub fn hitlag_of(d: &GameData, b: &Hitbox, kb: f64) -> u32 {
     let h = &d.global.hitlag;
-    libm::floor(h.max.min(libm::floor(h.base + b.damage * h.per_damage + kb * h.per_knockback)) * b.hitlag_mult) as u32
+    let raw = h.base + b.damage * h.per_damage + kb * h.per_knockback;
+    if h.mult_before_cap {
+        return h.max.min(libm::floor(raw * b.hitlag_mult)) as u32;
+    }
+    libm::floor(h.max.min(libm::floor(raw)) * b.hitlag_mult) as u32
 }
 pub fn launch_angle(d: &GameData, b: &Hitbox, kb: f64, ground: bool) -> f64 {
     if ground && let Some(angle) = b.ground_angle {
@@ -187,6 +197,9 @@ pub fn launch_angle(d: &GameData, b: &Hitbox, kb: f64, ground: bool) -> f64 {
             let s = &d.global.hit_types.sakurai;
             if !ground {
                 s.air
+            } else if let Some([from, to]) = s.ramp {
+                let r = ((kb / reference_scale(d) - from) / (to - from)).clamp(0., 1.);
+                s.ground_low + (s.ground_high - s.ground_low) * r
             } else if tumbles(d, kb) {
                 s.ground_high
             } else {
@@ -247,6 +260,7 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     }
     let vic = &mut w.fighters[v];
     let kb = knockback(d, b, vic.dmg, d.fighters[vic.data].stats.weight);
+    let mut top = false;
     let hl = hitlag_of(d, b, kb);
     vic.lag = if b.kind == HitType::Electric {
         libm::floor(f64::from(hl) * ht.electric.victim_hitlag_mult) as u32
@@ -344,7 +358,12 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
         vic.vx = (px - cx) * ht.autolink.pull + avx * ht.autolink.momentum;
         vic.vy = (py - cy) * ht.autolink.pull + avy * ht.autolink.momentum;
     } else {
-        let angle = launch_angle(d, b, kb, grounded) * std::f64::consts::PI / 180.;
+        let deg = launch_angle(d, b, kb, grounded);
+        top = g.hitstun.ultimate.as_ref().and_then(|u| u.top_launch.as_ref()).is_some_and(|t| {
+            let a = deg.rem_euclid(360.);
+            tumbles(d, kb) && a >= t.min_angle && a <= t.max_angle
+        });
+        let angle = deg * std::f64::consts::PI / 180.;
         vic.vx = libm::cos(angle) * kb * sgn;
         vic.vy = -libm::sin(angle) * kb;
         if grounded && vic.vy > 0. {
@@ -360,6 +379,7 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     }
     vic.hitstun = hitstun_of(d, b, kb);
     vic.tumble = b.kind != HitType::Autolink && tumbles(d, kb);
+    vic.top_launch = top;
     let (x, y, lag) = (vic.x, vic.y, vic.lag);
     w.fx.push(Fx::Burst {
         x: hx,

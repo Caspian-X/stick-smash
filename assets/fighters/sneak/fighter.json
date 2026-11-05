@@ -14,16 +14,19 @@
     "dashFrames": 14,
     "runAccel": 0.8857,
     "groundFriction": 0.82,
-    "jumpSpeed": 9.1,
+    "jumpSpeed": 6.0403,
     "shortHopSpeed": 7.2026,
     "airJumpSpeed": 11.8741,
+    "jumpInitialHeight": 59.455,
     "airJumpDrift": 4.935,
     "airJumps": 1,
     "airSpeed": 4.935,
     "airAccel": 0.15,
     "gravity": 0.4,
     "fallSpeed": 8.65,
-    "fastFallSpeed": 13.84
+    "fastFallSpeed": 13.84,
+    "traction": 0.58,
+    "airFriction": 0.025
   },
   "charges": [
     { "id": "c4", "uses": 1, "recharge": 0, "emptySfx": "toss", "refillSfx": "ready" }
@@ -771,12 +774,13 @@
               "y": 25.0,
               "r": 25,
               "damage": 4.0,
-              "bkb": 103.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 96.0,
               "dir": "away",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "fkb": 120.0
             },
             {
               "start": 10,
@@ -785,12 +789,13 @@
               "y": 30.0,
               "r": 25,
               "damage": 4.0,
-              "bkb": 103.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 96.0,
               "dir": "away",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "fkb": 120.0
             },
             {
               "start": 10,
@@ -799,12 +804,13 @@
               "y": 25.0,
               "r": 25,
               "damage": 4.0,
-              "bkb": 103.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 96.0,
               "dir": "away",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "fkb": 120.0
             },
             {
               "start": 10,
@@ -813,12 +819,13 @@
               "y": 30.0,
               "r": 25,
               "damage": 4.0,
-              "bkb": 103.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 96.0,
               "dir": "away",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "fkb": 120.0
             }
           ],
           "charge": { "frame": 23 },
@@ -944,13 +951,14 @@
               "y": 35.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 40.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "type": "autolink",
               "dir": "away",
               "situation": "air",
-              "setKb": true
+              "setKb": true,
+              "fkb": 30.0
             },
             {
               "start": 6,
@@ -959,13 +967,14 @@
               "y": 35.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 40.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "type": "autolink",
               "dir": "away",
               "situation": "air",
-              "setKb": true
+              "setKb": true,
+              "fkb": 30.0
             },
             {
               "start": 6,
@@ -974,13 +983,14 @@
               "y": 35.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 40.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "type": "autolink",
               "dir": "away",
               "situation": "air",
-              "setKb": true
+              "setKb": true,
+              "fkb": 30.0
             },
             {
               "start": 6,
@@ -989,12 +999,13 @@
               "y": 35.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 54.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90.0,
               "dir": "away",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "fkb": 50.0
             },
             {
               "start": 6,
@@ -1003,12 +1014,13 @@
               "y": 35.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 54.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90.0,
               "dir": "away",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "fkb": 50.0
             },
             {
               "start": 6,
@@ -1017,12 +1029,13 @@
               "y": 35.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 54.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90.0,
               "dir": "away",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "fkb": 50.0
             },
             {
               "start": 14,
@@ -1031,13 +1044,14 @@
               "y": 45.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 40.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "type": "autolink",
               "dir": "away",
               "situation": "air",
               "setKb": true,
+              "fkb": 30.0,
               "group": 1
             },
             {
@@ -1047,13 +1061,14 @@
               "y": 45.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 40.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "type": "autolink",
               "dir": "away",
               "situation": "air",
               "setKb": true,
+              "fkb": 30.0,
               "group": 1
             },
             {
@@ -1063,13 +1078,14 @@
               "y": 45.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 40.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "type": "autolink",
               "dir": "away",
               "situation": "air",
               "setKb": true,
+              "fkb": 30.0,
               "group": 1
             },
             {
@@ -1079,12 +1095,13 @@
               "y": 45.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 54.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90.0,
               "dir": "away",
               "situation": "ground",
               "setKb": true,
+              "fkb": 50.0,
               "group": 1
             },
             {
@@ -1094,12 +1111,13 @@
               "y": 45.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 54.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90.0,
               "dir": "away",
               "situation": "ground",
               "setKb": true,
+              "fkb": 50.0,
               "group": 1
             },
             {
@@ -1109,12 +1127,13 @@
               "y": 45.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 54.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90.0,
               "dir": "away",
               "situation": "ground",
               "setKb": true,
+              "fkb": 50.0,
               "group": 1
             },
             {
@@ -1124,13 +1143,14 @@
               "y": 45.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 40.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "type": "autolink",
               "dir": "away",
               "situation": "air",
               "setKb": true,
+              "fkb": 30.0,
               "group": 2
             },
             {
@@ -1140,13 +1160,14 @@
               "y": 45.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 40.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "type": "autolink",
               "dir": "away",
               "situation": "air",
               "setKb": true,
+              "fkb": 30.0,
               "group": 2
             },
             {
@@ -1156,13 +1177,14 @@
               "y": 45.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 40.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90,
               "type": "autolink",
               "dir": "away",
               "situation": "air",
               "setKb": true,
+              "fkb": 30.0,
               "group": 2
             },
             {
@@ -1172,12 +1194,13 @@
               "y": 45.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 54.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90.0,
               "dir": "away",
               "situation": "ground",
               "setKb": true,
+              "fkb": 50.0,
               "group": 2
             },
             {
@@ -1187,12 +1210,13 @@
               "y": 45.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 54.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90.0,
               "dir": "away",
               "situation": "ground",
               "setKb": true,
+              "fkb": 50.0,
               "group": 2
             },
             {
@@ -1202,12 +1226,13 @@
               "y": 45.0,
               "r": 20,
               "damage": 3.0,
-              "bkb": 54.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 90.0,
               "dir": "away",
               "situation": "ground",
               "setKb": true,
+              "fkb": 50.0,
               "group": 2
             },
             {
@@ -1573,12 +1598,13 @@
               "y": -5.0,
               "r": 27.5,
               "damage": 4.0,
-              "bkb": 54.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": -94.0,
               "type": "spike",
               "situation": "ground",
-              "setKb": true
+              "setKb": true,
+              "fkb": 50.0
             },
             {
               "start": 2,
@@ -1587,11 +1613,12 @@
               "y": -5.0,
               "r": 27.5,
               "damage": 4.0,
-              "bkb": 43.9,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 80.0,
               "situation": "air",
-              "setKb": true
+              "setKb": true,
+              "fkb": 35.0
             },
             {
               "start": 2,
@@ -1600,10 +1627,11 @@
               "y": 25.0,
               "r": 22.5,
               "damage": 4.0,
-              "bkb": 36.9,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 70.0,
-              "setKb": true
+              "setKb": true,
+              "fkb": 25.0
             },
             {
               "start": 9,
@@ -1612,12 +1640,13 @@
               "y": -5.0,
               "r": 27.5,
               "damage": 3.0,
-              "bkb": 54.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": -94.0,
               "type": "spike",
               "situation": "ground",
               "setKb": true,
+              "fkb": 50.0,
               "group": 1
             },
             {
@@ -1627,11 +1656,12 @@
               "y": -5.0,
               "r": 27.5,
               "damage": 3.0,
-              "bkb": 43.9,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 80.0,
               "situation": "air",
               "setKb": true,
+              "fkb": 35.0,
               "group": 1
             },
             {
@@ -1641,10 +1671,11 @@
               "y": 25.0,
               "r": 22.5,
               "damage": 3.0,
-              "bkb": 36.9,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 70.0,
               "setKb": true,
+              "fkb": 25.0,
               "group": 1
             },
             {
@@ -1654,12 +1685,13 @@
               "y": -5.0,
               "r": 27.5,
               "damage": 3.0,
-              "bkb": 54.4,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": -94.0,
               "type": "spike",
               "situation": "ground",
               "setKb": true,
+              "fkb": 50.0,
               "group": 2
             },
             {
@@ -1669,11 +1701,12 @@
               "y": -5.0,
               "r": 27.5,
               "damage": 3.0,
-              "bkb": 43.9,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 80.0,
               "situation": "air",
               "setKb": true,
+              "fkb": 35.0,
               "group": 2
             },
             {
@@ -1683,10 +1716,11 @@
               "y": 25.0,
               "r": 22.5,
               "damage": 3.0,
-              "bkb": 36.9,
+              "bkb": 0.0,
               "kbg": 1.0,
               "angle": 70.0,
               "setKb": true,
+              "fkb": 25.0,
               "group": 2
             }
           ],

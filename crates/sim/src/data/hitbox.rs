@@ -108,6 +108,12 @@ pub struct Hitbox {
     /// Fixed knockback: ignores damage/percent (launch speed = bkb × launchSpeed × victim weight multiplier).
     #[serde(default, skip_serializing_if = "is_default")]
     pub set_kb: bool,
+    /// Ultimate's weight-based fixed knockback (FKB/WBKB): the shared formula with percent 10 and this value as the
+    /// damage, ignoring the victim's percent and the hit's damage; `bkb` and `kbg` keep their source meaning. Needs
+    /// `knockback.ultimate`; takes precedence over `setKb`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::damage)]
+    pub fkb: Option<f64>,
     /// Multi-hit: can hit the same victim/group again every this many move ticks (default: once until history clears).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schemars(transform = unit::tick)]

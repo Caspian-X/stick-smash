@@ -262,3 +262,14 @@ Arcthunder 9 → 12.8571, Thoron 22 → 31.4286, Arcfire bolt (9.5, 2.2) → (13
 flame 2.2 → 3.1429, burst 0.6 → 0.8571, Elwind blades (2.0, 15.0) / (1.4, 14.0) → (2.8571, 12.5) / (2.0, 11.6667).
 `drift()` scales the legacy shared air accels by 5/3.5 with `AIR_ACCEL`, so every phase `airAccelMult` is unchanged.
 Earlier tuning observations in this record were made at the old scale.
+
+## Ultimate calibration (2026-11-05)
+
+- **Traction / air friction**: Robin (`reflet`) `ground_brake` 0.105 / `air_brake_x` 0.007 (fighter_param dump
+  github.com/j99thoms/smash-charts `data/raw/ultimate_fighter_params.csv`, matching ssbwiki Traction and Air
+  friction; high confidence) → `stats.traction` 0.525, `stats.airFriction` 0.035.
+- **Full hop initial height**: Ultimate climbs 0.55 × the full hop in its first four airborne frames (ssbwiki Jump, the ratio for most fighters);
+  the generator emits `stats.jumpInitialHeight` and derives `jumpSpeed` from the remaining height (`units.jumps`),
+  so the full hop keeps its height and lands on Ultimate's frame. Short hops and air jumps are unchanged.
+- **Fixed knockback**: FKB hits emit `fkb` with the source BKB/KBG (Ultimate WBKB, weight-correct) and keep `setKb`
+  as a marker; they were resolved at weight 100 into a `setKb` BKB.

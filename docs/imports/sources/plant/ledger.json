@@ -6025,7 +6025,7 @@
        "end": 3,
        "damage": 1.2,
        "angle": 145.0,
-       "bkb": 47.4,
+       "bkb": 0.0,
        "kbg": 1.0,
        "rehit": null,
        "geometry": {
@@ -6050,7 +6050,7 @@
        "end": 4,
        "damage": 1.2,
        "angle": 100.0,
-       "bkb": 33.4,
+       "bkb": 0.0,
        "kbg": 1.0,
        "rehit": 6,
        "geometry": {
@@ -6070,7 +6070,7 @@
        "end": 4,
        "damage": 1.2,
        "angle": 100.0,
-       "bkb": 33.4,
+       "bkb": 0.0,
        "kbg": 1.0,
        "rehit": 6,
        "geometry": {

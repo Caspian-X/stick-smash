@@ -4971,16 +4971,19 @@
    "dashFrames": 15,
    "runAccel": 1.0286,
    "groundFriction": 0.86,
-   "jumpSpeed": 12.3798,
+   "jumpSpeed": 8.2278,
    "shortHopSpeed": 8.5725,
    "airJumpSpeed": 12.0006,
+   "jumpInitialHeight": 90.3375,
    "airJumpDrift": 5.4286,
    "airJumps": 4,
    "airSpeed": 3.675,
    "airAccel": 0.25,
    "gravity": 0.485,
    "fallSpeed": 9.75,
-   "fastFallSpeed": 15.6
+   "fastFallSpeed": 15.6,
+   "traction": 0.425,
+   "airFriction": 0.03
   }
  }
 }

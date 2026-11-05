@@ -67,8 +67,8 @@ def hit(a,start=0,end=None,x=None,y=None,r=None):
     if mask.endswith('_G'):b['situation']='ground'
     elif mask.endswith('_A'):b['situation']='air'
     if num(a,'FKB'):
-        # Source WBKB resolved at 100 reference weight, then retained as fixed-launch adaptation.
-        b['setKb']=True;b['bkb']=((1+num(a,'FKB')/2)*1.4+18)*num(a,'KBG')/100+num(a,'BKB')
+        # Ultimate WBKB (`fkb`); bkb/kbg stay the source values.
+        b['setKb']=True;b['fkb']=num(a,'FKB')
     if num(a,'Rehit'):b['rehit']=int(num(a,'Rehit'))
     if num(a,'Hitlag',1)!=1:b['hitlagMult']=num(a,'Hitlag',1)
     if num(a,'ShieldDamage') and b['damage']>0:b['shieldDmgMult']=max(0,(b['damage']+num(a,'ShieldDamage'))/b['damage'])
@@ -261,7 +261,7 @@ for slot in ['fair','bair','uair','dair']:
 # Source jump heights (units): full 31.55, short 15.24, air 31.55 (ssbwiki Jump, SSBU jump height ranking).
 # runAccel .4 is fitted (old .28 × 5 / 3.5).
 GRAVITY=round(.071*SCALE,5)
-fighter={'$schema':'../../schema/fighter.schema.json','schemaVersion':1,'extends':'base','name':'Wizard','tagline':'A spark, a knight, a perfect read','blurb':'A Zelda-inspired caster: precise lightning kicks, multi-hit magic, a guiding fireball, a directional warp and a delayed Phantom.','stats':{'weight':100/85,'walkSpeed':round(.914*SCALE,5),'runSpeed':round(1.43*SCALE,5),'dashSpeed':round(1.958*SCALE,5),'dashFrames':16,'runAccel':.4,'airSpeed':round(1.092*SCALE,5),'airAccel':AIR_ACCEL,'gravity':GRAVITY,'fallSpeed':round(1.35*SCALE,5),'fastFallSpeed':round(2.16*SCALE,5),**units.jumps(31.55,15.24,31.55,GRAVITY),'airJumpDrift':round(1.092*SCALE,5)},'ai':{'reach':70,'counterChance':0,'specials':[{'minDistance':160,'maxDistance':470,'height':100,'chance':.24,'grounded':True,'noProjectile':True,'down':True,'hold':None},{'minDistance':150,'maxDistance':550,'height':100,'chance':.15,'grounded':True,'noProjectile':True,'down':False,'hold':[18,40]}]},'poses':poses,'moves':moves,'throws':throws,'projectiles':projectiles,'attachments':attachments}
+fighter={'$schema':'../../schema/fighter.schema.json','schemaVersion':1,'extends':'base','name':'Wizard','tagline':'A spark, a knight, a perfect read','blurb':'A Zelda-inspired caster: precise lightning kicks, multi-hit magic, a guiding fireball, a directional warp and a delayed Phantom.','stats':{'weight':100/85,'walkSpeed':round(.914*SCALE,5),'runSpeed':round(1.43*SCALE,5),'dashSpeed':round(1.958*SCALE,5),'dashFrames':16,'runAccel':.4,'airSpeed':round(1.092*SCALE,5),'airAccel':AIR_ACCEL,'gravity':GRAVITY,'fallSpeed':round(1.35*SCALE,5),'fastFallSpeed':round(2.16*SCALE,5),'traction':round(0.116*SCALE,5),'airFriction':round(0.006*SCALE,5),**units.jumps(31.55,15.24,31.55,GRAVITY),'airJumpDrift':round(1.092*SCALE,5)},'ai':{'reach':70,'counterChance':0,'specials':[{'minDistance':160,'maxDistance':470,'height':100,'chance':.24,'grounded':True,'noProjectile':True,'down':True,'hold':None},{'minDistance':150,'maxDistance':550,'height':100,'chance':.15,'grounded':True,'noProjectile':True,'down':False,'hold':[18,40]}]},'poses':poses,'moves':moves,'throws':throws,'projectiles':projectiles,'attachments':attachments}
 (ROOT/'assets/fighters/wizard/fighter.json').write_text(json.dumps(fighter,indent=2)+'\n')
 (SOURCES/'ledger.json').write_text(json.dumps({'sourceCommit':source['commit'],'scale':SCALE,'rawAttackLedger':ledger,'ufd':{'url':'https://ultimateframedata.com/zelda','accessed':'2026-11-02','timings':{slot:{'phases':[(p['name'],p['frames']) for p in m['phases']]} for slot,m in moves.items()}}},indent=2)+'\n')
 print('Rebuilt Wizard; run just bless to format content and update schemas.')

@@ -33,7 +33,10 @@ fits in 120 columns and contains no objects stays on one line (a hitbox, a keyfr
 - Scale: **5 px per Smash Ultimate unit** on both axes, for lengths, speeds (units/frame × 5 = px/tick),
   accelerations and gravity (units/frame² × 5 = px/tick²); launch speed is 0.15 px/tick per reference knockback
   unit. Built-in content and stage sizes use it ([DESIGN.md](DESIGN.md#scope), Units). A jump speed for a source
-  height `h` units comes from `tools/units.py` (`jumps`), which is exact for the sim's integration.
+  height `h` units comes from `tools/units.py` (`jumps`), which is exact for the sim's integration. A full hop with
+  `stats.jumpInitialHeight` (Ultimate's jump initial height, 0.55 × the full hop for most fighters) climbs that height
+  in four equal no-gravity ticks, then continues at `jumpSpeed` (derived from the remaining height), so full hops land
+  on Ultimate's frame (Peach 57, not 63); short hops and air jumps are unaffected.
 - Fighter-local (hitboxes, hurtboxes, poses, events, projectile spawn): **x forward, y up**, origin at the feet.
   The sim mirrors x by facing and flips y.
 - Angles in degrees: 0 = forward, 90 = up. This holds for launch angles, attachment angles and pose `rot`
@@ -52,7 +55,11 @@ Every fighter, throw, projectile and shared attack uses `global.knockback.ultima
 the no-staleness/no-rage Ultimate equation and convert launch speed to this world's pixels. Charge changes
 hitDamage without separately inflating bkb. There is no per-character or per-hitbox formula selector.
 Fixed-knockback (`setKb`) hits ignore damage/percent: `bkb × launchSpeed × w`; their BKB uses the same
-reference units. This is a fixed-launch adaptation, not the full source WBKB equation. Windboxes remain
+reference units. A hit with `fkb` (imports: the source FKB) is Ultimate's weight-based knockback instead: the shared
+equation with postHitPercent 10 and hitDamage `fkb`, keeping the hit's own `bkb` and `kbg`, so only the first term
+scales with weight (`((1 + fkb/2) × 1.4 × 200/(W+100) + 18) × kbg + bkb`); it takes precedence over `setKb`, which
+imports keep as a marker. Before, generators resolved FKB at weight 100 into a `setKb` BKB, which then scaled the
+whole launch by `w`. Windboxes remain
 pixel-space forces and bypass launch calculation; grabs do not launch. Autolinks use their separate pull
 velocity, with the shared formula supplying hitstun strength.
 
@@ -90,8 +97,21 @@ an air jump, a ledge grab, a new hit and any state other than `hitstun`/`air` cl
 belongs to the new state's physics. DI rotates the launch vector with the velocity.
 
 Hitstun = floor(floor(reference × `perReferenceKnockback`) + `base`) × hitstunMult + hitstunAdd (Ultimate 0.4 and
-0). Tumble starts above `tumbleThreshold` reference knockback (Ultimate 80; also picks the Sakurai ground angle).
-Hitlag uses `global.hitlag` (Ultimate: base 6, perDamage 0.65, perKnockback 0, max 30 before hitlagMult).
+0). Tumble starts above `tumbleThreshold` reference knockback (Ultimate 80).
+Hitlag uses `global.hitlag` (Ultimate: base 6, perDamage 0.65, perKnockback 0, max 30). With `multBeforeCap`
+(bundled) it is min(max, floor((base + damage × perDamage) × hitlagMult)), Ultimate's order (ssbwiki Hitlag); without
+it the legacy min(max, floor(…)) × hitlagMult, floored.
+
+`topLaunch` (`{ minAngle, maxAngle, gravity, gravityPerWeight, fallSpeed }`, bundled 70 / 110 / 0.21 / 0.00168 / 9):
+Ultimate's `damage_fly_top_*` params. A tumbling launch whose angle is within the range uses gravity
+`gravity + gravityPerWeight × W` (W = 100 / `stats.weight`, the source weight; Mario 0.0749 units) capped at
+`fallSpeed` (1.8 units for everyone) on its own component while in hitstun, instead of the victim's own. After
+hitstun, a fall faster than the fighter's own fall speed slows by its gravity per frame back to it (the snapshot flag
+`Fighter::top_launch`). Sideways and non-tumbling launches keep the victim's own gravity.
+
+`hitTypes.sakurai` (361): airborne victims launch at `air`; grounded ones at `groundLow` / `groundHigh` by the tumble
+threshold, or with `ramp: [from, to]` (reference knockback) rising linearly from `groundLow` at `from` to `groundHigh`
+at `to`. Bundled: Ultimate's 0° up to 60, 38° from 88, 38° in the air (ssbwiki Sakurai angle).
 Optional `cancel: { airDodgeAfter, aerialAfter }` lets a tumbling airborne fighter air dodge / start an aerial
 after that many hitstun ticks; it is absent (off) pending verification against Ultimate.
 
@@ -435,12 +455,14 @@ With `movement.ultimate` present, horizontal speed changes by fixed amounts per 
 shared `aerialAccel`/`attackAirAccel`/`upSpecialAccel`/`helplessAccel` and `fastFallKick`. Those fields stay
 required so legacy data loads; the new model ignores them.
 
-- **Traction** (`stats.traction`, default `ultimate.traction` 0.5 = Mario's 0.1 × 5): |vx| drops toward zero by
+- **Traction** (`stats.traction`, default `ultimate.traction` 0.5 = Mario's 0.1 × 5; imports and Mike carry their
+  source `ground_brake` × 5, originals the default): |vx| drops toward zero by
   traction per frame in idle, crouch, brake, turn skid, jumpsquat, landing lag, dizzy, grab hold, throws, shield
   and grounded attacks, times `fastTraction` (2) while faster than the fighter's walk speed. A grounded attack
   phase's `slide` frames multiply it by `attackSlideTraction` (0.5). Dodge, knockdown, shield-break and hitstun
   ground drag stay multiplicative.
-- **Air friction** (`stats.airFriction`, default `ultimate.airFriction` 0.05 = 0.01 × 5): with the stick neutral (or no air
+- **Air friction** (`stats.airFriction`, default `ultimate.airFriction` 0.05 = 0.01 × 5; imports and Mike carry their
+  source `air_brake_x` × 5): with the stick neutral (or no air
   control in the phase) |vx| drops toward zero by it; with the stick held and |vx| at or below `airSpeed` × tilt
   the fighter accelerates by its air accel × tilt up to that cap (opposite stick accelerates against the motion);
   above the cap |vx| drops toward the cap by air friction and is never clamped. The same rule runs in the air
@@ -912,11 +934,14 @@ an `explosion` containing `manual: true`, `armTicks` and `radius`, plus its ordi
 `life`, radius and presentation fields. Use existing gravity/bounce data to settle it on terrain if needed;
 trigger it from another move's detonate event. This is a remote blast gadget, not a pickup or trip-item system.
 
-Optional `stats.floatSpeed` is a finite positive downward speed in px/tick. Holding jump caps gravity's
-result at the smaller of this value and the normal/fast-fall cap only while airborne in normal `Air` control.
-Release restores the ordinary cap immediately; rising velocity remains rising. Hitstun, helplessness,
-ledge hang/climb, attacks, airdodge and every other non-Air state are excluded. Float has no duration,
-fuel or activation latch; fast-fall state is preserved.
+Optional `stats.float: { speed, frames }` is a Peach-style float. In the air (normal `Air` control), holding jump
+while not rising, or a jump press with down held (instead of the air jump), starts it once per airtime: for up to
+`frames` ticks the vertical speed is held at `speed` (0 hovers; positive sinks) while drift works as usual. An aerial
+started during the float keeps it (the float continues through the aerial and after it); fast fall is ignored while
+floating. Releasing jump, the frame limit, an air jump, a hit, a ledge, any non-aerial move or other state, and
+landing end it; only landing makes it available again (`Fighter::floating` / `float_used` in the snapshot). The air
+jump stays available. This replaced `stats.floatSpeed` (a descent cap while jump was held, with no duration or latch);
+SIM_VERSION -sim-33.
 
-These opt-in fields add no rollback snapshot state. Existing content omits them and keeps its behavior;
-the replay SIM_VERSION and golden world hash are unchanged.
+`restore`, `detonate` and `explosion.manual` add no rollback snapshot state; content that omits them keeps its
+behavior.

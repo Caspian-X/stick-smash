@@ -25,6 +25,8 @@ pub enum Action {
     SpotDodge,
     AirDodge,
     FastFall,
+    /// A float started (`stats.float`).
+    Float,
     PlatformDrop,
     LedgeGrab,
     LedgeTrump,

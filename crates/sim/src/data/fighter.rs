@@ -98,13 +98,19 @@ pub struct Stats {
     /// Legacy (no `movement.ultimate`): idle and crouch velocity multiplier per frame.
     #[schemars(transform = unit::ratio)]
     pub ground_friction: f64,
-    /// Grounded slowdown in px/frame² with `movement.ultimate` (default its `traction`; Ultimate traction × 3.5).
+    /// Grounded slowdown in px/frame² with `movement.ultimate` (default its `traction`; Ultimate traction × 5).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schemars(transform = unit::a_x)]
     pub traction: Option<f64>,
-    /// Full hop launch speed (upward).
+    /// Full hop launch speed (upward). With `jumpInitialHeight` it is the speed after the initial rise.
     #[schemars(transform = unit::v_y)]
     pub jump_speed: f64,
+    /// Ultimate's jump initial height: a full hop rises this far in equal steps over its first 4 airborne frames
+    /// (no gravity), then continues at `jumpSpeed` (derived from the remaining height). Short hops and air jumps
+    /// are unaffected. Omit for a plain jump.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_y)]
+    pub jump_initial_height: Option<f64>,
     #[schemars(transform = unit::v_y)]
     pub short_hop_speed: f64,
     #[schemars(transform = unit::v_y)]
@@ -121,7 +127,7 @@ pub struct Stats {
     #[schemars(transform = unit::a_x)]
     pub air_accel: f64,
     /// Airborne slowdown in px/frame² with `movement.ultimate`: toward zero with the stick neutral, toward airSpeed
-    /// when above it (default its `airFriction`; Ultimate air friction × 3.5).
+    /// when above it (default its `airFriction`; Ultimate air friction × 5).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schemars(transform = unit::a_x)]
     pub air_friction: Option<f64>,
@@ -131,11 +137,24 @@ pub struct Stats {
     pub fall_speed: f64,
     #[schemars(transform = unit::v_y)]
     pub fast_fall_speed: f64,
-    /// Positive downward speed cap while holding jump in normal Air control. Excludes attacks, hitstun,
-    /// helplessness, ledge/climb, airdodge and every other non-Air state. Omit to disable float.
+    /// Peach-style float: once per airtime, holding jump while descending (or jump pressed with down held) holds
+    /// the vertical speed at `speed` for up to `frames` ticks, through aerials. Omit to disable.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub float: Option<Float>,
+}
+
+/// `stats.float`. Starts in the air (normal `Air` control) once per airtime when jump is held while not rising,
+/// or on a jump press with down held. While it lasts the fighter's vertical speed is `speed` (0 = hover; positive
+/// sinks) and drift, aerials and the air jump work as usual; an aerial started during the float keeps it.
+/// Releasing jump, the frame limit, an air jump, fast fall, being hit, a ledge, any non-aerial state and landing end
+/// it; landing (not a ledge) makes it available again.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Float {
     #[schemars(transform = unit::v_y)]
-    pub float_speed: Option<f64>,
+    pub speed: f64,
+    #[schemars(transform = unit::tick)]
+    pub frames: u32,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]

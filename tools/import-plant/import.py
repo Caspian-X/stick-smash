@@ -159,8 +159,7 @@ def attacks(article, name):
 
 
 def fixed_bkb(a):
-    if num(a, "FKB"):
-        return ((1 + num(a, "FKB") / 2) * 1.4 + 18) * num(a, "KBG") / 100 + num(a, "BKB")
+    """Source BKB; a fixed (FKB) hit keeps it next to `fkb` (Ultimate WBKB)."""
     return num(a, "BKB")
 
 
@@ -226,6 +225,7 @@ def hit(a, start, end, overrides=None):
         b["type"] = kind
     if num(a, "FKB"):
         b["setKb"] = True
+        b["fkb"] = num(a, "FKB")
     fr = a.get("FacingRestrict", "")
     if fr.endswith("_POS"):
         b["dir"] = "away"
@@ -1231,6 +1231,7 @@ fighter = {
         "gravity": round(MOBILITY["gravity"] * SCALE, 5),
         "fallSpeed": round(MOBILITY["fall"] * SCALE, 5),
         "fastFallSpeed": round(MOBILITY["fastFall"] * SCALE, 5),
+        "traction": round(0.088 * SCALE, 5), "airFriction": round(0.008 * SCALE, 5),  # Ultimate ground_brake / air_brake_x (fighter_param dump; ssbwiki Traction, Air friction)
     },
     "body": {"halfWidth": 18, "height": 74},
     "hurtboxes": {"default": {"x1": -24, "x2": 24, "y1": 0, "y2": 122}, "knockdown": {"x1": -40, "x2": 40, "y1": 0, "y2": 26}},

@@ -3,7 +3,6 @@ mod common;
 use sim::{
     GameData, World,
     data::{ChargeNeed, Event},
-    input::Intent,
     world::State,
 };
 
@@ -144,40 +143,16 @@ fn manual_gadgets_survive_proximity_and_fuse_but_normal_fuse_still_blasts() {
 }
 
 #[test]
-fn float_caps_held_jump_releases_and_excludes_other_states() {
-    let mut d = common::data();
-    let mut w = setup(&d);
-    d.fighters[w.fighters[0].data].stats.float_speed = Some(1.);
-    for state in
-        [State::Air, State::Hitstun, State::Helpless, State::Ledge, State::Climb, State::Attack, State::Airdodge]
-    {
-        let mut f = w.fighters[0].clone();
-        f.state = state;
-        f.ground = false;
-        f.surf = None;
-        f.y = 100.;
-        f.vy = 8.;
-        sim::physics::air_phys(&mut w, &d, 0, &mut f, Intent { jump_held: true, ..Default::default() }, 0., 0.);
-        assert_eq!(f.vy == 1., state == State::Air, "{state:?}");
-        if state == State::Air {
-            sim::physics::air_phys(&mut w, &d, 0, &mut f, Intent::default(), 0., 0.);
-            assert!(f.vy > 1.);
-            f.vy = -5.;
-            sim::physics::air_phys(&mut w, &d, 0, &mut f, Intent { jump_held: true, ..Default::default() }, 0., 0.);
-            assert!(f.vy < 0.);
-        }
-    }
-}
-
-#[test]
 fn validation_reports_resource_paths() {
     let mut d = common::data();
     let di = setup(&d).fighters[0].data;
-    for speed in [0., -1., f64::INFINITY, f64::NAN] {
-        d.fighters[di].stats.float_speed = Some(speed);
-        assert!(sim::data::validate(&d).iter().any(|e| e.path == "stats.floatSpeed"));
+    for (speed, frames, path) in
+        [(-1., 10, "stats.float.speed"), (f64::NAN, 10, "stats.float.speed"), (0., 0, "stats.float.frames")]
+    {
+        d.fighters[di].stats.float = Some(sim::data::fighter::Float { speed, frames });
+        assert!(sim::data::validate(&d).iter().any(|e| e.path == path), "{path}");
     }
-    d.fighters[di].stats.float_speed = Some(1.);
+    d.fighters[di].stats.float = Some(sim::data::fighter::Float { speed: 0., frames: 10 });
     for (charge, uses, suffix) in [("missing", 1, "charge"), ("levin", 0, "uses")] {
         d.fighters[di].moves.jab.phases[0].events = vec![Event {
             at: Some(0),

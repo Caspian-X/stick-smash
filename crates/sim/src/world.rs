@@ -317,6 +317,19 @@ pub struct Fighter {
     pub dodge_stale: u8,
     #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
     pub dodge_at: u64,
+    /// Ticks left of a full hop's initial rise (`stats.jumpInitialHeight`); the last one launches at `jumpSpeed`.
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub rise: u8,
+    /// The current launch uses `hitstun.ultimate.topLaunch` physics (and, after hitstun, slows back to its own fall
+    /// speed).
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub top_launch: bool,
+    /// Float ticks left (`stats.float`); 0 = not floating.
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub floating: u32,
+    /// The float was used this airtime (landing restores it).
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub float_used: bool,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -343,6 +356,12 @@ impl Fighter {
         }
         if !matches!(state, State::Hitstun | State::Air) {
             self.launch = (0., 0.);
+            self.top_launch = false;
+        }
+        // An aerial keeps the initial rise and the float (`moves::start_move` ends them for other moves).
+        if !matches!(state, State::Air | State::Attack) {
+            self.rise = 0;
+            self.floating = 0;
         }
     }
     pub fn hittable(&self) -> bool {
@@ -578,6 +597,10 @@ impl World {
                     tech_lock: 0,
                     dodge_stale: 0,
                     dodge_at: 0,
+                    rise: 0,
+                    top_launch: false,
+                    floating: 0,
+                    float_used: false,
                 }
             })
             .collect();

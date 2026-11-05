@@ -157,7 +157,7 @@ def hit(a, start, end, x, y, r, **kw):
         b['situation'] = 'air'
     if num(a, 'FKB'):
         b['setKb'] = True
-        b['bkb'] = round(((1 + num(a, 'FKB') / 2) * 1.4 + 18) * num(a, 'KBG') / 100 + num(a, 'BKB'), 4)
+        b['fkb'] = num(a, 'FKB')  # Ultimate WBKB (`fkb`); bkb/kbg stay the source values
     if num(a, 'Rehit'):
         b['rehit'] = int(num(a, 'Rehit'))
     if num(a, 'Hitlag', 1) != 1:
@@ -625,7 +625,7 @@ moves['fair'] = {'name': 'Forward Air', 'air': 'aerial', 'phases': segments(
     anim=[{'at': 0, 'pose': 'air'}, {'at': 8, 'pose': 'airHigh', 'lerp': True}, {'at': 15, 'pose': 'airHigh'},
           {'at': 18, 'pose': 'airLow'}, {'at': 28, 'pose': 'air', 'lerp': True}],
     keys=[[0, 270], [10, 300], [16, 90], [18, -50], [25, -70], [52, 95]],
-    land_lag=11, land_ends=(5,))}
+    land_lag=11, land_ends=(0, 5))}  # UFD autocancels on the opening frames too
 ab = raw('bair', 'cloud', 'AttackAirB')
 bair = [hit(take(ab, 13.0, 0, at=11)['source'], frame(11), frame(11), -55, 42, 35),
         hit(take(ab, 13.0, 0, at=12)['source'], frame(12), frame(12), -55, 80, 35)]
@@ -634,7 +634,7 @@ moves['bair'] = {'name': 'Back Air', 'air': 'aerial', 'phases': segments(
     anim=[{'at': 0, 'pose': 'air'}, {'at': 6, 'pose': 'airBack', 'lerp': True}, {'at': 12, 'pose': 'airBack'},
           {'at': 20, 'pose': 'air', 'lerp': True}],
     keys=[[0, 95], [5, 60], [9, 180], [12, 135], [41, 95]],
-    land_lag=8, land_ends=(5,))}
+    land_lag=8, land_ends=(0, 5))}  # UFD autocancels on the opening frames too
 au = raw('uair', 'cloud', 'AttackAirHi')
 uair_end = int(re.findall(r'\d+', ufd['Up Air']['active'])[-1])
 uair = [*capsule(take(au, 11.0, 0, at=8)['source'], frame(8), frame(9), (0, 120), (45, 90), 21),
@@ -662,7 +662,7 @@ moves['dair'] = {'name': 'Down Air', 'air': 'aerial', 'phases': segments(
     anim=[{'at': 0, 'pose': 'air'}, {'at': 8, 'pose': 'airHigh', 'lerp': True},
           {'at': 11, 'pose': 'airLow'}, {'at': 34, 'pose': 'airLow'}, {'at': 46, 'pose': 'air', 'lerp': True}],
     keys=[[0, 60], [8, 250], [11, 270], [40, 270], [63, 95]],
-    land_lag=16, land_ends=(5,))}
+    land_lag=16, land_ends=(0, 5))}  # UFD autocancels on the opening frames too
 
 # --- grabs
 grab1 = frame(9)
@@ -932,6 +932,7 @@ stats = {
     **units.jumps(32.5, 17, 32.5, GRAVITY), 'airJumpDrift': round(1.155 * SCALE, 5), 'airJumps': 1,
     'airSpeed': round(1.155 * SCALE, 5), 'airAccel': round(0.07 * SCALE, 5), 'gravity': GRAVITY,
     'fallSpeed': round(1.68 * SCALE, 5), 'fastFallSpeed': round(2.688 * SCALE, 5),
+    'traction': round(0.106 * SCALE, 5), 'airFriction': round(0.009 * SCALE, 5),  # Ultimate ground_brake / air_brake_x (fighter_param dump; ssbwiki Traction, Air friction)
 }
 doc = {
     '$schema': '../../schema/fighter.schema.json',

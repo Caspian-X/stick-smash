@@ -116,8 +116,13 @@ fn package_identity_slots_and_reference_stats() {
     close(f.stats.gravity, 0.070 * 5.);
     close(f.stats.fall_speed, 1.19 * 5.);
     close(f.stats.fast_fall_speed, 1.904 * 5.);
-    // Fitted sink (the source float holds height): 1.2 at the old x6 vertical scale.
-    close(f.stats.float_speed.unwrap(), 1.2 * 5. / 6.);
+    // Source float: no vertical movement for up to 150 frames (2.5 s), once per airtime.
+    let fl = f.stats.float.as_ref().unwrap();
+    assert_eq!((fl.speed, fl.frames), (0., 150));
+    // Ultimate ground_brake 0.111 / air_brake_x 0.01; full hop initial height 0.55 × 30.03 units.
+    close(f.stats.traction.unwrap(), 0.111 * 5.);
+    close(f.stats.air_friction.unwrap(), 0.01 * 5.);
+    close(f.stats.jump_initial_height.unwrap(), 0.55 * 30.03 * 5.);
     assert!(f.moves.uspec.once_per_airtime);
 }
 
@@ -219,42 +224,138 @@ fn aerial_landing_lag_and_autocancel_windows() {
     }
 }
 
+/// Duchess in the air at rest, facing right, far from the opponent.
+fn airborne(d: &GameData) -> World {
+    let mut w = sandbox(d, &["duchess", "brawler"]);
+    w.count = 0;
+    w.fighters[1].x = 1500.;
+    let f = &mut w.fighters[0];
+    (f.x, f.y, f.vx, f.vy, f.ground, f.surf) = (640., 200., 0., 0., false, None);
+    f.set_state(State::Air);
+    w
+}
+const JUMP: Input = Input { stick: (0, 0), buttons: sim::input::JUMP, attack_stick: (0, 0) };
+
 #[test]
-fn float_caps_descent_while_jump_is_held_and_releases_immediately() {
+fn float_holds_height_through_a_nair_and_ends_on_the_frame_limit() {
     let d = common::data();
     let mut w = sandbox(&d, &["duchess", "brawler"]);
     w.count = 0;
     w.fighters[1].x = 1500.;
-    let hold = |w: &mut World, d: &GameData, n: usize| {
-        for _ in 0..n {
-            tick(w, d, Input { buttons: sim::input::JUMP, ..Default::default() });
-        }
-    };
-    {
-        let f = &mut w.fighters[0];
-        f.ground = false;
-        f.surf = None;
-        f.y = 300.;
-        f.vy = 0.;
-        f.set_state(State::Air);
+    // A full hop with jump held throughout: once she stops rising, the float holds her there.
+    let mut rose = 0;
+    while w.fighters[0].floating == 0 {
+        tick(&mut w, &d, JUMP);
+        rose += 1;
+        assert!(rose < 60, "no float after the full hop");
     }
-    hold(&mut w, &d, 40);
-    let float = 1.2 * 5. / 6.;
-    let floating = w.fighters[0].vy;
-    assert!((floating - float).abs() < 1e-9, "held jump caps the descent at floatSpeed: {floating}");
-    // Releasing jump restores the ordinary fall immediately while falling.
-    for _ in 0..6 {
+    let f = &w.fighters[0];
+    assert!(f.vy == 0. && f.float_used && f.jumps == 1);
+    let y = f.y;
+    let mut held = 1;
+    for _ in 0..10 {
+        tick(&mut w, &d, JUMP);
+        held += 1;
+        assert_eq!(w.fighters[0].y, y, "the float holds height");
+    }
+    // A neutral air started during the float keeps it: the height stays put through the aerial.
+    tick(&mut w, &d, Input { buttons: sim::input::JUMP | sim::input::ATTACK, ..Default::default() });
+    held += 1;
+    assert_eq!(w.fighters[0].mov.as_ref().map(|m| m.slot.as_str()), Some("nair"));
+    while w.fighters[0].state == State::Attack {
+        tick(&mut w, &d, JUMP);
+        held += 1;
+        assert_eq!(w.fighters[0].y, y, "height held through the nair");
+    }
+    // It runs out after 150 ticks, then she falls; the air jump is still available.
+    while w.fighters[0].floating > 0 {
+        tick(&mut w, &d, JUMP);
+        held += 1;
+    }
+    assert_eq!(held, 150, "float length");
+    tick(&mut w, &d, JUMP);
+    tick(&mut w, &d, JUMP);
+    assert!(w.fighters[0].vy > 0. && w.fighters[0].floating == 0, "falls after the frame limit");
+    assert_eq!(w.fighters[0].jumps, 1, "the air jump survives the float");
+}
+
+#[test]
+fn full_hop_climbs_its_initial_height_in_four_ticks_and_lands_on_the_source_frame() {
+    let d = common::data();
+    let s = &d.fighter("duchess").unwrap().stats;
+    let hi = s.jump_initial_height.unwrap();
+    let hop = |held: bool| {
+        let mut w = sandbox(&d, &["duchess", "brawler"]);
+        w.count = 0;
+        // Clear of Arena's platforms.
+        (w.fighters[0].x, w.fighters[1].x) = (290., 1500.);
+        let y0 = w.fighters[0].y;
+        tick(&mut w, &d, JUMP);
+        while w.fighters[0].ground {
+            tick(&mut w, &d, if held { JUMP } else { Input::default() });
+        }
+        let mut ys = vec![y0 - w.fighters[0].y];
+        while !w.fighters[0].ground {
+            tick(&mut w, &d, Input::default());
+            ys.push(y0 - w.fighters[0].y);
+        }
+        ys
+    };
+    let full = hop(true);
+    for (t, y) in full.iter().take(4).enumerate() {
+        assert!((y - hi * (t + 1) as f64 / 4.).abs() < 1e-9, "tick {t}: {y}");
+    }
+    let apex = full.iter().copied().fold(0., f64::max);
+    assert!((apex - 30.03 * 5.).abs() < 0.01, "full hop apex {apex}");
+    // UFD air time: full hop 57, short hop 41 airborne frames (the landing tick is the last entry).
+    assert_eq!(full.len() - 1, 57);
+    let short = hop(false);
+    assert!((short.iter().copied().fold(0., f64::max) - 14.5 * 5.).abs() < 0.01);
+    assert_eq!(short.len() - 1, 41);
+}
+
+#[test]
+fn float_is_once_per_airtime_and_ends_on_release() {
+    let d = common::data();
+    let mut w = airborne(&d);
+    let f = &mut w.fighters[0];
+    assert!(sim::physics::start_float(&d, f), "a fresh airtime can float");
+    assert!(!sim::physics::start_float(&d, f), "only once per airtime");
+    // Releasing jump ends it at once, and holding again does not restart it.
+    tick(&mut w, &d, Input::default());
+    assert_eq!(w.fighters[0].floating, 0);
+    for _ in 0..5 {
         tick(&mut w, &d, Input::default());
     }
-    assert!(w.fighters[0].vy > float, "released jump falls normally: {}", w.fighters[0].vy);
-    // Fast fall still wins over the cap while jump is held only for a normal air drift; the engine caps at
-    // floatSpeed regardless of fast-fall state (documented limitation).
-    // A move keeps its own gravity: starting the aerial leaves State::Air, so the float cap no longer applies.
-    let mut w = start_air(&d, "nair");
-    for _ in 0..20 {
-        step_move(&mut w, &d, Intent { jump_held: true, ..Default::default() });
+    let vy = w.fighters[0].vy;
+    assert!(vy > 0.);
+    tick(&mut w, &d, JUMP);
+    tick(&mut w, &d, JUMP);
+    assert_eq!(w.fighters[0].floating, 0, "no second float this airtime");
+    // Landing restores it.
+    for _ in 0..200 {
+        tick(&mut w, &d, Input::default());
+        if w.fighters[0].ground {
+            break;
+        }
     }
-    assert!(w.fighters[0].vy > float, "no float during an attack: {}", w.fighters[0].vy);
+    assert!(w.fighters[0].ground && !w.fighters[0].float_used);
+    // Jump with down held starts the float at once instead of spending the air jump.
+    let mut w = airborne(&d);
+    w.fighters[0].vy = -4.;
+    tick(&mut w, &d, Input { stick: (0, -127), buttons: sim::input::JUMP, ..Default::default() });
+    let f = &w.fighters[0];
+    assert!(f.floating > 0 && f.jumps == 1 && f.vy == 0., "down + jump floats: {} {} {}", f.floating, f.jumps, f.vy);
+    // A hit ends it.
+    let mut w = airborne(&d);
+    assert!(sim::physics::start_float(&d, &mut w.fighters[0]));
+    let b: sim::data::Hitbox = serde_json::from_value(
+        serde_json::json!({"x": 0, "y": 0, "r": 10, "damage": 5, "bkb": 30, "kbg": 0.5, "angle": 45}),
+    )
+    .unwrap();
+    let src = combat::HitSource { attacker: 1, direction: 1., point: (600., 160.), projectile: true, label: None };
+    combat::apply_hit(&mut w, &d, 0, &b, src);
+    assert_eq!(w.fighters[0].floating, 0);
 }
 
 #[test]

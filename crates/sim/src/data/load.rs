@@ -1323,6 +1323,9 @@ fn check_hitbox(file: &str, path: &str, h: &super::Hitbox, geometry: bool) -> Re
     if let Some(angle) = h.ground_angle {
         finite(file, &format!("{path}.groundAngle"), angle)?;
     }
+    if let Some(n) = h.fkb {
+        nonnegative(file, &format!("{path}.fkb"), n)?;
+    }
     for (name, n) in [("x", h.x), ("y", h.y), ("angle", h.angle), ("hitstunAdd", h.hitstun_add)] {
         finite(file, &format!("{path}.{name}"), n)?;
     }
@@ -1707,8 +1710,14 @@ fn check_stats(file: &str, v: &super::Stats) -> Result<(), ContentError> {
     ] {
         positive(file, &format!("stats.{name}"), n)?;
     }
-    if let Some(n) = v.float_speed {
-        positive(file, "stats.floatSpeed", n)?;
+    if let Some(n) = v.jump_initial_height {
+        nonnegative(file, "stats.jumpInitialHeight", n)?;
+    }
+    if let Some(f) = &v.float {
+        nonnegative(file, "stats.float.speed", f.speed)?;
+        if f.frames == 0 {
+            return Err(err(file, "stats.float.frames", "must be positive"));
+        }
     }
     Ok(())
 }
@@ -1796,6 +1805,12 @@ fn check_hitstun(file: &str, v: &super::global::Hitstun) -> Result<(), ContentEr
             nonnegative(file, &format!("hitstun.ultimate.{name}"), n)?;
         }
         positive(file, "hitstun.ultimate.launchDecay", u.launch_decay)?;
+        if let Some(top) = &u.top_launch {
+            nonnegative_range(file, "hitstun.ultimate.topLaunch", top.min_angle, top.max_angle)?;
+            nonnegative(file, "hitstun.ultimate.topLaunch.gravity", top.gravity)?;
+            nonnegative(file, "hitstun.ultimate.topLaunch.gravityPerWeight", top.gravity_per_weight)?;
+            positive(file, "hitstun.ultimate.topLaunch.fallSpeed", top.fall_speed)?;
+        }
     }
     Ok(())
 }
@@ -1940,6 +1955,11 @@ fn check_hit_types(file: &str, v: &super::global::HitTypes) -> Result<(), Conten
         [("groundLow", v.sakurai.ground_low), ("groundHigh", v.sakurai.ground_high), ("air", v.sakurai.air)]
     {
         finite(file, &format!("hitTypes.sakurai.{name}"), n)?;
+    }
+    if let Some([from, to]) = v.sakurai.ramp
+        && !(from >= 0. && to > from)
+    {
+        return Err(err(file, "hitTypes.sakurai.ramp", "needs 0 <= from < to"));
     }
     Ok(())
 }

@@ -123,12 +123,12 @@ pub struct Movement {
 }
 
 /// Ultimate-style momentum: speeds change by fixed amounts per frame instead of by multipliers. Rates are px/frame²
-/// (Ultimate units × 3.5 horizontally).
+/// (Ultimate units × 5).
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct UltimateMovement {
     /// Default `stats.traction`: grounded slowdown toward zero in idle, crouch, brake, turn skid, jumpsquat, landing
-    /// lag, shield, grabs, throws and grounded attacks (Ultimate Mario 0.1 → 0.35).
+    /// lag, shield, grabs, throws and grounded attacks (Ultimate Mario 0.1 → 0.5).
     #[schemars(transform = unit::a_x)]
     pub traction: f64,
     /// Traction multiplier while faster than the fighter's walk speed, so a run skids to a stop in a readable time.
@@ -138,7 +138,7 @@ pub struct UltimateMovement {
     #[schemars(transform = unit::ratio)]
     pub attack_slide_traction: f64,
     /// Default `stats.airFriction`: airborne slowdown with the stick neutral (toward zero) or above the held air
-    /// speed (toward it; overspeed is never clamped). Ultimate ≈ 0.01 → 0.035.
+    /// speed (toward it; overspeed is never clamped). Ultimate ≈ 0.01 → 0.05.
     #[schemars(transform = unit::a_x)]
     pub air_friction: f64,
     /// `stats.airAccel` multiplier for moves with `air: "aerial"`; phase `airAccelMult` multiplies on top.
@@ -240,6 +240,29 @@ pub struct UltimateHitstun {
     /// Out of tumble, allow an air dodge / aerial after this many frames of hitstun. Absent = never.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cancel: Option<HitstunCancel>,
+    /// Ultimate's upward launch physics (`damage_fly_top_*`). Absent = the victim's own gravity and fall speed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub top_launch: Option<TopLaunch>,
+}
+
+/// A tumbling launch whose angle is within `minAngle..=maxAngle` (70–110 in Ultimate) falls with gravity
+/// `gravity + gravityPerWeight × source weight` capped at `fallSpeed` while in hitstun, instead of the victim's own;
+/// after hitstun a fall faster than the fighter's own slows back to it by its gravity per frame.
+/// Ultimate: 0.042 + 0.000336 × weight units/frame², fall speed 1.8 (× 5 here).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TopLaunch {
+    #[schemars(transform = unit::deg)]
+    pub min_angle: f64,
+    #[schemars(transform = unit::deg)]
+    pub max_angle: f64,
+    #[schemars(transform = unit::a_y)]
+    pub gravity: f64,
+    /// Per unit of source weight (100 / `stats.weight`).
+    #[schemars(transform = unit::a_y)]
+    pub gravity_per_weight: f64,
+    #[schemars(transform = unit::v_y)]
+    pub fall_speed: f64,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -252,7 +275,9 @@ pub struct HitstunCancel {
 }
 
 /// Hitlag (freeze frames for both fighters) = min(max, floor(base + damage × perDamage + knockback × perKnockback)),
-/// then × the hitbox's hitlagMult (floored). Ultimate: base 6, perDamage 0.65, perKnockback 0, max 30.
+/// then × the hitbox's hitlagMult (floored). With `multBeforeCap` (Ultimate) it is
+/// min(max, floor((base + damage × perDamage + knockback × perKnockback) × hitlagMult)) instead.
+/// Ultimate: base 6, perDamage 0.65, perKnockback 0, max 30.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Hitlag {
@@ -264,6 +289,8 @@ pub struct Hitlag {
     pub per_knockback: f64,
     #[schemars(transform = unit::tick)]
     pub max: f64,
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub mult_before_cap: bool,
 }
 
 /// Rules for each hitbox `type`.
@@ -318,6 +345,8 @@ pub struct TripRule {
 }
 
 /// Auto angle: grounded hits below tumble knockback use groundLow, stronger grounded hits groundHigh, airborne hits air.
+/// With `ramp: [from, to]` (reference knockback) the grounded angle instead rises linearly from groundLow at `from` to
+/// groundHigh at `to` (Ultimate: 0° below 60, 38° from 88, 38° in the air).
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SakuraiRule {
@@ -327,6 +356,9 @@ pub struct SakuraiRule {
     pub ground_high: f64,
     #[schemars(transform = unit::deg)]
     pub air: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::kb)]
+    pub ramp: Option<[f64; 2]>,
 }
 
 /// Victim velocity = (hitbox center − victim center) × pull + attacker velocity × momentum.

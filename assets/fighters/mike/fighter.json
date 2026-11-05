@@ -20,7 +20,9 @@
     "gravity": 0.46,
     "fallSpeed": 8.25,
     "fastFallSpeed": 13.2,
-    "dashSpeed": 8.8
+    "dashSpeed": 8.8,
+    "traction": 0.56,
+    "airFriction": 0.045
   },
   "ai": {
     "reach": 86,

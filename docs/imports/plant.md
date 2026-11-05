@@ -262,3 +262,14 @@ unreleased batch, so it was not bumped again. The generator remains the source o
 Counter contacts also release a held ball into an independent shot and end the former caster's hold. `article.reflectCooldown` is authored as 8 ticks for Ptooie, defaults to zero for older content, and suppresses all reflectors during that window.
 
 Momentum migration (2026-11-04): no phase sets `airAccelMult`, so drift now uses the fighter's airAccel × the `movement.ultimate` kind multipliers; regeneration is unchanged.
+
+## Ultimate calibration (2026-11-05)
+
+- **Traction / air friction**: Piranha Plant (`packun`) `ground_brake` 0.088 / `air_brake_x` 0.008 (fighter_param dump
+  github.com/j99thoms/smash-charts `data/raw/ultimate_fighter_params.csv`, matching ssbwiki Traction and Air
+  friction; high confidence) → `stats.traction` 0.44, `stats.airFriction` 0.04.
+- **Full hop initial height**: Ultimate climbs 0.55 × the full hop in its first four airborne frames (ssbwiki Jump, the ratio for most fighters);
+  the generator emits `stats.jumpInitialHeight` and derives `jumpSpeed` from the remaining height (`units.jumps`),
+  so the full hop keeps its height and lands on Ultimate's frame. Short hops and air jumps are unchanged.
+- **Fixed knockback**: FKB hits emit `fkb` with the source BKB/KBG (Ultimate WBKB, weight-correct) and keep `setKb`
+  as a marker; they were resolved at weight 100 into a `setKb` BKB.

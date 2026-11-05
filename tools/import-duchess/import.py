@@ -147,7 +147,7 @@ def hit(a, start, end, x, y, r, **kw):
         b['situation'] = 'air'
     if num(a, 'FKB'):
         b['setKb'] = True
-        b['bkb'] = round(((1 + num(a, 'FKB') / 2) * 1.4 + 18) * num(a, 'KBG') / 100 + num(a, 'BKB'), 4)
+        b['fkb'] = num(a, 'FKB')  # Ultimate WBKB (`fkb`); bkb/kbg stay the source values
     if num(a, 'Rehit'):
         b['rehit'] = int(num(a, 'Rehit'))
     if num(a, 'Hitlag', 1) != 1:
@@ -893,10 +893,10 @@ doc = {
         'airSpeed': round(1.029 * SCALE, 4), 'airAccel': AIR_ACCEL,
         'gravity': GRAVITY, 'fallSpeed': round(1.19 * SCALE, 4),
         'fastFallSpeed': round(1.904 * SCALE, 4),
-        # Source float: 0 vertical movement for up to 2.5 s, once per airtime. The engine's stat only caps a
-        # descent, so a slow sink stands in for the hover and there is no duration/fuel limit (fitted: 1.2 at
-        # the old ×6 vertical scale, ×5/6).
-        'floatSpeed': 1.0,
+        'traction': round(0.111 * SCALE, 5), 'airFriction': round(0.01 * SCALE, 5),  # Ultimate ground_brake / air_brake_x (fighter_param dump; ssbwiki Traction, Air friction)
+        # Peach's float: no vertical movement for up to 2.5 s (param uniq_float_float_frame 150), once per airtime
+        # (ssbwiki Floating).
+        'float': {'speed': 0, 'frames': 150},
     },
     'ai': {
         'reach': 74, 'counterChance': 0.25,

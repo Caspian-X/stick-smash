@@ -21,9 +21,15 @@ class Jumps(unittest.TestCase):
         self.assertAlmostEqual(units.jump_speed(150, 0.5, True), units.jump_speed(150, 0.5) + 0.5)
 
     def test_stats(self):
-        s = units.jumps(29.9, 16, 31, 0.46)
+        s = units.jumps(29.9, 16, 31, 0.46, initial=0)
         self.assertEqual(set(s), {'jumpSpeed', 'shortHopSpeed', 'airJumpSpeed'})
         self.assertAlmostEqual(units.apex(s['jumpSpeed'], 0.46), 149.5, delta=0.01)
+
+    def test_initial_height(self):
+        s = units.jumps(30.03, 14.5, 30.03, 0.35)
+        self.assertAlmostEqual(s['jumpInitialHeight'], 0.55 * 150.15, places=3)
+        self.assertAlmostEqual(units.apex(s['jumpSpeed'], 0.35, initial=s['jumpInitialHeight']), 150.15, delta=0.01)
+        self.assertAlmostEqual(units.apex(s['shortHopSpeed'], 0.35), 72.5, delta=0.01)
 
 
 if __name__ == '__main__':

@@ -97,7 +97,14 @@ Units are fixed for every import (see [DESIGN.md](DESIGN.md#scope), Units):
   with the converted gravity. The sim sets `vy = -v` on the jump tick and adds gravity `g` before each later move,
   so the rise is `n·v − g·n(n−1)/2` with `n = ceil(v/g)`, inverted exactly as `v = h/n + g(n−1)/2`; an air jump
   applies gravity on its first tick and needs one more `g`. Check with `just feel <id>`: the measured heights equal
-  source × 5 within 1 px. Several midair jumps share one speed (King uses his first).
+  source × 5 within 1 px. Several midair jumps share one speed (King uses his first). `units.jumps` also emits
+  Ultimate's full hop `jumpInitialHeight` (0.55 × the full hop unless the source says otherwise), so full hops land
+  on the source frame.
+- **Traction and air friction** come from the source (`ground_brake` / `air_brake_x` × `SCALE` into `stats.traction` /
+  `stats.airFriction`; ssbwiki Traction / Air friction or a fighter_param dump). **FKB** hits emit `fkb` with the
+  source BKB/KBG (Ultimate's weight-based knockback), not a BKB resolved at weight 100.
+- Check launches and movement against Ultimate with `just reference-ko <id>` (calculator) and, for the calibration
+  set, `just calibrate` (DESIGN.md, Ultimate calibration).
 - Fitted values with no source number (a projectile arc, a recovery impulse) are authored in px at this scale.
   (Fitted values from before the unification were converted x ×5/3.5, y ×5/6, up-special rises ×√(5/6).)
 - The sim runs at 60 Hz. World Y points down; fighter-local hitbox/pose/event Y points up. X points forward
