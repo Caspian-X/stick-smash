@@ -2654,6 +2654,7 @@
             }
           ],
           "transitions": [
+            { "on": "land", "to": "landing", "lag": 26 },
             { "on": "timeout", "to": "rise2", "preserveHits": true }
           ]
         },
@@ -2712,6 +2713,7 @@
             "parasol": { "show": [0, 5], "angle": [[0, 0]] }
           },
           "transitions": [
+            { "on": "land", "to": "landing", "lag": 26 },
             { "on": "timeout", "to": "rise3", "preserveHits": true }
           ]
         },
@@ -2757,6 +2759,7 @@
             "parasol": { "show": [0, 5], "angle": [[0, 0]] }
           },
           "transitions": [
+            { "on": "land", "to": "landing", "lag": 26 },
             { "on": "timeout", "to": "rise4", "preserveHits": true }
           ]
         },
@@ -2803,6 +2806,7 @@
             "parasol": { "show": [0, 5], "angle": [[0, 0]] }
           },
           "transitions": [
+            { "on": "land", "to": "landing", "lag": 26 },
             { "on": "timeout", "to": "rise5", "preserveHits": true }
           ]
         },
@@ -2835,6 +2839,7 @@
             { "at": 0, "sfx": "slash" }
           ],
           "transitions": [
+            { "on": "land", "to": "landing", "lag": 26 },
             { "on": "timeout", "to": "open" }
           ]
         },
@@ -2909,6 +2914,7 @@
           "anim": [
             { "at": 0, "pose": "helpless" }
           ],
+          "ledgeGrab": 0,
           "attach": {
             "parasol": { "show": [0, 14], "angle": [[0, 0]] }
           },
