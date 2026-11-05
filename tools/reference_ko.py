@@ -222,7 +222,7 @@ def compare(path):
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
+    p = argparse.ArgumentParser(description=(__doc__ or '').split('\n\n')[0])
     p.add_argument('fighters', nargs='*')
     p.add_argument('--all', action='store_true', help='every hitbox, not the strongest per move')
     p.add_argument('--victim', default='mario', help='mario, or weight,gravity,fall in source units')
