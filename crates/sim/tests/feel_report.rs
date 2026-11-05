@@ -140,6 +140,17 @@ fn ground(d: &GameData, id: &str) -> Value {
         tick(&mut w, d, IDLE);
     }
     let dash = f0(&w).x - CENTRE;
+    // A one-tick flick, then neutral until the fighter is standing still.
+    let mut w = world(d, &[id]);
+    tick(&mut w, d, inp(127, 0, 0));
+    let rest = until(&mut w, d, 200, IDLE, |f| f.vx == 0. && f.gait == Gait::Stand);
+    let tap = json!({ "distance": r2(f0(&w).x - CENTRE), "frames": rest.map(|n| n + 1) });
+    // The stick held through the initial dash (dashFrames ticks from the flick).
+    let mut w = world(d, &[id]);
+    for _ in 0..s.dash_frames.unwrap_or(d.global.gait.dash_frames) {
+        tick(&mut w, d, inp(127, 0, 0));
+    }
+    let hold = r2(f0(&w).x - CENTRE);
     let mut w = world(d, &[id]);
     let run95 = until(&mut w, d, 120, inp(127, 0, 0), |f| f.vx >= 0.95 * s.run_speed);
     let running = || {
@@ -176,7 +187,7 @@ fn ground(d: &GameData, id: &str) -> Value {
         window += u32::from(f0(&w).gait == Gait::DashTurn);
     }
     let back = json!({ "distance": r2(x0 - f0(&w).x), "turn": window });
-    json!({ "dash20": r2(dash), "run95": run95, "stop": stop, "turn": turn, "dashBack": back })
+    json!({ "dash20": r2(dash), "dash": { "tap": tap, "hold": hold }, "run95": run95, "stop": stop, "turn": turn, "dashBack": back })
 }
 
 fn air(d: &GameData, id: &str) -> Value {
@@ -468,22 +479,24 @@ fn cells(v: &Value, ptrs: &[&str]) -> String {
 fn tables(rows: &[Value]) -> String {
     let mut s = String::from(
         "### Movement\n\n| Fighter | Full hop h / apex / air | Short hop h / apex / air | SH:FH | Air jump h / apex / air \
-         | Dash 20f px | Run 95% f | Stop f / px | Turn face / vx≤0 / full f, slide px | Dash-back 20f px / turn f \
+         | Dash 20f px | Dash tap px / f, hold px | Run 95% f | Stop f / px | Turn face / vx≤0 / full f, slide px | Dash-back 20f px / turn f \
          | Drift / nair kept | Fast fall f |\n\
-         |---|---|---|---|---|---|---|---|---|---|---|---|\n",
+         |---|---|---|---|---|---|---|---|---|---|---|---|---|\n",
     );
     for r in rows {
         let j = |k: &str| {
             cells(r, &[&format!("/jumps/{k}/height"), &format!("/jumps/{k}/apex"), &format!("/jumps/{k}/air")])
         };
         s += &format!(
-            "| {} | {} | {} | {} | {} | {} | {} | {} | {}, {} | {} | {} | {} |\n",
+            "| {} | {} | {} | {} | {} | {} | {}, {} | {} | {} | {}, {} | {} | {} | {} |\n",
             cell(&r["fighter"]).trim_matches('"'),
             j("full"),
             j("short"),
             cell(&r["jumps"]["shortRatio"]),
             j("air"),
             cell(&r["ground"]["dash20"]),
+            cells(r, &["/ground/dash/tap/distance", "/ground/dash/tap/frames"]),
+            cell(&r["ground"]["dash"]["hold"]),
             cell(&r["ground"]["run95"]),
             cells(r, &["/ground/stop/frames", "/ground/stop/distance"]),
             cells(r, &["/ground/turn/face", "/ground/turn/cross", "/ground/turn/full"]),

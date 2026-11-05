@@ -36,3 +36,13 @@ run turnaround 11 / 17 / 15 frames (Duchess / King / Stratus), brake 11. Feel ba
 speed the other way Duchess 20 → 22 frames, King 17 → 25, Stratus 18 → 24 (the slide before reversing:
 39.8 → 37.9, 39.0 → 51.0, 60.6 → 75.2 px); run stop distance drops 2.5–3.7 px because the brake-to-stand tick, which
 applies no traction, now comes at a lower speed. Dash and dash-back distances are unchanged.
+
+A released initial dash then started braking (`gait.dashRelease`, -sim-37; DESIGN.md): with the stick back to
+neutral the dash skids by traction at once instead of holding dash speed for all of `dashFrames`, as Ultimate's dash
+does. The same pass fixed an off-by-one in the import gait frames: script markers are 1-indexed, so each length is
+one less than the marker (`dashFrames` Duchess 16 → 15, King and Stratus 15 → 10 as in SmashWiki's Ultimate Dash
+table; `turnFrames` 10 / 16 / 14; `brakeFrames` 10). Feel baseline, one-tick flick to rest (`dash.tap`): Duchess
+194.8 → 48.0 px, King 205.6 → 69.9, Stratus 237.2 → 76.9, Brawler 155.0 → 59.5, Mike 135.9 → 44.6, Ninja 214.0 →
+93.5; `dash20` and the dash-back distance fall by the same amounts. A held initial dash (`dash.hold`) is unchanged
+for originals and follows the new frame counts for imports (Duchess 146.1 → 137.0, King 136.1 → 90.8, Stratus
+160.9 → 107.3 px).

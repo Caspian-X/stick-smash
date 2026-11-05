@@ -478,7 +478,9 @@ hitstun and tumble still collide with them. Solid blocks always collide. `global
 threshold, no greater than a nonzero `runThreshold`. Between them the current gait is retained to avoid jitter. `dashLock` restricts standing
 attacks and shield during initial dash when enabled (bundled tuning disables it): tilts and forward/down smashes queue within `bufferFrames`, while
 jump, dash attack, up smash, grab and specials can cancel. Opposite flicks still dash back. Crouching can
-cancel a run after initial dash. The settings affect all fighters; they are not per-character speed fixes.
+cancel a run after initial dash. `dashRelease` (bundled true, default false) makes the initial dash skid by
+traction while the stick is not past `walkThreshold` in the dash direction, and re-accelerate by `runAccel` toward
+dash speed when it is pushed again; the dash gait still lasts `dashFrames` (Momentum, Gait frames). The settings affect all fighters; they are not per-character speed fixes.
 `global.input.bufferFrames` is the human press buffer lifetime in ticks (u32, currently 5); age equal to
 the lifetime is still live, and 0 disables buffering for TS fidelity. Press-time directions and taps are
 replayed once at the next buffer-actionable update, while held buttons use current input (see DESIGN.md).
@@ -554,20 +556,25 @@ required so legacy data loads; the new model ignores them.
   `helplessAccelMult` (0.65) in helpless fall and air dodges, times the phase `airAccelMult`. Bundled phase values
   were migrated to keep their old effective acceleration: new = old × legacy accel / (airAccel × kind multiplier).
 - **Fast fall** sets vertical speed to the fighter's `fastFallSpeed` at once (still capped by a phase `fallCap`).
-- **Initial dash** holds `stats.dashSpeed` (default runSpeed × `gait.dashSpeed` 1.12) for its frames; a faster
+- **Initial dash** holds `stats.dashSpeed` (default runSpeed × `gait.dashSpeed` 1.12) for its `dashFrames` ticks
+  (counting the flick tick; the run or brake starts on the next) while the stick is held; with `gait.dashRelease` a
+  neutral stick skids it by traction instead (a stutter step) and pushing again re-accelerates by `runAccel`. A faster
   fighter entering the run then slows toward `runSpeed` by its traction instead of snapping to it.
 
-### Gait frames (`stats.turnFrames`, `brakeFrames`, `dashTurnFrames`)
+### Gait frames (`stats.dashFrames`, `turnFrames`, `brakeFrames`, `dashTurnFrames`)
 
 Optional per-fighter frame counts for the ground gait, each falling back to the same-named `global.gait` field
 (bundled 4, 5 and 2). Deceleration is always the fighter's traction (or the legacy `turnFriction` /
-`brakeFriction`); only the lengths are per fighter.
+`brakeFriction`); only the lengths are per fighter. Ultimate script markers are 1-indexed (`frame(Frame=N)` runs on
+game frame N), so imports take the N − 1 frames before each marker (`tools/units.py` `gait`).
+- `dashFrames`: the initial dash's length. Imports take the frames before `Dash` enables `DASH_TO_RUN` (Peach 16, so
+  15, as SmashWiki's Ultimate Dash table lists).
 - `turnFrames`: holding back while running flips facing at once (the `turn` gait), slides the old way under
   traction, and runs the new way (run acceleration from whatever speed is left) once this many frames have passed.
-  Imports take the frame of Ultimate's `TurnRun` script that sets `RUN_BRAKE_FLAG_STOP`.
+  Imports take the frames before Ultimate's `TurnRun` script sets `RUN_BRAKE_FLAG_STOP`.
 - `brakeFrames`: releasing the stick while running is the `brake` gait for this many frames (holding back turns
   around, holding forward resumes the run, a forward flick dashes), then `stand`, still under traction. Imports
-  take `RunBrakeR`'s `RUN_BRAKE_FLAG_STOP` frame.
+  take the frames before `RunBrakeR`'s `RUN_BRAKE_FLAG_STOP`.
 - `dashTurnFrames`: a dash against the current facing (a dash-back, or a backward flick from standing or a brake)
   still flips facing and speed at once, but its first frames are the `dashturn` gait: the `turn` clip if the
   package has one, else a backward lean of `global.gait.dashTurnLean` degrees that straightens over the window.
