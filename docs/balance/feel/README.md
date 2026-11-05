@@ -36,9 +36,13 @@ compare the JSON.
   i.e. the initial dash plus its brake.
 - `run95`: ticks with the stick held from standstill until `vx` reaches 95% of `runSpeed`. A dash at or above run
   speed makes this 1.
-- `stop`: from a full run (stick held 40 ticks), stick released: ticks until `|vx| < 0.1` and distance covered.
-- `turn`: from a full run, stick held the other way: ticks until facing flips (`face`) and until `vx ≤ 0`
-  (`cross`).
+- `stop`: from a full run (stick held 40 ticks), stick released: ticks until `|vx| < 0.1` and distance covered
+  (the run-stop: brake plus the standing slide).
+- `turn`: from a full run, stick held the other way: ticks until facing flips (`face`), until `vx ≤ 0`
+  (`cross`) and until `vx` reaches 95% of `runSpeed` the other way (`full`), and the distance slid the old way
+  before reversing (`slide`, px).
+- `dashBack`: a flick held for 3 ticks, then a one-tick flick the other way and the stick neutral for 19 more:
+  `distance` covered from the flick back (px) and `turn`, the ticks spent in the `dashturn` window.
 
 **Air** (`air`).
 - `drift`: full hop with the stick held forward until the apex, then neutral. `apexVx` is the speed at the apex

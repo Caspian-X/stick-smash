@@ -71,7 +71,7 @@ fn slow_tilt_walks_proportionally_and_a_flick_dashes_into_a_run() {
     let mut w = mike(&d);
     tick(&mut w, &d, inp(127, 0, 0));
     tick(&mut w, &d, inp(-127, 0, 0));
-    assert_eq!((w.fighters[0].gait, w.fighters[0].face), (Gait::Dash, -1.));
+    assert_eq!((w.fighters[0].gait, w.fighters[0].face), (Gait::DashTurn, -1.));
 }
 
 #[test]
@@ -522,7 +522,7 @@ fn initial_dash_defers_standing_attacks_and_shield_but_allows_dash_cancels() {
     }
     let mut w = dash();
     tick(&mut w, &d, inp(-127, 0, 0));
-    assert_eq!((w.fighters[0].gait, w.fighters[0].face), (Gait::Dash, -1.));
+    assert_eq!((w.fighters[0].gait, w.fighters[0].face), (Gait::DashTurn, -1.));
 }
 
 #[test]

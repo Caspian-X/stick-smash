@@ -293,5 +293,7 @@ fn cpu_match_golden_world_hash() {
     // Ultimate calibration pass (-sim-33: jump initial height, upward-launch gravity, Sakurai ramp, hitlag rounding,
     // `fkb`, float, per-fighter traction) adds `rise` / `top_launch` / `floating` / `float_used` and moves it again.
     // -sim-34 (ground float, Duchess's braking Bomber) leaves this scenario unchanged.
+    // Per-fighter gait frames (-sim-35) leave it alone: neither original sets them, and the dash-back turn window
+    // only renames the first dash ticks.
     assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x516185616a1deed4);
 }

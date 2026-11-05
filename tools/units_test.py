@@ -32,5 +32,15 @@ class Jumps(unittest.TestCase):
         self.assertAlmostEqual(units.apex(s['shortHopSpeed'], 0.35), 72.5, delta=0.01)
 
 
+
+class Gait(unittest.TestCase):
+    def test_frames_from_scripts(self):
+        body = {'TurnDash': 'frame(Frame=3)\r\nif(is_excute){\r\n\tWorkModule::on_flag(Flag=FIGHTER_STATUS_DASH_FLAG_TURN_DASH)'
+                            '\r\n}\r\nframe(Frame=18)\r\n',
+                'TurnRun': 'frame(Frame=11)\r\nif(is_excute){\r\n\tWorkModule::on_flag(Flag=FIGHTER_STATUS_RUN_BRAKE_FLAG_STOP)',
+                'RunBrakeR': 'frame(Frame=15)\r\nWorkModule::on_flag(Flag=FIGHTER_STATUS_RUN_BRAKE_FLAG_STOP)'}
+        self.assertEqual(units.gait(body), {'dashTurnFrames': 2, 'turnFrames': 11, 'brakeFrames': 15})
+        self.assertEqual(units.gait({}), {})
+
 if __name__ == '__main__':
     unittest.main()

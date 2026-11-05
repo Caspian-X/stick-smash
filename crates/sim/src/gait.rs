@@ -1,5 +1,9 @@
-//! Ground gait while idle: walk by stick tilt, flick to dash (flick back to dash the other way), keep holding to
-//! run, hold the other way to turn around with a skid (facing flips at once, speed carries), let go to brake.
+//! Ground gait while idle: walk by stick tilt, flick to dash (flick back to dash the other way: facing and speed flip
+//! at once, the first `dashTurnFrames` show the turn), keep holding to run, hold the other way to turn around (facing
+//! flips at once, traction slides the old way for `turnFrames`, then the run accelerates the new way), let go to
+//! brake (`brakeFrames` of traction skid; a flick dashes out, holding back turns around). The frame counts are per
+//! fighter (`stats`), defaulting to `global.gait`. Every gait is the idle state, so attacks, jumps, shield and grabs
+//! cancel any of them (except standing commands during a `dashLock` initial dash).
 use crate::actions::{Action, accept};
 use crate::input::{Intent, Strike};
 use crate::physics::skid;
@@ -12,17 +16,26 @@ pub fn walk_speed(d: &GameData, f: &Fighter) -> f64 {
 }
 /// Moving fast enough for dash attacks / dash grabs.
 pub fn dashing(d: &GameData, f: &Fighter) -> bool {
-    if d.global.gait.enabled { matches!(f.gait, Gait::Dash | Gait::Run) } else { false }
+    if d.global.gait.enabled { matches!(f.gait, Gait::Dash | Gait::DashTurn | Gait::Run) } else { false }
 }
 pub fn initial_dash(d: &GameData, f: &Fighter) -> bool {
     d.global.gait.enabled
         && d.global.gait.dash_lock
         && f.state == State::Idle
-        && f.gait == Gait::Dash
+        && matches!(f.gait, Gait::Dash | Gait::DashTurn)
         && f.gait_t < dash_frames(d, f)
 }
 fn dash_frames(d: &GameData, f: &Fighter) -> u32 {
     d.fighters[f.data].stats.dash_frames.unwrap_or(d.global.gait.dash_frames)
+}
+pub fn dash_turn_frames(d: &GameData, f: &Fighter) -> u32 {
+    d.fighters[f.data].stats.dash_turn_frames.unwrap_or(d.global.gait.dash_turn_frames)
+}
+fn turn_frames(d: &GameData, f: &Fighter) -> u32 {
+    d.fighters[f.data].stats.turn_frames.unwrap_or(d.global.gait.turn_frames)
+}
+fn brake_frames(d: &GameData, f: &Fighter) -> u32 {
+    d.fighters[f.data].stats.brake_frames.unwrap_or(d.global.gait.brake_frames)
 }
 fn dash_speed(d: &GameData, f: &Fighter) -> f64 {
     let s = &d.fighters[f.data].stats;
@@ -66,7 +79,7 @@ fn dash(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, dir: f64) {
     if dir != f.face || f.vx * dir < 0. {
         w.dust(f.x, f.y, 3);
     }
-    set(f, Gait::Dash);
+    set(f, if dir != f.face && dash_turn_frames(d, f) > 0 { Gait::DashTurn } else { Gait::Dash });
     f.face = dir;
     f.vx = dir * dash_speed(d, f).max(f.vx * dir);
     accept(w, i, Action::Dash);
@@ -110,9 +123,14 @@ pub fn step(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent)
     f.gait_t = f.gait_t.saturating_add(1);
     let t = f.gait_t;
     match f.gait {
-        Gait::Dash if flick == -f.face => dash(w, d, i, f, flick),
-        Gait::Dash if t < dash_frames(d, f) => f.vx = f.face * dash_speed(d, f).max(f.vx * f.face),
-        Gait::Dash => set(f, if held == f.face { Gait::Run } else { Gait::Brake }),
+        Gait::Dash | Gait::DashTurn if flick == -f.face => dash(w, d, i, f, flick),
+        Gait::Dash | Gait::DashTurn if t < dash_frames(d, f) => {
+            if t >= dash_turn_frames(d, f) {
+                f.gait = Gait::Dash;
+            }
+            f.vx = f.face * dash_speed(d, f).max(f.vx * f.face);
+        }
+        Gait::Dash | Gait::DashTurn => set(f, if held == f.face { Gait::Run } else { Gait::Brake }),
         Gait::Run if dir == f.face && g.run_threshold > 0. && inp.x.abs() < g.walk_threshold => set(f, Gait::Walk),
         Gait::Run if held == f.face => run(d, f, f.face),
         Gait::Run | Gait::Brake if held == -f.face => {
@@ -121,11 +139,11 @@ pub fn step(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent)
             accept(w, i, Action::Turn);
         }
         Gait::Run => set(f, Gait::Brake),
-        Gait::Turn if t >= g.turn_frames => set(f, if held == f.face { Gait::Run } else { Gait::Stand }),
+        Gait::Turn if t >= turn_frames(d, f) => set(f, if held == f.face { Gait::Run } else { Gait::Stand }),
         Gait::Turn => skid(d, f, g.turn_friction, 1.),
         Gait::Brake if flick != 0. => dash(w, d, i, f, flick),
         Gait::Brake if held == f.face => set(f, Gait::Run),
-        Gait::Brake if t >= g.brake_frames => set(f, Gait::Stand),
+        Gait::Brake if t >= brake_frames(d, f) => set(f, Gait::Stand),
         Gait::Brake => skid(d, f, g.brake_friction, 1.),
         Gait::Stand | Gait::Walk | Gait::Rise if flick != 0. => dash(w, d, i, f, flick),
         Gait::Stand | Gait::Rise if held != 0. && held * f.vx > walk_speed(d, f) => {

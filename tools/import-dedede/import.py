@@ -1206,6 +1206,7 @@ fighter = {
         "runSpeed": round(1.496 * SCALE, 5),
         "dashSpeed": round(1.815 * SCALE, 5),
         "dashFrames": 15,
+        **units.gait(scripts["dedede"]),  # TurnDash / TurnRun / RunBrakeR flag frames
         "runAccel": 1.0286,  # fitted
         "groundFriction": 0.86,
         **units.jumps(JUMP_HEIGHTS["full"], JUMP_HEIGHTS["short"], JUMP_HEIGHTS["air"], 0.097 * SCALE),
