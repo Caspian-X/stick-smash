@@ -17,6 +17,7 @@ pub mod gait;
 pub mod geometry;
 pub mod input;
 pub mod interactions;
+pub mod items;
 pub mod moves;
 pub mod physics;
 pub mod pose;

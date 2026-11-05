@@ -42,6 +42,12 @@ pub enum Action {
     Pummel,
     /// Throw by direction (`f`, `b`, `u`, `d`).
     Throw(String),
+    /// Item throw by direction (`f`, `b`, `u`, `d`, `drop`).
+    Toss(String),
+    /// A landed item picked up.
+    Pickup,
+    /// An item caught in flight.
+    Catch,
     /// Directional influence bent a launch by this many degrees (rounded).
     Influence(i32),
 }

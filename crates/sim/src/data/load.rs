@@ -1047,6 +1047,35 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
             }
         }
     }
+    for (id, it) in &f.items {
+        let path = format!("items.{id}");
+        for (field, p) in [("projectile", Some(&it.projectile)), ("smashProjectile", it.smash_projectile.as_ref())] {
+            match p.map(|p| f.projectiles.get(p).map(|d| (p, d))) {
+                Some(None) => return Err(err(file, format!("{path}.{field}"), format!("no projectile {p:?}"))),
+                Some(Some((_, d))) if d.bounce.is_none() || d.article.is_some() || d.explosion.is_some() => {
+                    return Err(err(file, format!("{path}.{field}"), "needs a plain projectile with `bounce`"));
+                }
+                _ => {}
+            }
+        }
+        let t = &it.throws;
+        let speeds = [t.forward.tilt, t.forward.smash, t.back.tilt, t.back.smash, t.up.tilt, t.up.smash, t.down.tilt];
+        for n in speeds.into_iter().chain([t.down.smash, t.drop, it.hold, it.rebound.unwrap_or_default()]).flatten() {
+            finite(file, &path, n)?;
+        }
+        nonnegative(file, &format!("{path}.speedDamage"), it.speed_damage)?;
+        positive(file, &format!("{path}.life"), f64::from(it.life))?;
+        if let Some(toss) = &it.toss {
+            check_toss(file, &format!("{path}.toss"), toss)?;
+        }
+    }
+    Ok(())
+}
+
+fn check_toss(file: &str, path: &str, t: &super::global::Toss) -> Result<(), ContentError> {
+    if t.frames == 0 || t.release > t.frames {
+        return Err(err(file, path, "needs 0 < frames and release <= frames"));
+    }
     Ok(())
 }
 
@@ -1186,6 +1215,11 @@ fn check_phase(
             && !f.projectiles.contains_key(s)
         {
             return Err(e(format!("{pp}.events[{i}].spawn"), format!("no projectile {s:?}")));
+        }
+        if let Some(s) = &ev.item
+            && !f.items.contains_key(s)
+        {
+            return Err(e(format!("{pp}.events[{i}].item"), format!("no item {s:?}")));
         }
     }
     for (i, t) in p.transitions.iter().enumerate() {
@@ -1385,6 +1419,13 @@ fn check_event(file: &str, path: &str, ev: &super::Event) -> Result<(), ContentE
 /// Validates global content, including presentation tuning in embedded replay payloads.
 pub fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
     check_audio(file, &g.audio)?;
+    check_toss(file, "items.toss", &g.items.toss)?;
+    for (name, r) in [("pickup", g.items.pickup), ("catch", g.items.catch)] {
+        if !(r.x1 < r.x2 && r.y1 < r.y2) {
+            return Err(err(file, format!("items.{name}"), "needs positive extents"));
+        }
+    }
+    nonnegative(file, "items.settle", g.items.settle)?;
     nonnegative(file, "gait.poseRunSpeed", g.gait.pose_run_speed)?;
     range(file, "gait.crawlSpeed", g.gait.crawl_speed, 0., 1.)?;
     range(file, "gait.runThreshold", g.gait.run_threshold, 0., 1.)?;

@@ -120,6 +120,8 @@ pub enum State {
     Climb,
     Hold,
     Throw,
+    /// Throwing a held item (`sd.kind`: `f`, `b`, `u`, `d` or `drop`; `sd.n` 1 for a smash throw).
+    Toss,
     Grabbed,
     Shieldbreak,
     Dizzy,
@@ -150,6 +152,7 @@ impl State {
             Self::Climb => "climb",
             Self::Hold => "hold",
             Self::Throw => "throw",
+            Self::Toss => "toss",
             Self::Grabbed => "grabbed",
             Self::Shieldbreak => "shieldbreak",
             Self::Dizzy => "dizzy",
@@ -247,6 +250,9 @@ pub struct AiState {
     pub pursuit_x: f64,
     #[serde(default)]
     pub pursuit: bool,
+    /// Ticks a held item has been carried (CPU throws it after `items.cpuHold`).
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub item_t: u32,
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Fighter {
@@ -330,6 +336,31 @@ pub struct Fighter {
     /// The float was used this airtime (landing restores it).
     #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
     pub float_used: bool,
+    /// The item in hand (`items.rs`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub item: Option<Held>,
+}
+/// An item by content: the package (`GameData::fighters` index) that defines it and its id there.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Held {
+    pub data: usize,
+    pub id: String,
+}
+/// An item lying in the world or falling freely (not thrown): no hitbox, picked up or caught by anyone.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct LooseItem {
+    pub item: Held,
+    /// Last thrower (who cannot catch it again for `items.regrab` ticks).
+    pub owner: usize,
+    /// Centre of the item.
+    pub x: f64,
+    pub y: f64,
+    pub vx: f64,
+    pub vy: f64,
+    /// Resting on this surface.
+    pub surf: Option<usize>,
+    pub life: u32,
+    pub age: u32,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -429,6 +460,9 @@ pub struct Projectile {
     pub power: f64,
     #[serde(default = "unit_multiplier")]
     pub speed: f64,
+    /// A thrown item (id in `fighter_data`'s `items`): it becomes a loose item when it lands, connects or expires.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub item: Option<String>,
 }
 fn unit_multiplier() -> f64 {
     1.
@@ -472,6 +506,9 @@ pub struct World {
     pub stage: usize,
     pub fighters: Vec<Fighter>,
     pub projs: Vec<Projectile>,
+    /// Loose items (`items.rs`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub items: Vec<LooseItem>,
     pub count: u32,
     pub go_t: u32,
     /// Ticks left on the match timer (`None`: no time limit, out of time, or training).
@@ -601,6 +638,7 @@ impl World {
                     top_launch: false,
                     floating: 0,
                     float_used: false,
+                    item: None,
                 }
             })
             .collect();
@@ -614,6 +652,7 @@ impl World {
             stage,
             fighters,
             projs: vec![],
+            items: vec![],
             count: if cfg.training { 0 } else { data.global.match_.countdown },
             go_t: 0,
             time_left: time_left.filter(|_| !cfg.training && !cfg.sudden_death),

@@ -748,6 +748,15 @@ fn training() -> Vec<Step> {
     v.push(Step::Wait(6));
     v.push(Step::Set(0, Special, false));
     v.push(Step::Set(0, Down, false));
+    // The pluck leaves a held turnip; attack throws it (the shared item `toss` state).
+    v.push(Step::Fast(
+        |m, _, _| m.world.fighters[0].item.is_some() && m.world.fighters[0].state == FState::Idle,
+        200,
+    ));
+    v.push(Step::Set(0, Attack, true));
+    v.push(Step::Fast(|m, _, _| m.world.fighters[0].state == FState::Toss && m.world.fighters[0].t >= 4, 60));
+    v.push(Step::Shot("35k-duchess-turnip-toss", Screen::Match));
+    v.push(Step::Set(0, Attack, false));
     v.push(Step::Fast(|m, _, _| m.world.projs.iter().any(|p| p.id.starts_with("turnip")), 200));
     v.push(Step::Wait(10));
     v.push(Step::Shot("35p-duchess-turnip-flight", Screen::Match));
@@ -892,7 +901,6 @@ fn fighter_kits() -> Vec<Step> {
         ("duchess", "sspec", 16, "35h-duchess-peach-bomber"),
         ("duchess", "uspec", 20, "35i-duchess-parasol"),
         ("duchess", "dspec", 25, "35j-duchess-vegetable-pluck"),
-        ("duchess", "dspec", 45, "35k-duchess-turnip-toss"),
         ("duchess", "dtilt", 8, "35l-duchess-underfoot-kick"),
         ("duchess", "dsmash", 13, "35m-duchess-ribbon-sweep"),
         ("duchess", "utilt", 10, "35n-duchess-royal-wave"),

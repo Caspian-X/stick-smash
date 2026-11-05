@@ -359,6 +359,19 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
         {
             inp.down_p = true;
         }
+        if f.item.is_none() {
+            ai.item_t = 0;
+        } else if matches!(st, State::Idle | State::Air) {
+            // Carry a held item toward the target and smash-throw it once in range (or after `items.cpuHold`).
+            ai.item_t = ai.item_t.saturating_add(1);
+            let items = &d.global.items;
+            if adx < items.cpu_range && dy.abs() < v.attack_height || ai.item_t >= items.cpu_hold {
+                ai.item_t = 0;
+                toward(&mut inp, tdir);
+                (inp.tap_r, inp.tap_l, inp.up, inp.down, inp.jump, inp.atk) = (tdir > 0., tdir < 0., false, false, false, true);
+            }
+            return inp;
+        }
         if ai.cool > 0. {
             ai.cool -= 1.;
             return inp;

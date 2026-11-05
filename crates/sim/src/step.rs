@@ -70,6 +70,7 @@ pub fn step_world(w: &mut World, d: &GameData, inputs: &[Input]) {
     }
     crate::combat::hit_pass(w, d);
     crate::projectiles::step_projectiles(w, d);
+    crate::items::step(w, d);
     let no_push = |s| {
         matches!(
             s,

@@ -240,6 +240,11 @@ pub fn state_anim(d: &GameData, f: &Fighter) -> (String, Option<f64>) {
         }
         State::Air => if f.vy < 0. { "air.rise" } else { "air.fall" }.into(),
         State::Landing if f.sd.kind == "shield" => "shieldDrop".into(),
+        State::Landing if f.sd.kind == "pickup" && has_clip(d, f, "pickup") => "pickup".into(),
+        State::Toss => {
+            let kind = format!("toss.{}", f.sd.kind);
+            if has_clip(d, f, &kind) { kind } else { "toss".into() }
+        }
         State::Hitstun if f.tumble => "tumble".into(),
         State::Getup if f.sd.kind == "atk" => "getupAttack".into(),
         State::Climb => match f.sd.kind.as_str() {

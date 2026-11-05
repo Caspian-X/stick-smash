@@ -26,17 +26,19 @@ pub enum Section {
     Style,
     Attachments,
     Projectiles,
+    Items,
     Effects,
     Anims,
     Ai,
 }
 
 impl Section {
-    pub const ALL: [Section; 7] = [
+    pub const ALL: [Section; 8] = [
         Section::Rig,
         Section::Style,
         Section::Attachments,
         Section::Projectiles,
+        Section::Items,
         Section::Effects,
         Section::Anims,
         Section::Ai,
@@ -47,6 +49,7 @@ impl Section {
             Section::Style => "Style",
             Section::Attachments => "Attachments",
             Section::Projectiles => "Projectiles",
+            Section::Items => "Items",
             Section::Effects => "Effects",
             Section::Anims => "Animations",
             Section::Ai => "CPU behavior",
@@ -66,6 +69,7 @@ impl crate::section::Section for Section {
             Self::Style => &["style"],
             Self::Attachments => &["attachments"],
             Self::Projectiles => &["projectiles"],
+            Self::Items => &["items"],
             Self::Effects => &["fx"],
             Self::Anims => &["anims"],
             Self::Ai => &["ai"],

@@ -55,6 +55,10 @@ pub struct Fighter {
     pub throws: Throws,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub projectiles: BTreeMap<String, Projectile>,
+    /// Holdable items, granted by a move event's `item`. Holding one turns attacks into throws (`docs/FORMAT.md`,
+    /// Items).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub items: BTreeMap<String, Item>,
     /// Effects for fighter-wide moments.
     #[serde(default, skip_serializing_if = "FighterFx::is_empty")]
     pub fx: FighterFx,
@@ -269,6 +273,70 @@ pub struct Projectile {
     #[serde(default, skip_serializing_if = "is_default")]
     #[schemars(transform = unit::deg_px)]
     pub spin: f64,
+}
+
+/// A holdable item (`items.<id>`), Smash-style. While it is held, attacks and aerials throw it (the `toss` state);
+/// a thrown item is its `projectile` (smash throws: `smashProjectile`) launched at the throw's velocity. It turns
+/// into a loose world item when it lands, connects or runs out of life, and a loose item can be picked up on the
+/// ground or caught in the air by anyone.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Item {
+    /// Training label.
+    pub name: String,
+    /// Projectile (from `projectiles`, with `bounce`) a tilt throw or a drop launches. Its shapes draw the item;
+    /// its radius, gravity, fall cap and bounce move the loose item.
+    pub projectile: String,
+    /// Projectile a smash throw launches (default `projectile`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub smash_projectile: Option<String>,
+    /// Fighter-local point (x forward, y up) a throw starts from; also where the held item is drawn on figures
+    /// without a front hand.
+    #[schemars(transform = unit::px_pt)]
+    pub hold: Pt,
+    pub throws: ItemThrows,
+    /// Damage added per px/tick of throw speed above the projectile's own `vel` speed (taken away below it),
+    /// never below zero. Ultimate's thrown-item damage adds 3 per unit/frame: 0.6 at 5 px per unit.
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::damage)]
+    pub speed_damage: f64,
+    /// Velocity a thrown item bounces off with when its hit connects (x back against its travel, y up). Omit to use
+    /// the item up on a hit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::v_pt)]
+    pub rebound: Option<Pt>,
+    /// Ticks a loose item stays in the world.
+    #[schemars(transform = unit::tick)]
+    pub life: u32,
+    /// Can be caught out of the air (thrown or falling). A landed item can always be picked up.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub catch: bool,
+    /// Throw timing for this item (default `global.items.toss`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub toss: Option<super::global::Toss>,
+}
+
+/// Item throw velocities (x forward, y up) by direction and strength.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ItemThrows {
+    pub forward: ThrowSpeeds,
+    /// The fighter turns around first, so x points the new way.
+    pub back: ThrowSpeeds,
+    pub up: ThrowSpeeds,
+    pub down: ThrowSpeeds,
+    /// Letting go: grab in the air, or attack / grab from shield.
+    #[schemars(transform = unit::v_pt)]
+    pub drop: Pt,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ThrowSpeeds {
+    #[schemars(transform = unit::v_pt)]
+    pub tilt: Pt,
+    #[schemars(transform = unit::v_pt)]
+    pub smash: Pt,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]

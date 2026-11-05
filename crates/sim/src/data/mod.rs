@@ -18,7 +18,7 @@ pub mod unit;
 pub mod visual;
 
 pub use common::{Color, Num, Pt, Rect};
-pub use fighter::{Fighter, Projectile, Stats};
+pub use fighter::{Fighter, Item, Projectile, Stats};
 pub use global::Global;
 pub use hitbox::{HitType, Hitbox, LaunchDir};
 #[cfg(feature = "fs")]

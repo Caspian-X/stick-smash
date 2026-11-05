@@ -369,6 +369,11 @@ fn draw(
                     let (x, y) = pp.map_or((p.x, p.y), |q| (q.x + (p.x - q.x) * t, q.y + (p.y - q.y) * t));
                     draw::draw_projectile(cv, d, p, x, y, cur.frame);
                 }
+                for (k, it) in cur.items.iter().enumerate() {
+                    let prev = st.prev.as_ref().and_then(|w| w.items.get(k)).filter(|q| q.item == it.item);
+                    let (x, y) = prev.map_or((it.x, it.y), |q| (q.x + (it.x - q.x) * t, q.y + (it.y - q.y) * t));
+                    draw::draw_item(cv, d, it, x, y, cur.frame);
+                }
                 for v in &views {
                     draw::draw_fighter(cv, d, cur.frame, v, &mut st.rng);
                 }

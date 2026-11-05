@@ -395,7 +395,7 @@ pub struct Reflector {
 
 /// Frame-scoped actions. Use `at` for one frame, or `from`/`to` (inclusive) for a range. `from` alone means
 /// from there on; neither means every frame from 1. Actions in one event run in field order (velocity, then
-/// `leaveGround`, `invuln`, `spawn`, `restore`, `detonate`, `sfx`, `fx`); events on the same frame run in list order.
+/// `leaveGround`, `invuln`, `spawn`, `item`, `restore`, `detonate`, `sfx`, `fx`); events on the same frame run in list order.
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Event {
@@ -448,6 +448,9 @@ pub struct Event {
     /// Spawn a projectile by id (from the fighter's `projectiles`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub spawn: Option<String>,
+    /// Put this item (from the fighter's `items`) in its hand; nothing when it already holds one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub item: Option<String>,
     /// Restore uses to a charge pool, capped at capacity. Keeps recharge running until full.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub restore: Option<ChargeNeed>,

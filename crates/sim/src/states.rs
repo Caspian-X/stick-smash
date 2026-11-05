@@ -222,7 +222,11 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
             }
         }
         State::Jumpsquat => {
-            if inp.atk {
+            if f.item.is_some() && (inp.atk || inp.grab) {
+                // Jump-canceled up smash / grab while holding an item: an up smash throw / a throw.
+                let (kind, smash) = if inp.atk { ("u", true) } else { crate::items::aim(d, &f, &inp) };
+                crate::items::toss(w, d, i, &mut f, kind, smash);
+            } else if inp.atk {
                 moves::start_attack(w, d, i, &mut f, "usmash", inp);
             } else if inp.sp && inp.up && !f.up_b {
                 moves::up_special(w, d, i, &mut f, dir);
@@ -246,7 +250,11 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
                     f.set_state(State::Air);
                     w.dust(f.x, f.y, 4);
                     w.sfx("jump");
-                    if let Some(slot) = aerial {
+                    if let Some(slot) = aerial.as_deref()
+                        && f.item.is_some()
+                    {
+                        crate::items::toss(w, d, i, &mut f, crate::items::aerial_kind(slot), false);
+                    } else if let Some(slot) = aerial {
                         accept(w, i, Action::Move(slot.clone()));
                         moves::start_move(w, d, i, &mut f, &slot);
                     }
@@ -257,12 +265,20 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
             }
         }
         State::Air => {
-            if inp.shield_p && !f.ad_used {
+            // Attack, grab or air dodge with an empty hand catches an item in reach instead.
+            let took = (inp.atk || inp.grab || inp.shield_p) && crate::items::take(w, d, i, &mut f);
+            if !took && inp.shield_p && !f.ad_used {
                 airdodge(w, d, i, &mut f, inp, dir);
                 integrate(w, d, i, &mut f, false);
             } else {
-                if inp.sp {
+                if took {
+                } else if inp.sp {
                     moves::special(w, d, i, &mut f, inp, dir);
+                } else if f.item.is_some() && (inp.atk || inp.grab) {
+                    if g.input.jump_aerials && inp.jump_attack && f.jumps > 0 {
+                        air_jump(w, d, i, &mut f, dir);
+                    }
+                    crate::items::air_toss(w, d, i, &mut f, &inp);
                 } else if inp.grab && d.fighters[f.data].moves.zair.is_some() {
                     moves::start_attack(w, d, i, &mut f, "zair", inp);
                 } else if inp.atk {
@@ -315,6 +331,10 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
                 f.sd.stun -= 1;
             } else if inp.jump_attack && g.input.jump_aerials {
                 moves::start_jump(w, i, &mut f, inp, true);
+            } else if f.item.is_some() && (inp.atk || inp.grab) {
+                // Up smash out of shield throws up; shield + attack / grab drops the item.
+                let up = inp.atk && g.shield.up_smash && inp.strike.up(&inp);
+                crate::items::toss(w, d, i, &mut f, if up { "u" } else { "drop" }, up);
             } else if inp.atk && g.shield.up_smash && inp.strike.up(&inp) {
                 // Up smash out of shield comes before shield + attack = grab.
                 moves::start_attack(w, d, i, &mut f, "usmash", inp);
@@ -472,6 +492,7 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
         State::Climb => st_climb(w, d, &mut f),
         State::Hold => st_hold(w, d, i, &mut f, inp, dir),
         State::Throw => st_throw(w, d, i, &mut f),
+        State::Toss => crate::items::st_toss(w, d, i, &mut f, inp),
         State::Grabbed => {
             if let Some(by) = sd.by
                 && matches!(w.fighters[by].state, State::Hold | State::Throw)
@@ -824,6 +845,7 @@ pub fn respawn(w: &World, d: &GameData, i: usize, f: &mut Fighter) {
     f.ledge_inv = true;
     f.used_air_moves.clear();
     f.paralyze_used = false;
+    f.item = None;
     crate::charges::refill(d, f);
     f.set_state(State::Respawn);
 }
@@ -839,6 +861,7 @@ pub fn ko(w: &mut World, d: &GameData, i: usize) {
     f.lag = 0;
     f.tumble = false;
     f.di = false;
+    f.item = None;
     if w.cfg.training {
         f.stocks = f.stocks.max(1);
         f.set_state(State::Dead);

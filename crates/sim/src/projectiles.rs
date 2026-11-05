@@ -12,6 +12,16 @@ pub fn spawn(w: &mut World, d: &GameData, i: usize, f: &Fighter, id: &str) {
         }
         return;
     }
+    let shot = make(w, d, i, f, f.data, id);
+    w.projs.push(shot);
+    if let Some(s) = &p.spawn_sfx {
+        w.sfx(s.clone());
+    }
+}
+/// Projectile `id` of package `data` fired by fighter `i` from its `spawn` point at its own velocity, scaled by
+/// the fighter's move charge (`chargeScale`).
+pub fn make(w: &World, d: &GameData, i: usize, f: &Fighter, data: usize, id: &str) -> Projectile {
+    let p = &d.fighters[data].projectiles[id];
     let charge = f.mov.as_ref().map_or(0., |m| f64::from(m.charge));
     let speed = p.charge_scale.as_ref().map_or(1., |c| 1. + charge * c.speed);
     let mut hit = p.hit.clone();
@@ -38,9 +48,9 @@ pub fn spawn(w: &mut World, d: &GameData, i: usize, f: &Fighter, id: &str) {
             }
         }
     }
-    w.projs.push(Projectile {
+    Projectile {
         owner: i,
-        fighter_data: f.data,
+        fighter_data: data,
         id: id.into(),
         x: f.x + f.face * p.spawn[0],
         y: f.y - p.spawn[1],
@@ -63,9 +73,7 @@ pub fn spawn(w: &mut World, d: &GameData, i: usize, f: &Fighter, id: &str) {
         damage_hits: vec![],
         power: 1.,
         speed: 1.,
-    });
-    if let Some(s) = &p.spawn_sfx {
-        w.sfx(s.clone());
+        item: None,
     }
 }
 pub fn bat(w: &mut World, d: &GameData, a: usize, bx: &[ActiveBox]) {
@@ -143,6 +151,7 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
             p.life -= 1;
         }
         p.cooldown = p.cooldown.saturating_sub(1);
+        let mut landed = false;
         if let Some(b) = &def.bounce {
             let py = p.y;
             p.vy = (p.vy + def.gravity).min(def.max_fall.unwrap_or(f64::INFINITY));
@@ -175,6 +184,7 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                     if p.bounces > b.max_bounces {
                         p.life = p.life.min(b.fizzle_life as i32);
                     }
+                    landed = true;
                     break;
                 }
             }
@@ -191,6 +201,13 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
         } else {
             p.vy = (p.vy + def.gravity).min(def.max_fall.unwrap_or(f64::INFINITY));
             p.y += p.vy;
+        }
+        // A thrown item loses its hitbox on the floor and lies there as a loose item.
+        if landed && p.item.is_some() {
+            crate::items::loosen(w, d, &mut p, false);
+            p.life = 0;
+            w.projs[pi] = p;
+            continue;
         }
         for e in &def.trail {
             if e.fires(1, w.frame) {
@@ -209,6 +226,7 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                             })
                         }))
         });
+        let hits = p.hits.len();
         contacts(w, d, &mut p, detonate);
         for qi in 0..w.projs.len() {
             let q = &w.projs[qi];
@@ -235,7 +253,19 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
                 w.projs[qi].life = 0;
             }
         }
+        if p.life <= 0 {
+            let connected = p.hits.len() > hits;
+            crate::items::loosen(w, d, &mut p, connected);
+        }
         w.projs[pi] = p;
+    }
+    // Items whose flight ended out of turn (a clash with an earlier shot) drop where they are.
+    for pi in 0..w.projs.len() {
+        if w.projs[pi].life <= 0 && w.projs[pi].item.is_some() {
+            let mut p = w.projs[pi].clone();
+            crate::items::loosen(w, d, &mut p, false);
+            w.projs[pi] = p;
+        }
     }
     let b = &s.blast;
     w.projs.retain(|p| p.life > 0 && p.x > b.left && p.x < b.right && p.y < b.bottom);
@@ -321,6 +351,8 @@ fn contacts(w: &mut World, d: &GameData, p: &mut Projectile, detonate: bool) {
             } else {
                 w.fighters[p.owner].face
             }
+        } else if p.vx == 0. && p.item.is_some() {
+            p.face
         } else {
             sign(p.vx)
         };

@@ -323,6 +323,19 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
     for pl in placed.iter().filter(|pl| !pl.a.behind) {
         draw_attachment(cv, d, i, pl, alpha, frame);
     }
+    // A held item rides the front hand (named-joint figures: the item's `hold` point).
+    if let Some(h) = &f.item
+        && let Some(it) = d.fighters.get(h.data).and_then(|p| p.items.get(&h.id))
+        && let Some(pd) = d.fighters[h.data].projectiles.get(&it.projectile)
+    {
+        let at = if fd.rig.is_none() { p.hand_f } else { it.hold };
+        cv.save();
+        cv.translate(at[0], at[1]);
+        for s in pd.shapes.iter().chain(&pd.overlay) {
+            draw_shape(cv, d, i, s, alpha, false, frame);
+        }
+        cv.restore();
+    }
     cv.restore();
 
     if f.state == State::Grabbed
@@ -510,6 +523,21 @@ fn draw_shape_palette(
         }
         _ => {}
     }
+}
+
+/// A loose item: its projectile's shapes, unrotated, centred at `(x, y)`.
+pub fn draw_item(cv: &mut Canvas, d: &GameData, it: &sim::world::LooseItem, x: f64, y: f64, frame: u64) {
+    let Some(pd) = d.fighters.get(it.item.data).and_then(|p| Some(&p.projectiles[&p.items.get(&it.item.id)?.projectile]))
+    else {
+        return;
+    };
+    cv.save();
+    cv.translate(x, y);
+    cv.scale(1., -1.);
+    for s in pd.shapes.iter().chain(&pd.overlay) {
+        draw_shape(cv, d, it.owner, s, 1., false, frame);
+    }
+    cv.restore();
 }
 
 pub fn draw_projectile(cv: &mut Canvas, d: &GameData, p: &Projectile, x: f64, y: f64, frame: u64) {

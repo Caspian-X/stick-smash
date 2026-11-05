@@ -149,7 +149,7 @@ fn reference_durations_and_hit_windows_match_the_ledger() {
         ("nspec", 62 + 60),
         ("sspec", 12 + 24 + 25 + 26),
         ("uspec", 39 + 480),     // closed parasol is an open-ended special fall
-        ("dspec", 39 + 22 + 22), // tap path: 39-frame pluck + one 22-frame toss
+        ("dspec", 39), // the pluck; the turnip is then a held item (tests/items.rs)
     ] {
         assert_eq!(total(&d, slot), frames, "{slot} total");
     }
@@ -359,66 +359,41 @@ fn float_is_once_per_airtime_and_ends_on_release() {
 }
 
 #[test]
-fn vegetable_plucks_then_throws_a_deterministic_turnip_tier() {
+fn vegetable_plucks_a_turnip_item_thrown_in_deterministic_tiers() {
     let d = common::data();
-    // The pluck is 39 frames and spawns nothing.
+    // The pluck is 39 frames, spawns nothing and leaves the turnip in hand (out of the ground at phase frame 29).
     let mut w = start(&d, "dspec");
     assert_eq!(phase_name(&d, &w), Some("pluck".into()));
-    for _ in 0..38 {
-        step_move(&mut w, &d, Intent::default());
-        assert!(w.projs.is_empty(), "no turnip before the pluck finishes");
+    for t in 1..=39 {
+        tick(&mut w, &d, Input::default());
+        assert!(w.projs.is_empty(), "no turnip flies before a throw");
+        assert_eq!(w.fighters[0].item.is_some(), t >= 29, "frame {t}");
     }
-    step_move(&mut w, &d, Intent::default());
-    assert_eq!(phase_name(&d, &w), Some("ready".into()));
-    // A tap releases the held turnip as the common (8.3%) throw.
-    step_move(&mut w, &d, Intent::default());
-    assert_eq!(phase_name(&d, &w), Some("toss".into()));
-    let mut spawned = None;
-    for _ in 0..8 {
-        step_move(&mut w, &d, Intent::default());
-        if let Some(p) = w.projs.first() {
-            spawned = Some(p.clone());
-            break;
-        }
-    }
-    let p = spawned.expect("turnip spawned");
-    assert_eq!(p.id, "turnip");
-    close(p.hit.damage, 8.3);
-    close(p.hit.angle, 30.);
-    close(p.hit.bkb, 25.);
-    close(p.hit.kbg, 0.45);
-    // Holding past eight ticks throws the stronger tier (the source's smash item throw: +3.1%).
-    let mut w = start(&d, "dspec");
-    for _ in 0..39 {
-        step_move(&mut w, &d, Intent::default());
-    }
-    for _ in 0..9 {
-        step_move(&mut w, &d, Intent { sp_held: true, ..Default::default() });
-    }
-    step_move(&mut w, &d, Intent::default());
-    assert_eq!(phase_name(&d, &w), Some("tossStrong".into()));
-    for _ in 0..8 {
-        step_move(&mut w, &d, Intent::default());
-    }
-    let p = w.projs.first().expect("strong turnip spawned");
-    assert_eq!(p.id, "turnip_strong");
-    close(p.hit.damage, 11.4);
-    assert!((p.hit.shield_dmg_mult - 0.7807).abs() < 1e-6, "{}", p.hit.shield_dmg_mult);
-    // Deterministic: both tiers leave the gameplay RNG untouched (the pluck picks no face at random).
-    for held in [0, 9] {
-        let mut w = start(&d, "dspec");
+    assert_eq!(w.fighters[0].state, State::Idle);
+    let it = &d.fighter("duchess").unwrap().items["turnip"];
+    assert_eq!((it.projectile.as_str(), it.smash_projectile.as_deref()), ("turnip", Some("turnip_strong")));
+    // A tilt throw is the common (8.3%) turnip; a smash throw adds the item-throw strength difference (+3.1%).
+    for (input, id, damage) in [
+        (Input { buttons: 2, ..Default::default() }, "turnip", 8.3),
+        (Input { attack_stick: (127, 0), ..Default::default() }, "turnip_strong", 11.4),
+    ] {
+        let mut w = w.clone();
         let before = w.rng;
-        for _ in 0..39 {
-            step_move(&mut w, &d, Intent::default());
+        tick(&mut w, &d, input);
+        for _ in 0..5 {
+            tick(&mut w, &d, Input::default());
         }
-        for _ in 0..held {
-            step_move(&mut w, &d, Intent { sp_held: true, ..Default::default() });
+        let p = w.projs.first().expect("turnip thrown");
+        assert_eq!(p.id, id);
+        close(p.hit.damage, damage);
+        close(p.hit.angle, 30.);
+        close(p.hit.bkb, 25.);
+        close(p.hit.kbg, 0.45);
+        if id == "turnip_strong" {
+            assert!((p.hit.shield_dmg_mult - 0.7807).abs() < 1e-6, "{}", p.hit.shield_dmg_mult);
         }
-        for _ in 0..20 {
-            step_move(&mut w, &d, Intent::default());
-        }
-        assert_eq!(w.rng, before, "turnip held {held}: gameplay RNG must not be consumed");
-        assert!(w.projs.iter().any(|p| p.id.starts_with("turnip")));
+        // Deterministic: neither tier consumes the gameplay RNG (the pluck picks no face at random).
+        assert_eq!(w.rng, before);
     }
 }
 

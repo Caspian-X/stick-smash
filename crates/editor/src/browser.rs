@@ -263,6 +263,7 @@ fn section_count(f: &sim::data::Fighter, s: Section) -> String {
     match s {
         Section::Attachments => f.attachments.len().to_string(),
         Section::Projectiles => f.projectiles.len().to_string(),
+        Section::Items => f.items.len().to_string(),
         Section::Anims => f.anims.len().to_string(),
         _ => String::new(),
     }

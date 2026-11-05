@@ -144,6 +144,9 @@ fn events(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) {
         if let Some(id) = &e.spawn {
             crate::projectiles::spawn(w, d, i, f, id);
         }
+        if let Some(id) = &e.item {
+            crate::items::give(f, id);
+        }
         if let Some(need) = &e.restore
             && let Some(s) = crate::charges::restore(d, f, need)
         {
@@ -393,7 +396,15 @@ fn ground_attack(d: &GameData, f: &mut Fighter, inp: Intent, dir: f64) -> &'stat
 }
 pub fn ground_actions(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, dir: f64) -> bool {
     let mv = &d.global.movement;
-    if inp.grab {
+    if (inp.atk || inp.grab) && crate::items::take(w, d, i, f) {
+        return true;
+    }
+    let holding = f.item.is_some();
+    if holding && (inp.grab || inp.atk && !(inp.jump_attack && d.global.input.jump_aerials)) {
+        // Holding an item, attacks and grab throw it instead.
+        let (kind, smash) = crate::items::aim(d, f, &inp);
+        crate::items::toss(w, d, i, f, kind, smash);
+    } else if inp.grab {
         let gait = d.global.gait.enabled;
         let dash = if gait { crate::gait::dashing(d, f) } else { f.vx.abs() > mv.dash_grab_speed };
         if dir != 0. && !(gait && dash) {

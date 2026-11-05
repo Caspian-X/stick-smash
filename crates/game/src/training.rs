@@ -127,6 +127,18 @@ fn act_text(d: &sim::GameData, fighter: usize, a: &Action) -> String {
                 _ => "Forward",
             }
         ),
+        Action::Toss(k) => format!(
+            "{} item throw",
+            match k.as_str() {
+                "b" => "Back",
+                "u" => "Up",
+                "d" => "Down",
+                "drop" => "Drop",
+                _ => "Forward",
+            }
+        ),
+        Action::Pickup => t("Pick up item"),
+        Action::Catch => t("Catch item"),
         Action::Influence(deg) => format!("Influence {deg:+}°"),
     }
 }

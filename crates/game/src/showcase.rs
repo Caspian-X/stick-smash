@@ -62,9 +62,11 @@ fn swap_fighter(m: &mut Match, i: usize, fighter: usize) {
     let f = &mut m.world.fighters[i];
     f.data = fighter;
     f.mov = None;
+    f.item = None;
     f.jumps = m.data.fighters[fighter].stats.air_jumps;
     f.set_state(if f.ground { FState::Idle } else { FState::Air });
     m.world.projs.retain(|p| p.owner != i);
+    m.world.items.retain(|it| it.owner != i);
     m.world.cfg.players[i].fighter = m.data.fighters[fighter].id.clone();
     m.slots[i].fighter = fighter;
 }

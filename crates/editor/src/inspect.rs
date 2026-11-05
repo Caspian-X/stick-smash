@@ -484,6 +484,7 @@ fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<G
     let rigged = ed.fighter().rig.is_some();
     let poses: Vec<String> = ed.fighter().poses.keys().cloned().collect();
     let projectiles: Vec<String> = ed.fighter().projectiles.keys().cloned().collect();
+    let items: Vec<String> = ed.fighter().items.keys().cloned().collect();
     let attachments: Vec<String> = ed.fighter().attachments.iter().map(|a| a.id.clone()).collect();
     let note = inherited_note(ed, &format!("moves.{slot}"));
     let (mut ph, mut hb) = (ed.phase, ed.hitbox);
@@ -592,7 +593,7 @@ fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<G
         transitions(ui, p, &names);
         sub(ui, "Events", &d("Phase", "events"));
         errs(ui, errors, &format!("{pbase}.events"));
-        events(ui, p, &projectiles, playhead_t);
+        events(ui, p, (&projectiles, &items), playhead_t);
         sub(ui, "Pose keys", &d("Phase", "anim"));
         errs(ui, errors, &format!("{pbase}.anim"));
         anim_keys(ui, p, &poses, playhead_t, rigged);
@@ -963,6 +964,9 @@ fn summary(e: &Event) -> String {
     if e.spawn.is_some() {
         what.push("spawn");
     }
+    if e.item.is_some() {
+        what.push("item");
+    }
     if e.sfx.is_some() {
         what.push("sfx");
     }
@@ -972,7 +976,7 @@ fn summary(e: &Event) -> String {
     format!("{when}  {}", what.join(" · "))
 }
 
-fn events(ui: &mut egui::Ui, p: &mut Phase, projectiles: &[String], t: Option<u32>) {
+fn events(ui: &mut egui::Ui, p: &mut Phase, (projectiles, items): (&[String], &[String]), t: Option<u32>) {
     let mut del = None;
     for (i, e) in p.events.iter_mut().enumerate() {
         egui::CollapsingHeader::new(RichText::new(summary(e)).color(STAR)).id_salt(("ev", i)).show(ui, |ui| {
@@ -1020,6 +1024,13 @@ fn events(ui: &mut egui::Ui, p: &mut Phase, projectiles: &[String], t: Option<u3
                     opts.extend(projectiles.iter().map(|p| (Some(p.clone()), p.as_str())));
                     combo(ui, ("ev-sp", i), &mut e.spawn, &opts);
                 });
+                if !items.is_empty() || e.item.is_some() {
+                    row(ui, "item", &d("Event", "item"), |ui| {
+                        let mut opts: Vec<(Option<String>, &str)> = vec![(None, "none")];
+                        opts.extend(items.iter().map(|p| (Some(p.clone()), p.as_str())));
+                        combo(ui, ("ev-it", i), &mut e.item, &opts);
+                    });
+                }
                 row(ui, "sfx", &format!("Sound name (from global.json audio). {}", d("Event", "sfx")), |ui| {
                     let mut s = e.sfx.clone().unwrap_or_default();
                     if ui.text_edit_singleline(&mut s).changed() {
@@ -1474,6 +1485,7 @@ fn data_panel(ui: &mut egui::Ui, ed: &mut Editor, s: Section, errors: &[ContentE
             "Vector parts hung on joints: weapons, hats, props. Phases animate them under Attachment animation."
         }
         Section::Projectiles => "Spawned by a move event's spawn field.",
+        Section::Items => "Held items, given by a move event's item field and thrown with attacks.",
         Section::Effects => "Visual effects for fighter-wide moments.",
         Section::Anims => "State animations (idle, run, air…): pose keys over a clock.",
         Section::Ai => "How CPU players use this fighter.",
@@ -1515,6 +1527,7 @@ fn data_panel(ui: &mut egui::Ui, ed: &mut Editor, s: Section, errors: &[ContentE
         Section::Style => drop(form::edit(ui, id, form::def("Style"), &mut f.style)),
         Section::Attachments => drop(form::edit(ui, id, &form::array_of("Attachment"), &mut f.attachments)),
         Section::Projectiles => drop(form::map(ui, id, form::def("Projectile"), &mut f.projectiles, || None)),
+        Section::Items => drop(form::map(ui, id, form::def("Item"), &mut f.items, || None)),
         Section::Effects => drop(form::edit(ui, id, form::def("FighterFx"), &mut f.fx)),
         Section::Anims => drop(form::map(ui, id, form::def("Anim"), &mut f.anims, || None)),
         Section::Ai => drop(form::edit(ui, id, form::def("Ai"), &mut f.ai)),

@@ -53,6 +53,9 @@ pub struct Global {
     pub audio: super::audio::Audio,
     #[serde(default)]
     pub replay: Replay,
+    /// Held items: throw timing, pickup and catch reach, loose-item landing, CPU use.
+    #[serde(default)]
+    pub items: Items,
 }
 
 /// Shared movement rules. Per-fighter speeds and gravity live in each fighter's `stats`.
@@ -1119,6 +1122,60 @@ pub struct AiThresholds {
     pub down_attack_distance: f64,
     #[schemars(transform = unit::px_y)]
     pub projectile_target_height: f64,
+}
+
+/// Shared held-item rules (`docs/FORMAT.md`, Items). Boxes are fighter-local (x forward, y up from the feet).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+pub struct Items {
+    /// Item throw timing (Ultimate: the item leaves the hand on frame 6 of about 22).
+    pub toss: Toss,
+    /// Attack or grab on the ground picks up a landed item whose centre is in this box.
+    pub pickup: super::common::Rect,
+    /// Attack, grab or (in the air) air dodge catches an item in flight whose centre is in this box.
+    pub catch: super::common::Rect,
+    /// Lag after a ground pickup (`landing` state, kind `pickup`).
+    #[schemars(transform = unit::tick)]
+    pub pickup_lag: u32,
+    /// Ticks before a fighter can catch an item it threw.
+    #[schemars(transform = unit::tick)]
+    pub regrab: u32,
+    /// A landing loose item comes to rest when it would bounce back up slower than this.
+    #[schemars(transform = unit::v_y)]
+    pub settle: f64,
+    /// CPU: smash-throw a held item forward at an opponent closer than this (and within `ai.thresholds.attackHeight`).
+    #[schemars(transform = unit::px_x)]
+    pub cpu_range: f64,
+    /// CPU: throw a held item toward the target after holding it this long.
+    #[schemars(transform = unit::tick)]
+    pub cpu_hold: u32,
+}
+impl Default for Items {
+    fn default() -> Self {
+        let rect = |x1, x2, y1, y2| super::common::Rect { x1, x2, y1, y2 };
+        Self {
+            toss: Toss { frames: 22, release: 5 },
+            pickup: rect(-30., 45., -10., 40.),
+            catch: rect(-35., 50., -10., 110.),
+            pickup_lag: 6,
+            regrab: 15,
+            settle: 1.5,
+            cpu_range: 260.,
+            cpu_hold: 180,
+        }
+    }
+}
+
+/// Item throw timing, on the `toss` state clock (0 = the tick the throw starts).
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Toss {
+    /// The throw ends (actionable again).
+    #[schemars(transform = unit::tick)]
+    pub frames: u32,
+    /// The item leaves the hand.
+    #[schemars(transform = unit::tick)]
+    pub release: u32,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]

@@ -681,25 +681,15 @@ moves['uspec'] = {'name': 'Peach Parasol', 'air': 'upSpecial', 'oncePerAirtime':
 # The rising timeline changes coverage without resetting a continuing loop's cooldown.
 chain_ground(moves['uspec']['phases'][:5])
 
-# Vegetable: the 39-frame pluck, then a turnip throw whose tier is chosen by how long the button is held.
+# Vegetable: the 39-frame pluck puts a turnip item in her hand (out of the ground on source frame 30); it is
+# thrown like any held item (the shared `toss` state; `items.turnip` below).
 raw('dspec', 'SpecialLw')
 ledger['rawAttacks']['turnip'] = {'article': 'item', 'script': 'peachdaikon/game_Throw',
                                   'attacks': items['items']['peachdaikon']['Scripts']}
 moves['dspec'] = {'name': 'Vegetable', 'phases': [
     phase('pluck', 39, anim=[{'at': 0, 'pose': 'crouch'}, {'at': 10, 'pose': 'pluck', 'lerp': True},
                              {'at': 30, 'pose': 'holdTurnip', 'lerp': True}],
-          events=[{'at': frame(20), 'sfx': 'toss'}, {'at': frame(30), 'sfx': 'ready'}],
-          transitions=[wait('ready')]),
-    phase('ready', charge={'frame': 0, 'max': 24, 'button': 'special'},
-          anim=[{'at': 0, 'pose': 'holdTurnip'}],
-          transitions=[{'on': 'release', 'minCharge': 8, 'to': 'tossStrong'},
-                       {'on': 'release', 'to': 'toss'}]),
-    phase('toss', 22, anim=[{'at': 0, 'pose': 'holdTurnip'}, {'at': 6, 'pose': 'tossOver', 'lerp': True},
-                            {'at': 14, 'pose': 'stand', 'lerp': True}],
-          events=[{'at': frame(6), 'spawn': 'turnip', 'sfx': 'swing'}]),
-    phase('tossStrong', 22, anim=[{'at': 0, 'pose': 'holdTurnip'}, {'at': 6, 'pose': 'tossOver', 'lerp': True},
-                                  {'at': 14, 'pose': 'stand', 'lerp': True}],
-          events=[{'at': frame(6), 'spawn': 'turnip_strong', 'sfx': 'swing'}]),
+          events=[{'at': frame(20), 'sfx': 'toss'}, {'at': frame(30), 'sfx': 'ready', 'item': 'turnip'}]),
 ]}
 
 # ---------------------------------------------------------------- throws
@@ -749,6 +739,22 @@ projectiles = {
                       'bounce': {'restitution': 0.42, 'minSpeed': 1.3333, 'friction': 0.7, 'maxBounces': 3,
                                  'fizzleLife': 28, 'wallRestitution': 0.4, 'sfx': 'bonk'},
                       'hit': turnip_strong, 'spawnSfx': 'swing', 'shapes': turnip_shapes},
+}
+# The held turnip (Ultimate item throws): tilt and smash projectiles by strength; Ultimate's thrown-item damage
+# `base - 0.4 + speed x 3` (3 per unit/frame = 0.6 per px/tick) is applied relative to each projectile's own
+# forward speed, so the forward throws keep 8.3 / 11.4 and other directions scale by their speed. Back, up and down
+# use the forward speeds (adapted: the source's per-direction item-throw speeds are not in the pinned data); a drop
+# lets go at rest. A connecting turnip bounces back and up (catchable), as in the source.
+turnip_item = {
+    'name': 'Turnip', 'projectile': 'turnip', 'smashProjectile': 'turnip_strong', 'hold': [24, 56],
+    'throws': {
+        'forward': {'tilt': [11.4286, 3.3333], 'smash': [14.2857, 3.5833]},
+        'back': {'tilt': [11.4286, 3.3333], 'smash': [14.2857, 3.5833]},
+        'up': {'tilt': [0, 11.9048], 'smash': [0, 14.7281]},
+        'down': {'tilt': [0, -11.9048], 'smash': [0, -14.7281]},
+        'drop': [0, 0],
+    },
+    'speedDamage': 0.6, 'rebound': [2.5, 6], 'life': 600, 'catch': True,
 }
 spore_shape = [{'shape': 'circle', 'at': [0, 0], 'r': 5.5, 'fill': '#efe6cf', 'stroke': '#b4a98d', 'width': 1.4}]
 for key, (vel, spawn) in {'spore_up': ([8.5714, 5.8333], [24, 54]), 'spore_fwd': ([14.2857, 1.25], [26, 46]),
@@ -873,6 +879,10 @@ anims = {
     'win': {'clock': 'state', 'keys': [
         {'at': 0, 'pose': 'win'}, {'at': 20, 'pose': {'from': 'win', 'handF': [28, 70]}, 'lerp': True}]},
     'respawn': {'clock': 'state', 'keys': [{'at': 0, 'pose': 'air'}]},
+    # Item throws (the shared `toss` state): the overhand turnip toss for every direction.
+    'toss': {'clock': 'state', 'keys': [
+        {'at': 0, 'pose': 'holdTurnip'}, {'at': 6, 'pose': 'tossOver', 'lerp': True},
+        {'at': 14, 'pose': 'stand', 'lerp': True}]},
 }
 
 # ---------------------------------------------------------------- fighter document
@@ -910,6 +920,7 @@ doc = {
     'moves': moves,
     'throws': throws,
     'projectiles': projectiles,
+    'items': {'turnip': turnip_item},
     'style': style,
     'poses': poses,
     'anims': anims,
