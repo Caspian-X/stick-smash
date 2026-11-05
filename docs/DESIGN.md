@@ -237,6 +237,11 @@ feel. Its own design, not a port of the TS panels.
 - **Interpolation.** The game pushes a `World` snapshot to `render::Scene` every tick and sets `alpha` (fraction
   of a tick since then) every frame. Fighter positions and skeletons, projectiles, particles and the camera
   interpolate between the last two ticks. Fighters snap when their state, facing or position jumps.
+- **Frame pacing.** Rendering runs on the main thread (no pipelined rendering) with one frame in flight. When the
+  display refreshes at about 60 Hz (median of recent frame intervals within 58–62 Hz) and the "Lock sim to 60 Hz
+  display" setting is on, the sim steps once per rendered frame instead of through `Time<Fixed>`, and draws the
+  newest tick (`alpha` 1 at normal speed), so vsync can't alias into 0- or 2-tick frames. Other refresh rates and
+  the screenshot tours keep the fixed-step accumulator.
 - **Interpolation gaps.** A fighter or projectile that moved further in one tick than
   `render.interpolate.fighterJump` / `projectileJump` stage pixels is treated as teleported and drawn at its
   new position instead of sliding across.

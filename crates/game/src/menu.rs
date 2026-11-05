@@ -55,6 +55,7 @@ const WINDOW: u32 = 12;
 const MASTER: u32 = 13;
 const SFX: u32 = 14;
 const MUSIC: u32 = 15;
+const LOCK60: u32 = 16;
 const BACK: u32 = 19;
 const TAB0: u32 = 100;
 const ACT0: u32 = 30;
@@ -287,6 +288,7 @@ fn update(
                 *value = (*value + f64::from(by) * a.volume_step).clamp(0., 1.);
             }
             (Screen::Settings, Action::Spin(HITBOXES, _)) => saved.versus_hitboxes = !saved.versus_hitboxes,
+            (Screen::Settings, Action::Spin(LOCK60, _)) => saved.lock_60 = !saved.lock_60,
             (Screen::Settings, Action::Spin(WINDOW, _)) => {
                 saved.fullscreen = !saved.fullscreen;
                 if let Ok(mut w) = win.single_mut() {
@@ -453,6 +455,7 @@ fn draw(
                     ),
                     Item::spin(HITBOXES, "Hitboxes in versus", on_off(saved.versus_hitboxes)),
                     Item::spin(WINDOW, "Window", if saved.fullscreen { "Fullscreen" } else { "Windowed" }),
+                    Item::spin(LOCK60, "Lock sim to 60 Hz display", on_off(saved.lock_60)),
                     Item::button(BACK, "Back"),
                 ];
                 menu_list(p, f, &items, focus, List::new(560., 28.));

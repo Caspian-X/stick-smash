@@ -1,9 +1,13 @@
 use std::fs;
+use std::num::NonZero;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use bevy::app::RunFixedMainLoopSystems;
 use bevy::input::InputSystems;
 use bevy::prelude::*;
+use bevy::render::pipelined_rendering::PipelinedRenderingPlugin;
+use bevy::time::TimeSystems;
 use bevy_egui::{EguiContexts, EguiPlugin, EguiPrimaryContextPass, egui};
 use render::{RenderPlugin, RenderSystems, Scene};
 use sim::data::load;
@@ -127,9 +131,16 @@ fn main() {
     let persist =
         settings::Persist(if shot_dir.is_some() || layout_dir.is_some() { None } else { settings::config_file() });
     let saved = if layout_dir.is_some() { layout_shots::saved() } else { settings::load(persist.0.as_ref()) };
+    let mut pace = play::Pace::default();
+    pace.allowed = shot_dir.is_none() && layout_dir.is_none();
     let mut app = App::new();
+    // Pipelined rendering and a two-frame swapchain queue each add a frame of input latency; a fighting game wants
+    // the newest tick on screen as soon as possible, so render on the main thread with one frame in flight (vsync
+    // stays on).
     app.add_plugins(
         DefaultPlugins
+            .build()
+            .disable::<PipelinedRenderingPlugin>()
             .set(bevy::render::RenderPlugin { synchronous_pipeline_compilation: shot_dir.is_some(), ..default() })
             .set(WindowPlugin {
                 primary_window: Some(Window {
@@ -137,6 +148,7 @@ fn main() {
                     resolution: (1280, 720).into(),
                     resizable: shot_dir.is_none(),
                     mode: menu::window_mode(saved.fullscreen && shot_dir.is_none()),
+                    desired_maximum_frame_latency: NonZero::new(1),
                     ..default()
                 }),
                 // `editing::close_requested` quits, after the editor's unsaved-changes prompt.
@@ -169,12 +181,24 @@ fn main() {
         commands.insert_resource(ui::Fonts::load(&assets, &mut fonts));
     })
     .add_systems(PreUpdate, input::poll.after(InputSystems))
-    .add_systems(FixedUpdate, play::tick.run_if(resource_exists::<play::Match>))
+    .insert_resource(pace)
+    .add_systems(First, play::pace.after(TimeSystems))
+    .add_systems(FixedUpdate, play::tick.run_if(resource_exists::<play::Match>).run_if(not(play::locked)))
+    // Locked to a 60 Hz display: one step per frame, where the fixed step would run.
+    .add_systems(
+        RunFixedMainLoop,
+        play::tick
+            .in_set(RunFixedMainLoopSystems::AfterFixedMainLoop)
+            .run_if(resource_exists::<play::Match>)
+            .run_if(play::locked),
+    )
     .add_systems(
         Update,
         (play::interpolate.before(RenderSystems).run_if(resource_exists::<play::Match>), settings::save),
     )
     .add_systems(EguiPrimaryContextPass, toast);
+    #[cfg(feature = "dev")]
+    app.add_systems(EguiPrimaryContextPass, play::pace_overlay);
     editing::setup(&mut app, assets_root, if shot_dir.is_some() { None } else { settings::user_content_dir() });
     if let Some(dir) = shot_dir {
         fs::create_dir_all(&dir).expect("create screenshot dir");
