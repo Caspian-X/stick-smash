@@ -130,7 +130,7 @@ fn spot_dodge_ducks_on_acceptance_and_recovers_before_exit() {
     let dodge = fighter_pose(&d, &w.fighters[0], w.frame);
     assert!(dodge.head[0] < -5. && dodge.head[1] < 60.);
     let mut last = dodge;
-    for _ in 0..d.global.dodge.spot_frames {
+    for _ in 0..d.global.dodge.spot.frames {
         last = fighter_pose(&d, &w.fighters[0], w.frame);
         assert_eq!(feet(&last), (0., 0.));
         tick(&mut w, &d, 0, 0, 0);
@@ -168,7 +168,7 @@ fn airdodge_unfolds_before_neutral_and_directional_exits_and_can_land_early() {
         tick(&mut w, &d, x, 0, SHIELD);
         assert_eq!(w.fighters[0].state, State::Airdodge);
         let entry = fighter_pose(&d, &w.fighters[0], w.frame);
-        let duration = if x == 0 { d.global.dodge.air_dodge_frames } else { d.global.dodge.dir_air_dodge_frames };
+        let duration = if x == 0 { d.global.dodge.air.frames } else { d.global.dodge.dir_air.frames };
         let mut tuck = entry;
         let mut last = entry;
         for t in 0..duration {

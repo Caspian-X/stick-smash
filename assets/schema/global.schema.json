@@ -927,7 +927,7 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Frames of lag after releasing shield."
+          "description": "Frames of lag after releasing shield (Ultimate 11)."
         },
         "upSmash": {
           "type": "boolean",
@@ -982,41 +982,83 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "rollInvuln": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "rollFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "rollSpeed": { "type": "number", "format": "double" },
-        "rollMoveStart": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "rollMoveEnd": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "spotInvuln": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "spotFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "airDodgeInvuln": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "airDodgeFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "airDodgeLandingLag": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "dirAirDodgeInvuln": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "dirAirDodgeFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "dirAirDodgeSpeed": { "type": "number", "format": "double" },
-        "dirAirDodgeDecay": { "type": "number", "format": "double" },
-        "dirAirDodgeDecayFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "dirAirDodgeLandingLag": { "type": "integer", "format": "uint32", "minimum": 0 }
+        "roll": { "$ref": "#/$defs/Window" },
+        "spot": { "$ref": "#/$defs/Window" },
+        "air": { "$ref": "#/$defs/Window", "description": "Neutral air dodge." },
+        "dirAir": { "$ref": "#/$defs/Window", "description": "Directional air dodge." },
+        "staling": {
+          "$ref": "#/$defs/DodgeStaling",
+          "description": "Repeated rolls, spot dodges and air dodges get less intangibility and more frames. Absent = off."
+        }
       },
-      "required": [
-        "rollInvuln",
-        "rollFrames",
-        "rollSpeed",
-        "rollMoveStart",
-        "rollMoveEnd",
-        "spotInvuln",
-        "spotFrames",
-        "airDodgeInvuln",
-        "airDodgeFrames",
-        "airDodgeLandingLag",
-        "dirAirDodgeInvuln",
-        "dirAirDodgeFrames",
-        "dirAirDodgeSpeed",
-        "dirAirDodgeDecay",
-        "dirAirDodgeDecayFrames",
-        "dirAirDodgeLandingLag"
-      ]
+      "required": ["roll", "spot", "air", "dirAir"],
+      "description": "Dodge timelines. Frame numbers are the state clock: 0 is the tick the dodge starts (Ultimate's frame 1)."
+    },
+    "Window": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "frames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "invulnStart": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "First and last intangible frame (inclusive). Start 0 replaces any current invulnerability on the entry\ntick; a later start adds it on that frame (leaving the state first cancels it). End below start = none; an\nend past `frames` carries over into the next state."
+        },
+        "invulnEnd": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "moveStart": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Roll: frames moving at `speed` (inclusive)."
+        },
+        "moveEnd": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "speed": {
+          "type": "number",
+          "format": "double",
+          "description": "Roll ground speed / directional air dodge launch speed."
+        },
+        "decay": {
+          "type": "number",
+          "format": "double",
+          "description": "Directional air dodge: velocity × decay each frame below `decayFrames`, then helpless drift."
+        },
+        "decayFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "landingLag": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Air dodges: landing lag when touching down during the dodge."
+        }
+      },
+      "required": ["frames", "invulnStart", "invulnEnd"],
+      "description": "One timed defensive state. Frames count from 0 on the entry tick; the state ends when its clock reaches `frames`."
+    },
+    "DodgeStaling": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "window": { "type": "integer", "format": "uint32", "minimum": 0, "default": 0 },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/StaleStep" },
+          "default": []
+        }
+      },
+      "description": "Each roll, spot dodge or air dodge started within `window` ticks of the previous one goes one step further down\n`steps` (the first repeat uses `steps[0]`, capped at the last); a longer gap starts fresh. Getup and tech rolls\nneither stale nor count. Empty `steps` = off."
+    },
+    "StaleStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "invuln": {
+          "type": "number",
+          "format": "double",
+          "description": "Intangible frames × this (rounded; the start frame stays)."
+        },
+        "frames": { "type": "number", "format": "double", "description": "Total frames × this (rounded)." }
+      },
+      "required": ["invuln", "frames"]
     },
     "Landing": {
       "type": "object",
@@ -1043,7 +1085,13 @@
           "minimum": 0,
           "description": "Press shield within this many frames before landing in tumble to tech."
         },
-        "invuln": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "invulnStart": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "First and last intangible frame of a tech in place (state clock as in `dodge.roll`; 0 = the landing tick)."
+        },
+        "invulnEnd": { "type": "integer", "format": "uint32", "minimum": 0 },
         "frames": { "type": "integer", "format": "uint32", "minimum": 0 },
         "lockout": {
           "type": "integer",
@@ -1053,7 +1101,7 @@
           "default": 0
         }
       },
-      "required": ["window", "invuln", "frames"]
+      "required": ["window", "invulnStart", "invulnEnd", "frames"]
     },
     "Knockdown": {
       "type": "object",
@@ -1071,10 +1119,11 @@
           "minimum": 0,
           "description": "Automatically stand up at this frame."
         },
-        "getupFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "getupInvuln": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "attackFrames": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "attackInvuln": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "getup": {
+          "$ref": "#/$defs/Window",
+          "description": "Neutral getup: `frames` and intangibility as in `dodge.roll`."
+        },
+        "getupAttack": { "$ref": "#/$defs/Window" },
         "attackActive": {
           "type": "array",
           "items": { "type": "integer", "format": "uint32", "minimum": 0 },
@@ -1087,16 +1136,7 @@
           "items": { "$ref": "#/$defs/Hitbox" }
         }
       },
-      "required": [
-        "minFrames",
-        "autoGetup",
-        "getupFrames",
-        "getupInvuln",
-        "attackFrames",
-        "attackInvuln",
-        "attackActive",
-        "attack"
-      ]
+      "required": ["minFrames", "autoGetup", "getup", "getupAttack", "attackActive", "attack"]
     },
     "Hitbox": {
       "type": "object",
@@ -1387,9 +1427,15 @@
         "b": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Frame movement ends." },
         "end": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Actionable frame." },
         "dist": { "type": "number", "format": "double", "description": "Slide distance onto the stage." },
-        "inv": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Invulnerability frames." }
+        "invulnStart": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "First and last intangible frame (state clock, 0 = the tick the option starts; start 0 keeps the longer of\nthis and any current invulnerability)."
+        },
+        "invulnEnd": { "type": "integer", "format": "uint32", "minimum": 0 }
       },
-      "required": ["a", "b", "end", "dist", "inv"],
+      "required": ["a", "b", "end", "dist", "invulnStart", "invulnEnd"],
       "description": "Ledge getup timing."
     },
     "Trump": {

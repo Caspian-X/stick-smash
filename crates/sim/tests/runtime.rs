@@ -287,6 +287,7 @@ fn cpu_match_golden_world_hash() {
         w.acts.clear();
     }
     // The decaying launch model (`hitstun.ultimate`), Ultimate hitlag and tech lockout change this scenario's
-    // trajectories and add `launch` / `tech_lock` to the Debug snapshot; replay SIM_VERSION is now -sim-29.
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xf7110186e7bad2d1);
+    // trajectories and add `launch` / `tech_lock` to the Debug snapshot. Authored dodge / tech / getup windows and
+    // dodge staling add `dodge_stale` / `dodge_at` and state `end` / `inv_at` / `inv_len`; replay SIM_VERSION -sim-31.
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x5de36585253359ee);
 }

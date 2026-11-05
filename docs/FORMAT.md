@@ -95,6 +95,33 @@ tumble compares launch px with `knockback.tumbleThreshold`, and launches fly wit
 hitstun presses don't count toward teching; a successful tech clears it. A single press within `tech.window`
 frames before a tumble landing still techs; mashing from far out does not.
 
+### Defensive windows (`dodge`, `tech`, `knockdown`, `ledge`, `shield.dropLag`)
+
+`dodge.roll`, `spot`, `air` (neutral air dodge) and `dirAir` are windows
+`{ frames, invulnStart, invulnEnd, moveStart, moveEnd, speed, decay, decayFrames, landingLag }` (fields a dodge
+doesn't use are omitted). Frame numbers use the state clock like move phases: 0 is the tick the state starts
+(Ultimate's frame 1), and the state ends when its clock reaches `frames`. The fighter is intangible on frames
+`invulnStart..=invulnEnd` and hittable before and after. Start 0 sets invulnerability on the entry tick, replacing
+any current invulnerability; a later start adds it when the clock gets there, and leaving the state first (hit,
+walking off a ledge) cancels it. An end past `frames` carries over into the next state. The roll moves at `speed`
+on `moveStart..=moveEnd`; a directional air dodge launches at `speed`, multiplies its velocity by `decay` below
+`decayFrames`, and lands with `landingLag` (neutral too). `tech` has `invulnStart` / `invulnEnd` for a tech in
+place (tech rolls use `dodge.roll`), `knockdown.getup` / `getupAttack` are `{ frames, invulnStart, invulnEnd }`,
+and each ledge option (`climb`, `attack`, `roll`, `jump`) has `invulnStart` / `invulnEnd` (start 0 keeps the longer
+of this and the hang invulnerability). Bundled values (state clock; Ultimate frame = +1): roll 30 frames,
+intangible 3–14; spot dodge 26, 2–16; neutral air dodge 40, 2–28; directional 44, 2–21; tech 24, 2–19; getup 24,
+2–21; getup attack 32, 2–13; ledge options unchanged from 0. `shield.dropLag` is 11 (Ultimate).
+
+`dodge.staling` (absent = off): a roll, spot dodge or air dodge started within `window` ticks (bundled 90) of the
+previous one moves one step along `steps` (`{ invuln, frames }` multipliers, rounded; the first repeat uses
+`steps[0]`, then capped at the last), shortening intangibility from its start frame and lengthening the state; a
+longer gap starts fresh. Bundled: 0.93 / 0.87 / 0.8 intangibility and 1.1 / 1.2 / 1.3 frames. Getup and tech rolls
+neither stale nor count. The counter is `Fighter::dodge_stale` / `dodge_at` in the snapshot.
+
+Older global files with the flat `dodge.rollInvuln` … `dirAirDodgeLandingLag`, `tech.invuln`,
+`knockdown.getupInvuln` / `attackInvuln` / `getupFrames` / `attackFrames` and ledge `inv` load as windows starting
+at 0 (`invuln` N = frames 0..=N−1), which reproduces the old timing exactly.
+
 ## Moves
 
 Moves sit in fixed slots (`jab` … `dspec`, optional `sspec`). A move is a list of **phases**, starting with the

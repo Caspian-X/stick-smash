@@ -71,6 +71,22 @@ fn load_data(linear: bool) -> GameData {
     data
 }
 
+/// The reference's defensive timings: invulnerable from the entry tick, no dodge staling, 7-frame shield drop.
+pub fn reference_defence(d: &mut GameData) {
+    use sim::data::global::{DodgeStaling, Window};
+    let g = &mut d.global;
+    let w = |frames, inv: u32| Window { frames, invuln_start: 0, invuln_end: inv - 1, ..Default::default() };
+    g.dodge.roll = Window { move_start: 3, move_end: 18, speed: 7., ..w(30, 31) };
+    g.dodge.spot = w(26, 16);
+    g.dodge.air = Window { landing_lag: 4, ..w(30, 28) };
+    g.dodge.dir_air = Window { speed: 10., decay: 0.88, decay_frames: 18, landing_lag: 10, ..w(34, 24) };
+    g.dodge.staling = DodgeStaling::default();
+    (g.tech.invuln_start, g.tech.invuln_end, g.tech.frames) = (0, 19, 24);
+    g.knockdown.getup = w(24, 22);
+    g.knockdown.getup_attack = w(32, 14);
+    g.shield.drop_lag = 7;
+}
+
 pub fn sandbox(data: &GameData, stage: &str, players: Vec<PlayerConfig>) -> World {
     World::new(MatchConfig::sandbox(stage, players, MatchConfig::default().seed), data).unwrap()
 }
