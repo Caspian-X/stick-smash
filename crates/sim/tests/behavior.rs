@@ -325,11 +325,14 @@ fn phase_zero_events_transitions_and_ending_tick() {
     moves::st_attack(&mut w, &d, 0, &mut f, Default::default(), 0.);
     assert_eq!(f.mov.as_ref().unwrap().phase, 1);
     assert_eq!(f.mov.as_ref().unwrap().t, 0);
-    assert_eq!(f.vx, 20. * d.global.movement.attack_friction);
+    // Grounded attacks slow by the fighter's traction, doubled above walk speed (`movement.ultimate`).
+    let u = d.global.movement.ultimate.as_ref().unwrap();
+    let slowed = |v: f64| v - u.traction * u.fast_traction;
+    assert_eq!(f.vx, slowed(20.));
     let before = f.vx;
     moves::st_attack(&mut w, &d, 0, &mut f, Default::default(), 0.);
     assert_eq!(f.state, State::Idle);
-    assert_eq!(f.vx, before * d.global.movement.attack_friction);
+    assert_eq!(f.vx, slowed(before));
 }
 
 #[test]

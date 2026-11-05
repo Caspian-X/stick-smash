@@ -12,6 +12,15 @@ import math
 import re
 from pathlib import Path
 
+# Phase drift (`airAccelMult`) is written as a multiple of the old shared air accels (aerial 0.45, attack 0.25,
+# upSpecial 0.3). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier instead, so drift()
+# stores the value that keeps the same effective acceleration.
+AIR_ACCEL = 0.30
+def drift(legacy, kind):
+    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind]
+    mult = {'aerial': 1.0, 'attack': 0.55, 'upSpecial': 0.65}[kind]
+    return round(legacy * old / (AIR_ACCEL * mult), 4)
+
 ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / 'docs/imports/sources/bongo'
 source = json.loads((SOURCES / 'scripts.json').read_text())
@@ -623,19 +632,19 @@ moves['sspec'] = {
               transitions=[{'on': 'attackPress', 'to': 'kick'}, land(26), wait('flip')]),
         phase('flip', 19, [{'start': 0, 'end': 18, 'x': 30, 'y': 42, 'r': 26, 'damage': 0, 'bkb': 0, 'kbg': 0,
                             'angle': 0, 'type': 'grab'}],
-              airAccelMult=0.5, ledgeGrab=0,
+              airAccelMult=drift(0.5, 'attack'), ledgeGrab=0,
               anim=[{'at': 0, 'pose': 'flipTight'}, {'at': 12, 'pose': 'flip', 'lerp': True}],
               transitions=[{'on': 'attackPress', 'to': 'kick'}, land(26), wait('recover')]),
         phase('kick', 32, [{'start': frame(6), 'end': frame(10), 'x': 36, 'y': 34, 'r': 25, 'damage': 14.0,
                             'bkb': 80.0, 'kbg': 0.5, 'angle': 45, 'type': 'sakurai'},
                            {'start': frame(11), 'end': frame(25), 'x': 34, 'y': 32, 'r': 22, 'damage': 12.0,
                             'bkb': 80.0, 'kbg': 0.5, 'angle': 45, 'type': 'sakurai'}],
-              airAccelMult=0.6, ledgeGrab=0,
+              airAccelMult=drift(0.6, 'attack'), ledgeGrab=0,
               anim=[{'at': 0, 'pose': 'flipTight'}, {'at': frame(6), 'pose': 'kick', 'lerp': True},
                     {'at': frame(25), 'pose': 'kick'}, {'at': 31, 'pose': 'air', 'lerp': True}],
               events=[{'at': frame(6), 'sfx': 'slash'}],
               transitions=[land(18), wait('end')]),
-        phase('recover', 11, airAccelMult=0.5, ledgeGrab=0,
+        phase('recover', 11, airAccelMult=drift(0.5, 'attack'), ledgeGrab=0,
               anim=[{'at': 0, 'pose': 'flipTight'}, {'at': 8, 'pose': 'air', 'lerp': True}],
               transitions=[land(26), wait('end')]),
     ]}
@@ -644,7 +653,7 @@ moves['sspec'] = {
 moves['uspec'] = {
     'name': 'Rocketbarrel Boost', 'air': 'upSpecial', 'bReverse': True, 'chargeDamage': 0.0,
     'phases': [
-        phase('charge', 8, aim=True, fallCap=2.5, airAccelMult=0.25,
+        phase('charge', 8, aim=True, fallCap=2.5, airAccelMult=drift(0.25, 'upSpecial'),
               charge={'frame': frame(8), 'max': 60, 'button': 'special', 'jet': True},
               anim=[{'at': 0, 'pose': 'charge'}],
               attach={'barrels': {'show': [0, 67], 'angle': [[0, 0]]}},
@@ -657,7 +666,7 @@ moves['uspec'] = {
                 'angle': 80},
                {'start': 9, 'end': 27, 'x': 0, 'y': 40, 'r': 14, 'damage': 6.0, 'bkb': 40.0, 'kbg': 0.9,
                 'angle': 70}],
-              airAccelMult=0.9, ledgeGrab=0,
+              airAccelMult=drift(0.9, 'upSpecial'), ledgeGrab=0,
               anim=[{'at': 0, 'pose': 'charge'}, {'at': 3, 'pose': 'airTuck', 'lerp': True},
                     {'at': 20, 'pose': 'air'}],
               attach={'barrels': {'show': [0, 29], 'angle': [[0, 0]]}},
@@ -672,7 +681,7 @@ moves['uspec'] = {
               events=[{'at': 0, 'sfx': 'quake', 'fx': [{'type': 'burst', 'color': '#ff7a3c', 'n': 22,
                                                         'speed': 6.5, 'life': 24, 'size': 5.5},
                                                        {'type': 'shake', 'k': 7}]}]),
-        phase('fall', 30, airAccelMult=0.5, ledgeGrab=0,
+        phase('fall', 30, airAccelMult=drift(0.5, 'upSpecial'), ledgeGrab=0,
               anim=[{'at': 0, 'pose': 'air'}],
               transitions=[{'on': 'land', 'to': 'landing', 'lag': 30}, wait('helpless')]),
     ]}
@@ -760,7 +769,7 @@ doc = {
         'airJumps': 1,
         # Source ×3.5 gives 3.234 / 0.175; fitted upward so the requested above-average air mobility is felt
         # in this engine's shared movement (recorded as adapted in the import record).
-        'airSpeed': 4.3, 'airAccel': 0.30,
+        'airSpeed': 4.3, 'airAccel': AIR_ACCEL,
         'gravity': round(st['gravity'] * 6, 5), 'fallSpeed': round(st['fall'] * 6, 5),
         'fastFallSpeed': round(st['fastFall'] * 6, 5),
     },

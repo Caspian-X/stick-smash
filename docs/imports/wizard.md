@@ -174,3 +174,5 @@ Completion checks (2026-11-02):
   No physical-controller playtest by the agent. Human matchup balance and exact special kinetics remain
   limitations rather than claimed measurements.
 - Delivery: local, uncommitted changes on `char-tune`; nothing committed or pushed for this import.
+
+Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-wizard`.

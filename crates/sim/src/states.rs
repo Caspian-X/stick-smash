@@ -174,7 +174,7 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
                     f.vx = (f.vx + dir * s.run_accel).clamp(-s.run_speed, s.run_speed);
                     f.run_ph += f.vx.abs() * 0.07;
                 } else {
-                    f.vx *= s.ground_friction;
+                    skid(d, &mut f, s.ground_friction, 1.);
                 }
                 fall(w, d, i, &mut f, false, None);
                 if !f.ground {
@@ -190,7 +190,7 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
             } else if inp.grab {
                 moves::start_attack(w, d, i, &mut f, "grab", inp);
             } else {
-                f.vx *= r.jumpsquat_friction;
+                skid(d, &mut f, r.jumpsquat_friction, 1.);
                 if f.t >= g.movement.jumpsquat {
                     let aerial = f.sd.jump_aerial.take();
                     let full = inp.jump_held && aerial.is_none() && !f.sd.short;
@@ -238,13 +238,14 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
         }
         State::Attack => moves::st_attack(w, d, i, &mut f, inp, dir),
         State::Helpless => {
-            air_phys(w, d, i, &mut f, inp, inp.x, g.movement.helpless_accel);
+            let acc = air_accel(d, &f, g.movement.helpless_accel, |u| u.helpless_accel_mult);
+            air_phys(w, d, i, &mut f, inp, inp.x, acc);
             if f.state == State::Helpless {
                 try_ledge(w, d, i, &mut f, inp, false);
             }
         }
         State::Landing => {
-            f.vx *= r.landing_friction;
+            skid(d, &mut f, r.landing_friction, 1.);
             fall(w, d, i, &mut f, true, None);
             if !f.ground {
                 f.set_state(State::Air);
@@ -254,7 +255,7 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
         }
         State::Shield => {
             f.sh -= g.shield.decay;
-            f.vx *= r.shield_friction;
+            skid(d, &mut f, r.shield_friction, 1.);
             fall(w, d, i, &mut f, true, None);
             if !f.ground {
                 f.set_state(State::Air);
@@ -317,7 +318,8 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
                 f.vy *= dd.dir_air_dodge_decay;
                 integrate(w, d, i, &mut f, false);
             } else {
-                air_phys(w, d, i, &mut f, inp, inp.x, g.movement.helpless_accel);
+                let acc = air_accel(d, &f, g.movement.helpless_accel, |u| u.helpless_accel_mult);
+                air_phys(w, d, i, &mut f, inp, inp.x, acc);
             }
             if f.state == State::Airdodge {
                 try_ledge(w, d, i, &mut f, inp, false);
@@ -446,7 +448,7 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
             integrate(w, d, i, &mut f, false);
         }
         State::Dizzy => {
-            f.vx *= r.landing_friction;
+            skid(d, &mut f, r.landing_friction, 1.);
             fall(w, d, i, &mut f, true, None);
             if inp.any_p {
                 f.sd.n -= g.shield.dizzy_mash;
@@ -590,7 +592,7 @@ fn st_climb(w: &mut World, d: &GameData, f: &mut Fighter) {
 fn st_hold(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, dir: f64) {
     let g = &d.global.grab;
     let v = f.sd.victim;
-    f.vx *= d.global.sim.landing_friction;
+    skid(d, f, d.global.sim.landing_friction, 1.);
     fall(w, d, i, f, true, None);
     let Some(v) = v.filter(|v| w.fighters[*v].state == State::Grabbed) else {
         f.set_state(State::Idle);
@@ -676,7 +678,7 @@ fn st_throw(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) {
         _ => &ts.f,
     };
     let r = &d.global.sim;
-    f.vx *= r.landing_friction;
+    skid(d, f, r.landing_friction, 1.);
     fall(w, d, i, f, true, None);
     let vic = &mut w.fighters[v];
     if vic.state == State::Grabbed {

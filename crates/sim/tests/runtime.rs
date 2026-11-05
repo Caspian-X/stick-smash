@@ -286,7 +286,7 @@ fn cpu_match_golden_world_hash() {
         w.hits.clear();
         w.acts.clear();
     }
-    // The decaying launch model (`hitstun.ultimate`), Ultimate hitlag and tech lockout change this scenario's
-    // trajectories and add `launch` / `tech_lock` to the Debug snapshot; replay SIM_VERSION is now -sim-29.
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xf7110186e7bad2d1);
+    // Subtractive momentum (`movement.ultimate`: traction, air friction, fighter air control, instant fast fall,
+    // dash bursts) changes this scenario's movement; replay SIM_VERSION is now -sim-30.
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x14e938aa47ef5102);
 }

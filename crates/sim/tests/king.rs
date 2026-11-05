@@ -319,7 +319,8 @@ fn inhale_pulls_and_captures_with_the_shared_hold() {
         raw(&mut w2, &d2, (0, 0), 4);
     }
     assert_eq!(w2.fighters[1].state, State::Idle);
-    assert!(w2.fighters[1].vx < 0., "windbox should pull toward Dedede");
+    // The one-tick pull moves the victim before traction stops it.
+    assert!(w2.fighters[1].x < 630., "windbox should pull toward Dedede");
 }
 
 #[test]

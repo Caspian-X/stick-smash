@@ -35,6 +35,17 @@ hitstun cancel exists but is off until verified. Launch speed (`launchSpeed` 0.1
 multiplicative drag, so KO percents moved earlier with this change; blast zones and launch speed have not been
 retuned for it.
 
+**Momentum model** (`movement.ultimate`, off in TS traces): speeds change by fixed amounts per frame rather than
+by multipliers, as in Ultimate. On the ground every slowdown is the fighter's `traction` (doubled above walk
+speed), so a released run skids to a stop in about 11–20 frames and running momentum carries into attacks,
+jumpsquat, landing lag and shield. In the air, a neutral stick loses `airFriction` per frame (≈ 0.88 of air speed
+kept after 15 frames instead of 0.54), speed above the held air speed decays toward it instead of clamping, and
+attacks, specials, helpless fall and air dodges use the same rule with the fighter's own `airAccel` times a
+per-kind multiplier, so starting an aerial no longer changes momentum and slow air fighters stay slow while
+attacking. Fast fall reaches the fighter's fast-fall speed at once. Initial dashes are an authored burst above
+run speed (imports use their reference values, originals 1.12 × run speed) that eases into the run by traction.
+Legacy multipliers remain in the data for the TS traces; see FORMAT.md, Momentum.
+
 The walk/run transition uses separate entry and release tilt thresholds (`gait.runThreshold` and
 `walkThreshold`) so pushing farther works after either a slow tilt or a flick, and easing off restores
 walking without oscillation. `gait.dashLock` applies command-specific initial-dash restrictions: the

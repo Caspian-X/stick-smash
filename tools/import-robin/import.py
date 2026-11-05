@@ -9,6 +9,15 @@ skeleton. Run `just import-robin`.
 import copy, hashlib, json, math, re
 from pathlib import Path
 
+# Phase drift (`airAccelMult`) is written as a multiple of the old shared air accels (aerial 0.45, attack 0.25,
+# upSpecial 0.3). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier instead, so drift()
+# stores the value that keeps the same effective acceleration.
+AIR_ACCEL = 0.28
+def drift(legacy, kind):
+    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind]
+    mult = {'aerial': 1.0, 'attack': 0.55, 'upSpecial': 0.65}[kind]
+    return round(legacy * old / (AIR_ACCEL * mult), 4)
+
 ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / 'docs/imports/sources/throbbin'
 source = json.loads((SOURCES / 'scripts.json').read_text())
@@ -730,11 +739,11 @@ moves['sspec'] = {'name': 'Arcfire', 'bReverse': True, 'variants': [
 def elwind(first_blade: bool, second_blade: bool):
     """Source timing: blade 1 on frame 8, blade 2 on frame 28, 85 frames total. Each blade costs one Wind use,
     so one remaining use still gives the first (single-blade) recovery."""
-    startup = [phase('startup', frame(8), airAccelMult=0.2, anim=[{'at': 0, 'pose': 'cast'}], attach=stowed(),
+    startup = [phase('startup', frame(8), airAccelMult=drift(0.2, 'upSpecial'), anim=[{'at': 0, 'pose': 'cast'}], attach=stowed(),
                      events=[{'at': 0, 'setVel': {'x': 0, 'y': 0}, 'sfx': 'charge'}],
                      transitions=[wait('rise1')])]
     # Source: the ledge can be caught from frame 14 on, which is inside the first rise phase.
-    rise1 = phase('rise1', frame(28) - frame(8), airAccelMult=0.4, anim=[{'at': 0, 'pose': 'castHigh'}],
+    rise1 = phase('rise1', frame(28) - frame(8), airAccelMult=drift(0.4, 'upSpecial'), anim=[{'at': 0, 'pose': 'castHigh'}],
                   attach=stowed(), ledgeGrab=frame(14) - frame(8), events=[{'at': 0, 'leaveGround': True}],
                   transitions=[wait('rise2')])
     if first_blade:
@@ -743,7 +752,7 @@ def elwind(first_blade: bool, second_blade: bool):
                             'fx': [{'type': 'ring', 'x': 26, 'y': 24, 'r': 10, 'grow': 6, 'life': 10,
                                     'color': '#8af0bf'}]},
                            {'at': 0, 'setVel': {'y': 12.5}}]
-    rise2 = phase('rise2', frame(85) - frame(28) + 1, airAccelMult=0.4, anim=[{'at': 0, 'pose': 'castHigh'}],
+    rise2 = phase('rise2', frame(85) - frame(28) + 1, airAccelMult=drift(0.4, 'upSpecial'), anim=[{'at': 0, 'pose': 'castHigh'}],
                   attach=stowed(), ledgeGrab=0,
                   transitions=[{'on': 'land', 'to': 'landing', 'lag': 25}, wait('helpless')])
     if second_blade:
@@ -758,7 +767,7 @@ def elwind(first_blade: bool, second_blade: bool):
 moves['uspec'] = {'name': 'Elwind', 'air': 'upSpecial', 'variants': [
     {'needs': {'charge': 'wind', 'uses': 2}, 'phases': elwind(True, True)},
     {'needs': {'charge': 'wind', 'uses': 1}, 'phases': elwind(True, False)}],
-    'phases': [phase('empty', 51, airAccelMult=0.2, anim=[{'at': 0, 'pose': 'cast'}], attach=stowed(),
+    'phases': [phase('empty', 51, airAccelMult=drift(0.2, 'upSpecial'), anim=[{'at': 0, 'pose': 'cast'}], attach=stowed(),
                      events=[{'at': 0, 'sfx': 'swing'}],
                      transitions=[{'on': 'land', 'to': 'landing', 'lag': 25}, wait('helpless')])]}
 
@@ -768,7 +777,7 @@ moves['dspec'] = {'name': 'Nosferatu', 'variants': [
         phase('startup', frame(15), cost={'charge': 'dark', 'uses': 1}, anim=[{'at': 0, 'pose': 'drain'}],
               attach=stowed(), events=[{'at': 0, 'sfx': 'charge'}],
               transitions=[wait('capture')]),
-        phase('capture', 4, airAccelMult=0.2, anim=[{'at': 0, 'pose': 'drain'}], attach=stowed(),
+        phase('capture', 4, airAccelMult=drift(0.2, 'attack'), anim=[{'at': 0, 'pose': 'drain'}], attach=stowed(),
               hitboxes=[{'start': 0, 'end': 3, 'x': 58, 'y': 46, 'r': 34, 'damage': 1.0, 'bkb': 30.0, 'kbg': 1.0,
                          'angle': 60, 'type': 'paralyze', 'setKb': True, 'bkb': 22.0, 'unblockable': True,
                          'hitlagMult': 0.2}],
@@ -778,7 +787,7 @@ moves['dspec'] = {'name': 'Nosferatu', 'variants': [
                               {'type': 'burst', 'x': 58, 'y': 46, 'color': '#c05ce0', 'n': 8, 'speed': 2.5,
                                'life': 10, 'size': 3.0}]}],
               transitions=[{'on': 'hit', 'to': 'drain'}, wait('whiff')]),
-        phase('drain', 35, airAccelMult=0.1, anim=[{'at': 0, 'pose': 'drain'},
+        phase('drain', 35, airAccelMult=drift(0.1, 'attack'), anim=[{'at': 0, 'pose': 'drain'},
                                                    {'at': 20, 'pose': {'from': 'drain', 'handF': [52, 56]}}],
               attach=stowed(),
               hitboxes=[{'start': 0, 'end': 34, 'x': 56, 'y': 44, 'r': 30, 'damage': 2.0, 'bkb': 0.0, 'kbg': 1.0,
@@ -790,7 +799,7 @@ moves['dspec'] = {'name': 'Nosferatu', 'variants': [
                                'size': 2.6, 'color': '#c05ce0'}]}],
               transitions=[wait('end')]),
         # Whiffed capture: the source spends the animation with no further hitboxes.
-        phase('whiff', 31, airAccelMult=0.2, anim=[{'at': 0, 'pose': 'drain'}], attach=stowed(),
+        phase('whiff', 31, airAccelMult=drift(0.2, 'attack'), anim=[{'at': 0, 'pose': 'drain'}], attach=stowed(),
               transitions=[wait('end')]),
     ]}],
     'phases': [phase('empty', 49, anim=[{'at': 0, 'pose': 'drain'}], attach=stowed(),
@@ -958,7 +967,7 @@ doc = {
         'walkSpeed': 3.276, 'runSpeed': 4.4275, 'dashSpeed': 6.3525, 'dashFrames': 15, 'runAccel': 0.62,
         'groundFriction': 0.85,
         'jumpSpeed': 13.2, 'shortHopSpeed': 9.4, 'airJumpSpeed': 13.0, 'airJumpDrift': 3.675, 'airJumps': 1,
-        'airSpeed': 3.675, 'airAccel': 0.28, 'gravity': 0.534, 'fallSpeed': 9.0, 'fastFallSpeed': 14.4,
+        'airSpeed': 3.675, 'airAccel': AIR_ACCEL, 'gravity': 0.534, 'fallSpeed': 9.0, 'fastFallSpeed': 14.4,
     },
     'charges': [
         {'id': 'levin', 'uses': 8, 'recharge': 600, 'emptySfx': 'toss', 'refillSfx': 'ready'},

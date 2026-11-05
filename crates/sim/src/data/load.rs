@@ -1594,6 +1594,11 @@ fn check_stats(file: &str, v: &super::Stats) -> Result<(), ContentError> {
             positive(file, &format!("stats.{name}"), n)?;
         }
     }
+    for (name, n) in [("traction", v.traction), ("airFriction", v.air_friction)] {
+        if let Some(n) = n {
+            nonnegative(file, &format!("stats.{name}"), n)?;
+        }
+    }
     if v.dash_frames == Some(0) {
         return Err(err(file, "stats.dashFrames", "must be positive"));
     }
@@ -1644,6 +1649,20 @@ fn check_movement(file: &str, v: &super::global::Movement) -> Result<(), Content
         nonnegative(file, &format!("movement.{name}"), n)?;
     }
     finite(file, "movement.fastFallMinVy", v.fast_fall_min_vy)?;
+    if let Some(u) = &v.ultimate {
+        for (name, n) in [
+            ("traction", u.traction),
+            ("fastTraction", u.fast_traction),
+            ("attackSlideTraction", u.attack_slide_traction),
+            ("airFriction", u.air_friction),
+            ("aerialAccelMult", u.aerial_accel_mult),
+            ("attackAirAccelMult", u.attack_air_accel_mult),
+            ("upSpecialAccelMult", u.up_special_accel_mult),
+            ("helplessAccelMult", u.helpless_accel_mult),
+        ] {
+            nonnegative(file, &format!("movement.ultimate.{name}"), n)?;
+        }
+    }
     Ok(())
 }
 

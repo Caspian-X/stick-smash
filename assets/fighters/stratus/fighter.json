@@ -3431,7 +3431,7 @@
                 "sword": { "angle": [[0.0, 90.0], [8.0, 120.0], [14.0, 95.0]] }
               },
               "ledgeGrab": 0,
-              "airAccelMult": 0.5,
+              "airAccelMult": 0.9419,
               "transitions": [
                 { "on": "timeout", "to": "hit2", "preserveHits": true }
               ]
@@ -3610,7 +3610,7 @@
                   "hitlagMult": 1.3
                 }
               ],
-              "airAccelMult": 0.3,
+              "airAccelMult": 0.5651,
               "anim": [
                 { "at": 0, "pose": "plunge" }
               ],
@@ -3764,7 +3764,7 @@
             "sword": { "angle": [[0.0, 90.0], [8.0, 120.0], [14.0, 95.0]] }
           },
           "ledgeGrab": 0,
-          "airAccelMult": 0.5,
+          "airAccelMult": 0.9419,
           "transitions": [
             { "on": "timeout", "to": "hit2", "preserveHits": true }
           ]
@@ -3895,7 +3895,7 @@
               "hitlagMult": 1.3
             }
           ],
-          "airAccelMult": 0.3,
+          "airAccelMult": 0.5651,
           "anim": [
             { "at": 0, "pose": "plunge" }
           ],

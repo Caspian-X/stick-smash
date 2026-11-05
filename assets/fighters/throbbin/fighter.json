@@ -2470,7 +2470,7 @@
             {
               "name": "startup",
               "frames": 7,
-              "airAccelMult": 0.2,
+              "airAccelMult": 0.3297,
               "anim": [
                 { "at": 0, "pose": "cast" }
               ],
@@ -2492,7 +2492,7 @@
             {
               "name": "rise1",
               "frames": 20,
-              "airAccelMult": 0.4,
+              "airAccelMult": 0.6593,
               "anim": [
                 { "at": 0, "pose": "castHigh" }
               ],
@@ -2524,7 +2524,7 @@
             {
               "name": "rise2",
               "frames": 58,
-              "airAccelMult": 0.4,
+              "airAccelMult": 0.6593,
               "anim": [
                 { "at": 0, "pose": "castHigh" }
               ],
@@ -2561,7 +2561,7 @@
             {
               "name": "startup",
               "frames": 7,
-              "airAccelMult": 0.2,
+              "airAccelMult": 0.3297,
               "anim": [
                 { "at": 0, "pose": "cast" }
               ],
@@ -2583,7 +2583,7 @@
             {
               "name": "rise1",
               "frames": 20,
-              "airAccelMult": 0.4,
+              "airAccelMult": 0.6593,
               "anim": [
                 { "at": 0, "pose": "castHigh" }
               ],
@@ -2615,7 +2615,7 @@
             {
               "name": "rise2",
               "frames": 58,
-              "airAccelMult": 0.4,
+              "airAccelMult": 0.6593,
               "anim": [
                 { "at": 0, "pose": "castHigh" }
               ],
@@ -2636,7 +2636,7 @@
         {
           "name": "empty",
           "frames": 51,
-          "airAccelMult": 0.2,
+          "airAccelMult": 0.3297,
           "anim": [
             { "at": 0, "pose": "cast" }
           ],
@@ -2681,7 +2681,7 @@
             {
               "name": "capture",
               "frames": 4,
-              "airAccelMult": 0.2,
+              "airAccelMult": 0.3247,
               "anim": [
                 { "at": 0, "pose": "drain" }
               ],
@@ -2734,7 +2734,7 @@
             {
               "name": "drain",
               "frames": 35,
-              "airAccelMult": 0.1,
+              "airAccelMult": 0.1623,
               "anim": [
                 { "at": 0, "pose": "drain" },
                 {
@@ -2791,7 +2791,7 @@
             {
               "name": "whiff",
               "frames": 31,
-              "airAccelMult": 0.2,
+              "airAccelMult": 0.3247,
               "anim": [
                 { "at": 0, "pose": "drain" }
               ],

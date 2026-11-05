@@ -72,7 +72,8 @@ too) is stored on the fighter as a separate launch vector. Reference knockback i
 - the launch vector's magnitude shrinks by `launchDecay` × launchSpeed px (reference units per frame; Ultimate
   0.051 / 0.03 = 1.7, ≈ 0.238 px at launchSpeed 0.14), never past zero;
 - the fighter's own component gets the victim's `stats.gravity`, capped at its `stats.fallSpeed`, and the stick
-  accelerates it by `hitstun.driftAccel` up to `stats.airSpeed` (otherwise `movement.airDrag`);
+  accelerates it by `hitstun.driftAccel` up to `stats.airSpeed` (otherwise air friction under
+  `movement.ultimate`, or `movement.airDrag`);
 - `vx`/`vy` stay the sum, so a spike keeps its full speed with no fall cap on the launch part.
 
 On the ground (non-tumble landing) the launch is cleared and `groundDrag` / `driftAccel` apply to the whole
@@ -121,9 +122,9 @@ next phase's frame 0 is that same tick. A one-phase move with `frames: N` lasts 
 5. **Step transitions**, in list order, first match wins: `timeout`, `grounded`, `airborne`, `falling`,
    `release`, `attackHeld`, `targetNear`, `shieldPress`. A phase with `frames` and no `timeout` transition ends
    the move on timeout.
-6. **Movement** with the current phase (after any transition). Grounded: attack friction (`slide` frames use slide
-   friction), gravity, ground snap with edge stop. Airborne: drift with the move's `air` accel × `airAccelMult`,
-   fast-fall if `air: "aerial"`, gravity capped by `fallCap` (else fast-fall or fall speed), `hover` zeroes vertical
+6. **Movement** with the current phase (after any transition). Grounded: attack friction or traction (`slide`
+   frames use the slide value; see Momentum), gravity, ground snap with edge stop. Airborne: drift with the move's
+   `air` accel × `airAccelMult`, fast-fall if `air: "aerial"`, gravity capped by `fallCap` (else fast-fall or fall speed), `hover` zeroes vertical
    speed, integrate. Landing fires `land` transitions. Ledges can be grabbed from phase frame `ledgeGrab` on, even
    while rising.
 7. **Hit pass** (after every fighter has stepped): hitboxes of the current phase active on its current frame.
@@ -390,6 +391,34 @@ Each fighter's `ai` contains:
 
 A projectile's `name` is its training hit label. The first two arena respawn points both use the reference
 center position; additional player slots have their own points.
+
+### Momentum (`global.movement.ultimate`)
+
+With `movement.ultimate` present, horizontal speed changes by fixed amounts per frame (px/frame², Ultimate units
+× 3.5) instead of by multipliers. Without it (TS traces) the multipliers marked *Legacy* in the schema apply:
+`stats.groundFriction`, `gait.turnFriction`/`brakeFriction`, `sim.jumpsquatFriction`/`landingFriction`/
+`shieldFriction`, `movement.attackFriction`/`attackSlideFriction`, `airDrag`/`airDragHeld`/`attackAirDrag`, the
+shared `aerialAccel`/`attackAirAccel`/`upSpecialAccel`/`helplessAccel` and `fastFallKick`. Those fields stay
+required so legacy data loads; the new model ignores them.
+
+- **Traction** (`stats.traction`, default `ultimate.traction` 0.35 ≈ Mario's 0.1): |vx| drops toward zero by
+  traction per frame in idle, crouch, brake, turn skid, jumpsquat, landing lag, dizzy, grab hold, throws, shield
+  and grounded attacks, times `fastTraction` (2) while faster than the fighter's walk speed. A grounded attack
+  phase's `slide` frames multiply it by `attackSlideTraction` (0.5). Dodge, knockdown, shield-break and hitstun
+  ground drag stay multiplicative.
+- **Air friction** (`stats.airFriction`, default `ultimate.airFriction` 0.035): with the stick neutral (or no air
+  control in the phase) |vx| drops toward zero by it; with the stick held and |vx| at or below `airSpeed` × tilt
+  the fighter accelerates by its air accel × tilt up to that cap (opposite stick accelerates against the motion);
+  above the cap |vx| drops toward the cap by air friction and is never clamped. The same rule runs in the air
+  state, helpless fall, air dodges, attacks, specials and the own component of hitstun drift, so starting an
+  aerial does not change momentum.
+- **Air control** is fighter-relative: `stats.airAccel` × `aerialAccelMult` (1) for `air: "aerial"` moves,
+  `attackAirAccelMult` (0.55) for `air: "attack"`, `upSpecialAccelMult` (0.65) for `air: "upSpecial"` and
+  `helplessAccelMult` (0.65) in helpless fall and air dodges, times the phase `airAccelMult`. Bundled phase values
+  were migrated to keep their old effective acceleration: new = old × legacy accel / (airAccel × kind multiplier).
+- **Fast fall** sets vertical speed to the fighter's `fastFallSpeed` at once (still capped by a phase `fallCap`).
+- **Initial dash** holds `stats.dashSpeed` (default runSpeed × `gait.dashSpeed` 1.12) for its frames; a faster
+  fighter entering the run then slows toward `runSpeed` by its traction instead of snapping to it.
 
 ## Match and input snapshots
 

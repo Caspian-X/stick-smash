@@ -157,6 +157,15 @@ previous source timing; lighter charges unlock follow-ups, including up special 
 sooner. This charge-dependent recovery is a requested adaptation, not an extracted Ultimate rule.
 `mike_quickdraw_tuning.rs` covers saturated holds, travel extrema, momentum, recovery and buffered up B.
 
+### Momentum migration
+
+Under the subtractive momentum model (`movement.ultimate`, FORMAT.md) Mike's initial dash is Ike's 1.76 × 3.5 =
+6.16 (`stats.dashSpeed`), easing into the 5.2745 run. Aerials drop the per-phase 0.389 drift correction
+(0.175 / the old shared 0.45): they now use `airAccel` 0.175 directly. Aether's air phases keep their previous
+effective drift (0.45 × the old 0.3 → 1.1868 × 0.175 × 0.65). Quickdraw's rush speed is refitted to 12.0667 with
+chargeVelocity 0.020227 so slide traction (0.35 per tick) still gives exactly 75% and 100% of the former ground
+distances.
+
 ### Aether capture correction
 
 The rising hit previously used one small sphere above Mike's head. The numeric `SpecialHi2` script

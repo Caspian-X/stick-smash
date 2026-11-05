@@ -1888,7 +1888,7 @@
         {
           "name": "airRecover",
           "frames": 37,
-          "airAccelMult": 0.4,
+          "airAccelMult": 0.9802,
           "anim": [
             { "at": 0, "pose": "thrust" },
             { "at": 12, "pose": "air", "lerp": true }
@@ -1909,7 +1909,7 @@
         {
           "name": "startup",
           "frames": 8,
-          "airAccelMult": 0.2,
+          "airAccelMult": 0.4976,
           "ledgeGrab": 6,
           "tether": { "x1": 30, "x2": 210, "y1": 20, "y2": 160 },
           "anim": [
@@ -1948,7 +1948,7 @@
               "frames": [[1, 62, 82, 22], [4, 94, 122, 22], [8, 116, 152, 20]]
             }
           ],
-          "airAccelMult": 0.3,
+          "airAccelMult": 0.7464,
           "ledgeGrab": 0,
           "tether": { "x1": 30, "x2": 210, "y1": 20, "y2": 160 },
           "anim": [
@@ -1967,7 +1967,7 @@
         {
           "name": "rise",
           "frames": 29,
-          "airAccelMult": 0.4,
+          "airAccelMult": 0.9952,
           "ledgeGrab": 0,
           "anim": [
             { "at": 0, "pose": "airHigh" }

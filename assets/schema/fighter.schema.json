@@ -89,21 +89,43 @@
         },
         "runSpeed": { "type": "number", "format": "double" },
         "runAccel": { "type": "number", "format": "double" },
-        "dashSpeed": { "type": ["number", "null"], "format": "double" },
+        "dashSpeed": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Initial dash speed, held for dashFrames, then easing into the run (default runSpeed × gait.dashSpeed)."
+        },
         "dashFrames": { "type": ["integer", "null"], "format": "uint32", "minimum": 0 },
         "walkSpeed": {
           "type": ["number", "null"],
           "format": "double",
           "description": "Full-tilt walk speed; defaults to runSpeed × gait.walkSpeed."
         },
-        "groundFriction": { "type": "number", "format": "double" },
+        "groundFriction": {
+          "type": "number",
+          "format": "double",
+          "description": "Legacy (no `movement.ultimate`): idle and crouch velocity multiplier per frame."
+        },
+        "traction": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Grounded slowdown in px/frame² with `movement.ultimate` (default its `traction`; Ultimate traction × 3.5)."
+        },
         "jumpSpeed": { "type": "number", "format": "double", "description": "Full hop launch speed (upward)." },
         "shortHopSpeed": { "type": "number", "format": "double" },
         "airJumpSpeed": { "type": "number", "format": "double" },
         "airJumpDrift": { "type": "number", "format": "double" },
         "airJumps": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Mid-air jumps." },
         "airSpeed": { "type": "number", "format": "double" },
-        "airAccel": { "type": "number", "format": "double" },
+        "airAccel": {
+          "type": "number",
+          "format": "double",
+          "description": "Air drift acceleration (px/frame²). With `movement.ultimate` it also drives attacks, up specials and helpless\nfall, times that movement's per-kind multiplier and the phase `airAccelMult`."
+        },
+        "airFriction": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Airborne slowdown in px/frame² with `movement.ultimate`: toward zero with the stick neutral, toward airSpeed\nwhen above it (default its `airFriction`; Ultimate air friction × 3.5)."
+        },
         "gravity": { "type": "number", "format": "double" },
         "fallSpeed": { "type": "number", "format": "double" },
         "fastFallSpeed": { "type": "number", "format": "double" },
@@ -519,9 +541,21 @@
     },
     "AirControl": {
       "oneOf": [
-        { "type": "string", "const": "attack", "description": "`attackAirAccel`." },
-        { "type": "string", "const": "aerial", "description": "`aerialAccel`, and the move can fast-fall." },
-        { "type": "string", "const": "upSpecial", "description": "`upSpecialAccel`." }
+        {
+          "type": "string",
+          "const": "attack",
+          "description": "`attackAirAccel` (`ultimate.attackAirAccelMult` × airAccel)."
+        },
+        {
+          "type": "string",
+          "const": "aerial",
+          "description": "`aerialAccel` (`ultimate.aerialAccelMult` × airAccel), and the move can fast-fall."
+        },
+        {
+          "type": "string",
+          "const": "upSpecial",
+          "description": "`upSpecialAccel` (`ultimate.upSpecialAccelMult` × airAccel)."
+        }
       ],
       "description": "Which global air acceleration a move uses while airborne (`global.movement`)."
     },
@@ -648,7 +682,7 @@
         "airAccelMult": {
           "type": "number",
           "format": "double",
-          "description": "Multiplies the move's air acceleration (0 = no drift control)."
+          "description": "Multiplies the move's air acceleration (0 = no drift control): with `movement.ultimate` that is the fighter's\nairAccel × the `air` kind's multiplier, otherwise the shared legacy accel."
         },
         "detection": {
           "anyOf": [
@@ -661,7 +695,7 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Grounded: phase frames below this use `attackSlideFriction` instead of `attackFriction` (dash attacks)."
+          "description": "Grounded: phase frames below this use `attackSlideFriction` instead of `attackFriction` (dash attacks), or\ntraction × `attackSlideTraction` with `movement.ultimate`."
         },
         "ledgeGrab": {
           "type": ["integer", "null"],
@@ -2213,21 +2247,43 @@
         },
         "runSpeed": { "type": "number", "format": "double" },
         "runAccel": { "type": "number", "format": "double" },
-        "dashSpeed": { "type": ["number", "null"], "format": "double" },
+        "dashSpeed": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Initial dash speed, held for dashFrames, then easing into the run (default runSpeed × gait.dashSpeed)."
+        },
         "dashFrames": { "type": ["integer", "null"], "format": "uint32", "minimum": 0 },
         "walkSpeed": {
           "type": ["number", "null"],
           "format": "double",
           "description": "Full-tilt walk speed; defaults to runSpeed × gait.walkSpeed."
         },
-        "groundFriction": { "type": "number", "format": "double" },
+        "groundFriction": {
+          "type": "number",
+          "format": "double",
+          "description": "Legacy (no `movement.ultimate`): idle and crouch velocity multiplier per frame."
+        },
+        "traction": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Grounded slowdown in px/frame² with `movement.ultimate` (default its `traction`; Ultimate traction × 3.5)."
+        },
         "jumpSpeed": { "type": "number", "format": "double", "description": "Full hop launch speed (upward)." },
         "shortHopSpeed": { "type": "number", "format": "double" },
         "airJumpSpeed": { "type": "number", "format": "double" },
         "airJumpDrift": { "type": "number", "format": "double" },
         "airJumps": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Mid-air jumps." },
         "airSpeed": { "type": "number", "format": "double" },
-        "airAccel": { "type": "number", "format": "double" },
+        "airAccel": {
+          "type": "number",
+          "format": "double",
+          "description": "Air drift acceleration (px/frame²). With `movement.ultimate` it also drives attacks, up specials and helpless\nfall, times that movement's per-kind multiplier and the phase `airAccelMult`."
+        },
+        "airFriction": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Airborne slowdown in px/frame² with `movement.ultimate`: toward zero with the stick neutral, toward airSpeed\nwhen above it (default its `airFriction`; Ultimate air friction × 3.5)."
+        },
         "gravity": { "type": "number", "format": "double" },
         "fallSpeed": { "type": "number", "format": "double" },
         "fastFallSpeed": { "type": "number", "format": "double" },
@@ -2423,9 +2479,21 @@
     },
     "AirControlPartial": {
       "oneOf": [
-        { "type": "string", "const": "attack", "description": "`attackAirAccel`." },
-        { "type": "string", "const": "aerial", "description": "`aerialAccel`, and the move can fast-fall." },
-        { "type": "string", "const": "upSpecial", "description": "`upSpecialAccel`." }
+        {
+          "type": "string",
+          "const": "attack",
+          "description": "`attackAirAccel` (`ultimate.attackAirAccelMult` × airAccel)."
+        },
+        {
+          "type": "string",
+          "const": "aerial",
+          "description": "`aerialAccel` (`ultimate.aerialAccelMult` × airAccel), and the move can fast-fall."
+        },
+        {
+          "type": "string",
+          "const": "upSpecial",
+          "description": "`upSpecialAccel` (`ultimate.upSpecialAccelMult` × airAccel)."
+        }
       ],
       "description": "Which global air acceleration a move uses while airborne (`global.movement`)."
     },

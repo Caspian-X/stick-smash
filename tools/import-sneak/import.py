@@ -15,6 +15,15 @@ import math
 import re
 from pathlib import Path
 
+# Phase drift (`airAccelMult`) is written as a multiple of the old shared air accels (aerial 0.45, attack 0.25,
+# upSpecial 0.3). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier instead, so drift()
+# stores the value that keeps the same effective acceleration.
+AIR_ACCEL = 0.105
+def drift(legacy, kind):
+    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind]
+    mult = {'aerial': 1.0, 'attack': 0.55, 'upSpecial': 0.65}[kind]
+    return round(legacy * old / (AIR_ACCEL * mult), 4)
+
 ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / 'docs/imports/sources/sneak'
 source = json.loads((SOURCES / 'scripts.json').read_text())
@@ -658,7 +667,7 @@ moves['sspec'] = {'name': 'Nikita', 'b_reverse': True, 'phases': [
         {'at': 0, 'pose': 'guard'}, {'at': 8, 'pose': 'kneel', 'lerp': True}, {'at': 40, 'pose': 'kneel'}],
         attach={'mortar': {'show': [0, 40]}}, events=[{'at': src(7), 'sfx': 'swing'}],
         transitions=[{'on': 'timeout', 'to': 'guide'}]),
-    phase('guide', 200, air_accel_mult=0.15, anim=[{'at': 0, 'pose': 'kneel'}],
+    phase('guide', 200, air_accel_mult=drift(0.15, 'attack'), anim=[{'at': 0, 'pose': 'kneel'}],
           events=[{'at': 0, 'spawn': 'nikita', 'sfx': 'shoot'}],
           transitions=[{'on': 'shieldPress', 'to': 'away'},
                        {'on': 'articleRelease', 'to': 'fire'},
@@ -676,7 +685,7 @@ moves['uspec'] = {'name': 'Cypher', 'air': 'upSpecial', 'phases': [
     phase('startup', 3, anim=[{'at': 0, 'pose': 'guard'}, {'at': 3, 'pose': 'ride'}],
           events=[{'at': 0, 'sfx': 'swing'}], transitions=[{'on': 'timeout', 'to': 'rise'}]),
     # The rise phase begins on source frame 4, so its frame = source frame - 4.
-    phase('rise', 86, armor_threshold=7, ledge_grab=src(14) - 3, air_accel_mult=0.4,
+    phase('rise', 86, armor_threshold=7, ledge_grab=src(14) - 3, air_accel_mult=drift(0.4, 'upSpecial'),
           attach={'cypher': {'show': [0, 85]}},
           anim=[{'at': 0, 'pose': 'ride'}],
           events=[{'at': 0, 'leave_ground': True, 'sfx': 'jet'},
@@ -824,7 +833,7 @@ stats = {
     'walkSpeed': 3.087, 'runSpeed': 5.5825, 'dashSpeed': 6.16, 'dashFrames': 14, 'runAccel': 0.62,
     'groundFriction': 0.82,
     'jumpSpeed': 13.0, 'shortHopSpeed': 9.0, 'airJumpSpeed': 12.6, 'airJumpDrift': 3.455, 'airJumps': 1,
-    'airSpeed': 3.455, 'airAccel': 0.105, 'gravity': 0.48, 'fallSpeed': 10.38, 'fastFallSpeed': 16.608,
+    'airSpeed': 3.455, 'airAccel': AIR_ACCEL, 'gravity': 0.48, 'fallSpeed': 10.38, 'fastFallSpeed': 16.608,
 }
 doc = {
     '$schema': '../../schema/fighter.schema.json',

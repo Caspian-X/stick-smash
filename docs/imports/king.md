@@ -239,3 +239,5 @@ general rules.
 
 Naming decision (2026-11-04): the display name is **Gordo Ramsay**, formerly Penguin King. Package id
 `king`, directory, tools, pinned sources and `25*`/`27*` screenshot names remain unchanged.
+
+Momentum migration (2026-11-04): no phase sets `airAccelMult`, so drift now uses the fighter's airAccel × the `movement.ultimate` kind multipliers; regeneration is unchanged.

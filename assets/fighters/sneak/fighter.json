@@ -2130,7 +2130,7 @@
         {
           "name": "guide",
           "frames": 200,
-          "airAccelMult": 0.15,
+          "airAccelMult": 0.6494,
           "anim": [
             { "at": 0, "pose": "kneel" }
           ],
@@ -2195,7 +2195,7 @@
           "frames": 86,
           "armorThreshold": 7,
           "ledgeGrab": 10,
-          "airAccelMult": 0.4,
+          "airAccelMult": 1.7582,
           "attach": {
             "cypher": { "show": [0, 85] }
           },

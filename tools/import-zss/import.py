@@ -2,6 +2,15 @@
 """Rebuild Whiplash's Zero Suit Samus adaptation from pinned scripts and documented authoring rules."""
 import copy, hashlib, json, math, re
 from pathlib import Path
+
+# Phase drift (`airAccelMult`) is written as a multiple of the old shared air accels (aerial 0.45, attack 0.25,
+# upSpecial 0.3). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier instead, so drift()
+# stores the value that keeps the same effective acceleration.
+AIR_ACCEL = .095 * 3.5
+def drift(legacy, kind):
+    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind]
+    mult = {'aerial': 1.0, 'attack': 0.55, 'upSpecial': 0.65}[kind]
+    return round(legacy * old / (AIR_ACCEL * mult), 4)
 ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / 'docs/imports/sources/whiplash'
 source = json.loads((SOURCES / 'scripts.json').read_text())
@@ -256,7 +265,7 @@ for kind,script in [('ground','SpecialHi'),('air','SpecialAirHi')]:
         if b['start']==12:b['rehit']=4
         if b['start']==28:b['rehit']=1
         if b['start']==34:b['rehit']=4
-    ph=phase(kind,76,cut(bs,1,76),airAccelMult=.75,ledgeGrab=16,anim=[{'at':0,'pose':'airKick'},{'at':5,'pose':'airKick'},{'at':11,'pose':'verticalKick','lerp':True},{'at':23,'pose':'verticalKick'},{'at':27,'pose':'airKick','lerp':True},{'at':33,'pose':{**airkick,'kneeF':[28,55],'footF':[55,62.5]},'lerp':True},{'at':34,'pose':{**airkick,'kneeF':[28,55],'footF':[55,62.5]}},{'at':44,'pose':'air','lerp':True}],events=[{'at':5,'setVel':{'y':23.4,'x':1.6},'leaveGround':True,'sfx':'jet'},{'at':11,'setVel':{'y':15.6}},{'at':27,'setVel':{'x':4.8,'y':1.2}},{'at':33,'sfx':'smash'}],transitions=[land(30),timeout('helpless')])
+    ph=phase(kind,76,cut(bs,1,76),airAccelMult=drift(.75, 'upSpecial'),ledgeGrab=16,anim=[{'at':0,'pose':'airKick'},{'at':5,'pose':'airKick'},{'at':11,'pose':'verticalKick','lerp':True},{'at':23,'pose':'verticalKick'},{'at':27,'pose':'airKick','lerp':True},{'at':33,'pose':{**airkick,'kneeF':[28,55],'footF':[55,62.5]},'lerp':True},{'at':34,'pose':{**airkick,'kneeF':[28,55],'footF':[55,62.5]}},{'at':44,'pose':'air','lerp':True}],events=[{'at':5,'setVel':{'y':23.4,'x':1.6},'leaveGround':True,'sfx':'jet'},{'at':11,'setVel':{'y':15.6}},{'at':27,'setVel':{'x':4.8,'y':1.2}},{'at':33,'sfx':'smash'}],transitions=[land(30),timeout('helpless')])
     moves['uspec']['phases'].append(ph)
 # Flip Jump is an independent one-use resource. The contact trigger below the feet chooses the stomp.
 kickbs=boxes('kick','SpecialAirLwKick')
@@ -286,10 +295,10 @@ anims={
 }
 
 moves['dspec']={'name':'Flip Jump','oncePerAirtime':True,'phases':[
- phase('flip',38,airAccelMult=3,passPlatforms=True,ledgeGrab=13,detection={'x1':-16,'x2':16,'y1':-22,'y2':5},events=[{'at':0,'setVel':{'x':7.5,'y':12.6},'leaveGround':True,'sfx':'jump'},{'at':3,'invuln':10},{'at':38,'turn':True}],anim=flipanim,transitions=[{'on':'attackPress','from':14,'to':'kick'},{'on':'specialPress','from':14,'to':'kick'},{'on':'targetNear','from':19,'to':'stomp'},timeout('end')]),
- phase('kick',59,kickbs,airAccelMult=.3,fallCap=20,anim=[{'at':0,'pose':'flipTuck'},{'at':7,'pose':'flipTuck'},{'at':9,'pose':'flipKick','lerp':True},{'at':12,'pose':'flipKick'},{'at':18,'pose':'flipTuck','lerp':True},{'at':28,'pose':'flipTuck'},{'at':38,'pose':'flipRecover','lerp':True},{'at':50,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':7,'y':-3}},{'at':9,'setVel':{'x':10,'y':-8},'sfx':'smash'}],transitions=[{'on':'hit','to':'kickBounce'}, {'on':'land','to':'land'}]),
- phase('stomp',58,stompbs,airAccelMult=.8,ledgeGrab=2,anim=[{'at':0,'pose':'dive'},{'at':10,'pose':{'from':'air','rot':-180},'lerp':True},{'at':35,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':2,'y':12},'sfx':'djump'}],transitions=[{'on':'land','to':'end'}]),
- phase('kickBounce',49,airAccelMult=.8,ledgeGrab=1,anim=[{'at':0,'pose':'flipBounce'},{'at':20,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':-3,'y':11}}],transitions=[{'on':'land','to':'land'}]),
+ phase('flip',38,airAccelMult=drift(3, 'attack'),passPlatforms=True,ledgeGrab=13,detection={'x1':-16,'x2':16,'y1':-22,'y2':5},events=[{'at':0,'setVel':{'x':7.5,'y':12.6},'leaveGround':True,'sfx':'jump'},{'at':3,'invuln':10},{'at':38,'turn':True}],anim=flipanim,transitions=[{'on':'attackPress','from':14,'to':'kick'},{'on':'specialPress','from':14,'to':'kick'},{'on':'targetNear','from':19,'to':'stomp'},timeout('end')]),
+ phase('kick',59,kickbs,airAccelMult=drift(.3, 'attack'),fallCap=20,anim=[{'at':0,'pose':'flipTuck'},{'at':7,'pose':'flipTuck'},{'at':9,'pose':'flipKick','lerp':True},{'at':12,'pose':'flipKick'},{'at':18,'pose':'flipTuck','lerp':True},{'at':28,'pose':'flipTuck'},{'at':38,'pose':'flipRecover','lerp':True},{'at':50,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':7,'y':-3}},{'at':9,'setVel':{'x':10,'y':-8},'sfx':'smash'}],transitions=[{'on':'hit','to':'kickBounce'}, {'on':'land','to':'land'}]),
+ phase('stomp',58,stompbs,airAccelMult=drift(.8, 'attack'),ledgeGrab=2,anim=[{'at':0,'pose':'dive'},{'at':10,'pose':{'from':'air','rot':-180},'lerp':True},{'at':35,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':2,'y':12},'sfx':'djump'}],transitions=[{'on':'land','to':'end'}]),
+ phase('kickBounce',49,airAccelMult=drift(.8, 'attack'),ledgeGrab=1,anim=[{'at':0,'pose':'flipBounce'},{'at':20,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':-3,'y':11}}],transitions=[{'on':'land','to':'land'}]),
  phase('land',35,anim=[{'at':0,'pose':'sweep'},{'at':23,'pose':'stand','lerp':True}]) ]}
 throws={}
 for key,script,release,total,pre,dmg in [('f','ThrowF',9,25,8,5),('b','ThrowB',11,27,9,2),('u','ThrowHi',5,40,3,2),('d','ThrowLw',22,51,20,4)]:
@@ -344,7 +353,7 @@ for slot in ['grab','dashgrab']:
     track['show'][1]=end+12
     track['scale'].extend([[end+6, .35], [end+12, .02]])
 
-fighter={'$schema':'../../schema/fighter.schema.json','schemaVersion':1,'extends':'base','name':'Whiplash','tagline':'Never where you expected','blurb':'A Zero Suit Samus-inspired acrobat: swift kicks, plasma tethers, paralysis and a slippery Flip Jump. Use grab in the air for a tether attack; press attack or special during Flip Jump for its diving kick.','stats':{'weight':1.25,'pummelDamage':1.3,'walkSpeed':1.47*3.5,'runSpeed':2.31*3.5,'dashSpeed':2.42*3.5,'dashFrames':13,'runAccel':.45,'groundFriction':.84,'airSpeed':1.26*3.5,'airAccel':.095*3.5,'gravity':.12*6,'fallSpeed':1.7*6,'fastFallSpeed':2.72*6,'jumpSpeed':18.1,'shortHopSpeed':12.4,'airJumpSpeed':18.0,'airJumpDrift':4.41},'body':{'halfWidth':13,'height':74},'hurtboxes':{'default':{'x1':-14,'x2':14,'y1':0,'y2':77},'knockdown':{'x1':-29,'x2':29,'y1':0,'y2':16}},'style':{'torsoWidth':5,'frontLimbWidth':5,'backLimbWidth':4.5},'ai':{'reach':72,'counterChance':0,'specials':[{'minDistance':160,'maxDistance':390,'height':75,'chance':.2,'grounded':True,'noProjectile':False,'down':False,'hold':[0,22]}]},'poses':poses,'anims':anims,'moves':moves,'throws':throws,'projectiles':projectiles,'attachments':attachments}
+fighter={'$schema':'../../schema/fighter.schema.json','schemaVersion':1,'extends':'base','name':'Whiplash','tagline':'Never where you expected','blurb':'A Zero Suit Samus-inspired acrobat: swift kicks, plasma tethers, paralysis and a slippery Flip Jump. Use grab in the air for a tether attack; press attack or special during Flip Jump for its diving kick.','stats':{'weight':1.25,'pummelDamage':1.3,'walkSpeed':1.47*3.5,'runSpeed':2.31*3.5,'dashSpeed':2.42*3.5,'dashFrames':13,'runAccel':.45,'groundFriction':.84,'airSpeed':1.26*3.5,'airAccel':AIR_ACCEL,'gravity':.12*6,'fallSpeed':1.7*6,'fastFallSpeed':2.72*6,'jumpSpeed':18.1,'shortHopSpeed':12.4,'airJumpSpeed':18.0,'airJumpDrift':4.41},'body':{'halfWidth':13,'height':74},'hurtboxes':{'default':{'x1':-14,'x2':14,'y1':0,'y2':77},'knockdown':{'x1':-29,'x2':29,'y1':0,'y2':16}},'style':{'torsoWidth':5,'frontLimbWidth':5,'backLimbWidth':4.5},'ai':{'reach':72,'counterChance':0,'specials':[{'minDistance':160,'maxDistance':390,'height':75,'chance':.2,'grounded':True,'noProjectile':False,'down':False,'hold':[0,22]}]},'poses':poses,'anims':anims,'moves':moves,'throws':throws,'projectiles':projectiles,'attachments':attachments}
 (ROOT/'assets/fighters/whiplash/fighter.json').write_text(json.dumps(fighter,indent=2)+'\n')
 (SOURCES/'ledger.json').write_text(json.dumps({'sourceCommit':source['commit'],'geometryScale':5,'rawAttackLedger':ledger,'gameplay':{'url':'https://ultimateframedata.com/zero_suit_samus','accessed':'2026-11-02','moves':{slot:{'name':m['name'],'phases':[(p['name'],p['frames']) for p in m['phases']]} for slot,m in moves.items()}}},indent=2)+'\n')
 print('Rebuilt Whiplash from pinned scripts and fitted poses; run just bless to normalize content.')

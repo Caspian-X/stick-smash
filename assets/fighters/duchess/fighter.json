@@ -2891,7 +2891,7 @@
             }
           ],
           "fallCap": 2.0,
-          "airAccelMult": 1.2,
+          "airAccelMult": 1.3187,
           "ledgeGrab": 0,
           "anim": [
             { "at": 0, "pose": "parasol" },

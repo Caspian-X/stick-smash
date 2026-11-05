@@ -12,7 +12,8 @@
     "airAccel": 0.58,
     "jumpSpeed": 15.5,
     "gravity": 0.68,
-    "fallSpeed": 10
+    "fallSpeed": 10,
+    "dashSpeed": 7.168
   },
   "ai": {
     "reach": 82,
@@ -1794,13 +1795,13 @@
             "kite": { "show": [0, 28] },
             "bow": { "angle": [[0, 90]] }
           },
-          "airAccelMult": 1.4
+          "airAccelMult": 1.1141
         },
         {
           "name": "glide",
           "frames": 20,
           "fallCap": 2,
-          "airAccelMult": 1.6,
+          "airAccelMult": 1.2732,
           "ledgeGrab": 0,
           "anim": [
             { "at": 0, "pose": "air" }

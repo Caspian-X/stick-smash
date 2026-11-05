@@ -12,7 +12,8 @@
     "airSpeed": 5.5,
     "airAccel": 0.6,
     "airJumps": 2,
-    "airJumpSpeed": 11.7
+    "airJumpSpeed": 11.7,
+    "dashSpeed": 8.288
   },
   "moves": {
     "jab": {
@@ -1616,7 +1617,7 @@
             { "at": 0, "pose": "curl" },
             { "at": 12, "pose": "air", "lerp": true }
           ],
-          "airAccelMult": 2
+          "airAccelMult": 1.5385
         }
       ]
     },

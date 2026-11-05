@@ -57,7 +57,9 @@ fn slow_tilt_walks_proportionally_and_a_flick_dashes_into_a_run() {
     assert!((w.fighters[0].vx - walk * 0.5).abs() < 0.02);
     run(&mut w, &d, 20, inp(0, 0, 0));
     assert!(tick(&mut w, &d, inp(127, 0, 0)).contains(&Action::Dash));
-    assert_eq!(w.fighters[0].vx, s.run_speed * d.global.gait.dash_speed);
+    // Mike authors an initial dash burst (Ike's 1.76 × 3.5) above his run speed.
+    assert_eq!(w.fighters[0].vx, s.dash_speed.unwrap());
+    assert!(s.dash_speed.unwrap() > s.run_speed);
     run(&mut w, &d, d.global.gait.dash_frames as usize, inp(127, 0, 0));
     assert_eq!(w.fighters[0].gait, Gait::Run);
     // Dash dance: flick back during a dash.

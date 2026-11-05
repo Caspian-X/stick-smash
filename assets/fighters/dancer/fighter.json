@@ -1263,7 +1263,7 @@
           "transitions": [
             { "on": "timeout", "to": "finish" }
           ],
-          "airAccelMult": 0.6,
+          "airAccelMult": 0.4959,
           "slide": 24
         },
         {
@@ -1587,7 +1587,8 @@
     "shortHopSpeed": 11,
     "airSpeed": 5.3,
     "airAccel": 0.55,
-    "gravity": 0.7
+    "gravity": 0.7,
+    "dashSpeed": 7.616
   },
   "ai": {
     "reach": 70,

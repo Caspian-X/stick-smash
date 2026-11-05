@@ -105,12 +105,12 @@
         "airDrag": {
           "type": "number",
           "format": "double",
-          "description": "Air drift when no direction is held (multiplier per frame)."
+          "description": "Legacy: air drift when no direction is held (multiplier per frame)."
         },
         "airDragHeld": {
           "type": "number",
           "format": "double",
-          "description": "Air drift multiplier when a direction is held but already at max speed."
+          "description": "Legacy: air drift multiplier when a direction is held but already at max speed."
         },
         "fastFallMinVy": {
           "type": "number",
@@ -120,34 +120,38 @@
         "fastFallKick": {
           "type": "number",
           "format": "double",
-          "description": "Downward speed applied the frame you fast fall."
+          "description": "Legacy: downward speed applied the frame you fast fall (`ultimate` sets the fighter's fastFallSpeed at once)."
         },
         "attackAirAccel": {
           "type": "number",
           "format": "double",
-          "description": "Air accel for moves with `air: \"attack\"`."
+          "description": "Legacy: air accel for moves with `air: \"attack\"`."
         },
         "aerialAccel": {
           "type": "number",
           "format": "double",
-          "description": "Air accel for moves with `air: \"aerial\"`."
+          "description": "Legacy: air accel for moves with `air: \"aerial\"`."
         },
-        "helplessAccel": { "type": "number", "format": "double" },
+        "helplessAccel": {
+          "type": "number",
+          "format": "double",
+          "description": "Legacy: air accel in helpless fall and air dodges."
+        },
         "upSpecialAccel": {
           "type": "number",
           "format": "double",
-          "description": "Air accel for moves with `air: \"upSpecial\"`."
+          "description": "Legacy: air accel for moves with `air: \"upSpecial\"`."
         },
         "attackFriction": {
           "type": "number",
           "format": "double",
-          "description": "Ground friction multiplier during attacks; `slide` frames use attackSlideFriction."
+          "description": "Legacy: ground friction multiplier during attacks; `slide` frames use attackSlideFriction."
         },
         "attackSlideFriction": { "type": "number", "format": "double" },
         "attackAirDrag": {
           "type": "number",
           "format": "double",
-          "description": "Air drift multiplier during attacks when not accelerating."
+          "description": "Legacy: air drift multiplier during attacks when not accelerating."
         },
         "platformDrop": {
           "type": "integer",
@@ -183,6 +187,13 @@
           "format": "uint32",
           "minimum": 0,
           "description": "Frames after a `bReverse` move starts in which pressing the other direction turns it around."
+        },
+        "ultimate": {
+          "anyOf": [
+            { "$ref": "#/$defs/UltimateMovement" },
+            { "type": "null" }
+          ],
+          "description": "Subtractive momentum (traction, air friction, fighter-relative air control, instant fast fall). Absent = the\nlegacy multipliers and shared accelerations marked Legacy (TS compatibility), which it replaces."
         }
       },
       "required": [
@@ -207,6 +218,63 @@
         "bReverseWindow"
       ],
       "description": "Shared movement rules. Per-fighter speeds and gravity live in each fighter's `stats`."
+    },
+    "UltimateMovement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "traction": {
+          "type": "number",
+          "format": "double",
+          "description": "Default `stats.traction`: grounded slowdown toward zero in idle, crouch, brake, turn skid, jumpsquat, landing\nlag, shield, grabs, throws and grounded attacks (Ultimate Mario 0.1 → 0.35)."
+        },
+        "fastTraction": {
+          "type": "number",
+          "format": "double",
+          "description": "Traction multiplier while faster than the fighter's walk speed, so a run skids to a stop in a readable time."
+        },
+        "attackSlideTraction": {
+          "type": "number",
+          "format": "double",
+          "description": "Traction multiplier during a grounded attack phase's `slide` frames (dash attacks)."
+        },
+        "airFriction": {
+          "type": "number",
+          "format": "double",
+          "description": "Default `stats.airFriction`: airborne slowdown with the stick neutral (toward zero) or above the held air\nspeed (toward it; overspeed is never clamped). Ultimate ≈ 0.01 → 0.035."
+        },
+        "aerialAccelMult": {
+          "type": "number",
+          "format": "double",
+          "description": "`stats.airAccel` multiplier for moves with `air: \"aerial\"`; phase `airAccelMult` multiplies on top."
+        },
+        "attackAirAccelMult": {
+          "type": "number",
+          "format": "double",
+          "description": "`stats.airAccel` multiplier for moves with `air: \"attack\"`."
+        },
+        "upSpecialAccelMult": {
+          "type": "number",
+          "format": "double",
+          "description": "`stats.airAccel` multiplier for moves with `air: \"upSpecial\"`."
+        },
+        "helplessAccelMult": {
+          "type": "number",
+          "format": "double",
+          "description": "`stats.airAccel` multiplier in helpless fall and air dodges."
+        }
+      },
+      "required": [
+        "traction",
+        "fastTraction",
+        "attackSlideTraction",
+        "airFriction",
+        "aerialAccelMult",
+        "attackAirAccelMult",
+        "upSpecialAccelMult",
+        "helplessAccelMult"
+      ],
+      "description": "Ultimate-style momentum: speeds change by fixed amounts per frame instead of by multipliers. Rates are px/frame²\n(Ultimate units × 3.5 horizontally)."
     },
     "InputRules": {
       "type": "object",
@@ -316,7 +384,7 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Holding the other way while running turns around: facing flips at once and speed skids with turnFriction.",
+          "description": "Holding the other way while running turns around: facing flips at once and speed skids with turnFriction\n(the fighter's traction with `movement.ultimate`).",
           "default": 0
         },
         "turnFriction": { "type": "number", "format": "double", "default": 0.0 },
@@ -324,7 +392,7 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Letting go while running skids for brakeFrames with brakeFriction.",
+          "description": "Letting go while running skids for brakeFrames with brakeFriction (traction with `movement.ultimate`).",
           "default": 0
         },
         "brakeFriction": { "type": "number", "format": "double", "default": 0.0 },
@@ -353,7 +421,11 @@
           "description": "Keep effect ranges and charge particles from advancing gameplay randomness. Defaults to true for\nolder user `global.json` overrides written before this field existed (the bundled value).",
           "default": true
         },
-        "jumpsquatFriction": { "type": "number", "format": "double" },
+        "jumpsquatFriction": {
+          "type": "number",
+          "format": "double",
+          "description": "Legacy velocity multipliers in jumpsquat, landing lag (also dizzy, grab hold, throw) and shield;\n`movement.ultimate` uses the fighter's traction instead."
+        },
         "landingFriction": { "type": "number", "format": "double" },
         "shieldFriction": { "type": "number", "format": "double" },
         "dodgeFriction": { "type": "number", "format": "double" },

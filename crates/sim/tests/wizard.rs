@@ -349,6 +349,11 @@ fn initial_dash_and_run_use_distinct_reference_speeds() {
     w.count = 0;
     raw(&mut w, &d, (127, 0), 0);
     assert!((w.fighters[0].vx - 1.958 * 3.5).abs() < 1e-9);
+    // The dash eases into the run by traction instead of snapping down to run speed.
+    for _ in 0..20 {
+        raw(&mut w, &d, (127, 0), 0);
+    }
+    assert!(w.fighters[0].vx > 1.43 * 3.5 && w.fighters[0].vx < 1.958 * 3.5);
     for _ in 0..20 {
         raw(&mut w, &d, (127, 0), 0);
     }

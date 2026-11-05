@@ -225,3 +225,5 @@ retain independent groups. Full-move contact probes cover the continuous swings 
 
 The late-window regression reads `sources/stratus/ufd.json` directly: up smash's 8% tier is source 15–16,
 up air ends on 23, and down air ends on 39. Engine endpoints are each one less; no phase split extends them.
+
+Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-stratus`.

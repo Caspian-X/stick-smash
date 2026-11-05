@@ -3559,7 +3559,7 @@
               "hitlagMult": 1.2
             }
           ],
-          "airAccelMult": 0.3,
+          "airAccelMult": 0.6086,
           "events": [
             {
               "at": 0,

@@ -77,6 +77,7 @@ pub struct Stats {
     pub pummel_damage: Option<f64>,
     pub run_speed: f64,
     pub run_accel: f64,
+    /// Initial dash speed, held for dashFrames, then easing into the run (default runSpeed × gait.dashSpeed).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub dash_speed: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -84,7 +85,11 @@ pub struct Stats {
     /// Full-tilt walk speed; defaults to runSpeed × gait.walkSpeed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub walk_speed: Option<f64>,
+    /// Legacy (no `movement.ultimate`): idle and crouch velocity multiplier per frame.
     pub ground_friction: f64,
+    /// Grounded slowdown in px/frame² with `movement.ultimate` (default its `traction`; Ultimate traction × 3.5).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub traction: Option<f64>,
     /// Full hop launch speed (upward).
     pub jump_speed: f64,
     pub short_hop_speed: f64,
@@ -93,7 +98,13 @@ pub struct Stats {
     /// Mid-air jumps.
     pub air_jumps: u32,
     pub air_speed: f64,
+    /// Air drift acceleration (px/frame²). With `movement.ultimate` it also drives attacks, up specials and helpless
+    /// fall, times that movement's per-kind multiplier and the phase `airAccelMult`.
     pub air_accel: f64,
+    /// Airborne slowdown in px/frame² with `movement.ultimate`: toward zero with the stick neutral, toward airSpeed
+    /// when above it (default its `airFriction`; Ultimate air friction × 3.5).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub air_friction: Option<f64>,
     pub gravity: f64,
     pub fall_speed: f64,
     pub fast_fall_speed: f64,

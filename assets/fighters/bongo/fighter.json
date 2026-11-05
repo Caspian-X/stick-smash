@@ -1291,7 +1291,7 @@
               "type": "grab"
             }
           ],
-          "airAccelMult": 0.5,
+          "airAccelMult": 0.7576,
           "ledgeGrab": 0,
           "anim": [
             { "at": 0, "pose": "flipTight" },
@@ -1332,7 +1332,7 @@
               "type": "sakurai"
             }
           ],
-          "airAccelMult": 0.6,
+          "airAccelMult": 0.9091,
           "ledgeGrab": 0,
           "anim": [
             { "at": 0, "pose": "flipTight" },
@@ -1351,7 +1351,7 @@
         {
           "name": "recover",
           "frames": 11,
-          "airAccelMult": 0.5,
+          "airAccelMult": 0.7576,
           "ledgeGrab": 0,
           "anim": [
             { "at": 0, "pose": "flipTight" },
@@ -1375,7 +1375,7 @@
           "frames": 8,
           "aim": true,
           "fallCap": 2.5,
-          "airAccelMult": 0.25,
+          "airAccelMult": 0.3846,
           "charge": { "frame": 7, "max": 60, "button": "special", "jet": true },
           "anim": [
             { "at": 0, "pose": "charge" }
@@ -1410,7 +1410,7 @@
             { "start": 2, "end": 8, "x": 0, "y": 40, "r": 16, "damage": 8.0, "bkb": 40.0, "kbg": 0.9, "angle": 80 },
             { "start": 9, "end": 27, "x": 0, "y": 40, "r": 14, "damage": 6.0, "bkb": 40.0, "kbg": 0.9, "angle": 70 }
           ],
-          "airAccelMult": 0.9,
+          "airAccelMult": 1.3846,
           "ledgeGrab": 0,
           "anim": [
             { "at": 0, "pose": "charge" },
@@ -1473,7 +1473,7 @@
         {
           "name": "fall",
           "frames": 30,
-          "airAccelMult": 0.5,
+          "airAccelMult": 0.7692,
           "ledgeGrab": 0,
           "anim": [
             { "at": 0, "pose": "air" }

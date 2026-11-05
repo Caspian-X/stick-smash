@@ -250,3 +250,5 @@ Special notes:
   source art's palette), not source models, and the source's per-frame article animation is not reproduced.
 - Delivery: local branch `char-tune`, uncommitted working tree (this record, the importer, the package, engine
   changes and tests).
+
+Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-robin`.

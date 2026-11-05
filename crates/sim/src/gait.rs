@@ -2,6 +2,7 @@
 //! run, hold the other way to turn around with a skid (facing flips at once, speed carries), let go to brake.
 use crate::actions::{Action, accept};
 use crate::input::{Intent, Strike};
+use crate::physics::skid;
 use crate::world::{Fighter, Gait, State, sign};
 use crate::{GameData, World};
 
@@ -52,6 +53,15 @@ fn set(f: &mut Fighter, gait: Gait) {
     f.gait = gait;
     f.gait_t = 0;
 }
+/// Run acceleration toward `dir`, capped at run speed. Under `movement.ultimate` a faster fighter (a dash ending)
+/// slows toward run speed by its traction instead of snapping to it.
+fn run(d: &GameData, f: &mut Fighter, dir: f64) {
+    let s = &d.fighters[f.data].stats;
+    match crate::physics::traction(d, f) {
+        Some(k) if f.vx * dir > s.run_speed => f.vx = dir * (f.vx * dir - k).max(s.run_speed),
+        _ => f.vx = (f.vx + dir * s.run_accel).clamp(-s.run_speed, s.run_speed),
+    }
+}
 fn dash(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, dir: f64) {
     if dir != f.face || f.vx * dir < 0. {
         w.dust(f.x, f.y, 3);
@@ -87,7 +97,7 @@ pub fn step(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent)
             f.face = sign(inp.x);
             f.vx = inp.x * walk_speed(d, f) * g.crawl_speed;
         } else {
-            f.vx *= s.ground_friction;
+            skid(d, f, s.ground_friction, 1.);
         }
         f.run_ph += f.vx.abs() * 0.07;
         return;
@@ -104,7 +114,7 @@ pub fn step(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent)
         Gait::Dash if t < dash_frames(d, f) => f.vx = f.face * dash_speed(d, f).max(f.vx * f.face),
         Gait::Dash => set(f, if held == f.face { Gait::Run } else { Gait::Brake }),
         Gait::Run if dir == f.face && g.run_threshold > 0. && inp.x.abs() < g.walk_threshold => set(f, Gait::Walk),
-        Gait::Run if held == f.face => f.vx = (f.vx + f.face * s.run_accel).clamp(-s.run_speed, s.run_speed),
+        Gait::Run if held == f.face => run(d, f, f.face),
         Gait::Run | Gait::Brake if held == -f.face => {
             set(f, Gait::Turn);
             f.face = held;
@@ -112,11 +122,11 @@ pub fn step(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent)
         }
         Gait::Run => set(f, Gait::Brake),
         Gait::Turn if t >= g.turn_frames => set(f, if held == f.face { Gait::Run } else { Gait::Stand }),
-        Gait::Turn => f.vx *= g.turn_friction,
+        Gait::Turn => skid(d, f, g.turn_friction, 1.),
         Gait::Brake if flick != 0. => dash(w, d, i, f, flick),
         Gait::Brake if held == f.face => set(f, Gait::Run),
         Gait::Brake if t >= g.brake_frames => set(f, Gait::Stand),
-        Gait::Brake => f.vx *= g.brake_friction,
+        Gait::Brake => skid(d, f, g.brake_friction, 1.),
         Gait::Stand | Gait::Walk | Gait::Rise if flick != 0. => dash(w, d, i, f, flick),
         Gait::Stand | Gait::Rise if held != 0. && held * f.vx > walk_speed(d, f) => {
             // Landing or leaving a skid while moving faster than a walk keeps running.
@@ -126,7 +136,7 @@ pub fn step(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent)
         Gait::Stand | Gait::Walk | Gait::Rise if g.run_threshold > 0. && inp.x.abs() >= g.run_threshold => {
             set(f, Gait::Run);
             f.face = dir;
-            f.vx = (f.vx + dir * s.run_accel).clamp(-s.run_speed, s.run_speed);
+            run(d, f, dir);
         }
         Gait::Stand | Gait::Walk | Gait::Rise if dir != 0. => {
             if f.gait != Gait::Walk {
@@ -141,7 +151,7 @@ pub fn step(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent)
             if f.gait != Gait::Rise || t >= g.crouch_frames {
                 set(f, Gait::Stand);
             }
-            f.vx *= s.ground_friction;
+            skid(d, f, s.ground_friction, 1.);
         }
         Gait::Crouch => unreachable!(),
     }

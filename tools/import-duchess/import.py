@@ -27,6 +27,15 @@ ledger = {'sourceCommit': source['commit'], 'sourceSha256': source['sha256'],
 
 SCALE = 5.0        # attack geometry: source units to px
 SPEED = 3.5        # horizontal movement: source units/tick to px/tick
+
+# Phase drift (`airAccelMult`) is written as a multiple of the old shared air accels (aerial 0.45, attack 0.25,
+# upSpecial 0.3). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier instead, so drift()
+# stores the value that keeps the same effective acceleration.
+AIR_ACCEL = round(0.12 * SPEED, 4)
+def drift(legacy, kind):
+    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind]
+    mult = {'aerial': 1.0, 'attack': 0.55, 'upSpecial': 0.65}[kind]
+    return round(legacy * old / (AIR_ACCEL * mult), 4)
 FALL = 6.0         # gravity and fall speeds
 
 
@@ -652,7 +661,7 @@ moves['uspec'] = {'name': 'Peach Parasol', 'air': 'upSpecial', 'oncePerAirtime':
           [hit({'Damage': '2.0', 'Angle': '80', 'KBG': '15', 'BKB': '65', 'Size': '2.0',
                 'FacingRestrict': 'ATTACK_LR_CHECK_POS', 'Ground_or_Air': 'COLLISION_SITUATION_MASK_GA',
                 'Hitlag': '0.0', 'Rehit': '18'}, frame(8), 479, x, 102, 12) for x in (-13, 0, 13)],
-          fallCap=2.0, airAccelMult=1.2, ledgeGrab=0,
+          fallCap=2.0, airAccelMult=drift(1.2, 'upSpecial'), ledgeGrab=0,
           anim=[{'at': 0, 'pose': 'parasol'}, {'at': 30, 'pose': 'parasolFall', 'lerp': True}],
           attach={'parasol': {'show': [0, 479], 'angle': [[0, 0]]}},
           events=[{'at': 0, 'sfx': 'swing'}],
@@ -875,7 +884,7 @@ doc = {
         'walkSpeed': round(0.924 * SPEED, 4), 'runSpeed': round(1.595 * SPEED, 4),
         'dashSpeed': round(1.826 * SPEED, 4), 'dashFrames': 16, 'runAccel': 0.6, 'groundFriction': 0.74,
         'jumpSpeed': 12.0, 'shortHopSpeed': 8.6, 'airJumpSpeed': 11.6, 'airJumpDrift': 3.6, 'airJumps': 1,
-        'airSpeed': round(1.029 * SPEED, 4), 'airAccel': round(0.12 * SPEED, 4),
+        'airSpeed': round(1.029 * SPEED, 4), 'airAccel': AIR_ACCEL,
         'gravity': round(0.070 * FALL, 4), 'fallSpeed': round(1.19 * FALL, 4),
         'fastFallSpeed': round(1.904 * FALL, 4),
         # Source float: 0 vertical movement for up to 2.5 s, once per airtime. The engine's stat only caps a

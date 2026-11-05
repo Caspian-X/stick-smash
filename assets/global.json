@@ -21,7 +21,17 @@
     "dashAttackSpeed": 4.3,
     "dashGrabSpeed": 3.9,
     "tapWindow": 5,
-    "bReverseWindow": 4
+    "bReverseWindow": 4,
+    "ultimate": {
+      "traction": 0.35,
+      "fastTraction": 2,
+      "attackSlideTraction": 0.5,
+      "airFriction": 0.035,
+      "aerialAccelMult": 1,
+      "attackAirAccelMult": 0.55,
+      "upSpecialAccelMult": 0.65,
+      "helplessAccelMult": 0.65
+    }
   },
   "knockback": {
     "kbPercentScale": 1.4,
@@ -185,7 +195,7 @@
     "runThreshold": 0.75,
     "walkThreshold": 0.6,
     "dashLock": false,
-    "dashSpeed": 1,
+    "dashSpeed": 1.12,
     "dashFrames": 10,
     "turnFrames": 4,
     "turnFriction": 0.9,

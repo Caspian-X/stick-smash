@@ -11,7 +11,8 @@
     "airSpeed": 4.3,
     "gravity": 0.72,
     "jumpSpeed": 15.2,
-    "airJumpSpeed": 13.8
+    "airJumpSpeed": 13.8,
+    "dashSpeed": 5.824
   },
   "ai": {
     "reach": 85,
@@ -2019,7 +2020,7 @@
             "flame": { "show": [0, 24] },
             "wrench": { "angle": [[0, 20]] }
           },
-          "airAccelMult": 0.6
+          "airAccelMult": 0.6154
         },
         {
           "name": "coast",

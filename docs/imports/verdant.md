@@ -215,3 +215,5 @@ complete damage sequence. No other import's base non-jab/non-recovery timeline d
 
 Naming decision (2026-11-04): the display name changed from Verdant to **Bleth**. Package id `verdant`,
 directory, tools, pinned sources and `34a`–`34o` screenshot names deliberately remain unchanged.
+
+Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-verdant`.

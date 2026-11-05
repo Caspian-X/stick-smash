@@ -9,6 +9,15 @@ to the per-move UFD hitbox visualisations and the stick-figure poses authored be
 import copy, json, math, re
 from pathlib import Path
 
+# Phase drift (`airAccelMult`) is written as a multiple of the old shared air accels (aerial 0.45, attack 0.25,
+# upSpecial 0.3). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier instead, so drift()
+# stores the value that keeps the same effective acceleration.
+AIR_ACCEL = 0.1855
+def drift(legacy, kind):
+    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind]
+    mult = {'aerial': 1.0, 'attack': 0.55, 'upSpecial': 0.65}[kind]
+    return round(legacy * old / (AIR_ACCEL * mult), 4)
+
 ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / 'docs/imports/sources/verdant'
 source = json.loads((SOURCES / 'scripts.json').read_text())
@@ -715,7 +724,7 @@ moves['sspec'] = {'name': 'Areadbhar Rush', 'bReverse': True, 'phases': [
           attach=wield('lance', [[0, 30], [4, 10]]),
           events=[{'at': 0, 'setVel': {'x': 3.5}, 'sfx': 'slash'}],
           transitions=[{'on': 'land', 'to': 'landing', 'lag': 16}, wait('airRecover')]),
-    phase('airRecover', 37, airAccelMult=0.4, anim=[{'at': 0, 'pose': 'thrust'}, {'at': 12, 'pose': 'air', 'lerp': True}],
+    phase('airRecover', 37, airAccelMult=drift(0.4, 'attack'), anim=[{'at': 0, 'pose': 'thrust'}, {'at': 12, 'pose': 'air', 'lerp': True}],
           attach=wield('lance', [[0, 10], [12, 60]]),
           transitions=[{'on': 'land', 'to': 'landing', 'lag': 16}]),
 ]}
@@ -727,19 +736,19 @@ whip = [swept(take(sw_hi, 3.0, 0)['source'], [(1, 62, 82, 22), (4, 94, 122, 22),
               rehit=3)]
 moves['uspec'] = {'name': 'Creator Tether', 'air': 'upSpecial', 'phases': [
     # UFD: the tether reaches from source frame 7, so it opens during the startup phase.
-    phase('startup', 8, airAccelMult=0.2, ledgeGrab=frame(7),
+    phase('startup', 8, airAccelMult=drift(0.2, 'upSpecial'), ledgeGrab=frame(7),
           tether={'x1': 30, 'x2': 210, 'y1': 20, 'y2': 160},
           anim=[{'at': 0, 'pose': 'sweepUp'}],
           attach=wield('sword', [[0, 95], [6, 60]], scale=1.4),
           events=[{'at': 0, 'setVel': {'x': 0}, 'sfx': 'swing'}],
           transitions=[wait('whip')]),
-    phase('whip', 9, whip, airAccelMult=0.3, ledgeGrab=0,
+    phase('whip', 9, whip, airAccelMult=drift(0.3, 'upSpecial'), ledgeGrab=0,
           tether={'x1': 30, 'x2': 210, 'y1': 20, 'y2': 160},
           anim=[{'at': 0, 'pose': 'sweepUp'}],
           attach=wield('sword', [[0, 60], [8, 45]], scale=2.4),
           events=[{'at': 0, 'sfx': 'slash'}],
           transitions=[wait('rise')]),
-    phase('rise', 29, airAccelMult=0.4, ledgeGrab=0, anim=[{'at': 0, 'pose': 'airHigh'}],
+    phase('rise', 29, airAccelMult=drift(0.4, 'upSpecial'), ledgeGrab=0, anim=[{'at': 0, 'pose': 'airHigh'}],
           attach=wield('sword', [[0, 60], [10, 95]], scale=1.6),
           events=[{'at': 0, 'setVel': {'y': 10.5}}],
           transitions=[{'on': 'land', 'to': 'landing', 'lag': 24}, wait('helpless')]),
@@ -824,7 +833,7 @@ doc = {
         'walkSpeed': 3.395, 'runSpeed': 5.005, 'dashSpeed': 6.3, 'dashFrames': 15, 'runAccel': 0.62,
         'groundFriction': 0.85,
         'jumpSpeed': 13.4, 'shortHopSpeed': 9.4, 'airJumpSpeed': 12.9, 'airJumpDrift': 3.115, 'airJumps': 1,
-        'airSpeed': 3.115, 'airAccel': 0.1855, 'gravity': 0.534, 'fallSpeed': 9.6, 'fastFallSpeed': 15.36,
+        'airSpeed': 3.115, 'airAccel': AIR_ACCEL, 'gravity': 0.534, 'fallSpeed': 9.6, 'fastFallSpeed': 15.36,
     },
     'ai': {
         'reach': 90, 'counterChance': 0,

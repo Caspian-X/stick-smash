@@ -103,12 +103,12 @@ impl Moves {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum AirControl {
-    /// `attackAirAccel`.
+    /// `attackAirAccel` (`ultimate.attackAirAccelMult` × airAccel).
     #[default]
     Attack,
-    /// `aerialAccel`, and the move can fast-fall.
+    /// `aerialAccel` (`ultimate.aerialAccelMult` × airAccel), and the move can fast-fall.
     Aerial,
-    /// `upSpecialAccel`.
+    /// `upSpecialAccel` (`ultimate.upSpecialAccelMult` × airAccel).
     UpSpecial,
 }
 
@@ -268,13 +268,15 @@ pub struct Phase {
     /// Airborne: max fall speed during this phase (default: the fighter's fall speed or fast-fall speed).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fall_cap: Option<f64>,
-    /// Multiplies the move's air acceleration (0 = no drift control).
+    /// Multiplies the move's air acceleration (0 = no drift control): with `movement.ultimate` that is the fighter's
+    /// airAccel × the `air` kind's multiplier, otherwise the shared legacy accel.
     #[serde(default = "one", skip_serializing_if = "is_one")]
     pub air_accel_mult: f64,
     /// Fighter-local rectangle that detects a hittable opponent for `targetNear` transitions.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub detection: Option<super::common::Rect>,
-    /// Grounded: phase frames below this use `attackSlideFriction` instead of `attackFriction` (dash attacks).
+    /// Grounded: phase frames below this use `attackSlideFriction` instead of `attackFriction` (dash attacks), or
+    /// traction × `attackSlideTraction` with `movement.ultimate`.
     #[serde(default, skip_serializing_if = "is_default")]
     pub slide: u32,
     /// Can grab a ledge (even while rising) from this phase frame on.

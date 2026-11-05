@@ -59,25 +59,26 @@ pub struct Global {
 pub struct Movement {
     /// Frames crouching before takeoff. Jump still held on the last one = full hop, released = short hop.
     pub jumpsquat: u32,
-    /// Air drift when no direction is held (multiplier per frame).
+    /// Legacy: air drift when no direction is held (multiplier per frame).
     pub air_drag: f64,
-    /// Air drift multiplier when a direction is held but already at max speed.
+    /// Legacy: air drift multiplier when a direction is held but already at max speed.
     pub air_drag_held: f64,
     /// Fast fall allowed once vertical speed is above this (negative = still slightly rising; y down).
     pub fast_fall_min_vy: f64,
-    /// Downward speed applied the frame you fast fall.
+    /// Legacy: downward speed applied the frame you fast fall (`ultimate` sets the fighter's fastFallSpeed at once).
     pub fast_fall_kick: f64,
-    /// Air accel for moves with `air: "attack"`.
+    /// Legacy: air accel for moves with `air: "attack"`.
     pub attack_air_accel: f64,
-    /// Air accel for moves with `air: "aerial"`.
+    /// Legacy: air accel for moves with `air: "aerial"`.
     pub aerial_accel: f64,
+    /// Legacy: air accel in helpless fall and air dodges.
     pub helpless_accel: f64,
-    /// Air accel for moves with `air: "upSpecial"`.
+    /// Legacy: air accel for moves with `air: "upSpecial"`.
     pub up_special_accel: f64,
-    /// Ground friction multiplier during attacks; `slide` frames use attackSlideFriction.
+    /// Legacy: ground friction multiplier during attacks; `slide` frames use attackSlideFriction.
     pub attack_friction: f64,
     pub attack_slide_friction: f64,
-    /// Air drift multiplier during attacks when not accelerating.
+    /// Legacy: air drift multiplier during attacks when not accelerating.
     pub attack_air_drag: f64,
     /// Frames platforms are ignored after dropping through.
     pub platform_drop: u32,
@@ -94,6 +95,35 @@ pub struct Movement {
     pub tap_window: u32,
     /// Frames after a `bReverse` move starts in which pressing the other direction turns it around.
     pub b_reverse_window: u32,
+    /// Subtractive momentum (traction, air friction, fighter-relative air control, instant fast fall). Absent = the
+    /// legacy multipliers and shared accelerations marked Legacy (TS compatibility), which it replaces.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ultimate: Option<UltimateMovement>,
+}
+
+/// Ultimate-style momentum: speeds change by fixed amounts per frame instead of by multipliers. Rates are px/frame²
+/// (Ultimate units × 3.5 horizontally).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct UltimateMovement {
+    /// Default `stats.traction`: grounded slowdown toward zero in idle, crouch, brake, turn skid, jumpsquat, landing
+    /// lag, shield, grabs, throws and grounded attacks (Ultimate Mario 0.1 → 0.35).
+    pub traction: f64,
+    /// Traction multiplier while faster than the fighter's walk speed, so a run skids to a stop in a readable time.
+    pub fast_traction: f64,
+    /// Traction multiplier during a grounded attack phase's `slide` frames (dash attacks).
+    pub attack_slide_traction: f64,
+    /// Default `stats.airFriction`: airborne slowdown with the stick neutral (toward zero) or above the held air
+    /// speed (toward it; overspeed is never clamped). Ultimate ≈ 0.01 → 0.035.
+    pub air_friction: f64,
+    /// `stats.airAccel` multiplier for moves with `air: "aerial"`; phase `airAccelMult` multiplies on top.
+    pub aerial_accel_mult: f64,
+    /// `stats.airAccel` multiplier for moves with `air: "attack"`.
+    pub attack_air_accel_mult: f64,
+    /// `stats.airAccel` multiplier for moves with `air: "upSpecial"`.
+    pub up_special_accel_mult: f64,
+    /// `stats.airAccel` multiplier in helpless fall and air dodges.
+    pub helpless_accel_mult: f64,
 }
 
 /// Shared damage-dependent knockback. Omitting ultimate retains the original TS compatibility formula.
@@ -434,10 +464,11 @@ pub struct Gait {
     /// A flick starts a dash at this speed, held for dashFrames; flick back to dash the other way.
     pub dash_speed: f64,
     pub dash_frames: u32,
-    /// Holding the other way while running turns around: facing flips at once and speed skids with turnFriction.
+    /// Holding the other way while running turns around: facing flips at once and speed skids with turnFriction
+    /// (the fighter's traction with `movement.ultimate`).
     pub turn_frames: u32,
     pub turn_friction: f64,
-    /// Letting go while running skids for brakeFrames with brakeFriction.
+    /// Letting go while running skids for brakeFrames with brakeFriction (traction with `movement.ultimate`).
     pub brake_frames: u32,
     pub brake_friction: f64,
     /// Frames to lower into a crouch or rise back to idle. Zero switches immediately.
@@ -583,6 +614,8 @@ pub struct SimRules {
     /// older user `global.json` overrides written before this field existed (the bundled value).
     #[serde(default = "default_true")]
     pub separate_cosmetic_rng: bool,
+    /// Legacy velocity multipliers in jumpsquat, landing lag (also dizzy, grab hold, throw) and shield;
+    /// `movement.ultimate` uses the fighter's traction instead.
     pub jumpsquat_friction: f64,
     pub landing_friction: f64,
     pub shield_friction: f64,

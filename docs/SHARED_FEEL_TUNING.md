@@ -9,3 +9,13 @@ Bundled movement now uses three jumpsquat frames (was four), four turnaround fra
 `feel::roster_raw_inputs_move_jump_and_shield_without_dash_delay` drives actual raw stick/button inputs for every playable fighter, requiring first-tick displacement, next-tick shield and takeoff after three startup ticks. `knockback::roster_finishers_launch_at_multiple_percents_through_real_hit_application` applies each fighter's strongest smash hit through combat at 0/100/200/400%, checking increasing launch, a 200% speed floor, and proportional percent scaling. Measured 200% launch speeds were 35–56 pixels/tick in the shared checkout. Concurrent fighter edits may change those values.
 
 This pass changes bundled content only, so it does not require a SIM_VERSION change: old replay content retains its original settings. TS traces explicitly restore four-frame jumpsquat and disable gait/Ultimate knockback. The linear-content fixture restores damage as well as BKB/growth, keeping later damage edits out of the historical launch contract.
+
+Momentum then moved to the subtractive `movement.ultimate` model (FORMAT.md, Momentum): traction 0.35 px/frame²
+(Ultimate Mario 0.1 × 3.5, doubled above walk speed), air friction 0.035, fighter-relative air control with
+per-kind multipliers (aerial 1, other attacks 0.55, up special and helpless 0.65), instant fast fall and dash
+bursts easing into the run. No fighter sets its own `traction` or `airFriction` yet: per-character values from
+references are still to be gathered. Phase `airAccelMult` values were migrated to keep each phase's previous
+effective acceleration (Mike's 0.389 aerial correction became the default 1); phases without one now use the
+fighter's own air accel, which slows heavy fighters' aerial drift (King 0.175 instead of the shared 0.45). Mike's
+Quickdraw rush speed was refitted so its requested ground distances survive slide traction. This is a SIM_VERSION
+change (-sim-30); TS traces disable the block.

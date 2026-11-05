@@ -10,6 +10,15 @@ Run `just import-stratus`.
 import copy, json, math, re
 from pathlib import Path
 
+# Phase drift (`airAccelMult`) is written as a multiple of the old shared air accels (aerial 0.45, attack 0.25,
+# upSpecial 0.3). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier instead, so drift()
+# stores the value that keeps the same effective acceleration.
+AIR_ACCEL = 0.245
+def drift(legacy, kind):
+    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind]
+    mult = {'aerial': 1.0, 'attack': 0.55, 'upSpecial': 0.65}[kind]
+    return round(legacy * old / (AIR_ACCEL * mult), 4)
+
 ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / 'docs/imports/sources/stratus'
 source = json.loads((SOURCES / 'scripts.json').read_text())
@@ -835,7 +844,7 @@ def climhazzard(limit):
         rise_names = ['rise', 'hit2', 'hit3', 'tail']
     rise_phases = segments(36 if limit else 24, rise_cuts, rise_names, rise_boxes,
                            anim=[{'at': 0, 'pose': 'rise'}], keys=[[0, 90], [8, 120], [14, 95]],
-                           ledgeGrab=0, airAccelMult=0.5)
+                           ledgeGrab=0, airAccelMult=drift(0.5, 'upSpecial'))
     # A fresh special press starts the plunge from move frame 20 (normal) / 33 (Limit).
     follow = frame(33) if limit else frame(20)
     last = rise_phases[-1]
@@ -844,7 +853,7 @@ def climhazzard(limit):
     return [thrust_phase] + rise_phases
 
 
-plunge_phase = phase('plunge', 26, plunge, airAccelMult=0.3,
+plunge_phase = phase('plunge', 26, plunge, airAccelMult=drift(0.3, 'upSpecial'),
                      anim=[{'at': 0, 'pose': 'plunge'}],
                      attach=attach([[0, 90], [4, 180], [12, 270], [25, 95]]),
                      events=[{'at': 0, 'setVel': {'x': 0, 'y': -14}}, {'at': frame(12), 'sfx': 'slash'}],
@@ -920,7 +929,7 @@ doc = {
         'walkSpeed': 4.0425, 'runSpeed': 7.5845, 'dashSpeed': 7.5075, 'dashFrames': 15, 'runAccel': 1.0,
         'groundFriction': 0.8,
         'jumpSpeed': 14.8, 'shortHopSpeed': 10.4, 'airJumpSpeed': 13.8, 'airJumpDrift': 4.0425, 'airJumps': 1,
-        'airSpeed': 4.0425, 'airAccel': 0.245, 'gravity': 0.588, 'fallSpeed': 10.08, 'fastFallSpeed': 16.128,
+        'airSpeed': 4.0425, 'airAccel': AIR_ACCEL, 'gravity': 0.588, 'fallSpeed': 10.08, 'fastFallSpeed': 16.128,
     },
     'charges': [
         {'id': 'limit', 'uses': 1, 'recharge': 0, 'emptySfx': 'toss', 'refillSfx': 'ready'},

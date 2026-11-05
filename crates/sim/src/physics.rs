@@ -1,5 +1,5 @@
 use crate::actions::{Action, accept};
-use crate::data::Trigger;
+use crate::data::{Trigger, global::UltimateMovement};
 use crate::{
     GameData, World,
     input::Intent,
@@ -230,17 +230,48 @@ pub fn fast_fall(d: &GameData, f: &mut Fighter, inp: Intent) -> bool {
     if !f.tumble && (inp.down_p || inp.down_recent) && f.vy > m.fast_fall_min_vy {
         let started = !f.ff;
         f.ff = true;
-        f.vy = f.vy.max(m.fast_fall_kick);
+        let kick = if m.ultimate.is_some() { d.fighters[f.data].stats.fast_fall_speed } else { m.fast_fall_kick };
+        f.vy = f.vy.max(kick);
         return started;
     }
     false
 }
-/// Analog drift: a partial tilt accelerates and tops out proportionally. Never changes facing.
+/// `v` moved toward zero by `by`, stopping at magnitude `floor` (`|v| >= floor`).
+fn slow(v: f64, by: f64, floor: f64) -> f64 {
+    sign(v) * (v.abs() - by).max(floor)
+}
+/// The fighter's traction under `movement.ultimate`.
+pub fn traction(d: &GameData, f: &Fighter) -> Option<f64> {
+    let u = d.global.movement.ultimate.as_ref()?;
+    Some(d.fighters[f.data].stats.traction.unwrap_or(u.traction))
+}
+/// Grounded slowdown: traction × `scale` (× `fastTraction` above walk speed) toward zero under `movement.ultimate`,
+/// otherwise vx ×= `legacy`.
+pub fn skid(d: &GameData, f: &mut Fighter, legacy: f64, scale: f64) {
+    match (traction(d, f), &d.global.movement.ultimate) {
+        (Some(k), Some(u)) => {
+            let fast = if f.vx.abs() > crate::gait::walk_speed(d, f) { u.fast_traction } else { 1. };
+            f.vx = slow(f.vx, k * scale * fast, 0.);
+        }
+        _ => f.vx *= legacy,
+    }
+}
+/// Air acceleration for a control kind: the fighter's airAccel × `mult` under `movement.ultimate`, else `legacy`.
+pub fn air_accel(d: &GameData, f: &Fighter, legacy: f64, mult: fn(&UltimateMovement) -> f64) -> f64 {
+    d.global.movement.ultimate.as_ref().map_or(legacy, |u| d.fighters[f.data].stats.air_accel * mult(u))
+}
+/// Analog drift: a partial tilt accelerates and tops out proportionally. Never changes facing. Otherwise
+/// `movement.ultimate` slows by the fighter's air friction (toward the held cap when above it, never clamping),
+/// and the legacy model multiplies by `drag`.
 pub fn air_drift(d: &GameData, f: &mut Fighter, x: f64, acc: f64, drag: f64) {
     let (dir, k) = (sign(x), x.abs().min(1.));
-    let max = d.fighters[f.data].stats.air_speed * k;
-    if dir != 0. && acc != 0. && f.vx * dir < max {
+    let s = &d.fighters[f.data].stats;
+    let max = s.air_speed * k;
+    let control = dir != 0. && acc != 0.;
+    if control && f.vx * dir < max {
         f.vx = (f.vx * dir + acc * k).min(max) * dir;
+    } else if let Some(u) = &d.global.movement.ultimate {
+        f.vx = slow(f.vx, s.air_friction.unwrap_or(u.air_friction), if control { max } else { 0. });
     } else {
         f.vx *= drag;
     }
@@ -254,11 +285,7 @@ pub fn air_phys(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Int
         f.vx -= l.0;
         f.vy -= l.1;
     }
-    if x != 0. && acc != 0. && f.vx * sign(x) < s.air_speed * x.abs().min(1.) {
-        air_drift(d, f, x, acc, 1.);
-    } else {
-        f.vx *= if x != 0. { m.air_drag_held } else { m.air_drag };
-    }
+    air_drift(d, f, x, acc, if x != 0. { m.air_drag_held } else { m.air_drag });
     if fast_fall(d, f, inp) {
         accept(w, i, Action::FastFall);
     }

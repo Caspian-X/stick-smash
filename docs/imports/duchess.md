@@ -238,3 +238,5 @@ Parasol's rising phases also use whole-timeline grouping. The rehit-5 loop conti
 `rise3`; a real gap before `rise4` starts a new identity. The coverage-following rising probe retains
 `3 + 1 + 1 + 1 + 1 + 1 + 4`, but its loop contacts move from elapsed ticks `10,15,16,22,27` to
 `10,15,20,22,27`, preserving the five-tick cooldown through the presentation seam. The final 4% hit still lands.
+
+Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-duchess`.

@@ -5,7 +5,7 @@
   "name": "Yo-yo",
   "tagline": "Around the world, back for more",
   "blurb": "Playful reach · special: out-and-back yo-yo · → walk the dog · ↑ string swing · ↓ hold a sleeper",
-  "stats": { "weight": 1.0, "runSpeed": 6.1, "airSpeed": 4.9, "airAccel": 0.5 },
+  "stats": { "weight": 1.0, "runSpeed": 6.1, "airSpeed": 4.9, "airAccel": 0.5, "dashSpeed": 6.832 },
   "moves": {
     "jab": {
       "name": "String Flick",
@@ -1747,7 +1747,7 @@
               "show": [0, 32]
             }
           },
-          "airAccelMult": 1.5
+          "airAccelMult": 1.3846
         }
       ]
     },

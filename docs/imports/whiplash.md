@@ -201,3 +201,5 @@ retained GIF manifest covers attacks and her specials, not idle or ordinary loco
   so no `SIM_VERSION` change is implied and the golden world hash is untouched.
 
 Final integration review separated locomotion from the inherited `air`/`crouch` attack bookends, preserving the original active-window hand and foot positions. Jump load and short-landing recovery reach their endpoint on visible tick 2; longer landings retain a small settle.
+
+Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-whiplash`.

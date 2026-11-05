@@ -4036,7 +4036,7 @@
               "hitlagMult": 2.5
             }
           ],
-          "airAccelMult": 0.75,
+          "airAccelMult": 1.0411,
           "ledgeGrab": 16,
           "anim": [
             { "at": 0, "pose": "airKick" },
@@ -4201,7 +4201,7 @@
               "hitlagMult": 2.5
             }
           ],
-          "airAccelMult": 0.75,
+          "airAccelMult": 1.0411,
           "ledgeGrab": 16,
           "anim": [
             { "at": 0, "pose": "airKick" },
@@ -4276,7 +4276,7 @@
           "name": "flip",
           "frames": 38,
           "hitboxes": [],
-          "airAccelMult": 3,
+          "airAccelMult": 4.1012,
           "passPlatforms": true,
           "ledgeGrab": 13,
           "detection": { "x1": -16, "x2": 16, "y1": -22, "y2": 5 },
@@ -4473,7 +4473,7 @@
               ]
             }
           ],
-          "airAccelMult": 0.3,
+          "airAccelMult": 0.4101,
           "fallCap": 20,
           "anim": [
             { "at": 0, "pose": "flipTuck" },
@@ -4551,7 +4551,7 @@
               "hitlagMult": 1.8
             }
           ],
-          "airAccelMult": 0.8,
+          "airAccelMult": 1.0936,
           "ledgeGrab": 2,
           "anim": [
             { "at": 0, "pose": "dive" },
@@ -4577,7 +4577,7 @@
           "name": "kickBounce",
           "frames": 49,
           "hitboxes": [],
-          "airAccelMult": 0.8,
+          "airAccelMult": 1.0936,
           "ledgeGrab": 1,
           "anim": [
             { "at": 0, "pose": "flipBounce" },

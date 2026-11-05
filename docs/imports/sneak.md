@@ -314,3 +314,5 @@ Local branch `t3/3972654f`, uncommitted working tree (this record, the importer/
 package, the two transition triggers, tests, registries and screenshots). Not pushed. The registry files
 (`tests/content.rs`, `tests/stages.rs`, `shots.rs`, `justfile`) are expected to conflict with sibling imports;
 the fighter and its records conflict with none.
+
+Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-sneak`.

@@ -565,16 +565,18 @@ fn movement(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent,
     if f.ground {
         if p.ground_speed > 0. {
             f.vx = inp.x * p.ground_speed;
+        } else if t < p.slide {
+            skid(d, f, mv.attack_slide_friction, mv.ultimate.as_ref().map_or(1., |u| u.attack_slide_traction));
         } else {
-            f.vx *= if t < p.slide { mv.attack_slide_friction } else { mv.attack_friction };
+            skid(d, f, mv.attack_friction, 1.);
         }
         fall(w, d, i, f, true, None);
         return;
     }
     let acc = match def.air {
-        AirControl::Attack => mv.attack_air_accel,
-        AirControl::Aerial => mv.aerial_accel,
-        AirControl::UpSpecial => mv.up_special_accel,
+        AirControl::Attack => air_accel(d, f, mv.attack_air_accel, |u| u.attack_air_accel_mult),
+        AirControl::Aerial => air_accel(d, f, mv.aerial_accel, |u| u.aerial_accel_mult),
+        AirControl::UpSpecial => air_accel(d, f, mv.up_special_accel, |u| u.up_special_accel_mult),
     } * p.air_accel_mult;
     air_drift(d, f, inp.x, acc, mv.attack_air_drag);
     if def.air == AirControl::Aerial && fast_fall(d, f, inp) {

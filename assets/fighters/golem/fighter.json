@@ -1666,7 +1666,8 @@
     "airAccel": 0.32,
     "gravity": 0.85,
     "fallSpeed": 11.5,
-    "fastFallSpeed": 16
+    "fastFallSpeed": 16,
+    "dashSpeed": 4.704
   },
   "hurtboxes": {
     "default": { "x1": -22, "x2": 22, "y1": 0, "y2": 83 }

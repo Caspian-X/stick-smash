@@ -1118,7 +1118,7 @@ fn phase_more(ui: &mut egui::Ui, p: &mut Phase) {
         check(ui, "pass platforms", &d("Phase", "passPlatforms"), &mut p.pass_platforms);
         num(ui, "air accel ×", "0 = no drift control", &mut p.air_accel_mult, 0.01);
         num(ui, "charge frames", &d("Phase", "chargeFrames"), &mut p.charge_frames, 0.01);
-        int(ui, "slide", "Grounded: frames below this use slide friction", &mut p.slide);
+        int(ui, "slide", "Grounded: frames below this use slide friction / traction", &mut p.slide);
         opt_int(ui, "ledgeGrab", "Can grab ledges from this phase frame on", &mut p.ledge_grab, 1, "never");
         row(ui, "charge", "Hold to charge on a frame", |ui| {
             let mut on = p.charge.is_some();
@@ -1347,6 +1347,7 @@ fn fighter_panel(ui: &mut egui::Ui, ed: &mut Editor, errors: &[ContentError]) {
             opt_num(ui, "dash speed", &d("Stats", "dashSpeed"), &mut s.dash_speed, 6., "global ratio");
             opt_int(ui, "dash frames", &d("Stats", "dashFrames"), &mut s.dash_frames, 16, "global");
             num(ui, "ground friction", &stat_tip("groundFriction"), &mut s.ground_friction, 0.005);
+            opt_num(ui, "traction", &d("Stats", "traction"), &mut s.traction, 0.35, "global");
             num(ui, "jump speed", &stat_tip("jumpSpeed"), &mut s.jump_speed, 0.05);
             num(ui, "short hop", &stat_tip("shortHopSpeed"), &mut s.short_hop_speed, 0.05);
             num(ui, "air jump speed", &stat_tip("airJumpSpeed"), &mut s.air_jump_speed, 0.05);
@@ -1354,6 +1355,7 @@ fn fighter_panel(ui: &mut egui::Ui, ed: &mut Editor, errors: &[ContentError]) {
             int(ui, "air jumps", &stat_tip("airJumps"), &mut s.air_jumps);
             num(ui, "air speed", &stat_tip("airSpeed"), &mut s.air_speed, 0.05);
             num(ui, "air accel", &stat_tip("airAccel"), &mut s.air_accel, 0.01);
+            opt_num(ui, "air friction", &d("Stats", "airFriction"), &mut s.air_friction, 0.035, "global");
             num(ui, "gravity", &stat_tip("gravity"), &mut s.gravity, 0.005);
             num(ui, "fall speed", &stat_tip("fallSpeed"), &mut s.fall_speed, 0.05);
             num(ui, "fast fall", &stat_tip("fastFallSpeed"), &mut s.fast_fall_speed, 0.05);

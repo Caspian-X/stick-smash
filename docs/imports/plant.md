@@ -248,3 +248,5 @@ unreleased batch, so it was not bumped again. The generator remains the source o
 `just import-plant` rewrites both from the pinned UFD/Rubendal inputs.
 
 Counter contacts also release a held ball into an independent shot and end the former caster's hold. `article.reflectCooldown` is authored as 8 ticks for Ptooie, defaults to zero for older content, and suppresses all reflectors during that window.
+
+Momentum migration (2026-11-04): no phase sets `airAccelMult`, so drift now uses the fighter's airAccel × the `movement.ultimate` kind multipliers; regeneration is unchanged.

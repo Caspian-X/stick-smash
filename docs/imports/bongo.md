@@ -166,3 +166,5 @@ Special notes:
   Monkey Flip stays spent for that airtime.
 - Delivery: local branch `t3/import-bongo-boy-fighter`, uncommitted working tree (importer, sources, package, tests,
   screenshots list and this record).
+
+Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-bongo`.
