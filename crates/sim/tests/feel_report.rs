@@ -245,8 +245,8 @@ fn launch(d: &GameData, id: &str, angle: f64, pct: f64) -> Value {
         tick(&mut w, d, IDLE);
         let f = f0(&w);
         if f.state == State::Dead {
-            // Same launch-KO rule as the KO percents: a fall after landing doesn't count.
-            died = prev == State::Hitstun || prev == State::Air && landed.is_none();
+            // Same launch-KO rule as the KO percents.
+            died = launch_ko(d, &w, f, prev, landed.is_none());
             break;
         }
         top = top.min(f.y);
@@ -266,6 +266,12 @@ fn launch(d: &GameData, id: &str, angle: f64, pct: f64) -> Value {
     })
 }
 
+/// A death that counts as a launch KO: a side or top blast line crossed before touching ground or a ledge since
+/// the hit, or the bottom line crossed in hitstun (a spike). Anything else is a ring-out.
+fn launch_ko(d: &GameData, w: &World, f: &Fighter, prev: State, untouched: bool) -> bool {
+    let b = &d.stages[w.stage].blast;
+    if f.y > b.bottom { prev == State::Hitstun } else { untouched }
+}
 #[derive(Clone, Copy)]
 enum Ko {
     Fsmash,
@@ -278,7 +284,7 @@ enum Out {
     Stay,
     /// Off the main block (hanging on a ledge, or dead) without a launch KO.
     Ring,
-    /// Crossed a blast line while still launched: in hitstun, or airborne without touching ground since the hit.
+    /// See [`launch_ko`].
     Ko,
 }
 struct Trial {
@@ -325,7 +331,7 @@ fn trial(d: &GameData, id: &str, mv: Ko, (dx, delay): (f64, u32), pct: f64, stop
         }
         let v = &w.fighters[1];
         if v.state == State::Dead {
-            let ko = prev == State::Hitstun || prev == State::Air && launched;
+            let ko = launch_ko(d, &w, v, prev, launched);
             return Trial { hit: true, out: if ko { Out::Ko } else { Out::Ring }, speed: 0. };
         }
         if v.dmg > pct || v.state == State::Grabbed {
