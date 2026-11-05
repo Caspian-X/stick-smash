@@ -1,0 +1,497 @@
+{
+ "base": "https://ultimateframedata.com/hitboxes/robin/",
+ "files": {
+  "RobinArcfire": {
+   "slot": "specials",
+   "size": 1319754,
+   "sha256": "0db574abee58565fc8a7c4959566d5b4d23cea0483debe7d63fb22fe8cb54fd9",
+   "frames": 77,
+   "montage": "RobinArcfire-frames.png",
+   "kept": [
+    10,
+    16,
+    20,
+    30
+   ]
+  },
+  "RobinArcthunder": {
+   "slot": "specials",
+   "size": 1012077,
+   "sha256": "602d75b413505d323613c2d12a935cb08cf5a31fac20bc7a0b5b660fed159dea",
+   "frames": 86,
+   "montage": "RobinArcthunder-frames.png",
+   "kept": [
+    0,
+    43,
+    85
+   ]
+  },
+  "RobinBAirBronze": {
+   "slot": "bair",
+   "size": 1745122,
+   "sha256": "cad5f4e568e189e991c5f7e71c7dc7a76c13e0d763307032e99a6a4c505bbee7",
+   "frames": 39,
+   "montage": "RobinBAirBronze-frames.png",
+   "kept": [
+    0,
+    19,
+    38
+   ]
+  },
+  "RobinBAirLevin": {
+   "slot": "bair",
+   "size": 1759881,
+   "sha256": "caf29837c52d722798139817a600958c235b1d34061318ec16249b82eeda5283",
+   "frames": 39,
+   "montage": "RobinBAirLevin-frames.png",
+   "kept": [
+    5,
+    8,
+    9,
+    12,
+    15,
+    20
+   ]
+  },
+  "RobinBThrow": {
+   "slot": "throws",
+   "size": 2479638,
+   "sha256": "32cb6b5564d4629cd4039ce62953723f5a1ab185e93ce204575fb70d5dc7d859",
+   "frames": 44,
+   "montage": "RobinBThrow-frames.png",
+   "kept": [
+    0,
+    22,
+    43
+   ]
+  },
+  "RobinDAirBronze": {
+   "slot": "dair",
+   "size": 2203486,
+   "sha256": "8f64942c7950eee3f6514d7d01f14fd067eae5727fe868b3f4369edcba207b0d",
+   "frames": 59,
+   "montage": "RobinDAirBronze-frames.png",
+   "kept": [
+    0,
+    29,
+    58
+   ]
+  },
+  "RobinDAirLevin": {
+   "slot": "dair",
+   "size": 2734753,
+   "sha256": "89f48403a86bb350ffdc18030fe23129e156daed6a538714a02f011ad2bf70c2",
+   "frames": 59,
+   "montage": "RobinDAirLevin-frames.png",
+   "kept": [
+    8,
+    12,
+    14,
+    16,
+    20,
+    26
+   ]
+  },
+  "RobinDSmashBronze": {
+   "slot": "dsmash",
+   "size": 2885843,
+   "sha256": "6d88ae1bbe6aaf34e40969d85f9b39183ba66c2c2d7d53651bda2ebfa5ce62fa",
+   "frames": 56,
+   "montage": "RobinDSmashBronze-frames.png",
+   "kept": [
+    0,
+    28,
+    55
+   ]
+  },
+  "RobinDSmashLevin": {
+   "slot": "dsmash",
+   "size": 2887291,
+   "sha256": "a0073d7bc509f2ee9780c6a4d09cedea1c354cad26f2131ff071a3b8161e29ae",
+   "frames": 56,
+   "montage": "RobinDSmashLevin-frames.png",
+   "kept": [
+    10,
+    14,
+    16,
+    18,
+    21,
+    26
+   ]
+  },
+  "RobinDThrow": {
+   "slot": "throws",
+   "size": 2128495,
+   "sha256": "45f623a762fd6da1f0fd71dc1c5b98721a117ff6a0a7cca311fc7b6fbc7d1ddd",
+   "frames": 37,
+   "montage": "RobinDThrow-frames.png",
+   "kept": [
+    0,
+    18,
+    36
+   ]
+  },
+  "RobinDTilt": {
+   "slot": "dtilt",
+   "size": 1267467,
+   "sha256": "494a7422005be6a360efed5c172220e6388214bd3649c5275669865712d8b1e4",
+   "frames": 21,
+   "montage": "RobinDTilt-frames.png",
+   "kept": [
+    4,
+    6,
+    7,
+    9,
+    12,
+    16
+   ]
+  },
+  "RobinDashAttack": {
+   "slot": "dashatk",
+   "size": 2145732,
+   "sha256": "0aee51900767bafc86df190cea27d4c072f66a3bec202d2ba594ea0f1adb72ce",
+   "frames": 41,
+   "montage": "RobinDashAttack-frames.png",
+   "kept": [
+    0,
+    20,
+    40
+   ]
+  },
+  "RobinDashGrab": {
+   "slot": "grab",
+   "size": 2873442,
+   "sha256": "5d4a2e4f96c72853c9aab85d850df6486fc83cb0cfc9ccfcf7c073cdae246b38",
+   "frames": 47,
+   "montage": "RobinDashGrab-frames.png",
+   "kept": [
+    0,
+    23,
+    46
+   ]
+  },
+  "RobinElthunder": {
+   "slot": "specials",
+   "size": 730870,
+   "sha256": "669002c904ff61643560b9a5806b063774b56893a054d4a3ac518bc7b8c549d3",
+   "frames": 52,
+   "montage": "RobinElthunder-frames.png",
+   "kept": [
+    0,
+    26,
+    51
+   ]
+  },
+  "RobinElwind": {
+   "slot": "specials",
+   "size": 567924,
+   "sha256": "17f527686b860d0785402410986b0a494c246c17a7d8ad78c1dd802c591f3bc2",
+   "frames": 85,
+   "montage": "RobinElwind-frames.png",
+   "kept": [
+    6,
+    9,
+    14,
+    26
+   ]
+  },
+  "RobinFAirBronze": {
+   "slot": "fair",
+   "size": 1604398,
+   "sha256": "793c8dd54f3c953bd5c41db2401fedc7d7f02227f12b3d8b9b4add6865df8fa0",
+   "frames": 33,
+   "montage": "RobinFAirBronze-frames.png",
+   "kept": [
+    8,
+    11,
+    13,
+    15,
+    18,
+    24
+   ]
+  },
+  "RobinFAirLevin": {
+   "slot": "fair",
+   "size": 1619117,
+   "sha256": "6154c7b9072a24fb3fd0932fa986711c84a403b6f3ae4c885823c9496b1d89ff",
+   "frames": 33,
+   "montage": "RobinFAirLevin-frames.png",
+   "kept": [
+    8,
+    11,
+    13,
+    15,
+    18,
+    24
+   ]
+  },
+  "RobinFSmashBronze": {
+   "slot": "fsmash",
+   "size": 3240039,
+   "sha256": "674d7e2e20ce2b1d599974f39be2bf1ccc580f3cb74e85692decfc8a9037e7cb",
+   "frames": 57,
+   "montage": "RobinFSmashBronze-frames.png",
+   "kept": [
+    9,
+    12,
+    15,
+    17,
+    20,
+    26
+   ]
+  },
+  "RobinFSmashLevin": {
+   "slot": "fsmash",
+   "size": 3255686,
+   "sha256": "387558700b9067003db64dca561df87f296255d8fb1ed300288fbc93330c6175",
+   "frames": 57,
+   "montage": "RobinFSmashLevin-frames.png",
+   "kept": [
+    9,
+    12,
+    15,
+    17,
+    20,
+    26
+   ]
+  },
+  "RobinFThrow": {
+   "slot": "throws",
+   "size": 1787715,
+   "sha256": "242af9f897ccc5b3f16189a408d7ad46633c8d6b6502574d3d85f574e102af2a",
+   "frames": 31,
+   "montage": "RobinFThrow-frames.png",
+   "kept": [
+    0,
+    15,
+    30
+   ]
+  },
+  "RobinFTilt": {
+   "slot": "ftilt",
+   "size": 1998900,
+   "sha256": "91eb3a9562e74947a7513c72d31e1b4123b26a7c0abca54b8269eccf9d4448f6",
+   "frames": 32,
+   "montage": "RobinFTilt-frames.png",
+   "kept": [
+    0,
+    16,
+    31
+   ]
+  },
+  "RobinGrab": {
+   "slot": "grab",
+   "size": 2199933,
+   "sha256": "b72d58e65730ca9375ded4d737fdc86b89af32fa50a8798dc46f340fefc92d5e",
+   "frames": 39,
+   "montage": "RobinGrab-frames.png",
+   "kept": [
+    0,
+    19,
+    38
+   ]
+  },
+  "RobinJab1": {
+   "slot": "jab1",
+   "size": 2001300,
+   "sha256": "2d1c252ea45b0312adbe344efd00e04e17fa2ce77fa921f14d65f18d359d29dd",
+   "frames": 31,
+   "montage": "RobinJab1-frames.png",
+   "kept": [
+    2,
+    3,
+    4,
+    6,
+    10,
+    16
+   ]
+  },
+  "RobinJab2": {
+   "slot": "jab2",
+   "size": 1973257,
+   "sha256": "94e41911c21c3f340927485c246f2bb7b8a1ec176b13a9eca28361eb105fc9a7",
+   "frames": 34,
+   "montage": "RobinJab2-frames.png",
+   "kept": [
+    0,
+    17,
+    33
+   ]
+  },
+  "RobinJab3": {
+   "slot": "jab3",
+   "size": 2258825,
+   "sha256": "5fcac32e8477fbd7f9b15782053cffad48263d30a674817a330c1f1e06661159",
+   "frames": 35,
+   "montage": "RobinJab3-frames.png",
+   "kept": [
+    3,
+    5,
+    6,
+    8,
+    12,
+    18
+   ]
+  },
+  "RobinJabRapid": {
+   "slot": "rapid",
+   "size": 1728414,
+   "sha256": "9f5fe8698c5b2b5a7552790909e40ea666e55fb06ad0a7a2b5dd511e94f69487",
+   "frames": 30,
+   "montage": "RobinJabRapid-frames.png",
+   "kept": [
+    0,
+    15,
+    29
+   ]
+  },
+  "RobinNAirBronze": {
+   "slot": "nair",
+   "size": 2718555,
+   "sha256": "e3f9e4f65cb277b982a9734a485dac433aec8796a170bd486dee0d184a72dabe",
+   "frames": 47,
+   "montage": "RobinNAirBronze-frames.png",
+   "kept": [
+    0,
+    23,
+    46
+   ]
+  },
+  "RobinNAirLevin": {
+   "slot": "nair",
+   "size": 2144442,
+   "sha256": "f5de7fe7fcb159c69be2dc9137ba5f4ca8fa9404f61a13d5436d5e9f54c247b4",
+   "frames": 47,
+   "montage": "RobinNAirLevin-frames.png",
+   "kept": [
+    4,
+    6,
+    9,
+    12,
+    20,
+    24
+   ]
+  },
+  "RobinNosferatu": {
+   "slot": "specials",
+   "size": 3058006,
+   "sha256": "99966b97760fb797c3a0b16b8e5d16d4caabed25b8bc2d852bb3c367223ee0c1",
+   "frames": 49,
+   "montage": "RobinNosferatu-frames.png",
+   "kept": [
+    12,
+    14,
+    16,
+    20,
+    26
+   ]
+  },
+  "RobinThoron": {
+   "slot": "specials",
+   "size": 207733,
+   "sha256": "698f5221739b8277728741a12cb2117d53572cd056b007e4c844a7eb1a7cf823",
+   "frames": 89,
+   "montage": "RobinThoron-frames.png",
+   "kept": [
+    20,
+    24,
+    30,
+    40
+   ]
+  },
+  "RobinThunder": {
+   "slot": "specials",
+   "size": 1035694,
+   "sha256": "9b5339bd16198716e896e35c27ffaecf38a8161938a24d9477ff09cbabbfd3ea",
+   "frames": 32,
+   "montage": "RobinThunder-frames.png",
+   "kept": [
+    6,
+    8,
+    10,
+    14
+   ]
+  },
+  "RobinUAirBronze": {
+   "slot": "uair",
+   "size": 1905578,
+   "sha256": "c182e9a76cc894e6b45b51fc01e20618a399b2d344d8f17776dcb249c34bc6b1",
+   "frames": 45,
+   "montage": "RobinUAirBronze-frames.png",
+   "kept": [
+    0,
+    22,
+    44
+   ]
+  },
+  "RobinUAirLevin": {
+   "slot": "uair",
+   "size": 1950151,
+   "sha256": "22df5cf75aea8da1d3b6234fde3aded815fc4674058be71c1bed22caa382dbe0",
+   "frames": 45,
+   "montage": "RobinUAirLevin-frames.png",
+   "kept": [
+    6,
+    9,
+    11,
+    13,
+    17,
+    22
+   ]
+  },
+  "RobinUSmashBronze": {
+   "slot": "usmash",
+   "size": 1911142,
+   "sha256": "c4026c498cd3f9c682479a3206c8128da302afab53bc48213063ba78f1be7db7",
+   "frames": 52,
+   "montage": "RobinUSmashBronze-frames.png",
+   "kept": [
+    0,
+    26,
+    51
+   ]
+  },
+  "RobinUSmashLevin": {
+   "slot": "usmash",
+   "size": 1680554,
+   "sha256": "623ecff30cb5cbce430afd02c6ef31ab4453e98fbb1236d3693ec61c745d11e2",
+   "frames": 52,
+   "montage": "RobinUSmashLevin-frames.png",
+   "kept": [
+    6,
+    10,
+    12,
+    14,
+    18,
+    28
+   ]
+  },
+  "RobinUThrow": {
+   "slot": "throws",
+   "size": 2773535,
+   "sha256": "59732340f2bd3a3f6cc09f0c89b27b08298c417467a3a0a8537e2c069fde75dc",
+   "frames": 47,
+   "montage": "RobinUThrow-frames.png",
+   "kept": [
+    0,
+    23,
+    46
+   ]
+  },
+  "RobinUTilt": {
+   "slot": "utilt",
+   "size": 1392613,
+   "sha256": "9453cd0892539d4aa66438e936b9ae65d1bdac4ed9aad7dda3a94eafc887d1f9",
+   "frames": 32,
+   "montage": "RobinUTilt-frames.png",
+   "kept": [
+    3,
+    5,
+    8,
+    11,
+    13,
+    18
+   ]
+  }
+ }
+}

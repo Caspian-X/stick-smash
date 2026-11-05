@@ -1,0 +1,630 @@
+{
+ "url": "https://ultimateframedata.com/diddy_kong",
+ "accessed": "2026-11-04",
+ "pageSha256": "0dfdad7665f4664d674f31f71b63cd16909f4efb860e1fcf3d2d899b12e9f1aa",
+ "note": "Per-move hitbox GIFs live under https://ultimateframedata.com/hitboxes/diddy_kong/ (the character page only links generic getup/ledge/trip clips); see visuals.json.",
+ "rows": {
+  "Jab 1": {
+   "name": "Jab 1",
+   "startup": "3",
+   "totalframes": "19",
+   "landinglag": "--",
+   "notes": "Transitions to jab 2 as ealy as frame 6",
+   "basedamage": "2.0",
+   "shieldlag": "7",
+   "shieldstun": "3",
+   "whichhitbox": "--",
+   "advantage": "-13",
+   "activeframes": "3",
+   "endlag": "16",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongJab1.gif"
+   ]
+  },
+  "Jab 2": {
+   "name": "Jab 2",
+   "startup": "5",
+   "totalframes": "20",
+   "landinglag": "--",
+   "notes": "Transitions to jab 3 as early as frame 6",
+   "basedamage": "1.5",
+   "shieldlag": "5",
+   "shieldstun": "3",
+   "whichhitbox": "--",
+   "advantage": "-12",
+   "activeframes": "5",
+   "endlag": "15",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongJab2.gif"
+   ]
+  },
+  "Jab 3": {
+   "name": "Jab 3",
+   "startup": "5",
+   "totalframes": "34",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "4.0",
+   "shieldlag": "11",
+   "shieldstun": "5",
+   "whichhitbox": "--",
+   "advantage": "-24",
+   "activeframes": "5",
+   "endlag": "29",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongJab3.gif"
+   ]
+  },
+  "Forward Tilt": {
+   "name": "Forward Tilt",
+   "startup": "10",
+   "totalframes": "36",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "10.0/7.0",
+   "shieldlag": "8",
+   "shieldstun": "10",
+   "whichhitbox": "Early/Late",
+   "advantage": "-16",
+   "activeframes": "10\u201411(12/13\u201416)",
+   "endlag": "20",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongFTilt.gif",
+    "hitboxes/diddy_kong/DiddyKongFTiltUp.gif",
+    "hitboxes/diddy_kong/DiddyKongFTiltDown.gif"
+   ]
+  },
+  "Up Tilt": {
+   "name": "Up Tilt",
+   "startup": "6",
+   "totalframes": "29",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "6.0",
+   "shieldlag": "6",
+   "shieldstun": "6",
+   "whichhitbox": "--",
+   "advantage": "-17",
+   "activeframes": "6\u201411",
+   "endlag": "18",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongUTilt.gif"
+   ]
+  },
+  "Down Tilt": {
+   "name": "Down Tilt",
+   "startup": "4",
+   "totalframes": "18",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "5.5",
+   "shieldlag": "6",
+   "shieldstun": "6",
+   "whichhitbox": "--",
+   "advantage": "-8",
+   "activeframes": "4\u20145",
+   "endlag": "13",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongDTilt.gif"
+   ]
+  },
+  "Dash Attack": {
+   "name": "Dash Attack",
+   "startup": "8/16/22",
+   "totalframes": "40",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "2.0/3.0",
+   "shieldlag": "4/5",
+   "shieldstun": "3/4",
+   "whichhitbox": "Multi/Final",
+   "advantage": "-14",
+   "activeframes": "8\u20149/16\u201417/22\u201423",
+   "endlag": "17",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongDashAttack.gif"
+   ]
+  },
+  "Forward Smash": {
+   "name": "Forward Smash",
+   "startup": "12/21",
+   "totalframes": "50",
+   "landinglag": "--",
+   "notes": "Charge hold is frame 4",
+   "basedamage": "5.0/11.0",
+   "shieldlag": "6/10",
+   "shieldstun": "4/8",
+   "whichhitbox": "--",
+   "advantage": "-21",
+   "activeframes": "12(13)/21\u201423",
+   "endlag": "27",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongFSmash.gif"
+   ]
+  },
+  "Up Smash": {
+   "name": "Up Smash",
+   "startup": "5/12/19",
+   "totalframes": "53",
+   "landinglag": "--",
+   "notes": "Charge hold is frame 1",
+   "basedamage": "2.5/6.0",
+   "shieldlag": "5/6",
+   "shieldstun": "3/5",
+   "whichhitbox": "Multihit/Final",
+   "advantage": "-29",
+   "activeframes": "5(6\u20148)/12\u201414(15)/19\u201423",
+   "endlag": "30",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongUSmash.gif"
+   ]
+  },
+  "Down Smash": {
+   "name": "Down Smash",
+   "startup": "7/12",
+   "totalframes": "50",
+   "landinglag": "--",
+   "notes": "Charge hold frame is 2",
+   "basedamage": "12.0/15.0",
+   "shieldlag": "9/10",
+   "shieldstun": "8/10",
+   "whichhitbox": "--",
+   "advantage": "-35/-28",
+   "activeframes": "7\u20148/12\u201413",
+   "endlag": "37",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongDSmash.gif"
+   ]
+  },
+  "Neutral Air": {
+   "name": "Neutral Air",
+   "startup": "8",
+   "totalframes": "48",
+   "landinglag": "8",
+   "notes": "Autocancels on frame 1-3 and 27 onward",
+   "basedamage": "6.0",
+   "shieldlag": "6",
+   "shieldstun": "3",
+   "whichhitbox": "--",
+   "advantage": "-5",
+   "activeframes": "8\u201420",
+   "endlag": "28",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongNAir.gif"
+   ]
+  },
+  "Forward Air": {
+   "name": "Forward Air",
+   "startup": "6",
+   "totalframes": "46",
+   "landinglag": "16",
+   "notes": "Autocancels on frame 1-2 and 26 onward",
+   "basedamage": "10.0/8.0",
+   "shieldlag": "8/7",
+   "shieldstun": "4/4",
+   "whichhitbox": "Early/Late",
+   "advantage": "-12/-12",
+   "activeframes": "6\u20149(10\u201416)",
+   "endlag": "30",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongFAir.gif"
+   ]
+  },
+  "Back Air": {
+   "name": "Back Air",
+   "startup": "5",
+   "totalframes": "30",
+   "landinglag": "7",
+   "notes": "Autocancels on frame 1-2 and 20 onward",
+   "basedamage": "9.0",
+   "shieldlag": "7",
+   "shieldstun": "4",
+   "whichhitbox": "--",
+   "advantage": "-3",
+   "activeframes": "5\u20148",
+   "endlag": "22",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongBAir.gif"
+   ]
+  },
+  "Up Air": {
+   "name": "Up Air",
+   "startup": "4",
+   "totalframes": "36",
+   "landinglag": "9",
+   "notes": "Autocancels on frame 27 onward",
+   "basedamage": "7.0",
+   "shieldlag": "7",
+   "shieldstun": "3",
+   "whichhitbox": "--",
+   "advantage": "-7",
+   "activeframes": "4\u20147",
+   "endlag": "29",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongUAir.gif"
+   ]
+  },
+  "Down Air": {
+   "name": "Down Air",
+   "startup": "15",
+   "totalframes": "46",
+   "landinglag": "17",
+   "notes": "Autocancels on frame 1-14 and 35 onward",
+   "basedamage": "13.0/10.0",
+   "shieldlag": "9/8",
+   "shieldstun": "5/4",
+   "whichhitbox": "--",
+   "advantage": "-26 (-13 landing)",
+   "activeframes": "15\u201416",
+   "endlag": "30",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongDAir.gif"
+   ]
+  },
+  "Neutral B (Peanut Popgun)": {
+   "name": "Neutral B (Peanut Popgun)",
+   "startup": "16/17\u2014121/124",
+   "totalframes": "48",
+   "landinglag": "--",
+   "notes": "Melee hitbox generated after projectile. Diddy does not suffer hitlag from melee attack",
+   "basedamage": "3.3\u201415.0/2.0",
+   "shieldlag": "5\u201410/10\u201414",
+   "shieldstun": "2\u20145/2\u20142",
+   "whichhitbox": "Projectile/melee",
+   "advantage": "-25 to -17/-19 to -13",
+   "activeframes": "**",
+   "endlag": "--",
+   "images": []
+  },
+  "Peanut Popgun, Misfire": {
+   "name": "Peanut Popgun, Misfire",
+   "startup": "123",
+   "totalframes": "228",
+   "landinglag": "--",
+   "notes": "You can cancel charge into shield/air dodge as early as frame 14.",
+   "basedamage": "23.0",
+   "shieldlag": "16",
+   "shieldstun": "20",
+   "whichhitbox": "--",
+   "advantage": "-85",
+   "activeframes": "**",
+   "endlag": "--",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongPeanutPopgunBoom.gif"
+   ]
+  },
+  "Peanuts (Thrown)": {
+   "name": "Peanuts (Thrown)",
+   "startup": "--",
+   "totalframes": "--",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "--",
+   "shieldlag": "--",
+   "shieldstun": "--",
+   "whichhitbox": "--",
+   "advantage": "--",
+   "activeframes": "--",
+   "endlag": "--",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongPeanut.gif"
+   ]
+  },
+  "Side B (Monkey Flip)": {
+   "name": "Side B (Monkey Flip)",
+   "startup": "18",
+   "totalframes": "47/61",
+   "landinglag": "26",
+   "notes": "First total frames is in the air, second is along level ground.",
+   "basedamage": "--",
+   "shieldlag": "--",
+   "shieldstun": "--",
+   "whichhitbox": "--",
+   "advantage": "--",
+   "activeframes": "18\u201436",
+   "endlag": "11",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongMonkeyFlip.gif"
+   ]
+  },
+  "Monkey Flip, Attack": {
+   "name": "Monkey Flip, Attack",
+   "startup": "6",
+   "totalframes": "32",
+   "landinglag": "18",
+   "notes": "Total frames is in the air.",
+   "basedamage": "14.0/10.0",
+   "shieldlag": "10/8",
+   "shieldstun": "13/10",
+   "whichhitbox": "Early/Late",
+   "advantage": "-5/-8",
+   "activeframes": "6\u201410(11\u201425)",
+   "endlag": "7",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongMonkeyFlipKick.gif"
+   ]
+  },
+  "Monkey Flip, Grab Success": {
+   "name": "Monkey Flip, Grab Success",
+   "startup": "11/29/59...",
+   "totalframes": "--",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "--",
+   "shieldlag": "--",
+   "shieldstun": "--",
+   "whichhitbox": "--",
+   "advantage": "--",
+   "activeframes": "**",
+   "endlag": "--",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongMonkeyFlipStick.gif"
+   ]
+  },
+  "Monkey Flip, Grab Attack": {
+   "name": "Monkey Flip, Grab Attack",
+   "startup": "18/21",
+   "totalframes": "36",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "--",
+   "shieldlag": "--",
+   "shieldstun": "--",
+   "whichhitbox": "--",
+   "advantage": "--",
+   "activeframes": "**",
+   "endlag": "--",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongMonkeyFlipStickAttack.gif"
+   ]
+  },
+  "Monkey Flip, Grab Jump": {
+   "name": "Monkey Flip, Grab Jump",
+   "startup": "18/27",
+   "totalframes": "42",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "--",
+   "shieldlag": "--",
+   "shieldstun": "--",
+   "whichhitbox": "--",
+   "advantage": "--",
+   "activeframes": "**",
+   "endlag": "--",
+   "images": []
+  },
+  "Up B (Rocketbarrel Boost)": {
+   "name": "Up B (Rocketbarrel Boost)",
+   "startup": "8\u201468",
+   "totalframes": "--",
+   "landinglag": "30",
+   "notes": "Touching a solid surface during boost activates explosion",
+   "basedamage": "10.0/8.0/6.0",
+   "shieldlag": "8/7/6",
+   "shieldstun": "10/8/6",
+   "whichhitbox": "Early/Late/Later",
+   "advantage": "--",
+   "activeframes": "8\u20149(10\u201416/17\u201435)",
+   "endlag": "--",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongRocketBarrels.gif",
+    "hitboxes/diddy_kong/DiddyKongRocketBarrels.png"
+   ]
+  },
+  "Rocketbarrel Boost, Explosion": {
+   "name": "Rocketbarrel Boost, Explosion",
+   "startup": "1",
+   "totalframes": "57-59",
+   "landinglag": "--",
+   "notes": "Total frames assumes exploding on level ground, Diddy does not suffer hitlag from explosion",
+   "basedamage": "18.0",
+   "shieldlag": "11",
+   "shieldstun": "6",
+   "whichhitbox": "--",
+   "advantage": "-39 to -41",
+   "activeframes": "1\u20142",
+   "endlag": "55",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongRocketBarrelsExplosion.png"
+   ]
+  },
+  "Down B (Banana Peel)": {
+   "name": "Down B (Banana Peel)",
+   "startup": "--",
+   "totalframes": "39",
+   "landinglag": "--",
+   "notes": "Item generated on frame 20",
+   "basedamage": "--",
+   "shieldlag": "6",
+   "shieldstun": "6",
+   "whichhitbox": "--",
+   "advantage": "--",
+   "activeframes": "20 (banana appears)",
+   "endlag": "--",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongBanana.png",
+    "hitboxes/diddy_kong/DiddyKongBanana.gif"
+   ]
+  },
+  "Grab": {
+   "name": "Grab",
+   "startup": "7",
+   "totalframes": "36",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "--",
+   "activeframes": "7\u20148",
+   "endlag": "28",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongGrab.gif"
+   ]
+  },
+  "Dash Grab": {
+   "name": "Dash Grab",
+   "startup": "10",
+   "totalframes": "44",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "--",
+   "activeframes": "10\u201411",
+   "endlag": "33",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongDashGrab.gif"
+   ]
+  },
+  "Pivot Grab": {
+   "name": "Pivot Grab",
+   "startup": "11",
+   "totalframes": "39",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "--",
+   "activeframes": "11\u201412",
+   "endlag": "27",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongPivotGrab.gif"
+   ]
+  },
+  "Pummel": {
+   "name": "Pummel",
+   "startup": "1",
+   "totalframes": "16",
+   "landinglag": "--",
+   "notes": "Total frames includes 10 frames of hitlag",
+   "basedamage": "1.0",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongPummel.gif"
+   ]
+  },
+  "Forward Throw": {
+   "name": "Forward Throw",
+   "startup": "21",
+   "totalframes": "31",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "9.0",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongFThrow.gif"
+   ]
+  },
+  "Backward Throw": {
+   "name": "Backward Throw",
+   "startup": "18",
+   "totalframes": "51",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "12.0",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongBThrow.gif"
+   ]
+  },
+  "Up Throw": {
+   "name": "Up Throw",
+   "startup": "17/19",
+   "totalframes": "26",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "1.0/4.0",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongUThrow.gif"
+   ]
+  },
+  "Down Throw": {
+   "name": "Down Throw",
+   "startup": "22",
+   "totalframes": "31",
+   "landinglag": "--",
+   "notes": "--",
+   "basedamage": "7.0",
+   "images": [
+    "hitboxes/diddy_kong/DiddyKongDThrow.gif"
+   ]
+  },
+  "Spot Dodge": {
+   "name": "Spot Dodge",
+   "totalframes": "19/24",
+   "landinglag": "--",
+   "notes": "Intangible on frame 3-16",
+   "images": []
+  },
+  "Forward Roll": {
+   "name": "Forward Roll",
+   "totalframes": "28",
+   "landinglag": "--",
+   "notes": "Intangible on frame 4-14",
+   "images": []
+  },
+  "Backward Roll": {
+   "name": "Backward Roll",
+   "totalframes": "33",
+   "landinglag": "--",
+   "notes": "Intangible on frame 4-15",
+   "images": []
+  },
+  "Neutral Air Dodge": {
+   "name": "Neutral Air Dodge",
+   "totalframes": "44",
+   "landinglag": "10",
+   "notes": "Intangible on frame 2-27",
+   "images": []
+  },
+  "Air Dodge, Down": {
+   "name": "Air Dodge, Down",
+   "totalframes": "62",
+   "landinglag": "11-19",
+   "notes": "Intangible on frame 2-19",
+   "images": []
+  },
+  "Air Dodge, Diagonally Down": {
+   "name": "Air Dodge, Diagonally Down",
+   "totalframes": "68",
+   "landinglag": "11-19",
+   "notes": "Intangible on frame 2-19",
+   "images": []
+  },
+  "Air Dodge, Left/Right": {
+   "name": "Air Dodge, Left/Right",
+   "totalframes": "74",
+   "landinglag": "11-19",
+   "notes": "Intangible on frame 2-19",
+   "images": []
+  },
+  "Air Dodge, Diagonally Up": {
+   "name": "Air Dodge, Diagonally Up",
+   "totalframes": "86",
+   "landinglag": "11-19",
+   "notes": "Intangible on frame 2-19",
+   "images": []
+  },
+  "Air Dodge, Up": {
+   "name": "Air Dodge, Up",
+   "totalframes": "96",
+   "landinglag": "11-19",
+   "notes": "Intangible on frame 2-19",
+   "images": []
+  },
+  "Getup Attacks": {
+   "name": "Getup Attacks",
+   "images": [
+    "hitboxes/diddy_kong/diddykongGetupAttackU.gif",
+    "hitboxes/diddy_kong/diddykongGetupAttackD.gif",
+    "hitboxes/diddy_kong/diddykongTripAttack.gif",
+    "hitboxes/diddy_kong/diddykongLedgeAttack.gif"
+   ]
+  }
+ },
+ "stats": {
+  "weight": 90.0,
+  "gravity": 0.125,
+  "walk": 1.313,
+  "run": 2.006,
+  "dash": 2.09,
+  "air": 0.924,
+  "airAccel": 0.05,
+  "shortHopFrames": 36,
+  "fullHopFrames": 51,
+  "fall": 1.75,
+  "fastFall": 2.8,
+  "jumpSquat": 3
+ }
+}

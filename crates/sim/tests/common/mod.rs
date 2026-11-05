@@ -104,3 +104,51 @@ pub fn run_draining(w: &mut World, data: &GameData, ticks: usize, inputs: &[Inpu
         step_draining(w, data, inputs);
     }
 }
+
+/// Follow a move's coverage with one victim, isolating contact identity from launch and hitlag.
+pub fn contact_sequence(d: &GameData, fighter: &str, slot: &str) -> Vec<f64> {
+    let mut w = fighters(d, fighter, &["brawler"]);
+    w.count = 0;
+    if fighter == "stratus" {
+        w.fighters[0].charges[0] = 0;
+    }
+    let mut f = w.fighters[0].clone();
+    f.x = 640.;
+    f.y = 100.;
+    f.ground = false;
+    f.surf = None;
+    sim::moves::start_move(&mut w, d, 0, &mut f, slot);
+    w.fighters[0] = f;
+    let mut damage = vec![];
+    for _ in 0..200 {
+        if w.fighters[0].mov.is_none() {
+            return damage;
+        }
+        let f = &mut w.fighters[0];
+        f.x = 640.;
+        f.y = 100.;
+        f.vx = 0.;
+        f.vy = 0.;
+        f.lag = 0;
+        if let Some(b) = sim::combat::active_boxes_at(d, f, w.frame).first() {
+            let v = &mut w.fighters[1];
+            v.set_state(sim::world::State::Idle);
+            v.inv = 0;
+            v.blink = 0;
+            v.lag = 0;
+            v.x = b.x;
+            v.y = b.y + 35.;
+            v.ground = b.hit.targets(true);
+            v.surf = None;
+        }
+        sim::combat::hit_pass(&mut w, d);
+        damage.extend(w.hits.drain(..).filter(|h| h.attacker == Some(0)).map(|h| h.damage));
+        let mut f = w.fighters[0].clone();
+        sim::moves::st_attack(&mut w, d, 0, &mut f, Default::default(), 0.);
+        w.fighters[0] = f;
+        w.frame += 1;
+        w.fx.clear();
+        w.acts.clear();
+    }
+    panic!("{fighter}/{slot} did not finish");
+}

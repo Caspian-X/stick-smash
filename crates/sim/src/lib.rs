@@ -10,6 +10,7 @@
 pub mod actions;
 pub mod ai;
 pub mod articles;
+pub mod charges;
 pub mod combat;
 pub mod data;
 pub mod gait;

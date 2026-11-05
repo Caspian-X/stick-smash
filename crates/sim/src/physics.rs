@@ -222,7 +222,15 @@ pub fn air_phys(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Int
     if fast_fall(d, f, inp) {
         accept(w, i, Action::FastFall);
     }
-    fall(w, d, i, f, false, Some(if f.ff { s.fast_fall_speed } else { s.fall_speed }));
+    let mut cap = if f.ff { s.fast_fall_speed } else { s.fall_speed };
+    if !f.ground
+        && f.state == State::Air
+        && inp.jump_held
+        && let Some(speed) = s.float_speed
+    {
+        cap = cap.min(speed);
+    }
+    fall(w, d, i, f, false, Some(cap));
 }
 pub fn landing(f: &mut Fighter, n: u32) {
     f.set_state(State::Landing);

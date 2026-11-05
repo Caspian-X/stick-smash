@@ -82,8 +82,8 @@ pub(crate) struct PlayheadBoxes {
 
 pub(crate) fn playhead_boxes(ed: &Editor) -> Option<PlayheadBoxes> {
     let Subject::Move(slot) = &ed.subject else { return None };
-    let crate::ui::Playhead { fighter: f, phase: Some((p, t)) } = at_playhead(ed)? else { return None };
-    let boxes = ed.ws.docs.get(&ed.cur)?.item.moves.get(slot)?.phases.get(p)?.hitboxes.clone();
+    let crate::ui::Playhead { fighter: f, phase: Some((p, t)), variant } = at_playhead(ed)? else { return None };
+    let boxes = ed.ws.docs.get(&ed.cur)?.item.moves.get(slot)?.timeline(variant).get(p)?.hitboxes.clone();
     Some(PlayheadBoxes { f, phase: p, t, boxes })
 }
 
@@ -377,10 +377,14 @@ fn drag_box(
 ) {
     let Subject::Move(slot) = ed.subject.clone() else { return };
     let s = |v: f64| crate::stage_view::Snap::fighter(coarse, fine).v(v);
-    let Some(h) = ed.fighter().moves.get_mut(&slot).and_then(|mv| mv.phases.get_mut(phase)).and_then(|p| match kind {
-        Hit::Body(i) | Hit::Rim(i) | Hit::Angle(i) => p.hitboxes.get_mut(i),
-        Hit::Joint(_) => None,
-    }) else {
+    // Drag the box that is on screen: the timeline the simulated move ran.
+    let variant = ed.run.as_ref().map_or(0, |r| r.marks[ed.frame.min(r.marks.len() - 1)].variant);
+    let Some(h) = ed.fighter().moves.get_mut(&slot).and_then(|mv| mv.timeline_mut(variant).get_mut(phase)).and_then(
+        |p| match kind {
+            Hit::Body(i) | Hit::Rim(i) | Hit::Angle(i) => p.hitboxes.get_mut(i),
+            Hit::Joint(_) => None,
+        },
+    ) else {
         return;
     };
     let (x, y, r) = orig;

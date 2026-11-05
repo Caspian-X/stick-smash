@@ -72,6 +72,10 @@ verify-replays dir:
 balance seeds="16" fighter="":
     BALANCE_SEEDS={{seeds}} BALANCE_FIGHTER="{{fighter}}" cargo test --release -p sim --test stages fighter_balance_diagnostics -- --ignored --nocapture
 
+# Throbbin against every other fighter, one seat-swapped pair per seed (stage: THROBBIN_STAGE, default arena)
+throbbin-matchups seeds="1" stage="arena":
+    THROBBIN_SEEDS={{seeds}} THROBBIN_STAGE="{{stage}}" cargo test --release -p sim --test stages throbbin_vs_roster -- --ignored --nocapture
+
 # Regenerate the README screenshots in docs/images (needs ImageMagick 7 with WebP)
 readme-shots:
     #!/usr/bin/env bash
@@ -101,9 +105,82 @@ import-king:
     python3 tools/import-dedede/import.py
     just bless
 
+# Alias using the upstream character name; preserves the established import-king command
+import-dedede: import-king
+
 # Download hash-checked King Dedede reference GIFs and make per-frame inspection sheets (Pillow)
 king-visuals dir="/tmp/king-reference":
     python3 tools/import-dedede/visuals.py "{{dir}}"
+
+# Rebuild Sneak (SSBU Snake, 13.0.1) from pinned Rubendal scripts and UFD rows
+import-sneak:
+    python3 tools/import-sneak/import.py
+    just bless
+
+# Re-download and hash-pin the Snake attack scripts and UFD rows
+sneak-sources:
+    python3 tools/import-sneak/fetch.py
+
+# Download hash-checked Snake hitbox GIFs and write per-frame montages (Pillow)
+sneak-visuals dir="/tmp/sneak-reference":
+    python3 tools/import-sneak/visuals.py "{{dir}}"
+
+# Rebuild the Piranha Plant package (SSBU 13.0.1) from pinned UFD/Rubendal inputs
+import-plant:
+    python3 tools/import-plant/import.py
+    just bless
+
+# Rebuild Throbbin (SSBU Robin, 13.0.1) from pinned Rubendal scripts and UFD rows
+import-robin:
+    python3 tools/import-robin/import.py
+    just bless
+
+# Rebuild Duchess (SSBU Peach, 13.0.1) from pinned Rubendal scripts and UFD rows
+import-duchess:
+    python3 tools/import-duchess/import.py
+    just bless
+
+# Download hash-checked Peach hitbox clips and write per-frame montages (Pillow)
+duchess-visuals dir="/tmp/duchess-reference":
+    python3 tools/import-duchess/visuals.py "{{dir}}"
+
+# Download hash-checked Robin hitbox GIFs and write per-frame montages (Pillow)
+robin-visuals dir="/tmp/robin-reference":
+    python3 tools/import-robin/visuals.py "{{dir}}"
+
+# Rebuild Stratus (SSBU Cloud, 13.0.1) from pinned Rubendal scripts and UFD rows
+import-stratus:
+    python3 tools/import-stratus/import.py
+    just bless
+
+# Refresh the pinned Cloud attack scripts and UFD rows (ordinary rebuilds use local pins)
+stratus-sources:
+    python3 tools/import-stratus/fetch.py
+
+# Download hash-checked Cloud hitbox GIFs and write per-frame montages (Pillow)
+stratus-visuals dir="/tmp/stratus-reference":
+    python3 tools/import-stratus/visuals.py "{{dir}}"
+# Rebuild Verdant (SSBU Byleth, 13.0.1) from pinned Rubendal scripts and UFD rows
+import-verdant:
+    python3 tools/import-verdant/import.py
+    just bless
+
+# Download hash-checked Byleth hitbox GIFs and write per-frame montages (Pillow)
+verdant-visuals dir="/tmp/verdant-reference":
+    python3 tools/import-verdant/visuals.py "{{dir}}"
+
+# Download hash-checked Piranha Plant reference GIFs and make per-frame inspection sheets (Pillow)
+plant-visuals dir="/tmp/plant-reference":
+    python3 tools/import-plant/visuals.py "{{dir}}"
+
+# Rebuild Bongo Boy (SSBU Diddy Kong, 13.0.1) from pinned scripts and UFD rows
+import-bongo:
+    python3 tools/import-bongo/import.py
+    just bless
+
+# Download hash-checked Diddy Kong reference GIFs and write per-frame montages (Pillow)
+bongo-visuals dir="/tmp/bongo-reference":
+    python3 tools/import-bongo/visuals.py "{{dir}}"
 
 # Capture character-select layout selection and Controls profile management
 layout-shots dir="/tmp/stick-smash-layout-shots":

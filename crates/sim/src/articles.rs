@@ -20,7 +20,26 @@ pub fn control(w: &mut World, d: &GameData, owner: usize, inp: Intent) -> bool {
         if controlling && f.lag == 0 && a.steer != 0. {
             p.vy = -inp.y * a.steer;
         }
-        let manual = if a.release_on_up { !inp.sp_held || !controlling } else { inp.sp };
+        if a.release_on_dir && !controlling {
+            // Losing the controlling move stops the blow: the held ball simply disappears.
+            p.life = 0;
+            continue;
+        }
+        if a.release_on_dir && !inp.sp_held {
+            // Letting go of special without a direction swallows the ball instead of launching it.
+            p.life = 0;
+            let mut f = w.fighters[owner].clone();
+            moves::trigger(w, d, owner, &mut f, crate::data::Trigger::ArticleEnd);
+            w.fighters[owner] = f;
+            continue;
+        }
+        let manual = if a.release_on_dir {
+            inp.x != 0. && (inp.left || inp.right)
+        } else if a.release_on_up {
+            !inp.sp_held || !controlling
+        } else {
+            inp.sp
+        };
         if p.age < a.min_release || !manual || f.lag > 0 {
             continue;
         }
@@ -28,6 +47,10 @@ pub fn control(w: &mut World, d: &GameData, owner: usize, inp: Intent) -> bool {
         p.released = Some(p.age);
         p.vx = 0.;
         p.vy = 0.;
+        if a.release_on_dir {
+            // Blow in the pressed direction, which may be behind the caster.
+            p.face = sign(inp.x);
+        }
         // Losing control detonates a guided shot without accepting or erasing the victim's next command.
         if !controlling && a.release_on_up {
             continue;
@@ -61,8 +84,24 @@ pub fn step(w: &mut World, d: &GameData, pi: usize) {
     }
     p.age += 1;
     p.life -= 1;
+    p.cooldown = p.cooldown.saturating_sub(1);
     if p.released.is_none() {
         p.stage = a.stages.iter().rposition(|s| s.from <= p.age).unwrap_or(0);
+        if let Some(h) = &a.hold {
+            let f = &w.fighters[p.owner];
+            let bob = if h.bob != 0. && h.period != 0 {
+                h.bob * libm::sin(std::f64::consts::TAU * f64::from(p.age) / f64::from(h.period))
+            } else {
+                0.
+            };
+            p.x = f.x + f.face * h.offset[0];
+            p.y = f.y - h.offset[1] - bob;
+            p.face = f.face;
+            if p.released.is_none() {
+                let age = p.age;
+                apply_hitboxes(w, d, &mut p, &h.hitboxes, age);
+            }
+        }
         if p.age >= a.auto_release {
             p.automatic = true;
             p.released = Some(p.age);
@@ -120,88 +159,136 @@ pub fn step(w: &mut World, d: &GameData, pi: usize) {
         }
     }
     if let Some(t) = t.filter(|_| p.life > 0) {
-        for v in 0..w.fighters.len() {
-            let mut wind_applied = false;
-            if !w.opponents(p.owner, v) {
-                continue;
-            }
-            for b in &stage.hitboxes {
-                if !b.active(t) || !b.targets(w.fighters[v].ground) {
-                    continue;
-                }
-                let (x, y, r) = b.geom_at(t);
-                let (x, y) = (p.x + p.face * x, p.y - y);
-                if let Some(c) = combat::reflecting(d, &w.fighters[v])
-                    && b.kind != crate::data::HitType::Windbox
-                    && libm::hypot(x - w.fighters[v].x, y - (w.fighters[v].y - c.height)) < r + c.radius
-                {
-                    p.owner = v;
-                    p.face = -p.face;
-                    p.vx = -p.vx * c.speed;
-                    p.damage = 0.;
-                    p.power *= c.damage;
-                    p.speed *= c.speed;
-                    p.hits.clear();
-                    break;
-                }
-                if !combat::circle_hurt(d, &w.fighters[v], w.frame, x, y, r)
-                    || !w.fighters[v].hittable()
-                    || p.hits.iter().any(|&(i, age)| i == v && p.age - age < b.rehit.unwrap_or(u32::MAX))
-                {
-                    continue;
-                }
-                let direction = match b.dir {
-                    crate::data::LaunchDir::Forward => p.face,
-                    crate::data::LaunchDir::Back => -p.face,
-                    crate::data::LaunchDir::Away => {
-                        let s = sign(w.fighters[v].x - p.x);
-                        if s == 0. { p.face } else { s }
-                    }
-                };
-                let mut hit = b.clone();
-                hit.damage *= p.power;
-                let source = combat::HitSource {
-                    attacker: p.owner,
-                    direction,
-                    point: (x, y),
-                    projectile: true,
-                    label: Some(d.fighters[p.fighter_data].projectiles[&p.id].name.clone()),
-                };
-                if b.kind == crate::data::HitType::Windbox {
-                    if wind_applied {
-                        continue;
-                    }
-                    wind_applied = true;
-                    let angle = b.angle.to_radians();
-                    let k = &d.global.hit_types.windbox;
-                    let force = b.bkb * k.push * d.fighters[w.fighters[v].data].stats.weight;
-                    let f = &mut w.fighters[v];
-                    f.vx = (f.vx + direction * libm::cos(angle) * force).clamp(-k.max_speed, k.max_speed);
-                    let dy = -libm::sin(angle) * force;
-                    if dy < 0. || !f.ground {
-                        f.vy = (f.vy + dy).clamp(-k.max_speed, k.max_speed);
-                    }
-                    continue;
-                }
-                if let Some(c) = combat::countering(d, &w.fighters[v]) {
-                    p.owner = v;
-                    p.face = -p.face;
-                    p.speed *= c.reflect_speed;
-                    p.hits.clear();
-                    combat::counter(w, d, v, None, 0.);
-                } else if combat::parrying(d, &w.fighters[v]) {
-                    combat::parry(w, d, v, None);
-                } else if w.fighters[v].state == State::Shield {
-                    combat::shield_hit(w, d, v, &hit, source);
-                } else {
-                    combat::apply_hit(w, d, v, &hit, source);
-                }
-                p.hits.push((v, p.age));
-                break;
-            }
-        }
+        apply_hitboxes(w, d, &mut p, &stage.hitboxes, t);
     }
     w.projs[pi] = p;
+}
+
+/// Apply one stage's frame-windowed contacts at local timeline `t`. Held and released stages share this.
+fn apply_hitboxes(
+    w: &mut World,
+    d: &GameData,
+    p: &mut crate::world::Projectile,
+    boxes: &[crate::data::Hitbox],
+    t: u32,
+) {
+    for v in 0..w.fighters.len() {
+        let mut wind_applied = false;
+        if !w.opponents(p.owner, v) {
+            continue;
+        }
+        for b in boxes {
+            if !b.active(t) || !b.targets(w.fighters[v].ground) {
+                continue;
+            }
+            let (x, y, r) = b.geom_at(t);
+            let (x, y) = (p.x + p.face * x, p.y - y);
+            if let Some(c) = combat::reflecting(d, &w.fighters[v])
+                && b.kind != crate::data::HitType::Windbox
+                && p.cooldown == 0
+                && libm::hypot(x - w.fighters[v].x, y - (w.fighters[v].y - c.height)) < r + c.radius
+            {
+                let former = p.owner;
+                let held = p.released.is_none();
+                p.owner = v;
+                p.face = -p.face;
+                p.vx = -p.vx * c.speed;
+                p.damage = 0.;
+                p.power *= c.damage;
+                p.speed *= c.speed;
+                p.hits.clear();
+                let a = d.fighters[p.fighter_data].projectiles[&p.id].article.as_ref().unwrap();
+                p.cooldown = a.reflect_cooldown;
+                if held {
+                    release_stolen(w, d, p, former);
+                    return;
+                }
+                break;
+            }
+            if !combat::circle_hurt(d, &w.fighters[v], w.frame, x, y, r)
+                || !w.fighters[v].hittable()
+                || p.hits.iter().any(|&(i, age)| i == v && p.age - age < b.rehit.unwrap_or(u32::MAX))
+            {
+                continue;
+            }
+            let direction = match b.dir {
+                crate::data::LaunchDir::Forward => p.face,
+                crate::data::LaunchDir::Back => -p.face,
+                crate::data::LaunchDir::Away => {
+                    let s = sign(w.fighters[v].x - p.x);
+                    if s == 0. { p.face } else { s }
+                }
+            };
+            let mut hit = b.clone();
+            hit.damage *= p.power;
+            let source = combat::HitSource {
+                attacker: p.owner,
+                direction,
+                point: (x, y),
+                projectile: true,
+                label: Some(d.fighters[p.fighter_data].projectiles[&p.id].name.clone()),
+            };
+            if b.kind == crate::data::HitType::Windbox {
+                if wind_applied {
+                    continue;
+                }
+                wind_applied = true;
+                let angle = b.angle.to_radians();
+                let k = &d.global.hit_types.windbox;
+                let force = b.bkb * k.push * d.fighters[w.fighters[v].data].stats.weight;
+                let f = &mut w.fighters[v];
+                f.vx = (f.vx + direction * libm::cos(angle) * force).clamp(-k.max_speed, k.max_speed);
+                let dy = -libm::sin(angle) * force;
+                if dy < 0. || !f.ground {
+                    f.vy = (f.vy + dy).clamp(-k.max_speed, k.max_speed);
+                }
+                continue;
+            }
+            if let Some(c) = combat::countering(d, &w.fighters[v]) {
+                let former = p.owner;
+                let held = p.released.is_none();
+                p.owner = v;
+                p.face = -p.face;
+                p.speed *= c.reflect_speed;
+                p.hits.clear();
+                combat::counter(w, d, v, None, 0.);
+                if held {
+                    release_stolen(w, d, p, former);
+                    return;
+                }
+            } else if combat::parrying(d, &w.fighters[v]) {
+                combat::parry(w, d, v, None);
+            } else if w.fighters[v].state == State::Shield {
+                combat::shield_hit(w, d, v, &hit, source);
+            } else {
+                combat::apply_hit(w, d, v, &hit, source);
+            }
+            p.hits.push((v, p.age));
+            break;
+        }
+    }
+}
+
+/// A stolen held article becomes an independent shot; its new owner never gains hold control.
+fn release_stolen(w: &mut World, d: &GameData, p: &mut crate::world::Projectile, former: usize) {
+    let a = d.fighters[p.fighter_data].projectiles[&p.id].article.as_ref().unwrap();
+    p.stage = a.stages.iter().rposition(|s| s.from <= p.age).unwrap_or(0);
+    p.released = Some(p.age);
+    p.automatic = false;
+    p.cooldown = a.reflect_cooldown;
+    end_hold(w, d, former, &a.slot);
+}
+
+/// End a fighter's hold of an article it no longer controls (reflected, destroyed or stolen). The
+/// `articleEnd` transition is data-authored, so a fighter without one simply keeps playing its phase.
+fn end_hold(w: &mut World, d: &GameData, owner: usize, slot: &str) {
+    if !w.fighters[owner].mov.as_ref().is_some_and(|m| m.slot == slot) {
+        return;
+    }
+    let mut f = w.fighters[owner].clone();
+    if moves::trigger(w, d, owner, &mut f, crate::data::Trigger::ArticleEnd) {
+        w.fighters[owner] = f;
+    }
 }
 
 /// Damage the independent bodies touched by a traveling shot or an explosion.

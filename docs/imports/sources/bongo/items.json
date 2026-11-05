@@ -1,0 +1,47 @@
+{
+ "repository": "https://github.com/rubendal/ssbu",
+ "commit": "2e8f0d245481cb0c936524b6ffe1cdea867c4f68",
+ "patch": "13.0.1",
+ "source": "public/data/patch/13.0.1/items.json",
+ "sha256": "bf8806de2ce69030f19904ddda022e45f3a1968c835683761e677c076cc2684e",
+ "items": {
+  "banana": {
+   "Name": "banana",
+   "ScriptNames": [
+    "game_Throw",
+    "game_SpecialLwThrow",
+    "game_SetSlipCallback"
+   ],
+   "Scripts": [
+    {
+     "Id": 0,
+     "Name": "game_Throw",
+     "Data": "if(is_excute()){\r\n\tATTACK(ID=0,Part=0,Bone=top,Damage=0,Angle=361,KBG=0,FKB=0,BKB=50,Size=3,X=0,Y=0,Z=0,Hitlag=1,SDI=1,Clang_Rebound=ATTACK_SETOFF_KIND_OFF,FacingRestrict=ATTACK_LR_CHECK_SPEED,SetWeight=false,ShieldDamage=0,Trip=0,Rehit=0,Reflectable=true,Absorbable=false,Flinchless=false,DisableHitlag=false,Direct_Hitbox=false,Ground_or_Air=COLLISION_SITUATION_MASK_G,Hitbits=COLLISION_CATEGORY_MASK_NO_STAGE,CollisionPart=COLLISION_PART_MASK_ALL,FriendlyFire=false,Effect=collision_attr_slip,SFXLevel=ATTACK_SOUND_LEVEL_S,SFXType=COLLISION_SOUND_ATTR_PUNCH,Type=ATTACK_REGION_NONE)\r\n\tATTACK(ID=1,Part=0,Bone=top,Damage=0,Angle=361,KBG=0,FKB=0,BKB=50,Size=3,X=0,Y=0,Z=0,Hitlag=1,SDI=1,Clang_Rebound=ATTACK_SETOFF_KIND_OFF,FacingRestrict=ATTACK_LR_CHECK_SPEED,SetWeight=false,ShieldDamage=0,Trip=0,Rehit=0,Reflectable=true,Absorbable=false,Flinchless=false,DisableHitlag=false,Direct_Hitbox=false,Ground_or_Air=COLLISION_SITUATION_MASK_A,Hitbits=COLLISION_CATEGORY_MASK_NO_STAGE,CollisionPart=COLLISION_PART_MASK_ALL,FriendlyFire=false,Effect=collision_attr_normal,SFXLevel=ATTACK_SOUND_LEVEL_S,SFXType=COLLISION_SOUND_ATTR_PUNCH,Type=ATTACK_REGION_NONE)\r\n\tAttackModule::enable_safe_pos()\r\n}\r\n"
+    },
+    {
+     "Id": 0,
+     "Name": "game_SpecialLwThrow",
+     "Data": "if(is_excute()){\r\n\tATTACK(ID=0,Part=0,Bone=top,Damage=0,Angle=361,KBG=0,FKB=0,BKB=50,Size=3,X=0,Y=0,Z=0,Hitlag=1,SDI=1,Clang_Rebound=ATTACK_SETOFF_KIND_OFF,FacingRestrict=ATTACK_LR_CHECK_SPEED,SetWeight=false,ShieldDamage=0,Trip=0,Rehit=0,Reflectable=true,Absorbable=false,Flinchless=false,DisableHitlag=false,Direct_Hitbox=false,Ground_or_Air=COLLISION_SITUATION_MASK_G,Hitbits=COLLISION_CATEGORY_MASK_NO_STAGE,CollisionPart=COLLISION_PART_MASK_ALL,FriendlyFire=false,Effect=collision_attr_slip,SFXLevel=ATTACK_SOUND_LEVEL_S,SFXType=COLLISION_SOUND_ATTR_PUNCH,Type=ATTACK_REGION_NONE)\r\n\tATTACK(ID=1,Part=0,Bone=top,Damage=0,Angle=361,KBG=0,FKB=0,BKB=50,Size=3,X=0,Y=0,Z=0,Hitlag=1,SDI=1,Clang_Rebound=ATTACK_SETOFF_KIND_OFF,FacingRestrict=ATTACK_LR_CHECK_SPEED,SetWeight=false,ShieldDamage=0,Trip=0,Rehit=0,Reflectable=true,Absorbable=false,Flinchless=false,DisableHitlag=false,Direct_Hitbox=false,Ground_or_Air=COLLISION_SITUATION_MASK_A,Hitbits=COLLISION_CATEGORY_MASK_NO_STAGE,CollisionPart=COLLISION_PART_MASK_ALL,FriendlyFire=false,Effect=collision_attr_normal,SFXLevel=ATTACK_SOUND_LEVEL_S,SFXType=COLLISION_SOUND_ATTR_PUNCH,Type=ATTACK_REGION_NONE)\r\n}\r\n"
+    },
+    {
+     "Id": 0,
+     "Name": "game_SetSlipCallback",
+     "Data": "if(is_excute()){\r\n\tATTACK(ID=0,Part=0,Bone=top,Damage=0,Angle=361,KBG=0,FKB=0,BKB=50,Size=3,X=0,Y=-3,Z=0,Hitlag=1,SDI=1,Clang_Rebound=ATTACK_SETOFF_KIND_OFF,FacingRestrict=ATTACK_LR_CHECK_POS,SetWeight=false,ShieldDamage=no,Trip=0,Rehit=0,Reflectable=false,Absorbable=false,Flinchless=false,DisableHitlag=false,Direct_Hitbox=true,Ground_or_Air=COLLISION_SITUATION_MASK_G,Hitbits=COLLISION_CATEGORY_MASK_FIGHTER,CollisionPart=COLLISION_PART_MASK_BODY_LEGS,FriendlyFire=false,Effect=collision_attr_slip,SFXLevel=ATTACK_SOUND_LEVEL_S,SFXType=COLLISION_SOUND_ATTR_PUNCH,Type=ATTACK_REGION_NONE)\r\n\tATTACK(ID=1,Part=0,Bone=top,Damage=0,Angle=361,KBG=0,FKB=0,BKB=50,Size=3,X=0,Y=-3,Z=0,Hitlag=1,SDI=1,Clang_Rebound=ATTACK_SETOFF_KIND_OFF,FacingRestrict=ATTACK_LR_CHECK_POS,SetWeight=false,ShieldDamage=no,Trip=0,Rehit=0,Reflectable=false,Absorbable=false,Flinchless=false,DisableHitlag=false,Direct_Hitbox=true,Ground_or_Air=COLLISION_SITUATION_MASK_G,Hitbits=COLLISION_CATEGORY_MASK_NO_IFGS,CollisionPart=COLLISION_PART_MASK_ALL,FriendlyFire=false,Effect=collision_attr_slip,SFXLevel=ATTACK_SOUND_LEVEL_S,SFXType=COLLISION_SOUND_ATTR_PUNCH,Type=ATTACK_REGION_NONE)\r\n}\r\n"
+    }
+   ]
+  },
+  "diddypeanuts": {
+   "Name": "diddypeanuts",
+   "ScriptNames": [
+    "game_Throw"
+   ],
+   "Scripts": [
+    {
+     "Id": 0,
+     "Name": "game_Throw",
+     "Data": "if(is_excute()){\r\n\tATTACK(ID=0,Part=0,Bone=top,Damage=3,Angle=70,KBG=70,FKB=0,BKB=40,Size=2.4,X=0,Y=0,Z=0,Hitlag=0.2,SDI=1,Clang_Rebound=ATTACK_SETOFF_KIND_OFF,FacingRestrict=ATTACK_LR_CHECK_F,SetWeight=false,ShieldDamage=-1,Trip=0,Rehit=0,Reflectable=true,Absorbable=false,Flinchless=false,DisableHitlag=false,Direct_Hitbox=false,Ground_or_Air=COLLISION_SITUATION_MASK_GA,Hitbits=COLLISION_CATEGORY_MASK_NO_FLOOR,CollisionPart=COLLISION_PART_MASK_ALL,FriendlyFire=false,Effect=collision_attr_normal,SFXLevel=ATTACK_SOUND_LEVEL_M,SFXType=COLLISION_SOUND_ATTR_PUNCH,Type=ATTACK_REGION_OBJECT)\r\n\tAttackModule::enable_safe_pos()\r\n}\r\n\r\nwait(Frames=1)\r\nif(is_excute()){\r\n\tATTACK(ID=0,Part=0,Bone=top,Damage=3,Angle=70,KBG=70,FKB=0,BKB=40,Size=2.4,X=0,Y=1.9,Z=0,X2=0,Y2=-1.1,Z2=0,Hitlag=0.2,SDI=1,Clang_Rebound=ATTACK_SETOFF_KIND_OFF,FacingRestrict=ATTACK_LR_CHECK_F,SetWeight=false,ShieldDamage=-1,Trip=0,Rehit=0,Reflectable=true,Absorbable=false,Flinchless=false,DisableHitlag=false,Direct_Hitbox=false,Ground_or_Air=COLLISION_SITUATION_MASK_GA,Hitbits=COLLISION_CATEGORY_MASK_NO_FLOOR,CollisionPart=COLLISION_PART_MASK_ALL,FriendlyFire=false,Effect=collision_attr_normal,SFXLevel=ATTACK_SOUND_LEVEL_M,SFXType=COLLISION_SOUND_ATTR_PUNCH,Type=ATTACK_REGION_OBJECT)\r\n}\r\n"
+    }
+   ]
+  }
+ }
+}

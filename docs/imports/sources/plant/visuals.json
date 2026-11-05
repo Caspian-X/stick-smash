@@ -1,0 +1,480 @@
+{
+ "url": "https://ultimateframedata.com/hitboxes/piranha_plant/",
+ "accessed": "2026-11-04",
+ "animations": [
+  {
+   "filename": "PiranhaPlantBAir.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantBAir.gif",
+   "sha256": "b65177141b1ad47330bdf51c5b771087cf24e69610fd696b7c99a58ad27a1abc",
+   "inspect": [
+    0,
+    10,
+    13,
+    14,
+    15,
+    20,
+    30,
+    45,
+    60
+   ]
+  },
+  {
+   "filename": "PiranhaPlantBThrow.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantBThrow.gif",
+   "sha256": "273d0afb7dab25ab4af4d730ce1847866ed5e9b760c9006bd6f672d423c69daa",
+   "inspect": [
+    0,
+    10,
+    18,
+    19,
+    25,
+    33
+   ]
+  },
+  {
+   "filename": "PiranhaPlantDAir.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantDAir.gif",
+   "sha256": "e079a02ac86054294c3108038558ee0c7e51e0059b2c8412f18b22771be8d5e4",
+   "inspect": [
+    0,
+    8,
+    11,
+    13,
+    20,
+    30,
+    43
+   ]
+  },
+  {
+   "filename": "PiranhaPlantDSmash.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantDSmash.gif",
+   "sha256": "5d881fb85d03e0a7e050480b8ff240538e52609178a2d82d833577d659d175e1",
+   "inspect": [
+    0,
+    5,
+    10,
+    13,
+    14,
+    18,
+    25,
+    35,
+    42
+   ]
+  },
+  {
+   "filename": "PiranhaPlantDThrow.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantDThrow.gif",
+   "sha256": "ded42abfd486ed32d77dad1c54a8a1def21ef65195068d42f7ae826c6931b5e2",
+   "inspect": [
+    0,
+    10,
+    20,
+    25,
+    30,
+    31,
+    40,
+    46
+   ]
+  },
+  {
+   "filename": "PiranhaPlantDTilt.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantDTilt.gif",
+   "sha256": "95be200ccea962ebaba848de40f2b3b449f012dd1fb36b661bb73e8dcce14626",
+   "inspect": [
+    0,
+    8,
+    9,
+    11,
+    15,
+    20,
+    25
+   ]
+  },
+  {
+   "filename": "PiranhaPlantDashAttack.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantDashAttack.gif",
+   "sha256": "0f165ab8ebd84053927bc16692767a77592ffb8e086aec4bfd432e0dccf7156e",
+   "inspect": [
+    0,
+    6,
+    7,
+    9,
+    14,
+    20,
+    30,
+    46
+   ]
+  },
+  {
+   "filename": "PiranhaPlantDashGrab.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantDashGrab.gif",
+   "sha256": "3de7093b6a70d94866b54c20c87fc2db148c65d8889a4f7c582c5ede67fc0bd3",
+   "inspect": [
+    0,
+    8,
+    9,
+    10,
+    15,
+    25,
+    41
+   ]
+  },
+  {
+   "filename": "PiranhaPlantFAir.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantFAir.gif",
+   "sha256": "72f0ef0af7d2d7a02c477d3ee323532bbf3c996a87823be303233b233818de2b",
+   "inspect": [
+    0,
+    6,
+    9,
+    13,
+    20,
+    30,
+    43
+   ]
+  },
+  {
+   "filename": "PiranhaPlantFSmash.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantFSmash.gif",
+   "sha256": "f89be6769f104fabb31f39ec6fbbabe081ecfead0cfe6706f2d7cd2e799192c8",
+   "inspect": [
+    0,
+    6,
+    12,
+    15,
+    16,
+    17,
+    22,
+    30,
+    40,
+    50
+   ]
+  },
+  {
+   "filename": "PiranhaPlantFThrow.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantFThrow.gif",
+   "sha256": "c56089504c636fca0c53a6a78baa04942fb5f52567537c40f4d1f4b9a1a9020b",
+   "inspect": [
+    0,
+    5,
+    10,
+    13,
+    14,
+    20,
+    30
+   ]
+  },
+  {
+   "filename": "PiranhaPlantFTilt1.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantFTilt1.gif",
+   "sha256": "f5d20a0ef15c31bacd15a7ebdac37b9e7bfccd154bd405cfc5009ef4500c08ca",
+   "inspect": [
+    0,
+    5,
+    6,
+    7,
+    10,
+    15,
+    20,
+    26
+   ]
+  },
+  {
+   "filename": "PiranhaPlantFTilt2.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantFTilt2.gif",
+   "sha256": "d7047418f6949706a321996ddaf6e8be94d7ce5f726da1dac6168e4c7d08ca3e",
+   "inspect": [
+    0,
+    4,
+    5,
+    6,
+    10,
+    15,
+    20,
+    30
+   ]
+  },
+  {
+   "filename": "PiranhaPlantFootstoolAttack.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantFootstoolAttack.gif",
+   "sha256": "d274dea916d70b41415c482c3b630d487dc5d72f851d81fd2353d310e95a7b3b",
+   "inspect": [
+    0,
+    4,
+    5,
+    6,
+    10
+   ]
+  },
+  {
+   "filename": "PiranhaPlantGrab.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantGrab.gif",
+   "sha256": "77217db2a6625fc498805c3a295c22865bd3a1d39d5cf0dc4fa9485d5377a000",
+   "inspect": [
+    0,
+    5,
+    6,
+    7,
+    12,
+    20,
+    33
+   ]
+  },
+  {
+   "filename": "PiranhaPlantJab1.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantJab1.gif",
+   "sha256": "565b2e5db988094c05b774773f494daf8f47657f4b6e443df64977afc3f1284b",
+   "inspect": [
+    0,
+    2,
+    3,
+    6,
+    12,
+    18
+   ]
+  },
+  {
+   "filename": "PiranhaPlantJab2.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantJab2.gif",
+   "sha256": "26c0b73c3e842f0bf0f5826ce232736e643fc321656c31fdbedd3cacac85a9bb",
+   "inspect": [
+    0,
+    2,
+    3,
+    6,
+    12,
+    19
+   ]
+  },
+  {
+   "filename": "PiranhaPlantJab3.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantJab3.gif",
+   "sha256": "0f8a78c05a147d8c4f167460c93f91f59d68fb067d8182d890af91bbc2e4be60",
+   "inspect": [
+    0,
+    6,
+    7,
+    10,
+    15,
+    24
+   ]
+  },
+  {
+   "filename": "PiranhaPlantJabRapid.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantJabRapid.gif",
+   "sha256": "a9b0fa986602b2316b1a62a414542fe30784d1e07589e8673a398a9d585bcde0",
+   "inspect": [
+    0,
+    3,
+    6,
+    10,
+    15
+   ]
+  },
+  {
+   "filename": "PiranhaPlantJabRapidEnd.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantJabRapidEnd.gif",
+   "sha256": "be95d799749707cc66b67753bf0b2fda585cc39c8bb76492de9b665ccff5aa7c",
+   "inspect": [
+    0,
+    6,
+    7,
+    10,
+    20,
+    39
+   ]
+  },
+  {
+   "filename": "PiranhaPlantLong-StemStrike.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantLong-StemStrike.gif",
+   "sha256": "caaa2c870ada785c3265088efd6f49c04561b6c8383ec17222e4fba8c2a9b254",
+   "inspect": [
+    0,
+    3,
+    6,
+    9,
+    12,
+    15,
+    18,
+    21,
+    23
+   ]
+  },
+  {
+   "filename": "PiranhaPlantNAir.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantNAir.gif",
+   "sha256": "5fd537bd20d11ad0bcb200c3f352689855e119cb26cb786e599ed5645f0220e6",
+   "inspect": [
+    0,
+    7,
+    10,
+    14,
+    17,
+    18,
+    19,
+    26,
+    40,
+    46
+   ]
+  },
+  {
+   "filename": "PiranhaPlantPiranhacopter.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantPiranhacopter.gif",
+   "sha256": "9c47b58fe060ade0affa625a9dc68b72f00159e53d0883099fd85986eb6d68fb",
+   "inspect": [
+    0,
+    12,
+    14,
+    16,
+    24,
+    32,
+    40,
+    55,
+    60,
+    67,
+    80,
+    100,
+    120,
+    141
+   ]
+  },
+  {
+   "filename": "PiranhaPlantPivotGrab.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantPivotGrab.gif",
+   "sha256": "5477f1c6615fe06bfdbf588912e7a142df2ad36f2536a105a55aa8d439f94b5f",
+   "inspect": [
+    0,
+    8,
+    9,
+    10,
+    15,
+    25,
+    35
+   ]
+  },
+  {
+   "filename": "PiranhaPlantPoisonBreathMax.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantPoisonBreathMax.gif",
+   "sha256": "5ad5488cb75e61b858bece4d163e3841982243882ee99bb2a400028c2476e3e2",
+   "inspect": [
+    0,
+    8,
+    16,
+    24,
+    32,
+    40,
+    60,
+    80,
+    100,
+    120,
+    141
+   ]
+  },
+  {
+   "filename": "PiranhaPlantPoisonBreathMin.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantPoisonBreathMin.gif",
+   "sha256": "ba28b7423d247800d97fe4c70dec799aed83b51cd24ee716035317afeeedb1b0",
+   "inspect": [
+    0,
+    8,
+    16,
+    24,
+    32,
+    40,
+    60,
+    80,
+    101
+   ]
+  },
+  {
+   "filename": "PiranhaPlantPtooie.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantPtooie.gif",
+   "sha256": "4cd35757bf86d1035d971e901dcdc0c0a66be615eb77003a0ed69fa4b45872e2",
+   "inspect": [
+    0,
+    8,
+    16,
+    24,
+    32,
+    40,
+    48,
+    60,
+    80,
+    100,
+    120,
+    132
+   ]
+  },
+  {
+   "filename": "PiranhaPlantPummel.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantPummel.gif",
+   "sha256": "5ab1cf0b35dfdeedae134b1ca66ca3b4a036fba7421f14cd156fc547b3e1c0e7",
+   "inspect": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ]
+  },
+  {
+   "filename": "PiranhaPlantUAir.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantUAir.gif",
+   "sha256": "8babfada83f92a859e863ed4add8ee1e7d04e8b1550ce7e1af5d86a1958f0827",
+   "inspect": [
+    0,
+    6,
+    8,
+    14,
+    20,
+    30,
+    37
+   ]
+  },
+  {
+   "filename": "PiranhaPlantUSmash.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantUSmash.gif",
+   "sha256": "c1b362a3c84de850780bf66ce4dae9e18c9ec63d3b7df26f4990c9c275de6b4e",
+   "inspect": [
+    0,
+    6,
+    11,
+    15,
+    16,
+    20,
+    30,
+    40,
+    50
+   ]
+  },
+  {
+   "filename": "PiranhaPlantUThrow.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantUThrow.gif",
+   "sha256": "cca0f638126d51b032ac07aa0fa553472d78cccadba59f1ead150d737624cd25",
+   "inspect": [
+    0,
+    10,
+    19,
+    20,
+    30,
+    40,
+    48
+   ]
+  },
+  {
+   "filename": "PiranhaPlantUTilt.gif",
+   "url": "https://ultimateframedata.com/hitboxes/piranha_plant/PiranhaPlantUTilt.gif",
+   "sha256": "ce968956d109052790d92beb3cdd3f8de03e82ac2857af7570f8cb026644d59a",
+   "inspect": [
+    0,
+    6,
+    8,
+    12,
+    16,
+    20,
+    25
+   ]
+  }
+ ]
+}

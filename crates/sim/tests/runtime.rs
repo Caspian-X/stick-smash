@@ -182,6 +182,8 @@ fn hit_history_tracks_each_victim_rehit_tick_and_resets_on_phase_entry() {
             on: sim::data::Trigger::Release,
             cond: None,
             from: None,
+            min_charge: 0,
+            needs: None,
             to: "again".into(),
             lag: None,
             preserve_hits,
@@ -284,6 +286,7 @@ fn cpu_match_golden_world_hash() {
         w.hits.clear();
         w.acts.clear();
     }
-    // Updated deliberately for shared launch/movement tuning and concurrent roster content changes.
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xa7595d379a195bc0);
+    // Hit history now stores (victim, group, tick), adding group 0 to this scenario's Debug snapshot.
+    // The brawler/ninja inputs and gameplay are unchanged; replay SIM_VERSION is now -sim-28.
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xaae0275d681189af);
 }

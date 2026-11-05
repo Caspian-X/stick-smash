@@ -692,3 +692,126 @@ fn right_stick_charges_then_releases_without_repeating() {
     run(&mut w, &d, 80, &[Input::default()]);
     assert_eq!(w.fighters[0].state, State::Idle);
 }
+
+fn timed(d: &GameData, seconds: u32, damages: [f64; 2]) -> World {
+    let players = vec![PlayerConfig::human("brawler"), PlayerConfig::human("brawler")];
+    let cfg = MatchConfig { training: false, time_limit: Some(seconds), ..MatchConfig::sandbox("arena", players, 9) };
+    let mut w = World::new(cfg, d).unwrap();
+    for (f, dmg) in w.fighters.iter_mut().zip(damages) {
+        f.dmg = dmg;
+    }
+    w
+}
+
+#[test]
+fn time_up_goes_to_most_stocks_then_lowest_damage() {
+    let d = common::data();
+    let mut w = timed(&d, 3, [40., 10.]);
+    for _ in 0..400 {
+        run(&mut w, &d, 1, &[]);
+    }
+    assert!(w.time_up, "the timer ran out");
+    assert_eq!(w.time_left, Some(0));
+    assert_eq!(w.winner, Some(1), "lower damage wins the tie on stocks");
+    assert!(w.end_t > 0);
+    assert!(w.time_tied.is_empty(), "a decided time up has no sudden death");
+    w.fighters[1].stocks = 2;
+    assert_eq!(w.time_winner(), Some(1), "more stocks beats less damage");
+    w.fighters[0].stocks = 2;
+    w.fighters[1].dmg = 40.;
+    assert_eq!(w.time_winner(), None, "level stocks and damage is a tie");
+    assert_eq!(w.time_leaders(), [0, 1], "the tied sides meet again in sudden death");
+    // A fighter in the death sequence has spent the stock they died on: that damage no longer counts.
+    w.fighters[1].set_state(State::Dead);
+    w.fighters[1].dmg = 300.;
+    assert_eq!(w.time_winner(), Some(1), "nobody leads once the tie is broken");
+    w.fighters[1].set_state(State::Out);
+    w.fighters[1].stocks = 0;
+    assert_eq!(w.time_winner(), Some(0));
+    w.fighters[0].stocks = 0;
+    assert_eq!(w.time_winner(), None, "everyone out is a draw");
+    assert!(w.time_leaders().is_empty());
+    run(&mut w, &d, 60 * 4, &[]);
+    assert!(w.over);
+}
+
+#[test]
+fn time_up_pools_teammates_stocks_and_damage() {
+    let d = common::data();
+    let players = vec![
+        PlayerConfig { team: Some(0), ..PlayerConfig::human("brawler") },
+        PlayerConfig { team: Some(0), ..PlayerConfig::human("brawler") },
+        PlayerConfig { team: Some(1), ..PlayerConfig::human("brawler") },
+        PlayerConfig { team: Some(1), ..PlayerConfig::human("brawler") },
+    ];
+    let cfg = MatchConfig { training: false, ..MatchConfig::sandbox("arena", players, 9) };
+    let mut w = World::new(cfg, &d).unwrap();
+    for (i, f) in w.fighters.iter_mut().enumerate() {
+        f.dmg = [60., 5., 30., 40.][i];
+    }
+    assert_eq!(w.time_winner(), Some(0), "team 0 pools 65% against team 1's 70%");
+    assert!(w.time_leaders().is_empty(), "a decided time up has no sudden death");
+    w.fighters[3].dmg = 35.;
+    assert_eq!(w.time_winner(), None, "level pooled damage is a tie");
+    assert_eq!(w.time_leaders(), [0, 1, 2, 3]);
+}
+
+#[test]
+fn the_timer_waits_for_go_and_beeps_through_its_warning_time() {
+    let d = common::data();
+    let warn = d.global.match_.timer_warn_seconds;
+    let mut w = timed(&d, warn, [0., 0.]);
+    let start = w.time_left;
+    let mut ticks = 0;
+    let mut counted_until = 0;
+    while w.time_left != Some(0) {
+        let before = w.count;
+        common::step_preserving(&mut w, &d, &[]);
+        if w.fx.iter().any(|fx| matches!(fx, sim::Fx::Sfx { name, .. } if name == "tick")) {
+            ticks += 1;
+        }
+        w.fx.clear();
+        if before > 1 {
+            assert_eq!(w.time_left, start, "the timer waits for the countdown");
+        }
+        counted_until = w.count;
+    }
+    assert_eq!(counted_until, 0, "the clock started at GO");
+    assert_eq!(ticks, warn, "one beep a second through the warning time");
+}
+
+#[test]
+fn sudden_death_starts_everyone_at_high_damage_with_one_stock_and_no_timer() {
+    let d = common::data();
+    let players = vec![PlayerConfig::human("brawler"), PlayerConfig::human("brawler")];
+    let mut cfg = MatchConfig { training: false, time_limit: Some(60), ..MatchConfig::sandbox("arena", players, 9) }
+        .sudden_death();
+    let w = World::new(cfg.clone(), &d).unwrap();
+    assert_eq!(w.time_left, None);
+    assert!(!w.cfg.training);
+    for f in &w.fighters {
+        assert_eq!(f.dmg, d.global.match_.sudden_death_damage);
+        assert_eq!(f.stocks, 1);
+    }
+    // A side that lost the time-up starts out.
+    cfg.players[1].eliminated = true;
+    let w = World::new(cfg, &d).unwrap();
+    assert_eq!((w.fighters[1].stocks, w.fighters[1].state, w.fighters[1].dmg), (0, State::Out, 0.));
+    assert_eq!(w.time_winner(), Some(0));
+}
+
+#[test]
+fn sudden_death_participants_are_fixed_when_the_clock_hits_zero() {
+    let d = common::data();
+    let mut w = timed(&d, 3, [10., 10.]);
+    for _ in 0..400 {
+        run(&mut w, &d, 1, &[]);
+    }
+    assert!(w.time_up);
+    assert_eq!(w.winner, None, "level on stocks and damage");
+    assert_eq!(w.time_tied, [0, 1], "both tied sides would meet again");
+    // The ending animation can still land hits; that must not change who plays sudden death.
+    w.fighters[0].dmg = 80.;
+    assert_eq!(w.time_winner(), Some(1));
+    assert_eq!(w.time_tied, [0, 1], "the lineup stays as it was at zero");
+}

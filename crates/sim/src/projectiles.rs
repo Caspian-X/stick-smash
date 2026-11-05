@@ -21,15 +21,13 @@ pub fn spawn(w: &mut World, d: &GameData, i: usize, f: &Fighter, id: &str) {
     if let Some(c) = &p.charge_scale {
         hit.bkb *= 1. + charge * c.bkb;
         radius *= 1. + charge * c.radius;
-        life = libm::round(f64::from(life) * (1. + charge * c.life)) as u32;
+        life = libm::round(f64::from(life) * (1. + charge * c.life)).max(1.) as u32;
+        if let Some(rehit) = hit.rehit {
+            hit.rehit = Some(libm::round((f64::from(rehit) + charge * c.rehit).max(1.)) as u32);
+        }
         if c.angle_to.is_some() || c.ground_angle_to.is_some() {
-            let max = crate::moves::definition(d, f)
-                .phases
-                .iter()
-                .filter_map(|p| p.charge.as_ref())
-                .map(|c| c.max)
-                .max()
-                .unwrap_or(1);
+            let max =
+                crate::moves::timeline(d, f).iter().filter_map(|p| p.charge.as_ref()).map(|c| c.max).max().unwrap_or(1);
             let fraction = (charge / f64::from(max.max(1))).min(1.);
             if let Some(angle) = c.angle_to {
                 hit.angle += (angle - hit.angle) * fraction;
@@ -141,7 +139,9 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
         }
         p.age = p.age.saturating_add(1);
         p.x += p.vx;
-        p.life -= 1;
+        if !def.explosion.as_ref().is_some_and(|e| e.manual) {
+            p.life -= 1;
+        }
         p.cooldown = p.cooldown.saturating_sub(1);
         if let Some(b) = &def.bounce {
             let py = p.y;
@@ -198,101 +198,18 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
             }
         }
         let detonate = def.explosion.as_ref().is_some_and(|e| {
-            p.life <= 0
-                || p.age >= e.arm_ticks
-                    && e.proximity.is_some_and(|r| {
-                        w.fighters.iter().enumerate().any(|(v, f)| {
-                            w.opponents(p.owner, v) && f.hittable() && combat::circle_hurt(d, f, w.frame, p.x, p.y, r)
-                        })
-                    })
+            !e.manual
+                && (p.life <= 0
+                    || p.age >= e.arm_ticks
+                        && e.proximity.is_some_and(|r| {
+                            w.fighters.iter().enumerate().any(|(v, f)| {
+                                w.opponents(p.owner, v)
+                                    && f.hittable()
+                                    && combat::circle_hurt(d, f, w.frame, p.x, p.y, r)
+                            })
+                        }))
         });
-        if let Some(e) = &def.explosion
-            && detonate
-        {
-            p.r = e.radius;
-            crate::moves::effects(w, &e.fx, (p.x, p.y), sign(p.vx), (p.vx, p.vy), p.owner);
-            if let Some(s) = &e.sfx {
-                w.sfx(s.clone());
-            }
-        }
-        if detonate || def.explosion.is_none() && p.life > 0 {
-            crate::articles::projectile_contacts(w, d, &mut p, detonate);
-        }
-        for v in 0..w.fighters.len() {
-            if !detonate
-                && w.opponents(p.owner, v)
-                && let Some(c) = combat::reflecting(d, &w.fighters[v])
-                && libm::hypot(p.x - w.fighters[v].x, p.y - (w.fighters[v].y - c.height)) < p.r + c.radius
-            {
-                p.owner = v;
-                p.face = -p.face;
-                p.vx = -p.vx * c.speed;
-                p.hit.damage *= c.damage;
-                continue;
-            }
-            if def.explosion.is_some() && !detonate
-                || !w.opponents(p.owner, v)
-                || !w.fighters[v].hittable()
-                || !p.hit.targets(w.fighters[v].ground)
-                || p.life <= 0 && !detonate
-                || !combat::circle_hurt(d, &w.fighters[v], w.frame, p.x, p.y, p.r)
-            {
-                continue;
-            }
-            if detonate && combat::countering(d, &w.fighters[v]).is_some() {
-                combat::counter(w, d, v, None, 0.);
-                continue;
-            }
-            if let Some(c) = combat::countering(d, &w.fighters[v]) {
-                p.owner = v;
-                p.surf = None;
-                p.vx = -p.vx * c.reflect_speed;
-                p.life = c.reflect_life as i32;
-                if let Some(vy) = def.reflect_vy {
-                    p.vy = -vy;
-                }
-                combat::counter(w, d, v, None, 0.);
-                continue;
-            }
-            let direction = if detonate {
-                let away = sign(w.fighters[v].x - p.x);
-                if away != 0. {
-                    away
-                } else if p.vx != 0. {
-                    sign(p.vx)
-                } else {
-                    w.fighters[p.owner].face
-                }
-            } else {
-                sign(p.vx)
-            };
-            let label = Some(def.name.clone());
-            if combat::parrying(d, &w.fighters[v]) {
-                combat::parry(w, d, v, None);
-            } else if w.fighters[v].state == State::Shield {
-                combat::shield_hit(
-                    w,
-                    d,
-                    v,
-                    &p.hit,
-                    combat::HitSource { attacker: p.owner, direction, point: (p.x, p.y), projectile: true, label },
-                );
-            } else {
-                combat::apply_hit(
-                    w,
-                    d,
-                    v,
-                    &p.hit,
-                    combat::HitSource { attacker: p.owner, direction, point: (p.x, p.y), projectile: true, label },
-                );
-            }
-            if !detonate {
-                p.life = 0;
-            }
-        }
-        if detonate {
-            p.life = 0;
-        }
+        contacts(w, d, &mut p, detonate);
         for qi in 0..w.projs.len() {
             let q = &w.projs[qi];
             if qi != pi
@@ -322,4 +239,130 @@ pub fn step_projectiles(w: &mut World, d: &GameData) {
     }
     let b = &s.blast;
     w.projs.retain(|p| p.life > 0 && p.x > b.left && p.x < b.right && p.y < b.bottom);
+}
+
+/// Immediately blast live owned gadgets in projectile order. Named ids fire whether or not they are remote;
+/// an empty list fires only remote (`explosion.manual`) gadgets, so a timed fuse such as a grenade is never
+/// triggered by accident. No movement, aging or fuse tick.
+pub fn detonate(w: &mut World, d: &GameData, owner: usize, ids: &[String]) {
+    for pi in 0..w.projs.len() {
+        let mut p = w.projs[pi].clone();
+        let Some(e) = d.fighters[p.fighter_data].projectiles[&p.id].explosion.as_ref() else {
+            continue;
+        };
+        let fires = ids.is_empty() && e.manual || ids.contains(&p.id);
+        if p.owner == owner && p.life > 0 && fires {
+            contacts(w, d, &mut p, true);
+            w.projs[pi] = p;
+        }
+    }
+    w.projs.retain(|p| p.life > 0);
+}
+
+fn contacts(w: &mut World, d: &GameData, p: &mut Projectile, detonate: bool) {
+    let def = &d.fighters[p.fighter_data].projectiles[&p.id];
+    if let Some(e) = &def.explosion
+        && detonate
+    {
+        p.r = e.radius;
+        crate::moves::effects(w, &e.fx, (p.x, p.y), sign(p.vx), (p.vx, p.vy), p.owner);
+        if let Some(s) = &e.sfx {
+            w.sfx(s.clone());
+        }
+    }
+    if detonate || def.explosion.is_none() && p.life > 0 {
+        crate::articles::projectile_contacts(w, d, p, detonate);
+    }
+    for v in 0..w.fighters.len() {
+        if !detonate
+            && w.opponents(p.owner, v)
+            && let Some(c) = combat::reflecting(d, &w.fighters[v])
+            && libm::hypot(p.x - w.fighters[v].x, p.y - (w.fighters[v].y - c.height)) < p.r + c.radius
+        {
+            p.owner = v;
+            p.face = -p.face;
+            p.vx = -p.vx * c.speed;
+            p.hit.damage *= c.damage;
+            continue;
+        }
+        if def.explosion.is_some() && !detonate
+            || !w.opponents(p.owner, v)
+            || !w.fighters[v].hittable()
+            || !p.hit.targets(w.fighters[v].ground)
+            || p.life <= 0 && !detonate
+            || p.hit.rehit.is_some_and(|n| p.hits.iter().any(|&(i, at)| i == v && p.age.saturating_sub(at) < n))
+            || !combat::circle_hurt(d, &w.fighters[v], w.frame, p.x, p.y, p.r)
+        {
+            continue;
+        }
+        if !p.hit.unblockable && detonate && combat::countering(d, &w.fighters[v]).is_some() {
+            combat::counter(w, d, v, None, 0.);
+            continue;
+        }
+        if !p.hit.unblockable
+            && let Some(c) = combat::countering(d, &w.fighters[v])
+        {
+            p.owner = v;
+            p.surf = None;
+            p.vx = -p.vx * c.reflect_speed;
+            p.life = c.reflect_life as i32;
+            if let Some(vy) = def.reflect_vy {
+                p.vy = -vy;
+            }
+            combat::counter(w, d, v, None, 0.);
+            continue;
+        }
+        let direction = if detonate {
+            let away = sign(w.fighters[v].x - p.x);
+            if away != 0. {
+                away
+            } else if p.vx != 0. {
+                sign(p.vx)
+            } else {
+                w.fighters[p.owner].face
+            }
+        } else {
+            sign(p.vx)
+        };
+        let label = Some(def.name.clone());
+        if p.hit.unblockable {
+            // Command-grab hits ignore guards, parries and counters, exactly like the melee path, but they
+            // still take part in the usual contact bookkeeping below (rehit intervals, single-hit expiry).
+            combat::apply_hit(
+                w,
+                d,
+                v,
+                &p.hit,
+                combat::HitSource { attacker: p.owner, direction, point: (p.x, p.y), projectile: true, label },
+            );
+        } else if combat::parrying(d, &w.fighters[v]) {
+            combat::parry(w, d, v, None);
+        } else if w.fighters[v].state == State::Shield {
+            combat::shield_hit(
+                w,
+                d,
+                v,
+                &p.hit,
+                combat::HitSource { attacker: p.owner, direction, point: (p.x, p.y), projectile: true, label },
+            );
+        } else {
+            combat::apply_hit(
+                w,
+                d,
+                v,
+                &p.hit,
+                combat::HitSource { attacker: p.owner, direction, point: (p.x, p.y), projectile: true, label },
+            );
+        }
+        // Rehitting hazards stay in play for their next contact window; single hits are consumed.
+        if !detonate {
+            p.hits.push((v, p.age));
+            if p.hit.rehit.is_none() {
+                p.life = 0;
+            }
+        }
+    }
+    if detonate {
+        p.life = 0;
+    }
 }

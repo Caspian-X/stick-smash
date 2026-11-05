@@ -161,7 +161,7 @@ pub fn unique_name(base: &str, taken: impl Fn(&str) -> bool) -> String {
 fn each_anim_key(f: &mut Fighter, mut fx: impl FnMut(&mut AnimKey)) {
     for slot in sim::data::moves::Moves::SLOTS {
         if let Some(mv) = f.moves.get_mut(slot) {
-            mv.phases.iter_mut().flat_map(|p| p.anim.iter_mut()).for_each(&mut fx);
+            mv.timelines_mut().flat_map(|phases| phases.iter_mut()).flat_map(|p| p.anim.iter_mut()).for_each(&mut fx);
         }
     }
     f.anims.values_mut().flat_map(|a| a.keys.iter_mut()).for_each(fx);
@@ -173,7 +173,7 @@ pub fn pose_uses(f: &Fighter, name: &str) -> usize {
         PoseRef::Named(n) => n == name,
         PoseRef::Inline(p) => p.from.as_deref() == Some(name),
     };
-    f.moves.iter().flat_map(|(_, m)| m.phases.iter()).flat_map(|p| p.anim.iter()).filter(|k| named(k)).count()
+    f.moves.iter().flat_map(|(_, m)| m.timelines()).flatten().flat_map(|p| p.anim.iter()).filter(|k| named(k)).count()
         + f.anims.values().flat_map(|a| a.keys.iter()).filter(|k| named(k)).count()
         + f.poses.values().filter(|p| p.from.as_deref() == Some(name)).count()
 }
@@ -185,7 +185,13 @@ pub fn pose_users(f: &Fighter, name: &str) -> usize {
     }
     let inline = |k: &AnimKey| matches!(&k.pose, PoseRef::Inline(p) if p.from.is_none());
     pose_uses(f, name)
-        + f.moves.iter().flat_map(|(_, m)| m.phases.iter()).flat_map(|p| p.anim.iter()).filter(|k| inline(k)).count()
+        + f.moves
+            .iter()
+            .flat_map(|(_, m)| m.timelines())
+            .flatten()
+            .flat_map(|p| p.anim.iter())
+            .filter(|k| inline(k))
+            .count()
         + f.anims.values().flat_map(|a| a.keys.iter()).filter(|k| inline(k)).count()
         + f.poses.iter().filter(|(n, p)| *n != name && p.from.is_none()).count()
 }
@@ -229,7 +235,7 @@ pub fn remove_hurt_regions(f: &mut Fighter) {
     f.combat_center = None;
     for slot in sim::data::moves::Moves::SLOTS {
         if let Some(m) = f.moves.get_mut(slot) {
-            for p in &mut m.phases {
+            for p in m.timelines_mut().flat_map(|phases| phases.iter_mut()) {
                 p.hurt_regions.clear();
             }
         }
@@ -246,7 +252,7 @@ pub fn remove_rig(f: &mut Fighter) {
     }
     for slot in sim::data::moves::Moves::SLOTS {
         if let Some(m) = f.moves.get_mut(slot) {
-            for p in &mut m.phases {
+            for p in m.timelines_mut().flat_map(|phases| phases.iter_mut()) {
                 p.hitboxes
                     .retain(|h| !h.geometry.as_ref().is_some_and(|g| g.points().iter().any(|p| p.joint.is_some())));
             }
@@ -877,7 +883,7 @@ fn collision_geometries(f: &mut Fighter, mut visit: impl FnMut(&mut sim::data::h
     }
     for slot in sim::data::moves::Moves::SLOTS {
         if let Some(m) = f.moves.get_mut(slot) {
-            for p in &mut m.phases {
+            for p in m.timelines_mut().flat_map(|phases| phases.iter_mut()) {
                 for h in &mut p.hitboxes {
                     if let Some(g) = &mut h.geometry {
                         visit(g);
@@ -1121,6 +1127,8 @@ mod tests {
                 on: sim::data::Trigger::Timeout,
                 cond: None,
                 from: None,
+                min_charge: 0,
+                needs: None,
                 to: "nowhere".into(),
                 lag: None,
                 preserve_hits: false,

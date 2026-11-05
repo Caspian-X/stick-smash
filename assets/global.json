@@ -155,7 +155,7 @@
     "releaseLag": 12
   },
   "respawn": { "deadFrames": 70, "descendFrames": 40, "maxWait": 220, "invuln": 100 },
-  "match": { "countdown": 180, "goFrames": 45, "endFrames": 110 },
+  "match": { "countdown": 180, "goFrames": 45, "endFrames": 48, "timerWarnSeconds": 10, "suddenDeathDamage": 300 },
   "palette": [
     { "main": "#ff5d5d", "dark": "#a63b3b", "light": "#ffd0d0" },
     { "main": "#4fa8ff", "dark": "#2c66a6", "light": "#cfeaff" },
@@ -387,8 +387,11 @@
     "hud": {
       "damageRamp": [[0, "#ffffff"], [50, "#ffe98a"], [100, "#ffa04a"], [150, "#ff4d4d"], [250, "#c41a3b"]],
       "shake": 6,
-      "endSlowmo": { "speed": 0.25, "ticks": 50 },
-      "resultsDelay": 100,
+      "endSlowmo": { "speed": 0.35, "ticks": 16 },
+      "endBanner": { "secs": 1, "pop": 0.2, "fade": 0.25 },
+      "resultsDelay": 0,
+      "resultsHoldSecs": 0.25,
+      "resultsEnter": { "secs": 0.3, "slide": 30, "stagger": 0.035 },
       "koCreditTicks": 480,
       "look": {
         "shakeSpeed": 91,
@@ -397,7 +400,8 @@
         "bubbleShrink": 900,
         "bubbleMinScale": 0.7,
         "popScale": 1.5,
-        "popSpeed": 6
+        "popSpeed": 6,
+        "timerPulse": 0.16
       }
     },
     "select": {
@@ -458,6 +462,22 @@
           "breathScale": 0.03,
           "substeps": 240
         }
+      },
+      "backRing": {
+        "offset": [12, 17],
+        "radius": 33,
+        "thickness": 5,
+        "ticks": 24,
+        "dash": 0.74,
+        "track": 0.16,
+        "rim": 2,
+        "hot": 4,
+        "spark": 1.6,
+        "follow": [900, 0.9],
+        "grow": [300, 0.5],
+        "pop": 0.55,
+        "wobble": 0.04,
+        "wobbleSecs": 0.8
       },
       "hints": { "showSecs": 6, "idleSecs": 4, "fadeSecs": 0.25 }
     },
@@ -791,6 +811,16 @@
         "strengthGain": 1,
         "layers": [
           { "wave": "square", "from": 440.0, "to": 440.0, "duration": 0.14, "attack": 0.002, "decay": 8, "gain": 0.05 }
+        ]
+      },
+      "tick": {
+        "volume": 0.8,
+        "priority": 70,
+        "cooldown": 0.05,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "square", "from": 880.0, "to": 880.0, "duration": 0.09, "attack": 0.002, "decay": 9, "gain": 0.07 }
         ]
       },
       "go": {

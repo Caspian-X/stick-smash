@@ -1,0 +1,525 @@
+{
+ "url": "https://ultimateframedata.com/snake/",
+ "accessed": "2026-11-04",
+ "pageSha256": "1c2ee1b62d16d462443cd150f718309b0b8651ef74cd589c27b90d64b34de071",
+ "note": "Per-move hitbox visualisations live under `https://ultimateframedata.com/hitboxes/snake/<File>`; normal attacks are `.gif`, the grenade, Cypher, C4, mortar and Nikita hitboxes are single-frame `.png` files. Spaces in those names are URL-encoded; `just sneak-visuals` reacquires and hashes them.",
+ "rows": {
+  "jab1": {
+   "name": "Jab 1",
+   "startup": "3",
+   "active": "3\u20144",
+   "total": "15",
+   "landing": "--",
+   "damage": "2.5",
+   "hitbox": "--",
+   "shieldlag": "8",
+   "shieldstun": "4",
+   "advantage": "-8",
+   "notes": "Transitions to jab 2 as early as frame 6",
+   "hitboxFiles": [
+    "SnakeJab1.gif"
+   ]
+  },
+  "jab2": {
+   "name": "Jab 2",
+   "startup": "4",
+   "active": "4\u20145",
+   "total": "24",
+   "landing": "--",
+   "damage": "2.5",
+   "hitbox": "--",
+   "shieldlag": "8",
+   "shieldstun": "4",
+   "advantage": "-16",
+   "notes": "Transitions to jab 3 as early as frame 7",
+   "hitboxFiles": [
+    "SnakeJab2.gif"
+   ]
+  },
+  "jab3": {
+   "name": "Jab 3",
+   "startup": "8",
+   "active": "8\u20149",
+   "total": "46",
+   "landing": "--",
+   "damage": "6.0",
+   "hitbox": "--",
+   "shieldlag": "11",
+   "shieldstun": "6",
+   "advantage": "-32",
+   "notes": "--",
+   "hitboxFiles": [
+    "SnakeJab3.gif"
+   ]
+  },
+  "ftilt1": {
+   "name": "Forward Tilt 1",
+   "startup": "4",
+   "active": "4\u20145",
+   "total": "31",
+   "landing": "--",
+   "damage": "4.0",
+   "hitbox": "--",
+   "shieldlag": "9",
+   "shieldstun": "5",
+   "advantage": "-22",
+   "notes": "Transitions to Ftilt 2 as early as frame 10",
+   "hitboxFiles": [
+    "SnakeFTilt1.gif"
+   ]
+  },
+  "ftilt2": {
+   "name": "Forward Tilt 2",
+   "startup": "8",
+   "active": "8",
+   "total": "39",
+   "landing": "--",
+   "damage": "9.0/10.0/11.0",
+   "hitbox": "Close/Far/Farther",
+   "shieldlag": "7/7/8",
+   "shieldstun": "9/9/10",
+   "advantage": "-22/-22/-21",
+   "notes": "--",
+   "hitboxFiles": [
+    "SnakeFTilt2.gif"
+   ]
+  },
+  "utilt": {
+   "name": "Up Tilt",
+   "startup": "6",
+   "active": "6\u20148/9\u201413",
+   "total": "37",
+   "landing": "--",
+   "damage": "14.5/13.5",
+   "hitbox": "Early/Late",
+   "shieldlag": "10/9",
+   "shieldstun": "13/12",
+   "advantage": "-18/**",
+   "notes": "--",
+   "hitboxFiles": [
+    "SnakeUTilt.gif"
+   ]
+  },
+  "dtilt": {
+   "name": "Down Tilt",
+   "startup": "6",
+   "active": "6\u20147",
+   "total": "30",
+   "landing": "--",
+   "damage": "12.0",
+   "hitbox": "--",
+   "shieldlag": "9",
+   "shieldstun": "11",
+   "advantage": "-13",
+   "notes": "--",
+   "hitboxFiles": [
+    "SnakeDTilt.gif"
+   ]
+  },
+  "dashatk": {
+   "name": "Dash Attack",
+   "startup": "5",
+   "active": "5\u20148/9\u201412",
+   "total": "41",
+   "landing": "--",
+   "damage": "11.0/9.0/8.0/6.0",
+   "hitbox": "Early/Late",
+   "shieldlag": "8/7",
+   "shieldstun": "10/8",
+   "advantage": "-26/**",
+   "notes": "Arm intangibility on frame 5-12",
+   "hitboxFiles": [
+    "SnakeDashAttack.gif"
+   ]
+  },
+  "fsmash": {
+   "name": "Forward Smash",
+   "startup": "41",
+   "active": "41\u201443",
+   "total": "73",
+   "landing": "--",
+   "damage": "22.0",
+   "hitbox": "--",
+   "shieldlag": "13",
+   "shieldstun": "14",
+   "advantage": "-18",
+   "notes": "Charge hold is frame 38",
+   "hitboxFiles": [
+    "SnakeFSmash.gif"
+   ]
+  },
+  "usmash": {
+   "name": "Up Smash",
+   "startup": "11/35",
+   "active": "11\u201412/35\u2014**",
+   "total": "54",
+   "landing": "--",
+   "damage": "4.0/14.0",
+   "hitbox": "Initial/Projectile",
+   "shieldlag": "5/10",
+   "shieldstun": "4/10",
+   "advantage": "-39/+1",
+   "notes": "Charge hold is frame 24. Projectile generated on frame 35. Projectile explosion is active for 5 frames.",
+   "hitboxFiles": [
+    "SnakeUSmash.gif",
+    "SnakeUSmashExplosion.png",
+    "SnakeUSmashSearch.png"
+   ]
+  },
+  "dsmash": {
+   "name": "Down Smash",
+   "startup": "8/20",
+   "active": "8\u201410/20\u201422",
+   "total": "44",
+   "landing": "--",
+   "damage": "12.0/14.0",
+   "hitbox": "--",
+   "shieldlag": "9/10",
+   "shieldstun": "8/10",
+   "advantage": "-28/-14",
+   "notes": "Charge hold is frame 5",
+   "hitboxFiles": [
+    "SnakeDSmash.gif"
+   ]
+  },
+  "nair": {
+   "name": "Neutral Air",
+   "startup": "10/18/26/36",
+   "active": "10\u201411/18\u201419/26\u201427/36\u201438",
+   "total": "59",
+   "landing": "16",
+   "damage": "3.0/12.0",
+   "hitbox": "Multi/Final",
+   "shieldlag": "5/9",
+   "shieldstun": "2/5",
+   "advantage": "-14/-11",
+   "notes": "Autocancels on frame 1-3 and 50 onward",
+   "hitboxFiles": [
+    "SnakeNAir.gif"
+   ]
+  },
+  "fair": {
+   "name": "Forward Air",
+   "startup": "23",
+   "active": "23\u201426",
+   "total": "69",
+   "landing": "19",
+   "damage": "14.0/15.0",
+   "hitbox": "Close/Far",
+   "shieldlag": "10/10",
+   "shieldstun": "5/5",
+   "advantage": "-14/-14",
+   "notes": "Autocancels on frame 1-3 and 63 onward",
+   "hitboxFiles": [
+    "SnakeFAir.gif"
+   ]
+  },
+  "bair": {
+   "name": "Back Air",
+   "startup": "7",
+   "active": "7\u20149/10\u201426",
+   "total": "42",
+   "landing": "19",
+   "damage": "16.0/14.0/10.0/9.0",
+   "hitbox": "Early far/close, Late far/close",
+   "shieldlag": "10/10/8/7",
+   "shieldstun": "6/5/4/4",
+   "advantage": "-13/-14/-15/-15",
+   "notes": "Autocancels on frame 40 onward",
+   "hitboxFiles": [
+    "SnakeBAir.gif"
+   ]
+  },
+  "uair": {
+   "name": "Up Air",
+   "startup": "10",
+   "active": "10\u201412/13\u201423",
+   "total": "47",
+   "landing": "15",
+   "damage": "14.0/10.0",
+   "hitbox": "Far/Close",
+   "shieldlag": "10/8",
+   "shieldstun": "5/4",
+   "advantage": "-10/-11",
+   "notes": "Autocancels on frame 1-4 and 36 onward",
+   "hitboxFiles": [
+    "SnakeUAir.gif"
+   ]
+  },
+  "dair": {
+   "name": "Down Air",
+   "startup": "3/10/17/25",
+   "active": "3\u20144/10\u201411/17\u201418/25\u201426",
+   "total": "59",
+   "landing": "20",
+   "damage": "4.0/3.0/10.0",
+   "hitbox": "First/Multi/Final",
+   "shieldlag": "5/5/8",
+   "shieldstun": "3/2/4",
+   "advantage": "-17/-18/-16",
+   "notes": "Autocancels on frame 54 onward",
+   "hitboxFiles": [
+    "SnakeDAir.gif"
+   ]
+  },
+  "grenadePull": {
+   "name": "Neutral B (Grenade)",
+   "startup": "1 (Grenade Pull)",
+   "active": "**",
+   "total": "21",
+   "landing": "--",
+   "damage": "--",
+   "hitbox": "--",
+   "shieldlag": "--",
+   "shieldstun": "--",
+   "advantage": "--",
+   "notes": "Pull Pin animation takes 21 frames before you can throw or shield/dodge. Grenades explode on roughly frame 150. Grenade generates on frame 1. Grenade lasts 2.5 seconds until it blows up on its own.",
+   "hitboxFiles": [
+    "SnakeGrenade.png",
+    "SnakeGrenadeBurst.gif"
+   ]
+  },
+  "grenadeThrows": {
+   "name": "Grenade (Neutral Throw, Smash Throw, Underhand Throw)",
+   "startup": "8, 10, 9",
+   "active": "**",
+   "total": "27, 31, 25",
+   "landing": "--",
+   "damage": "2.0\u20143.1/8.9\u20149.9",
+   "hitbox": "Collide/Explosion",
+   "shieldlag": "5/8",
+   "shieldstun": "2/4",
+   "advantage": "**",
+   "notes": "Grenade collision and explosion vary slightly in damage",
+   "hitboxFiles": []
+  },
+  "nikita": {
+   "name": "Side B (Nikita)",
+   "startup": "41",
+   "active": "41\u2014**",
+   "total": "--",
+   "landing": "--",
+   "damage": "7.0/14.0",
+   "hitbox": "Early/Late",
+   "shieldlag": "7/10",
+   "shieldstun": "3/5",
+   "advantage": "-19/-14",
+   "notes": "Takes 27 frames to cancel with shield. 29 frame fist pump animation after a hit.",
+   "hitboxFiles": [
+    "Nikita Explosion (Strong).png",
+    "Nikita Explosion (Weak).png",
+    "Nikita Hurtbox (Weak).png",
+    "NikitaSearch.png"
+   ]
+  },
+  "cypher": {
+   "name": "Up B (Cypher)",
+   "startup": "--",
+   "active": "**",
+   "total": "--",
+   "landing": "--",
+   "damage": "6.0",
+   "hitbox": "--",
+   "shieldlag": "6",
+   "shieldstun": "3",
+   "advantage": "--",
+   "notes": "Damage-based armor on frame 7\u201494. Frame 47 is the earliest you can cancel the move. To knock Snake off of Cypher you need to do 7% damage in doubles or 8.4% damage in singles with a single hit. To destroy the Cypher with multiple hits, it takes 13% in doubles and 15.6% in singles.",
+   "hitboxFiles": [
+    "SnakeCypher.png"
+   ]
+  },
+  "c4": {
+   "name": "Down B (C4)",
+   "startup": "9",
+   "active": "**",
+   "total": "24",
+   "landing": "-",
+   "damage": "--",
+   "hitbox": "--",
+   "shieldlag": "--",
+   "shieldstun": "--",
+   "advantage": "--",
+   "notes": "Lasts 26.6 seconds until it blows up on its own.",
+   "hitboxFiles": [
+    "SnakeC4.png"
+   ]
+  },
+  "c4Blast": {
+   "name": "C4 Detonate/Explosion",
+   "startup": "25",
+   "active": "25\u201427",
+   "total": "32",
+   "landing": "-",
+   "damage": "17.0",
+   "hitbox": "Sticky/Non-Sticky",
+   "shieldlag": "11/11",
+   "shieldstun": "15/6",
+   "advantage": "+20 / +11",
+   "notes": "--",
+   "hitboxFiles": [
+    "C4 Explosion (Snake for Scale).png"
+   ]
+  },
+  "grab": {
+   "name": "Grab",
+   "startup": "8",
+   "active": "8\u20149",
+   "total": "34",
+   "landing": "--",
+   "damage": "--",
+   "hitbox": null,
+   "shieldlag": null,
+   "shieldstun": null,
+   "advantage": null,
+   "notes": "--",
+   "hitboxFiles": [
+    "SnakeGrab.gif"
+   ]
+  },
+  "dashgrab": {
+   "name": "Dash Grab",
+   "startup": "11",
+   "active": "11\u201412",
+   "total": "42",
+   "landing": "--",
+   "damage": "--",
+   "hitbox": null,
+   "shieldlag": null,
+   "shieldstun": null,
+   "advantage": null,
+   "notes": "--",
+   "hitboxFiles": [
+    "SnakeDashGrab.gif"
+   ]
+  },
+  "pivotgrab": {
+   "name": "Pivot Grab",
+   "startup": "9",
+   "active": "9\u201410",
+   "total": "37",
+   "landing": "--",
+   "damage": "--",
+   "hitbox": null,
+   "shieldlag": null,
+   "shieldstun": null,
+   "advantage": null,
+   "notes": "--",
+   "hitboxFiles": [
+    "SnakePivotGrab.gif"
+   ]
+  },
+  "pummel": {
+   "name": "Pummel",
+   "startup": "1",
+   "active": null,
+   "total": "19",
+   "landing": "Total frames includes 13 frames of hitlag.",
+   "damage": "1.3",
+   "hitbox": null,
+   "shieldlag": null,
+   "shieldstun": null,
+   "advantage": null,
+   "notes": "--",
+   "hitboxFiles": [
+    "SnakePummel.gif"
+   ]
+  },
+  "fthrow": {
+   "name": "Forward Throw",
+   "startup": "21",
+   "active": null,
+   "total": "39",
+   "landing": "--",
+   "damage": "9.0",
+   "hitbox": null,
+   "shieldlag": null,
+   "shieldstun": null,
+   "advantage": null,
+   "notes": "--",
+   "hitboxFiles": [
+    "SnakeFThrow.gif"
+   ]
+  },
+  "bthrow": {
+   "name": "Backward Throw",
+   "startup": "20",
+   "active": null,
+   "total": "30",
+   "landing": "--",
+   "damage": "9.0",
+   "hitbox": null,
+   "shieldlag": null,
+   "shieldstun": null,
+   "advantage": null,
+   "notes": "--",
+   "hitboxFiles": [
+    "SnakeBThrow.gif"
+   ]
+  },
+  "uthrow": {
+   "name": "Up Throw",
+   "startup": "22/23",
+   "active": null,
+   "total": "47",
+   "landing": "--",
+   "damage": "7.0/4.0",
+   "hitbox": null,
+   "shieldlag": null,
+   "shieldstun": null,
+   "advantage": null,
+   "notes": "--",
+   "hitboxFiles": [
+    "SnakeUThrow.gif"
+   ]
+  },
+  "dthrow": {
+   "name": "Down Throw",
+   "startup": "35",
+   "active": null,
+   "total": "41",
+   "landing": "--",
+   "damage": "9.0",
+   "hitbox": null,
+   "shieldlag": null,
+   "shieldstun": null,
+   "advantage": null,
+   "notes": "--",
+   "hitboxFiles": [
+    "SnakeDThrow.gif"
+   ]
+  }
+ },
+ "stats": {
+  "weight": [
+   106.0
+  ],
+  "gravity": [
+   0.08
+  ],
+  "walkSpeed": [
+   0.882
+  ],
+  "runSpeed": [
+   1.595
+  ],
+  "dashSpeed": [
+   1.76
+  ],
+  "airSpeed": [
+   0.987
+  ],
+  "airAccel": [
+   0.03
+  ],
+  "fallSpeed": [
+   1.73,
+   2.768
+  ],
+  "jumpFrames": [
+   37,
+   42,
+   23,
+   28
+  ]
+ }
+}

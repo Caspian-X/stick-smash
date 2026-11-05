@@ -1,0 +1,4043 @@
+{
+  "$schema": "../../schema/fighter.schema.json",
+  "schemaVersion": 1,
+  "extends": "base",
+  "name": "Planty",
+  "blurb": "A leafy potted fighter with a stretching stem and a floating spiked ball.",
+  "tagline": "Small pot, big reach",
+  "stats": {
+    "weight": 0.8928571428571429,
+    "pummelDamage": 1.4,
+    "walkSpeed": 2.66,
+    "runSpeed": 6.02,
+    "dashSpeed": 6.37,
+    "dashFrames": 15,
+    "runAccel": 0.8,
+    "groundFriction": 0.85,
+    "jumpSpeed": 15.5,
+    "shortHopSpeed": 9.8,
+    "airJumpSpeed": 14.5,
+    "airJumpDrift": 3.5,
+    "airJumps": 1,
+    "airSpeed": 3.5,
+    "airAccel": 0.21,
+    "gravity": 0.84,
+    "fallSpeed": 11.7,
+    "fastFallSpeed": 16.38
+  },
+  "body": { "halfWidth": 18, "height": 74 },
+  "hurtboxes": {
+    "default": { "x1": -24, "x2": 24, "y1": 0, "y2": 122 },
+    "knockdown": { "x1": -40, "x2": 40, "y1": 0, "y2": 26 }
+  },
+  "hurtRegions": [
+    {
+      "id": "pot",
+      "geometry": {
+        "kind": "capsule",
+        "a": { "joint": "pot", "offset": [0, 8] },
+        "b": { "joint": "stem0", "offset": [0, 4] },
+        "radius": 16
+      }
+    },
+    {
+      "id": "stem",
+      "geometry": {
+        "kind": "capsule",
+        "a": { "joint": "stem0", "offset": [0, 0] },
+        "b": { "joint": "neck", "offset": [0, 0] },
+        "radius": 7
+      }
+    },
+    {
+      "id": "head",
+      "geometry": {
+        "kind": "capsule",
+        "a": { "joint": "head", "offset": [0, -10] },
+        "b": { "joint": "top", "offset": [0, 8] },
+        "radius": 19
+      }
+    },
+    {
+      "id": "jaw",
+      "geometry": {
+        "kind": "capsule",
+        "a": { "joint": "jaw", "offset": [2, 0] },
+        "b": { "joint": "mouth", "offset": [0, 0] },
+        "radius": 6
+      }
+    }
+  ],
+  "combatCenter": [0, 58],
+  "interactions": {
+    "grab": { "catchPoint": [0, 20], "holdPoint": [46, 70], "heldAnchor": [0, 24] },
+    "ledge": { "catchPoint": [0, 50] }
+  },
+  "ai": {
+    "reach": 80,
+    "counterChance": 0,
+    "specials": [
+      {
+        "minDistance": 160,
+        "maxDistance": null,
+        "height": 100,
+        "grounded": true,
+        "noProjectile": true,
+        "chance": 0.5,
+        "neutral": true,
+        "down": false,
+        "hold": [12, 26]
+      },
+      {
+        "minDistance": 90,
+        "maxDistance": 250,
+        "height": 80,
+        "grounded": false,
+        "noProjectile": true,
+        "chance": 0.4,
+        "down": false,
+        "hold": null
+      },
+      {
+        "minDistance": 0,
+        "maxDistance": 150,
+        "height": 120,
+        "grounded": true,
+        "noProjectile": true,
+        "chance": 0.25,
+        "down": true,
+        "hold": [20, 50]
+      }
+    ]
+  },
+  "moves": {
+    "jab": {
+      "name": "Jab",
+      "phases": [
+        {
+          "name": "jab1",
+          "frames": 19,
+          "hitboxes": [
+            {
+              "start": 1,
+              "end": 2,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 9.0,
+              "damage": 2.4,
+              "bkb": 20.0,
+              "kbg": 0.25,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 2.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [26.5, 31.5] },
+                "radius": 9.0
+              }
+            },
+            {
+              "start": 1,
+              "end": 2,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 9.0,
+              "damage": 2.4,
+              "bkb": 18.0,
+              "kbg": 0.25,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 2.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [43.5, 31.5] },
+                "radius": 9.0
+              }
+            },
+            {
+              "start": 1,
+              "end": 2,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 10.0,
+              "damage": 2.4,
+              "bkb": 18.0,
+              "kbg": 0.2,
+              "angle": 180.0,
+              "hitlagMult": 2.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [62.5, 31.5] },
+                "radius": 10.0
+              }
+            },
+            {
+              "start": 1,
+              "end": 2,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 10.0,
+              "damage": 2.4,
+              "bkb": 18.0,
+              "kbg": 0.2,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 2.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [62.5, 31.5] },
+                "radius": 10.0
+              }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "coil" },
+            { "at": 1, "pose": "lowStrike", "lerp": true },
+            { "at": 2, "pose": "lowStrike" },
+            { "at": 4, "pose": "strike" },
+            { "at": 15, "pose": "stand", "lerp": true },
+            { "at": 18, "pose": "stand" }
+          ],
+          "transitions": [
+            { "on": "attackHeld", "from": 4, "to": "jab2" }
+          ]
+        },
+        {
+          "name": "jab2",
+          "frames": 20,
+          "hitboxes": [
+            {
+              "start": 1,
+              "end": 2,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 13.0,
+              "damage": 2.2,
+              "bkb": 18.0,
+              "kbg": 0.3,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 1.2,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [30.0, 32.5] },
+                "radius": 13.0
+              }
+            },
+            {
+              "start": 1,
+              "end": 2,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 14.0,
+              "damage": 2.2,
+              "bkb": 18.0,
+              "kbg": 0.3,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 1.2,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [50.0, 32.5] },
+                "radius": 14.0
+              }
+            },
+            {
+              "start": 1,
+              "end": 2,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 15.0,
+              "damage": 2.2,
+              "bkb": 15.0,
+              "kbg": 0.25,
+              "angle": 180.0,
+              "hitlagMult": 1.2,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [75.0, 32.5] },
+                "radius": 15.0
+              }
+            },
+            {
+              "start": 1,
+              "end": 2,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 15.0,
+              "damage": 2.2,
+              "bkb": 15.0,
+              "kbg": 0.15,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 1.2,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [75.0, 32.5] },
+                "radius": 15.0
+              }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "coil" },
+            { "at": 1, "pose": "lowStrike", "lerp": true },
+            { "at": 2, "pose": "lowStrike" },
+            { "at": 4, "pose": "strike" },
+            { "at": 16, "pose": "stand", "lerp": true },
+            { "at": 19, "pose": "stand" }
+          ],
+          "transitions": [
+            { "on": "attackHeld", "from": 6, "to": "jab3" }
+          ]
+        },
+        {
+          "name": "jab3",
+          "frames": 25,
+          "hitboxes": [
+            {
+              "start": 6,
+              "end": 7,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 27.5,
+              "damage": 4.4,
+              "bkb": 60.0,
+              "kbg": 0.7,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 2.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [64.0, 40.0] },
+                "radius": 27.5
+              }
+            },
+            {
+              "start": 6,
+              "end": 7,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 12.5,
+              "damage": 4.4,
+              "bkb": 60.0,
+              "kbg": 0.7,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 2.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [35.0, 40.0] },
+                "radius": 12.5
+              }
+            },
+            {
+              "start": 6,
+              "end": 7,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 12.5,
+              "damage": 4.4,
+              "bkb": 60.0,
+              "kbg": 0.7,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 2.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [23.5, 40.0] },
+                "radius": 12.5
+              }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "coil" },
+            { "at": 4, "pose": "coil", "lerp": true },
+            { "at": 6, "pose": "lowStrike", "lerp": true },
+            { "at": 7, "pose": "lowStrike" },
+            { "at": 9, "pose": "strike" },
+            { "at": 21, "pose": "stand", "lerp": true },
+            { "at": 24, "pose": "stand" }
+          ],
+          "transitions": [
+            { "on": "attackHeld", "from": 8, "to": "rapid" }
+          ]
+        },
+        {
+          "name": "rapid",
+          "frames": 4,
+          "hitboxes": [
+            {
+              "start": 0,
+              "end": 0,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 26.0,
+              "damage": 0.6,
+              "bkb": 8.0,
+              "kbg": 0.1,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 0.5,
+              "geometry": {
+                "kind": "capsule",
+                "a": { "offset": [40.0, 40.0] },
+                "b": { "offset": [65.0, 40.0] },
+                "radius": 26.0
+              }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "lowStrike" },
+            { "at": 3, "pose": "coil" }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "rapid" },
+            { "on": "release", "to": "rapidEnd" }
+          ]
+        },
+        {
+          "name": "rapidEnd",
+          "frames": 40,
+          "hitboxes": [
+            {
+              "start": 5,
+              "end": 6,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 30.0,
+              "damage": 3.4,
+              "bkb": 40.0,
+              "kbg": 1.5,
+              "angle": 50.0,
+              "hitlagMult": 3.0,
+              "geometry": {
+                "kind": "capsule",
+                "a": { "offset": [45.0, 37.5] },
+                "b": { "offset": [75.0, 37.5] },
+                "radius": 30.0
+              }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "coil" },
+            { "at": 3, "pose": "coil", "lerp": true },
+            { "at": 5, "pose": "lowStrike", "lerp": true },
+            { "at": 6, "pose": "lowStrike" },
+            { "at": 8, "pose": "bite" },
+            { "at": 36, "pose": "stand", "lerp": true },
+            { "at": 39, "pose": "stand" }
+          ]
+        }
+      ]
+    },
+    "ftilt": {
+      "name": "Forward Tilt",
+      "phases": [
+        {
+          "name": "first",
+          "frames": 27,
+          "hitboxes": [
+            {
+              "start": 6,
+              "end": 7,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 31.5,
+              "damage": 5.5,
+              "bkb": 20.0,
+              "kbg": 0.2,
+              "angle": 90,
+              "type": "autolink",
+              "hitlagMult": 1.3,
+              "geometry": {
+                "kind": "capsule",
+                "a": { "offset": [60.0, 37.5] },
+                "b": { "offset": [65.0, 52.5] },
+                "radius": 31.5
+              }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "coil" },
+            { "at": 4, "pose": "coil", "lerp": true },
+            { "at": 6, "pose": "strike", "lerp": true },
+            { "at": 7, "pose": "strike" },
+            { "at": 9, "pose": "strike" },
+            { "at": 23, "pose": "stand", "lerp": true },
+            { "at": 26, "pose": "stand" }
+          ],
+          "transitions": [
+            { "on": "attackPress", "from": 11, "to": "second" }
+          ]
+        },
+        {
+          "name": "second",
+          "frames": 31,
+          "hitboxes": [
+            {
+              "start": 4,
+              "end": 5,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 32.5,
+              "damage": 6.0,
+              "bkb": 40.0,
+              "kbg": 1.17,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 1.5,
+              "geometry": {
+                "kind": "capsule",
+                "a": { "offset": [75.0, 37.5] },
+                "b": { "offset": [75.0, 52.5] },
+                "radius": 32.5
+              }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "coil" },
+            { "at": 2, "pose": "coil", "lerp": true },
+            { "at": 4, "pose": "strike", "lerp": true },
+            { "at": 5, "pose": "strike" },
+            { "at": 7, "pose": "strike" },
+            { "at": 27, "pose": "stand", "lerp": true },
+            { "at": 30, "pose": "stand" }
+          ]
+        }
+      ]
+    },
+    "utilt": {
+      "name": "Up Tilt",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 26,
+          "hitboxes": [
+            {
+              "start": 7,
+              "end": 14,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 17.5,
+              "damage": 7.0,
+              "bkb": 55.0,
+              "kbg": 1.0,
+              "angle": 85.0,
+              "dir": "away",
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [0.0, 0.0], "joint": "head" },
+                "radius": 17.5
+              }
+            },
+            {
+              "start": 7,
+              "end": 14,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 17.5,
+              "damage": 7.0,
+              "bkb": 55.0,
+              "kbg": 1.0,
+              "angle": 85.0,
+              "dir": "away",
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [0.0, 0.0], "joint": "head" },
+                "radius": 17.5
+              }
+            },
+            {
+              "start": 7,
+              "end": 14,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 17.5,
+              "damage": 7.0,
+              "bkb": 55.0,
+              "kbg": 1.0,
+              "angle": 85.0,
+              "dir": "away",
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [0.0, 0.0], "joint": "head" },
+                "radius": 17.5
+              }
+            },
+            {
+              "start": 7,
+              "end": 14,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 30.0,
+              "damage": 9.0,
+              "bkb": 28.0,
+              "kbg": 1.2,
+              "angle": 90.0,
+              "dir": "away",
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [10.0, 0.0], "joint": "mouth" },
+                "radius": 30.0
+              }
+            }
+          ],
+          "hurtRegions": [
+            { "region": "head", "enabled": false, "from": 5, "to": 12 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 5, "pose": "coil", "lerp": true },
+            { "at": 7, "pose": "upStrike", "lerp": true },
+            { "at": 14, "pose": "upStrike" },
+            { "at": 16, "pose": "strike" },
+            { "at": 22, "pose": "stand", "lerp": true },
+            { "at": 25, "pose": "stand" }
+          ]
+        }
+      ]
+    },
+    "dtilt": {
+      "name": "Down Tilt",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 26,
+          "hitboxes": [
+            {
+              "start": 8,
+              "end": 10,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 15.0,
+              "damage": 6.0,
+              "bkb": 55.0,
+              "kbg": 0.85,
+              "angle": 73.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [27.5, 20.0] },
+                "radius": 15.0
+              }
+            },
+            {
+              "start": 8,
+              "end": 10,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 15.0,
+              "damage": 6.0,
+              "bkb": 55.0,
+              "kbg": 0.85,
+              "angle": 73.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [47.5, 17.0] },
+                "radius": 15.0
+              }
+            },
+            {
+              "start": 8,
+              "end": 10,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 15.0,
+              "damage": 7.0,
+              "bkb": 55.0,
+              "kbg": 0.85,
+              "angle": 78.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [65.0, 14.0] },
+                "radius": 15.0
+              }
+            },
+            {
+              "start": 8,
+              "end": 10,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 15.0,
+              "damage": 7.0,
+              "bkb": 55.0,
+              "kbg": 0.85,
+              "angle": 78.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [85.0, 10.0] },
+                "radius": 15.0
+              }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 6, "pose": "coil", "lerp": true },
+            { "at": 8, "pose": "lowSweep", "lerp": true },
+            { "at": 10, "pose": "lowSweep" },
+            { "at": 12, "pose": "strike" },
+            { "at": 22, "pose": "stand", "lerp": true },
+            { "at": 25, "pose": "stand" }
+          ]
+        }
+      ]
+    },
+    "dashatk": {
+      "name": "Dash Attack",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 47,
+          "hitboxes": [
+            {
+              "start": 6,
+              "end": 8,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 26.5,
+              "damage": 10.0,
+              "bkb": 100.0,
+              "kbg": 0.43,
+              "angle": 45.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [-25.0, 0.0], "joint": "pot" },
+                "radius": 26.5
+              }
+            },
+            {
+              "start": 6,
+              "end": 8,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 20.0,
+              "damage": 10.0,
+              "bkb": 100.0,
+              "kbg": 0.43,
+              "angle": 45.0,
+              "geometry": {
+                "kind": "capsule",
+                "a": { "offset": [0.0, 55.0] },
+                "b": { "offset": [0.0, 25.0] },
+                "radius": 20.0
+              }
+            },
+            {
+              "start": 9,
+              "end": 13,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 26.5,
+              "damage": 7.0,
+              "bkb": 100.0,
+              "kbg": 0.43,
+              "angle": 45.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [-25.0, 0.0], "joint": "pot" },
+                "radius": 26.5
+              }
+            },
+            {
+              "start": 9,
+              "end": 13,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 20.0,
+              "damage": 7.0,
+              "bkb": 100.0,
+              "kbg": 0.43,
+              "angle": 45.0,
+              "geometry": {
+                "kind": "capsule",
+                "a": { "offset": [-10.0, 55.0] },
+                "b": { "offset": [-10.0, 25.0] },
+                "radius": 20.0
+              }
+            }
+          ],
+          "events": [
+            { "at": 6, "setVel": [5.5, 0] }
+          ],
+          "slide": 10,
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 4, "pose": "coil", "lerp": true },
+            { "at": 6, "pose": "strike", "lerp": true },
+            { "at": 13, "pose": "strike" },
+            { "at": 15, "pose": "strike" },
+            { "at": 43, "pose": "stand", "lerp": true },
+            { "at": 46, "pose": "stand" }
+          ]
+        }
+      ]
+    },
+    "fsmash": {
+      "name": "Forward Smash",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 51,
+          "hitboxes": [
+            {
+              "start": 15,
+              "end": 16,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 17.5,
+              "damage": 15.0,
+              "bkb": 25.0,
+              "kbg": 1.03,
+              "angle": 45.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [0.0, 0.0], "joint": "head" },
+                "radius": 17.5
+              }
+            },
+            {
+              "start": 15,
+              "end": 16,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 17.5,
+              "damage": 15.0,
+              "bkb": 25.0,
+              "kbg": 1.03,
+              "angle": 45.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [0.0, 0.0], "joint": "head" },
+                "radius": 17.5
+              }
+            },
+            {
+              "start": 15,
+              "end": 16,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 31.5,
+              "damage": 19.0,
+              "bkb": 25.0,
+              "kbg": 0.99,
+              "angle": 45.0,
+              "hitlagMult": 1.2,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [12.5, 0.0], "joint": "mouth" },
+                "radius": 31.5
+              }
+            }
+          ],
+          "charge": { "frame": 5, "max": 60 },
+          "hurtRegions": [
+            { "region": "head", "enabled": false, "from": 15, "to": 16 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "coil" },
+            { "at": 13, "pose": "coil", "lerp": true },
+            { "at": 15, "pose": "strike", "lerp": true },
+            { "at": 16, "pose": "strike" },
+            { "at": 18, "pose": "strike" },
+            { "at": 47, "pose": "stand", "lerp": true },
+            { "at": 50, "pose": "stand" }
+          ]
+        }
+      ]
+    },
+    "usmash": {
+      "name": "Up Smash",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 51,
+          "hitboxes": [
+            {
+              "start": 11,
+              "end": 14,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 27.5,
+              "damage": 3.0,
+              "bkb": 75.0,
+              "kbg": 0.0,
+              "angle": 75.0,
+              "hitlagMult": 0.8,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [-20.0, 60.0] },
+                "radius": 27.5
+              }
+            },
+            {
+              "start": 11,
+              "end": 14,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 27.5,
+              "damage": 3.0,
+              "bkb": 75.0,
+              "kbg": 0.0,
+              "angle": 105.0,
+              "hitlagMult": 0.8,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [20.0, 60.0] },
+                "radius": 27.5
+              }
+            },
+            {
+              "start": 15,
+              "end": 17,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 45.0,
+              "damage": 12.0,
+              "bkb": 90.0,
+              "kbg": 0.82,
+              "angle": 90.0,
+              "hitlagMult": 1.2,
+              "geometry": {
+                "kind": "capsule",
+                "a": { "offset": [10.0, 0.0], "joint": "mouth" },
+                "b": { "offset": [17.5, 0.0], "joint": "mouth" },
+                "radius": 45.0
+              }
+            }
+          ],
+          "charge": { "frame": 6, "max": 60 },
+          "hurtRegions": [
+            { "region": "head", "enabled": false, "from": 11, "to": 17 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 9, "pose": "coil", "lerp": true },
+            { "at": 11, "pose": "upStrike", "lerp": true },
+            { "at": 17, "pose": "upStrike" },
+            { "at": 19, "pose": "strike" },
+            { "at": 47, "pose": "stand", "lerp": true },
+            { "at": 50, "pose": "stand" }
+          ]
+        }
+      ]
+    },
+    "dsmash": {
+      "name": "Down Smash",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 43,
+          "hitboxes": [
+            {
+              "start": 13,
+              "end": 14,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 25.0,
+              "damage": 12.0,
+              "bkb": 25.0,
+              "kbg": 1.0,
+              "angle": 30.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [62.5, 20.0] },
+                "radius": 25.0
+              }
+            },
+            {
+              "start": 13,
+              "end": 14,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 20.0,
+              "damage": 12.0,
+              "bkb": 25.0,
+              "kbg": 1.0,
+              "angle": 30.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [37.5, 17.5] },
+                "radius": 20.0
+              }
+            },
+            {
+              "start": 17,
+              "end": 18,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 25.0,
+              "damage": 14.0,
+              "bkb": 25.0,
+              "kbg": 1.0,
+              "angle": 32.0,
+              "dir": "back",
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [-67.5, 20.0] },
+                "radius": 25.0
+              }
+            },
+            {
+              "start": 17,
+              "end": 18,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 20.0,
+              "damage": 14.0,
+              "bkb": 25.0,
+              "kbg": 1.0,
+              "angle": 32.0,
+              "dir": "back",
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [-42.5, 18.0] },
+                "radius": 20.0
+              }
+            }
+          ],
+          "charge": { "frame": 5, "max": 60 },
+          "anim": [
+            { "at": 0, "pose": "coil" },
+            { "at": 9, "pose": "lowSweep", "lerp": true },
+            { "at": 13, "pose": "lowSweep" },
+            { "at": 15, "pose": "lowSweepBack", "lerp": true },
+            { "at": 18, "pose": "lowSweepBack" },
+            { "at": 24, "pose": "coil", "lerp": true },
+            { "at": 34, "pose": "stand", "lerp": true },
+            { "at": 42, "pose": "stand" }
+          ]
+        }
+      ]
+    },
+    "nair": {
+      "name": "Neutral Air",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 47,
+          "hitboxes": [
+            {
+              "start": 7,
+              "end": 16,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 22.5,
+              "damage": 2.0,
+              "bkb": 10.0,
+              "kbg": 1.0,
+              "angle": 90,
+              "type": "autolink",
+              "dir": "away",
+              "rehit": 3,
+              "hitlagMult": 0.5,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [9.0, 0.0], "joint": "leafL" },
+                "radius": 22.5
+              }
+            },
+            {
+              "start": 7,
+              "end": 16,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 22.5,
+              "damage": 2.0,
+              "bkb": 10.0,
+              "kbg": 1.0,
+              "angle": 90,
+              "type": "autolink",
+              "dir": "away",
+              "rehit": 3,
+              "hitlagMult": 0.5,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [9.0, 0.0], "joint": "leafR" },
+                "radius": 22.5
+              }
+            },
+            {
+              "start": 17,
+              "end": 18,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 25.0,
+              "damage": 3.0,
+              "bkb": 45.0,
+              "kbg": 1.4,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 1.8,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [0.0, 0.0], "joint": "leafL" },
+                "radius": 25.0
+              }
+            },
+            {
+              "start": 17,
+              "end": 18,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 25.0,
+              "damage": 3.0,
+              "bkb": 45.0,
+              "kbg": 1.4,
+              "angle": 45,
+              "type": "sakurai",
+              "hitlagMult": 1.8,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [0.0, 0.0], "joint": "leafR" },
+                "radius": 25.0
+              }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "airCoil" },
+            { "at": 5, "pose": "coil", "lerp": true },
+            { "at": 7, "pose": "airStrike", "lerp": true },
+            { "at": 18, "pose": "airStrike" },
+            { "at": 20, "pose": "airStrike" },
+            { "at": 43, "pose": "stand", "lerp": true },
+            { "at": 46, "pose": "stand" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 15 }
+          ]
+        }
+      ]
+    },
+    "fair": {
+      "name": "Forward Air",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 44,
+          "hitboxes": [
+            {
+              "start": 6,
+              "end": 8,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 22.5,
+              "damage": 9.0,
+              "bkb": 50.0,
+              "kbg": 0.6,
+              "angle": 45,
+              "type": "sakurai",
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [15.0, 2.5], "joint": "pot" },
+                "radius": 22.5
+              }
+            },
+            {
+              "start": 6,
+              "end": 8,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 32.5,
+              "damage": 11.0,
+              "bkb": 55.0,
+              "kbg": 0.6,
+              "angle": 45,
+              "type": "sakurai",
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [-15.0, 2.5], "joint": "pot" },
+                "radius": 32.5
+              }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "airCoil" },
+            { "at": 4, "pose": "coil", "lerp": true },
+            { "at": 6, "pose": "airStrike", "lerp": true },
+            { "at": 8, "pose": "airStrike" },
+            { "at": 10, "pose": "airStrike" },
+            { "at": 40, "pose": "stand", "lerp": true },
+            { "at": 43, "pose": "stand" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 13 }
+          ]
+        }
+      ]
+    },
+    "bair": {
+      "name": "Back Air",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 61,
+          "hitboxes": [
+            {
+              "start": 13,
+              "end": 14,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 40.0,
+              "damage": 14.5,
+              "bkb": 23.0,
+              "kbg": 1.05,
+              "angle": 45,
+              "type": "sakurai",
+              "dir": "back",
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [-50.0, 20.0] },
+                "radius": 40.0
+              }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "airCoil" },
+            { "at": 11, "pose": "coil", "lerp": true },
+            { "at": 13, "pose": "lowSweepBack", "lerp": true },
+            { "at": 14, "pose": "lowSweepBack" },
+            { "at": 16, "pose": "airStrike" },
+            { "at": 57, "pose": "stand", "lerp": true },
+            { "at": 60, "pose": "stand" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 16 }
+          ]
+        }
+      ]
+    },
+    "uair": {
+      "name": "Up Air",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 38,
+          "hitboxes": [
+            {
+              "start": 6,
+              "end": 8,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 30.0,
+              "damage": 10.0,
+              "bkb": 40.0,
+              "kbg": 1.04,
+              "angle": 85.0,
+              "dir": "away",
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [10.0, 0.0], "joint": "mouth" },
+                "radius": 30.0
+              }
+            }
+          ],
+          "hurtRegions": [
+            { "region": "head", "enabled": false, "from": 6, "to": 8 },
+            { "region": "stem", "enabled": false, "from": 6, "to": 8 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "airCoil" },
+            { "at": 4, "pose": "coil", "lerp": true },
+            { "at": 6, "pose": "airStrike", "lerp": true },
+            { "at": 8, "pose": "airStrike" },
+            { "at": 10, "pose": "airStrike" },
+            { "at": 34, "pose": "stand", "lerp": true },
+            { "at": 37, "pose": "stand" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 10 }
+          ]
+        }
+      ]
+    },
+    "dair": {
+      "name": "Down Air",
+      "air": "aerial",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 44,
+          "hitboxes": [
+            {
+              "start": 8,
+              "end": 10,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 22.5,
+              "damage": 11.0,
+              "bkb": 15.0,
+              "kbg": 0.92,
+              "angle": 45,
+              "type": "sakurai",
+              "dir": "away",
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [-1.5, 0.0], "joint": "pot" },
+                "radius": 22.5
+              }
+            },
+            {
+              "start": 8,
+              "end": 10,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 22.5,
+              "damage": 11.0,
+              "bkb": 25.0,
+              "kbg": 0.9,
+              "angle": -90,
+              "type": "spike",
+              "dir": "away",
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [-35.0, -2.5], "joint": "pot" },
+                "radius": 22.5
+              }
+            },
+            {
+              "start": 11,
+              "end": 13,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 22.5,
+              "damage": 9.0,
+              "bkb": 15.0,
+              "kbg": 0.92,
+              "angle": 45,
+              "type": "sakurai",
+              "dir": "away",
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [-1.5, 0.0], "joint": "pot" },
+                "radius": 22.5
+              }
+            },
+            {
+              "start": 11,
+              "end": 13,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 22.5,
+              "damage": 9.0,
+              "bkb": 15.0,
+              "kbg": 0.92,
+              "angle": 45,
+              "type": "sakurai",
+              "dir": "away",
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [-35.0, -2.5], "joint": "pot" },
+                "radius": 22.5
+              }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "airCoil" },
+            { "at": 6, "pose": "coil", "lerp": true },
+            { "at": 8, "pose": "airStrike", "lerp": true },
+            { "at": 13, "pose": "airStrike" },
+            { "at": 15, "pose": "airStrike" },
+            { "at": 40, "pose": "stand", "lerp": true },
+            { "at": 43, "pose": "stand" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 18 }
+          ]
+        }
+      ]
+    },
+    "grab": {
+      "name": "Grab",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 34,
+          "hitboxes": [
+            {
+              "start": 5,
+              "end": 7,
+              "x": 0,
+              "y": 0,
+              "r": 17,
+              "damage": 0,
+              "bkb": 0,
+              "kbg": 0,
+              "angle": 0,
+              "type": "grab",
+              "geometry": {
+                "kind": "circle",
+                "center": { "joint": "mouth", "offset": [4, 0] },
+                "radius": 17
+              }
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "coil" },
+            { "at": 4, "pose": "grabOpen" },
+            { "at": 6, "pose": "grabOpen" },
+            { "at": 12, "pose": "grabHold" },
+            { "at": 24, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    },
+    "dashgrab": {
+      "name": "Dash Grab",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 42,
+          "hitboxes": [
+            {
+              "start": 8,
+              "end": 10,
+              "x": 0,
+              "y": 0,
+              "r": 15,
+              "damage": 0,
+              "bkb": 0,
+              "kbg": 0,
+              "angle": 0,
+              "type": "grab",
+              "geometry": {
+                "kind": "circle",
+                "center": { "joint": "mouth", "offset": [4, 0] },
+                "radius": 17
+              }
+            }
+          ],
+          "slide": 8,
+          "anim": [
+            { "at": 0, "pose": "coil" },
+            { "at": 7, "pose": "grabOpen" },
+            { "at": 9, "pose": "grabOpen" },
+            { "at": 16, "pose": "grabHold" },
+            { "at": 30, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    },
+    "nspec": {
+      "name": "Ptooie",
+      "phases": [
+        {
+          "name": "start",
+          "frames": 10,
+          "events": [
+            { "at": 9, "spawn": "ptooie", "sfx": "swing" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "coil" },
+            { "at": 6, "pose": "grabOpen" },
+            { "at": 9, "pose": "strike", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "hold" },
+            { "on": "articleEnd", "to": "swallow" }
+          ]
+        },
+        {
+          "name": "hold",
+          "frames": 300,
+          "anim": [
+            { "at": 0, "pose": "strike" },
+            { "at": 8, "pose": "coil", "lerp": true },
+            { "at": 16, "pose": "strike", "lerp": true }
+          ],
+          "transitions": [
+            { "on": "articleRelease", "to": "shoot" },
+            { "on": "articleEnd", "to": "swallow" },
+            { "on": "timeout", "to": "swallow" }
+          ]
+        },
+        {
+          "name": "shoot",
+          "frames": 41,
+          "anim": [
+            { "at": 0, "pose": "strike" },
+            { "at": 6, "pose": "bite", "lerp": true },
+            { "at": 18, "pose": "coil" },
+            { "at": 30, "pose": "stand", "lerp": true }
+          ]
+        },
+        {
+          "name": "swallow",
+          "frames": 30,
+          "anim": [
+            { "at": 0, "pose": "strike" },
+            { "at": 6, "pose": "grabOpen", "lerp": true },
+            { "at": 12, "pose": "bite" },
+            { "at": 20, "pose": "coil", "lerp": true },
+            { "at": 29, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    },
+    "sspec": {
+      "name": "Poison Breath",
+      "phases": [
+        {
+          "name": "start",
+          "frames": 10,
+          "anim": [
+            { "at": 0, "pose": "coil" },
+            { "at": 6, "pose": "charge" }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "charge" }
+          ]
+        },
+        {
+          "name": "charge",
+          "charge": { "frame": 2, "max": 95, "button": "special" },
+          "anim": [
+            { "at": 0, "pose": "charge" },
+            { "at": 2, "pose": "charge" }
+          ],
+          "transitions": [
+            { "on": "release", "to": "shoot" }
+          ]
+        },
+        {
+          "name": "shoot",
+          "frames": 38,
+          "chargeFrames": 0.105,
+          "events": [
+            { "at": 9, "spawn": "poison", "sfx": "swing" }
+          ],
+          "anim": [
+            { "at": 0, "pose": "strike" },
+            { "at": 8, "pose": "strike" },
+            { "at": 18, "pose": "coil" },
+            { "at": 28, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    },
+    "uspec": {
+      "name": "Piranhacopter",
+      "air": "upSpecial",
+      "oncePerAirtime": true,
+      "phases": [
+        {
+          "name": "spin",
+          "frames": 58,
+          "hitboxes": [
+            {
+              "start": 2,
+              "end": 3,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 20.0,
+              "damage": 1.2,
+              "bkb": 47.4,
+              "kbg": 1.0,
+              "angle": 145.0,
+              "setKb": true,
+              "dir": "away",
+              "hitlagMult": 0.6,
+              "geometry": {
+                "kind": "capsule",
+                "a": { "offset": [-40.0, 30.0] },
+                "b": { "offset": [40.0, 30.0] },
+                "radius": 20.0
+              }
+            },
+            {
+              "start": 4,
+              "end": 4,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 27.5,
+              "damage": 1.2,
+              "bkb": 33.4,
+              "kbg": 1.0,
+              "angle": 100.0,
+              "setKb": true,
+              "dir": "away",
+              "rehit": 6,
+              "hitlagMult": 0.6,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [15.0, 0.0], "joint": "leafL" },
+                "radius": 27.5
+              }
+            },
+            {
+              "start": 4,
+              "end": 4,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 27.5,
+              "damage": 1.2,
+              "bkb": 33.4,
+              "kbg": 1.0,
+              "angle": 100.0,
+              "setKb": true,
+              "dir": "away",
+              "rehit": 6,
+              "hitlagMult": 0.6,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [15.0, 0.0], "joint": "leafR" },
+                "radius": 27.5
+              }
+            },
+            {
+              "start": 5,
+              "end": 44,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 17.5,
+              "damage": 1.2,
+              "bkb": 20.0,
+              "kbg": 1.0,
+              "angle": 90,
+              "type": "autolink",
+              "dir": "away",
+              "rehit": 6,
+              "hitlagMult": 0.6,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [30.0, 0.0], "joint": "leafL" },
+                "radius": 17.5
+              }
+            },
+            {
+              "start": 5,
+              "end": 44,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 17.5,
+              "damage": 1.2,
+              "bkb": 20.0,
+              "kbg": 1.0,
+              "angle": 90,
+              "type": "autolink",
+              "dir": "away",
+              "rehit": 6,
+              "hitlagMult": 0.6,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [30.0, 0.0], "joint": "leafR" },
+                "radius": 17.5
+              }
+            },
+            {
+              "start": 5,
+              "end": 44,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 25.0,
+              "damage": 1.2,
+              "bkb": 20.0,
+              "kbg": 1.0,
+              "angle": 90,
+              "type": "autolink",
+              "dir": "away",
+              "rehit": 6,
+              "hitlagMult": 0.6,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [7.5, 0.0], "joint": "leafL" },
+                "radius": 25.0
+              }
+            },
+            {
+              "start": 5,
+              "end": 44,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 25.0,
+              "damage": 1.2,
+              "bkb": 20.0,
+              "kbg": 1.0,
+              "angle": 90,
+              "type": "autolink",
+              "dir": "away",
+              "rehit": 6,
+              "hitlagMult": 0.6,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [7.5, 0.0], "joint": "leafR" },
+                "radius": 25.0
+              }
+            },
+            {
+              "start": 45,
+              "end": 50,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 15.0,
+              "damage": 4.0,
+              "bkb": 90.0,
+              "kbg": 0.6,
+              "angle": 60.0,
+              "rehit": 6,
+              "hitlagMult": 0.6,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [40.0, 0.0], "joint": "leafL" },
+                "radius": 15.0
+              }
+            },
+            {
+              "start": 45,
+              "end": 50,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 15.0,
+              "damage": 4.0,
+              "bkb": 90.0,
+              "kbg": 0.6,
+              "angle": 60.0,
+              "rehit": 6,
+              "hitlagMult": 0.6,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [40.0, 0.0], "joint": "leafR" },
+                "radius": 15.0
+              }
+            },
+            {
+              "start": 45,
+              "end": 50,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 20.0,
+              "damage": 0.8,
+              "bkb": 15.0,
+              "kbg": 0.9,
+              "angle": 90,
+              "type": "autolink",
+              "rehit": 6,
+              "hitlagMult": 0.6,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [12.5, 0.0], "joint": "leafL" },
+                "radius": 20.0
+              }
+            },
+            {
+              "start": 45,
+              "end": 50,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 20.0,
+              "damage": 0.8,
+              "bkb": 15.0,
+              "kbg": 0.9,
+              "angle": 90,
+              "type": "autolink",
+              "rehit": 6,
+              "hitlagMult": 0.6,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [12.5, 0.0], "joint": "leafR" },
+                "radius": 20.0
+              }
+            },
+            {
+              "start": 51,
+              "end": 56,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 15.0,
+              "damage": 4.0,
+              "bkb": 90.0,
+              "kbg": 0.6,
+              "angle": 60.0,
+              "hitlagMult": 0.6,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [40.0, 0.0], "joint": "leafL" },
+                "radius": 15.0
+              }
+            },
+            {
+              "start": 51,
+              "end": 56,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 15.0,
+              "damage": 4.0,
+              "bkb": 90.0,
+              "kbg": 0.6,
+              "angle": 60.0,
+              "hitlagMult": 0.6,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [40.0, 0.0], "joint": "leafR" },
+                "radius": 15.0
+              }
+            },
+            {
+              "start": 51,
+              "end": 56,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 20.0,
+              "damage": 4.0,
+              "bkb": 90.0,
+              "kbg": 0.6,
+              "angle": 60.0,
+              "hitlagMult": 0.6,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [12.5, 0.0], "joint": "leafL" },
+                "radius": 20.0
+              }
+            },
+            {
+              "start": 51,
+              "end": 56,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 20.0,
+              "damage": 4.0,
+              "bkb": 90.0,
+              "kbg": 0.6,
+              "angle": 60.0,
+              "hitlagMult": 0.6,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [12.5, 0.0], "joint": "leafR" },
+                "radius": 20.0
+              }
+            }
+          ],
+          "events": [
+            { "at": 0, "setVel": [0, 8], "leaveGround": true },
+            {
+              "from": 1,
+              "to": 56,
+              "setVel": { "y": 6.5 }
+            }
+          ],
+          "ledgeGrab": 0,
+          "anim": [
+            { "at": 0, "pose": "airCoil" },
+            {
+              "at": 4,
+              "pose": {
+                "joints": {
+                  "stem0": { "translation": [0, 27], "angle": -4 },
+                  "head": { "translation": [0, 20] },
+                  "leafL": { "angle": 180 },
+                  "leafR": { "angle": 0 },
+                  "jaw": { "angle": -20 }
+                }
+              },
+              "lerp": true
+            },
+            {
+              "at": 20,
+              "pose": {
+                "joints": {
+                  "stem0": { "translation": [0, 25] },
+                  "head": { "translation": [0, 18] },
+                  "leafL": { "angle": 270 },
+                  "leafR": { "angle": 90 }
+                }
+              }
+            },
+            {
+              "at": 40,
+              "pose": {
+                "joints": {
+                  "stem0": { "translation": [0, 25] },
+                  "head": { "translation": [0, 18] },
+                  "leafL": { "angle": 450 },
+                  "leafR": { "angle": 270 }
+                }
+              }
+            },
+            {
+              "at": 57,
+              "pose": {
+                "joints": {
+                  "stem0": { "translation": [0, 25] },
+                  "head": { "translation": [0, 18] },
+                  "leafL": { "angle": 630 },
+                  "leafR": { "angle": 450 }
+                }
+              },
+              "lerp": true
+            }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 20 }
+          ]
+        },
+        {
+          "name": "fall",
+          "frames": 20,
+          "anim": [
+            {
+              "at": 0,
+              "pose": {
+                "joints": {
+                  "stem0": { "translation": [0, 24], "angle": 4 },
+                  "stem1": { "translation": [0, 24], "angle": 2 },
+                  "head": { "translation": [-2, 18], "angle": 2 },
+                  "leafL": { "angle": 164 },
+                  "leafR": { "angle": 16 }
+                }
+              }
+            },
+            { "at": 10, "pose": "stand" }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "helpless" },
+            { "on": "land", "to": "landing", "lag": 20 }
+          ]
+        }
+      ]
+    },
+    "dspec": {
+      "name": "Long-Stem Strike",
+      "bReverse": true,
+      "chargeDamage": 0.01944444444444444,
+      "phases": [
+        {
+          "name": "start",
+          "frames": 18,
+          "aim": true,
+          "anim": [
+            { "at": 0, "pose": "coil" },
+            { "at": 10, "pose": "charge", "lerp": true },
+            { "at": 17, "pose": "charge" }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "charge" }
+          ]
+        },
+        {
+          "name": "charge",
+          "charge": { "frame": 3, "max": 60, "button": "special" },
+          "aim": true,
+          "armorThreshold": 15,
+          "anim": [
+            { "at": 0, "pose": "charge" },
+            { "at": 3, "pose": "charge" }
+          ],
+          "transitions": [
+            { "on": "release", "to": "lunge" }
+          ]
+        },
+        {
+          "name": "lunge",
+          "frames": 8,
+          "armorThreshold": 12,
+          "hurtRegions": [
+            { "region": "head", "enabled": false, "from": 3, "to": 7 },
+            { "region": "jaw", "enabled": false, "from": 3, "to": 7 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "charge" },
+            { "at": 4, "pose": "stretch0", "lerp": true },
+            { "at": 5, "pose": "stretch15", "lerp": true, "minCharge": 15 },
+            { "at": 6, "pose": "stretch30", "lerp": true, "minCharge": 30 },
+            { "at": 7, "pose": "stretch45", "lerp": true, "minCharge": 45 }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "bite" }
+          ]
+        },
+        {
+          "name": "bite",
+          "frames": 4,
+          "hitboxes": [
+            {
+              "start": 0,
+              "end": 0,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 39.5,
+              "damage": 12.0,
+              "bkb": 75.0,
+              "kbg": 0.55,
+              "angle": 55.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [12.0, 0.0], "joint": "mouth" },
+                "radius": 39.5
+              },
+              "minCharge": 45
+            },
+            {
+              "start": 0,
+              "end": 0,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 39.5,
+              "damage": 10.2,
+              "bkb": 75.0,
+              "kbg": 0.55,
+              "angle": 55.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [12.0, 0.0], "joint": "mouth" },
+                "radius": 39.5
+              },
+              "minCharge": 30
+            },
+            {
+              "start": 0,
+              "end": 0,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 39.5,
+              "damage": 9.3,
+              "bkb": 75.0,
+              "kbg": 0.55,
+              "angle": 55.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [12.0, 0.0], "joint": "mouth" },
+                "radius": 39.5
+              },
+              "minCharge": 15
+            },
+            {
+              "start": 0,
+              "end": 0,
+              "x": 0.0,
+              "y": 0.0,
+              "r": 39.5,
+              "damage": 8.4,
+              "bkb": 75.0,
+              "kbg": 0.55,
+              "angle": 55.0,
+              "geometry": {
+                "kind": "circle",
+                "center": { "offset": [12.0, 0.0], "joint": "mouth" },
+                "radius": 39.5
+              },
+              "minCharge": 0
+            }
+          ],
+          "hurtRegions": [
+            { "region": "head", "enabled": false, "from": 0, "to": 3 },
+            { "region": "jaw", "enabled": false, "from": 0, "to": 3 }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stretchedBite0" },
+            { "at": 0, "pose": "stretchedBite15", "minCharge": 15 },
+            { "at": 0, "pose": "stretchedBite30", "minCharge": 30 },
+            { "at": 0, "pose": "stretchedBite45", "minCharge": 45 }
+          ],
+          "transitions": [
+            { "on": "hit", "to": "recoverHit" },
+            { "on": "timeout", "to": "recover" }
+          ]
+        },
+        {
+          "name": "recover",
+          "frames": 37,
+          "chargeFrames": 0.166,
+          "anim": [
+            { "at": 0, "pose": "stretchedBite0" },
+            { "at": 0, "pose": "stretchedBite15", "minCharge": 15 },
+            { "at": 0, "pose": "stretchedBite30", "minCharge": 30 },
+            { "at": 0, "pose": "stretchedBite45", "minCharge": 45 },
+            { "at": 6, "pose": "stretch0", "lerp": true },
+            { "at": 16, "pose": "charge", "lerp": true },
+            { "at": 30, "pose": "stand", "lerp": true }
+          ]
+        },
+        {
+          "name": "recoverHit",
+          "frames": 27,
+          "chargeFrames": 0.166,
+          "anim": [
+            { "at": 0, "pose": "stretchedBite0" },
+            { "at": 0, "pose": "stretchedBite15", "minCharge": 15 },
+            { "at": 0, "pose": "stretchedBite30", "minCharge": 30 },
+            { "at": 0, "pose": "stretchedBite45", "minCharge": 45 },
+            { "at": 5, "pose": "strike", "lerp": true },
+            { "at": 14, "pose": "coil", "lerp": true },
+            { "at": 22, "pose": "stand", "lerp": true }
+          ]
+        }
+      ]
+    }
+  },
+  "throws": {
+    "f": {
+      "release": 13,
+      "total": 31,
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 8.0, "bkb": 60, "kbg": 0.65, "angle": 45 }
+    },
+    "b": {
+      "release": 18,
+      "total": 34,
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 11.0, "bkb": 54, "kbg": 0.6, "angle": 45 }
+    },
+    "u": {
+      "release": 19,
+      "total": 49,
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 12.0, "bkb": 64, "kbg": 0.67, "angle": 90 },
+      "ticks": [
+        { "at": 18, "damage": 5.0 }
+      ]
+    },
+    "d": {
+      "release": 29,
+      "total": 47,
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 3.0, "bkb": 80, "kbg": 0.8, "angle": 66 },
+      "ticks": [
+        { "at": 19, "damage": 2.5 },
+        { "at": 27, "damage": 2.5 }
+      ]
+    }
+  },
+  "projectiles": {
+    "ptooie": {
+      "name": "Ptooie",
+      "spawn": [18, 126],
+      "vel": [0, 0],
+      "r": 25,
+      "life": 400,
+      "max": 1,
+      "spawnSfx": "swing",
+      "hit": {
+        "start": 0,
+        "x": 0,
+        "y": 0,
+        "r": 25.0,
+        "damage": 14.0,
+        "bkb": 50,
+        "kbg": 0.8,
+        "angle": 55,
+        "hitlagMult": 1.2
+      },
+      "article": {
+        "slot": "nspec",
+        "minRelease": 13,
+        "autoRelease": 180,
+        "releaseOnDir": true,
+        "reflectCooldown": 8,
+        "hold": {
+          "offset": [18, 126],
+          "bob": 20,
+          "period": 36,
+          "hitboxes": [
+            {
+              "start": 0,
+              "x": 0,
+              "y": 0,
+              "r": 25.0,
+              "damage": 14.0,
+              "bkb": 50,
+              "kbg": 0.8,
+              "angle": 55,
+              "hitlagMult": 1.2
+            }
+          ]
+        },
+        "stages": [
+          {
+            "from": 0,
+            "startup": 0,
+            "frames": 180,
+            "vel": [0.0, 0.0],
+            "hitboxes": [],
+            "shapes": [
+              { "shape": "circle", "at": [0, 0], "r": 22, "fill": "#b52828", "stroke": "#5b1010", "width": 2 },
+              { "shape": "circle", "at": [0, 0], "r": 15, "fill": "#d24848" },
+              { "shape": "poly", "points": [[23, 0], [15, 8], [15, -8]], "fill": "#e8e8e8" },
+              { "shape": "poly", "points": [[-23, 0], [-15, 8], [-15, -8]], "fill": "#e8e8e8" },
+              { "shape": "poly", "points": [[0, 23], [8, 15], [-8, 15]], "fill": "#e8e8e8" },
+              { "shape": "poly", "points": [[0, -23], [8, -15], [-8, -15]], "fill": "#e8e8e8" },
+              { "shape": "poly", "points": [[16, 16], [8, 18], [14, 8]], "fill": "#dcdcdc" },
+              { "shape": "poly", "points": [[-16, 16], [-8, 18], [-14, 8]], "fill": "#dcdcdc" },
+              { "shape": "poly", "points": [[16, -16], [8, -18], [14, -8]], "fill": "#dcdcdc" },
+              { "shape": "poly", "points": [[-16, -16], [-8, -18], [-14, -8]], "fill": "#dcdcdc" },
+              { "shape": "circle", "at": [-6, 5], "r": 3, "fill": "#f0c0b0", "alpha": 0.9 }
+            ]
+          },
+          {
+            "from": 1,
+            "startup": 0,
+            "frames": 70,
+            "vel": [8.0, 0.0],
+            "hitboxes": [
+              {
+                "start": 0,
+                "x": 0,
+                "y": 0,
+                "r": 25.0,
+                "damage": 18.0,
+                "bkb": 50,
+                "kbg": 0.8,
+                "angle": 55,
+                "hitlagMult": 1.2,
+                "end": 3
+              },
+              {
+                "start": 4,
+                "x": 0,
+                "y": 0,
+                "r": 25.0,
+                "damage": 13.0,
+                "bkb": 45,
+                "kbg": 0.8,
+                "angle": 55,
+                "hitlagMult": 1.2
+              }
+            ],
+            "shapes": [
+              { "shape": "circle", "at": [0, 0], "r": 22, "fill": "#b52828", "stroke": "#5b1010", "width": 2 },
+              { "shape": "circle", "at": [0, 0], "r": 15, "fill": "#d24848" },
+              { "shape": "poly", "points": [[23, 0], [15, 8], [15, -8]], "fill": "#e8e8e8" },
+              { "shape": "poly", "points": [[-23, 0], [-15, 8], [-15, -8]], "fill": "#e8e8e8" },
+              { "shape": "poly", "points": [[0, 23], [8, 15], [-8, 15]], "fill": "#e8e8e8" },
+              { "shape": "poly", "points": [[0, -23], [8, -15], [-8, -15]], "fill": "#e8e8e8" },
+              { "shape": "poly", "points": [[16, 16], [8, 18], [14, 8]], "fill": "#dcdcdc" },
+              { "shape": "poly", "points": [[-16, 16], [-8, 18], [-14, 8]], "fill": "#dcdcdc" },
+              { "shape": "poly", "points": [[16, -16], [8, -18], [14, -8]], "fill": "#dcdcdc" },
+              { "shape": "poly", "points": [[-16, -16], [-8, -18], [-14, -8]], "fill": "#dcdcdc" },
+              { "shape": "circle", "at": [-6, 5], "r": 3, "fill": "#f0c0b0", "alpha": 0.9 }
+            ],
+            "attackShapes": [
+              { "shape": "circle", "at": [0, 0], "r": 27, "fill": "#ff6a5a", "alpha": 0.28 }
+            ]
+          }
+        ]
+      },
+      "shapes": [
+        { "shape": "circle", "at": [0, 0], "r": 22, "fill": "#b52828", "stroke": "#5b1010", "width": 2 },
+        { "shape": "circle", "at": [0, 0], "r": 15, "fill": "#d24848" },
+        { "shape": "poly", "points": [[23, 0], [15, 8], [15, -8]], "fill": "#e8e8e8" },
+        { "shape": "poly", "points": [[-23, 0], [-15, 8], [-15, -8]], "fill": "#e8e8e8" },
+        { "shape": "poly", "points": [[0, 23], [8, 15], [-8, 15]], "fill": "#e8e8e8" },
+        { "shape": "poly", "points": [[0, -23], [8, -15], [-8, -15]], "fill": "#e8e8e8" },
+        { "shape": "poly", "points": [[16, 16], [8, 18], [14, 8]], "fill": "#dcdcdc" },
+        { "shape": "poly", "points": [[-16, 16], [-8, 18], [-14, 8]], "fill": "#dcdcdc" },
+        { "shape": "poly", "points": [[16, -16], [8, -18], [14, -8]], "fill": "#dcdcdc" },
+        { "shape": "poly", "points": [[-16, -16], [-8, -18], [-14, -8]], "fill": "#dcdcdc" },
+        { "shape": "circle", "at": [-6, 5], "r": 3, "fill": "#f0c0b0", "alpha": 0.9 }
+      ],
+      "spin": 8.0
+    },
+    "poison": {
+      "name": "Poison Breath",
+      "spawn": [48, 86],
+      "vel": [0.9, 0],
+      "r": 50,
+      "life": 82,
+      "max": 1,
+      "gravity": 0,
+      "spawnSfx": "whack",
+      "hit": {
+        "x": 0,
+        "y": 0,
+        "r": 50,
+        "damage": 1.2,
+        "bkb": 0,
+        "kbg": 0,
+        "angle": 0,
+        "rehit": 4,
+        "type": "damageOnly",
+        "hitlagMult": 0.0,
+        "shieldDmgMult": 0.1
+      },
+      "chargeScale": {
+        "speed": 0.0,
+        "damage": 0.014035087719298248,
+        "radius": 0.0,
+        "life": 0.005134788189987163,
+        "rehit": 0.031578947368421054
+      },
+      "shapes": [
+        { "shape": "circle", "at": [0, 0], "r": 50, "fill": "#8b2f9e", "alpha": 0.28 },
+        { "shape": "circle", "at": [-8, 4], "r": 32, "fill": "#b347c4", "alpha": 0.38 },
+        { "shape": "circle", "at": [10, -4], "r": 26, "fill": "#d06ae0", "alpha": 0.34 },
+        { "shape": "circle", "at": [0, 0], "r": 13, "fill": "#e9a6f0", "alpha": 0.22 }
+      ]
+    }
+  },
+  "style": {
+    "headRadius": 24,
+    "torsoWidth": 8,
+    "frontLimbWidth": 4,
+    "backLimbWidth": 4,
+    "glowWidth": 16,
+    "torsoGlowWidth": 18,
+    "headGlowRadius": 27,
+    "headRing": 2,
+    "headFill": "#79eb62",
+    "eye": [4, 4, 3, 3]
+  },
+  "rig": {
+    "joints": [
+      {
+        "id": "pot",
+        "translation": [0, 0],
+        "shapes": [
+          {
+            "shape": "poly",
+            "points": [[-15, 0], [15, 0], [20, 26], [-20, 26]],
+            "fill": "#b45e40",
+            "stroke": "#633528",
+            "width": 2
+          },
+          { "shape": "line", "from": [-12, 4], "to": [-15, 21], "width": 1.5, "color": "#d88965", "alpha": 0.8 },
+          {
+            "shape": "poly",
+            "points": [[-20, 21], [20, 21], [21, 29], [-21, 29]],
+            "fill": "#c77350",
+            "stroke": "#633528",
+            "width": 2
+          },
+          {
+            "shape": "poly",
+            "points": [
+              [-20, 28],
+              [-16, 30],
+              [-8, 31],
+              [8, 31],
+              [16, 30],
+              [20, 28],
+              [16, 26],
+              [8, 25],
+              [-8, 25],
+              [-16, 26]
+            ],
+            "fill": "#493429",
+            "stroke": "#633528",
+            "width": 1.5
+          },
+          { "shape": "line", "from": [-17, 23], "to": [17, 23], "width": 1, "color": "#e39870", "alpha": 0.7 }
+        ]
+      },
+      { "id": "stem0", "parent": "pot", "translation": [0, 24] },
+      { "id": "stem1", "parent": "stem0", "translation": [0, 24] },
+      { "id": "stem2", "parent": "stem1", "translation": [0, 20] },
+      { "id": "neck", "parent": "stem2", "translation": [0, 14] },
+      {
+        "id": "head",
+        "parent": "neck",
+        "translation": [0, 18],
+        "shapes": [
+          {
+            "shape": "poly",
+            "points": [[0, -6], [-8, 0], [-10, 8], [-8, 15], [-4, 20], [0, 22], [5, 19], [9, 13], [9, 6], [6, 0]],
+            "fill": "#79eb62",
+            "stroke": "#348f3d",
+            "width": 1.5
+          },
+          { "shape": "line", "from": [0, -5], "to": [0, 20], "width": 1.2, "color": "#246d31" },
+          { "shape": "line", "from": [0, 2], "to": [-7, 7], "width": 0.8, "color": "#2d7937" },
+          { "shape": "line", "from": [0, 6], "to": [7, 11], "width": 0.8, "color": "#2d7937" },
+          { "shape": "line", "from": [0, 11], "to": [-6, 15], "width": 0.8, "color": "#2d7937" },
+          { "shape": "line", "from": [0, 15], "to": [4, 18], "width": 0.8, "color": "#2d7937" },
+          {
+            "shape": "poly",
+            "points": [[0, -5], [-8, -6], [-16, -3], [-22, 3], [-24, 8], [-17, 9], [-10, 7], [-4, 2]],
+            "fill": "#5bd65b",
+            "stroke": "#348f3d",
+            "width": 1.5
+          },
+          { "shape": "line", "from": [-1, -4], "to": [-22, 7], "width": 1.2, "color": "#246d31" },
+          { "shape": "line", "from": [-7, -1], "to": [-12, -2], "width": 0.8, "color": "#2d7937" },
+          { "shape": "line", "from": [-11, 1], "to": [-15, 5], "width": 0.8, "color": "#2d7937" },
+          { "shape": "line", "from": [-15, 3], "to": [-19, 4], "width": 0.8, "color": "#2d7937" }
+        ]
+      },
+      {
+        "id": "jaw",
+        "parent": "head",
+        "translation": [18, -8],
+        "angle": -6,
+        "shapes": [
+          {
+            "shape": "poly",
+            "points": [[-18, 4], [-12, 2], [-4, 2], [3, 5], [7, 10], [1, 13], [-6, 13], [-13, 10]],
+            "fill": "#91f270",
+            "stroke": "#348f3d",
+            "width": 1.5
+          },
+          { "shape": "line", "from": [-17, 5], "to": [5, 10], "width": 1.2, "color": "#246d31" },
+          { "shape": "line", "from": [-11, 6], "to": [-7, 3], "width": 0.8, "color": "#2d7937" },
+          { "shape": "line", "from": [-6, 7], "to": [-3, 11], "width": 0.8, "color": "#2d7937" },
+          { "shape": "line", "from": [-2, 8], "to": [1, 6], "width": 0.8, "color": "#2d7937" }
+        ]
+      },
+      { "id": "mouth", "parent": "head", "translation": [22, 0] },
+      { "id": "top", "parent": "head", "translation": [0, 16] },
+      { "id": "leafBase", "parent": "stem2", "translation": [0, 4] },
+      {
+        "id": "leafL",
+        "parent": "leafBase",
+        "translation": [-2, 2],
+        "angle": 150,
+        "shapes": [
+          {
+            "shape": "poly",
+            "points": [[0, 0], [5, 5], [13, 7], [21, 5], [27, 0], [21, -4], [13, -6], [5, -4]],
+            "fill": "#6ddd58",
+            "stroke": "#348f3d",
+            "width": 1.5
+          },
+          { "shape": "line", "from": [0, 0], "to": [25, 0], "width": 1.2, "color": "#246d31" },
+          { "shape": "line", "from": [8, 0], "to": [12, 4], "width": 0.8, "color": "#2d7937" },
+          { "shape": "line", "from": [13, 0], "to": [17, -3], "width": 0.8, "color": "#2d7937" },
+          { "shape": "line", "from": [18, 0], "to": [21, 3], "width": 0.8, "color": "#2d7937" }
+        ]
+      },
+      {
+        "id": "leafR",
+        "parent": "leafBase",
+        "translation": [2, 2],
+        "angle": 30,
+        "shapes": [
+          {
+            "shape": "poly",
+            "points": [[0, 0], [5, 5], [13, 7], [21, 5], [27, 0], [21, -4], [13, -6], [5, -4]],
+            "fill": "#6ddd58",
+            "stroke": "#348f3d",
+            "width": 1.5
+          },
+          { "shape": "line", "from": [0, 0], "to": [25, 0], "width": 1.2, "color": "#246d31" },
+          { "shape": "line", "from": [8, 0], "to": [12, 4], "width": 0.8, "color": "#2d7937" },
+          { "shape": "line", "from": [13, 0], "to": [17, -3], "width": 0.8, "color": "#2d7937" },
+          { "shape": "line", "from": [18, 0], "to": [21, 3], "width": 0.8, "color": "#2d7937" }
+        ]
+      }
+    ],
+    "bones": [
+      { "from": "stem0", "to": "stem1", "width": 6, "color": "#48ac48" },
+      { "from": "stem1", "to": "stem2", "width": 6, "color": "#48ac48" },
+      { "from": "stem2", "to": "neck", "width": 5, "color": "#48ac48" },
+      { "from": "neck", "to": "head", "width": 5, "color": "#48ac48" },
+      { "from": "leafBase", "to": "leafL", "width": 3, "color": "#48ac48" },
+      { "from": "leafBase", "to": "leafR", "width": 3, "color": "#48ac48" }
+    ]
+  },
+  "poses": {
+    "stand": {},
+    "crouch": {
+      "joints": {
+        "stem0": { "translation": [0, 18] },
+        "stem1": { "translation": [0, 18] },
+        "stem2": { "translation": [0, 14] },
+        "neck": { "translation": [0, 10] },
+        "head": { "translation": [2, 14], "angle": -8 },
+        "leafL": { "angle": 128 },
+        "leafR": { "angle": 52 },
+        "jaw": { "angle": -3 }
+      }
+    },
+    "coil": {
+      "joints": {
+        "stem0": { "angle": 16 },
+        "stem1": { "angle": 14 },
+        "stem2": { "angle": 10 },
+        "neck": { "angle": 8 },
+        "head": { "translation": [-6, 16], "angle": 14 },
+        "jaw": { "angle": -34 },
+        "leafL": { "angle": 168 },
+        "leafR": { "angle": 12 }
+      }
+    },
+    "strike": {
+      "joints": {
+        "stem0": { "translation": [0, 25], "angle": -22 },
+        "stem1": { "translation": [0, 25], "angle": -20 },
+        "stem2": { "translation": [0, 22], "angle": -15 },
+        "neck": { "translation": [0, 16], "angle": -8 },
+        "head": { "translation": [10, 18], "angle": -12 },
+        "jaw": { "angle": -38 },
+        "leafL": { "angle": 112 },
+        "leafR": { "angle": 68 }
+      }
+    },
+    "bite": {
+      "joints": {
+        "stem0": { "translation": [0, 25], "angle": -22 },
+        "stem1": { "translation": [0, 25], "angle": -20 },
+        "stem2": { "translation": [0, 22], "angle": -15 },
+        "neck": { "translation": [0, 16], "angle": -8 },
+        "head": { "translation": [10, 18], "angle": -10 },
+        "jaw": { "angle": -2 },
+        "leafL": { "angle": 112 },
+        "leafR": { "angle": 68 }
+      }
+    },
+    "lowStrike": {
+      "joints": {
+        "stem0": { "translation": [0, 22], "angle": -26 },
+        "stem1": { "translation": [0, 21], "angle": -22 },
+        "stem2": { "translation": [0, 17], "angle": -16 },
+        "neck": { "translation": [0, 11], "angle": -6 },
+        "head": { "translation": [8, 14], "angle": -8 },
+        "jaw": { "angle": -30 },
+        "leafL": { "angle": 124 },
+        "leafR": { "angle": 56 }
+      }
+    },
+    "lowSweep": {
+      "joints": {
+        "stem0": { "translation": [0, 22], "angle": -74 },
+        "stem1": { "translation": [0, 20], "angle": -8 },
+        "stem2": { "translation": [0, 16], "angle": 8 },
+        "neck": { "translation": [0, 10], "angle": 8 },
+        "head": { "translation": [10, 14], "angle": 4 },
+        "jaw": { "angle": -30 },
+        "leafL": { "angle": 104 },
+        "leafR": { "angle": 76 }
+      }
+    },
+    "upStrike": {
+      "joints": {
+        "stem0": { "translation": [0, 26], "angle": -6 },
+        "stem1": { "translation": [0, 26], "angle": -4 },
+        "stem2": { "translation": [0, 22], "angle": -2 },
+        "neck": { "translation": [0, 16] },
+        "head": { "translation": [4, 22], "angle": -18 },
+        "jaw": { "angle": -34 },
+        "leafL": { "angle": 170 },
+        "leafR": { "angle": 10 }
+      }
+    },
+    "lowSweepBack": {
+      "joints": {
+        "stem0": { "translation": [0, 22], "angle": 74 },
+        "stem1": { "translation": [0, 20], "angle": 8 },
+        "stem2": { "translation": [0, 16], "angle": -8 },
+        "neck": { "translation": [0, 10], "angle": -8 },
+        "head": { "translation": [-10, 14], "angle": -62 },
+        "jaw": { "angle": -30 },
+        "leafL": { "angle": 76 },
+        "leafR": { "angle": 104 }
+      }
+    },
+    "airCoil": {
+      "joints": {
+        "stem0": { "angle": 10 },
+        "stem1": { "angle": 8 },
+        "stem2": { "angle": 6 },
+        "head": { "translation": [-4, 16], "angle": 10 },
+        "jaw": { "angle": -30 },
+        "leafL": { "angle": 174 },
+        "leafR": { "angle": 6 }
+      }
+    },
+    "airStrike": {
+      "joints": {
+        "stem0": { "translation": [0, 24], "angle": -16 },
+        "stem1": { "translation": [0, 24], "angle": -14 },
+        "stem2": { "translation": [0, 20], "angle": -10 },
+        "head": { "translation": [8, 18], "angle": -8 },
+        "jaw": { "angle": -36 },
+        "leafL": { "angle": 112 },
+        "leafR": { "angle": 68 }
+      }
+    },
+    "charge": {
+      "joints": {
+        "stem0": { "translation": [0, 20], "angle": 10 },
+        "stem1": { "translation": [0, 18], "angle": 8 },
+        "stem2": { "translation": [0, 14], "angle": 6 },
+        "neck": { "translation": [0, 10], "angle": 2 },
+        "head": { "translation": [-10, 12], "angle": 12 },
+        "jaw": { "angle": -2 },
+        "leafL": { "angle": 176 },
+        "leafR": { "angle": 4 }
+      }
+    },
+    "grabOpen": {
+      "joints": {
+        "stem0": { "angle": -25 },
+        "stem1": { "angle": -18 },
+        "stem2": { "angle": -10 },
+        "neck": { "angle": -5 },
+        "head": { "translation": [10, 16], "angle": -14 },
+        "jaw": { "angle": -38 },
+        "leafL": { "angle": 120 },
+        "leafR": { "angle": 60 }
+      }
+    },
+    "grabHold": {
+      "joints": {
+        "stem0": { "angle": -20 },
+        "stem1": { "angle": -14 },
+        "stem2": { "angle": -8 },
+        "neck": { "angle": -4 },
+        "head": { "translation": [10, 16], "angle": -10 },
+        "jaw": { "angle": -3 },
+        "leafL": { "angle": 126 },
+        "leafR": { "angle": 54 }
+      }
+    },
+    "throwWind": {
+      "joints": {
+        "head": { "translation": [-8, 18], "angle": 12 },
+        "jaw": { "angle": -30 },
+        "leafL": { "angle": 160 },
+        "leafR": { "angle": 20 }
+      }
+    },
+    "throwHeave": {
+      "joints": {
+        "head": { "translation": [16, 18], "angle": -16 },
+        "jaw": { "angle": -34 },
+        "leafL": { "angle": 110 },
+        "leafR": { "angle": 70 }
+      }
+    },
+    "ledgeHang": {
+      "joints": {
+        "stem0": { "translation": [0, 22], "angle": -4 },
+        "stem1": { "translation": [0, 22], "angle": -4 },
+        "stem2": { "translation": [0, 18], "angle": -4 },
+        "neck": { "translation": [0, 12], "angle": -2 },
+        "head": { "translation": [2, 16], "angle": 4 },
+        "jaw": { "angle": -6 },
+        "leafL": { "angle": 144 },
+        "leafR": { "angle": 36 }
+      }
+    },
+    "guard": {
+      "joints": {
+        "stem0": { "translation": [0, 20], "angle": 18 },
+        "stem1": { "translation": [0, 18], "angle": 16 },
+        "stem2": { "translation": [0, 14], "angle": 12 },
+        "neck": { "translation": [0, 10], "angle": 8 },
+        "head": { "translation": [-8, 14], "angle": 14 },
+        "jaw": { "angle": -2 },
+        "leafL": { "angle": 196 },
+        "leafR": { "angle": -16 }
+      }
+    },
+    "win": {
+      "joints": {
+        "head": { "translation": [4, 18], "angle": -10 },
+        "jaw": { "angle": -28 },
+        "leafL": { "angle": 126 },
+        "leafR": { "angle": 54 },
+        "stem0": { "angle": -4 }
+      }
+    },
+    "stretch0": {
+      "joints": {
+        "stem0": { "translation": [0, 24], "angle": -78 },
+        "stem1": { "translation": [0, 70], "angle": -10 },
+        "stem2": { "translation": [0, 65], "angle": 0 },
+        "neck": { "translation": [0, 45], "angle": 4 },
+        "leafL": { "angle": 100 },
+        "leafR": { "angle": 80 },
+        "head": { "translation": [18, 18], "angle": 0 },
+        "jaw": { "angle": -38 }
+      }
+    },
+    "stretchedBite0": {
+      "joints": {
+        "stem0": { "translation": [0, 24], "angle": -78 },
+        "stem1": { "translation": [0, 70], "angle": -10 },
+        "stem2": { "translation": [0, 65], "angle": 0 },
+        "neck": { "translation": [0, 45], "angle": 4 },
+        "leafL": { "angle": 100 },
+        "leafR": { "angle": 80 },
+        "head": { "translation": [18, 18], "angle": -8 },
+        "jaw": { "angle": -2 }
+      }
+    },
+    "stretch15": {
+      "joints": {
+        "stem0": { "translation": [0, 24], "angle": -78 },
+        "stem1": { "translation": [0, 90], "angle": -10 },
+        "stem2": { "translation": [0, 85], "angle": 0 },
+        "neck": { "translation": [0, 60], "angle": 4 },
+        "leafL": { "angle": 100 },
+        "leafR": { "angle": 80 },
+        "head": { "translation": [18, 18], "angle": 0 },
+        "jaw": { "angle": -38 }
+      }
+    },
+    "stretchedBite15": {
+      "joints": {
+        "stem0": { "translation": [0, 24], "angle": -78 },
+        "stem1": { "translation": [0, 90], "angle": -10 },
+        "stem2": { "translation": [0, 85], "angle": 0 },
+        "neck": { "translation": [0, 60], "angle": 4 },
+        "leafL": { "angle": 100 },
+        "leafR": { "angle": 80 },
+        "head": { "translation": [18, 18], "angle": -8 },
+        "jaw": { "angle": -2 }
+      }
+    },
+    "stretch30": {
+      "joints": {
+        "stem0": { "translation": [0, 24], "angle": -78 },
+        "stem1": { "translation": [0, 110], "angle": -10 },
+        "stem2": { "translation": [0, 105], "angle": 0 },
+        "neck": { "translation": [0, 75], "angle": 4 },
+        "leafL": { "angle": 100 },
+        "leafR": { "angle": 80 },
+        "head": { "translation": [18, 18], "angle": 0 },
+        "jaw": { "angle": -38 }
+      }
+    },
+    "stretchedBite30": {
+      "joints": {
+        "stem0": { "translation": [0, 24], "angle": -78 },
+        "stem1": { "translation": [0, 110], "angle": -10 },
+        "stem2": { "translation": [0, 105], "angle": 0 },
+        "neck": { "translation": [0, 75], "angle": 4 },
+        "leafL": { "angle": 100 },
+        "leafR": { "angle": 80 },
+        "head": { "translation": [18, 18], "angle": -8 },
+        "jaw": { "angle": -2 }
+      }
+    },
+    "stretch45": {
+      "joints": {
+        "stem0": { "translation": [0, 24], "angle": -78 },
+        "stem1": { "translation": [0, 145], "angle": -10 },
+        "stem2": { "translation": [0, 140], "angle": 0 },
+        "neck": { "translation": [0, 100], "angle": 4 },
+        "leafL": { "angle": 100 },
+        "leafR": { "angle": 80 },
+        "head": { "translation": [18, 18], "angle": 0 },
+        "jaw": { "angle": -38 }
+      }
+    },
+    "stretchedBite45": {
+      "joints": {
+        "stem0": { "translation": [0, 24], "angle": -78 },
+        "stem1": { "translation": [0, 145], "angle": -10 },
+        "stem2": { "translation": [0, 140], "angle": 0 },
+        "neck": { "translation": [0, 100], "angle": 4 },
+        "leafL": { "angle": 100 },
+        "leafR": { "angle": 80 },
+        "head": { "translation": [18, 18], "angle": -8 },
+        "jaw": { "angle": -2 }
+      }
+    }
+  },
+  "anims": {
+    "idle": {
+      "clock": "world",
+      "loop": 96,
+      "keys": [
+        { "at": 0, "pose": "stand" },
+        {
+          "at": 24,
+          "pose": {
+            "joints": {
+              "head": { "translation": [1, 18], "angle": -2 },
+              "stem1": { "translation": [0, 25] }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 48, "pose": "stand", "lerp": true },
+        {
+          "at": 72,
+          "pose": {
+            "joints": {
+              "head": { "translation": [-1, 19], "angle": 2 },
+              "leafL": { "angle": 156 },
+              "leafR": { "angle": 24 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 96, "pose": "stand", "lerp": true }
+      ]
+    },
+    "walk": {
+      "clock": "state",
+      "loop": 32,
+      "keys": [
+        { "at": 0, "pose": "stand" },
+        {
+          "at": 8,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": -5 },
+              "stem1": { "angle": -3 },
+              "head": { "translation": [3, 18], "angle": -2 },
+              "leafL": { "angle": 146 },
+              "leafR": { "angle": 34 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 16, "pose": "stand", "lerp": true },
+        {
+          "at": 24,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": 5 },
+              "stem1": { "angle": 3 },
+              "head": { "translation": [-2, 18], "angle": 2 },
+              "leafL": { "angle": 154 },
+              "leafR": { "angle": 26 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 32, "pose": "stand", "lerp": true }
+      ]
+    },
+    "run": {
+      "clock": "state",
+      "loop": 24,
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": -12 },
+              "stem1": { "angle": -8 },
+              "stem2": { "angle": -4 },
+              "head": { "translation": [5, 17], "angle": -4 },
+              "leafL": { "angle": 136 },
+              "leafR": { "angle": 44 }
+            }
+          }
+        },
+        {
+          "at": 6,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": -14 },
+              "stem1": { "angle": -10 },
+              "stem2": { "angle": -5 },
+              "head": { "translation": [6, 16], "angle": -5 },
+              "leafL": { "angle": 132 },
+              "leafR": { "angle": 48 },
+              "jaw": { "angle": -12 }
+            }
+          },
+          "lerp": true
+        },
+        {
+          "at": 12,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": -10 },
+              "stem1": { "angle": -6 },
+              "stem2": { "angle": -3 },
+              "head": { "translation": [3, 18], "angle": -2 },
+              "leafL": { "angle": 144 },
+              "leafR": { "angle": 36 }
+            }
+          },
+          "lerp": true
+        },
+        {
+          "at": 18,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": -13 },
+              "stem1": { "angle": -9 },
+              "stem2": { "angle": -5 },
+              "head": { "translation": [5, 16], "angle": -5 },
+              "leafL": { "angle": 134 },
+              "leafR": { "angle": 46 }
+            }
+          },
+          "lerp": true
+        },
+        {
+          "at": 24,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": -12 },
+              "stem1": { "angle": -8 },
+              "stem2": { "angle": -4 },
+              "head": { "translation": [5, 17], "angle": -4 },
+              "leafL": { "angle": 136 },
+              "leafR": { "angle": 44 }
+            }
+          },
+          "lerp": true
+        }
+      ]
+    },
+    "crawl": {
+      "clock": "state",
+      "loop": 16,
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 18], "angle": -14 },
+              "stem1": { "translation": [0, 17], "angle": -10 },
+              "stem2": { "translation": [0, 13], "angle": -6 },
+              "neck": { "translation": [0, 9], "angle": -3 },
+              "head": { "translation": [7, 13], "angle": -10 },
+              "leafL": { "angle": 120 },
+              "leafR": { "angle": 60 }
+            }
+          }
+        },
+        {
+          "at": 8,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 18], "angle": -18 },
+              "stem1": { "translation": [0, 17], "angle": -12 },
+              "stem2": { "translation": [0, 13], "angle": -7 },
+              "neck": { "translation": [0, 9], "angle": -4 },
+              "head": { "translation": [9, 12], "angle": -12 },
+              "leafL": { "angle": 116 },
+              "leafR": { "angle": 64 }
+            }
+          },
+          "lerp": true
+        },
+        {
+          "at": 16,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 18], "angle": -14 },
+              "stem1": { "translation": [0, 17], "angle": -10 },
+              "stem2": { "translation": [0, 13], "angle": -6 },
+              "neck": { "translation": [0, 9], "angle": -3 },
+              "head": { "translation": [7, 13], "angle": -10 },
+              "leafL": { "angle": 120 },
+              "leafR": { "angle": 60 }
+            }
+          },
+          "lerp": true
+        }
+      ]
+    },
+    "turn": {
+      "clock": "state",
+      "loop": 10,
+      "keys": [
+        { "at": 0, "pose": "stand" },
+        {
+          "at": 4,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": 10 },
+              "stem1": { "angle": 8 },
+              "head": { "translation": [-4, 18], "angle": 6 },
+              "leafL": { "angle": 164 },
+              "leafR": { "angle": 16 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 10, "pose": "stand", "lerp": true }
+      ]
+    },
+    "brake": {
+      "clock": "state",
+      "loop": 10,
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": -12 },
+              "stem1": { "angle": -8 },
+              "head": { "translation": [4, 17], "angle": -4 },
+              "leafL": { "angle": 136 },
+              "leafR": { "angle": 44 }
+            }
+          }
+        },
+        {
+          "at": 5,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": -4 },
+              "stem1": { "angle": -2 },
+              "head": { "translation": [2, 18], "angle": -2 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 10, "pose": "stand", "lerp": true }
+      ]
+    },
+    "crouch": {
+      "clock": "world",
+      "loop": 60,
+      "keys": [
+        { "at": 0, "pose": "crouch" },
+        {
+          "at": 30,
+          "pose": {
+            "joints": {
+              "head": { "translation": [4, 14], "angle": -10 },
+              "leafL": { "angle": 122 },
+              "leafR": { "angle": 58 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 60, "pose": "crouch", "lerp": true }
+      ]
+    },
+    "jumpsquat": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 20] },
+              "stem1": { "translation": [0, 19] },
+              "stem2": { "translation": [0, 15] },
+              "neck": { "translation": [0, 11] },
+              "head": { "translation": [2, 15], "angle": -4 },
+              "leafL": { "angle": 136 },
+              "leafR": { "angle": 44 }
+            }
+          }
+        },
+        {
+          "at": 1,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 16] },
+              "stem1": { "translation": [0, 15] },
+              "stem2": { "translation": [0, 12] },
+              "neck": { "translation": [0, 8] },
+              "head": { "translation": [3, 11], "angle": -6 },
+              "leafL": { "angle": 126 },
+              "leafR": { "angle": 54 }
+            }
+          }
+        },
+        {
+          "at": 2,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 27], "angle": -4 },
+              "stem1": { "translation": [0, 27], "angle": -2 },
+              "stem2": { "translation": [0, 22] },
+              "neck": { "translation": [0, 16] },
+              "head": { "translation": [0, 20], "angle": 0 },
+              "leafL": { "angle": 186 },
+              "leafR": { "angle": -6 }
+            }
+          }
+        }
+      ]
+    },
+    "landing": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 14] },
+              "stem1": { "translation": [0, 13] },
+              "stem2": { "translation": [0, 10] },
+              "neck": { "translation": [0, 7] },
+              "head": { "translation": [4, 9], "angle": -8 },
+              "leafL": { "angle": 116 },
+              "leafR": { "angle": 64 }
+            }
+          }
+        },
+        {
+          "at": 1,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 16] },
+              "stem1": { "translation": [0, 15] },
+              "stem2": { "translation": [0, 12] },
+              "neck": { "translation": [0, 9] },
+              "head": { "translation": [3, 12], "angle": -6 },
+              "leafL": { "angle": 122 },
+              "leafR": { "angle": 58 }
+            }
+          },
+          "lerp": true
+        },
+        {
+          "at": 2,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 21] },
+              "stem1": { "translation": [0, 21] },
+              "stem2": { "translation": [0, 17] },
+              "neck": { "translation": [0, 12] },
+              "head": { "translation": [1, 15], "angle": -2 },
+              "leafL": { "angle": 144 },
+              "leafR": { "angle": 36 }
+            }
+          },
+          "lerp": true
+        }
+      ]
+    },
+    "air.rise": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 28], "angle": -4 },
+              "stem1": { "translation": [0, 28], "angle": -2 },
+              "stem2": { "translation": [0, 23] },
+              "neck": { "translation": [0, 17] },
+              "head": { "translation": [0, 21] },
+              "leafL": { "angle": 188 },
+              "leafR": { "angle": -8 },
+              "jaw": { "angle": -20 }
+            }
+          }
+        },
+        {
+          "at": 4,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 25], "angle": -2 },
+              "stem1": { "translation": [0, 25] },
+              "stem2": { "translation": [0, 21] },
+              "neck": { "translation": [0, 15] },
+              "head": { "translation": [-1, 19], "angle": 2 },
+              "leafL": { "angle": 172 },
+              "leafR": { "angle": 8 }
+            }
+          },
+          "lerp": true
+        }
+      ]
+    },
+    "air.fall": {
+      "clock": "world",
+      "loop": 30,
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 24], "angle": 4 },
+              "stem1": { "translation": [0, 24], "angle": 2 },
+              "stem2": { "translation": [0, 20] },
+              "head": { "translation": [-2, 18], "angle": 2 },
+              "leafL": { "angle": 164 },
+              "leafR": { "angle": 16 }
+            }
+          }
+        },
+        {
+          "at": 10,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 24], "angle": 7 },
+              "stem1": { "translation": [0, 24], "angle": 4 },
+              "stem2": { "translation": [0, 20] },
+              "head": { "translation": [-3, 18], "angle": 4 },
+              "leafL": { "angle": 158 },
+              "leafR": { "angle": 22 }
+            }
+          },
+          "lerp": true
+        },
+        {
+          "at": 20,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 24], "angle": 3 },
+              "stem1": { "translation": [0, 24], "angle": 1 },
+              "stem2": { "translation": [0, 20] },
+              "head": { "translation": [-1, 18], "angle": 1 },
+              "leafL": { "angle": 166 },
+              "leafR": { "angle": 14 }
+            }
+          },
+          "lerp": true
+        },
+        {
+          "at": 30,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 24], "angle": 4 },
+              "stem1": { "translation": [0, 24], "angle": 2 },
+              "stem2": { "translation": [0, 20] },
+              "head": { "translation": [-2, 18], "angle": 2 },
+              "leafL": { "angle": 164 },
+              "leafR": { "angle": 16 }
+            }
+          },
+          "lerp": true
+        }
+      ]
+    },
+    "air.flip": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 18], "angle": -10 },
+              "stem1": { "translation": [0, 18], "angle": -8 },
+              "stem2": { "translation": [0, 14], "angle": -4 },
+              "head": { "translation": [4, 12], "angle": -8 },
+              "leafL": { "angle": 110 },
+              "leafR": { "angle": 70 }
+            }
+          }
+        },
+        {
+          "at": 9,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 20], "angle": -16 },
+              "stem1": { "translation": [0, 20], "angle": -12 },
+              "stem2": { "translation": [0, 16], "angle": -6 },
+              "head": { "translation": [6, 13], "angle": -12 },
+              "leafL": { "angle": 100 },
+              "leafR": { "angle": 80 }
+            }
+          },
+          "lerp": true
+        },
+        {
+          "at": 19,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 22], "angle": -4 },
+              "stem1": { "translation": [0, 22], "angle": -2 },
+              "stem2": { "translation": [0, 18] },
+              "head": { "translation": [1, 16], "angle": -2 },
+              "leafL": { "angle": 152 },
+              "leafR": { "angle": 28 }
+            }
+          },
+          "lerp": true
+        }
+      ]
+    },
+    "helpless": {
+      "clock": "world",
+      "loop": 60,
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": 4 },
+              "stem1": { "angle": 2 },
+              "head": { "translation": [-2, 18], "angle": 4 },
+              "jaw": { "angle": -18 },
+              "leafL": { "angle": 162 },
+              "leafR": { "angle": 18 }
+            }
+          }
+        },
+        {
+          "at": 20,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": 8 },
+              "stem1": { "angle": 4 },
+              "head": { "translation": [-4, 18], "angle": 7 },
+              "jaw": { "angle": -10 },
+              "leafL": { "angle": 152 },
+              "leafR": { "angle": 28 }
+            }
+          },
+          "lerp": true
+        },
+        {
+          "at": 40,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": 1 },
+              "stem1": { "angle": 0 },
+              "head": { "translation": [0, 18], "angle": 1 },
+              "jaw": { "angle": -22 },
+              "leafL": { "angle": 166 },
+              "leafR": { "angle": 14 }
+            }
+          },
+          "lerp": true
+        },
+        {
+          "at": 60,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": 4 },
+              "stem1": { "angle": 2 },
+              "head": { "translation": [-2, 18], "angle": 4 },
+              "jaw": { "angle": -18 },
+              "leafL": { "angle": 162 },
+              "leafR": { "angle": 18 }
+            }
+          },
+          "lerp": true
+        }
+      ]
+    },
+    "hitstun": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": 22 },
+              "stem1": { "angle": 18 },
+              "stem2": { "angle": 13 },
+              "neck": { "angle": 9 },
+              "head": { "translation": [-9, 16], "angle": 20 },
+              "jaw": { "angle": -30 },
+              "leafL": { "angle": 180 },
+              "leafR": { "angle": 0 }
+            }
+          }
+        },
+        {
+          "at": 2,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": 20 },
+              "stem1": { "angle": 16 },
+              "stem2": { "angle": 12 },
+              "neck": { "angle": 8 },
+              "head": { "translation": [-8, 16], "angle": 18 },
+              "jaw": { "angle": -28 },
+              "leafL": { "angle": 176 },
+              "leafR": { "angle": 4 }
+            }
+          },
+          "lerp": true
+        },
+        {
+          "at": 5,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": 14 },
+              "stem1": { "angle": 11 },
+              "stem2": { "angle": 8 },
+              "neck": { "angle": 6 },
+              "head": { "translation": [-5, 17], "angle": 12 },
+              "jaw": { "angle": -20 },
+              "leafL": { "angle": 166 },
+              "leafR": { "angle": 14 }
+            }
+          },
+          "lerp": true
+        },
+        {
+          "at": 12,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": 6 },
+              "stem1": { "angle": 4 },
+              "head": { "translation": [-2, 18], "angle": 5 },
+              "jaw": { "angle": -10 },
+              "leafL": { "angle": 154 },
+              "leafR": { "angle": 26 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 24, "pose": "stand", "lerp": true }
+      ]
+    },
+    "tumble": {
+      "clock": "spin",
+      "loop": 360,
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 18] },
+              "stem1": { "translation": [0, 18] },
+              "stem2": { "translation": [0, 14] },
+              "head": { "translation": [4, 12], "angle": -8 },
+              "leafL": { "angle": 110 },
+              "leafR": { "angle": 70 }
+            }
+          }
+        },
+        {
+          "at": 90,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 18] },
+              "stem1": { "translation": [0, 18] },
+              "stem2": { "translation": [0, 14] },
+              "head": { "translation": [4, 12], "angle": -8 },
+              "leafL": { "angle": 110 },
+              "leafR": { "angle": 70 }
+            },
+            "rot": 90
+          },
+          "lerp": true
+        },
+        {
+          "at": 180,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 18] },
+              "stem1": { "translation": [0, 18] },
+              "stem2": { "translation": [0, 14] },
+              "head": { "translation": [4, 12], "angle": -8 },
+              "leafL": { "angle": 110 },
+              "leafR": { "angle": 70 }
+            },
+            "rot": 180
+          },
+          "lerp": true
+        },
+        {
+          "at": 270,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 18] },
+              "stem1": { "translation": [0, 18] },
+              "stem2": { "translation": [0, 14] },
+              "head": { "translation": [4, 12], "angle": -8 },
+              "leafL": { "angle": 110 },
+              "leafR": { "angle": 70 }
+            },
+            "rot": 270
+          },
+          "lerp": true
+        },
+        {
+          "at": 360,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 18] },
+              "stem1": { "translation": [0, 18] },
+              "stem2": { "translation": [0, 14] },
+              "head": { "translation": [4, 12], "angle": -8 },
+              "leafL": { "angle": 110 },
+              "leafR": { "angle": 70 }
+            },
+            "rot": 360
+          },
+          "lerp": true
+        }
+      ]
+    },
+    "shield": {
+      "clock": "state",
+      "loop": 24,
+      "keys": [
+        { "at": 0, "pose": "guard" },
+        {
+          "at": 12,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 19], "angle": 20 },
+              "head": { "translation": [-9, 13], "angle": 16 },
+              "jaw": { "angle": -4 },
+              "leafL": { "angle": 200 },
+              "leafR": { "angle": -20 }
+            }
+          }
+        },
+        { "at": 24, "pose": "guard", "lerp": true }
+      ]
+    },
+    "shieldDrop": {
+      "keys": [
+        { "at": 0, "pose": "guard" },
+        {
+          "at": 1,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 20], "angle": 10 },
+              "stem1": { "translation": [0, 19], "angle": 8 },
+              "head": { "translation": [-4, 15], "angle": 8 },
+              "leafL": { "angle": 176 },
+              "leafR": { "angle": 4 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 2, "pose": "stand", "lerp": true }
+      ]
+    },
+    "roll": {
+      "keys": [
+        { "at": 0, "pose": "crouch" },
+        {
+          "at": 6,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 16], "angle": -14 },
+              "head": { "translation": [4, 12], "angle": -6 },
+              "leafL": { "angle": 120 },
+              "leafR": { "angle": 60 }
+            },
+            "rot": 90,
+            "pivot": 30
+          },
+          "lerp": true
+        },
+        {
+          "at": 12,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 16], "angle": -14 },
+              "head": { "translation": [4, 12], "angle": -6 },
+              "leafL": { "angle": 120 },
+              "leafR": { "angle": 60 }
+            },
+            "rot": 180,
+            "pivot": 30
+          },
+          "lerp": true
+        },
+        {
+          "at": 20,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 16], "angle": -14 },
+              "head": { "translation": [4, 12], "angle": -6 },
+              "leafL": { "angle": 120 },
+              "leafR": { "angle": 60 }
+            },
+            "rot": 270,
+            "pivot": 30
+          },
+          "lerp": true
+        },
+        { "at": 28, "pose": "stand", "lerp": true }
+      ]
+    },
+    "spot": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 14], "angle": 18 },
+              "stem1": { "translation": [0, 13], "angle": 12 },
+              "head": { "translation": [-4, 10], "angle": 12 },
+              "leafL": { "angle": 190 },
+              "leafR": { "angle": -10 }
+            }
+          }
+        },
+        {
+          "at": 12,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 16], "angle": 14 },
+              "stem1": { "translation": [0, 15], "angle": 10 },
+              "head": { "translation": [-2, 12], "angle": 10 },
+              "leafL": { "angle": 184 },
+              "leafR": { "angle": -4 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 24, "pose": "stand", "lerp": true }
+      ]
+    },
+    "airdodge": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 16] },
+              "stem1": { "translation": [0, 16] },
+              "stem2": { "translation": [0, 13] },
+              "head": { "translation": [3, 10], "angle": -6 },
+              "leafL": { "angle": 116 },
+              "leafR": { "angle": 64 }
+            }
+          }
+        },
+        {
+          "at": 3,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 14] },
+              "stem1": { "translation": [0, 14] },
+              "stem2": { "translation": [0, 11] },
+              "head": { "translation": [5, 8], "angle": -8 },
+              "leafL": { "angle": 106 },
+              "leafR": { "angle": 74 }
+            }
+          },
+          "lerp": true
+        },
+        {
+          "at": 24,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 14] },
+              "stem1": { "translation": [0, 14] },
+              "stem2": { "translation": [0, 11] },
+              "head": { "translation": [5, 8], "angle": -8 },
+              "leafL": { "angle": 106 },
+              "leafR": { "angle": 74 }
+            }
+          }
+        },
+        { "at": 29, "pose": "stand", "lerp": true }
+      ]
+    },
+    "knockdown": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 10], "angle": 60 },
+              "stem1": { "translation": [0, 10], "angle": 50 },
+              "head": { "translation": [10, 8], "angle": 12 },
+              "jaw": { "angle": -14 },
+              "leafL": { "angle": 100 },
+              "leafR": { "angle": 80 }
+            },
+            "pivot": 10
+          }
+        }
+      ]
+    },
+    "getup": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 10], "angle": 60 },
+              "stem1": { "translation": [0, 10], "angle": 50 },
+              "head": { "translation": [10, 8], "angle": 12 }
+            },
+            "pivot": 10
+          }
+        },
+        {
+          "at": 10,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 20], "angle": 20 },
+              "stem1": { "translation": [0, 18], "angle": 14 },
+              "head": { "translation": [4, 14], "angle": 8 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 20, "pose": "stand", "lerp": true }
+      ]
+    },
+    "getupAttack": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 10], "angle": 60 },
+              "head": { "translation": [10, 8], "angle": 12 }
+            }
+          }
+        },
+        {
+          "at": 8,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 24], "angle": -20 },
+              "stem1": { "translation": [0, 22], "angle": -14 },
+              "head": { "translation": [10, 16], "angle": -10 },
+              "jaw": { "angle": -34 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 20, "pose": "stand", "lerp": true }
+      ]
+    },
+    "tech": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 14] },
+              "stem1": { "translation": [0, 14] },
+              "head": { "translation": [4, 10], "angle": -6 },
+              "leafL": { "angle": 116 },
+              "leafR": { "angle": 64 }
+            }
+          }
+        },
+        { "at": 4, "pose": "stand", "lerp": true }
+      ]
+    },
+    "ledge": {
+      "clock": "world",
+      "loop": 40,
+      "keys": [
+        { "at": 0, "pose": "ledgeHang" },
+        {
+          "at": 20,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 22], "angle": -2 },
+              "head": { "translation": [2, 16], "angle": 2 },
+              "leafL": { "angle": 148 },
+              "leafR": { "angle": 32 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 40, "pose": "ledgeHang", "lerp": true }
+      ]
+    },
+    "climb": {
+      "keys": [
+        { "at": 0, "pose": "ledgeHang" },
+        {
+          "at": 10,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 20], "angle": -10 },
+              "stem1": { "translation": [0, 18], "angle": -8 },
+              "head": { "translation": [6, 14], "angle": -4 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 20, "pose": "stand", "lerp": true }
+      ]
+    },
+    "ledgeAttack": {
+      "keys": [
+        { "at": 0, "pose": "ledgeHang" },
+        {
+          "at": 8,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 24], "angle": -24 },
+              "stem1": { "translation": [0, 22], "angle": -18 },
+              "head": { "translation": [12, 16], "angle": -12 },
+              "jaw": { "angle": -36 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 16, "pose": "strike", "lerp": true },
+        { "at": 24, "pose": "stand", "lerp": true }
+      ]
+    },
+    "ledgeRoll": {
+      "keys": [
+        { "at": 0, "pose": "ledgeHang" },
+        {
+          "at": 8,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 18], "angle": -12 },
+              "head": { "translation": [4, 12], "angle": -6 },
+              "leafL": { "angle": 120 },
+              "leafR": { "angle": 60 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 20, "pose": "stand", "lerp": true }
+      ]
+    },
+    "ledgeJump": {
+      "keys": [
+        { "at": 0, "pose": "ledgeHang" },
+        {
+          "at": 4,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 26], "angle": -4 },
+              "head": { "translation": [0, 20] },
+              "leafL": { "angle": 184 },
+              "leafR": { "angle": -4 }
+            }
+          },
+          "lerp": true
+        }
+      ]
+    },
+    "dizzy": {
+      "clock": "world",
+      "loop": 40,
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": 6 },
+              "stem1": { "angle": 4 },
+              "head": { "translation": [-4, 18], "angle": 8 },
+              "jaw": { "angle": -14 },
+              "leafL": { "angle": 160 },
+              "leafR": { "angle": 20 }
+            }
+          }
+        },
+        {
+          "at": 20,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": -4 },
+              "stem1": { "angle": -2 },
+              "head": { "translation": [4, 18], "angle": -6 },
+              "jaw": { "angle": -18 },
+              "leafL": { "angle": 148 },
+              "leafR": { "angle": 32 }
+            }
+          },
+          "lerp": true
+        },
+        {
+          "at": 40,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": 6 },
+              "stem1": { "angle": 4 },
+              "head": { "translation": [-4, 18], "angle": 8 },
+              "jaw": { "angle": -14 },
+              "leafL": { "angle": 160 },
+              "leafR": { "angle": 20 }
+            }
+          },
+          "lerp": true
+        }
+      ]
+    },
+    "win": {
+      "clock": "world",
+      "loop": 40,
+      "keys": [
+        { "at": 0, "pose": "win" },
+        {
+          "at": 20,
+          "pose": {
+            "joints": {
+              "head": { "translation": [5, 19], "angle": -12 },
+              "jaw": { "angle": -36 },
+              "leafL": { "angle": 120 },
+              "leafR": { "angle": 60 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 40, "pose": "win", "lerp": true }
+      ]
+    },
+    "respawn": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 18] },
+              "head": { "translation": [0, 14] }
+            }
+          }
+        },
+        { "at": 8, "pose": "stand", "lerp": true }
+      ]
+    },
+    "hold": {
+      "keys": [
+        { "at": 0, "pose": "grabHold" }
+      ]
+    },
+    "pummel": {
+      "keys": [
+        { "at": 0, "pose": "grabHold" },
+        {
+          "at": 3,
+          "pose": {
+            "joints": {
+              "head": { "translation": [10, 18], "angle": 2 },
+              "jaw": { "angle": -6 }
+            }
+          }
+        },
+        { "at": 5, "pose": "grabOpen" },
+        { "at": 8, "pose": "grabOpen" },
+        { "at": 11, "pose": "grabHold" }
+      ]
+    },
+    "throw.f": {
+      "keys": [
+        { "at": 0, "pose": "grabHold" },
+        { "at": 6, "pose": "throwWind" },
+        { "at": 10, "pose": "throwHeave" },
+        { "at": 16, "pose": "strike", "lerp": true }
+      ]
+    },
+    "throw.b": {
+      "keys": [
+        { "at": 0, "pose": "grabHold" },
+        { "at": 8, "pose": "throwWind" },
+        {
+          "at": 14,
+          "pose": {
+            "joints": {
+              "head": { "translation": [-10, 18], "angle": 14 },
+              "jaw": { "angle": -32 },
+              "leafL": { "angle": 176 },
+              "leafR": { "angle": 4 }
+            }
+          }
+        },
+        { "at": 22, "pose": "strike", "lerp": true }
+      ]
+    },
+    "throw.u": {
+      "keys": [
+        { "at": 0, "pose": "grabHold" },
+        { "at": 8, "pose": "charge" },
+        {
+          "at": 14,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 26], "angle": -2 },
+              "head": { "translation": [0, 22], "angle": -4 },
+              "jaw": { "angle": -36 },
+              "leafL": { "angle": 184 },
+              "leafR": { "angle": -4 }
+            }
+          },
+          "lerp": true
+        },
+        { "at": 24, "pose": "strike", "lerp": true }
+      ]
+    },
+    "throw.d": {
+      "keys": [
+        { "at": 0, "pose": "grabHold" },
+        { "at": 8, "pose": "charge" },
+        {
+          "at": 16,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 18], "angle": 10 },
+              "head": { "translation": [-6, 12], "angle": 10 },
+              "jaw": { "angle": -20 }
+            }
+          }
+        },
+        {
+          "at": 26,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 16], "angle": -14 },
+              "stem1": { "translation": [0, 15], "angle": -10 },
+              "head": { "translation": [8, 10], "angle": -10 },
+              "jaw": { "angle": -4 }
+            }
+          },
+          "lerp": true
+        }
+      ]
+    },
+    "grabbed": {
+      "clock": "world",
+      "loop": 16,
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": -6 },
+              "stem1": { "angle": -4 },
+              "head": { "translation": [-4, 16], "angle": 8 },
+              "jaw": { "angle": -12 },
+              "leafL": { "angle": 166 },
+              "leafR": { "angle": 14 }
+            }
+          }
+        },
+        {
+          "at": 8,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": -10 },
+              "stem1": { "angle": -6 },
+              "head": { "translation": [-6, 16], "angle": 12 },
+              "jaw": { "angle": -6 },
+              "leafL": { "angle": 172 },
+              "leafR": { "angle": 8 }
+            }
+          },
+          "lerp": true
+        },
+        {
+          "at": 16,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": -6 },
+              "stem1": { "angle": -4 },
+              "head": { "translation": [-4, 16], "angle": 8 },
+              "jaw": { "angle": -12 },
+              "leafL": { "angle": 166 },
+              "leafR": { "angle": 14 }
+            }
+          },
+          "lerp": true
+        }
+      ]
+    },
+    "buried": {
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "translation": [0, 8] },
+              "stem1": { "translation": [0, 8] },
+              "stem2": { "translation": [0, 6] },
+              "head": { "translation": [0, 6], "angle": 0 },
+              "leafL": { "angle": 170 },
+              "leafR": { "angle": 10 }
+            }
+          }
+        }
+      ]
+    },
+    "shieldbreak": {
+      "clock": "world",
+      "loop": 60,
+      "keys": [
+        {
+          "at": 0,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": 28 },
+              "stem1": { "angle": 24 },
+              "stem2": { "angle": 18 },
+              "head": { "translation": [-8, 14], "angle": 24 },
+              "jaw": { "angle": -40 },
+              "leafL": { "angle": 200 },
+              "leafR": { "angle": -20 }
+            }
+          }
+        },
+        {
+          "at": 20,
+          "pose": {
+            "joints": {
+              "stem0": { "angle": 24 },
+              "stem1": { "angle": 20 },
+              "head": { "translation": [-6, 14], "angle": 20 },
+              "jaw": { "angle": -30 },
+              "leafL": { "angle": 190 },
+              "leafR": { "angle": -10 }
+            }
+          },
+          "lerp": true
+        }
+      ]
+    }
+  }
+}

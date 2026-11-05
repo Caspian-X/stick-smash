@@ -54,7 +54,12 @@ pub(super) fn watching(mut r: Replay) -> Result<Match, String> {
         &data,
         Mode::Replay,
         slots,
-        Rules { stocks: cfg.stocks, stage: cfg.stage.clone(), friendly_fire: cfg.friendly_fire },
+        Rules {
+            stocks: cfg.stocks,
+            stage: cfg.stage.clone(),
+            friendly_fire: cfg.friendly_fire,
+            time_limit: cfg.time_limit,
+        },
         cfg.seed,
     )?;
     m.data = data;

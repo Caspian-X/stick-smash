@@ -129,8 +129,79 @@ pub struct Move {
     /// Damage bonus per held charge tick. Omit to use the global smash-charge divisor.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub charge_damage: Option<f64>,
+    /// Alternate timelines picked once when the move starts, by the fighter's charge resources (a weapon or tome
+    /// with uses left). The first variant whose `needs` is satisfied wins; otherwise `phases` runs.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub variants: Vec<MoveVariant>,
     /// Runs from the first phase. A move must have at least one phase.
     pub phases: Vec<Phase>,
+}
+
+impl Move {
+    /// The phase timeline a move started with `variant` runs (0 = the default `phases`).
+    pub fn timeline(&self, variant: u8) -> &[Phase] {
+        match variant.checked_sub(1).and_then(|i| self.variants.get(usize::from(i))) {
+            Some(v) => &v.phases,
+            None => &self.phases,
+        }
+    }
+    /// The phase timeline a move started with `variant` runs, for editing (0 = the default `phases`).
+    pub fn timeline_mut(&mut self, variant: u8) -> &mut Vec<Phase> {
+        match variant.checked_sub(1).and_then(|i| self.variants.get_mut(usize::from(i))) {
+            Some(v) => &mut v.phases,
+            None => &mut self.phases,
+        }
+    }
+    /// Every phase timeline in the move: the default one first, then each variant's.
+    pub fn timelines(&self) -> impl Iterator<Item = &[Phase]> {
+        std::iter::once(self.phases.as_slice()).chain(self.variants.iter().map(|v| v.phases.as_slice()))
+    }
+    /// Every phase timeline, mutably.
+    pub fn timelines_mut(&mut self) -> impl Iterator<Item = &mut Vec<Phase>> {
+        std::iter::once(&mut self.phases).chain(self.variants.iter_mut().map(|v| &mut v.phases))
+    }
+}
+
+/// An alternate phase timeline, chosen at move start by a charge resource.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct MoveVariant {
+    /// The charge resource that must still have uses for this variant to be picked.
+    pub needs: ChargeNeed,
+    pub phases: Vec<Phase>,
+}
+
+/// A charge resource (a weapon, tome or other limited-use tool) and its recharge behavior.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ChargePool {
+    /// Referenced by `moves.*.variants[].needs`, `phases[].cost` and `hitboxes[].needs`.
+    pub id: String,
+    /// Uses at full.
+    pub uses: u32,
+    /// Ticks from empty back to full. Zero keeps it spent until respawn.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub recharge: u32,
+    /// Ticks after using the pool's last charge before its refill starts (a tome is thrown away first).
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub discard_delay: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub empty_sfx: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub refill_sfx: Option<String>,
+}
+
+/// A charge requirement: a resource id and how many uses it takes.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ChargeNeed {
+    pub charge: String,
+    #[serde(default = "one_use")]
+    pub uses: u32,
+}
+
+fn one_use() -> u32 {
+    1
 }
 
 /// One step of a move.
@@ -145,6 +216,10 @@ pub struct Phase {
     /// Inclusive phase-tick activation overrides of named fighter hurt regions.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub hurt_regions: Vec<super::hitbox::HurtRegionWindow>,
+    /// This phase still accepts the move's single `bReverse` turnaround (a charged move can aim after the
+    /// shared opening window).
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub aim: bool,
     /// Unique within the move. Transitions refer to it. `end`, `helpless` and `landing` are reserved.
     pub name: String,
     /// Phase length (see the frame convention). Omit for a phase that loops until a transition fires.
@@ -153,6 +228,10 @@ pub struct Phase {
     /// Extra phase frames per stored charge tick (rounded to the nearest whole frame).
     #[serde(default, skip_serializing_if = "is_default")]
     pub charge_frames: f64,
+    /// Spent from the fighter's charge resources when the phase is entered. A pool with fewer uses left than
+    /// this spends what remains (and starts recharging); the phase still runs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cost: Option<ChargeNeed>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub hitboxes: Vec<Hitbox>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -282,7 +361,7 @@ pub struct Reflector {
 
 /// Frame-scoped actions. Use `at` for one frame, or `from`/`to` (inclusive) for a range. `from` alone means
 /// from there on; neither means every frame from 1. Actions in one event run in field order (velocity, then
-/// `leaveGround`, `invuln`, `spawn`, `sfx`, `fx`); events on the same frame run in list order.
+/// `leaveGround`, `invuln`, `spawn`, `restore`, `detonate`, `sfx`, `fx`); events on the same frame run in list order.
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Event {
@@ -326,6 +405,12 @@ pub struct Event {
     /// Spawn a projectile by id (from the fighter's `projectiles`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub spawn: Option<String>,
+    /// Restore uses to a charge pool, capped at capacity. Keeps recharge running until full.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub restore: Option<ChargeNeed>,
+    /// Explode owned gadgets matching these projectile ids (including unarmed ones). Empty means all.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detonate: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sfx: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -377,6 +462,10 @@ pub enum Trigger {
     Falling,
     /// The charge button (or attack, without `charge`) isn't held.
     Release,
+    /// Like `release`, and the live movement stick points toward the fighter's facing (a forward throw).
+    ReleaseToward,
+    /// Like `release`, and the live movement stick points away from the fighter's facing (a back throw).
+    ReleaseAway,
     /// Attack is held (jab follow-ups).
     AttackHeld,
     /// A new attack press; held buttons alone do not retrigger it.
@@ -389,6 +478,8 @@ pub enum Trigger {
     ShieldPress,
     /// An owned controlled projectile was manually released.
     ArticleRelease,
+    /// A held projectile ended without being launched (its caster let go or lost control).
+    ArticleEnd,
     /// A hit was countered in the phase's `counter` window.
     Counter,
     /// A hitbox of this phase connected (hit or shield).
@@ -406,6 +497,13 @@ pub struct Transition {
     /// Only from this phase frame on.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub from: Option<u32>,
+    /// Only fires with at least this many held charge ticks (a charged move can pick a phase per tier).
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub min_charge: u32,
+    /// Only fires while this charge resource still has uses (a jab can fall back when its tome is empty).
+    /// List the resource-gated transition before its fallback: the first match wins.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub needs: Option<ChargeNeed>,
     pub to: String,
     /// Landing lag frames for `to: "landing"`.
     #[serde(default, skip_serializing_if = "Option::is_none")]

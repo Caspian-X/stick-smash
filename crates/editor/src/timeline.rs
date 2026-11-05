@@ -93,7 +93,7 @@ fn readout(ui: &mut egui::Ui, ed: &Editor, n: usize) {
     match (m.phase, &ed.subject) {
         (Some((p, t)), Subject::Move(slot)) => {
             let mv = ed.ws.docs[&ed.cur].item.moves.get(slot);
-            let ph = mv.and_then(|mv| mv.phases.get(p));
+            let ph = mv.and_then(|mv| mv.timeline(ed.variant).get(p));
             let name = ph.map_or(String::new(), |ph| ph.name.clone());
             let len = ph.and_then(|ph| ph.frames).map_or("∞".into(), |f| f.to_string());
             ui.add_space(6.);
@@ -120,12 +120,13 @@ fn track(ui: &mut egui::Ui, ed: &mut Editor) {
     let (boxes, events, keys, phase_names) = match &ed.subject {
         Subject::Move(slot) => match doc.item.moves.get(slot) {
             Some(mv) => {
-                let p = mv.phases.get(ed.phase);
+                let phases = mv.timeline(ed.variant);
+                let p = phases.get(ed.phase);
                 (
                     p.map(|p| p.hitboxes.clone()).unwrap_or_default(),
                     p.map(|p| p.events.clone()).unwrap_or_default(),
                     p.map(|p| p.anim.iter().map(|k| k.at).collect::<Vec<_>>()).unwrap_or_default(),
-                    mv.phases.iter().map(|p| p.name.clone()).collect::<Vec<_>>(),
+                    phases.iter().map(|p| p.name.clone()).collect::<Vec<_>>(),
                 )
             }
             None => Default::default(),

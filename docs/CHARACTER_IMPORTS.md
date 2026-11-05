@@ -12,6 +12,21 @@ semantics. Copy the [reference-record template](templates/FIGHTER_REFERENCE.md) 
 animated bone fitting and independent controlled projectiles.
 [Whiplash's Zero Suit Samus record](imports/whiplash.md) covers aerial grab/tether attacks, once-per-airtime
 specials, follow-up input windows, paralysis and grounded bury effects.
+[Planty's record](imports/plant.md) covers a nonhumanoid named rig, charge-tiered joint-bound reach,
+a held/controlled projectile and a damage-only lingering hazard.
+[Throbbin's Robin record](imports/throbbin.md) covers limited-use charge resources with timed recharge,
+resource-selected move variants, charge-tiered specials, a healing unblockable hit and a Bronze fallback.
+[Sneak's Snake record](imports/sneak.md) covers exploding gadgets: a bouncing fused grenade thrown along a
+stick-selected arc (`releaseToward` / `releaseAway`), a planted remote C4 (`explosion.manual` + `detonate`
+driven by a charge pool), a steered `article` missile and a ballistic mortar shell.
+[Stratus's Cloud record](imports/stratus.md) covers a one-shot meter filled by a special (`Event.restore`) and
+spent by move variants that select Limit Break timelines, plus multi-hit rows split across phases.
+[Bongo Boy's Diddy Kong record](imports/bongo.md) covers a settling trip projectile with a one-at-a-time pool,
+a charge-scaled shot with overcharge stun, a branching leap and a charge-and-boost recovery.
+[Bleth's Byleth record](imports/verdant.md) covers one hidden attachment per weapon swapped by phase, a
+whip-stretched reach, a chargeable arrow and a tether recovery.
+[Duchess's Peach record](imports/duchess.md) covers a `floatSpeed` hover, a deterministic item-projectile throw
+tier, a counter that answers with reflectable projectile spores, and a lunge that searches for its target.
 
 ## 1. Establish the target
 
@@ -80,7 +95,7 @@ Choose and document units once per import:
 - Bone-local offsets require the bone's animated transform. With no original skeleton animation, fit a
   2D hand/weapon track from visuals, transform the offsets, and label the result **fitted**. Do not silently
   apply root-space conversion to a sword-bone offset.
-- Approximate capsules with overlapping circles; record the spacing/coverage rule. Preserve first-hitbox
+- Use native capsules for capsule geometry; when an approximation is necessary, record its spacing/coverage rule. Preserve first-hitbox
   priority where sour spots, spikes or masks overlap. Hurtboxes and the stage collision body are separate.
 - Document movement scaling independently from geometry. Weight here multiplies knockback taken (lower
   means heavier). Source knockback formulas and numeric fields are not necessarily interchangeable.

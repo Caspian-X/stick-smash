@@ -55,7 +55,7 @@ fn raw(w: &mut World, d: &GameData, stick: (i8, i8), buttons: u8) {
 fn package_identity_inventory_and_mobility() {
     let d = common::data();
     let f = d.fighter("king").unwrap();
-    assert_eq!(f.name, "Penguin King");
+    assert_eq!(f.name, "Gordo Ramsay");
     assert_eq!(f.stats.air_jumps, 4);
     assert!((f.stats.weight - 100. / 127.).abs() < 1e-6);
     for slot in sim::data::moves::Moves::SLOTS {

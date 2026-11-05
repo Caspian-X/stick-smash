@@ -93,6 +93,8 @@ pub enum Cmd {
     Frame(usize),
     Hitbox(Option<usize>),
     Dummy(bool),
+    /// Start the preview this high above the ground (`None`: grounded).
+    Airborne(Option<f64>),
     /// Leave, asking first if anything is unsaved.
     Back,
     Help(bool),
@@ -100,6 +102,8 @@ pub enum Cmd {
     Onion(bool),
     /// An undoable edit of the current fighter.
     Edit(fn(&mut sim::data::Fighter)),
+    /// Preview and inspect a specific phase timeline (`None`: let charge resources pick one).
+    Variant(Option<u8>),
     Dialog(Dialog),
     /// Close any dialog.
     Dismiss,
@@ -268,6 +272,8 @@ pub struct Editor {
     pub setup: Setup,
     /// Inspector selection: phase of the current move and a hitbox in it.
     pub phase: usize,
+    /// Selected phase timeline of the current move (0 = the default, `i + 1` = `variants[i]`).
+    pub variant: u8,
     pub hitbox: Option<usize>,
     pub(crate) rig_edit: rig_ed::State,
     pub run: Option<Run>,
@@ -310,6 +316,7 @@ impl Editor {
             subject: Subject::Move("jab".into()),
             setup: Setup::default(),
             phase: 0,
+            variant: 0,
             hitbox: None,
             rig_edit: Default::default(),
             run: None,
@@ -408,6 +415,8 @@ impl Editor {
         }
         if s != self.subject {
             self.phase = 0;
+            self.variant = 0;
+            self.setup.variant = None;
             self.hitbox = None;
             self.frame = 0;
         }
@@ -439,6 +448,14 @@ impl Editor {
         let data = Arc::new(self.ws.live_data());
         match preview::simulate(data, &self.cur, &self.subject, &self.setup) {
             Ok(r) => {
+                // Without a forced timeline, inspect the one the preview actually ran (charge resources pick a
+                // variant at move start).
+                if matches!(self.subject, Subject::Move(_))
+                    && self.setup.variant.is_none()
+                    && let Some(m) = r.marks.first()
+                {
+                    self.variant = m.variant;
+                }
                 self.run = Some(r);
                 self.run_gen = self.run_gen.wrapping_add(1);
                 self.frame = self.frame.min(self.frames() - 1);
@@ -621,12 +638,23 @@ fn frame(params: Frame) -> Result {
                 ed.setup.dummy = on;
                 ed.pane.stale = true;
             }
+            Cmd::Airborne(h) => {
+                ed.setup.air = h;
+                ed.pane.stale = true;
+            }
             Cmd::Back => ed.leave(false, &mut out),
             Cmd::Help(on) => ed.help = on,
             Cmd::Search(q) => ed.search = q,
             Cmd::Onion(on) => ed.onion = on,
             Cmd::Edit(f) => {
                 ed.doc().edit(f);
+                ed.pane.stale = true;
+            }
+            Cmd::Variant(v) => {
+                ed.variant = v.unwrap_or(0);
+                ed.setup.variant = v;
+                ed.phase = 0;
+                ed.hitbox = None;
                 ed.pane.stale = true;
             }
             Cmd::Dialog(d) => ed.dialog = Some(d),
@@ -734,6 +762,8 @@ mod tests {
                 on: sim::data::Trigger::Timeout,
                 cond: None,
                 from: None,
+                min_charge: 0,
+                needs: None,
                 to: "nowhere".into(),
                 lag: None,
                 preserve_hits: false,
