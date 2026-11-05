@@ -372,39 +372,47 @@ pub fn tick(
     screen: Res<State<Screen>>,
     pace: Option<ResMut<Pace>>,
 ) {
-    if matches!(screen.get(), Screen::Replays) {
-        return;
+    let catch_up = pace.as_ref().is_some_and(|p| p.catch_up());
+    let (ticks, normal) = if matches!(screen.get(), Screen::Replays) {
+        (0, false)
+    } else {
+        run_frame(&mut m, &mut devs, &mut scene, catch_up)
+    };
+    if let Some(mut p) = pace {
+        p.settle(ticks, normal);
     }
-    let m = &mut *m;
+}
+
+/// One frame's ticks: how many ran (fast-forward aside) and whether this was a normal-speed frame. `catch_up`
+/// adds one tick to a normal-speed frame.
+fn run_frame(m: &mut Match, devs: &mut Devices, scene: &mut Scene, catch_up: bool) -> (u32, bool) {
     if m.playback.as_ref().is_some_and(|p| p.seeking()) {
-        return;
+        return (0, false);
     }
     let ff = std::mem::take(&mut m.ff);
     for _ in 0..ff {
-        m.tick(&mut devs, &mut scene, false);
+        m.tick(devs, scene, false);
     }
     if m.paused.is_some() {
-        return;
+        return (0, false);
     }
     if matches!(m.mode, Mode::Training | Mode::Replay) && m.frozen {
-        if std::mem::take(&mut m.step) {
-            m.tick(&mut devs, &mut scene, true);
-            if let Some(mut p) = pace {
-                p.ticks += 1;
-            }
+        let step = std::mem::take(&mut m.step);
+        if step {
+            m.tick(devs, scene, true);
         }
-        return;
+        return (u32::from(step), false);
     }
-    m.acc += m.tick_speed();
+    let speed = m.tick_speed();
+    let normal = speed == 1.;
+    m.acc += speed + if catch_up && normal { 1. } else { 0. };
     let mut n = 0;
     while m.acc >= 1. {
         m.acc -= 1.;
-        m.tick(&mut devs, &mut scene, true);
+        m.tick(devs, scene, true);
         n += 1;
     }
-    if let Some(mut p) = pace {
-        p.ticks += n;
-    }
+    (n, normal)
 }
 
 /// Dev builds: with the debug overlay (F1) on, how many sim ticks recent frames ran, to check frame pacing.
@@ -438,6 +446,10 @@ pub struct Pace {
     frames: VecDeque<(f32, u32)>,
     /// Sim ticks run so far this frame.
     ticks: u32,
+    /// Locked: real time not yet simulated, in ticks (normal speed only), so dropped frames are caught up.
+    behind: f64,
+    /// A match ran last frame; otherwise nothing is owed.
+    settled: bool,
     /// The setting is on, pacing is allowed and the display runs at about `TICK_HZ`.
     pub locked: bool,
     /// Off in the screenshot tours, whose timing must not depend on the display.
@@ -446,13 +458,15 @@ pub struct Pace {
 
 impl Default for Pace {
     fn default() -> Self {
-        Pace { frames: VecDeque::new(), ticks: 0, locked: false, allowed: true }
+        Pace { frames: VecDeque::new(), ticks: 0, behind: 0., settled: false, locked: false, allowed: true }
     }
 }
 
 /// Frames measured for the refresh rate (median interval), and how far from `TICK_HZ` still counts as a match.
 const PACE_SAMPLES: usize = 30;
 const PACE_TOLERANCE_HZ: f32 = 2.;
+/// Locked, at most this many ticks of real time are owed; a longer stall is not caught up.
+const PACE_MAX_BEHIND: f64 = 3.;
 
 impl Pace {
     fn push(&mut self, dt: f32) {
@@ -492,6 +506,19 @@ impl Pace {
         self.locked = self.allowed
             && enabled
             && self.refresh_hz().is_some_and(|hz| (hz - sim::TICK_HZ as f32).abs() <= PACE_TOLERANCE_HZ);
+        let owed = if std::mem::take(&mut self.settled) { self.behind } else { 0. };
+        self.behind =
+            if self.locked { (owed + f64::from(dt) * f64::from(sim::TICK_HZ)).min(PACE_MAX_BEHIND) } else { 0. };
+    }
+    /// More than one tick behind real time: this frame runs a second tick.
+    fn catch_up(&self) -> bool {
+        self.locked && self.behind >= 2.
+    }
+    /// Books a frame's ticks. Paused, frozen or off-speed frames keep their own pace and owe nothing.
+    fn settle(&mut self, ticks: u32, normal: bool) {
+        self.ticks += ticks;
+        self.settled = true;
+        self.behind = if self.locked && normal { (self.behind - f64::from(ticks)).max(0.) } else { 0. };
     }
 }
 
@@ -635,6 +662,42 @@ mod tests {
                 _ => assert_eq!(seen, [(2, 1.); 4]),
             }
         }
+    }
+
+    #[test]
+    fn locked_frames_catch_up_a_dropped_frame_with_at_most_two_ticks() {
+        let data = crate::test_data();
+        let mut m = Match::attract(&data, 1).unwrap();
+        m.mode = Mode::Training;
+        let (mut devs, mut scene) = (Devices::default(), Scene::new(data));
+        let mut p = Pace::default();
+        for _ in 0..PACE_SAMPLES {
+            p.update(1. / 60., true);
+        }
+        let mut frame = |p: &mut Pace, m: &mut Match, dt: f32| {
+            p.update(dt, true);
+            let (n, normal) = run_frame(m, &mut devs, &mut scene, p.catch_up());
+            p.settle(n, normal);
+            n
+        };
+        let mut run =
+            |p: &mut Pace, m: &mut Match, dts: &[f32]| dts.iter().map(|dt| frame(p, m, *dt)).collect::<Vec<_>>();
+        let f = 1. / 60.;
+        assert_eq!(run(&mut p, &mut m, &[f, f, f]), [1, 1, 1]);
+        assert_eq!(run(&mut p, &mut m, &[2. * f, f, f]), [2, 1, 1], "one dropped frame is made up");
+        assert_eq!(run(&mut p, &mut m, &[10. * f, f, f, f]), [2, 2, 1, 1], "never more than two, long stalls capped");
+        m.paused = Some(Dev::Keys);
+        assert_eq!(run(&mut p, &mut m, &[2. * f]), [0]);
+        m.paused = None;
+        assert_eq!(run(&mut p, &mut m, &[f]), [1], "pause owes nothing");
+        m.frozen = true;
+        assert_eq!(run(&mut p, &mut m, &[3. * f]), [0]);
+        m.frozen = false;
+        assert_eq!(run(&mut p, &mut m, &[f]), [1], "frozen owes nothing");
+        m.speed = 0.5;
+        assert_eq!(run(&mut p, &mut m, &[3. * f, f, f, f]), [0, 1, 0, 1], "slow motion keeps its own pace");
+        m.speed = 1.;
+        assert_eq!(run(&mut p, &mut m, &[f]), [1]);
     }
 
     #[test]
