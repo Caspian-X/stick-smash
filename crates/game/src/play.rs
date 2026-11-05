@@ -1,6 +1,7 @@
 //! The running world (a match, training, the title-screen attract match or the character-select showcase):
 //! ticking with slow-motion and training speed, per-device input, pause, match stats and the end of a match.
 
+use std::collections::VecDeque;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
 
@@ -392,13 +393,73 @@ pub fn tick(mut m: ResMut<Match>, mut devs: ResMut<Devices>, mut scene: ResMut<S
     }
 }
 
-pub fn interpolate(time: Res<Time<Fixed>>, m: Res<Match>, mut scene: ResMut<Scene>) {
+/// Frame pacing. On a display refreshing at about `TICK_HZ`, the fixed-step accumulator aliases against vsync
+/// (frames with 0 or 2 ticks: stutter, and inputs landing a frame late at random), so while [`Pace::locked`] the sim
+/// steps once per rendered frame instead and draws the newest tick.
+#[derive(Resource)]
+pub struct Pace {
+    /// Recent real frame intervals in seconds, newest last.
+    frames: VecDeque<f32>,
+    /// The setting is on, pacing is allowed and the display runs at about `TICK_HZ`.
+    pub locked: bool,
+    /// Off in the screenshot tours, whose timing must not depend on the display.
+    pub allowed: bool,
+}
+
+impl Default for Pace {
+    fn default() -> Self {
+        Pace { frames: VecDeque::new(), locked: false, allowed: true }
+    }
+}
+
+/// Frames measured for the refresh rate (median interval), and how far from `TICK_HZ` still counts as a match.
+const PACE_SAMPLES: usize = 30;
+const PACE_TOLERANCE_HZ: f32 = 2.;
+
+impl Pace {
+    fn push(&mut self, dt: f32) {
+        if dt > 0. {
+            self.frames.push_back(dt);
+        }
+        while self.frames.len() > 360 {
+            self.frames.pop_front();
+        }
+    }
+    /// Display refresh rate from the median of recent frame intervals.
+    pub fn refresh_hz(&self) -> Option<f32> {
+        if self.frames.len() < PACE_SAMPLES {
+            return None;
+        }
+        let mut dts: Vec<f32> = self.frames.iter().rev().take(PACE_SAMPLES).copied().collect();
+        dts.sort_by(f32::total_cmp);
+        Some(1. / dts[PACE_SAMPLES / 2])
+    }
+    fn update(&mut self, dt: f32, enabled: bool) {
+        self.push(dt);
+        self.locked = self.allowed
+            && enabled
+            && self.refresh_hz().is_some_and(|hz| (hz - sim::TICK_HZ as f32).abs() <= PACE_TOLERANCE_HZ);
+    }
+}
+
+/// Measures the frame rate and decides whether the sim follows the display this frame. Runs in `First`.
+pub fn pace(time: Res<Time<Real>>, saved: Res<crate::settings::Saved>, mut p: ResMut<Pace>) {
+    p.update(time.delta_secs(), saved.lock_60);
+}
+
+pub fn locked(p: Option<Res<Pace>>) -> bool {
+    p.is_some_and(|p| p.locked)
+}
+
+pub fn interpolate(time: Res<Time<Fixed>>, pace: Option<Res<Pace>>, m: Res<Match>, mut scene: ResMut<Scene>) {
     if m.mode == Mode::Replay && m.frozen {
         scene.alpha = 1.;
         return;
     }
     if m.paused.is_none() && !(matches!(m.mode, Mode::Training | Mode::Replay) && m.frozen) {
-        scene.alpha = m.alpha(time.overstep_fraction_f64());
+        // Locked, each frame is a whole tick period that `tick` has already consumed.
+        let overstep = if pace.is_some_and(|p| p.locked) { 1. } else { time.overstep_fraction_f64() };
+        scene.alpha = m.alpha(overstep);
     }
 }
 
@@ -472,6 +533,56 @@ pub fn match_flow(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn pace_locks_only_near_the_tick_rate_and_when_allowed() {
+        let mut p = Pace::default();
+        for _ in 0..PACE_SAMPLES - 1 {
+            p.update(1. / 60., true);
+        }
+        assert!(!p.locked, "not enough samples yet");
+        p.update(0.5, true);
+        assert!(p.locked, "one hitch doesn't move the median");
+        p.update(1. / 60., false);
+        assert!(!p.locked, "setting off");
+        for _ in 0..PACE_SAMPLES {
+            p.update(1. / 144., true);
+        }
+        assert!(!p.locked, "144 Hz keeps the fixed step");
+        for _ in 0..PACE_SAMPLES {
+            p.update(1. / 59.94, true);
+        }
+        assert!(p.locked);
+        p.allowed = false;
+        p.update(1. / 60., true);
+        assert!(!p.locked, "screenshot tours never lock");
+    }
+
+    #[test]
+    fn locked_frames_tick_once_and_draw_the_newest_tick() {
+        let data = crate::test_data();
+        let mut m = Match::attract(&data, 1).unwrap();
+        let (mut devs, mut scene) = (Devices::default(), Scene::new(data));
+        for speed in [1., 0.5, 2.] {
+            m.mode = Mode::Training;
+            m.speed = speed;
+            let mut seen = vec![];
+            for _ in 0..4 {
+                let frame = m.world.frame;
+                m.acc += m.tick_speed();
+                while m.acc >= 1. {
+                    m.acc -= 1.;
+                    m.tick(&mut devs, &mut scene, false);
+                }
+                seen.push(((m.world.frame - frame) as u32, m.alpha(1.)));
+            }
+            match speed {
+                1. => assert_eq!(seen, [(1, 1.); 4]),
+                0.5 => assert_eq!(seen, [(0, 1.), (1, 0.5), (0, 1.), (1, 0.5)]),
+                _ => assert_eq!(seen, [(2, 1.); 4]),
+            }
+        }
+    }
 
     #[test]
     fn fast_forward_discards_countdown_sounds_but_live_ticks_keep_them() {

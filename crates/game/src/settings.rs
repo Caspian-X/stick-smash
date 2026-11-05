@@ -27,6 +27,8 @@ pub struct Saved {
     pub volume: Option<sim::data::audio::Volumes>,
     /// Hitbox/debug overlay in versus matches (training always starts with it on).
     pub versus_hitboxes: bool,
+    /// Step the sim once per rendered frame when the display runs at about 60 Hz (see `play::Pace`).
+    pub lock_60: bool,
     /// Control profile (`keyboard`, `keyboard-left`, `keyboard-right`, `gamepad:<name>`) → action → controls.
     pub bindings: BTreeMap<String, BTreeMap<String, Vec<String>>>,
     /// Control profile → control options (right stick, attack + special, stick range).
@@ -50,6 +52,7 @@ impl Default for Saved {
             fullscreen: false,
             volume: None,
             versus_hitboxes: false,
+            lock_60: true,
             bindings: default(),
             controls: default(),
             layouts: default(),
