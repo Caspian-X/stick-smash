@@ -58,8 +58,8 @@
     }
   ],
   "ledge": { "r": 60, "cy": 20, "handY": 50, "reachIn": 4, "hangX": 12, "hangY": 80 },
-  "blast": { "left": -280, "right": 1560, "top": -120, "bottom": 1180 },
-  "camera": { "left": -200, "right": 1480, "top": -40, "bottom": 1100 },
+  "blast": { "left": -402, "right": 1682, "top": -384, "bottom": 1128 },
+  "camera": { "left": -89, "right": 1369, "top": -87, "bottom": 861 },
   "spawns": [
     { "x": 540, "face": 1 },
     { "x": 740, "face": -1 },

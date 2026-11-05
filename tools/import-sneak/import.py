@@ -5,34 +5,40 @@ Numbers come from the pinned attack scripts (geometry, damage, launch fields, ma
 pinned Ultimate Frame Data rows (startup, active windows, totals, landing lag, autocancel, charge frames, gadget
 timings). Hits on the root bone (`top`) convert root-space (source Z forward, Y up, 5 px/unit); limb-bone hits
 are fitted to the UFD hitbox visuals because their animated bone transforms are not in the script dump. Poses
-and gadget visuals are authored here.
+and gadget visuals are authored here. Movement uses the same 5 px/unit scale (`tools/units.py`): speeds
+units/frame → px/tick, accelerations units/frame² → px/tick², jump speeds derived from the source jump heights.
 
     just import-sneak        # python3 tools/import-sneak/import.py, then just bless
 """
 import copy
+import importlib
 import json
 import math
 import re
+import sys
 from pathlib import Path
 
 # Phase drift (`airAccelMult`) is written as a multiple of the old shared air accels (aerial 0.45, attack 0.25,
 # upSpecial 0.3). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier instead, so drift()
-# stores the value that keeps the same effective acceleration.
-AIR_ACCEL = 0.105
+# stores the ratio that keeps the same effective acceleration relative to airAccel. The ratio is scale-free, so it
+# is taken against the airAccel at the old 3.5 px/unit scale those legacy accels were written in (0.03 × 3.5).
+LEGACY_AIR_ACCEL = 0.105
 def drift(legacy, kind):
     old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind]
     mult = {'aerial': 1.0, 'attack': 0.55, 'upSpecial': 0.65}[kind]
-    return round(legacy * old / (AIR_ACCEL * mult), 4)
+    return round(legacy * old / (LEGACY_AIR_ACCEL * mult), 4)
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools'))
+units = importlib.import_module('units')
 SOURCES = ROOT / 'docs/imports/sources/sneak'
 source = json.loads((SOURCES / 'scripts.json').read_text())
 ufd = json.loads((SOURCES / 'ufd.json').read_text())
 scripts = {art: {s['Name']: s['Data'] for s in ss} for art, ss in source['scripts'].items()}
 ledger = {'sourceCommit': source['commit'], 'sourceSha256': source['sha256'],
-          'ufdSha256': ufd['pageSha256'], 'geometryScale': 5, 'rawAttacks': {}, 'fitted': {}}
+          'ufdSha256': ufd['pageSha256'], 'scale': units.SCALE, 'rawAttacks': {}, 'fitted': {}}
 
-SCALE = 5.0
+SCALE = units.SCALE
 
 
 # ---------------------------------------------------------------- script parsing
@@ -484,7 +490,7 @@ dash += fitted(row(da, 8.0)['source'], src(9), src(12), 22, 40, 22.5) + \
 ledger['fitted']['dashatk'] = {'bone': 'neck', 'pos': [22, 42, 22.5]}
 moves['dashatk'] = {'name': 'Shoulder Charge', 'phases': [phase(
     'main', 41, dash, slide=src(13), anim=snap('shoulder', 'guard', src(5), 41),
-    events=[{'at': 0, 'set_vel': {'x': 4.6}}, {'at': src(5), 'sfx': 'smash'}],
+    events=[{'at': 0, 'set_vel': {'x': 6.5714}}, {'at': src(5), 'sfx': 'smash'}],
     transitions=[{'on': 'timeout', 'to': 'end'}])]}
 
 # --- forward smash: RPG-7 blast (AttackS4); UFD charge hold 38, hit 41-43, total 73
@@ -634,7 +640,7 @@ pull = phase('pull', 21, charge=HOLD_SPECIAL, anim=[
                  {'on': 'releaseToward', 'from': src(21), 'to': 'throwSmash'},
                  {'on': 'release', 'from': src(21), 'to': 'throwMid'},
                  {'on': 'timeout', 'to': 'hold'}])
-hold = phase('hold', None, ground_speed=1.7, charge=COOK_HOLD,
+hold = phase('hold', None, ground_speed=2.4286, charge=COOK_HOLD,
              anim=[{'at': 0, 'pose': 'pullPin'}], attach={'grenade': {'show': [0, 400]}},
              transitions=[{'on': 'shieldPress', 'to': 'drop'},
                           {'on': 'releaseAway', 'to': 'throwLob'},
@@ -689,7 +695,7 @@ moves['uspec'] = {'name': 'Cypher', 'air': 'upSpecial', 'phases': [
           attach={'cypher': {'show': [0, 85]}},
           anim=[{'at': 0, 'pose': 'ride'}],
           events=[{'at': 0, 'leave_ground': True, 'sfx': 'jet'},
-                  {'from': 0, 'to': 85, 'set_vel': {'y': 3.4}}],
+                  {'from': 0, 'to': 85, 'set_vel': {'y': 3.32}}],
           transitions=[{'on': 'attackPress', 'from': src(47) - 3, 'to': 'cut'},
                        {'on': 'shieldPress', 'from': src(47) - 3, 'to': 'cut'},
                        {'on': 'land', 'to': 'landing', 'lag': 20},
@@ -753,8 +759,8 @@ def blast_hit(**kw):
 
 def grenade(name, vel, life, maxn=1, spawn=(22, 52)):
     return proj(name, spawn, vel, 9, life, blast_hit(),
-                max=maxn, gravity=0.30, maxFall=13.0,
-                bounce={'restitution': 0.45, 'minSpeed': 1.2, 'friction': 0.72, 'wallRestitution': 0.5,
+                max=maxn, gravity=0.25, maxFall=10.8333,
+                bounce={'restitution': 0.45, 'minSpeed': 1.0, 'friction': 0.72, 'wallRestitution': 0.5,
                         'maxBounces': 3, 'fizzleLife': life, 'sfx': 'land'},
                 explosion={'armTicks': 0, 'radius': 80, 'sfx': 'quake',
                            'fx': [{'type': 'burst', 'color': '#ffd27a', 'n': 16, 'speed': 5.0, 'life': 18,
@@ -769,13 +775,13 @@ def grenade(name, vel, life, maxn=1, spawn=(22, 52)):
 
 
 projectiles = {
-    'grenadeMid': grenade('Grenade', [4.6, 5.2], GRENADE_FUSE, maxn=2),
-    'grenadeStrong': grenade('Grenade (smash throw)', [10.5, 3.0], GRENADE_FUSE),
-    'grenadeLob': grenade('Grenade (underhand)', [1.8, 10.6], GRENADE_FUSE),
+    'grenadeMid': grenade('Grenade', [6.5714, 4.3333], GRENADE_FUSE, maxn=2),
+    'grenadeStrong': grenade('Grenade (smash throw)', [15.0, 2.5], GRENADE_FUSE),
+    'grenadeLob': grenade('Grenade (underhand)', [2.5714, 8.8333], GRENADE_FUSE),
     'grenadeDrop': grenade('Grenade (drop)', [0.0, 0.0], GRENADE_FUSE, spawn=(0, 30)),
     'c4': proj('C4', (0, 16), (0, 0), 10, 1600,
                {'start': 0, 'x': 0, 'y': 0, 'r': 85, 'damage': 17.0, 'bkb': 40, 'kbg': 0.9, 'angle': 80},
-               gravity=0.4, maxFall=14.0,
+               gravity=0.3333, maxFall=11.6667,
                bounce={'restitution': 0.0, 'minSpeed': 0.0, 'friction': 0.5, 'wallRestitution': 0.3,
                        'maxBounces': 8, 'fizzleLife': 1600},
                explosion={'manual': True, 'armTicks': 0, 'radius': 85, 'sfx': 'quake',
@@ -785,14 +791,14 @@ projectiles = {
                shapes=[{'shape': 'rect', 'x': -9, 'y': -6, 'w': 18, 'h': 14, 'fill': '#4a5340',
                         'stroke': '#98a37c', 'width': 1.6},
                        circle((4, 4), 2.4, '#e0442c')]),
-    'cypherShot': proj('Cypher', (0, 60), (0, 15), 15, 24,
+    'cypherShot': proj('Cypher', (0, 60), (0, 12.5), 15, 24,
                        {'start': 0, 'x': 0, 'y': 0, 'r': 15, 'damage': 6.0, 'bkb': 63, 'kbg': 0.17, 'angle': 42},
                        spawnSfx='slash',
                        shapes=[line((-8, 0), (8, 0), 5, '#8a9680'), circle((0, 0), 7, '#5d6a58', stroke='#9aa88f',
                                                                            width=1.4)]),
-    'mortarShell': proj('Mortar Shell', (34, 66), (2.4, 11.5), 9, 100,
+    'mortarShell': proj('Mortar Shell', (34, 66), (3.4286, 9.5833), 9, 100,
                         {'start': 0, 'x': 0, 'y': 0, 'r': 60, 'damage': 14.0, 'bkb': 87, 'kbg': 0.6, 'angle': 65},
-                        gravity=0.34, maxFall=13.0,
+                        gravity=0.2833, maxFall=10.8333,
                         bounce={'restitution': 0.2, 'minSpeed': 0.0, 'friction': 0.8, 'wallRestitution': 0.6,
                                 'maxBounces': 0, 'fizzleLife': 3, 'sfx': 'land'},
                         explosion={'armTicks': 0, 'radius': 60, 'sfx': 'quake',
@@ -804,11 +810,11 @@ projectiles = {
                                 line((0, -4), (0, 6), 2, '#c9b98a')]),
 }
 projectiles['nikita'] = proj(
-    'Nikita', (34, 46), (2.4, 0), 12, 200,
+    'Nikita', (34, 46), (3.4286, 0), 12, 200,
     {'start': 0, 'x': 0, 'y': 0, 'r': 45, 'damage': 14.0, 'bkb': 75, 'kbg': 0.7, 'angle': 50},
     spawnSfx='shoot',
-    article={'slot': 'sspec', 'minRelease': 0, 'autoRelease': 150, 'releaseOnUp': True, 'steer': 2.6,
-             'stages': [{'from': 0, 'startup': 0, 'frames': 100, 'vel': [4.4, 0],
+    article={'slot': 'sspec', 'minRelease': 0, 'autoRelease': 150, 'releaseOnUp': True, 'steer': 2.1667,
+             'stages': [{'from': 0, 'startup': 0, 'frames': 100, 'vel': [6.2857, 0],
                          'hitboxes': [
                              # One box: the source has a single 14% explosion, and a second outer ring
                              # would steal straight hits from the strong box.
@@ -828,12 +834,17 @@ projectiles['nikita'] = proj(
 )
 
 # ---------------------------------------------------------------- fighter document
+# UFD movement (units/frame, units/frame²) × SCALE. Jump speeds come from the ssbwiki Jump height table (units:
+# full hop 21.62, short hop 13.69, double jump 34.07). runAccel is fitted (0.62 at the old 3.5 px/unit scale).
+GRAVITY = round(0.08 * SCALE, 5)
 stats = {
     'weight': round(100 / 106, 8), 'pummelDamage': 1.3,
-    'walkSpeed': 3.087, 'runSpeed': 5.5825, 'dashSpeed': 6.16, 'dashFrames': 14, 'runAccel': 0.62,
+    'walkSpeed': round(0.882 * SCALE, 5), 'runSpeed': round(1.595 * SCALE, 5), 'dashSpeed': round(1.76 * SCALE, 5),
+    'dashFrames': 14, 'runAccel': 0.8857,
     'groundFriction': 0.82,
-    'jumpSpeed': 13.0, 'shortHopSpeed': 9.0, 'airJumpSpeed': 12.6, 'airJumpDrift': 3.455, 'airJumps': 1,
-    'airSpeed': 3.455, 'airAccel': AIR_ACCEL, 'gravity': 0.48, 'fallSpeed': 10.38, 'fastFallSpeed': 16.608,
+    **units.jumps(21.62, 13.69, 34.07, GRAVITY), 'airJumpDrift': round(0.987 * SCALE, 5), 'airJumps': 1,
+    'airSpeed': round(0.987 * SCALE, 5), 'airAccel': round(0.03 * SCALE, 5), 'gravity': GRAVITY,
+    'fallSpeed': round(1.73 * SCALE, 5), 'fastFallSpeed': round(2.768 * SCALE, 5),
 }
 doc = {
     '$schema': '../../schema/fighter.schema.json',

@@ -8,22 +8,22 @@
   "stats": {
     "weight": 0.8928571428571429,
     "pummelDamage": 1.4,
-    "walkSpeed": 2.66,
-    "runSpeed": 6.02,
-    "dashSpeed": 6.37,
+    "walkSpeed": 3.8,
+    "runSpeed": 8.6,
+    "dashSpeed": 9.1,
     "dashFrames": 15,
-    "runAccel": 0.8,
+    "runAccel": 1.1429,
     "groundFriction": 0.85,
-    "jumpSpeed": 15.5,
-    "shortHopSpeed": 9.8,
-    "airJumpSpeed": 14.5,
-    "airJumpDrift": 3.5,
+    "jumpSpeed": 15.8304,
+    "shortHopSpeed": 10.7188,
+    "airJumpSpeed": 16.7739,
+    "airJumpDrift": 5.0,
     "airJumps": 1,
-    "airSpeed": 3.5,
-    "airAccel": 0.21,
-    "gravity": 0.84,
-    "fallSpeed": 11.7,
-    "fastFallSpeed": 16.38
+    "airSpeed": 5.0,
+    "airAccel": 0.3,
+    "gravity": 0.7,
+    "fallSpeed": 9.75,
+    "fastFallSpeed": 13.65
   },
   "body": { "halfWidth": 18, "height": 74 },
   "hurtboxes": {
@@ -756,7 +756,10 @@
             }
           ],
           "events": [
-            { "at": 6, "setVel": [5.5, 0] }
+            {
+              "at": 6,
+              "setVel": { "x": 7.8571, "y": 0 }
+            }
           ],
           "slide": 10,
           "anim": [
@@ -1810,11 +1813,15 @@
             }
           ],
           "events": [
-            { "at": 0, "setVel": [0, 8], "leaveGround": true },
+            {
+              "at": 0,
+              "setVel": { "x": 0, "y": 7.86 },
+              "leaveGround": true
+            },
             {
               "from": 1,
               "to": 56,
-              "setVel": { "y": 6.5 }
+              "setVel": { "y": 6.36 }
             }
           ],
           "ledgeGrab": 0,
@@ -2164,7 +2171,7 @@
             "from": 1,
             "startup": 0,
             "frames": 70,
-            "vel": [8.0, 0.0],
+            "vel": [11.4286, 0.0],
             "hitboxes": [
               {
                 "start": 0,
@@ -2227,7 +2234,7 @@
     "poison": {
       "name": "Poison Breath",
       "spawn": [48, 86],
-      "vel": [0.9, 0],
+      "vel": [1.2857, 0],
       "r": 50,
       "life": 82,
       "max": 1,

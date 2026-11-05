@@ -76,7 +76,8 @@ the importer.
 | Masks | `FacingRestrict`, `Ground_or_Air` | `dir` (away/back), `situation` (ground/air) | converted |
 | Hitlag / shield | script `Hitlag`, `ShieldDamage` | `hitlagMult`, `shieldDmgMult` | converted |
 | Poses | SmashWiki/script swing descriptions | Authored stick-figure poses (`thrust`, `sweepLow`, `sweepUp`, `overhead`, `cast`, `castHigh`, `drain`, air poses) with per-phase attachment angle keys and `hold` so the front arm grips the blade | **fitted** |
-| Movement | UFD: walk 0.936, run 1.265, dash 1.815, air 1.05, air accel 0.08, gravity 0.089, fall 1.5, fast fall 2.4 | ×3.5 for speeds (walk 3.276, run 4.4275, dash 6.3525, air 3.675, accel 0.28); gravity/fall ×6 (0.534 / 9.0 / 14.4); jump speeds fitted so a full hop clears the built-in platforms (13.2 / 9.4 / air jump 13.0) | converted + adapted (jumps) |
+| Movement | UFD: walk 0.936, run 1.265, dash 1.815, air 1.05, air accel 0.08, gravity 0.089, fall 1.5, fast fall 2.4 | ×5 on every axis (`units.SCALE`): walk 4.68, run 6.325, dash 9.075, air speed / air-jump drift 5.25, air accel 0.4, gravity 0.445, fall 7.5, fast fall 12.0 px/tick(²). `runAccel` 0.8857 is fitted (0.62 at the retired ×3.5 scale). Superseded: ×3.5 speeds (3.276 / 4.4275 / 6.3525 / 3.675 / 0.28) and ×6 gravity/fall (0.534 / 9.0 / 14.4) | converted |
+| Jumps | ssbwiki "Jump" page, SSBU "Jump height ranking" table, https://www.ssbwiki.com/Jump, accessed 2026-11-05; unitless game units: full hop 33.21, short hop 16.02, double jump 33.21 | `units.jumps` at gravity 0.445: jump 11.935, short hop 8.2208, air jump 12.38 px/tick. Feel harness: full 166.05 px, short 80.1 px, air 166.05 px (targets ×5: 166.05 / 80.1 / 166.05). Supersedes the fitted platform-clearing speeds 13.2 / 9.4 / 13.0 | converted |
 | Weight | 95 | `100/95` reciprocal knockback multiplier | converted |
 | Pummel | 1.5 | `stats.pummelDamage` | converted |
 
@@ -252,3 +253,12 @@ Special notes:
   changes and tests).
 
 Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-robin`.
+
+Scale unification (2026-11-05): one scale, 5 px per source unit, for geometry, speeds and accelerations (was ×3.5
+horizontal speeds, ×6 gravity/fall). Stats are now UFD × `units.SCALE` and jump speeds come from source heights
+(Movement / Jumps rows). Fitted velocities converted per axis (x ×5/3.5, y ×5/6): dash attack impulse x 4.2 → 6.0;
+Elwind lifts y 12.5 / 10.5 → 11.4109 / 9.5851 (× √(5/6), same height); projectile `vel` Thunder 13 → 18.5714, Elthunder 16 → 22.8571,
+Arcthunder 9 → 12.8571, Thoron 22 → 31.4286, Arcfire bolt (9.5, 2.2) → (13.5714, 1.8333) with gravity 0.16 → 0.1333,
+flame 2.2 → 3.1429, burst 0.6 → 0.8571, Elwind blades (2.0, 15.0) / (1.4, 14.0) → (2.8571, 12.5) / (2.0, 11.6667).
+`drift()` scales the legacy shared air accels by 5/3.5 with `AIR_ACCEL`, so every phase `airAccelMult` is unchanged.
+Earlier tuning observations in this record were made at the old scale.

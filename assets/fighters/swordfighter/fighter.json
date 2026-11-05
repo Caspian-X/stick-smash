@@ -759,7 +759,7 @@
             { "at": 14, "sfx": "slash" },
             {
               "at": 14,
-              "setVel": { "x": 4 }
+              "setVel": { "x": 5.714286 }
             }
           ],
           "charge": { "frame": 8 },
@@ -1595,12 +1595,12 @@
             {
               "at": 9,
               "if": "grounded",
-              "setVel": { "x": 12 }
+              "setVel": { "x": 17.142857 }
             },
             {
               "at": 9,
               "if": "airborne",
-              "setVel": { "x": 8 }
+              "setVel": { "x": 11.428571 }
             },
             {
               "at": 9,
@@ -1776,7 +1776,7 @@
             { "at": 5, "sfx": "slash" },
             {
               "at": 0,
-              "setVel": { "x": 2.8, "y": 19 },
+              "setVel": { "x": 4, "y": 17.344548 },
               "leaveGround": true,
               "sfx": "djump"
             },
@@ -2027,5 +2027,5 @@
       "hit": { "x": 0, "y": 0, "r": 0, "damage": 5, "bkb": 35.1020408163, "kbg": 0.5142857143, "angle": 75 }
     }
   },
-  "stats": { "dashSpeed": 6.496 }
+  "stats": { "dashSpeed": 9.28 }
 }

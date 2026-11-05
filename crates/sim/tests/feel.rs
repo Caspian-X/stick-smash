@@ -15,6 +15,11 @@ fn mike(d: &GameData) -> World {
     w.fighters[1].x = 320.;
     w
 }
+/// Centre and height of Arena's left platform.
+fn platform(d: &GameData) -> (f64, f64) {
+    let p = &d.stages[0].platforms[0];
+    ((p.x1 + p.x2) / 2., p.y)
+}
 fn inp(x: i8, y: i8, buttons: u8) -> Input {
     Input { stick: (x, y), buttons, ..Default::default() }
 }
@@ -295,7 +300,8 @@ fn platforms_drop_on_a_flick_and_crouch_on_a_slow_press() {
     let on_platform = || {
         let mut w = mike(&d);
         let f = &mut w.fighters[0];
-        (f.x, f.y, f.surf, f.ground) = (480., 400., Some(d.stages[w.stage].blocks.len()), true);
+        let (x, y) = platform(&d);
+        (f.x, f.y, f.surf, f.ground) = (x, y, Some(d.stages[w.stage].blocks.len()), true);
         w
     };
     let mut w = on_platform();
@@ -320,7 +326,8 @@ fn platform_drop_does_not_reuse_down_for_fast_fall() {
     for hold in [false, true] {
         let mut w = mike(&d);
         let f = &mut w.fighters[0];
-        (f.x, f.y, f.surf, f.ground) = (480., 400., Some(d.stages[w.stage].blocks.len()), true);
+        let (x, y) = platform(&d);
+        (f.x, f.y, f.surf, f.ground) = (x, y, Some(d.stages[w.stage].blocks.len()), true);
         tick(&mut w, &d, inp(0, -127, 0));
         for _ in 0..8 {
             let actions = tick(&mut w, &d, inp(0, if hold { -127 } else { 0 }, 0));
@@ -346,7 +353,8 @@ fn held_down_passes_platforms_only_in_ordinary_fall() {
         let mut w = mike(&d);
         let mut f = w.fighters[0].clone();
         f.set_state(state);
-        (f.x, f.y, f.vy, f.ground, f.surf) = (480., 395., 10., false, None);
+        let (x, y) = platform(&d);
+        (f.x, f.y, f.vy, f.ground, f.surf) = (x, y - 5., 10., false, None);
         (f.ff, f.in_down, f.tumble) = (true, down, tumble);
         physics::integrate(&mut w, &d, 0, &mut f, false);
         assert_eq!(f.ground, lands, "{state:?} tumble {tumble} down {down}");
@@ -354,19 +362,20 @@ fn held_down_passes_platforms_only_in_ordinary_fall() {
     // Hold down before crossing, without refreshing the gesture on the collision frame.
     let mut w = mike(&d);
     airborne(&mut w);
-    (w.fighters[0].x, w.fighters[0].y, w.fighters[0].vy) = (480., 350., 1.);
+    let (x, y) = platform(&d);
+    (w.fighters[0].x, w.fighters[0].y, w.fighters[0].vy) = (x, y - 50., 1.);
     run(&mut w, &d, 6, inp(0, -127, 0));
-    assert!(w.fighters[0].y > 400. && !w.fighters[0].ground && w.fighters[0].ff);
+    assert!(w.fighters[0].y > y && !w.fighters[0].ground && w.fighters[0].ff);
 }
 
 #[test]
 fn occupied_ledges_trump_and_regrabs_need_a_landing_for_invulnerability() {
     let d = common::data();
-    let l = &d.stages[0].ledge;
+    let (l, b) = (&d.stages[0].ledge, &d.stages[0].blocks[0]);
     let mut w = common::fighters(&d, "mike", &["brawler"]);
     let near = |f: &mut sim::world::Fighter| {
         f.set_state(State::Air);
-        (f.ground, f.surf, f.vy, f.x, f.y) = (false, None, 1., 296., 520. + l.hand_y + l.cy);
+        (f.ground, f.surf, f.vy, f.x, f.y) = (false, None, 1., b.left - 4., b.top + l.hand_y + l.cy);
     };
     let grab = |w: &mut World, i: usize| {
         let mut f = w.fighters[i].clone();

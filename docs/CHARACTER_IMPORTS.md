@@ -86,22 +86,34 @@ Maintain a move ledger independent of the resulting fighter JSON. For every move
 Keep source animation frames, real gameplay frames, move-relative frames and phase-relative frames
 distinct. Account for motion-rate commands. An imported move's events and hits must agree on one timeline.
 
-Choose and document units once per import:
+Units are fixed for every import (see [DESIGN.md](DESIGN.md#scope), Units):
 
+- **One constant: 5 px per source unit**, `SCALE` in [`tools/units.py`](../tools/units.py). It converts lengths,
+  speeds (units/frame → px/tick) and accelerations/gravity (units/frame² → px/tick²) on both axes; launch speed is
+  the shared 0.15 px/tick per reference knockback unit. Generators import `units` and multiply every source
+  movement stat by `SCALE`; do not introduce a per-import speed or gravity scale.
+- **Jumps come from heights.** Take full hop, short hop and air jump heights (units) from the source (ssbwiki's
+  [jump height table](https://www.ssbwiki.com/Jump) for SSBU) and call `units.jumps(full, short, air, gravity)`
+  with the converted gravity. The sim sets `vy = -v` on the jump tick and adds gravity `g` before each later move,
+  so the rise is `n·v − g·n(n−1)/2` with `n = ceil(v/g)`, inverted exactly as `v = h/n + g(n−1)/2`; an air jump
+  applies gravity on its first tick and needs one more `g`. Check with `just feel <id>`: the measured heights equal
+  source × 5 within 1 px. Several midair jumps share one speed (King uses his first).
+- Fitted values with no source number (a projectile arc, a recovery impulse) are authored in px at this scale.
+  (Fitted values from before the unification were converted x ×5/3.5, y ×5/6, up-special rises ×√(5/6).)
 - The sim runs at 60 Hz. World Y points down; fighter-local hitbox/pose/event Y points up. X points forward
   from the feet and is mirrored by facing. See [coordinates](FORMAT.md#coordinates-and-units).
 - Root-space script offsets can be scaled directly only after verifying axis mapping. For Mike, source
-  root Z became forward X, source Y remained up, and the offensive geometry scale was 5 px/unit.
+  root Z became forward X and source Y remained up.
 - Bone-local offsets require the bone's animated transform. With no original skeleton animation, fit a
   2D hand/weapon track from visuals, transform the offsets, and label the result **fitted**. Do not silently
   apply root-space conversion to a sword-bone offset.
 - Use native capsules for capsule geometry; when an approximation is necessary, record its spacing/coverage rule. Preserve first-hitbox
   priority where sour spots, spikes or masks overlap. Hurtboxes and the stage collision body are separate.
-- Document movement scaling independently from geometry. Weight here multiplies knockback taken (lower
-  means heavier). Source knockback formulas and numeric fields are not necessarily interchangeable.
+- Weight here multiplies knockback taken (lower means heavier: 100 / source weight). Source knockback formulas
+  and numeric fields are not necessarily interchangeable.
 - Resolve special angle codes into the engine's typed hit behavior. Record unsupported codes and approximations.
 
-Use Mike's conversion ratios only as documented starting points. Current shared walking/dashing,
+Mike's fitted kinetics are not conversion constants. Current shared walking/dashing,
 buffering, DI, parry, shield and ledge behavior belongs to this game; importing another character does not
 justify changing those globals to compensate for an input calibration problem.
 

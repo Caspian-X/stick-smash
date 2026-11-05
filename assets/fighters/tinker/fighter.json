@@ -7,12 +7,12 @@
   "blurb": "A gadgeteer with bouncing fuse bombs, one proximity mine, a wind-up wrench and a sputtering jetpack. Build space before swinging.",
   "stats": {
     "weight": 0.95,
-    "runSpeed": 5.2,
-    "airSpeed": 4.3,
-    "gravity": 0.72,
-    "jumpSpeed": 15.2,
-    "airJumpSpeed": 13.8,
-    "dashSpeed": 5.824
+    "runSpeed": 7.428571,
+    "airSpeed": 6.142857,
+    "gravity": 0.6,
+    "jumpSpeed": 13.875638,
+    "airJumpSpeed": 12.597619,
+    "dashSpeed": 8.32
   },
   "ai": {
     "reach": 85,
@@ -1983,7 +1983,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 4.5, "y": 22 },
+              "setVel": { "x": 6.428571, "y": 20.08316 },
               "leaveGround": true,
               "sfx": "djump"
             },
@@ -2025,7 +2025,7 @@
         {
           "name": "coast",
           "frames": 24,
-          "fallCap": 8,
+          "fallCap": 6.666667,
           "ledgeGrab": 0,
           "anim": [
             { "at": 0, "pose": "air" }
@@ -2060,7 +2060,7 @@
     "bomb": {
       "name": "Fuse Bomb",
       "spawn": [30, 48],
-      "vel": [5.5, 6],
+      "vel": [7.857143, 5],
       "r": 10,
       "life": 60,
       "max": 2,
@@ -2081,8 +2081,8 @@
         { "shape": "rect", "x": -3, "y": 8, "w": 6, "h": 6, "fill": "#b6c9d8" },
         { "shape": "line", "from": [0, 13], "to": [5, 18], "width": 2, "color": "#ffc36b" }
       ],
-      "gravity": 0.38,
-      "maxFall": 10,
+      "gravity": 0.316667,
+      "maxFall": 8.333333,
       "bounce": {
         "restitution": 0.48,
         "minSpeed": 0,
@@ -2107,7 +2107,7 @@
     "mine": {
       "name": "Pocket Mine",
       "spawn": [18, 12],
-      "vel": [0.6, 1],
+      "vel": [0.857143, 0.833333],
       "r": 9,
       "life": 300,
       "max": 1,
@@ -2127,8 +2127,8 @@
         { "shape": "rect", "x": -12, "y": -5, "w": 24, "h": 10, "fill": "#6f7f89" },
         { "shape": "circle", "at": [0, 5], "r": 4, "fill": "#ffae61" }
       ],
-      "gravity": 0.4,
-      "maxFall": 8,
+      "gravity": 0.333333,
+      "maxFall": 6.666667,
       "bounce": {
         "restitution": 0,
         "minSpeed": 0,

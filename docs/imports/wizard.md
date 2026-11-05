@@ -72,9 +72,11 @@ GIF playback durations are not used as gameplay frame timing.
 | Root capsules | Overlapping circles spaced no farther apart than their radius; keep original id priority | Converted 2D coverage; no original depth collision |
 | Animated bones | Fitted arm/leg/hand tracks from individual UFD frames; up-tilt track updated every active frame | Fitted, not root-space treatment of bone offsets |
 | Presentation | Low circlet/hood, mantle/robe, extended kicking poses, casting arm sweep; no old staff | Fitted; spell tells follow the attacking foot or casting hand, Phantom has construction and strike shapes |
-| Walk/run/dash/air speed | UFD values × 3.5; walk 0.914, run 1.43, initial dash 1.958, air 1.092; dash lasts 16 | Converted targets; shared gait/acceleration/friction implementation remains |
-| Gravity / fall | 0.071 / 1.35 / 2.16 × 6 for gravity / fall / fast fall | Adapted world scale, independently of geometry scale |
-| Jump | Full hop 11.75, short hop 8.6, air jump 12 px/tick; air acceleration 0.065 × 3.5 | Jump speeds fitted to floaty timing and stage traversal; not copied raw source jump velocities |
+| Scale | One scale on every axis: 5 px per source unit for geometry, units/frame → px/tick and units/frame² → px/tick² (`tools/units.py`) | Converted; replaces the earlier × 3.5 horizontal / × 6 vertical movement scales |
+| Walk/run/dash/air speed | UFD × 5: walk 0.914 → 4.57, run 1.43 → 7.15, initial dash 1.958 → 9.79, air 1.092 → 5.46 (also `airJumpDrift`); dash lasts 16 | Converted targets; shared gait/acceleration/friction implementation remains |
+| Air accel / run accel | Air 0.065 × 5 → 0.325; run accel 0.4 (fitted 0.28 at the old 3.5 scale, × 5 / 3.5) | Air converted; run accel fitted |
+| Gravity / fall | UFD × 5: gravity 0.071 → 0.355, fall 1.35 → 6.75, fast fall 2.16 → 10.8 | Converted |
+| Jump | Source heights full 31.55, short 15.24, air 31.55 units ([SmashWiki Jump](https://www.ssbwiki.com/Jump), SSBU jump height ranking, accessed 2026-11-05; unitless game units) → `units.jumps` at gravity 0.355: full 10.4058, short 7.1786, air 10.7608 px/tick | Derived for the sim's discrete integration; measured (`just feel wizard`) 157.75 / 76.2 / 157.75 px = heights × 5 exactly. Supersedes the fitted 11.75 / 8.6 / 12 |
 | Weight | 100 / 85 | Converted reciprocal knockback multiplier |
 | Ordinary knockback | Unscaled source BKB, KBG / 100; shared Ultimate-style formula | Converted fields; no rage, staleness or source 1v1 multiplier; shared hitstun/DI/decay still apply |
 | Fixed knockback | Resolve source fixed equation at reference weight 100 into this engine's `setKb` reference units | Adapted; target-weight behavior is this engine's fixed-launch rule |
@@ -82,8 +84,9 @@ GIF playback durations are not used as gameplay frame timing.
 | Hitlag / masks / rehit | Script multipliers and ground/air restrictions; gameplay multi-hit spacing | Converted, with engine-wide base hitlag and shield rules |
 | Hurtboxes / stage body | Shared base static hurt rectangles and 74 px stage body | Shared approximation; limb extension is not a per-bone hurtbox reconstruction |
 
-The offensive geometry and velocity scales are deliberate world adaptations, not a claim that 5 px/unit is
-universal for every import. All resolved tuning lives in the fighter JSON.
+All content shares the 5 px/unit scale. Fitted (non-source) velocities below were authored at the old
+× 3.5 / × 6 scale and converted per axis (x and xy × 5 / 3.5, y × 5 / 6). All resolved tuning lives in the
+fighter JSON.
 
 ## Move ledger
 
@@ -115,8 +118,8 @@ ledger and retained scripts. “Converted/fitted” means converted timing/launc
 | uthrow / ThrowHi | release 30 / 49 | 11, original upward launch | Shared throw carrying pose |
 | dthrow / ThrowLw | 25,30,35,39, release 42 / 61 | Four 1.5 damage ticks, then 2% angle 104/BKB 75/growth .85 | Damage ticks affect only the held victim; release knockback sees all 8 damage |
 | nspec / SpecialN | 11–22 rehit 4, 26 / 57 | 2 inner / 1 ground-only outer multi, 5 inner / 4 outer finisher | Intangible 4–13, reflector 4–40; reflection preserves the move and scales projectile damage ×1.25, speed ×1.8 |
-| sspec / guided Din's Fire | Earliest explosion 44; maximum 70; explosion lasts 6 | 7–14 inner, 3.5–7 outer, inner first; source BKB/growth/angles | Launch at 14; minimum travel 16, auto-release age 42; 14-frame fuse after release; fighter release lag 39 |
-| uspec / Farore's Wind | First hit 6–7, disappearance 17–34, reappear hit 35–36 / 75 | 6 first; 10/7 ground or 12/8 air reappearance; inner first | Aim live stick once at 17 (neutral up); 17 travel ticks at 21 px/tick; intangible, ledge grab from disappearance; air ends helpless, landing lag 30 |
+| sspec / guided Din's Fire | Earliest explosion 44; maximum 70; explosion lasts 6 | 7–14 inner, 3.5–7 outer, inner first; source BKB/growth/angles | Launch at 14, fitted 11.4286 px/tick forward (8 at the old scale), steer 2 (2.4); minimum travel 16, auto-release age 42; 14-frame fuse after release; fighter release lag 39 |
+| uspec / Farore's Wind | First hit 6–7, disappearance 17–34, reappear hit 35–36 / 75 | 6 first; 10/7 ground or 12/8 air reappearance; inner first | Aim live stick once at 17 (neutral up); 17 travel ticks at a fitted 30 px/tick (21 at the old scale); intangible, ledge grab from disappearance; air ends helpless, landing lag 30 |
 | dspec / Phantom | Manual construction thresholds 15,20,28,33,38,45,50; free from 66; auto-launch 121 | 5.9,8.2,10.5,11.8,14.1,15.4,17.7; source angles/BKB/growth; independent attack | Second B press launches after minimum; release lag 39; fully built Phantom waits while Wizard can act |
 
 Phantom's earliest manual first hits are 26 / 32 / 38 / 46 / 59 for kick/punch/side/overhead/rising slash.
@@ -124,7 +127,8 @@ The two intermediate construction refinements alter damage without changing thei
 includes the status delay beyond raw attack-animation startup. Automatic full release uses a 6-frame windup
 and first hits at 127. The independent body is destructible by melee, direct projectiles and blasts; fitted HP
 progresses 8/10/13/15/18/20/25. Its ground/air windboxes preserve zero damage/hitlag and use shared wind force.
-Fitted forward travel increases by construction stage. Sword collision and the connected visible blade follow fitted 2D tracks: a horizontal side slash,
+Fitted forward travel increases by construction stage: 5 / 7.1429 / 10 / 10 / 12.8571 / 12.8571 / 17.1429
+px/tick (3.5 / 5 / 7 / 7 / 9 / 9 / 12 at the old scale, × 5 / 3.5). Sword collision and the connected visible blade follow fitted 2D tracks: a horizontal side slash,
 descending overhead slash and a low-to-high rising full-charge arc. Static Knight body art remains simplified.
 
 Shared mechanics/omissions: pummel remains the base game's 1.5% pummel rather than Zelda's 1.3%; defensive
@@ -176,3 +180,13 @@ Completion checks (2026-11-02):
 - Delivery: local, uncommitted changes on `char-tune`; nothing committed or pushed for this import.
 
 Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-wizard`.
+
+Unified scale (2026-11-05): the importer now emits every speed/acceleration at 5 px/unit (`tools/units.py`):
+source movement × 5, jump speeds from source heights, fitted velocities converted per axis, phase drift
+(`airAccelMult`) values unchanged (their legacy reference accels are converted with the air accel). Measured
+jump heights match the sources exactly (above). `cargo test -p sim --test wizard` passes; its warp-speed and
+dash/run expectations now use the fitted 30 px/tick and UFD × 5. Earlier tuning notes above that quote the
+fitted jump speeds or × 3.5 / × 6 values are superseded. The 510 px warp (17 × 30, was 357 px) sent
+the CPU's out-of-shield Farore's Wind, aimed horizontally from the ground, off-stage (52 self-KOs / 222 KOs in
+`stages::ranged_roster_cpu_matchups`). The shared CPU now aims a directional-warp up special up when it starts
+on the ground (`ai.rs`, SIM_VERSION -sim-32); self-KOs dropped to about 24 / 224.

@@ -236,6 +236,8 @@ fn grenade_is_pulled_held_and_thrown_by_the_stick() {
 fn grenade_bounces_and_explodes_on_its_fuse() {
     let d = common::data();
     let mut w = setup(&d, &["sneak", "brawler"]);
+    // Thrown from the left end of the stage: the arc and its bounces travel about 530 px in the fuse.
+    w.fighters[0].x = 300.;
     let id = "grenadeMid";
     let f = w.fighters[0].clone();
     sim::projectiles::spawn(&mut w, &d, 0, &f, id);
@@ -474,7 +476,8 @@ fn up_smash_shell_arcs_and_explodes_where_it_lands() {
         tick(&mut w, &d, Input::default());
     }
     assert!(w.projs[0].y < y0 - 60., "the shell arcs upward first");
-    // It comes down, detonates on the floor and hits a target standing where it lands.
+    // It comes down, detonates on the surface it lands on (the Arena's right platform from the centre) and hits
+    // a target standing where it lands.
     let mut landed = None;
     for _ in 0..120 {
         tick(&mut w, &d, Input::default());
@@ -482,7 +485,8 @@ fn up_smash_shell_arcs_and_explodes_where_it_lands() {
             if p.bounces > 0 && landed.is_none() {
                 landed = Some((p.x, p.y));
                 w.fighters[1].x = p.x;
-                w.fighters[1].y = 520.;
+                w.fighters[1].y = p.y + p.r;
+                w.fighters[1].surf = p.surf;
                 w.fighters[1].ground = true;
                 w.fighters[1].dmg = 0.;
             }

@@ -3,9 +3,7 @@
  "sourceSha256": "c8e30d3644b0b2d17e49a3ea13c935897b6546572c4c5ad2097e5f641cbdb137",
  "ufdSha256": "6833bd893ce5ba4cfab04f0a795379be8f910dab0249243261bf067bece65df3",
  "itemsSourceSha256": "bf8806de2ce69030f19904ddda022e45f3a1968c835683761e677c076cc2684e",
- "geometryScale": 5,
- "speedScale": 3.5,
- "fallScale": 6,
+ "scale": 5.0,
  "rawAttacks": {
   "jab": {
    "script": "Attack11",

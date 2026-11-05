@@ -1,20 +1,22 @@
 """Tests for tools/rescale.py against the generated schemas: `python3 -m unittest tools/rescale_test.py`."""
 
 import contextlib
+import importlib
 import io
 import json
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import rescale  # noqa: E402
+rescale = importlib.import_module('rescale')
 
 ROOT = rescale.ROOT
 SCHEMAS = rescale.load_schemas(ROOT / 'assets' / 'schema')
 
-FIGHTER = {
+FIGHTER: dict[str, Any] = {
     '$schema': '../../schema/fighter.schema.json',
     'schemaVersion': 1,
     'extends': 'base',

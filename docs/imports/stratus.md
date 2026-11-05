@@ -77,7 +77,8 @@ belong in `tools/import-stratus/import.py`.
 | Hitlag / shield | `Hitlag`, `ShieldDamage` | `hitlagMult`, `shieldDmgMult` | converted |
 | Poses | GIF silhouettes and swing descriptions | authored stick-figure poses (`thrust`, `chop`, `sweepLow`, `sweepUp`, `overhead`, `cross`, `cast`, `spin`, `rise`, `plunge`, air poses) with per-phase attachment angle keys and `hold` so the front arm grips the sword | **fitted** |
 | Sword | Buster Sword, 84 px blade | poly blade + guard + grip on `handF`, pale-blue `glow` while attacking, trail sector around the shoulder | **fitted** |
-| Movement | UFD: walk 1.155, run 2.167, dash 2.145, air 1.155, air accel 0.07, gravity 0.098, fall 1.68, fast fall 2.688 | speeds ×3.5 (walk 4.0425, run 7.5845, dash 7.5075, air 4.0425, accel 0.245); gravity/fall ×6 (0.588 / 10.08 / 16.128); jumps fitted so a full hop clears the built-in platforms (14.8 / 10.4 / air jump 13.8) | converted + adapted (jumps) |
+| Movement | UFD: walk 1.155, run 2.167, dash 2.145, air 1.155, air accel 0.07, gravity 0.098, fall 1.68, fast fall 2.688 (units/frame, units/frame²) | × 5 px/unit (`tools/units.py`): walk / air speed / air-jump drift 5.775, run 10.835, dash 10.725, air accel 0.35, gravity 0.49, fall 8.4, fast fall 13.44. `runAccel` 1.4286 is fitted (1.0 at the old ×3.5) | converted (runAccel fitted) |
+| Jumps | ssbwiki [Cloud (SSBU)](https://www.ssbwiki.com/Cloud_(SSBU)) attributes, accessed 2026-11-05 (unitless game units; the [Jump](https://www.ssbwiki.com/Jump) page's SSBU table row is garbled by rowspans): full hop 32.5, short hop 17, double jump 32.5. Limit Break's jump boost is not modeled | `units.jumps(…, gravity 0.49)`: jump 12.375, short hop 8.8837, air jump 12.865 px/tick. Feel harness measures 162.5 / 85.0 / 162.5 px = source × 5 exactly. Supersedes the earlier platform-fitted 14.8 / 10.4 / 13.8 (old scale) | converted |
 | Weight | 100 | `100/100 = 1.0` reciprocal knockback multiplier | converted |
 | Pummel | 1.3 | `stats.pummelDamage` | converted |
 | Limit wave launch | final hit 3.0, 48°, KBG 226, BKB 50 | 19.0 damage with `kbg = 0.726`, `bkb = 50` (air 15.0 / `kbg = 0.803`), fitted so the launch at 100% matches the source final hit (23.8 px/tick) while carrying the full damage total | **fitted** |
@@ -92,7 +93,7 @@ belong in `tools/import-stratus/import.py`.
 | `dspec` (default) | 13-frame Limit Charge: charge frame 6, `max: 334`, `holdAfterMax: 600`; a `restore` on phase frame 12 with `minCharge: 334` fills the pool on release | 84-frame **Finishing Touch**, cost 1 limit: 1.0% at phase 12–13 with KBG 4.31/BKB 60, and a windbox at 21–25 | SmashWiki/UFD: Limit Charge → Finishing Touch when the gauge is full |
 | `nspec` | Blade Beam, 53 frames grounded / 60 airborne, spawn phase frame 17 (UFD frame 18) | Limit Blade Beam, 60 frames, invulnerable phase 9–16, spawn frame 15, faster and 19% total | Script `SpecialN_LB`, `SpecialAirN_LB`; SmashWiki multi-hit 19% and transcendent priority |
 | `sspec` | Cross Slash: 12 + 14 + 55 frames, 4.0 / 3.0 / 3.0+3.0+6.0 hits | Limit Cross Slash: one 60-frame sequence, five hits 5.0/5.0/3.0/3.0/10.0, invulnerable phase 5–10 | Script `SpecialS{1,2,3}_LB`; UFD `10—11/15—16/21—22/28/38—39` |
-| `uspec` | Climhazzard: 9-frame thrust, 24-frame rise, optional 26-frame plunge + 26-frame landing phase | Limit Climhazzard: 9 + 36, 6.0 thrust and 7.0 rise, 21 px/tick rise against the normal 17 (fitted to the source's 1.5× height), invulnerable move frames 5–12 | Script `SpecialHi_LB`, `SpecialAirHi_LB`; SmashWiki 1.5× height and ledge grab throughout |
+| `uspec` | Climhazzard: 9-frame thrust, 24-frame rise, optional 26-frame plunge + 26-frame landing phase | Limit Climhazzard: 9 + 36, 6.0 thrust and 7.0 rise, 19.1703 px/tick rise against the normal 15.5188 (fitted to the source's 1.5× height), invulnerable move frames 5–12 | Script `SpecialHi_LB`, `SpecialAirHi_LB`; SmashWiki 1.5× height and ledge grab throughout |
 
 The gauge has no HUD meter; the pool is exposed in the snapshot like every other `charges` pool. The Limit
 Break movement buff, the 15-second expiry and gauge gain from dealing/taking damage are not modeled
@@ -112,7 +113,7 @@ less. Every row is authored by `tools/import-stratus/import.py`; the raw parsed 
 | Forward tilt | AttackS3 | 9 / 9–10 / 35 | 11.0, 361, root capsule Z 14.5→7 (r 30) | — | `main` 35 |
 | Up tilt | AttackHi3 | 6 / 6–9 / 32 | 8.0, 95°, `dir: away`, BKB 46/KBG 1.0, four boxes + a vertical root capsule | — | `main` 32; arm boxes fitted overhead |
 | Down tilt | AttackLw3 | 7 / 7–8 (9–17) / 40 | 7.0 then 6.0, 80°, BKB 80/KBG 0.75; low front capsule + lingering back-leg box | back-leg intangibility not modeled | `main` 40 |
-| Dash attack | AttackDash | 9 / 9–13 (14–18) / 45 | 11.0 then 8.0, 60°/65°, BKB 100/KBG 0.7/0.5, hitlag 1.0 | slide to source 20, forward impulse 4.2 px/tick | `windup` 8, `early` 5, `late` 5, `recovery` 27; body boxes fitted |
+| Dash attack | AttackDash | 9 / 9–13 (14–18) / 45 | 11.0 then 8.0, 60°/65°, BKB 100/KBG 0.7/0.5, hitlag 1.0 | slide to source 20, forward impulse 6.0 px/tick | `windup` 8, `early` 5, `late` 5, `recovery` 27; body boxes fitted |
 | Forward smash | AttackS4 | 19 / 24 / 28 / 66, charge hold 5 (phase 4) | drag hits 3.0 (FKB 25/10, ground/air pair), 3.0/2.0/4.0 at 24, clean 13.0/12.0 at 28 (361, BKB 42/KBG 1.15, hitlag 1.8) | three windows, each its own phase so the drag hits can combo into the clean hit | `windup` 18, `drag1` 1, `link1` 4, `drag2` 1, `link2` 3, `clean` 1, `recovery` 38 |
 | Up smash | AttackHi4 | 12 / 13–14 / 15–16 / 45, charge hold 5 (phase 4) | 13.0 (rows persist across the whole window) then 12.0/11.0 then 8.0, 83°, BKB 40/KBG 1.05/0.96/0.9, hitlag 1.2 | the 13.0 rows stay up while the 12.0/11.0 are added, then every row becomes the 8.0 tier | `windup` 11, `hits` 3, `late` 2, `recovery` 29 |
 | Down smash | AttackLw4 | 8 / 8–9 and 21–23 / 49, charge hold 2 (phase 1) | front 3.0 ×4 (air/ground pairs, FKB 90/85), back 11.0 at 35°, BKB 35/KBG 0.92, `dir: back` | front then back are separate phases (both can hit) | `windup` 7, `front` 3, `link` 10, `back` 4, `recovery` 25 |
@@ -129,12 +130,12 @@ less. Every row is authored by `tools/import-stratus/import.py`; the raw parsed 
 | Down throw | ThrowLw | release 18 / 43 | 7.0 at 122°, BKB 40/KBG 1.10 | shared | — |
 | Neutral special | SpecialN / SpecialAirN | 18 / 53 ground, 60 air | wave 8.0 ground / 6.4 air at 55°, BKB 38/KBG 0.60, shield damage 0.5×; ground windbox on 15–16 | spawn at source 18 | `startup` 18 → `groundTail` 35 / `airTail` 42 |
 | Side special | SpecialS1–3 | 10 / 40; 2 / 31; 2,11,25 / 55 | 4.0 (75°/112°/autolink), 3.0 (95°/60°), 3.0+3.0 fixed-KB then 6.0 at 50° | auto-chained at the earliest cancel | `slash1` 12 → `slash2` 14 → third slash: `windup` 1, `hit1` 2, `link` 7, `hit2` 2, `link2` 12, `hit3` 2, `recovery` 29 |
-| Up special | SpecialHi / Hi2 / Hi2Landing | 7 / 10 / 20+ | 3.0 (FKB 80) thrust, 4.0 rise (FKB 121 then BKB 98/50), 4.5 plunge (270° air spike / 45°), 3.5 landing hit at 64° | rise 17 px/tick from move frame 8 (fitted so the rise clears a full hop; Limit 21), ledge grab from source 7; special press from move frame 19 (Limit 32) starts the plunge; otherwise helpless | `thrust` 9, rise split into 1 + 1 + 5 + 17 (Limit 1 + 1 + 4 + 30), `plunge` 26 (hitbox persists to landing), `landHit` 26 |
+| Up special | SpecialHi / Hi2 / Hi2Landing | 7 / 10 / 20+ | 3.0 (FKB 80) thrust, 4.0 rise (FKB 121 then BKB 98/50), 4.5 plunge (270° air spike / 45°), 3.5 landing hit at 64° | rise 15.5188 px/tick from move frame 8 (fitted so the rise clears a full hop; Limit 17.5), ledge grab from source 7; special press from move frame 19 (Limit 32) starts the plunge; otherwise helpless | `thrust` 9, rise split into 1 + 1 + 5 + 17 (Limit 1 + 1 + 4 + 30), `plunge` 26 (hitbox persists to landing), `landHit` 26 |
 | Down special | SpecialLw | — | no hitboxes | charge 6, max 334, restore at phase 12 when the hold reached the cap; shield cancels | `charge` 13 |
 | Limit: Finishing Touch | SpecialLw with `LB_SCENE` | 12 / 13–14, 22–26 / 84 | front 1.0 at 80° (BKB 60/KBG 4.31) on 11–14, rear 1.0 (KBG 4.06) on 21–25, plus a centre windbox (`dir: away`) that pushes both sides | the front and rear sweeps are separate phases | `windup` 11, `front` 4, `link` 6, `rear` 5, `recovery` 58 |
 | Limit: Blade Beam | SpecialN_LB / AirN_LB | 16 / — / 60 | 19.0 ground / 15.0 air total (fitted single contact), invulnerable 10–17 | spawn phase 15, invuln phase 9 | `main` 60 |
 | Limit: Cross Slash | SpecialS1–3_LB | 10 / 15 / 21 / 28 / 38 | 5.0, 5.0, 3.0, 3.0, 10.0 (50°, BKB 30/KBG 1.47), invulnerable 6–11 | one sequence, no inputs; each window is its own phase | 11 phases from `windup` 9 to `recovery` 21 (total 60) |
-| Limit: Climhazzard | SpecialHi_LB / AirHi_LB | 7 / 10 / — | 6.0 thrust, 7.0 rise (88°, BKB 50/KBG 1.42), invulnerable 5–12 | 21 px/tick, follows up from move frame 32 (source 33) | `thrust` 9, rise split 1 + 1 + 4 + 30 (36) |
+| Limit: Climhazzard | SpecialHi_LB / AirHi_LB | 7 / 10 / — | 6.0 thrust, 7.0 rise (88°, BKB 50/KBG 1.42), invulnerable 5–12 | 19.1703 px/tick, follows up from move frame 32 (source 33) | `thrust` 9, rise split 1 + 1 + 4 + 30 (36) |
 
 Special notes:
 - The Limit pool is spent by the variant's first phase `cost`, at move start. An interrupted Limit special still
@@ -169,7 +170,7 @@ Special notes:
   and nothing at 220 px.
 - Shared-behaviour coverage: `tests/content.rs` roster expectation; `tests/stages.rs`
   `new_fighter_cpu_matchups` (4 stages, 3 opponents, 4 seeds) and the automatic
-  `platforms_are_in_full_jump_reach` / `every_ledge_is_recoverable` / `cpu_matches_finish_on_every_stage` sweeps.
+  `platforms_are_in_jump_reach` / `every_ledge_is_recoverable` / `cpu_matches_finish_on_every_stage` sweeps.
   Observed: arena 8/12 wins, 35 KOs, 4 self-KOs; citadel 11/12, 32, 0; foundry 11/12, 35, 0; isles 12/12, 34,
   0 (42/48 wins, 136 KOs, 4 self-KOs). Every match finished.
 - `just balance 4 stratus` (4 seeds, every opponent and stage, 256 matches): **0 unfinished**, 211 wins,
@@ -227,3 +228,13 @@ The late-window regression reads `sources/stratus/ufd.json` directly: up smash's
 up air ends on 23, and down air ends on 39. Engine endpoints are each one less; no phase split extends them.
 
 Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-stratus`.
+
+Unified 5 px/unit scale (2026-11-05): movement stats are UFD source × 5 and jump speeds come from the source
+jump heights (see Conversion rules); the earlier ×3.5 / ×6 stats and fitted jump speeds are superseded. Fitted
+velocities in the generator were converted per axis (x ×5/3.5, y ×5/6): dash attack impulse 4.2 → 6.0,
+Blade Beam 11 / 9 → 15.7143 / 12.8571, Limit Blade Beam 14 / 11 → 20.0 / 15.7143, Climhazzard rise 17 / 21 →
+15.5188 / 19.1703 (× √(5/6), same height), plunge −14 → −11.6667 (capped by the 8.4 fall speed). `airAccelMult` ratios are unchanged
+(scale-free). Feel harness (`FEEL_FIGHTER=stratus … feel_report`): full 162.5 px (apex tick 26), short 85.0 px
+(19), double jump 162.5 px (26). Test change: the lingering-plunge check starts at x 1000; from the centre the
+plunge now lands on the rebuilt Arena's top platform (y 248) before its hitbox opens (this failed with the
+old content too).

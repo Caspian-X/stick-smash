@@ -6,19 +6,24 @@ Ultimate Frame Data rows (startup, active windows, totals, landing lag, autocanc
 weapon-bone geometry is *fitted* to the stick-figure poses authored below, not projected from Nintendo's
 skeleton. Run `just import-robin`.
 """
-import copy, hashlib, json, math, re
+import copy, hashlib, importlib, json, math, re, sys
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools'))
+units = importlib.import_module('units')
+SCALE = units.SCALE  # px per source unit: geometry, speeds (units/frame) and accelerations (units/frame²)
+
 # Phase drift (`airAccelMult`) is written as a multiple of the old shared air accels (aerial 0.45, attack 0.25,
-# upSpecial 0.3). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier instead, so drift()
-# stores the value that keeps the same effective acceleration.
-AIR_ACCEL = 0.28
+# upSpecial 0.3, px/tick² at the retired 3.5 px/unit speed scale, hence × SCALE / 3.5). Under `movement.ultimate`
+# it multiplies airAccel × the kind's multiplier instead, so drift() stores the value that keeps the same
+# effective acceleration.
+AIR_ACCEL = round(0.08 * SCALE, 5)  # UFD air acceleration 0.08
 def drift(legacy, kind):
-    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind]
+    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind] * SCALE / 3.5
     mult = {'aerial': 1.0, 'attack': 0.55, 'upSpecial': 0.65}[kind]
     return round(legacy * old / (AIR_ACCEL * mult), 4)
 
-ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / 'docs/imports/sources/throbbin'
 source = json.loads((SOURCES / 'scripts.json').read_text())
 ufd = json.loads((SOURCES / 'ufd.json').read_text())
@@ -121,8 +126,6 @@ def num(a, k, default=0):
 
 
 # ---------------------------------------------------------------- conversion
-SCALE = 5.0
-
 
 def frame(source_frame):
     """Source frame -> phase frame. The move's first tick is source frame 1 = phase frame 0."""
@@ -505,7 +508,7 @@ moves['dashatk'] = {'name': 'Rush Cut', 'phases': [phase(
     slide=frame(20), anim=swing('lunge', 7, 20, 41),
     attach={'sword': {'angle': [[0, 130], [frame(8), 10], [frame(18), 20], [frame(30), 95], [frame(41), 95]],
                       'scale': [[0, BRONZE]]}},
-    events=[{'at': frame(8), 'sfx': 'slash'}, {'at': 0, 'setVel': {'x': 4.2}}])]}
+    events=[{'at': frame(8), 'sfx': 'slash'}, {'at': 0, 'setVel': {'x': 6.0}}])]}
 
 # --- smashes: Levin when the sword has a use left, otherwise the Bronze fallback
 def smash(slot, name, total, charge_frame, levin, bronze, pose, angle_keys, anim=None):
@@ -751,7 +754,7 @@ def elwind(first_blade: bool, second_blade: bool):
         rise1['events'] = [{'at': 0, 'spawn': 'elwind1', 'sfx': 'slash', 'leaveGround': True,
                             'fx': [{'type': 'ring', 'x': 26, 'y': 24, 'r': 10, 'grow': 6, 'life': 10,
                                     'color': '#8af0bf'}]},
-                           {'at': 0, 'setVel': {'y': 12.5}}]
+                           {'at': 0, 'setVel': {'y': 11.4109}}]
     rise2 = phase('rise2', frame(85) - frame(28) + 1, airAccelMult=drift(0.4, 'upSpecial'), anim=[{'at': 0, 'pose': 'castHigh'}],
                   attach=stowed(), ledgeGrab=0,
                   transitions=[{'on': 'land', 'to': 'landing', 'lag': 25}, wait('helpless')])
@@ -760,7 +763,7 @@ def elwind(first_blade: bool, second_blade: bool):
         rise2['events'] = [{'at': 0, 'spawn': 'elwind2', 'sfx': 'slash',
                             'fx': [{'type': 'ring', 'x': 26, 'y': 24, 'r': 10, 'grow': 6, 'life': 10,
                                     'color': '#8af0bf'}]},
-                           {'at': 0, 'setVel': {'y': 10.5}}]
+                           {'at': 0, 'setVel': {'y': 9.5851}}]
     return startup + [rise1, rise2]
 
 
@@ -837,25 +840,25 @@ def fire_hit(a, damage=None, **kw):
 
 
 tshoot = {s['Name']: args(re.search(r'ATTACK\((.*)\)', s['Data'])[1]) for s in source['scripts']['reflet_thunder']}
-p_thunder = projectile('Thunder', (46, 56), (13, 0), 7.5, 16, fire_hit(tshoot['Shoot0']))
-p_elthunder = projectile('Elthunder', (46, 58), (16, 0), 17.5, 20, fire_hit(tshoot['Shoot1']))
+p_thunder = projectile('Thunder', (46, 56), (18.5714, 0), 7.5, 16, fire_hit(tshoot['Shoot0']))
+p_elthunder = projectile('Elthunder', (46, 58), (22.8571, 0), 17.5, 20, fire_hit(tshoot['Shoot1']))
 arcthunder_final = {'Damage': '8.0', 'Angle': '45', 'BKB': '85', 'KBG': '85', 'Size': '3.0', 'FKB': '0',
                      'FacingRestrict': 'F', 'Ground_or_Air': 'GA', 'Effect': 'elec', 'Hitlag': '0.6'}
-p_arcthunder = projectile('Arcthunder', (46, 58), (9, 0), 16, 26, fire_hit(arcthunder_final),
+p_arcthunder = projectile('Arcthunder', (46, 58), (12.8571, 0), 16, 26, fire_hit(arcthunder_final),
                           explosion={'armTicks': 8, 'proximity': 46, 'radius': 54, 'sfx': 'quake',
                                      'fx': [{'type': 'burst', 'color': '#7fd8ff', 'n': 14, 'speed': 4.5,
                                              'life': 18, 'size': 4.5}]})
 tron = {'name': 'Thoron', 'Damage': '2.6', 'Angle': '45', 'BKB': '75', 'KBG': '191', 'Size': '3.0', 'FKB': '0',
         'FacingRestrict': 'F', 'Ground_or_Air': 'GA', 'Effect': 'elec', 'Hitlag': '1.0'}
-p_thoron = projectile('Thoron', (46, 58), (22, 0), 15, 46, fire_hit(tron, rehit=4))
+p_thoron = projectile('Thoron', (46, 58), (31.4286, 0), 15, 46, fire_hit(tron, rehit=4))
 gf = {s['Name']: args(re.search(r'ATTACK\((.*)\)', s['Data'])[1]) for s in source['scripts']['reflet_gigafire']}
-arcfire_bolt = projectile('Arcfire', (44, 68), (9.5, 2.2), 9, 30, fire_hit(gf['Shoot0']), gravity=0.16,
+arcfire_bolt = projectile('Arcfire', (44, 68), (13.5714, 1.8333), 9, 30, fire_hit(gf['Shoot0']), gravity=0.1333,
                           spawnSfx='shoot')
 flame = fire_hit(gf['Burn'])
 flame['rehit'] = 8
-arcfire_flame = projectile('Arcfire Flame', (96, 22), (2.2, 0), 19, 42, flame)
+arcfire_flame = projectile('Arcfire Flame', (96, 22), (3.1429, 0), 19, 42, flame)
 ard = args(re.search(r'ATTACK\(ID=1,(.*)\)', source['scripts']['reflet_gigafire'][3]['Data'])[1])
-arcfire_burst = projectile('Arcfire Burst', (96, 22), (0.6, 0), 26, 12, fire_hit(ard))
+arcfire_burst = projectile('Arcfire Burst', (96, 22), (0.8571, 0), 26, 12, fire_hit(ard))
 arcfire_burst['spawnSfx'] = 'quake'
 ew = {s['Name']: s['Data'] for s in source['scripts']['reflet_elwind']}
 e1 = args(re.search(r'ATTACK\(ID=1,(.*)\)', ew['Shoot0'])[1])
@@ -864,8 +867,8 @@ e2 = args(re.search(r'ATTACK\(ID=0,(.*)\)', ew['Shoot1'])[1])
 # one projectile, so the spike is imported and the body box is dropped (recorded as an adaptation).
 elwind_early = {'Damage': '7.0', 'Angle': '255', 'BKB': '10', 'KBG': '100', 'Size': '4.0', 'FKB': '0',
                 'FacingRestrict': 'F', 'Ground_or_Air': 'GA', 'Effect': 'cutup', 'Hitlag': '1.0'}
-p_elwind1 = projectile('Elwind 1', (26, 30), (2.0, 15.0), 20, 24, fire_hit(elwind_early), spawnSfx='slash')
-p_elwind2 = projectile('Elwind 2', (26, 30), (1.4, 14.0), 20, 24, fire_hit(e2, damage=None), spawnSfx='slash')
+p_elwind1 = projectile('Elwind 1', (26, 30), (2.8571, 12.5), 20, 24, fire_hit(elwind_early), spawnSfx='slash')
+p_elwind2 = projectile('Elwind 2', (26, 30), (2.0, 11.6667), 20, 24, fire_hit(e2, damage=None), spawnSfx='slash')
 
 # ---------------------------------------------------------------- spell visuals
 # The imported hit data is invisible on its own: give each article the shape the source draws. Colors and
@@ -953,6 +956,8 @@ for key, p in [('thunder', p_thunder), ('elthunder', p_elthunder), ('arcthunder'
     projectiles[key] = {k: v for k, v in p.items() if v is not None}
 
 # ---------------------------------------------------------------- fighter document
+GRAVITY = round(0.089 * SCALE, 5)  # UFD gravity 0.089
+JUMP_HEIGHTS = (33.21, 16.02, 33.21)  # SSBU full hop, short hop, double jump (units; ssbwiki "Jump")
 props = lambda *xs: list(xs)
 doc = {
     '$schema': '../../schema/fighter.schema.json',
@@ -964,10 +969,13 @@ doc = {
              'wall opponents out with Arcfire, recover with Elwind and drain health with Nosferatu.',
     'stats': {
         'weight': round(100 / 95, 8), 'pummelDamage': 1.5,
-        'walkSpeed': 3.276, 'runSpeed': 4.4275, 'dashSpeed': 6.3525, 'dashFrames': 15, 'runAccel': 0.62,
+        # UFD movement × SCALE; runAccel is fitted (0.62 at the old 3.5 px/unit speed scale).
+        'walkSpeed': round(0.936 * SCALE, 5), 'runSpeed': round(1.265 * SCALE, 5),
+        'dashSpeed': round(1.815 * SCALE, 5), 'dashFrames': 15, 'runAccel': 0.8857,
         'groundFriction': 0.85,
-        'jumpSpeed': 13.2, 'shortHopSpeed': 9.4, 'airJumpSpeed': 13.0, 'airJumpDrift': 3.675, 'airJumps': 1,
-        'airSpeed': 3.675, 'airAccel': AIR_ACCEL, 'gravity': 0.534, 'fallSpeed': 9.0, 'fastFallSpeed': 14.4,
+        **units.jumps(*JUMP_HEIGHTS, GRAVITY), 'airJumpDrift': round(1.05 * SCALE, 5), 'airJumps': 1,
+        'airSpeed': round(1.05 * SCALE, 5), 'airAccel': AIR_ACCEL, 'gravity': GRAVITY,
+        'fallSpeed': round(1.5 * SCALE, 5), 'fastFallSpeed': round(2.4 * SCALE, 5),
     },
     'charges': [
         {'id': 'levin', 'uses': 8, 'recharge': 600, 'emptySfx': 'toss', 'refillSfx': 'ready'},

@@ -368,3 +368,8 @@ balance-original seeds="16" first="1":
    some fighters relative to their peers.
 6. Re-run the matrix including King once the Dedede import is final, and re-check the golden hash and
    `ranged_roster_cpu_matchups` in the committed combined tree.
+
+**Superseded scale (2026-11-05).** Every number above was measured before the 5 px/unit unification (DESIGN.md,
+Units): horizontal speeds ×5/3.5, gravity ×5/6, original jump heights kept, imports' jumps from source heights,
+launchSpeed 0.14 → 0.15 and Arena rebuilt as Battlefield. The matrix has not been re-run; rerun
+`just balance-original` before relying on these results.

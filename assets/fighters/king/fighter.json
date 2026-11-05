@@ -8,22 +8,22 @@
   "stats": {
     "weight": 0.78740157,
     "pummelDamage": 1.6,
-    "walkSpeed": 3.6015,
-    "runSpeed": 5.236,
-    "dashSpeed": 6.3525,
+    "walkSpeed": 5.145,
+    "runSpeed": 7.48,
+    "dashSpeed": 9.075,
     "dashFrames": 15,
-    "runAccel": 0.72,
+    "runAccel": 1.0286,
     "groundFriction": 0.86,
-    "jumpSpeed": 13.5,
-    "shortHopSpeed": 9.4,
-    "airJumpSpeed": 13.0,
-    "airJumpDrift": 3.8,
+    "jumpSpeed": 12.3798,
+    "shortHopSpeed": 8.5725,
+    "airJumpSpeed": 12.0006,
+    "airJumpDrift": 5.4286,
     "airJumps": 4,
-    "airSpeed": 2.5725,
-    "airAccel": 0.175,
-    "gravity": 0.582,
-    "fallSpeed": 11.7,
-    "fastFallSpeed": 18.72
+    "airSpeed": 3.675,
+    "airAccel": 0.25,
+    "gravity": 0.485,
+    "fallSpeed": 9.75,
+    "fastFallSpeed": 15.6
   },
   "body": { "halfWidth": 18, "height": 74 },
   "hurtboxes": {
@@ -1340,7 +1340,7 @@
             { "at": 22, "sfx": "smash" },
             {
               "at": 11,
-              "setVel": { "x": 1.2 }
+              "setVel": { "x": 1.7143 }
             }
           ],
           "anim": [
@@ -1516,7 +1516,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 4.5 }
+              "setVel": { "x": 6.4286 }
             },
             { "at": 25, "sfx": "whack" },
             { "at": 41, "sfx": "whack" }
@@ -1597,7 +1597,7 @@
             { "at": 39, "sfx": "whack" },
             {
               "at": 39,
-              "setVel": { "x": 2 }
+              "setVel": { "x": 2.8571 }
             },
             {
               "at": 43,
@@ -2252,7 +2252,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 5 }
+              "setVel": { "x": 7.1429 }
             },
             { "at": 10, "sfx": "grab" }
           ],
@@ -2407,7 +2407,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 0, "y": 22 },
+              "setVel": { "x": 0, "y": 20.0832 },
               "leaveGround": true,
               "invuln": 4,
               "sfx": "djump",
@@ -2437,7 +2437,7 @@
             { "at": 0, "pose": "win" }
           ],
           "events": [
-            { "from": 0, "capFall": 12 }
+            { "from": 0, "capFall": 10 }
           ],
           "transitions": [
             { "on": "falling", "to": "plungeArmor" },
@@ -2625,7 +2625,7 @@
         },
         {
           "name": "charge",
-          "groundSpeed": 1.6,
+          "groundSpeed": 2.2857,
           "charge": { "frame": 0, "max": 136, "button": "special", "jet": true },
           "attach": {
             "hammer": { "angle": [[0, 105], [12, 102], [24, 108], [36, 102.5], [48, 107], [60, 103.5], [136, 105]] }
@@ -2779,7 +2779,7 @@
     "gordo": {
       "name": "Gordo",
       "spawn": [52, 60],
-      "vel": [5.5, 7],
+      "vel": [7.8571, 5.8333],
       "r": 19,
       "life": 140,
       "max": 1,
@@ -2796,19 +2796,19 @@
       },
       "spawnSfx": "toss",
       "fullSfx": "bonk",
-      "gravity": 0.4,
-      "maxFall": 12,
-      "reflectVy": 4,
+      "gravity": 0.3333,
+      "maxFall": 10,
+      "reflectVy": 3.3333,
       "bounce": {
         "restitution": 0.7,
-        "minSpeed": 4,
+        "minSpeed": 3.3333,
         "friction": 0.85,
         "maxBounces": 3,
         "fizzleLife": 20,
         "wallRestitution": 0.6,
         "sfx": "bonk"
       },
-      "bat": { "speed": 10, "vy": 5, "life": 120, "cooldown": 12, "hitlag": 4 },
+      "bat": { "speed": 14.2857, "vy": 4.1667, "life": 120, "cooldown": 12, "hitlag": 4 },
       "spin": -3.438,
       "shapes": [
         {
@@ -2849,14 +2849,14 @@
     "starR": {
       "name": "Star",
       "spawn": [36, 6],
-      "vel": [7, -1],
+      "vel": [10, -0.8333],
       "r": 11,
       "life": 16,
       "max": 1,
       "hit": { "x": 0, "y": 0, "r": 11, "damage": 5, "bkb": 8, "kbg": 0.65, "angle": 70 },
       "spawnSfx": "toss",
-      "gravity": 0.25,
-      "maxFall": 8,
+      "gravity": 0.2083,
+      "maxFall": 6.6667,
       "shapes": [
         { "shape": "star", "at": [0, 0], "r": 11, "fill": "#ffe680" }
       ]
@@ -2864,14 +2864,14 @@
     "starL": {
       "name": "Star",
       "spawn": [-36, 6],
-      "vel": [-7, -1],
+      "vel": [-10, -0.8333],
       "r": 11,
       "life": 16,
       "max": 1,
       "hit": { "x": 0, "y": 0, "r": 11, "damage": 5, "bkb": 8, "kbg": 0.65, "angle": 70 },
       "spawnSfx": "toss",
-      "gravity": 0.25,
-      "maxFall": 8,
+      "gravity": 0.2083,
+      "maxFall": 6.6667,
       "shapes": [
         { "shape": "star", "at": [0, 0], "r": 11, "fill": "#ffe680" }
       ]

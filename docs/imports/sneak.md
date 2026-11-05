@@ -53,7 +53,7 @@ confirms the duration convention below. The grenade, Cypher, C4, mortar and Niki
 | Down smash windows | UFD: 8–10 and 20–22 | Script: frames 12–13 and 23–24 with motion-rate 0.5 halves | UFD (gameplay frames). The script's motion-rate note is why the raw animation frames run late. |
 | Up tilt damage windows | UFD: 14.5 on 6–8, 13.5 on 9–13 | Script: four successive attack rows at 6, 7, 8, 9-13 | Identical after conversion; the script's per-frame positions are kept for the three 14.5 windows. |
 | Up throw damage | UFD: 7.0 / 4.0 | Script: a 7% catch-only box at frame 22 and a 4% absolute throw at frame 23 | Merged into one 11% release hit (the engine's throw model has one release hit); release frame 23 → engine 22. |
-| Cypher rise | UFD/SmashWiki: armour 7–94, cancel from frame 47, ride timeout at frame 89 | script: `SpecialAirHiHang` enables cut at 41, timeout at 89 | Cancel from engine frame 46 (source 47), ride 86 ticks from source frame 5; the 3.4 px/tick climb is fitted to the recovery distance, not extracted. |
+| Cypher rise | UFD/SmashWiki: armour 7–94, cancel from frame 47, ride timeout at frame 89 | script: `SpecialAirHiHang` enables cut at 41, timeout at 89 | Cancel from engine frame 46 (source 47), ride 86 ticks from source frame 5; the 3.32 px/tick climb (3.4 at the old ×6 vertical scale) is fitted to the recovery distance, not extracted. |
 
 ## Conversion rules
 
@@ -66,7 +66,8 @@ confirms the duration convention below. The grenade, Cypher, C4, mortar and Niki
 | Launch fields | source BKB/KBG/FKB, angle codes | `bkb` unscaled, `kbg = KBG/100`; 361 → `sakurai`, 366–368 → `autolink`, 269/270 → `spike` (−89/−90°); FKB → fixed-launch `setKb` with the shared `((1 + FKB/2) × 1.4 + 18) × KBG/100 + BKB` fit | converted / adapted (FKB) |
 | Masks | `FacingRestrict`, `Ground_or_Air` | `dir` (away/back), `situation` (ground/air) | converted |
 | Hitlag / shield | script `Hitlag`, `ShieldDamage` | `hitlagMult`, `shieldDmgMult` (grenade 9%, shield −4.5 → 0.5×) | converted |
-| Movement | UFD: weight 106, walk 0.882, run 1.595, dash 1.76, air 0.987, air accel 0.03, gravity 0.080, fall 1.73, fast fall 2.768 | speeds ×3.5 (walk 3.087, run 5.5825, dash 6.16, air 3.455, accel 0.105); gravity/fall ×6 (0.48 / 10.38 / 16.608); jumps fitted to clear the built-in platforms (13.0 / 9.0 / air 12.6) | converted + adapted (jumps) |
+| Movement | UFD: weight 106, walk 0.882, run 1.595, dash 1.76, air 0.987, air accel 0.03, gravity 0.080, fall 1.73, fast fall 2.768 (units/frame, units/frame²) | × 5 px/unit (`tools/units.py`): walk 4.41, run 7.975, dash 8.8, air speed / air-jump drift 4.935, air accel 0.15, gravity 0.4, fall 8.65, fast fall 13.84. `runAccel` 0.8857 is fitted (0.62 at the old ×3.5) | converted (runAccel fitted) |
+| Jumps | ssbwiki [Jump](https://www.ssbwiki.com/Jump), SSBU "Jump height ranking" table, accessed 2026-11-05 (unitless game units): full hop 21.62, short hop 13.69, double jump 34.07 (the table's 0.55 × full-hop "initial height" 11.891 confirms the row is not shifted) | `units.jumps(…, gravity 0.4)`: jump 9.1, short hop 7.2026, air jump 11.8741 px/tick. Feel harness measures 108.1 / 68.45 / 170.35 px = source × 5 exactly. Supersedes the earlier platform-fitted 13.0 / 9.0 / 12.6 (old scale) | converted |
 | Weight | 106 | `100/106` reciprocal knockback multiplier | converted |
 | Pummel | 1.3 | `stats.pummelDamage` | converted |
 | Poses | None (no animation files) | Authored stick-figure poses and a small state-clip set; the rest inherit `base` | **fitted** |
@@ -79,25 +80,25 @@ All four gadget identities are content data; no code dispatches on fighter or mo
 limit (source: Snake may cook and walk while holding; elapsed cooking is omitted here). While held the grenade is an attached prop.
 The throw is selected on release:
 
-| Input on release | Projectile | Throw animation | Arc (vel, gravity 0.30) |
+| Input on release | Projectile | Throw animation | Arc (vel px/tick, gravity 0.25) |
 | --- | --- | --- | --- |
-| stick away from facing (`releaseAway`) | `grenadeLob` | 25 frames, spawn on source frame 9 | underhand lob `[1.8, 10.6]`, lands close |
-| stick toward facing (`releaseToward`) | `grenadeStrong` | 31 frames, spawn on source frame 10 | flat strong throw `[10.5, 3.0]` |
-| neutral (`release`) or a fresh attack press | `grenadeMid` | 27 frames, spawn on source frame 8 | mid arc `[4.6, 5.2]` |
+| stick away from facing (`releaseAway`) | `grenadeLob` | 25 frames, spawn on source frame 9 | underhand lob `[2.5714, 8.8333]`, lands close |
+| stick toward facing (`releaseToward`) | `grenadeStrong` | 31 frames, spawn on source frame 10 | flat strong throw `[15.0, 2.5]` |
+| neutral (`release`) or a fresh attack press | `grenadeMid` | 27 frames, spawn on source frame 8 | mid arc `[6.5714, 4.3333]` |
 
 All four share the source fuse, which starts at the unpin: the hold phase accumulates charge ticks and each
 projectile's `chargeScale.life` is `-1/129`, so the thrown fuse is `129 − held` ticks (clamped to one) and the
 explosion lands 150 ticks after the pin was pulled. Holding past 129 ticks therefore throws a grenade that
 detonates immediately, as in the source. Cooking keeps the fighter in the hold phase; a shield press still
 drops the grenade and attacking throws it, and a hit cancels the hold (see the tests). Grenades bounce
-(restitution 0.45, friction 0.72, max 3 bounces, wall restitution 0.5) and detonate on fuse expiry with a
+(restitution 0.45, friction 0.72, min speed 1.0, max 3 bounces, wall restitution 0.5; fall cap 10.8333) and detonate on fuse expiry with a
 fuse-only `explosion` (`armTicks: 0`, no proximity, radius 80 px, 9% at angle 80, BKB 60, KBG 0.69, 0.5× shield
 damage). The `max` field is per projectile id, so the source's two-grenade cap is modelled as two mid-arc plus
 one of each other arc (four in play at most).
 
 **C4 (down special).** A charge pool `c4` (one use, no recharge) drives a `variants` timeline: with the use
 available the down special plants, spending it; with the pool empty the same slot presses the switch. The
-plant is a zero-velocity projectile that falls 16 px and settles on the floor (gravity 0.4, zero-restitution
+plant is a zero-velocity projectile that falls 16 px and settles on the floor (gravity 0.3333, fall cap 11.6667, zero-restitution
 bounce). Its `explosion` is `manual` with `armTicks: 0` and radius 85 px; its blast hit is 17% at angle 80,
 BKB 40, KBG 0.9. The detonate timeline's frame 24 event runs `detonate: ["c4"]` and `restore` in one action
 set, so pressing the switch again is possible immediately. An empty `detonate` list fires only *manual*
@@ -107,21 +108,21 @@ the next press performs the (empty) switch animation, which restores the pool.
 
 **Nikita (side special).** An `article` on the `sspec` slot: the launcher startup is 41 frames, then the
 `guide` phase spawns the missile and keeps the fighter locked in the special (source: defenceless while
-guiding). While unreleased the missile travels forward at 2.4 px/tick and its vertical speed follows the live
-stick (`steer: 2.6`). Releasing special (or reaching `autoRelease` age 150) freezes the released stage: 100
-ticks at 4.4 px/tick with the source's strong explosion box (14%, BKB 75, KBG 0.7, radius 13 units → 65 px).
+guiding). While unreleased the missile travels forward at 3.4286 px/tick and its vertical speed follows the live
+stick (`steer: 2.1667`). Releasing special (or reaching `autoRelease` age 150) freezes the released stage: 100
+ticks at 6.2857 px/tick with the source's strong explosion box (14%, BKB 75, KBG 0.7, radius 13 units → 65 px).
 The 7% weak explosion is a separate source variant, not a ring: modelling both as concentric boxes made the
 outer ring swallow the direct hit. Shield cancels control into the 31-frame `away`
 animation.
 
-**Cypher (up special).** Startup 3 frames, then an 86-tick rise at 3.4 px/tick with `armorThreshold: 7`
+**Cypher (up special).** Startup 3 frames, then an 86-tick rise at 3.32 px/tick with `armorThreshold: 7`
 (source: 7% damage-based armour on frames 7–94) and ledge grab from source frame 14. Attack or shield from
 source frame 47, or the timeout, enters the 12-frame cut; the cut spawns the detached Cypher as an upward
 6% projectile (angle 42, BKB 63, KBG 0.17) and ends helpless. Landing during the rise is 20 frames of lag.
 
 **Mortar (up smash).** The launcher hit is 4% fixed-knockback (angle 96, FKB 120, ground only) on source
 frames 11–12. The shell spawns on source frame 35 as a ballistic projectile (spawn 34/66 px, velocity
-`[2.4, 11.5]`, gravity 0.34) whose first floor contact burns a 3-tick fuse (`bounce.maxBounces: 0`,
+`[3.4286, 9.5833]`, gravity 0.2833, fall cap 10.8333) whose first floor contact burns a 3-tick fuse (`bounce.maxBounces: 0`,
 `fizzleLife: 3`) and then blasts for 14% at angle 65, BKB 87, KBG 0.6, radius 60 px. Charge raises the shell's
 speed only (`chargeScale.speed`), matching the source.
 
@@ -316,3 +317,15 @@ package, the two transition triggers, tests, registries and screenshots). Not pu
 the fighter and its records conflict with none.
 
 Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-sneak`.
+
+Unified 5 px/unit scale (2026-11-05): movement stats are UFD source × 5 and jump speeds come from the source
+jump heights (see Conversion rules); the earlier ×3.5 / ×6 stats and fitted jump speeds are superseded. Fitted
+velocities in the generator were converted per axis (x ×5/3.5, y ×5/6): dash attack impulse 4.6 → 6.5714,
+grenade hold walk 1.7 → 2.4286, Cypher rise 3.4 → 3.32 (held rise: same per-tick climb v − g), the grenade / C4 / mortar / Cypher-shot / Nikita
+velocities, gravities, fall caps, bounce minimum speed and steer above. `airAccelMult` ratios are unchanged
+(scale-free). Feel harness (`FEEL_FIGHTER=sneak … feel_report`): full 108.1 px (apex tick 23), short 68.45 px
+(19), double jump 170.35 px (29). Test changes: the grenade fuse test throws from x 300 (the mid arc now
+covers about 530 px and left the 800 px Arena from the centre); the mortar test stands its target on the
+surface the shell lands on (the rebuilt Arena's right platform); the Cypher rise is held each tick, so it keeps
+its per-tick climb under the lower gravity (3.4 − 0.48 + 0.4 = 3.32 px/tick); the original thresholds (30-tick rise > 80 px,
+peak > 230 px) hold; the ledge-catch check is unchanged and passes.

@@ -8,22 +8,22 @@
   "stats": {
     "weight": 1.03092784,
     "pummelDamage": 1.5,
-    "walkSpeed": 3.395,
-    "runSpeed": 5.005,
-    "dashSpeed": 6.3,
+    "walkSpeed": 4.85,
+    "runSpeed": 7.15,
+    "dashSpeed": 9.0,
     "dashFrames": 15,
-    "runAccel": 0.62,
+    "runAccel": 0.8857,
     "groundFriction": 0.85,
-    "jumpSpeed": 13.4,
-    "shortHopSpeed": 9.4,
-    "airJumpSpeed": 12.9,
-    "airJumpDrift": 3.115,
+    "jumpSpeed": 10.6383,
+    "shortHopSpeed": 7.6714,
+    "airJumpSpeed": 11.485,
+    "airJumpDrift": 4.45,
     "airJumps": 1,
-    "airSpeed": 3.115,
-    "airAccel": 0.1855,
-    "gravity": 0.534,
-    "fallSpeed": 9.6,
-    "fastFallSpeed": 15.36
+    "airSpeed": 4.45,
+    "airAccel": 0.265,
+    "gravity": 0.445,
+    "fallSpeed": 8.0,
+    "fastFallSpeed": 12.8
   },
   "ai": {
     "reach": 90,
@@ -539,7 +539,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 4.2 }
+              "setVel": { "x": 6.0 }
             },
             { "at": 8, "sfx": "slash" }
           ]
@@ -1792,7 +1792,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 6.0 },
+              "setVel": { "x": 8.5714 },
               "sfx": "slash"
             }
           ],
@@ -1876,7 +1876,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 3.5 },
+              "setVel": { "x": 5.0 },
               "sfx": "slash"
             }
           ],
@@ -1978,7 +1978,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "y": 10.5 }
+              "setVel": { "y": 9.5851 }
             }
           ],
           "transitions": [
@@ -2215,7 +2215,7 @@
     "arrow": {
       "name": "Failnaught",
       "spawn": [36, 52],
-      "vel": [14, 0],
+      "vel": [20, 0],
       "r": 8,
       "life": 90,
       "max": 2,
@@ -2243,7 +2243,7 @@
     "arrowMax": {
       "name": "Failnaught (full)",
       "spawn": [36, 52],
-      "vel": [20, 0],
+      "vel": [28.5714, 0],
       "r": 11,
       "life": 100,
       "max": 2,

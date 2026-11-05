@@ -1257,7 +1257,7 @@
             {
               "from": 4,
               "to": 21,
-              "setVel": { "x": 3 }
+              "setVel": { "x": 4.285714 }
             }
           ],
           "transitions": [
@@ -1316,7 +1316,7 @@
             { "at": 0, "sfx": "smash" },
             {
               "at": 0,
-              "setVel": { "x": 1.5 }
+              "setVel": { "x": 2.142857 }
             }
           ],
           "transitions": []
@@ -1413,7 +1413,7 @@
             { "at": 5, "sfx": "swing" },
             {
               "at": 5,
-              "setVel": { "x": 9 },
+              "setVel": { "x": 12.857143 },
               "sfx": "swing"
             }
           ],
@@ -1457,7 +1457,7 @@
             { "at": 10, "sfx": "swing" },
             {
               "at": 2,
-              "setVel": { "x": 2.5, "y": 19 },
+              "setVel": { "x": 3.571429, "y": 17.344548 },
               "leaveGround": true,
               "sfx": "djump"
             }
@@ -1581,14 +1581,14 @@
   },
   "stats": {
     "weight": 1.02,
-    "runSpeed": 6.8,
-    "runAccel": 1.3,
-    "jumpSpeed": 15.8,
-    "shortHopSpeed": 11,
-    "airSpeed": 5.3,
-    "airAccel": 0.55,
-    "gravity": 0.7,
-    "dashSpeed": 7.616
+    "runSpeed": 9.714286,
+    "runAccel": 1.857143,
+    "jumpSpeed": 14.423361,
+    "shortHopSpeed": 10.04158,
+    "airSpeed": 7.571429,
+    "airAccel": 0.785714,
+    "gravity": 0.583333,
+    "dashSpeed": 10.88
   },
   "ai": {
     "reach": 70,

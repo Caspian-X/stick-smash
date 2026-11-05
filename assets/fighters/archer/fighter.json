@@ -7,13 +7,13 @@
   "blurb": "A light-footed ranger. Hold special to draw a faster, harder arrow; backstep to keep space, then ride the kite home.",
   "stats": {
     "weight": 1.06,
-    "runSpeed": 6.4,
-    "airSpeed": 5.5,
-    "airAccel": 0.58,
-    "jumpSpeed": 15.5,
-    "gravity": 0.68,
-    "fallSpeed": 10,
-    "dashSpeed": 7.168
+    "runSpeed": 9.142857,
+    "airSpeed": 7.857143,
+    "airAccel": 0.828571,
+    "jumpSpeed": 14.149499,
+    "gravity": 0.566667,
+    "fallSpeed": 8.333333,
+    "dashSpeed": 10.24
   },
   "ai": {
     "reach": 82,
@@ -1696,7 +1696,7 @@
           "events": [
             {
               "at": 2,
-              "setVel": { "x": -6 },
+              "setVel": { "x": -8.571429 },
               "sfx": "roll"
             },
             { "at": 8, "spawn": "quickArrow" }
@@ -1754,7 +1754,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 1.5, "y": 7.5 },
+              "setVel": { "x": 2.142857, "y": 7.386667 },
               "leaveGround": true,
               "sfx": "djump"
             },
@@ -1769,7 +1769,7 @@
             {
               "from": 1,
               "to": 27,
-              "setVel": { "y": 7.5 }
+              "setVel": { "y": 7.386667 }
             }
           ],
           "transitions": [
@@ -1800,7 +1800,7 @@
         {
           "name": "glide",
           "frames": 20,
-          "fallCap": 2,
+          "fallCap": 1.666667,
           "airAccelMult": 1.2732,
           "ledgeGrab": 0,
           "anim": [
@@ -1955,7 +1955,7 @@
     "arrow": {
       "name": "Drawn Arrow",
       "spawn": [40, 50],
-      "vel": [9, 1.4],
+      "vel": [12.857143, 1.166667],
       "r": 5,
       "life": 70,
       "max": 2,
@@ -1977,13 +1977,13 @@
         { "shape": "line", "from": [-15, 0], "to": [-21, 5], "width": 3, "color": "player" },
         { "shape": "line", "from": [-15, 0], "to": [-21, -5], "width": 3, "color": "player" }
       ],
-      "gravity": 0.055,
+      "gravity": 0.045833,
       "chargeScale": { "speed": 0.024, "damage": 0.03 }
     },
     "quickArrow": {
       "name": "Retreating Arrow",
       "spawn": [40, 50],
-      "vel": [13, 1],
+      "vel": [18.571429, 0.833333],
       "r": 5,
       "life": 48,
       "max": 2,
@@ -2005,7 +2005,7 @@
         { "shape": "line", "from": [-15, 0], "to": [-21, 5], "width": 3, "color": "player" },
         { "shape": "line", "from": [-15, 0], "to": [-21, -5], "width": 3, "color": "player" }
       ],
-      "gravity": 0.06
+      "gravity": 0.05
     }
   },
   "attachments": [

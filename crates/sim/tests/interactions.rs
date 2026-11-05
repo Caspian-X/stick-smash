@@ -362,8 +362,10 @@ fn authored_endpoints_and_extreme_anchors_are_rejected() {
     let mut d = common::data();
     let w = common::fighters(&d, "brawler", &[]);
     let fd = w.fighters[0].data;
+    let b = &d.stages[w.stage].blocks[0];
+    let past = b.right - b.left + 100.;
     d.fighters[fd].interactions = Some(Interactions {
-        ledge: Some(LedgeInteraction { climb_distance: Some(800.), ..Default::default() }),
+        ledge: Some(LedgeInteraction { climb_distance: Some(past), ..Default::default() }),
         ..Default::default()
     });
     let check = |d: &sim::GameData| {

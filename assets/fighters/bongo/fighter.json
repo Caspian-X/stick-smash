@@ -8,22 +8,22 @@
   "stats": {
     "weight": 1.11111111,
     "pummelDamage": 1.0,
-    "walkSpeed": 4.5955,
-    "runSpeed": 7.021,
-    "dashSpeed": 7.315,
+    "walkSpeed": 6.565,
+    "runSpeed": 10.03,
+    "dashSpeed": 10.45,
     "dashFrames": 13,
-    "runAccel": 0.62,
+    "runAccel": 0.8857,
     "groundFriction": 0.85,
-    "jumpSpeed": 14.2,
-    "shortHopSpeed": 9.9,
-    "airJumpSpeed": 14.0,
-    "airJumpDrift": 3.234,
+    "jumpSpeed": 15.7375,
+    "shortHopSpeed": 10.8403,
+    "airJumpSpeed": 16.3625,
+    "airJumpDrift": 4.62,
     "airJumps": 1,
-    "airSpeed": 4.3,
-    "airAccel": 0.3,
-    "gravity": 0.75,
-    "fallSpeed": 10.5,
-    "fastFallSpeed": 16.8
+    "airSpeed": 6.1429,
+    "airAccel": 0.4286,
+    "gravity": 0.625,
+    "fallSpeed": 8.75,
+    "fastFallSpeed": 14.0
   },
   "body": { "halfWidth": 13, "height": 70 },
   "hurtboxes": {
@@ -490,7 +490,7 @@
             { "at": 7, "sfx": "swing" },
             {
               "at": 0,
-              "setVel": { "x": 4.2 }
+              "setVel": { "x": 6.0 }
             }
           ]
         }
@@ -556,12 +556,12 @@
             {
               "at": 11,
               "sfx": "swing",
-              "setVel": { "x": 6.5 }
+              "setVel": { "x": 9.2857 }
             },
             {
               "at": 20,
               "sfx": "smash",
-              "setVel": { "x": 4.0 }
+              "setVel": { "x": 5.7143 }
             }
           ]
         }
@@ -629,7 +629,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "y": 8.0 },
+              "setVel": { "y": 6.6667 },
               "leaveGround": true
             },
             { "at": 4, "sfx": "swing" },
@@ -1263,7 +1263,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 4.2, "y": 13.0 },
+              "setVel": { "x": 6.0, "y": 10.8333 },
               "leaveGround": true,
               "sfx": "swing"
             }
@@ -1374,7 +1374,7 @@
           "name": "charge",
           "frames": 8,
           "aim": true,
-          "fallCap": 2.5,
+          "fallCap": 2.0833,
           "airAccelMult": 0.3846,
           "charge": { "frame": 7, "max": 60, "button": "special", "jet": true },
           "anim": [
@@ -1423,7 +1423,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 3.2, "y": 14.0 },
+              "setVel": { "x": 4.5714, "y": 12.7802 },
               "chargeVelocity": 0.006,
               "leaveGround": true,
               "sfx": "jet"
@@ -1602,12 +1602,12 @@
     "peanut": {
       "name": "Peanut",
       "spawn": [30, 46],
-      "vel": [13.0, 1.5],
+      "vel": [18.5714, 1.25],
       "r": 12,
       "life": 55,
       "max": 3,
-      "gravity": 0.12,
-      "maxFall": 5.0,
+      "gravity": 0.1,
+      "maxFall": 4.1667,
       "spawnSfx": "shoot",
       "chargeScale": { "speed": 0.0062, "damage": 0.0337662, "angleTo": 45.0 },
       "hit": {
@@ -1631,12 +1631,12 @@
     "banana": {
       "name": "Banana Peel",
       "spawn": [-18, 40],
-      "vel": [-1.6, 2.4],
+      "vel": [-2.2857, 2.0],
       "r": 10,
       "life": 600,
       "max": 1,
-      "gravity": 0.16,
-      "maxFall": 6.0,
+      "gravity": 0.1333,
+      "maxFall": 5.0,
       "spawnSfx": "swing",
       "bounce": {
         "restitution": 0.0,

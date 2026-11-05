@@ -281,11 +281,12 @@ fn secondary_ledge_jump_uses_secondary_top() {
 #[test]
 fn cpu_recovers_toward_nearest_secondary_block() {
     let mut d = common::data();
-    d.stages[0].blocks.push(island(1100., 1300., 400.));
+    let right = d.stages[0].blocks[0].right;
+    d.stages[0].blocks.push(island(right + 120., right + 320., 400.));
     let mut w = world(&d);
     let f = &mut w.fighters[0];
     f.set_state(State::Helpless);
-    f.x = 1050.;
+    f.x = right + 70.;
     f.y = 450.;
     f.ground = false;
     f.surf = None;
@@ -324,15 +325,16 @@ fn rising_at_seams_and_body_width_gaps_cannot_enter_solids() {
 fn arena_corner_contact_keeps_legacy_side_exit() {
     let d = common::data();
     let mut w = world(&d);
+    let right = d.stages[0].blocks[0].right;
     let f = &mut w.fighters[0];
-    f.x = 980. + d.fighters[0].body.half_width - 4.;
+    f.x = right + d.fighters[0].body.half_width - 4.;
     f.y = 513.;
     f.vy = 12.;
     f.ground = false;
     f.surf = None;
     integrate(&mut w, &d);
     let f = &w.fighters[0];
-    assert_eq!((f.x, f.y, f.vy), (980. + d.fighters[0].body.half_width, 525., 12.));
+    assert_eq!((f.x, f.y, f.vy), (right + d.fighters[0].body.half_width, 525., 12.));
     assert!(!f.ground);
 }
 

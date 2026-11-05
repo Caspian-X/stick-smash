@@ -22,7 +22,28 @@ iroh datagrams; the networking stack is not a settled decision.
 - **Input pipeline.** Raw input (sticks, button bits including a second-jump-control bit) → gestures (`input::History::derive`: thresholded directions, deadzoned analog `x`/`y`, flicks = reaching `flickThreshold` within `flickFrames` of the deadzone, taps = recent flicks, attack `Strike` source: button / attack stick / attack + special) → one buffered command → state handlers → accepted `Action` events (`world.acts`, drained each tick like `fx`). Movement, DI and holds always read live input; only presses, combination flags and press-time directions are buffered. Charges and jab chains are held by the control that started the move (`MoveState::stick`).
 - **Input buffer.** Human presses (attack, special, jump, grab, shield press) pressed while unable to act become a single buffered command for `global.input.bufferFrames` (5 ticks, inclusive age; 0 = TS behavior). Presses within `comboFrames` combine (jump + attack = short-hop aerial, two jumps = short hop, attack + special = smash when that option is on); otherwise the newer press replaces the older. The command is re-delivered each actionable tick until a handler accepts it (records a command `Action`) or it expires; any accepted command clears the buffer, and a fresh press on an actionable tick supersedes (or combines with) it, so nothing replays twice. `Fighter::actionable` is the single rule for buffering, frame advantage and the editor: idle, air, shield without stun, ledge once the incremented timer reaches `minHang`, knockdown from `minFrames`, never in hitlag. During jumpsquat (with `jumpAerials`), attack picks a short-hop aerial and any jump press forces a short hop; both are consumed before buffering. CPU intents bypass the buffer and are digital (`Intent::digital`: full-tilt analog, a held direction counts as a flick). Sub-tick taps are latched by the game crate's input layer so they last at least one tick.
 - **Feel features** (each off in the TS-trace harness): ground gait (`global.gait`, `world::Gait` on idle fighters: walk / dash / run / turn / brake; a run turnaround flips facing at once and skids, so jumping out and attacking backward is a reverse aerial rush), up smash out of shield before shield-attack-grab (`shield.upSmash`), release-timed parry (`parry`: the first `window` frames of the shield-drop landing; checked after counters, before shields, for melee and projectiles), directional influence (`di`: a launch flags `Fighter::di`; the first update after the victim's hitlag rotates velocity toward the live stick by up to `maxAngle` × the perpendicular component, speed unchanged; not autolink, trips, windboxes or armored hits), a fast-fall buffer (`input.fastFallBuffer`), flick-only platform drops, ledge trump (`ledge.trump`: an occupant hanging at least `minHang` frames is pushed off, loses invulnerability and can't regrab for `regrabCooldown`; climbers can't be trumped) and fresh ledge invulnerability (`ledge.freshInvuln`: reset by landing, climbing up, being hit or respawning). SDI is not implemented.
-- **Units.** Keep TS units: stage pixels, y down, velocities in px/frame, 60 Hz, `f64` + `libm`. Convert to Bevy's y-up world only when rendering.
+- **Coordinates.** Keep TS conventions: stage pixels, y down, velocities in px/frame, 60 Hz, `f64` + `libm`. Convert to Bevy's y-up world only when rendering.
+- **Units: 5 px per Ultimate unit, for everything.** One SSBU distance unit is 5 px on both axes, for geometry
+  (hitboxes, figures, stages), speeds (units/frame → px/tick) and accelerations (units/frame² → px/tick²); launch
+  speed is 0.15 px/tick per reference knockback unit (Ultimate's 0.03 × 5). Before this, hit geometry used 5,
+  horizontal speeds 3.5 and gravity/fall speeds 6, so imports moved and fell at different scales from what they
+  hit, and stage dimensions could not be taken from source data. Now:
+  - Stages take source dimensions × 5: Arena is Ultimate Battlefield (main platform ±80 units → 800 px, blast ±240 /
+    top 192 / bottom −140, camera ±170 / 130 / −80, all relative to the main floor and centre). Citadel, Isles and
+    Foundry keep their geometry; their blast and camera bounds moved by the same ratios as Arena's (proportional,
+    not source).
+  - Imports multiply every source speed, acceleration and gravity by `tools/units.py` `SCALE` (5), and derive jump
+    speeds from the source's full hop / short hop / air jump heights with `units.jumps`, exact for the sim's
+    discrete integration, so a measured apex is the source height × 5.
+  - Hand-authored content (originals, Mike, shared tuning) was migrated once by `just unify-5px`
+    (`tools/rescale/unify-5px.json`): horizontal and `xy` speeds ×5/3.5, vertical ×5/6, and jump speeds (plus
+    upward recovery impulses) ×√(5/6) so jump heights in px stay the same under the lower gravity. Fitted
+    up-special rises inside the import generators follow the same rule (Mike's Aether too); a rise held every tick
+    keeps its per-tick climb (v − g + g′).
+  - New content: author in px at this scale. From a reference, multiply source units by 5; jumps come from heights,
+    not from speeds. `xy` speeds (dodges, `travelSpeed`) are treated as horizontal-dominant.
+  - Not migrated: legacy TS-trace fields (linear knockback, `hitstun.gravity`/`maxFall`, `perKnockback`,
+    `tumbleThreshold`; TS traces load frozen content), visual particle speeds and render tuning.
 - **Multiplayer.** Local multiplayer + CPUs first. Keep simulation state and inputs suitable for eventual rollback; see "Status and next" for the proposed networking stack.
 
 **Launch model** (`hitstun.ultimate`, off in TS traces): a launch is a separate vector that loses a fixed
@@ -31,12 +52,12 @@ fall speed and drift act on a second component, so horizontal travel grows with 
 are not fall-capped and floaty fighters stay up longer. It persists through hitstun and the air state after it
 and is cleared by landing, ledges, air jumps and other states. Hitstun is 0.4 × reference knockback, tumble starts
 above 80, hitlag is floor(damage × 0.65 + 6) capped at 30, and `tech.lockout` stops mashed techs. An optional
-hitstun cancel exists but is off until verified. Launch speed (`launchSpeed` 0.14) was raised under the old
-multiplicative drag, so KO percents moved earlier with this change; blast zones and launch speed have not been
-retuned for it.
+hitstun cancel exists but is off until verified. Launch speed (`launchSpeed`) was 0.14, raised under the old
+multiplicative drag; the unit unification made it 0.15 (Ultimate's 0.03 × 5) and Arena's blast zones Battlefield's,
+so KO percents now follow source launch speed and stage size rather than separate tuning.
 
 **Momentum model** (`movement.ultimate`, off in TS traces): speeds change by fixed amounts per frame rather than
-by multipliers, as in Ultimate. On the ground every slowdown is the fighter's `traction` (doubled above walk
+by multipliers, as in Ultimate. On the ground every slowdown is the fighter's `traction` (default 0.5 = Mario's 0.1 × 5, doubled above walk
 speed), so a released run skids to a stop in about 11–20 frames and running momentum carries into attacks,
 jumpsquat, landing lag and shield. In the air, a neutral stick loses `airFriction` per frame (≈ 0.88 of air speed
 kept after 15 frames instead of 0.54), speed above the held air speed decays toward it instead of clamping, and
@@ -108,6 +129,7 @@ model later. See [FORMAT.md](FORMAT.md#moves) for exact frame timing, events and
 
 ### Stages
 `stage.json` (version 2): multiple static solid blocks with tapered undersides and independent top-corner ledges, pass-through platforms with optional frame-based waypoint motion, shared art and ledge zones, blast/camera bounds, and spawn/respawn points for up to 8 players. Version 1 ground migrates to a block with both ledges enabled. See FORMAT.md for motion timing and geometry constraints.
+Built-in stage sizes follow the Units decision: Arena is Battlefield at 5 px/unit.
 
 ### Input
 - Sim input = raw per-player state: quantized stick `(i8, i8)` + button bitflags. The sim derives presses, taps (smash input) and short hops from its own per-fighter input history, which is part of `World` so rollback stays correct.

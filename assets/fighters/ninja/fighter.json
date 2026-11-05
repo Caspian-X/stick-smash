@@ -7,13 +7,13 @@
   "blurb": "Light and swift · special: three throwing stars · → shadow dash · ↑ smoke step · ↓ substitution",
   "stats": {
     "weight": 1.04,
-    "runSpeed": 7.4,
-    "runAccel": 1.35,
-    "airSpeed": 5.5,
-    "airAccel": 0.6,
+    "runSpeed": 10.571429,
+    "runAccel": 1.928571,
+    "airSpeed": 7.857143,
+    "airAccel": 0.857143,
     "airJumps": 2,
-    "airJumpSpeed": 11.7,
-    "dashSpeed": 8.288
+    "airJumpSpeed": 10.68059,
+    "dashSpeed": 11.84
   },
   "moves": {
     "jab": {
@@ -538,7 +538,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 8 }
+              "setVel": { "x": 11.428571 }
             },
             { "at": 6, "sfx": "swing" }
           ],
@@ -1518,7 +1518,7 @@
             { "at": 0, "leaveGround": true },
             {
               "at": 0,
-              "setVel": { "x": 12, "y": 1 }
+              "setVel": { "x": 17.142857, "y": 0.833333 }
             }
           ],
           "anim": [
@@ -1593,7 +1593,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 2.5, "y": 19 },
+              "setVel": { "x": 3.571429, "y": 17.344548 },
               "leaveGround": true,
               "sfx": "djump",
               "invuln": 12,
@@ -1679,7 +1679,7 @@
             {
               "at": 0,
               "if": "countered",
-              "setVel": { "x": 10, "y": 2 },
+              "setVel": { "x": 14.285714, "y": 1.666667 },
               "leaveGround": true
             },
             {
@@ -1692,7 +1692,7 @@
             {
               "from": 1,
               "to": 6,
-              "setVel": { "x": 10 },
+              "setVel": { "x": 14.285714 },
               "if": "countered"
             },
             {
@@ -1842,7 +1842,7 @@
     "star": {
       "name": "Throwing Star",
       "spawn": [28, 49],
-      "vel": [12, 0],
+      "vel": [17.142857, 0],
       "r": 6,
       "life": 34,
       "max": 6,

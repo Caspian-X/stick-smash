@@ -57,8 +57,10 @@ for regeneration in the generator. This is a fitted 2D adaptation, not an origin
 | Root geometry | Source Z → forward X; source Y → upward Y; 5 pixels per unit. | Converted; source X depth discarded |
 | Bone geometry | Knee, foot and moving tether-tip positions fitted from GIFs, retaining source bone-local radii/offset spacing. Up-air follows a per-frame somersault arc. | Fitted; no original bone matrices |
 | Capsules | Overlapping circles at spacing no greater than the source-scaled radius, retaining original hitbox ordering. | Adapted projection |
-| Locomotion | Walk/run/dash/air speeds ×3.5; gravity/fall speeds ×6. Source gravity .120, fall1.7/fast2.72. | Fitted world scale, independent of hit geometry |
-| Jumping | Full 18.1, short 12.4, double 18.0 px/tick; source full/short/double heights 44.5/21.35/44.2 used as feel targets. | Fitted to shared gravity and stage scale |
+| Scale | One scale on every axis: 5 px per source unit for geometry, units/frame → px/tick and units/frame² → px/tick² (`tools/units.py`). | Converted; replaces the earlier ×3.5 horizontal / ×6 vertical movement scales |
+| Locomotion | UFD × 5: walk 1.47 → 7.35, run 2.31 → 11.55, initial dash 2.42 → 12.1, air 1.26 → 6.3 (also `airJumpDrift`), air accel .095 → .475, gravity .12 → .6, fall 1.7 → 8.5, fast fall 2.72 → 13.6. Run accel .6429 (fitted .45 at the old 3.5 scale, × 5/3.5). | Converted; run accel fitted |
+| Jumping | Source heights full 44.5, short 21.35, air 44.2 units ([SmashWiki Jump](https://www.ssbwiki.com/Jump), SSBU jump height ranking, accessed 2026-11-05; unitless game units) → `units.jumps` at gravity .6: full 16.0407, short 11.0184, air 16.5852 px/tick. Measured (`just feel whiplash`) 222.5 / 106.75 / 221.0 px = heights × 5 exactly. | Derived for the sim's discrete integration; supersedes the fitted 18.1 / 12.4 / 18.0 |
+| Fitted velocities | Authored at the old scale, converted per axis (x × 5/3.5, y × 5/6): dash attack slide 10.7143; dair hover .4167, dive (5, −22.5), fall cap 25; Boost Kick (2.2857, 21.3612) → 14.2408 → (6.8571, 1.0954) (up-special y × √(5/6), same height); Flip Jump (10.7143, 10.5), kick (10, −2.5) → (14.2857, −6.6667) with fall cap 16.6667, stomp (2.8571, 10), bounce (−4.2857, 9.1667); Paralyzer 17.1429 | Fitted; the vertical ones (e.g. Boost Kick 23.4 / 15.6, which equal 3.9 / 2.6 × 6) are not source status values, so × 5/6 |
 | Weight | Source80 → reciprocal100/80 =1.25. | Converted for this game's weight convention |
 | Ordinary knockback | Source BKB unchanged, KBG/100; shared Ultimate-style calculation. | Converted; shared DI/launch physics still apply |
 | Fixed knockback | Source fixed value resolved at reference weight100: `(1 + FKB/2) * 1.4 + 18`, then source growth/base. | Adapted to shared fixed-launch representation |
@@ -203,3 +205,13 @@ retained GIF manifest covers attacks and her specials, not idle or ordinary loco
 Final integration review separated locomotion from the inherited `air`/`crouch` attack bookends, preserving the original active-window hand and foot positions. Jump load and short-landing recovery reach their endpoint on visible tick 2; longer landings retain a small settle.
 
 Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-whiplash`.
+
+Unified scale (2026-11-05): the importer now emits every speed/acceleration at 5 px/unit (`tools/units.py`):
+source movement × 5, jump speeds from source heights, fitted velocities converted per axis, phase drift
+(`airAccelMult`) values unchanged (their legacy reference accels are converted with the air accel). Earlier
+notes quoting the fitted jump speeds or ×3.5 / ×6 values are superseded. `cargo test -p sim --test whiplash`
+passes; the flip-steering test's launch speed is now the fitted 7.5 × 5/3.5. With the Boost Kick
+converted ×5/6 the CPU fell short of the rebuilt Arena often (10/24 self-KOs, over the
+`whiplash_cpu_matches_finish_on_every_stage_in_both_seats` limit); the up-special rises are now × √(5/6) like the
+original roster's, keeping their height, and the test passes. The committed dair dive (5 px/tick sideways)
+started near an edge still carries the CPU off-stage at times.

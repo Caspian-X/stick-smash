@@ -108,15 +108,16 @@ fn package_identity_slots_and_reference_stats() {
     assert!(f.moves.zair.is_none(), "Peach has no tether aerial");
     assert!(f.charges.is_empty(), "no limited-use resources");
     assert_eq!((f.throws.f.total, f.throws.b.total, f.throws.u.total, f.throws.d.total), (39, 49, 49, 64));
-    // UFD: weight 89, air 1.029, gravity 0.070, fall 1.19 / 1.904. Movement uses x3.5, fall x6.
+    // UFD: weight 89, air 1.029, air accel 0.12, gravity 0.070, fall 1.19 / 1.904; 5 px per unit.
     close(f.stats.weight, 100. / 89.);
     close(f.stats.pummel_damage.unwrap(), 1.3);
-    close(f.stats.air_speed, 3.6015);
-    close(f.stats.air_accel, 0.42);
-    close(f.stats.gravity, 0.42);
-    close(f.stats.fall_speed, 7.14);
-    close(f.stats.fast_fall_speed, 11.424);
-    close(f.stats.float_speed.unwrap(), 1.2);
+    close(f.stats.air_speed, 1.029 * 5.);
+    close(f.stats.air_accel, 0.12 * 5.);
+    close(f.stats.gravity, 0.070 * 5.);
+    close(f.stats.fall_speed, 1.19 * 5.);
+    close(f.stats.fast_fall_speed, 1.904 * 5.);
+    // Fitted sink (the source float holds height): 1.2 at the old x6 vertical scale.
+    close(f.stats.float_speed.unwrap(), 1.2 * 5. / 6.);
     assert!(f.moves.uspec.once_per_airtime);
 }
 
@@ -238,13 +239,14 @@ fn float_caps_descent_while_jump_is_held_and_releases_immediately() {
         f.set_state(State::Air);
     }
     hold(&mut w, &d, 40);
+    let float = 1.2 * 5. / 6.;
     let floating = w.fighters[0].vy;
-    assert!((floating - 1.2).abs() < 1e-9, "held jump caps the descent at floatSpeed: {floating}");
+    assert!((floating - float).abs() < 1e-9, "held jump caps the descent at floatSpeed: {floating}");
     // Releasing jump restores the ordinary fall immediately while falling.
     for _ in 0..6 {
         tick(&mut w, &d, Input::default());
     }
-    assert!(w.fighters[0].vy > 1.2, "released jump falls normally: {}", w.fighters[0].vy);
+    assert!(w.fighters[0].vy > float, "released jump falls normally: {}", w.fighters[0].vy);
     // Fast fall still wins over the cap while jump is held only for a normal air drift; the engine caps at
     // floatSpeed regardless of fast-fall state (documented limitation).
     // A move keeps its own gravity: starting the aerial leaves State::Air, so the float cap no longer applies.
@@ -252,7 +254,7 @@ fn float_caps_descent_while_jump_is_held_and_releases_immediately() {
     for _ in 0..20 {
         step_move(&mut w, &d, Intent { jump_held: true, ..Default::default() });
     }
-    assert!(w.fighters[0].vy > 1.2, "no float during an attack: {}", w.fighters[0].vy);
+    assert!(w.fighters[0].vy > float, "no float during an attack: {}", w.fighters[0].vy);
 }
 
 #[test]
@@ -451,7 +453,7 @@ fn peach_parasol_opens_slow_descent_and_closes_on_release() {
         stay_air(&mut w, 300.);
     }
     let slow = w.fighters[0].vy;
-    assert!(slow <= 2.0 + 1e-9, "open parasol caps descent at fallCap: {slow}");
+    assert!(slow <= 2.0 * 5. / 6. + 1e-3, "open parasol caps descent at fallCap: {slow}");
     // Pressing special again closes it: normal gravity returns and the move ends in helplessness.
     for _ in 0..4 {
         step_move(&mut w, &d, Intent { sp: true, ..Default::default() });

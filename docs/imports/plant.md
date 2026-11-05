@@ -24,6 +24,8 @@ its held/controlled projectiles. It is an original-roster addition, not a replac
 | Per-frame hitbox GIFs | `docs/imports/sources/plant/visuals.json` (32 animations, pinned per-file sha256) → `just plant-visuals` | UFD `hitboxes/piranha_plant/*.gif` hashes as recorded | 2026-11-04 | Coarse coverage, weapon/pose silhouettes, cloud/ball appearance, spin and grab contact |
 | Numeric scripts | https://github.com/rubendal/ssbu/blob/2e8f0d245481cb0c936524b6ffe1cdea867c4f68/public/data/patch/13.0.1/character/Piranha%20Plant/data.json → `docs/imports/sources/plant/scripts.json` | commit `2e8f0d245481cb0c936524b6ffe1cdea867c4f68`, sha256 `38c60513b2db6ebed5f950505285696fc40b91a71a1082fab32ffe0bc7f99ea6` | 2026-11-04 | Attack arguments, frame windows, rehit, masks, armor threshold, article timeline |
 | SmashWiki | https://www.ssbwiki.com/Piranha_Plant_(SSBU), `/Long-Stem_Strike`, `/Ptooie` | live pages, not retained | 2026-11-04 | Behaviour prose used only to resolve intent (blow front/back, swallow, hold the ball afloat, aim during charge, shield/armor notes) |
+| UFD Misc Info | https://ultimateframedata.com/piranha_plant (stats block; not in the retained `ufd.json`) | live page | 2026-11-05 | Weight 112, gravity 0.140, walk 0.76, run 1.72, initial dash 1.82, air speed 1.0, total air acceleration 0.06, fall / fast fall 1.95 / 2.73 |
+| Jump heights | ssbwiki "Jump" page, SSBU "Jump height ranking" table, https://www.ssbwiki.com/Jump (unitless game units) | live page | 2026-11-05 | Full hop 37.4, short hop 17.5, midair jump 38.52 |
 
 Retained inputs and regeneration:
 
@@ -80,8 +82,18 @@ just import-plant                         # regenerate fighter.json + ledger.jso
 - **Masks and launch rules.** `FacingRestrict` CHECK_POS → `dir: away`, CHECK_B → `dir: back`,
   `Ground_or_Air` G/A → situation filters. Angle 361 → Sakurai, 366/367/368 → autolink, negative angles are
   kept as signed launch angles. Fixed-knockback (`FKB`) rows become `setKb`.
-- **Movement and recovery.** Plant uses its own walk/run/dash/air/gravity numbers (source-derived, tuned to the
-  shared stage scale); no shared movement changes were made. Piranhacopter uses data events for a sustained
+- **Movement and recovery.** One scale, source × 5 (`units.SCALE`, px/tick and px/tick²), from UFD Misc Info:
+  walk 0.76 → 3.8, run 1.72 → 8.6, dash 1.82 → 9.1, air 1.0 → 5.0, air accel 0.06 → 0.3, gravity 0.14 → 0.7,
+  fall 1.95 → 9.75, fast fall 2.73 → 13.65. These replace the earlier hard-coded ×3.5 / ×6 numbers
+  (2.66 / 6.02 / 6.37 / 3.5 / 0.21 / 0.84 / 11.7 / 16.38). Fitted, converted ×5/3.5: `runAccel` 1.1429 (was 0.8),
+  `airJumpDrift` 5.0 (was 3.5).
+- **Jumps.** `units.jumps(37.4, 17.5, 38.52, 0.7)` gives `jumpSpeed` 15.8304, `shortHopSpeed` 10.7188,
+  `airJumpSpeed` 16.7739, superseding the fitted 15.5 / 9.8 / 14.5. The feel harness measures 187.0 / 87.5 /
+  192.6 px rises (targets 187.0 / 87.5 / 192.6). No shared movement changes were made.
+- **Fitted velocities.** Authored, non-source speeds converted per axis (x ×5/3.5, y ×5/6): dash-attack lunge
+  7.8571 (was 5.5), Piranhacopter launch 7.86 / sustained rise 6.36 (was 8 / 6.5; a held rise keeps its per-tick climb v − g under the new gravity), Poison Breath drift 1.2857
+  (was 0.9), blown Ptooie 11.4286 (was 8). The lunge and launch `setVel` are now written as `{x, y}` objects
+  instead of `[x, y]` arrays so the unit tags apply to them. The copter climb test's floor moved 280 → 233 px (×5/6; measured 270). Piranhacopter uses data events for a sustained
   rise and the shared `upSpecialAccel` drift. Ledge catch points and grab anchors are authored for the
   nonhumanoid shape (`interactions`); the shared grab/ledge logic is unchanged.
 - **Charged reach.** Long-Stem's extension is a fan of four named poses (`stretch0/15/30/45` and their bite

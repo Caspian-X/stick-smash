@@ -34,12 +34,14 @@ fn motion_cycle(s: &sim::data::Stage) -> u64 {
     })
 }
 
-/// A witness is an actual landing after one held ground jump, with no air jumps or specials.
+/// A witness is an actual landing after one held ground jump and, if the apex is still below the platform, one air
+/// jump there (source-height jumps such as Snake's are lower than the platforms, as in Ultimate). No specials.
 fn jump_to(d: &GameData, start: &World, target: usize) -> Option<World> {
     let mut w = start.clone();
     let mut airborne = false;
+    let mut air_jump = 0;
     for _ in 0..120 {
-        let (l, r, _) = sim::physics::surface(d, &w, target);
+        let (l, r, y) = sim::physics::surface(d, &w, target);
         let f = &w.fighters[0];
         let dx = (l + r) / 2. - f.x;
         let stick = if dx.abs() < 4. {
@@ -49,7 +51,15 @@ fn jump_to(d: &GameData, start: &World, target: usize) -> Option<World> {
         } else {
             -127
         };
-        tick(&mut w, d, Input { stick: (stick, 0), buttons: 1, ..Default::default() });
+        if air_jump == 0 && airborne && f.vy >= 0. && f.y > y && f.jumps > 0 {
+            air_jump = 1;
+        }
+        // Release for a tick, then press again.
+        let buttons = if air_jump == 1 { 0 } else { 1 };
+        if air_jump == 1 {
+            air_jump = 2;
+        }
+        tick(&mut w, d, Input { stick: (stick, 0), buttons, ..Default::default() });
         let f = &w.fighters[0];
         airborne |= !f.ground;
         if matches!(f.state, State::Dead | State::Respawn | State::Ledge) {
@@ -110,12 +120,12 @@ fn reachable_platforms(d: &GameData, stage: &str, fighter: &str) -> Vec<bool> {
 }
 
 #[test]
-fn platforms_are_in_full_jump_reach() {
+fn platforms_are_in_jump_reach() {
     let d = common::data();
     for s in &d.stages {
         for f in &d.fighters {
             for (i, reached) in reachable_platforms(&d, &s.id, &f.id).into_iter().enumerate() {
-                assert!(reached, "{} platforms[{i}]: no full-jump route for {}", s.id, f.id);
+                assert!(reached, "{} platforms[{i}]: no jump route for {}", s.id, f.id);
             }
         }
     }
@@ -181,7 +191,10 @@ fn every_ledge_is_recoverable() {
                         special |= sp;
                         let aiming = fighter.moves.uspec.phases.iter().any(|p| p.travel_speed.is_some())
                             && w.fighters[0].mov.as_ref().is_some_and(|m| m.slot == "uspec" && m.phase == 0);
-                        let stick = ((-side * 127.) as i8, if sp || aiming { 127 } else { 0 });
+                        // Drift in until over the block, then let go (a floaty glide would otherwise cross it).
+                        let x = w.fighters[0].x;
+                        let over = x > b.left && x < b.right;
+                        let stick = (if over { 0 } else { (-side * 127.) as i8 }, if sp || aiming { 127 } else { 0 });
                         tick(
                             &mut w,
                             &d,

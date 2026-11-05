@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 """Rebuild Wizard's Zelda adaptation from pinned scripts and documented authoring rules."""
-import copy, hashlib, json, math, re
+import copy, hashlib, importlib, json, math, re, sys
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools'))
+units = importlib.import_module('units')
+SCALE = units.SCALE  # px per source unit: geometry, speeds (units/frame) and accelerations (units/frame²)
 # Phase drift (`airAccelMult`) is written as a multiple of the old shared air accels (aerial 0.45, attack 0.25,
-# upSpecial 0.3). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier instead, so drift()
-# stores the value that keeps the same effective acceleration.
-AIR_ACCEL = .065 * 3.5
+# upSpecial 0.3, fitted px/tick² at the old 3.5 horizontal scale, hence × 5 / 3.5). Under `movement.ultimate` it
+# multiplies airAccel × the kind's multiplier instead, so drift() stores the value that keeps the same effective
+# acceleration.
+AIR_ACCEL = round(.065 * SCALE, 5)
 def drift(legacy, kind):
-    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind]
+    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind] * 5 / 3.5
     mult = {'aerial': 1.0, 'attack': 0.55, 'upSpecial': 0.65}[kind]
     return round(legacy * old / (AIR_ACCEL * mult), 4)
-ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / 'docs/imports/sources/wizard'
 source = json.loads((SOURCES / 'scripts.json').read_text())
 scripts = {article: {s['Name']: s['Data'] for s in ss} for article, ss in source['scripts'].items()}
@@ -181,7 +185,7 @@ for bs in (airhi,groundhi):
     for b in bs:b['start']=1;b['end']=2;b['x']=0;b['y']=36
 moves['uspec']={'name':"Farore's Wind",'air':'upSpecial','phases':[
  phase('start',17,first,airAccelMult=0,events=[{'at':0,'setVel':{'x':0,'y':0},'sfx':'charge'}],anim=[{'at':0,'pose':'conjure'}],transitions=[timeout('travel')]),
- phase('travel',17,[],travelSpeed=21,hidden=True,ledgeGrab=0,events=[{'at':0,'leaveGround':True,'invuln':18,'sfx':'roll'}],transitions=[{'on':'timeout','if':'grounded','to':'groundEnd'},{'on':'timeout','to':'airEnd'}]),
+ phase('travel',17,[],travelSpeed=30,hidden=True,ledgeGrab=0,events=[{'at':0,'leaveGround':True,'invuln':18,'sfx':'roll'}],transitions=[{'on':'timeout','if':'grounded','to':'groundEnd'},{'on':'timeout','to':'airEnd'}]),
  phase('airEnd',41,airhi,airAccelMult=drift(.3, 'upSpecial'),events=[{'at':0,'setVel':{'x':0,'y':0},'sfx':'smash'}],anim=[{'at':0,'pose':'conjure'}],ledgeGrab=3,transitions=[landing(30),timeout('helpless')]),
  phase('groundEnd',41,groundhi,events=[{'at':0,'setVel':{'x':0,'y':0},'sfx':'smash'}],anim=[{'at':0,'pose':'cast'}],transitions=[timeout('end')]) ]}
 # Controlled articles use a release phase on the fighter, independent of their own lifetime.
@@ -193,7 +197,7 @@ def circle(at,r,color,alpha=1):return {'shape':'circle','at':at,'r':r,'fill':col
 def poly(points,c):return {'shape':'poly','points':points,'fill':c}
 phantom_shapes=[poly([[-13,18],[-18,58],[0,77],[22,59],[15,20]],'#58546c'),circle([0,83],13,'#a5a3bf'),line([-12,24],[-26,0],10,'#76758d'),line([12,24],[27,0],10,'#76758d'),poly([[-25,55],[-8,64],[2,41],[-21,27]],'#7bbee3'),line([14,56],[55,103],8,'#d9d7ed'),line([14,56],[48,95],3,'#a397ef'),circle([0,58],8,'#dba9f3')]
 stages=[]
-for threshold,script,damage,hp,start,duration,speed in [(0,'AttackKick',5.9,8,10,16,3.5),(20,'AttackPunch',8.2,10,7,16,5),(28,'AttackS',10.5,13,7,16,7),(33,'AttackS',11.8,15,7,16,7),(38,'AttackL',14.1,18,7,16,9),(45,'AttackL',15.4,20,7,16,9),(50,'AttackMax',17.7,25,6,22,12)]:
+for threshold,script,damage,hp,start,duration,speed in [(0,'AttackKick',5.9,8,10,16,5),(20,'AttackPunch',8.2,10,7,16,7.1429),(28,'AttackS',10.5,13,7,16,10),(33,'AttackS',11.8,15,7,16,10),(38,'AttackL',14.1,18,7,16,12.8571),(45,'AttackL',15.4,20,7,16,12.8571),(50,'AttackMax',17.7,25,6,22,17.1429)]:
     bs=boxes('phantom'+str(threshold),'zelda_phantom',script)
     sword_index=0
     for b in bs:
@@ -230,7 +234,7 @@ for age in range(43):
     sour={**center,'r':24+21*frac,'damage':outer,'bkb':55,'kbg':.4,'angle':65}
     firestages.append({'from':age,'startup':14,'frames':20,'vel':[0,0],'hitboxes':[center,sour],'shapes':[circle([0,0],10+6*frac,'#ffab58'),circle([0,0],5,'#fff4b0')],'attackShapes':[circle([0,0],sour['r'],'#ff7c43',.35),circle([0,0],center['r'],'#ffd68a',.6),{'shape':'star','at':[0,0],'r':center['r'],'fill':'#fff1d7'}]})
 projectiles={
- 'fire':{'name':"Din's Fire",'spawn':[25,45],'vel':[8,0],'r':12,'life':100,'max':1,'hit':{**firestages[0]['hitboxes'][0]},'article':{'slot':'sspec','minRelease':16,'autoRelease':42,'releaseOnUp':True,'steer':2.4,'stages':firestages}},
+ 'fire':{'name':"Din's Fire",'spawn':[25,45],'vel':[11.4286,0],'r':12,'life':100,'max':1,'hit':{**firestages[0]['hitboxes'][0]},'article':{'slot':'sspec','minRelease':16,'autoRelease':42,'releaseOnUp':True,'steer':2,'stages':firestages}},
  'phantom':{'name':'Phantom Slash','spawn':[-48,0],'vel':[0,0],'r':24,'life':160,'max':1,'hit':{**stages[-1]['hitboxes'][-1]},'article':{'slot':'dspec','minRelease':15,'autoRelease':121,'hurtbox':{'x1':-22,'x2':22,'y1':0,'y2':98},'stages':stages}}
 }
 throws={}
@@ -254,7 +258,10 @@ for slot in ['fair','bair','uair','dair']:
     for ph in moves[slot]['phases']:
         if ph['hitboxes']:
             ph['attach']={('backSpark' if slot=='bair' else 'skySpark' if slot=='uair' else 'spark'):{'show':[min(b['start'] for b in ph['hitboxes']),max(b['end'] for b in ph['hitboxes'])]}}
-fighter={'$schema':'../../schema/fighter.schema.json','schemaVersion':1,'extends':'base','name':'Wizard','tagline':'A spark, a knight, a perfect read','blurb':'A Zelda-inspired caster: precise lightning kicks, multi-hit magic, a guiding fireball, a directional warp and a delayed Phantom.','stats':{'weight':100/85,'walkSpeed':.914*3.5,'runSpeed':1.43*3.5,'dashSpeed':1.958*3.5,'dashFrames':16,'runAccel':.28,'airSpeed':1.092*3.5,'airAccel':AIR_ACCEL,'gravity':.071*6,'fallSpeed':1.35*6,'fastFallSpeed':2.16*6,'jumpSpeed':11.75,'shortHopSpeed':8.6,'airJumpSpeed':12,'airJumpDrift':3.822},'ai':{'reach':70,'counterChance':0,'specials':[{'minDistance':160,'maxDistance':470,'height':100,'chance':.24,'grounded':True,'noProjectile':True,'down':True,'hold':None},{'minDistance':150,'maxDistance':550,'height':100,'chance':.15,'grounded':True,'noProjectile':True,'down':False,'hold':[18,40]}]},'poses':poses,'moves':moves,'throws':throws,'projectiles':projectiles,'attachments':attachments}
+# Source jump heights (units): full 31.55, short 15.24, air 31.55 (ssbwiki Jump, SSBU jump height ranking).
+# runAccel .4 is fitted (old .28 × 5 / 3.5).
+GRAVITY=round(.071*SCALE,5)
+fighter={'$schema':'../../schema/fighter.schema.json','schemaVersion':1,'extends':'base','name':'Wizard','tagline':'A spark, a knight, a perfect read','blurb':'A Zelda-inspired caster: precise lightning kicks, multi-hit magic, a guiding fireball, a directional warp and a delayed Phantom.','stats':{'weight':100/85,'walkSpeed':round(.914*SCALE,5),'runSpeed':round(1.43*SCALE,5),'dashSpeed':round(1.958*SCALE,5),'dashFrames':16,'runAccel':.4,'airSpeed':round(1.092*SCALE,5),'airAccel':AIR_ACCEL,'gravity':GRAVITY,'fallSpeed':round(1.35*SCALE,5),'fastFallSpeed':round(2.16*SCALE,5),**units.jumps(31.55,15.24,31.55,GRAVITY),'airJumpDrift':round(1.092*SCALE,5)},'ai':{'reach':70,'counterChance':0,'specials':[{'minDistance':160,'maxDistance':470,'height':100,'chance':.24,'grounded':True,'noProjectile':True,'down':True,'hold':None},{'minDistance':150,'maxDistance':550,'height':100,'chance':.15,'grounded':True,'noProjectile':True,'down':False,'hold':[18,40]}]},'poses':poses,'moves':moves,'throws':throws,'projectiles':projectiles,'attachments':attachments}
 (ROOT/'assets/fighters/wizard/fighter.json').write_text(json.dumps(fighter,indent=2)+'\n')
-(SOURCES/'ledger.json').write_text(json.dumps({'sourceCommit':source['commit'],'geometryScale':5,'rawAttackLedger':ledger,'ufd':{'url':'https://ultimateframedata.com/zelda','accessed':'2026-11-02','timings':{slot:{'phases':[(p['name'],p['frames']) for p in m['phases']]} for slot,m in moves.items()}}},indent=2)+'\n')
+(SOURCES/'ledger.json').write_text(json.dumps({'sourceCommit':source['commit'],'scale':SCALE,'rawAttackLedger':ledger,'ufd':{'url':'https://ultimateframedata.com/zelda','accessed':'2026-11-02','timings':{slot:{'phases':[(p['name'],p['frames']) for p in m['phases']]} for slot,m in moves.items()}}},indent=2)+'\n')
 print('Rebuilt Wizard; run just bless to format content and update schemas.')

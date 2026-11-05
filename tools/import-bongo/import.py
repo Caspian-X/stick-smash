@@ -7,21 +7,28 @@ the pinned Ultimate Frame Data rows. Geometry is fitted to the pinned UFD per-mo
 stick-figure poses authored below; it is not a projection of Nintendo's skeleton. Run `just import-bongo`.
 """
 import copy
+import importlib
 import json
 import math
 import re
+import sys
 from pathlib import Path
 
+# Fitted air accel: 0.30 at the old ×3.5 speed scale (source 0.05 → 0.175 felt too low), ×5/3.5 at 5 px/unit.
+AIR_ACCEL = 0.30 * 5 / 3.5
+
+
 # Phase drift (`airAccelMult`) is written as a multiple of the old shared air accels (aerial 0.45, attack 0.25,
-# upSpecial 0.3). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier instead, so drift()
-# stores the value that keeps the same effective acceleration.
-AIR_ACCEL = 0.30
+# upSpecial 0.3, old scale ×5/3.5 here). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier
+# instead, so drift() stores the value that keeps the same effective acceleration.
 def drift(legacy, kind):
-    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind]
+    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind] * 5 / 3.5
     mult = {'aerial': 1.0, 'attack': 0.55, 'upSpecial': 0.65}[kind]
     return round(legacy * old / (AIR_ACCEL * mult), 4)
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools'))
+units = importlib.import_module('units')
 SOURCES = ROOT / 'docs/imports/sources/bongo'
 source = json.loads((SOURCES / 'scripts.json').read_text())
 items = json.loads((SOURCES / 'items.json').read_text())
@@ -106,7 +113,9 @@ def num(a, k, default=0):
 
 
 # ---------------------------------------------------------------- conversion
-SCALE = 5.0
+SCALE = units.SCALE  # px per source unit: geometry, speeds (px/tick) and accelerations (px/tick²)
+# Source jump heights (units; ssbwiki "Jump", SSBU jump height ranking): full, short, air.
+JUMP_HEIGHTS = (41.21, 19.9, 41.21)
 
 
 def frame(source_frame):
@@ -504,7 +513,7 @@ moves['dashatk'] = {'name': 'Rolling Slap', 'phases': [phase(
     slide=20, anim=[{'at': 0, 'pose': 'stand'}, {'at': frame(7), 'pose': 'spinLow', 'lerp': True},
                     {'at': frame(16), 'pose': {'from': 'spinLow', 'rot': 180}, 'lerp': True},
                     {'at': frame(24), 'pose': 'spinLow'}, {'at': 39, 'pose': 'stand', 'lerp': True}],
-    events=[{'at': frame(8), 'sfx': 'swing'}, {'at': 0, 'setVel': {'x': 4.2}}])]}
+    events=[{'at': frame(8), 'sfx': 'swing'}, {'at': 0, 'setVel': {'x': 6.0}}])]}
 
 # --- smashes
 fs = raw('fsmash', 'diddy', 'AttackS4')
@@ -520,8 +529,8 @@ moves['fsmash'] = {'name': 'Slap & Beat', 'phases': [phase(
                                                           {'at': frame(21), 'pose': 'spinLow'},
                                                           {'at': frame(24), 'pose': 'spinHigh', 'lerp': True},
                                                           {'at': frame(35), 'pose': 'stand', 'lerp': True}],
-    events=[{'at': frame(12), 'sfx': 'swing', 'setVel': {'x': 6.5}},
-            {'at': frame(21), 'sfx': 'smash', 'setVel': {'x': 4.0}}])]}
+    events=[{'at': frame(12), 'sfx': 'swing', 'setVel': {'x': 9.2857}},
+            {'at': frame(21), 'sfx': 'smash', 'setVel': {'x': 5.7143}}])]}
 us = raw('usmash', 'diddy', 'AttackHi4')
 usmash = [
     hit(pick(us, 2.5, 2)['source'], frame(5), frame(8), 28, 38, 22),
@@ -534,7 +543,7 @@ moves['usmash'] = {'name': 'Triple Attack', 'phases': [phase(
                                                          {'at': frame(12), 'pose': {'from': 'spinLow', 'rot': 180}, 'lerp': True},
                                                          {'at': frame(19), 'pose': 'spinHigh', 'lerp': True},
                                                          {'at': frame(30), 'pose': 'stand', 'lerp': True}],
-    events=[{'at': 0, 'setVel': {'y': 8.0}, 'leaveGround': True},
+    events=[{'at': 0, 'setVel': {'y': 6.6667}, 'leaveGround': True},
             {'at': frame(5), 'sfx': 'swing'}, {'at': frame(19), 'sfx': 'smash'}],
     transitions=[{'on': 'land', 'from': frame(23), 'to': 'landing', 'lag': 30}, wait('end')])]}
 ds = raw('dsmash', 'diddy', 'AttackLw4')
@@ -628,7 +637,7 @@ moves['sspec'] = {
     'phases': [
         phase('leap', 17, anim=[{'at': 0, 'pose': 'crouch'}, {'at': 3, 'pose': 'flip', 'lerp': True},
                                 {'at': 12, 'pose': 'flip'}],
-              events=[{'at': 0, 'setVel': {'x': 4.2, 'y': 13.0}, 'leaveGround': True, 'sfx': 'swing'}],
+              events=[{'at': 0, 'setVel': {'x': 6.0, 'y': 10.8333}, 'leaveGround': True, 'sfx': 'swing'}],
               transitions=[{'on': 'attackPress', 'to': 'kick'}, land(26), wait('flip')]),
         phase('flip', 19, [{'start': 0, 'end': 18, 'x': 30, 'y': 42, 'r': 26, 'damage': 0, 'bkb': 0, 'kbg': 0,
                             'angle': 0, 'type': 'grab'}],
@@ -653,7 +662,7 @@ moves['sspec'] = {
 moves['uspec'] = {
     'name': 'Rocketbarrel Boost', 'air': 'upSpecial', 'bReverse': True, 'chargeDamage': 0.0,
     'phases': [
-        phase('charge', 8, aim=True, fallCap=2.5, airAccelMult=drift(0.25, 'upSpecial'),
+        phase('charge', 8, aim=True, fallCap=2.0833, airAccelMult=drift(0.25, 'upSpecial'),
               charge={'frame': frame(8), 'max': 60, 'button': 'special', 'jet': True},
               anim=[{'at': 0, 'pose': 'charge'}],
               attach={'barrels': {'show': [0, 67], 'angle': [[0, 0]]}},
@@ -670,7 +679,7 @@ moves['uspec'] = {
               anim=[{'at': 0, 'pose': 'charge'}, {'at': 3, 'pose': 'airTuck', 'lerp': True},
                     {'at': 20, 'pose': 'air'}],
               attach={'barrels': {'show': [0, 29], 'angle': [[0, 0]]}},
-              events=[{'at': 0, 'setVel': {'x': 3.2, 'y': 14.0}, 'chargeVelocity': 0.006, 'leaveGround': True,
+              events=[{'at': 0, 'setVel': {'x': 4.5714, 'y': 12.7802}, 'chargeVelocity': 0.006, 'leaveGround': True,
                        'sfx': 'jet'}],
               transitions=[{'on': 'land', 'to': 'explosion'}, wait('fall')]),
         phase('explosion', 59,
@@ -726,8 +735,8 @@ banana = args(re.search(r'ATTACK\((.*?)\)', banana_item['Data'])[1])
 
 projectiles = {
     'peanut': {
-        'name': 'Peanut', 'spawn': [30, 46], 'vel': [13.0, 1.5], 'r': 12, 'life': 55, 'max': 3,
-        'gravity': 0.12, 'maxFall': 5.0, 'spawnSfx': 'shoot',
+        'name': 'Peanut', 'spawn': [30, 46], 'vel': [18.5714, 1.25], 'r': 12, 'life': 55, 'max': 3,
+        'gravity': 0.1, 'maxFall': 4.1667, 'spawnSfx': 'shoot',
         'chargeScale': {'speed': 0.0062, 'damage': 0.0337662, 'angleTo': 45.0},
         'hit': {'start': 0, 'x': 0, 'y': 0, 'r': 0, 'damage': 3.3, 'bkb': 40.0, 'kbg': 0.7, 'angle': 70.0,
                 'shieldDmgMult': 0.7, 'hitlagMult': 0.2},
@@ -736,8 +745,8 @@ projectiles = {
                    line((-9, 3), (9, 5), 1.5, '#8a6338', alpha=0.7)],
     },
     'banana': {
-        'name': 'Banana Peel', 'spawn': [-18, 40], 'vel': [-1.6, 2.4], 'r': 10, 'life': 600, 'max': 1,
-        'gravity': 0.16, 'maxFall': 6.0, 'spawnSfx': 'swing',
+        'name': 'Banana Peel', 'spawn': [-18, 40], 'vel': [-2.2857, 2.0], 'r': 10, 'life': 600, 'max': 1,
+        'gravity': 0.1333, 'maxFall': 5.0, 'spawnSfx': 'swing',
         'bounce': {'restitution': 0.0, 'minSpeed': 0.0, 'friction': 0.0, 'maxBounces': 4, 'fizzleLife': 300,
                    'wallRestitution': 0.4, 'sfx': 'bonk'},
         'hit': {'start': 0, 'x': 0, 'y': 0, 'r': 0, 'damage': 0.0, 'bkb': float(banana['BKB']),
@@ -762,16 +771,16 @@ doc = {
              'and a rocketbarrel recovery that explodes on landing.',
     'stats': {
         'weight': round(100.0 / st['weight'], 8), 'pummelDamage': 1.0,
-        'walkSpeed': round(st['walk'] * 3.5, 5), 'runSpeed': round(st['run'] * 3.5, 5),
-        'dashSpeed': round(st['dash'] * 3.5, 5), 'dashFrames': 13, 'runAccel': 0.62,
+        'walkSpeed': round(st['walk'] * SCALE, 5), 'runSpeed': round(st['run'] * SCALE, 5),
+        'dashSpeed': round(st['dash'] * SCALE, 5), 'dashFrames': 13, 'runAccel': round(0.62 * 5 / 3.5, 4),
         'groundFriction': 0.85,
-        'jumpSpeed': 14.2, 'shortHopSpeed': 9.9, 'airJumpSpeed': 14.0, 'airJumpDrift': round(st['air'] * 3.5, 5),
+        **units.jumps(*JUMP_HEIGHTS, st['gravity'] * SCALE), 'airJumpDrift': round(st['air'] * SCALE, 5),
         'airJumps': 1,
-        # Source ×3.5 gives 3.234 / 0.175; fitted upward so the requested above-average air mobility is felt
-        # in this engine's shared movement (recorded as adapted in the import record).
-        'airSpeed': 4.3, 'airAccel': AIR_ACCEL,
-        'gravity': round(st['gravity'] * 6, 5), 'fallSpeed': round(st['fall'] * 6, 5),
-        'fastFallSpeed': round(st['fastFall'] * 6, 5),
+        # Source × 5 gives 4.62 / 0.25; fitted upward (old scale 4.3 / 0.30, ×5/3.5) so the requested
+        # above-average air mobility is felt in this engine's shared movement (recorded as adapted).
+        'airSpeed': round(4.3 * 5 / 3.5, 4), 'airAccel': round(AIR_ACCEL, 4),
+        'gravity': round(st['gravity'] * SCALE, 5), 'fallSpeed': round(st['fall'] * SCALE, 5),
+        'fastFallSpeed': round(st['fastFall'] * SCALE, 5),
     },
     'body': {'halfWidth': 13, 'height': 70},
     'hurtboxes': {'default': {'x1': -14, 'x2': 14, 'y1': 0, 'y2': 72},

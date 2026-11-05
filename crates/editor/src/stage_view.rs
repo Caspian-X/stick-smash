@@ -1213,6 +1213,15 @@ mod tests {
     }
 
     #[test]
+    fn built_in_stages_have_no_notes() {
+        let files = crate::doc::tests_files();
+        let (d, _) = sim::data::load(files.sources()).unwrap();
+        for s in &d.stages {
+            assert!(notes(s, "").is_empty(), "{}: {:?}", s.id, notes(s, ""));
+        }
+    }
+
+    #[test]
     fn notes_flag_missing_spawns() {
         let mut s = arena();
         assert!(notes(&s, "").is_empty(), "{:?}", notes(&s, ""));

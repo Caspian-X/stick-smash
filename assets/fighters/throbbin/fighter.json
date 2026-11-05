@@ -8,22 +8,22 @@
   "stats": {
     "weight": 1.05263158,
     "pummelDamage": 1.5,
-    "walkSpeed": 3.276,
-    "runSpeed": 4.4275,
-    "dashSpeed": 6.3525,
+    "walkSpeed": 4.68,
+    "runSpeed": 6.325,
+    "dashSpeed": 9.075,
     "dashFrames": 15,
-    "runAccel": 0.62,
+    "runAccel": 0.8857,
     "groundFriction": 0.85,
-    "jumpSpeed": 13.2,
-    "shortHopSpeed": 9.4,
-    "airJumpSpeed": 13.0,
-    "airJumpDrift": 3.675,
+    "jumpSpeed": 11.935,
+    "shortHopSpeed": 8.2208,
+    "airJumpSpeed": 12.38,
+    "airJumpDrift": 5.25,
     "airJumps": 1,
-    "airSpeed": 3.675,
-    "airAccel": 0.28,
-    "gravity": 0.534,
-    "fallSpeed": 9.0,
-    "fastFallSpeed": 14.4
+    "airSpeed": 5.25,
+    "airAccel": 0.4,
+    "gravity": 0.445,
+    "fallSpeed": 7.5,
+    "fastFallSpeed": 12.0
   },
   "charges": [
     { "id": "levin", "uses": 8, "recharge": 600, "emptySfx": "toss", "refillSfx": "ready" },
@@ -589,7 +589,7 @@
             { "at": 7, "sfx": "slash" },
             {
               "at": 0,
-              "setVel": { "x": 4.2 }
+              "setVel": { "x": 6.0 }
             }
           ]
         }
@@ -2513,7 +2513,7 @@
                 },
                 {
                   "at": 0,
-                  "setVel": { "y": 12.5 }
+                  "setVel": { "y": 11.4109 }
                 }
               ],
               "transitions": [
@@ -2549,7 +2549,7 @@
                 },
                 {
                   "at": 0,
-                  "setVel": { "y": 10.5 }
+                  "setVel": { "y": 9.5851 }
                 }
               ]
             }
@@ -2604,7 +2604,7 @@
                 },
                 {
                   "at": 0,
-                  "setVel": { "y": 12.5 }
+                  "setVel": { "y": 11.4109 }
                 }
               ],
               "transitions": [
@@ -2898,7 +2898,7 @@
     "thunder": {
       "name": "Thunder",
       "spawn": [46, 56],
-      "vel": [13, 0],
+      "vel": [18.5714, 0],
       "r": 7.5,
       "life": 16,
       "max": 6,
@@ -2933,7 +2933,7 @@
     "elthunder": {
       "name": "Elthunder",
       "spawn": [46, 58],
-      "vel": [16, 0],
+      "vel": [22.8571, 0],
       "r": 17.5,
       "life": 20,
       "max": 6,
@@ -2970,7 +2970,7 @@
     "arcthunder": {
       "name": "Arcthunder",
       "spawn": [46, 58],
-      "vel": [9, 0],
+      "vel": [12.8571, 0],
       "r": 16,
       "life": 26,
       "max": 6,
@@ -3016,7 +3016,7 @@
     "thoron": {
       "name": "Thoron",
       "spawn": [46, 58],
-      "vel": [22, 0],
+      "vel": [31.4286, 0],
       "r": 15,
       "life": 46,
       "max": 6,
@@ -3061,7 +3061,7 @@
     "arcfire": {
       "name": "Arcfire",
       "spawn": [44, 68],
-      "vel": [9.5, 2.2],
+      "vel": [13.5714, 1.8333],
       "r": 9,
       "life": 30,
       "max": 6,
@@ -3078,7 +3078,7 @@
         "setKb": true,
         "shieldDmgMult": 0.5
       },
-      "gravity": 0.16,
+      "gravity": 0.1333,
       "spawnSfx": "shoot",
       "shapes": [
         { "shape": "circle", "at": [0, 0], "r": 9, "alpha": 0.85, "fill": "#d63b1a" },
@@ -3108,7 +3108,7 @@
     "arcfireFlame": {
       "name": "Arcfire Flame",
       "spawn": [96, 22],
-      "vel": [2.2, 0],
+      "vel": [3.1429, 0],
       "r": 19,
       "life": 42,
       "max": 6,
@@ -3160,7 +3160,7 @@
     "arcfireBurst": {
       "name": "Arcfire Burst",
       "spawn": [96, 22],
-      "vel": [0.6, 0],
+      "vel": [0.8571, 0],
       "r": 26,
       "life": 12,
       "max": 6,
@@ -3188,7 +3188,7 @@
     "elwind1": {
       "name": "Elwind 1",
       "spawn": [26, 30],
-      "vel": [2.0, 15.0],
+      "vel": [2.8571, 12.5],
       "r": 20,
       "life": 24,
       "max": 6,
@@ -3233,7 +3233,7 @@
     "elwind2": {
       "name": "Elwind 2",
       "spawn": [26, 30],
-      "vel": [1.4, 14.0],
+      "vel": [2.0, 11.6667],
       "r": 20,
       "life": 24,
       "max": 6,

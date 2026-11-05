@@ -11,9 +11,7 @@
  },
  "units": {
   "frame": "sourceFrame - 1",
-  "geometryScale": 5.0,
-  "mobilityScale": 3.5,
-  "verticalScale": 6.0,
+  "scale": 5.0,
   "hammerReach": 80.0
  },
  "ufd": {
@@ -4957,32 +4955,32 @@
    "fastFall": 3.12,
    "jumpHeight": 32.85,
    "shortHopHeight": 16.02,
+   "airJumpHeight": 28.50284665,
    "airJumps": 4
   },
   "conversion": {
-   "groundAirScale": 3.5,
-   "verticalScale": 6.0,
-   "jumpSpeed": "fitted full/short/air speeds 13.5/9.4/13; original sqrt(2 * gravity * height) baseline retained in import record"
+   "scale": 5.0,
+   "jumpSpeed": "units.jumps(source heights x scale, source gravity x scale); supersedes the fitted 13.5/9.4/13"
   },
   "result": {
    "weight": 0.78740157,
    "pummelDamage": 1.6,
-   "walkSpeed": 3.6015,
-   "runSpeed": 5.236,
-   "dashSpeed": 6.3525,
+   "walkSpeed": 5.145,
+   "runSpeed": 7.48,
+   "dashSpeed": 9.075,
    "dashFrames": 15,
-   "runAccel": 0.72,
+   "runAccel": 1.0286,
    "groundFriction": 0.86,
-   "jumpSpeed": 13.5,
-   "shortHopSpeed": 9.4,
-   "airJumpSpeed": 13.0,
-   "airJumpDrift": 3.8,
+   "jumpSpeed": 12.3798,
+   "shortHopSpeed": 8.5725,
+   "airJumpSpeed": 12.0006,
+   "airJumpDrift": 5.4286,
    "airJumps": 4,
-   "airSpeed": 2.5725,
-   "airAccel": 0.175,
-   "gravity": 0.582,
-   "fallSpeed": 11.7,
-   "fastFallSpeed": 18.72
+   "airSpeed": 3.675,
+   "airAccel": 0.25,
+   "gravity": 0.485,
+   "fallSpeed": 9.75,
+   "fastFallSpeed": 15.6
   }
  }
 }

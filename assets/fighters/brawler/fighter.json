@@ -597,7 +597,7 @@
             { "at": 14, "sfx": "smash" },
             {
               "at": 14,
-              "setVel": { "x": 4 }
+              "setVel": { "x": 5.714286 }
             }
           ],
           "charge": { "frame": 8 },
@@ -1783,7 +1783,7 @@
           "name": "main",
           "frames": 34,
           "events": [
-            { "if": "airborne", "capFall": 2.5 },
+            { "if": "airborne", "capFall": 2.083333 },
             { "at": 12, "spawn": "energyBall" }
           ],
           "anim": [
@@ -1903,7 +1903,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 2.5, "y": 17.5 },
+              "setVel": { "x": 3.571429, "y": 15.975241 },
               "leaveGround": true,
               "sfx": "djump"
             },
@@ -2043,11 +2043,11 @@
         {
           "name": "fall",
           "frames": 43,
-          "fallCap": 22,
+          "fallCap": 18.333333,
           "airAccelMult": 0,
           "events": [
             {
-              "setVel": { "y": -22 },
+              "setVel": { "y": -18.333333 },
               "mulVel": { "x": 0.9 }
             },
             {
@@ -2214,7 +2214,7 @@
   "projectiles": {
     "energyBall": {
       "spawn": [30, 50],
-      "vel": [10, 0],
+      "vel": [14.285714, 0],
       "r": 11,
       "life": 75,
       "max": 2,
@@ -2302,5 +2302,5 @@
       "hit": { "x": 0, "y": 0, "r": 0, "damage": 5, "bkb": 35.1020408163, "kbg": 0.6489795918, "angle": 75 }
     }
   },
-  "stats": { "dashSpeed": 6.496 }
+  "stats": { "dashSpeed": 9.28 }
 }

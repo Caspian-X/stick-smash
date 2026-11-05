@@ -2,7 +2,7 @@
  "sourceCommit": "2e8f0d245481cb0c936524b6ffe1cdea867c4f68",
  "sourceSha256": "5751539029aeeb6e9a28a0cfe3aa0688ece1f61d44c34af6d63959a06815cb7f",
  "ufdSha256": "1c2ee1b62d16d462443cd150f718309b0b8651ef74cd589c27b90d64b34de071",
- "geometryScale": 5,
+ "scale": 5.0,
  "rawAttacks": {
   "jab1": {
    "article": "snake",

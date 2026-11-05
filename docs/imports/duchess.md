@@ -63,7 +63,7 @@ Peach Parasol 39, Peach Bomber hit 25. That is why the engine totals use those n
 | Toad counter window | UFD "Counter window 9-34 from 10-35" | SmashWiki 9-34 | 9-34 (source frames) → phase frames 8-33. |
 | Peach Bomber totals | UFD 62 grounded miss / 87 airborne miss; "hit is 25 total frames" | script `SpecialSJump` enables a 25-frame timeout, `SpecialSHitEnd` is a 4-frame script | Grounded whiff 62 (11 windup + 25 thrust + 26 recovery); on contact a 25-frame hit phase; the airborne whiff uses an open `fall` phase (ledge grab from the source's frame 16) instead of a fixed 87 so the engine can keep steering to a ledge. The windup is one tick shorter than the source's 12 so the search box is live on source frames 13-36 (phase entry does not run transition checks). |
 | Turnip damage | UFD "8.3—27.6" for the whole move | UFD/SmashWiki base faces 5/10/16/23 and the item-throw formula `d − 0.4 + speed×3` | UFD's low end 8.3 is the common smiley forward throw; a smash throw adds `(3.64 − 2.6) × 3 = 3.1` → 11.4. Special faces, Mr. Saturn and Bob-omb are omitted. |
-| Float | SmashWiki: 2.5 s, once per airtime, no vertical movement, drift at air speed, persists through aerials | engine `stats.floatSpeed` only caps a descent while jump is held in normal Air | Source documented; engine expresses a slow sink (1.2 px/tick), not a timed hover. See below. |
+| Float | SmashWiki: 2.5 s, once per airtime, no vertical movement, drift at air speed, persists through aerials | engine `stats.floatSpeed` only caps a descent while jump is held in normal Air | Source documented; engine expresses a slow sink (fitted 1.0 px/tick), not a timed hover. See below. |
 | Pivot grab | UFD lists it (startup 10, total 39) | `Moves` has no pivot-grab slot | Omitted; standing/dash grabs and the four throws are imported. |
 
 ## Conversion rules
@@ -77,8 +77,8 @@ Peach Parasol 39, Peach Bomber hit 25. That is why the engine totals use those n
 | Masks | `FacingRestrict`, `Ground_or_Air` | `dir: away/back`, `situation: ground/air` | converted |
 | Hitlag / shield | `Hitlag`, `ShieldDamage` | `hitlagMult`, `shieldDmgMult` | converted |
 | Poses | script bones plus the UFD hitbox frames | 22 authored stick-figure poses (slaps, kicks, club swing, rise, spin, crown strike, hip check, counter, bomber lunge, parasol, pluck, toss) and matching attachment angles | **fitted** |
-| Movement | UFD walk 0.924, run 1.595, dash 1.826, air 1.029, air accel 0.12, gravity 0.070, fall 1.19 / 1.904 | ×3.5 for speeds (3.234 / 5.5825 / 6.391 / 3.6015 / 0.42); gravity and fall ×6 (0.42 / 7.14 / 11.424) | converted + shared world scale |
-| Jumps | UFD airtimes: full hop 57, short hop 41 frames | full 12.0, short 8.6, air jump 11.6 px/tick with gravity 0.42 (full-hop airtime 57 ticks); drift 3.6 | fitted to the reference airtimes and the built-in platform heights |
+| Movement | UFD walk 0.924, run 1.595, dash 1.826, air 1.029, air accel 0.12, gravity 0.070, fall 1.19 / 1.904 | 5 px/unit on every axis: 4.62 / 7.975 / 9.13 / 5.145 / 0.6; gravity 0.35, fall 5.95 / 9.52; air-jump drift = air speed 5.145 (was a fitted 3.6 ≈ 1.029 × 3.5); fitted run accel 0.6 → 0.8571 (×5/3.5) | converted |
+| Jumps | Heights (units) full 30.03, short 14.5, air 30.03: ssbwiki "Jump", SSBU "Jump height ranking" table, https://www.ssbwiki.com/Jump, accessed 2026-11-05 | `units.jumps` at gravity 0.35: jump 10.0776, short hop 6.95, air jump 10.4276 px/tick. Feel harness: full 150.15 / short 72.5 / air 150.15 px (target 150.15 / 72.5 / 150.15); airtimes full 64, short 42, air jump 89 frames vs UFD full/short hop 57 / 41 | converted; the earlier fit to the UFD airtimes (12.0 / 8.6 / 11.6 at gravity 0.42) is superseded |
 | Weight | 89 | `100/89` reciprocal knockback multiplier | converted |
 | Pummel | 1.3 | `stats.pummelDamage` | converted |
 | Specials | script rows/windows | counter window, spore projectiles, search→burst lunge, rising hits + fall-capped open parasol, pluck→toss | converted with the documented engine adaptations |
@@ -112,7 +112,7 @@ the authored phases. The parsed rows are in `sources/duchess/ledger.json`.
 | Down throw | `ThrowLw` | release 43 / 64 | 7.0, 106°, KBG 0.60, BKB 60; 1.0 pre-hit at frame 34 | |
 | Neutral special (Toad) | `SpecialN`/`SpecialNHit`, `peach_kinopiospore/Shot` | counter 9-34; 62 / 60 on hit | spores 3.5 each, 45°, KBG 210, BKB 40, shield +2 | `counter` phase 8-33; six spore births at 3,6,9,12,15,18. The source's 8-10 intangibility is not authored: an intangible victim is skipped before the counter check, so the window itself is the guard. |
 | Side special (Peach Bomber) | `SpecialSJump`/`SpecialSHitEnd` | searchbox 13-36; hit 2-3 after contact; 62 ground whiff | 12.0, 361 (Sakurai), KBG 73, BKB 60, ShieldDamage 6 | Windup 12, thrust 24 (ledge grab from source 16), 25-frame burst on contact, 26 recovery; air whiff falls with ledge grabs |
-| Up special (Peach Parasol) | `SpecialHiStart`/`Open`/`Fall` | hits 7-9, 11-15, 16-21, 22-27 (rehit 5), 31-32; attack 39 | 3.0 (FKB 160/130), 1.0 rehit 5 (93°, 87° and the frame-22 368 autolink replacements), 4.0 final (hitlag 3); open parasol 2.0 rehit 18 | Five rise phases (one per script window), then open (caps descent at 2.0 px/tick, closes on a fresh special press or after 480 frames) and a closed special-fall phase that runs until landing with 40 frames of lag (it still grabs ledges, as in the source); every rise phase lands into 26 frames of lag rather than staying in the move; open landing lag 26 |
+| Up special (Peach Parasol) | `SpecialHiStart`/`Open`/`Fall` | hits 7-9, 11-15, 16-21, 22-27 (rehit 5), 31-32; attack 39 | 3.0 (FKB 160/130), 1.0 rehit 5 (93°, 87° and the frame-22 368 autolink replacements), 4.0 final (hitlag 3); open parasol 2.0 rehit 18 | Five rise phases (one per script window), then open (caps descent at a fitted 1.6667 px/tick, 2.0 at the old ×6 scale, closes on a fresh special press or after 480 frames) and a closed special-fall phase that runs until landing with 40 frames of lag (it still grabs ledges, as in the source); every rise phase lands into 26 frames of lag rather than staying in the move; open landing lag 26 |
 | Down special (Vegetable) | `SpecialLw`, `peachdaikon` | pluck 39; toss 22 | Turnip 8.3 (weak tier) or 11.4 (smash tier), angle 30, KBG 0.45, BKB 25, hitlag 0.8 | Pluck (39) → `ready` charge phase → `toss`/`tossStrong` spawns the projectile at frame 6 |
 
 ## Float
@@ -123,8 +123,8 @@ The source float (`Floating`, SmashWiki): performing and holding a jump input wh
 canceled with down (which becomes a fast fall), and is not restored by being hit.
 
 The engine's hook is `stats.floatSpeed`: a positive downward speed cap applied only while airborne in normal
-`Air` control with jump held. Duchess uses **1.2 px/tick** (her fall speed is 7.14, fast fall 11.424), so the
-float reads as a slow sink with full drift.
+`Air` control with jump held. Duchess uses a fitted **1.0 px/tick** (1.2 at the old ×6 vertical scale; her fall
+speed is 5.95, fast fall 9.52), so the float reads as a slow sink with full drift.
 
 What the stat can and cannot express:
 
@@ -149,11 +149,11 @@ Mr. Saturn, Bob-omb, holding/regrabbing the turnip and throwing it in other dire
 ## Validation and handoff
 
 - Reference tests (`crates/sim/tests/duchess.rs`, 15): package identity/slots/stats (no zair, no charge pools,
-  100/89 weight, float 1.2); every slot's duration against the pinned UFD totals; hit windows after the entry
+  100/89 weight, float 1.0); every slot's duration against the pinned UFD totals; hit windows after the entry
   shift (jab 1-2, ftilt 6-8/9-14, dtilt 7-8, dsmash 5-6…25-26/29-30, nair 4-7/8-18, fair 15-19, bair 5-6/7-12,
   uair 9-12/14-18, dair 11-12…29-30, usmash 13-15/16-19, fsmash 14-16) and their damage tiers; smash charge
   frames 4/8/1; aerial landing-lag and autocancel boundaries through real phase progression (nair 7/AC 1-4,36+;
-  fair 13/1-9,41+; bair 11/1-4,30+; uair 7/1-4,41+; dair 8/1-11,38+); float caps a held-jump descent at 1.2 and
+  fair 13/1-9,41+; bair 11/1-4,30+; uair 7/1-4,41+; dair 8/1-11,38+); float caps a held-jump descent at 1.0 and
   releases immediately, and does not apply during an attack; Vegetable pluck length, no projectile during the
   pluck, weak/strong tiers (including the strong tier's re-derived shield multiplier) and that neither tier
   consumes the gameplay RNG; Toad's counter window boundaries, the attacker freeze, six spore births across three
@@ -224,7 +224,7 @@ Mr. Saturn, Bob-omb, holding/regrabbing the turnip and throwing it in other dire
 - Toad's source intangibility (frames 8-10) is not authored because the engine skips intangible victims before the
   counter check; the counter window is the protection instead.
 - Pivot grab has no destination slot and is omitted. Autolinks use the engine's shared pull rule.
-- No physical controller playtest; movement feel follows the fitted speeds and the UFD airtimes, not measured
+- No physical controller playtest; movement follows the source stats and jump heights at 5 px/unit, not measured
   hardware input.
 
 ## Contact identity correction (2026-11-04)
@@ -240,3 +240,17 @@ Parasol's rising phases also use whole-timeline grouping. The rehit-5 loop conti
 `10,15,20,22,27`, preserving the five-tick cooldown through the presentation seam. The final 4% hit still lands.
 
 Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-duchess`.
+
+## Unified scale (2026-11-05)
+
+The importer emits one 5 px/unit scale (`tools/units.py`) for geometry, speeds and accelerations: source
+movement, the Peach Bomber lunge (2.9 → 14.5) and its hit rebound (−0.95 / 1.4 → −4.75 / 7.0) are source × 5
+(were ×3.5 on both axes). Fitted values convert by factor (x ×5/3.5, y ×5/6): dash attack impulse 5.1429, Bomber
+lift 0.4167, Parasol rise 11.4109 (12.5 × √(5/6), same height) and open fall cap 1.6667, float 1.0, run accel 0.8571, turnip `[11.4286,
+3.3333]` / strong `[14.2857, 3.5833]` with gravity 0.2667, max fall 7.5, bounce min speed 1.3333, spores
+`[8.5714, 5.8333]`, `[14.2857, 1.25]`, `[10.7143, -2.5]`. `drift()` scales the old shared accels by 5/3.5, so
+every `airAccelMult` is unchanged. Jump speeds now come from the source jump heights (Jumps row), not the UFD
+airtimes: with height and gravity both source-exact the full hop lasts 64 frames (UFD 57) and the short hop 42
+(UFD 41). Expected: rising 30.03 units at gravity 0.070 and falling back capped at 1.19 already takes about
+63 frames, so UFD's 57 does not follow from the listed height, gravity and fall speed alone. Balance and CPU figures under "Validation" predate
+this change.

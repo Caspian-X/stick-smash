@@ -1247,7 +1247,8 @@ mod tests {
         assert!(doc.dirty() && doc.errors.is_empty());
         let patched = doc.patched();
         assert_eq!(patched["$schema"], before["$schema"]);
-        assert_eq!(patched["blocks"][0]["left"], 290.);
+        let left = before["blocks"][0]["left"].as_f64().unwrap() - 10.;
+        assert_eq!(patched["blocks"][0]["left"], left);
         assert_eq!(patched["blocks"][0]["right"], before["blocks"][0]["right"]);
         assert_eq!(patched["art"]["edge"], "#112233");
         for k in ["spawns", "respawns", "blast", "camera", "ledge"] {
@@ -1260,7 +1261,7 @@ mod tests {
         assert!(changed <= 3, "{diff:#?}");
         ws.saved::<Stage>("arena", text, data);
         assert!(!ws.stage("arena").unwrap().dirty());
-        assert_eq!(ws.data.stage("arena").unwrap().blocks[0].left, 290.);
+        assert_eq!(ws.data.stage("arena").unwrap().blocks[0].left, left);
         // Invalid geometry is caught live and refused.
         let doc = ws.stage("arena").unwrap();
         doc.edit(|s| s.platforms[0].x2 = s.platforms[0].x1 - 1.);

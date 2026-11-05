@@ -42,9 +42,25 @@ bless:
 rescale config *args:
     python3 tools/rescale.py "{{config}}" {{args}}
 
-# Unit tests for the Python content tools (rescale, canonical JSON formatting)
+# Unit tests for the Python content tools (rescale, canonical JSON formatting, jump speeds)
 test-tools:
-    python3 -m unittest tools/rescale_test.py
+    python3 -m unittest tools/rescale_test.py tools/units_test.py
+
+# One-time migration of pre-unification content to 5 px per source unit: factor-driven rescale of the hand-authored
+# content and stages (tools/rescale/unify-5px.json), then every import generator. Not idempotent: run it once.
+unify-5px:
+    python3 tools/rescale.py tools/rescale/unify-5px.json
+    python3 tools/import-dedede/import.py
+    python3 tools/import-plant/import.py
+    python3 tools/import-bongo/import.py
+    python3 tools/import-duchess/import.py
+    python3 tools/import-sneak/import.py
+    python3 tools/import-stratus/import.py
+    python3 tools/import-robin/import.py
+    python3 tools/import-verdant/import.py
+    python3 tools/import-zelda/import.py
+    python3 tools/import-zss/import.py
+    just bless
 
 # Re-snapshot the content TS traces load (crates/sim/tests/fixtures/ts-content) from assets/
 freeze-ts-content:

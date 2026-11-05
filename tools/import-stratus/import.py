@@ -5,26 +5,31 @@ Damage, launch fields, masks, hitlag and rehit come from the pinned attack scrip
 totals, landing lag, autocancels, charge frames and movement come from the pinned Ultimate Frame Data rows.
 Sword geometry is *fitted* to the stick-figure poses and the per-move hitbox GIF frames, not projected from
 Nintendo's skeleton. Limit is a one-use charge pool filled by the down special and spent by variant timelines.
+Movement uses the shared 5 px/unit scale (`tools/units.py`): speeds units/frame → px/tick, accelerations
+units/frame² → px/tick², jump speeds derived from the source jump heights.
 Run `just import-stratus`.
 """
-import copy, json, math, re
+import copy, importlib, json, math, re, sys
 from pathlib import Path
 
 # Phase drift (`airAccelMult`) is written as a multiple of the old shared air accels (aerial 0.45, attack 0.25,
 # upSpecial 0.3). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier instead, so drift()
-# stores the value that keeps the same effective acceleration.
-AIR_ACCEL = 0.245
+# stores the ratio that keeps the same effective acceleration relative to airAccel. The ratio is scale-free, so it
+# is taken against the airAccel at the old 3.5 px/unit scale those legacy accels were written in (0.07 × 3.5).
+LEGACY_AIR_ACCEL = 0.245
 def drift(legacy, kind):
     old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind]
     mult = {'aerial': 1.0, 'attack': 0.55, 'upSpecial': 0.65}[kind]
-    return round(legacy * old / (AIR_ACCEL * mult), 4)
+    return round(legacy * old / (LEGACY_AIR_ACCEL * mult), 4)
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools'))
+units = importlib.import_module('units')
 SOURCES = ROOT / 'docs/imports/sources/stratus'
 source = json.loads((SOURCES / 'scripts.json').read_text())
 ufd = json.loads((SOURCES / 'ufd.json').read_text())['rows']
 scripts = {art: {s['Name']: s['Data'] for s in ss} for art, ss in source['scripts'].items()}
-ledger = {'sourceCommit': source['commit'], 'sourceSha256': source['sha256'], 'geometryScale': 5, 'rawAttacks': {}}
+ledger = {'sourceCommit': source['commit'], 'sourceSha256': source['sha256'], 'scale': units.SCALE, 'rawAttacks': {}}
 
 
 # ---------------------------------------------------------------- script parsing
@@ -118,7 +123,7 @@ def num(a, k, default=0):
 
 
 # ---------------------------------------------------------------- conversion
-SCALE = 5.0
+SCALE = units.SCALE
 
 
 def frame(source_frame):
@@ -536,7 +541,7 @@ dash = [hit(take(da, 11.0, 0)['source'], frame(9), frame(13), 40, 70, 25),
 moves['dashatk'] = {'name': 'Dash Attack', 'phases': segments(
     45, [0, 8, 13, 18, 45], ['windup', 'early', 'late', 'recovery'], dash,
     anim=swing('thrust', frame(9), frame(18), 45), keys=[[0, 130], [8, 5], [18, 35], [44, 95]],
-    events=[{'at': 0, 'setVel': {'x': 4.2}}, {'at': frame(9), 'sfx': 'slash'}], slide=frame(20))}
+    events=[{'at': 0, 'setVel': {'x': 6.0}}, {'at': frame(9), 'sfx': 'slash'}], slide=frame(20))}
 
 # --- smashes: UFD charge holds are 5, 5 and 2
 fs = raw('fsmash', 'cloud', 'AttackS4')
@@ -693,10 +698,10 @@ def beam_projectile(name, damage, kbg, vel, life, r, colour, glow):
 
 
 projectiles = {
-    'bladeBeam': beam_projectile('Blade Beam', 8.0, 0.60, 11, 44, 15, '#67d08a', '#d8ffe4'),
-    'bladeBeamAir': beam_projectile('Blade Beam', 6.4, 0.60, 9, 40, 15, '#67d08a', '#d8ffe4'),
-    'limitBlade': beam_projectile('Limit Blade Beam', 19.0, 0.726, 14, 46, 40, '#3f7dff', '#d9ecff'),
-    'limitBladeAir': beam_projectile('Limit Blade Beam', 15.0, 0.803, 11, 42, 40, '#3f7dff', '#d9ecff'),
+    'bladeBeam': beam_projectile('Blade Beam', 8.0, 0.60, 15.7143, 44, 15, '#67d08a', '#d8ffe4'),
+    'bladeBeamAir': beam_projectile('Blade Beam', 6.4, 0.60, 12.8571, 40, 15, '#67d08a', '#d8ffe4'),
+    'limitBlade': beam_projectile('Limit Blade Beam', 19.0, 0.726, 20.0, 46, 40, '#3f7dff', '#d9ecff'),
+    'limitBladeAir': beam_projectile('Limit Blade Beam', 15.0, 0.803, 15.7143, 42, 40, '#3f7dff', '#d9ecff'),
 }
 for key in ('limitBlade', 'limitBladeAir'):
     projectiles[key]['hit'].update({'bkb': 50.0, 'angle': 48, 'hitlagMult': 1.0, 'shieldDmgMult': 1.0})
@@ -825,7 +830,7 @@ land_hit = [hit({'Damage': '3.5', 'Angle': '64', 'KBG': '128', 'BKB': '64', 'Hit
 def climhazzard(limit):
     thrust_boxes = lthrust if limit else thrust
     rise_boxes = lrise if limit else rise
-    speed = 21.0 if limit else 17.0
+    speed = 19.1703 if limit else 15.5188  # fitted rise: 21 / 17 at the old scale × √(5/6), same height
     # Nine thrust ticks (move frames 0-8), so the rise starts on move frame 9 = source frame 10.
     thrust_phase = phase('thrust', 9, thrust_boxes, ledgeGrab=frame(7),
                          anim=[{'at': 0, 'pose': 'stand'}, {'at': 5, 'pose': 'thrust', 'lerp': True},
@@ -856,7 +861,7 @@ def climhazzard(limit):
 plunge_phase = phase('plunge', 26, plunge, airAccelMult=drift(0.3, 'upSpecial'),
                      anim=[{'at': 0, 'pose': 'plunge'}],
                      attach=attach([[0, 90], [4, 180], [12, 270], [25, 95]]),
-                     events=[{'at': 0, 'setVel': {'x': 0, 'y': -14}}, {'at': frame(12), 'sfx': 'slash'}],
+                     events=[{'at': 0, 'setVel': {'x': 0, 'y': -11.6667}}, {'at': frame(12), 'sfx': 'slash'}],
                      transitions=[{'on': 'land', 'to': 'landHit'}, wait('helpless')])
 land_hit = phase('landHit', 26, land_hit,
                  anim=[{'at': 0, 'pose': 'plunge'}, {'at': 8, 'pose': 'stand', 'lerp': True}],
@@ -915,6 +920,19 @@ throws = {
 }
 
 # ---------------------------------------------------------------- fighter document
+# UFD movement (units/frame, units/frame²) × SCALE. Jump speeds come from the ssbwiki Cloud (SSBU) attributes
+# (units: full hop 32.5, short hop 17, double jump 32.5); Limit Break's boosts are not modeled. runAccel is fitted
+# (1.0 at the old 3.5 px/unit scale).
+GRAVITY = round(0.098 * SCALE, 5)
+stats = {
+    'weight': 1.0, 'pummelDamage': 1.3,
+    'walkSpeed': round(1.155 * SCALE, 5), 'runSpeed': round(2.167 * SCALE, 5), 'dashSpeed': round(2.145 * SCALE, 5),
+    'dashFrames': 15, 'runAccel': 1.4286,
+    'groundFriction': 0.8,
+    **units.jumps(32.5, 17, 32.5, GRAVITY), 'airJumpDrift': round(1.155 * SCALE, 5), 'airJumps': 1,
+    'airSpeed': round(1.155 * SCALE, 5), 'airAccel': round(0.07 * SCALE, 5), 'gravity': GRAVITY,
+    'fallSpeed': round(1.68 * SCALE, 5), 'fastFallSpeed': round(2.688 * SCALE, 5),
+}
 doc = {
     '$schema': '../../schema/fighter.schema.json',
     'schemaVersion': 1,
@@ -924,13 +942,7 @@ doc = {
     'blurb': 'A fast-moving swordsman with a huge disjointed blade and slow, heavy swings. Charge Limit with the '
              'down special, then spend it on a Limit Break special: a piercing Blade Beam, a five-hit Cross Slash, '
              'a towering Climhazzard, or Finishing Touch.',
-    'stats': {
-        'weight': 1.0, 'pummelDamage': 1.3,
-        'walkSpeed': 4.0425, 'runSpeed': 7.5845, 'dashSpeed': 7.5075, 'dashFrames': 15, 'runAccel': 1.0,
-        'groundFriction': 0.8,
-        'jumpSpeed': 14.8, 'shortHopSpeed': 10.4, 'airJumpSpeed': 13.8, 'airJumpDrift': 4.0425, 'airJumps': 1,
-        'airSpeed': 4.0425, 'airAccel': AIR_ACCEL, 'gravity': 0.588, 'fallSpeed': 10.08, 'fastFallSpeed': 16.128,
-    },
+    'stats': stats,
     'charges': [
         {'id': 'limit', 'uses': 1, 'recharge': 0, 'emptySfx': 'toss', 'refillSfx': 'ready'},
     ],

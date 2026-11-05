@@ -594,7 +594,7 @@ fn raw_flip_steering_can_brake_reverse_and_extend_the_arc_without_turning() {
     for face in [-1., 1.] {
         let (d, mut base) = setup("dspec");
         base.fighters[0].face = face;
-        base.fighters[0].vx = 7.5 * face;
+        base.fighters[0].vx = 7.5 * 5. / 3.5 * face; // the fitted Flip Jump launch (7.5 at the old 3.5 scale)
         let run = |x: i8| {
             let mut w = base.clone();
             for _ in 0..16 {

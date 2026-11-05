@@ -21,7 +21,8 @@
 | Frame-data page | https://ultimateframedata.com/king_dedede | page SHA-256 `9a23d46496b779d101240b667758455dc12af13dc0ff017d75d66b6512b84e29`; parsed copy `docs/imports/sources/king/ufd.json` | 2026-11-03 | Startup/active/total, damage variants, landing lag, autocancel windows, charge frames, armor/invulnerability notes, movement stats |
 | Numeric attack scripts | https://github.com/rubendal/ssbu/blob/2e8f0d245481cb0c936524b6ffe1cdea867c4f68/public/data/patch/13.0.1/character/King%20Dedede/data.json | repo commit `2e8f0d245481cb0c936524b6ffe1cdea867c4f68` (2021-12-04); source file SHA-256 `a081a4dbc20a4432c670229ce737fca482b217e2417c305bd342e0a6d93fc24a`; retained wrapper `docs/imports/sources/king/scripts.json` SHA-256 `433b0ae9c24d7c69000f9cf8e815ba915acf80677658b1c3bece0c8eb5c6dc5a` | 2026-11-03 | Hitbox IDs, bone names, damage/angle/BKB/KBG/FKB, hitlag, rehit, ground/air masks, facing restrictions, catch volumes, special flags |
 | Per-frame hitbox visuals | UFD linked GIFs, e.g. `hitboxes/king_dedede/KingDededeFSmash.gif` | 28 animations pinned by SHA-256 and inspected frame indices in `docs/imports/sources/king/visuals.json` SHA-256 `443d32691e3d33811b9f88292999074ae28daaaa91ee855fa376095f57cf06e4` | 2026-11-03 | Hammer path, weapon/head alignment, active-frame references, grab/special silhouettes |
-| Numeric movement stats | UFD Misc Info plus ssbwiki attributes (weight 127, four midair jumps, jump heights 32.85 / 16.02, fall speeds 1.95 / 3.12) | same page/date; wiki https://www.ssbwiki.com/King_Dedede_(SSBU) used only for cross-checking jump count/height | 2026-11-03 | Mobility and jump inputs |
+| Numeric movement stats | UFD Misc Info plus ssbwiki attributes (weight 127, four midair jumps, fall speeds 1.95 / 3.12) | same page/date; wiki https://www.ssbwiki.com/King_Dedede_(SSBU) used only for cross-checking jump count | 2026-11-03 | Mobility inputs |
+| Jump heights | ssbwiki "Jump" page, SSBU "Jump height ranking" table, https://www.ssbwiki.com/Jump (unitless game units) | full 32.85, short 16.02, first midair jump 28.50284665 | 2026-11-05 | Jump speeds |
 
 Retained commands and inputs:
 
@@ -64,8 +65,9 @@ formatter/schema check.
 | Angles | Source angle codes | 361 → `sakurai` (45°), 366/367/368 → `autolink` (90°), 270 → `spike` (or `bury` for Super Jump), 180°–359° mirrored to negative angles; other angles retained | No fighter/move-ID dispatch |
 | Knockback | Source BKB/KBG/FKB | `bkb` = source BKB; `kbg` = source KBG / 100. Fixed-FKB hits use the shared bounded `((1+FKB/2)×1.4+18)×KBG/100+BKB` adaptation and `setKb` | Current Ultimate formula, not Mike's old BKB × 0.1 / KBG × 0.001 |
 | Hitlag / shield | Source Hitlag and ShieldDamage | `hitlagMult`; negative ShieldDamage → `shieldDmgMult = max(0,(damage+ShieldDamage)/damage)` | Where source values are non-default |
-| Movement | Weight 127; walk 1.029, run 1.496, dash 1.815, air 0.735, air accel 0.05, gravity 0.097, fall 1.95, fast fall 3.12 | Ground/air × 3.5; gravity/fall × 6; weight = 100/127; full hop and double-jump speed = `sqrt(2 · gravity · 32.85 × 6)`, short hop from 16.02 | Deliberate scale choice; traversal tests verify every built-in stage |
-| Jumps | Four midair jumps | `airJumps: 4` | Set directly |
+| Movement | Weight 127; walk 1.029, run 1.496, dash 1.815, air 0.735, air accel 0.05, gravity 0.097, fall 1.95, fast fall 3.12 (units/frame, units/frame²) | One scale, source × 5 (`units.SCALE`): walk 5.145, run 7.48, dash 9.075, air 3.675, air accel 0.25, gravity 0.485, fall 9.75, fast fall 15.6; weight = 100/127. Fitted, converted ×5/3.5 from the old 3.5 px/unit horizontal scale: `runAccel` 1.0286 (was 0.72), `airJumpDrift` 5.4286 (was 3.8) | Traversal tests verify every built-in stage |
+| Jumps | Heights full 32.85, short 16.02, first midair 28.50284665 units; four midair jumps | `units.jumps` at gravity 0.485: `jumpSpeed` 12.3798, `shortHopSpeed` 8.5725, `airJumpSpeed` 12.0006; `airJumps: 4`. Feel harness measures 164.25 / 80.1 / 142.51 px (targets 164.25 / 80.1 / 142.51) | The sim has one `airJumpSpeed`, so all four midair jumps use the first jump's height; ssbwiki's later jumps decay, so the combined midair height exceeds the source 107.25 |
+| Fitted velocities | No source values | Authored speeds in move events and projectiles converted per axis (x ×5/3.5, y ×5/6) to the 5 px/unit scale: Super Jump launch 20.0832 (22 × √(5/6): same height) / fall cap 10, Jet Hammer carry 2.2857, lunges, Gordo/star velocity, gravity, bounce and bat speeds | **Fitted** |
 | Hurtboxes | No numeric hurt volumes supplied by the sources | Authored 46 × 92 default and 72 × 20 knockdown rectangles; interaction points separate | **Fitted** from the silhouette; body collision is 18 × 74 |
 | Poses / weapon | No native SSBU skeleton | Fitted 2D poses, hammer/coat/crown/beak/belly attachments, and unwrapped hammer angle tracks | **Fitted**; frame captures inspected |
 | Grab / ledge size | Source body is much larger than the shared base | `interactions.grab.catchPoint [0,20]`, `holdPoint [58,40]`; ledge uses shared anchors | Shared grab vertical tolerance and all ledge tests pass |
@@ -111,7 +113,7 @@ windows; the tests assert the engine-relative equivalents.
 - **Gordo**: `sspec` starts a hammer hitbox and spawns one `gordo` projectile. It has gravity, three bounces,
   a bat response (any attack can take ownership and reset its cooldown) and wall bounces. Source wall-stick,
   Gordo get and age-scaled damage are not modeled.
-- **Super Dedede Jump**: the fitted leap launches at 22 px/tick, has the source invulnerability event and
+- **Super Dedede Jump**: the fitted leap launches at 20.0832 px/tick (22 before the 5 px/unit rescale, × √(5/6) so it rises as high), has the source invulnerability event and
   armor on `launch`/`plungeArmor`, and waits for the natural fall. `shieldPress` during the plunge enters the
   shared helpless state. The separate 30-frame cancel landing lag is not modeled.
 - **Jet Hammer**: 17-frame entry, a held `charge` phase capped at 136 ticks, then a 14-frame armored swing and 45–55-frame unarmored recovery. Per-move
@@ -133,7 +135,7 @@ windows; the tests assert the engine-relative equivalents.
 - **Raw input tests**: jump + attack short-hop aerial, neutral/side/up/down special routing, held special
   and shield-cancel paths; the focused test drives real `Input` through `step_world`, not only direct
   `start_move`.
-- **Stage and CPU coverage**: `every_ledge_is_recoverable` and `platforms_are_in_full_jump_reach` include
+- **Stage and CPU coverage**: `every_ledge_is_recoverable` and `platforms_are_in_jump_reach` include
   `king` automatically; the focused CPU test runs King/Brawler in both seats on `arena`, `citadel`, `isles`
   and `foundry`. Before the four review fixes, `just balance 4 king` completed 208 matches with 0 unfinished, 47 wins, 365 KOs, 13
   self-KOs and 33 recovery deaths. These diagnostics are evidence about the fighter plus CPU behavior, not
@@ -174,7 +176,7 @@ windows; the tests assert the engine-relative equivalents.
 
 ## Dedicated hammer polish (2026-11-03)
 
-Jet Hammer now permits slow grounded movement while carrying partial or full charge (1.6 pixels/tick),
+Jet Hammer now permits slow grounded movement while carrying partial or full charge (1.6 pixels/tick then; 2.2857 at 5 px/unit),
 without changing facing or discarding charge. Airborne drift also retains charge. Releasing special
 swings with accumulated power. This uses reusable opt-in `Phase.groundSpeed`; other phases keep
 ordinary attack movement. The generator retains the authored speed.
@@ -194,12 +196,17 @@ airborne drift, and release retaining charge through the swing.
 
 ### Jump ascent tuning
 
+**Superseded (2026-11-05)** by the source-derived speeds in [Conversion rules](#conversion-rules): with every axis
+at 5 px/unit the jump speeds come from the ssbwiki heights through `units.jumps` (12.3798 / 8.5725 / 12.0006 at
+gravity 0.485). The observation below still stands as feedback against the old ×6 vertical scale.
+
 Tester feedback identified an overly abrupt ascent. Full-hop speed is now 13.5 (was 15.1468),
 short-hop 9.4 (was 10.5775), and midair jump 13 (was 15.1468) pixels/tick. These are fitted gameplay
 values replacing the height-derived import approximation, not source-exact speeds. Gravity and fall
 caps stay unchanged, so apex height is lower too; four midair jumps remain. The original conversion
 and source heights above record the import baseline. Raw-input tests cover takeoff and midair reset;
-stage reach/recovery tests check the reduced heights.
+stage reach/recovery tests check the reduced heights. (`raw_jump_heights_match_the_source_and_midair_jumps_are_gentler`
+now measures the full / short / first midair rises against source × 5 instead.)
 
 ### Jump, landing and carry presentation
 

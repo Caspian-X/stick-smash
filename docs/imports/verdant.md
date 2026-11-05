@@ -80,7 +80,8 @@ drawn during them (recorded below).
 | Hitlag / shield | script `Hitlag`, `ShieldDamage` | `hitlagMult`, `shieldDmgMult` | converted (down smash: 8 shield damage on 23 → ×1.3478). |
 | Armour | Aymr "damage-based armour frames 34-63, 36% in 1v1" | `slam` phase `armorThreshold: 36` over source frames 35-61 | converted window; the per-hit threshold is the engine's armour rule. |
 | Poses | UFD swing frames | Authored stick-figure poses (`thrust`, `slashDown`, `sweepUp`, `sweepLow`, `overhead`, `slam`, `draw`, `whipLow`, air poses) with per-phase attachment angles and `hold` so the front arm grips the weapon | **fitted** |
-| Movement | UFD: walk 0.97, run 1.43, dash 1.8, air 0.89, air accel 0.053, gravity 0.089, fall 1.6, fast fall 2.56 | ×3.5 for speeds (walk 3.395, run 5.005, dash 6.3, air 3.115, accel 0.1855); gravity/fall ×6 (0.534 / 9.6 / 15.36); jump speeds fitted so a full hop clears the built-in platforms (13.4 / 9.4 / air jump 12.9) | converted + adapted (jumps) |
+| Movement | UFD: walk 0.97, run 1.43, dash 1.8, air 0.89, air accel 0.053, gravity 0.089, fall 1.6, fast fall 2.56 | ×5 on every axis (`units.SCALE`): walk 4.85, run 7.15, dash 9.0, air speed / air-jump drift 4.45, air accel 0.265, gravity 0.445, fall 8.0, fast fall 12.8 px/tick(²). `runAccel` 0.8857 is fitted (0.62 at the retired ×3.5 scale). Superseded: ×3.5 speeds (3.395 / 5.005 / 6.3 / 3.115 / 0.1855) and ×6 gravity/fall (0.534 / 9.6 / 15.36) | converted |
+| Jumps | ssbwiki "Jump" page, SSBU "Jump height ranking" table, https://www.ssbwiki.com/Jump, accessed 2026-11-05; unitless game units: full hop 26.5, short hop 14, double jump 28.5 | `units.jumps` at gravity 0.445: jump 10.6383, short hop 7.6714, air jump 11.485 px/tick. Feel harness: full 132.5 px, short 70.0 px, air 142.5 px (targets ×5: 132.5 / 70 / 142.5). Supersedes the fitted platform-clearing speeds 13.4 / 9.4 / 12.9 | converted |
 | Weight | 97 | `100/97` reciprocal knockback multiplier | converted |
 | Pummel | 1.5 | `stats.pummelDamage` | converted |
 | Hurtboxes | none in the pinned scripts | inherited `base` body (half width 14, height 74) and hurtboxes | **shared** |
@@ -101,7 +102,7 @@ less. Every row is authored by `tools/import-verdant/import.py`; the parsed atta
 | Forward tilt | AttackS3 | 8 / 8-10 / 34 | 11.0, 35°, BKB 48, KBG 0.76 | Sword | Overhead-to-forward slash |
 | Up tilt | AttackHi3 | 9 / 9-15 / 34 | 10.0, 92-101°, BKB 66, KBG 0.83 | Sword | Rising arc; five script boxes folded into a fitted sweep plus one 18 px root circle |
 | Down tilt | AttackLw3 | 13 / 13-15 / 35 | 8.0, 93-96°, BKB 67, KBG 0.55 | Sword (whip scale 2.1) | Two root capsules reaching 141 px |
-| Dash attack | AttackDash | 9 / 9-11 / 44 | 9.0 sour / 13.0 sweet, Sakurai, BKB 61, KBG 0.68 | Sword | Forward impulse (x 4.2) and slide frames |
+| Dash attack | AttackDash | 9 / 9-11 / 44 | 9.0 sour / 13.0 sweet, Sakurai, BKB 61, KBG 0.68 | Sword | Forward impulse (x 6.0) and slide frames |
 | Forward smash | AttackS4 | 23 / 23-25 / 63, charge 14 | 18.0 tip (36°, BKB 60, KBG 0.90, hitlag 1.45) and 12.0 body (Sakurai, BKB 55, KBG 0.90) | Areadbhar | Tip boxes fitted at 132/150 px; body box converted as a root capsule |
 | Up smash | AttackHi4 | 13 / 13-16 (rehit 7), 17-27 (rehit 4), 28-29 / 56, charge 7 | 2.0 autolink multihits, 10.0 finisher (79°, BKB 68, KBG 1.04) | Sword (whip scale 2.2) | `windup` 27 (whip column to 170 px), then `final` 2 and `recover` 27; the finisher is its own phase so it can hit a victim the multihit already touched |
 | Down smash | AttackLw4 | 19, 29 / 19-21, 29-31 / 74, charge 3 | 23.0 both sides (63°, BKB 74, KBG 0.66), 8 shield damage, hitlag 1.4 | Aymr | `front` 28 then `back` 46; the phase split lets both swings hit the same victim (axe-head boxes fitted at 78/-74 px) |
@@ -117,8 +118,8 @@ less. Every row is authored by `tools/import-verdant/import.py`; the parsed atta
 | Up throw | ThrowHi | release 15 / 37 | 9.0, 76°, BKB 60, KBG 1.1 | shared | shared |
 | Down throw | ThrowLw | release 13 / 31 | 5.0, 74°, BKB 50, KBG 1.5 | shared | shared |
 | Neutral special | SpecialN / SpecialNMax | draw hold at 43 (44-frame draw), loose 36 / max loose 47; totals 80 / 160 | arrow 12.0 (35°, BKB 39, KBG 0.78, shield 5) or fully charged 29.0 (Sakurai, BKB 53, KBG 0.56, shield 9) | Failnaught | 69 held ticks reach the 114-frame full draw; releasing earlier looses at the minimum draw. Shield cancels from phase 20. `bReverse` |
-| Side special | SpecialSStart/SF/SFDash + SpecialAirSF/SpecialAirSFDash | ground 20 / 20-24 / 65, air 21 / 21-24 / 61 | ground 17.25 sweet (59°, BKB 115, KBG 0.40) / 11.5 sour (45°, BKB 85, KBG 0.35); air 14.25 (55°, BKB 86, KBG 0.59) / 9.5 (45°, BKB 85, KBG 0.35) | Areadbhar | Ground: 19-frame wind-up, 5-frame lunge (forward impulse x 6.0), 41-frame recovery. Air branch: 5-frame down-forward thrust and 37-frame air recovery (landing lag 16). The ground sweetspot starts one frame after its sour boxes, as the source does |
-| Up special | SpecialHi / SpecialAirHi + `master_sword` | 9 ground / 10 air / 46, tether from F7 | 3.0 multihit (75°, BKB 40) through the whip; the 1.0 autolink is folded in | Sword (whip scale 2.4) | `startup` 8 already opens the tether from its frame 6 (source frame 7) with a 30-210 px rectangle; `whip` 9 carries the 3.0 rehit-3 hit; then `rise` (29 frames, y 10.5) → landing lag 24 or helpless |
+| Side special | SpecialSStart/SF/SFDash + SpecialAirSF/SpecialAirSFDash | ground 20 / 20-24 / 65, air 21 / 21-24 / 61 | ground 17.25 sweet (59°, BKB 115, KBG 0.40) / 11.5 sour (45°, BKB 85, KBG 0.35); air 14.25 (55°, BKB 86, KBG 0.59) / 9.5 (45°, BKB 85, KBG 0.35) | Areadbhar | Ground: 19-frame wind-up, 5-frame lunge (forward impulse x 8.5714), 41-frame recovery. Air branch: 5-frame down-forward thrust and 37-frame air recovery (landing lag 16). The ground sweetspot starts one frame after its sour boxes, as the source does |
+| Up special | SpecialHi / SpecialAirHi + `master_sword` | 9 ground / 10 air / 46, tether from F7 | 3.0 multihit (75°, BKB 40) through the whip; the 1.0 autolink is folded in | Sword (whip scale 2.4) | `startup` 8 already opens the tether from its frame 6 (source frame 7) with a 30-210 px rectangle; `whip` 9 carries the 3.0 rehit-3 hit; then `rise` (29 frames, y 8.75) → landing lag 24 or helpless |
 | Down special | SpecialLw / SpecialAirLw / SpecialLwHit | 62 / 62-67 / 133, armour 34-63 | grounded 30.0 (51°, BKB 60, KBG 0.83, shield 25), aerial 25.0 (BKB 85, KBG 0.78), shockwave 8.0 (88°, BKB 100, KBG 0.30, grounded only) | Aymr | `raise` 33, `slam` 28 with the 36% armour from source frame 34, grounded/aerial `impact` 6 (62-67, armour kept through it), `wave` 4 and `recover` 62 = 133 |
 
 Special notes:
@@ -217,3 +218,10 @@ Naming decision (2026-11-04): the display name changed from Verdant to **Bleth**
 directory, tools, pinned sources and `34a`–`34o` screenshot names deliberately remain unchanged.
 
 Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-verdant`.
+
+Scale unification (2026-11-05): one scale, 5 px per source unit, for geometry, speeds and accelerations (was ×3.5
+horizontal speeds, ×6 gravity/fall). Stats are now UFD × `units.SCALE` and jump speeds come from source heights
+(Movement / Jumps rows). Fitted velocities converted per axis (x ×5/3.5, y ×5/6): dash attack impulse x 4.2 → 6.0;
+side special lunge x 6.0 → 8.5714, air thrust x 3.5 → 5.0; up special rise y 10.5 → 9.5851 (× √(5/6), same height); Failnaught arrow 14 → 20,
+full arrow 20 → 28.5714. `drift()` scales the legacy shared air accels by 5/3.5 with `AIR_ACCEL`, so every phase
+`airAccelMult` is unchanged. Earlier tuning observations in this record were made at the old scale.

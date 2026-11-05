@@ -180,12 +180,13 @@ fn farore_aim_is_captured_once_and_ends_helpless() {
         assert!(moves::phase(&d, &w.fighters[0]).hidden);
         let vel = (w.fighters[0].vx, w.fighters[0].vy);
         let start = (w.fighters[0].x - vel.0, w.fighters[0].y - vel.1);
-        assert!((libm::hypot(vel.0, vel.1) - 21.).abs() < 1e-9);
+        // Fitted travel speed: 21 px/tick at the old 3.5 scale, × 5 / 3.5.
+        assert!((libm::hypot(vel.0, vel.1) - 30.).abs() < 1e-9);
         for _ in 0..16 {
             tick(&mut w, &d, Intent { x: -x, y: -y, ..Default::default() });
         }
         assert_eq!((w.fighters[0].vx, w.fighters[0].vy), vel);
-        assert!(libm::hypot(w.fighters[0].x - start.0, w.fighters[0].y - start.1) > 350.);
+        assert!(libm::hypot(w.fighters[0].x - start.0, w.fighters[0].y - start.1) > 500.);
         tick(&mut w, &d, Intent::default());
         assert_eq!(moves::phase(&d, &w.fighters[0]).name, "airEnd");
         assert_eq!(combat::active_boxes(&d, &w.fighters[0]).len(), 0);
@@ -348,16 +349,16 @@ fn initial_dash_and_run_use_distinct_reference_speeds() {
     let mut w = common::fighters(&d, "wizard", &[]);
     w.count = 0;
     raw(&mut w, &d, (127, 0), 0);
-    assert!((w.fighters[0].vx - 1.958 * 3.5).abs() < 1e-9);
+    assert!((w.fighters[0].vx - 1.958 * 5.0).abs() < 1e-9);
     // The dash eases into the run by traction instead of snapping down to run speed.
     for _ in 0..20 {
         raw(&mut w, &d, (127, 0), 0);
     }
-    assert!(w.fighters[0].vx > 1.43 * 3.5 && w.fighters[0].vx < 1.958 * 3.5);
+    assert!(w.fighters[0].vx > 1.43 * 5.0 && w.fighters[0].vx < 1.958 * 5.0);
     for _ in 0..20 {
         raw(&mut w, &d, (127, 0), 0);
     }
-    assert!((w.fighters[0].vx - 1.43 * 3.5).abs() < 1e-9);
+    assert!((w.fighters[0].vx - 1.43 * 5.0).abs() < 1e-9);
 }
 
 #[test]

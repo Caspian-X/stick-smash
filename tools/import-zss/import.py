@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 """Rebuild Whiplash's Zero Suit Samus adaptation from pinned scripts and documented authoring rules."""
-import copy, hashlib, json, math, re
+import copy, hashlib, importlib, json, math, re, sys
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools'))
+units = importlib.import_module('units')
+SCALE = units.SCALE  # px per source unit: geometry, speeds (units/frame) and accelerations (units/frame²)
 # Phase drift (`airAccelMult`) is written as a multiple of the old shared air accels (aerial 0.45, attack 0.25,
-# upSpecial 0.3). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier instead, so drift()
-# stores the value that keeps the same effective acceleration.
-AIR_ACCEL = .095 * 3.5
+# upSpecial 0.3, fitted px/tick² at the old 3.5 horizontal scale, hence × 5 / 3.5). Under `movement.ultimate` it
+# multiplies airAccel × the kind's multiplier instead, so drift() stores the value that keeps the same effective
+# acceleration.
+AIR_ACCEL = round(.095 * SCALE, 5)
 def drift(legacy, kind):
-    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind]
+    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind] * 5 / 3.5
     mult = {'aerial': 1.0, 'attack': 0.55, 'upSpecial': 0.65}[kind]
     return round(legacy * old / (AIR_ACCEL * mult), 4)
-ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / 'docs/imports/sources/whiplash'
 source = json.loads((SOURCES / 'scripts.json').read_text())
 scripts = {article: {s['Name']: s['Data'] for s in ss} for article, ss in source['scripts'].items()}
@@ -183,7 +187,7 @@ for b in moves['usmash']['phases'][0]['hitboxes']:
     if b['start']==28:b['rehit']=2
 moves['utilt']['phases'][0]['anim']=[{'at':0,'pose':'stand'},{'at':2,'pose':'handstand','lerp':True},{'at':4,'pose':'handstand'},{'at':9,'pose':'verticalKick','lerp':True},{'at':14,'pose':'handstand','lerp':True},{'at':30,'pose':'stand','lerp':True}]
 moves['fsmash']['phases'][0]['anim']=keys('sideKick',13,14,64)[:3]+[{'at':20,'pose':'air','lerp':True},{'at':26,'pose':{**airkick,'kneeF':[35,43],'footF':[80,43],'footB':[-5,0]},'lerp':True},{'at':29,'pose':{**airkick,'kneeF':[35,43],'footF':[80,43],'footB':[-5,0]}},{'at':50,'pose':'stand','lerp':True}]
-moves['dashatk']['phases'][0].update(slide=20,events=[{'at':0,'setVel':{'x':7.5}},{'at':7,'sfx':'slash'}])
+moves['dashatk']['phases'][0].update(slide=20,events=[{'at':0,'setVel':{'x':10.7143}},{'at':7,'sfx':'slash'}])
 moves['dsmash']['phases'][0]['anim']=keys({**shoot,'handF':[42,25],'elbowF':[20,36]},20,24,41)
 for key,script,total,p in [('second','Attack12',25,'jabTwo'),('third','Attack13',34,'jabThree')]:
     bs=boxes('jab'+key,script);moves['jab']['phases'].append(phase(key,total,bs,anim=keys(p,min(b['start'] for b in bs),max(b['end'] for b in bs),total)))
@@ -219,10 +223,10 @@ for t in [6,8,10,12]:
     up['anim'].append({'at':t,'pose':{'head':[0,18],'shoulder':[0,30],'hip':[0,34],'kneeF':list(knee),'footF':list(foot),'kneeB':[-15,32],'footB':[-24,16],'handF':[18,6],'handB':[-18,9]},'lerp':True})
 up['anim'].append({'at':22,'pose':'air','lerp':True})
 # Down air stalls, then commits to a diagonal dive; its own landing phase deals the shockwave.
-dair=moves['dair']['phases'];dair[0]['events']=[{'at':0,'setVel':{'x':0,'y':.5}}];dair[0]['hover']=True
+dair=moves['dair']['phases'];dair[0]['events']=[{'at':0,'setVel':{'x':0,'y':.4167}}];dair[0]['hover']=True
 stall=phase('stall',10,hover=True,airAccelMult=0,anim=[{'at':0,'pose':'dive'}],transitions=[{'on':'land','to':'land'},timeout('active')])
 dair[0]['transitions'][-1]=timeout('stall')
-dair[1].update(frames=36,hitboxes=cut(boxes('dair','AttackAirLw'),14,49),airAccelMult=0,fallCap=30,events=[{'at':0,'setVel':{'x':3.5,'y':-27},'sfx':'slash'}])
+dair[1].update(frames=36,hitboxes=cut(boxes('dair','AttackAirLw'),14,49),airAccelMult=0,fallCap=25,events=[{'at':0,'setVel':{'x':5,'y':-22.5},'sfx':'slash'}])
 dair[1]['anim']=[{'at':0,'pose':'dive'}]
 dair.insert(1,stall)
 landing=boxes('dairLanding','LandingAirLw')
@@ -265,7 +269,7 @@ for kind,script in [('ground','SpecialHi'),('air','SpecialAirHi')]:
         if b['start']==12:b['rehit']=4
         if b['start']==28:b['rehit']=1
         if b['start']==34:b['rehit']=4
-    ph=phase(kind,76,cut(bs,1,76),airAccelMult=drift(.75, 'upSpecial'),ledgeGrab=16,anim=[{'at':0,'pose':'airKick'},{'at':5,'pose':'airKick'},{'at':11,'pose':'verticalKick','lerp':True},{'at':23,'pose':'verticalKick'},{'at':27,'pose':'airKick','lerp':True},{'at':33,'pose':{**airkick,'kneeF':[28,55],'footF':[55,62.5]},'lerp':True},{'at':34,'pose':{**airkick,'kneeF':[28,55],'footF':[55,62.5]}},{'at':44,'pose':'air','lerp':True}],events=[{'at':5,'setVel':{'y':23.4,'x':1.6},'leaveGround':True,'sfx':'jet'},{'at':11,'setVel':{'y':15.6}},{'at':27,'setVel':{'x':4.8,'y':1.2}},{'at':33,'sfx':'smash'}],transitions=[land(30),timeout('helpless')])
+    ph=phase(kind,76,cut(bs,1,76),airAccelMult=drift(.75, 'upSpecial'),ledgeGrab=16,anim=[{'at':0,'pose':'airKick'},{'at':5,'pose':'airKick'},{'at':11,'pose':'verticalKick','lerp':True},{'at':23,'pose':'verticalKick'},{'at':27,'pose':'airKick','lerp':True},{'at':33,'pose':{**airkick,'kneeF':[28,55],'footF':[55,62.5]},'lerp':True},{'at':34,'pose':{**airkick,'kneeF':[28,55],'footF':[55,62.5]}},{'at':44,'pose':'air','lerp':True}],events=[{'at':5,'setVel':{'y':21.3612,'x':2.2857},'leaveGround':True,'sfx':'jet'},{'at':11,'setVel':{'y':14.2408}},{'at':27,'setVel':{'x':6.8571,'y':1.0954}},{'at':33,'sfx':'smash'}],transitions=[land(30),timeout('helpless')])
     moves['uspec']['phases'].append(ph)
 # Flip Jump is an independent one-use resource. The contact trigger below the feet chooses the stomp.
 kickbs=boxes('kick','SpecialAirLwKick')
@@ -295,10 +299,10 @@ anims={
 }
 
 moves['dspec']={'name':'Flip Jump','oncePerAirtime':True,'phases':[
- phase('flip',38,airAccelMult=drift(3, 'attack'),passPlatforms=True,ledgeGrab=13,detection={'x1':-16,'x2':16,'y1':-22,'y2':5},events=[{'at':0,'setVel':{'x':7.5,'y':12.6},'leaveGround':True,'sfx':'jump'},{'at':3,'invuln':10},{'at':38,'turn':True}],anim=flipanim,transitions=[{'on':'attackPress','from':14,'to':'kick'},{'on':'specialPress','from':14,'to':'kick'},{'on':'targetNear','from':19,'to':'stomp'},timeout('end')]),
- phase('kick',59,kickbs,airAccelMult=drift(.3, 'attack'),fallCap=20,anim=[{'at':0,'pose':'flipTuck'},{'at':7,'pose':'flipTuck'},{'at':9,'pose':'flipKick','lerp':True},{'at':12,'pose':'flipKick'},{'at':18,'pose':'flipTuck','lerp':True},{'at':28,'pose':'flipTuck'},{'at':38,'pose':'flipRecover','lerp':True},{'at':50,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':7,'y':-3}},{'at':9,'setVel':{'x':10,'y':-8},'sfx':'smash'}],transitions=[{'on':'hit','to':'kickBounce'}, {'on':'land','to':'land'}]),
- phase('stomp',58,stompbs,airAccelMult=drift(.8, 'attack'),ledgeGrab=2,anim=[{'at':0,'pose':'dive'},{'at':10,'pose':{'from':'air','rot':-180},'lerp':True},{'at':35,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':2,'y':12},'sfx':'djump'}],transitions=[{'on':'land','to':'end'}]),
- phase('kickBounce',49,airAccelMult=drift(.8, 'attack'),ledgeGrab=1,anim=[{'at':0,'pose':'flipBounce'},{'at':20,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':-3,'y':11}}],transitions=[{'on':'land','to':'land'}]),
+ phase('flip',38,airAccelMult=drift(3, 'attack'),passPlatforms=True,ledgeGrab=13,detection={'x1':-16,'x2':16,'y1':-22,'y2':5},events=[{'at':0,'setVel':{'x':10.7143,'y':10.5},'leaveGround':True,'sfx':'jump'},{'at':3,'invuln':10},{'at':38,'turn':True}],anim=flipanim,transitions=[{'on':'attackPress','from':14,'to':'kick'},{'on':'specialPress','from':14,'to':'kick'},{'on':'targetNear','from':19,'to':'stomp'},timeout('end')]),
+ phase('kick',59,kickbs,airAccelMult=drift(.3, 'attack'),fallCap=16.6667,anim=[{'at':0,'pose':'flipTuck'},{'at':7,'pose':'flipTuck'},{'at':9,'pose':'flipKick','lerp':True},{'at':12,'pose':'flipKick'},{'at':18,'pose':'flipTuck','lerp':True},{'at':28,'pose':'flipTuck'},{'at':38,'pose':'flipRecover','lerp':True},{'at':50,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':10,'y':-2.5}},{'at':9,'setVel':{'x':14.2857,'y':-6.6667},'sfx':'smash'}],transitions=[{'on':'hit','to':'kickBounce'}, {'on':'land','to':'land'}]),
+ phase('stomp',58,stompbs,airAccelMult=drift(.8, 'attack'),ledgeGrab=2,anim=[{'at':0,'pose':'dive'},{'at':10,'pose':{'from':'air','rot':-180},'lerp':True},{'at':35,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':2.8571,'y':10},'sfx':'djump'}],transitions=[{'on':'land','to':'end'}]),
+ phase('kickBounce',49,airAccelMult=drift(.8, 'attack'),ledgeGrab=1,anim=[{'at':0,'pose':'flipBounce'},{'at':20,'pose':'air','lerp':True}],events=[{'at':0,'setVel':{'x':-4.2857,'y':9.1667}}],transitions=[{'on':'land','to':'land'}]),
  phase('land',35,anim=[{'at':0,'pose':'sweep'},{'at':23,'pose':'stand','lerp':True}]) ]}
 throws={}
 for key,script,release,total,pre,dmg in [('f','ThrowF',9,25,8,5),('b','ThrowB',11,27,9,2),('u','ThrowHi',5,40,3,2),('d','ThrowLw',22,51,20,4)]:
@@ -345,7 +349,7 @@ for ph in moves['sspec']['phases']:
 moves['usmash']['phases'][0]['attach']={'whipUp':{'show':[10,29]}}
 for ph in moves['nair']['phases']:
  if ph['name']=='active':ph['attach']={'lashFront':{'show':[6,7]},'lashBack':{'show':[11,12]}}
-projectiles={'paralyzer':{'name':'Paralyzer','spawn':[50,45],'vel':[12,0],'r':6.5,'life':24,'max':3,'hit':{'x':0,'y':0,'r':6.5,'damage':4,'bkb':34.1,'kbg':1,'angle':45,'groundAngle':0,'type':'paralyze','setKb':True,'hitlagMult':.7},'chargeScale':{'speed':.014,'damage':.5/22,'bkb':(68.4/34.1-1)/22,'radius':(10/6.5-1)/22,'life':1/22,'angleTo':60,'groundAngleTo':-45},'shapes':[circle([0,0],6.5,'#fff3b5'),line([-12,0],[5,0],3,'#ffce4b')],'trail':[{'every':2,'fx':[{'type':'part','x':0,'y':0,'vx':-.8,'vy':0,'life':8,'size':3,'color':'#ffed9a'}]}]}}
+projectiles={'paralyzer':{'name':'Paralyzer','spawn':[50,45],'vel':[17.1429,0],'r':6.5,'life':24,'max':3,'hit':{'x':0,'y':0,'r':6.5,'damage':4,'bkb':34.1,'kbg':1,'angle':45,'groundAngle':0,'type':'paralyze','setKb':True,'hitlagMult':.7},'chargeScale':{'speed':.014,'damage':.5/22,'bkb':(68.4/34.1-1)/22,'radius':(10/6.5-1)/22,'life':1/22,'angleTo':60,'groundAngleTo':-45},'shapes':[circle([0,0],6.5,'#fff3b5'),line([-12,0],[5,0],3,'#ffce4b')],'trail':[{'every':2,'fx':[{'type':'part','x':0,'y':0,'vx':-.8,'vy':0,'life':8,'size':3,'color':'#ffed9a'}]}]}}
 for slot in ['grab','dashgrab']:
     ph=moves[slot]['phases'][0]
     track=ph['attach']['whip']
@@ -353,7 +357,10 @@ for slot in ['grab','dashgrab']:
     track['show'][1]=end+12
     track['scale'].extend([[end+6, .35], [end+12, .02]])
 
-fighter={'$schema':'../../schema/fighter.schema.json','schemaVersion':1,'extends':'base','name':'Whiplash','tagline':'Never where you expected','blurb':'A Zero Suit Samus-inspired acrobat: swift kicks, plasma tethers, paralysis and a slippery Flip Jump. Use grab in the air for a tether attack; press attack or special during Flip Jump for its diving kick.','stats':{'weight':1.25,'pummelDamage':1.3,'walkSpeed':1.47*3.5,'runSpeed':2.31*3.5,'dashSpeed':2.42*3.5,'dashFrames':13,'runAccel':.45,'groundFriction':.84,'airSpeed':1.26*3.5,'airAccel':AIR_ACCEL,'gravity':.12*6,'fallSpeed':1.7*6,'fastFallSpeed':2.72*6,'jumpSpeed':18.1,'shortHopSpeed':12.4,'airJumpSpeed':18.0,'airJumpDrift':4.41},'body':{'halfWidth':13,'height':74},'hurtboxes':{'default':{'x1':-14,'x2':14,'y1':0,'y2':77},'knockdown':{'x1':-29,'x2':29,'y1':0,'y2':16}},'style':{'torsoWidth':5,'frontLimbWidth':5,'backLimbWidth':4.5},'ai':{'reach':72,'counterChance':0,'specials':[{'minDistance':160,'maxDistance':390,'height':75,'chance':.2,'grounded':True,'noProjectile':False,'down':False,'hold':[0,22]}]},'poses':poses,'anims':anims,'moves':moves,'throws':throws,'projectiles':projectiles,'attachments':attachments}
+# Source jump heights (units): full 44.5, short 21.35, air 44.2 (ssbwiki Jump, SSBU jump height ranking).
+# runAccel .6429 is fitted (old .45 × 5 / 3.5).
+GRAVITY=round(.12*SCALE,5)
+fighter={'$schema':'../../schema/fighter.schema.json','schemaVersion':1,'extends':'base','name':'Whiplash','tagline':'Never where you expected','blurb':'A Zero Suit Samus-inspired acrobat: swift kicks, plasma tethers, paralysis and a slippery Flip Jump. Use grab in the air for a tether attack; press attack or special during Flip Jump for its diving kick.','stats':{'weight':1.25,'pummelDamage':1.3,'walkSpeed':round(1.47*SCALE,5),'runSpeed':round(2.31*SCALE,5),'dashSpeed':round(2.42*SCALE,5),'dashFrames':13,'runAccel':.6429,'groundFriction':.84,'airSpeed':round(1.26*SCALE,5),'airAccel':AIR_ACCEL,'gravity':GRAVITY,'fallSpeed':round(1.7*SCALE,5),'fastFallSpeed':round(2.72*SCALE,5),**units.jumps(44.5,21.35,44.2,GRAVITY),'airJumpDrift':round(1.26*SCALE,5)},'body':{'halfWidth':13,'height':74},'hurtboxes':{'default':{'x1':-14,'x2':14,'y1':0,'y2':77},'knockdown':{'x1':-29,'x2':29,'y1':0,'y2':16}},'style':{'torsoWidth':5,'frontLimbWidth':5,'backLimbWidth':4.5},'ai':{'reach':72,'counterChance':0,'specials':[{'minDistance':160,'maxDistance':390,'height':75,'chance':.2,'grounded':True,'noProjectile':False,'down':False,'hold':[0,22]}]},'poses':poses,'anims':anims,'moves':moves,'throws':throws,'projectiles':projectiles,'attachments':attachments}
 (ROOT/'assets/fighters/whiplash/fighter.json').write_text(json.dumps(fighter,indent=2)+'\n')
-(SOURCES/'ledger.json').write_text(json.dumps({'sourceCommit':source['commit'],'geometryScale':5,'rawAttackLedger':ledger,'gameplay':{'url':'https://ultimateframedata.com/zero_suit_samus','accessed':'2026-11-02','moves':{slot:{'name':m['name'],'phases':[(p['name'],p['frames']) for p in m['phases']]} for slot,m in moves.items()}}},indent=2)+'\n')
+(SOURCES/'ledger.json').write_text(json.dumps({'sourceCommit':source['commit'],'scale':SCALE,'rawAttackLedger':ledger,'gameplay':{'url':'https://ultimateframedata.com/zero_suit_samus','accessed':'2026-11-02','moves':{slot:{'name':m['name'],'phases':[(p['name'],p['frames']) for p in m['phases']]} for slot,m in moves.items()}}},indent=2)+'\n')
 print('Rebuilt Whiplash from pinned scripts and fitted poses; run just bless to normalize content.')

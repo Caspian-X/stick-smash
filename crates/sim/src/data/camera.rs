@@ -82,6 +82,13 @@ mod tests {
         (s, g.render.camera)
     }
 
+    /// Arena with camera bounds far enough out that they never cap the automatic range.
+    fn uncapped() -> (Stage, Camera) {
+        let (mut s, c) = data();
+        s.camera = super::super::stage::Bounds { left: -1e5, right: 1e5, top: -1e5, bottom: 1e5 };
+        (s, c)
+    }
+
     #[test]
     fn arena_keeps_reference_range_until_camera_bounds_cap_it() {
         let (s, c) = data();
@@ -93,7 +100,7 @@ mod tests {
 
     #[test]
     fn portrait_max_is_continuous_at_reference_size() {
-        let (s, c) = data();
+        let (s, c) = uncapped();
         for aspect in [0.5, 0.75, 16. / 9.] {
             let baseline = automatic_range(&s, &c, aspect).max;
             for delta in [-1., -0.001, 0.001, 1.] {
@@ -108,7 +115,7 @@ mod tests {
 
     #[test]
     fn wide_small_and_empty_stages() {
-        let (mut s, c) = data();
+        let (mut s, c) = uncapped();
         let aspect = 16. / 9.;
         s.blocks[0].left -= c.reference_play_width / 2.;
         s.blocks[0].right += c.reference_play_width / 2.;
@@ -140,7 +147,8 @@ mod tests {
 
     #[test]
     fn motion_extrema_and_camera_cap() {
-        let (mut s, c) = data();
+        let (mut s, c) = uncapped();
+        let p = s.platforms[0].clone();
         s.platforms[0].motion = Some(crate::data::stage::Motion {
             mode: crate::data::stage::PathMode::PingPong,
             phase: 0,
@@ -150,10 +158,12 @@ mod tests {
             ],
         });
         let area = play_area(&s);
-        assert_eq!(area[2], 2570.);
-        assert_eq!(area[1], -600.);
+        assert_eq!(area[2], p.x2 + 2000.);
+        assert_eq!(area[1], p.y - 1000.);
         let r = automatic_range(&s, &c, 16. / 9.);
         assert!(r.max > c.max_height);
+        s.camera = data().0.camera;
+        let r = automatic_range(&s, &c, 16. / 9.);
         assert!(r.max <= (s.camera.right - s.camera.left) / (16. / 9.));
     }
 }

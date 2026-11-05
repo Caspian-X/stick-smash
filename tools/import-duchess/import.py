@@ -3,18 +3,22 @@
 
 Numbers come from the pinned Peach attack scripts (damage, launch fields, masks, hitlag, rehit, windows) and
 the pinned Ultimate Frame Data rows (startup, active windows, totals, landing lag, autocancel, charge frames,
-movement stats). Limb-bone geometry is fitted to the stick-figure poses below; source `top`/root offsets are
-converted with the shared 5 px/unit scale. Special mechanics are documented in `docs/imports/duchess.md`.
+movement stats). Limb-bone geometry is fitted to the stick-figure poses below; source `top`/root offsets,
+speeds and accelerations are converted with the shared 5 px/unit scale. Special mechanics are documented in `docs/imports/duchess.md`.
 
     just import-duchess
 """
 import copy
+import importlib
 import json
 import math
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools'))
+units = importlib.import_module('units')
 SOURCES = ROOT / 'docs/imports/sources/duchess'
 source = json.loads((SOURCES / 'scripts.json').read_text())
 ufd = json.loads((SOURCES / 'ufd.json').read_text())
@@ -23,20 +27,21 @@ scripts = {art: {s['Name']: s['Data'] for s in ss} for art, ss in source['script
 rows = {r['movename']: r for r in ufd['moves']}
 ledger = {'sourceCommit': source['commit'], 'sourceSha256': source['sha256'],
           'ufdSha256': ufd['pageSha256'], 'itemsSourceSha256': items['sha256'],
-          'geometryScale': 5, 'speedScale': 3.5, 'fallScale': 6, 'rawAttacks': {}}
+          'scale': units.SCALE, 'rawAttacks': {}}
 
-SCALE = 5.0        # attack geometry: source units to px
-SPEED = 3.5        # horizontal movement: source units/tick to px/tick
+SCALE = units.SCALE  # px per source unit: geometry, speeds (px/tick) and accelerations (px/tick²)
+GRAVITY = round(0.070 * SCALE, 4)
+# Source jump heights (units; ssbwiki "Jump", SSBU jump height ranking): full, short, air.
+JUMP_HEIGHTS = (30.03, 14.5, 30.03)
 
 # Phase drift (`airAccelMult`) is written as a multiple of the old shared air accels (aerial 0.45, attack 0.25,
-# upSpecial 0.3). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier instead, so drift()
-# stores the value that keeps the same effective acceleration.
-AIR_ACCEL = round(0.12 * SPEED, 4)
+# upSpecial 0.3, old ×3.5 scale, ×5/3.5 here). Under `movement.ultimate` it multiplies airAccel × the kind's
+# multiplier instead, so drift() stores the value that keeps the same effective acceleration.
+AIR_ACCEL = round(0.12 * SCALE, 4)
 def drift(legacy, kind):
-    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind]
+    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind] * 5 / 3.5
     mult = {'aerial': 1.0, 'attack': 0.55, 'upSpecial': 0.65}[kind]
     return round(legacy * old / (AIR_ACCEL * mult), 4)
-FALL = 6.0         # gravity and fall speeds
 
 
 # ---------------------------------------------------------------- script parsing
@@ -422,7 +427,7 @@ dash2 = [b for b in da if b['start'] >= 10]
 moves['dashatk'] = {'name': 'Lady Push', 'phases': chain_ground([
     phase('slide', 16, rows_at(dash1, 'dashPush', bone='hip'), slide=12,
           anim=hit_anim('dashPush', rows_at(dash1, 'dashPush', bone='hip'), 16),
-          events=[{'at': 0, 'setVel': {'x': 3.6}}, {'at': frame(6), 'sfx': 'shoot'}]),
+          events=[{'at': 0, 'setVel': {'x': 5.1429}}, {'at': frame(6), 'sfx': 'shoot'}]),
     phase('push', 21, rows_at(dash2, 'dashPush', 16, bone='hip'),
           anim=hit_anim('dashPush', rows_at(dash2, 'dashPush', 16, bone='hip'), 21),
           events=[{'at': 0, 'sfx': 'slash'}]),
@@ -597,8 +602,8 @@ moves['sspec'] = {'name': 'Peach Bomber', 'phases': [
           events=[{'at': 0, 'sfx': 'charge'}], transitions=[wait('thrust')]),
     phase('thrust', frame(37) - frame(13) + 1, detection={'x1': 6, 'x2': 62, 'y1': 6, 'y2': 70},
           anim=[{'at': 0, 'pose': 'bomber'}], ledgeGrab=frame(16) - frame(13),
-          events=[{'at': 0, 'setVel': {'x': 2.9 * SPEED, 'y': 0.5}, 'leaveGround': True, 'sfx': 'swing'},
-                  {'from': 1, 'setVel': {'x': 2.9 * SPEED}},
+          events=[{'at': 0, 'setVel': {'x': 2.9 * SCALE, 'y': 0.4167}, 'leaveGround': True, 'sfx': 'swing'},
+                  {'from': 1, 'setVel': {'x': 2.9 * SCALE}},
                   {'from': 3, 'every': 3, 'fx': [{'type': 'burst', 'x': -18, 'y': 30, 'color': '#ff9ecb',
                                                   'n': 2, 'speed': 1.6, 'life': 12, 'size': 3.4}]}],
           # The timeouts are listed first: on the phase's last tick (source 37) they win over the search box,
@@ -610,7 +615,7 @@ moves['sspec'] = {'name': 'Peach Bomber', 'phases': [
                              'FacingRestrict': 'ATTACK_LR_CHECK_F', 'Ground_or_Air': 'COLLISION_SITUATION_MASK_GA',
                              'ShieldDamage': '6', 'Hitlag': '1.0'}, 1, 2, 22, 40, 38.5)],
           anim=[{'at': 0, 'pose': 'bomber'}], ledgeGrab=0,
-          events=[{'at': 0, 'setVel': {'x': -0.95 * SPEED, 'y': 1.4 * SPEED}, 'sfx': 'whack'}],
+          events=[{'at': 0, 'setVel': {'x': -0.95 * SCALE, 'y': 1.4 * SCALE}, 'sfx': 'whack'}],
           transitions=[{'on': 'land', 'to': 'landing', 'lag': 35}, {'on': 'timeout', 'to': 'fall'}]),
     phase('recover', 26, anim=[{'at': 0, 'pose': 'crouch'}, {'at': 12, 'pose': 'stand', 'lerp': True}]),
     phase('fall', ledgeGrab=0, anim=[{'at': 0, 'pose': 'air'}],
@@ -644,7 +649,7 @@ rise5 = [parasol(4.0, 81, 70, 0, 90, 5.2, 8, 88, 26, 3, 4, hitlag=3.0)]
 moves['uspec'] = {'name': 'Peach Parasol', 'air': 'upSpecial', 'oncePerAirtime': True, 'phases': [
     phase('rise1', 10, rise1, anim=[{'at': 0, 'pose': 'parasol'}],
           attach={'parasol': {'show': [0, 38], 'angle': [[0, 0]]}},
-          events=[{'at': frame(6), 'leaveGround': True, 'setVel': {'y': 12.5}, 'sfx': 'swing'}],
+          events=[{'at': frame(6), 'leaveGround': True, 'setVel': {'y': 11.4109}, 'sfx': 'swing'}],
           transitions=[land(26), wait('rise2')]),
     phase('rise2', 6, rise2, anim=[{'at': 0, 'pose': 'parasol'}],
           attach={'parasol': {'show': [0, 5], 'angle': [[0, 0]]}}, transitions=[land(26), wait('rise3')]),
@@ -661,7 +666,7 @@ moves['uspec'] = {'name': 'Peach Parasol', 'air': 'upSpecial', 'oncePerAirtime':
           [hit({'Damage': '2.0', 'Angle': '80', 'KBG': '15', 'BKB': '65', 'Size': '2.0',
                 'FacingRestrict': 'ATTACK_LR_CHECK_POS', 'Ground_or_Air': 'COLLISION_SITUATION_MASK_GA',
                 'Hitlag': '0.0', 'Rehit': '18'}, frame(8), 479, x, 102, 12) for x in (-13, 0, 13)],
-          fallCap=2.0, airAccelMult=drift(1.2, 'upSpecial'), ledgeGrab=0,
+          fallCap=1.6667, airAccelMult=drift(1.2, 'upSpecial'), ledgeGrab=0,
           anim=[{'at': 0, 'pose': 'parasol'}, {'at': 30, 'pose': 'parasolFall', 'lerp': True}],
           attach={'parasol': {'show': [0, 479], 'angle': [[0, 0]]}},
           events=[{'at': 0, 'sfx': 'swing'}],
@@ -734,20 +739,20 @@ turnip_shapes = [
     {'shape': 'poly', 'points': [[-8, -5], [-4, -13], [-1, -5]], 'fill': '#4f9846'},
 ]
 projectiles = {
-    'turnip': {'name': 'Turnip', 'spawn': [24, 56], 'vel': [8.0, 4.0], 'r': 9, 'life': 90, 'max': 1,
-               'gravity': 0.32, 'maxFall': 9.0,
-               'bounce': {'restitution': 0.42, 'minSpeed': 1.6, 'friction': 0.7, 'maxBounces': 3,
+    'turnip': {'name': 'Turnip', 'spawn': [24, 56], 'vel': [11.4286, 3.3333], 'r': 9, 'life': 90, 'max': 1,
+               'gravity': 0.2667, 'maxFall': 7.5,
+               'bounce': {'restitution': 0.42, 'minSpeed': 1.3333, 'friction': 0.7, 'maxBounces': 3,
                           'fizzleLife': 28, 'wallRestitution': 0.4, 'sfx': 'bonk'},
                'hit': turnip_hit, 'spawnSfx': 'swing', 'shapes': turnip_shapes},
-    'turnip_strong': {'name': 'Turnip (smash throw)', 'spawn': [24, 56], 'vel': [10.0, 4.3], 'r': 9,
-                      'life': 90, 'max': 1, 'gravity': 0.32, 'maxFall': 9.0,
-                      'bounce': {'restitution': 0.42, 'minSpeed': 1.6, 'friction': 0.7, 'maxBounces': 3,
+    'turnip_strong': {'name': 'Turnip (smash throw)', 'spawn': [24, 56], 'vel': [14.2857, 3.5833], 'r': 9,
+                      'life': 90, 'max': 1, 'gravity': 0.2667, 'maxFall': 7.5,
+                      'bounce': {'restitution': 0.42, 'minSpeed': 1.3333, 'friction': 0.7, 'maxBounces': 3,
                                  'fizzleLife': 28, 'wallRestitution': 0.4, 'sfx': 'bonk'},
                       'hit': turnip_strong, 'spawnSfx': 'swing', 'shapes': turnip_shapes},
 }
 spore_shape = [{'shape': 'circle', 'at': [0, 0], 'r': 5.5, 'fill': '#efe6cf', 'stroke': '#b4a98d', 'width': 1.4}]
-for key, (vel, spawn) in {'spore_up': ([6.0, 7.0], [24, 54]), 'spore_fwd': ([10.0, 1.5], [26, 46]),
-                          'spore_low': ([7.5, -3.0], [24, 36])}.items():
+for key, (vel, spawn) in {'spore_up': ([8.5714, 5.8333], [24, 54]), 'spore_fwd': ([14.2857, 1.25], [26, 46]),
+                          'spore_low': ([10.7143, -2.5], [24, 36])}.items():
     projectiles[key] = {'name': 'Spore', 'spawn': spawn, 'vel': vel, 'r': 6, 'life': 16, 'max': 2,
                         'hit': dict(spore_hit), 'spawnSfx': 'toss', 'shapes': spore_shape}
 
@@ -881,15 +886,17 @@ doc = {
              'bombers forward and parachutes down.',
     'stats': {
         'weight': round(100 / 89, 8), 'pummelDamage': 1.3,
-        'walkSpeed': round(0.924 * SPEED, 4), 'runSpeed': round(1.595 * SPEED, 4),
-        'dashSpeed': round(1.826 * SPEED, 4), 'dashFrames': 16, 'runAccel': 0.6, 'groundFriction': 0.74,
-        'jumpSpeed': 12.0, 'shortHopSpeed': 8.6, 'airJumpSpeed': 11.6, 'airJumpDrift': 3.6, 'airJumps': 1,
-        'airSpeed': round(1.029 * SPEED, 4), 'airAccel': AIR_ACCEL,
-        'gravity': round(0.070 * FALL, 4), 'fallSpeed': round(1.19 * FALL, 4),
-        'fastFallSpeed': round(1.904 * FALL, 4),
+        'walkSpeed': round(0.924 * SCALE, 4), 'runSpeed': round(1.595 * SCALE, 4),
+        'dashSpeed': round(1.826 * SCALE, 4), 'dashFrames': 16, 'runAccel': round(0.6 * 5 / 3.5, 4),
+        'groundFriction': 0.74,
+        **units.jumps(*JUMP_HEIGHTS, GRAVITY), 'airJumpDrift': round(1.029 * SCALE, 4), 'airJumps': 1,
+        'airSpeed': round(1.029 * SCALE, 4), 'airAccel': AIR_ACCEL,
+        'gravity': GRAVITY, 'fallSpeed': round(1.19 * SCALE, 4),
+        'fastFallSpeed': round(1.904 * SCALE, 4),
         # Source float: 0 vertical movement for up to 2.5 s, once per airtime. The engine's stat only caps a
-        # descent, so a slow sink stands in for the hover and there is no duration/fuel limit.
-        'floatSpeed': 1.2,
+        # descent, so a slow sink stands in for the hover and there is no duration/fuel limit (fitted: 1.2 at
+        # the old ×6 vertical scale, ×5/6).
+        'floatSpeed': 1.0,
     },
     'ai': {
         'reach': 74, 'counterChance': 0.25,

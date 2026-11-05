@@ -361,14 +361,16 @@ fn peanut_charge_scales_damage_and_speed() {
     let (weak, w) = cast_peanut(0);
     close(weak.hit.damage, 3.3);
     close(weak.hit.angle, 70.0);
-    assert!(weak.vx > 12.9 && weak.vx < 13.1, "uncharged speed {}", weak.vx);
+    // Fitted peanut speed 13 → 21.5 at the old x3.5 scale.
+    let speed = 13.0 * 5. / 3.5;
+    assert!((weak.vx - speed).abs() < 0.1, "uncharged speed {}", weak.vx);
     assert_eq!(phase_name(&common::data(), &w).as_deref(), Some("shot"));
     let (mid, _) = cast_peanut(52);
     assert!(mid.hit.damage > 8.9 && mid.hit.damage < 9.3, "mid damage {}", mid.hit.damage);
     let (full, _) = cast_peanut(105);
     assert!((full.hit.damage - 15.0).abs() < 1e-3, "full damage {}", full.hit.damage);
     assert!((full.hit.angle - 45.0).abs() < 1e-3, "full angle {}", full.hit.angle);
-    assert!(full.vx > 20.9, "fully charged speed {}", full.vx);
+    assert!(full.vx > 21.5 * 5. / 3.5 - 0.2, "fully charged speed {}", full.vx);
 }
 
 #[test]

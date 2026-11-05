@@ -7,20 +7,20 @@
   "blurb": "Hold attack for a three-hit jab · broad aerials, slow smashes · hold special: Eruption · side: Quickdraw · up: Aether · down: Counter",
   "stats": {
     "weight": 0.93457944,
-    "runSpeed": 5.2745,
-    "runAccel": 0.7,
+    "runSpeed": 7.535,
+    "runAccel": 1,
     "groundFriction": 0.82,
-    "jumpSpeed": 12.9,
-    "shortHopSpeed": 7.0623076923,
-    "airJumpSpeed": 12.9,
-    "airJumpDrift": 3.969,
+    "jumpSpeed": 11.5,
+    "shortHopSpeed": 8.3505,
+    "airJumpSpeed": 12.1715,
+    "airJumpDrift": 5.67,
     "airJumps": 1,
-    "airSpeed": 3.969,
-    "airAccel": 0.175,
-    "gravity": 0.552,
-    "fallSpeed": 9.9,
-    "fastFallSpeed": 15.84,
-    "dashSpeed": 6.16
+    "airSpeed": 5.67,
+    "airAccel": 0.25,
+    "gravity": 0.46,
+    "fallSpeed": 8.25,
+    "fastFallSpeed": 13.2,
+    "dashSpeed": 8.8
   },
   "ai": {
     "reach": 86,
@@ -1128,7 +1128,7 @@
             { "at": 15, "sfx": "slash" },
             {
               "at": 10,
-              "setVel": { "x": 6.8 }
+              "setVel": { "x": 9.714286 }
             }
           ],
           "slide": 24
@@ -3885,13 +3885,13 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 12.066666666666666, "y": 0 },
+              "setVel": { "x": 17.238095, "y": 0 },
               "chargeVelocity": 0.020226706168094594,
               "sfx": "slash"
             },
             {
               "from": 1,
-              "setVel": { "x": 12.066666666666666, "y": 0 },
+              "setVel": { "x": 17.238095, "y": 0 },
               "chargeVelocity": 0.020226706168094594
             }
           ],
@@ -3996,7 +3996,7 @@
             { "at": 2, "sfx": "slash" },
             {
               "at": 5,
-              "setVel": { "x": 8.016666666666667 },
+              "setVel": { "x": 11.452381 },
               "chargeVelocity": 0.02083091787439614
             }
           ],
@@ -4414,7 +4414,7 @@
             {
               "at": 0,
               "leaveGround": true,
-              "setVel": { "x": 0, "y": 19 },
+              "setVel": { "x": 0, "y": 17.344548 },
               "sfx": "djump"
             }
           ],
@@ -4494,11 +4494,11 @@
         {
           "name": "catch",
           "frames": 10,
-          "fallCap": 18,
+          "fallCap": 15,
           "events": [
             {
               "at": 0,
-              "setVel": { "y": -18 }
+              "setVel": { "y": -15 }
             }
           ],
           "hitboxes": [
@@ -4693,13 +4693,13 @@
           "anim": [
             { "at": 0, "pose": "mikeDive" }
           ],
-          "fallCap": 18,
+          "fallCap": 15,
           "airAccelMult": 1.1868,
           "ledgeGrab": 0,
           "events": [
             {
               "at": 0,
-              "setVel": { "y": -18 }
+              "setVel": { "y": -15 }
             }
           ],
           "transitions": [
@@ -4886,11 +4886,11 @@
     "aetherSword": {
       "name": "Aether Sword",
       "spawn": [40, 100],
-      "vel": [1.5, 10],
+      "vel": [2.142857, 8.333333],
       "r": 25,
       "life": 25,
       "max": 1,
-      "gravity": 0.6,
+      "gravity": 0.5,
       "hit": {
         "x": 0,
         "y": 0,

@@ -1292,7 +1292,7 @@
             { "at": 12, "sfx": "swing" },
             {
               "at": 12,
-              "setVel": { "x": 8 },
+              "setVel": { "x": 11.428571 },
               "sfx": "smash"
             }
           ],
@@ -1373,7 +1373,7 @@
           "events": [
             {
               "at": 5,
-              "setVel": { "x": 2, "y": 18 },
+              "setVel": { "x": 2.857143, "y": 16.431677 },
               "leaveGround": true,
               "sfx": "djump"
             }
@@ -1567,7 +1567,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "y": -12 },
+              "setVel": { "y": -10 },
               "sfx": "swing"
             }
           ],
@@ -1656,18 +1656,18 @@
   },
   "stats": {
     "weight": 0.78,
-    "runSpeed": 4.2,
-    "runAccel": 0.7,
-    "jumpSpeed": 14.9,
-    "shortHopSpeed": 9,
-    "airJumpSpeed": 12.8,
+    "runSpeed": 6,
+    "runAccel": 1,
+    "jumpSpeed": 13.601777,
+    "shortHopSpeed": 8.215838,
+    "airJumpSpeed": 11.684748,
     "airJumps": 1,
-    "airSpeed": 3.5,
-    "airAccel": 0.32,
-    "gravity": 0.85,
-    "fallSpeed": 11.5,
-    "fastFallSpeed": 16,
-    "dashSpeed": 4.704
+    "airSpeed": 5,
+    "airAccel": 0.457143,
+    "gravity": 0.708333,
+    "fallSpeed": 9.583333,
+    "fastFallSpeed": 13.333333,
+    "dashSpeed": 6.72
   },
   "hurtboxes": {
     "default": { "x1": -22, "x2": 22, "y1": 0, "y2": 83 }
@@ -1750,7 +1750,7 @@
     "waveF": {
       "name": "Fault wave",
       "spawn": [30, 10],
-      "vel": [5, 0],
+      "vel": [7.142857, 0],
       "r": 16,
       "life": 22,
       "max": 2,
@@ -1778,7 +1778,7 @@
     "waveB": {
       "name": "Fault wave",
       "spawn": [-30, 10],
-      "vel": [-5, 0],
+      "vel": [-7.142857, 0],
       "r": 16,
       "life": 22,
       "max": 2,

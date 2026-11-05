@@ -56,8 +56,8 @@ window 8–68; the popgun misfire clip is 109 frames, the post-charge explosion 
 | Rocketbarrel charge/hit mapping | Script `SpecialAirHiJump`: 10% at frame 1, 8% at frame 3, 6% at frame 10, clear at frame 29 | UFD: startup 8–68, active 8–9 / 10–16 / 17–35 | The 8-frame charge phase precedes the boost; boost phase frames 0–1, 2–8 and 9–27 map to UFD move frames 8–9, 10–16 and 17–35. |
 | Overcharge total | UFD: misfire total 228, frame 124 | Hitbox GIF: 109 frames starting at source frame 120 | Charge phase 16 + max 105 + 3 held ticks = 124, then a 104-frame overcharge phase, totaling 228 from press. The GIF's earlier first frame is the pre-misfire animation. |
 | Banana cooldown | SmashWiki: 12 frames (Smash 4) → 61 (8.0.0) → 85 (11.0.0) | UFD: one item generated at frame 20, no cooldown text | 85-tick `banana` charge pool models the Ultimate cooldown; `max: 1` models one peel at a time. |
-| Banana toss | SmashWiki: 105° at 2.2 (tilt) / 3.036 (smash) | No scripted item toss velocity in the fighter data | Fitted `[-1.6, 2.4]` so the peel visibly arcs behind him and settles; the source's 105°/2.2 horizontal component is too small to read at this engine scale. Smash-input toss omitted. |
-| Air mobility | Source ×3.5: air speed 3.234, air accel 0.175 | Requested identity: above-average air mobility | Fitted to `4.3` / `0.30`. This is an intentional gameplay adaptation, recorded here; walk/run/dash/gravity/fall remain source-scaled. |
+| Banana toss | SmashWiki: 105° at 2.2 (tilt) / 3.036 (smash) | No scripted item toss velocity in the fighter data | Fitted `[-2.2857, 2.0]` (old-scale `[-1.6, 2.4]`, x ×5/3.5, y ×5/6) so the peel visibly arcs behind him and settles; the source's 105°/2.2 horizontal component is too small to read. Smash-input toss omitted. |
+| Air mobility | Source ×5: air speed 4.62, air accel 0.25 | Requested identity: above-average air mobility | Fitted to `6.1429` / `0.4286` (old-scale `4.3` / `0.30`, ×5/3.5). This is an intentional gameplay adaptation, recorded here; walk/run/dash/gravity/fall/jumps remain source-scaled. |
 
 ## Conversion rules
 
@@ -70,7 +70,8 @@ window 8–68; the popgun misfire clip is 109 frames, the post-charge explosion 
 | Masks | `FacingRestrict`, `Ground_or_Air` | `dir` (`away`/`back`), `situation` (`ground`/`air`); folded ground/air pairs use GA | converted |
 | Hitlag / shield | script `Hitlag`, `ShieldDamage` | `hitlagMult`, `shieldDmgMult` | converted |
 | Poses / attachments | UFD GIF silhouettes; no original skeleton animation | Authored stick poses with a hip tail, head cap, hidden popgun and hidden rocketbarrel pack; per-phase `show` and angle keys. Tail is presentation and a fitted bair tail box (see approximations) | **fitted** |
-| Movement | UFD: walk 1.313, run 2.006, dash 2.09, air 0.924, air accel 0.05, gravity 0.125, fall 1.75, fast fall 2.8 | ×3.5 speeds, ×6 gravity/fall; jump speeds fitted to clear the built-in platforms (14.2 / 9.9 / air 14.0); air speed/accel fitted upward (4.3 / 0.30) | converted + adapted |
+| Movement | UFD: walk 1.313, run 2.006, dash 2.09, air 0.924, air accel 0.05, gravity 0.125, fall 1.75, fast fall 2.8 | 5 px/unit on every axis: walk 6.565, run 10.03, dash 10.45, air-jump drift 4.62, gravity 0.625, fall 8.75, fast fall 14.0; air speed/accel fitted upward (6.1429 / 0.4286, see above); fitted run accel 0.62 → 0.8857 (×5/3.5) | converted + adapted |
+| Jumps | Heights (units) full 41.21, short 19.9, air 41.21: ssbwiki "Jump", SSBU "Jump height ranking" table, https://www.ssbwiki.com/Jump, accessed 2026-11-05 | `units.jumps` at gravity 0.625: jump 15.7375, short hop 10.8403, air jump 16.3625 px/tick. Feel harness: full 206.05 / short 99.5 / air 206.05 px (target 206.05 / 99.5 / 206.05); airtimes 57 / 37 / 80 frames (UFD full/short hop 51 / 36) | converted |
 | Weight | 90 | `100/90` reciprocal knockback multiplier | converted |
 | Pummel | 1.0 | `stats.pummelDamage` | converted |
 
@@ -92,7 +93,7 @@ move has the requested tail disjoint; the source's leg boxes remain first in pri
 | Down tilt | AttackLw3 | 4 / 4–5 / 18 | 5.5, 60°/50°, BKB 15, KBG 0.75, low clap | phases 3–4; near and far boxes |
 | Dash attack | AttackDash | 8 / 8–9, 16–17, 22–23 / 40 | 2.0/2.0/3.0, FKB 60/70 then 83°/BKB 80, KBG 0.90 | phases 7–8, 15–16, 21–22; forward impulse and slide |
 | Forward smash | AttackS4 | 12 / 12–13 (21–23) / 50 | 5.0 first (FKB 35), 11.0 + 9.0 second (46°/60°, BKB 40, KBG 1.16) | charge hold phase 3; spin pose; forward impulses at phases 12/21 |
-| Up smash | AttackHi4 | 5 / 5–8, 12–15, 19–23 / 53 | 2.5 fixed-KB multihit, 6.0 final (85°, BKB 55, KBG 1.31) | charge hold phase 0; leaps (fitted y 8); landing lag 30 from phase 22 |
+| Up smash | AttackHi4 | 5 / 5–8, 12–15, 19–23 / 53 | 2.5 fixed-KB multihit, 6.0 final (85°, BKB 55, KBG 1.31) | charge hold phase 0; leaps (fitted y 6.6667; 8 at the old ×6 scale); landing lag 30 from phase 22 |
 | Down smash | AttackLw4 | 7 / 7–8, 12–13 / 50 | 12.0 front (33°, BKB 46, KBG 0.77), 15.0 back (35°, BKB 38, KBG 0.76) | charge hold phase 1; front phases 6–7, back 11–12 |
 | Neutral air | AttackAirN | 8 / 8–20 / 48, landing 8, AC 1–3 / 27+ | 6.0, 80°, BKB 60, KBG 0.75, four body circles | cartwheel track; main phase lands for 8 |
 | Forward air | AttackAirF | 6 / 6–9 (10–16) / 46, landing 16, AC 1–2 / 26+ | 10.0 clean (361, BKB 30, KBG 0.86), 8.0 late | dropkick; clean phases 5–8, late 9–15 |
@@ -116,7 +117,7 @@ Special notes:
   consumed on its one contact and expires after 600 ticks. Bongo cannot pick it up or throw it.
 - The banana pool is spent when the throw phase is entered; the recharge schedule is the source's 85-tick
   generation cooldown. Using the move while the pool is empty runs a 39-frame shrug with no spawn.
-- Peanut charge scales projectile damage from 3.3 to 15.0, speed from 13 to 21.5 and angle from 70° to 45°.
+- Peanut charge scales projectile damage from 3.3 to 15.0, speed from 18.57 to ~30.7 (fitted 13 → 21.5 at the old ×3.5 scale) and angle from 70° to 45°.
   The close melee hit stays 2.0 (`chargeDamage: 0`).
 - Overcharge is a 23% local Sakurai hitbox plus a 104-frame stun animation. The source also damages Diddy;
   this engine has no self-hitting attack, so the self-damage is not applied.
@@ -158,7 +159,7 @@ Special notes:
   reported a usage limit; no external review findings were received. The checklist above and the focused
   tests were self-reviewed against `docs/CHARACTER_IMPORTS.md`.
 - Known approximations: fitted bone geometry and poses; folded ground/air hitbox rows; folded forward-tilt
-  angles; fitted air speed/accel and jump speeds; fitted banana toss; overcharge self-damage; wall-contact
+  angles; fitted air speed/accel; fitted banana toss; overcharge self-damage; wall-contact
   rocketbarrel explosion; banana pickup/throw and two-slip durability; Monkey Flip scratch/grab jump;
   held-jab repeat; pivot grab; no controller calibration. Projectile transcendent priority, item catching
   and item clashing rules are not modeled: the banana and peanut use the ordinary projectile clash,
@@ -168,3 +169,12 @@ Special notes:
   screenshots list and this record).
 
 Momentum migration (2026-11-04): `drift()` in the importer rewrites phase `airAccelMult` for `movement.ultimate` (airAccel × kind multiplier) keeping each phase's effective drift; regenerated with `just import-bongo`.
+
+Unified scale (2026-11-05): the importer emits one 5 px/unit scale (`tools/units.py`) for geometry, speeds and
+accelerations; source movement is source × 5 (was ×3.5 horizontal, ×6 vertical). Fitted values are converted by
+factor (x ×5/3.5, y ×5/6): air speed/accel, run accel, every move `setVel` (dash attack 6.0; fsmash 9.2857 /
+5.7143; usmash y 6.6667; Monkey Flip 6.0 / 10.8333; Rocketbarrel 4.5714 / 12.7802 (rise 14 × √(5/6), same height), charge fall cap 2.0833),
+peanut `[18.5714, 1.25]` gravity 0.1, max fall 4.1667, banana gravity 0.1333, max fall 5.0. `drift()` scales
+the old shared accels by the same 5/3.5, so every `airAccelMult` is unchanged. The fitted jump speeds
+(14.2 / 9.9 / 14.0, "to clear the built-in platforms") are **superseded** by source jump heights (Jumps row).
+Balance and CPU figures under "Validation" predate this change.

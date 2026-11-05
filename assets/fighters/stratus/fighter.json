@@ -8,22 +8,22 @@
   "stats": {
     "weight": 1.0,
     "pummelDamage": 1.3,
-    "walkSpeed": 4.0425,
-    "runSpeed": 7.5845,
-    "dashSpeed": 7.5075,
+    "walkSpeed": 5.775,
+    "runSpeed": 10.835,
+    "dashSpeed": 10.725,
     "dashFrames": 15,
-    "runAccel": 1.0,
+    "runAccel": 1.4286,
     "groundFriction": 0.8,
-    "jumpSpeed": 14.8,
-    "shortHopSpeed": 10.4,
-    "airJumpSpeed": 13.8,
-    "airJumpDrift": 4.0425,
+    "jumpSpeed": 12.375,
+    "shortHopSpeed": 8.8837,
+    "airJumpSpeed": 12.865,
+    "airJumpDrift": 5.775,
     "airJumps": 1,
-    "airSpeed": 4.0425,
-    "airAccel": 0.245,
-    "gravity": 0.588,
-    "fallSpeed": 10.08,
-    "fastFallSpeed": 16.128
+    "airSpeed": 5.775,
+    "airAccel": 0.35,
+    "gravity": 0.49,
+    "fallSpeed": 8.4,
+    "fastFallSpeed": 13.44
   },
   "charges": [
     { "id": "limit", "uses": 1, "recharge": 0, "emptySfx": "toss", "refillSfx": "ready" }
@@ -478,7 +478,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 4.2 }
+              "setVel": { "x": 6.0 }
             },
             { "at": 8, "sfx": "slash" }
           ],
@@ -3385,7 +3385,7 @@
                 { "at": 6, "sfx": "slash" },
                 {
                   "at": 8,
-                  "setVel": { "y": 21.0 },
+                  "setVel": { "y": 19.1703 },
                   "leaveGround": true
                 },
                 { "at": 4, "invuln": 8 }
@@ -3620,7 +3620,7 @@
               "events": [
                 {
                   "at": 0,
-                  "setVel": { "x": 0, "y": -14 }
+                  "setVel": { "x": 0, "y": -11.6667 }
                 },
                 { "at": 11, "sfx": "slash" }
               ],
@@ -3718,7 +3718,7 @@
             { "at": 6, "sfx": "slash" },
             {
               "at": 8,
-              "setVel": { "y": 17.0 },
+              "setVel": { "y": 15.5188 },
               "leaveGround": true
             }
           ],
@@ -3905,7 +3905,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 0, "y": -14 }
+              "setVel": { "x": 0, "y": -11.6667 }
             },
             { "at": 11, "sfx": "slash" }
           ],
@@ -4240,7 +4240,7 @@
     "bladeBeam": {
       "name": "Blade Beam",
       "spawn": [46, 58],
-      "vel": [11, 0],
+      "vel": [15.7143, 0],
       "r": 15,
       "life": 44,
       "max": 1,
@@ -4284,7 +4284,7 @@
     "bladeBeamAir": {
       "name": "Blade Beam",
       "spawn": [46, 58],
-      "vel": [9, 0],
+      "vel": [12.8571, 0],
       "r": 15,
       "life": 40,
       "max": 1,
@@ -4328,7 +4328,7 @@
     "limitBlade": {
       "name": "Limit Blade Beam",
       "spawn": [46, 58],
-      "vel": [14, 0],
+      "vel": [20.0, 0],
       "r": 40,
       "life": 46,
       "max": 1,
@@ -4373,7 +4373,7 @@
     "limitBladeAir": {
       "name": "Limit Blade Beam",
       "spawn": [46, 58],
-      "vel": [11, 0],
+      "vel": [15.7143, 0],
       "r": 40,
       "life": 42,
       "max": 1,

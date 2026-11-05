@@ -6,18 +6,27 @@ hitbox joint anchors and fitted motion are authoring/runtime adaptations documen
 docs/imports/plant.md. Run `just import-plant` for the generated package.
 """
 import hashlib
+import importlib
 import json
 import math
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools"))
+units = importlib.import_module("units")
 SOURCES = ROOT / "docs/imports/sources/plant"
 raw = json.loads((SOURCES / "scripts.json").read_text())
 ufd = json.loads((SOURCES / "ufd.json").read_text())
 scripts = raw["scripts"]
 page = {row["movename"]: row for row in ufd["moves"]}
-SCALE = 5.0  # source gameplay units to stage pixels for attack geometry
+SCALE = units.SCALE  # source units to px for geometry, px/tick for speeds and px/tick^2 for accelerations
+# UFD Misc Info (https://ultimateframedata.com/piranha_plant, accessed 2026-11-05), per frame.
+MOBILITY = {"walk": 0.76, "run": 1.72, "dash": 1.82, "air": 1.0, "airAccel": 0.06,
+            "gravity": 0.14, "fall": 1.95, "fastFall": 2.73}
+# Jump heights (units): ssbwiki "Jump" (SSBU jump height ranking), accessed 2026-11-05.
+JUMP_HEIGHTS = {"full": 37.4, "short": 17.5, "air": 38.52}
 FRAME = "sourceFrame - 1"  # engine phase frame convention
 
 # Source script offsets are bone-local. `top` is Plant's root bone: its offsets are already feet-relative
@@ -800,7 +809,7 @@ moves["dashatk"] = {
             "main",
             47,
             hitboxes=hits_from("AttackDash"),
-            events=[{"at": 6, "setVel": [5.5, 0]}],
+            events=[{"at": 6, "setVel": {"x": 7.8571, "y": 0}}],
             slide=10,
             anim=move_anim(47, 6, 13, "crouch", "strike"),
         )
@@ -979,7 +988,7 @@ moves["uspec"] = {
             hitboxes=hits_from("SpecialHi", entry=13),
             # Sustained lift instead of one ballistic pop: the rotor holds a steady climb while the
             # shared up-special drift steers left/right.
-            events=[{"at": 0, "setVel": [0, 8], "leaveGround": True}, {"from": 1, "to": 56, "setVel": {"y": 6.5}}],
+            events=[{"at": 0, "setVel": {"x": 0, "y": 7.86}, "leaveGround": True}, {"from": 1, "to": 56, "setVel": {"y": 6.36}}],
             ledge_grab=0,
             anim=[
                 key(0, "airCoil"),
@@ -1135,7 +1144,7 @@ projectiles = {
                     "from": 1,
                     "startup": 0,
                     "frames": 70,
-                    "vel": [8.0, 0.0],
+                    "vel": [11.4286, 0.0],
                     # Source article: 18% while freshly blown, 13% once it has slowed (SmashWiki
                     # 13% late; UFD's 15.3% after-bounce variant is not modeled).
                     "hitboxes": [{**ptooie_ball(18.0, 50), "end": 3}, {**ptooie_ball(13.0, 45), "start": 4}],
@@ -1150,7 +1159,7 @@ projectiles = {
     "poison": {
         "name": "Poison Breath",
         "spawn": [48, 86],
-        "vel": [0.9, 0],
+        "vel": [1.2857, 0],
         "r": 50,
         "life": 82,
         "max": 1,
@@ -1208,22 +1217,20 @@ fighter = {
     "stats": {
         "weight": 100.0 / 112.0,
         "pummelDamage": 1.4,
-        "walkSpeed": 2.66,
-        "runSpeed": 6.02,
-        "dashSpeed": 6.37,
+        "walkSpeed": round(MOBILITY["walk"] * SCALE, 5),
+        "runSpeed": round(MOBILITY["run"] * SCALE, 5),
+        "dashSpeed": round(MOBILITY["dash"] * SCALE, 5),
         "dashFrames": 15,
-        "runAccel": 0.8,
+        "runAccel": 1.1429,  # fitted
         "groundFriction": 0.85,
-        "jumpSpeed": 15.5,
-        "shortHopSpeed": 9.8,
-        "airJumpSpeed": 14.5,
-        "airJumpDrift": 3.5,
+        **units.jumps(JUMP_HEIGHTS["full"], JUMP_HEIGHTS["short"], JUMP_HEIGHTS["air"], MOBILITY["gravity"] * SCALE),
+        "airJumpDrift": 5.0,  # fitted
         "airJumps": 1,
-        "airSpeed": 3.5,
-        "airAccel": 0.21,
-        "gravity": 0.84,
-        "fallSpeed": 11.7,
-        "fastFallSpeed": 16.38,
+        "airSpeed": round(MOBILITY["air"] * SCALE, 5),
+        "airAccel": round(MOBILITY["airAccel"] * SCALE, 5),
+        "gravity": round(MOBILITY["gravity"] * SCALE, 5),
+        "fallSpeed": round(MOBILITY["fall"] * SCALE, 5),
+        "fastFallSpeed": round(MOBILITY["fastFall"] * SCALE, 5),
     },
     "body": {"halfWidth": 18, "height": 74},
     "hurtboxes": {"default": {"x1": -24, "x2": 24, "y1": 0, "y2": 122}, "knockdown": {"x1": -40, "x2": 40, "y1": 0, "y2": 26}},

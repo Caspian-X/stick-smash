@@ -1,7 +1,7 @@
 {
  "sourceCommit": "2e8f0d245481cb0c936524b6ffe1cdea867c4f68",
  "sourceSha256": "f7812dc2b4849fcdd77e0b84872b2d3e45555bede204c423e060bec5e1a0c3f4",
- "geometryScale": 5,
+ "scale": 5.0,
  "rawAttacks": {
   "jab": {
    "article": "cloud",

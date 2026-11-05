@@ -5,7 +5,7 @@
   "name": "Wrangler",
   "tagline": "Mind the end of the rope",
   "blurb": "Long reach, slow recovery · special: lasso pull · → whip crack · ↑ high hitch · ↓ stomp and spin",
-  "stats": { "weight": 0.94, "runSpeed": 5.35, "runAccel": 0.95, "airSpeed": 4.2, "dashSpeed": 5.992 },
+  "stats": { "weight": 0.94, "runSpeed": 7.642857, "runAccel": 1.357143, "airSpeed": 6, "dashSpeed": 8.56 },
   "moves": {
     "jab": {
       "name": "Rope Knuckle",
@@ -2180,7 +2180,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 4, "y": 16 },
+              "setVel": { "x": 5.714286, "y": 14.605935 },
               "leaveGround": true,
               "sfx": "djump"
             }

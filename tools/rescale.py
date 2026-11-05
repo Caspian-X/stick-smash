@@ -352,7 +352,7 @@ def rescale(doc, root, node, rel, cfg):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
+    ap = argparse.ArgumentParser(description=(__doc__ or '').split('\n\n')[0])
     ap.add_argument('config', type=Path)
     ap.add_argument('paths', nargs='*', type=Path)
     ap.add_argument('--dry-run', action='store_true', help='print counts without writing')

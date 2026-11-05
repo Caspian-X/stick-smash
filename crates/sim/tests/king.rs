@@ -582,20 +582,35 @@ fn jet_hammer_raw_air_drift_preserves_charge() {
     assert!(f.mov.as_ref().unwrap().charge >= charge);
 }
 
+/// Rises to the apex of the current ascent, from the fighter's height before this call.
+fn rise(w: &mut World, d: &GameData) -> f64 {
+    let (start, mut top) = (w.fighters[0].y, w.fighters[0].y);
+    while w.fighters[0].vy < 0. {
+        raw(w, d, (0, 0), 0);
+        top = top.min(w.fighters[0].y);
+    }
+    start - top
+}
+
 #[test]
-fn raw_jump_ascent_is_measured_and_midair_jumps_are_gentler() {
+fn raw_jump_heights_match_the_source_and_midair_jumps_are_gentler() {
+    // ssbwiki SSBU jump heights (units) at 5 px/unit; the air jump is the first of four.
+    let (full, short, air) = (32.85 * 5.0, 16.02 * 5.0, 28.50284665 * 5.0);
     let (d, mut w) = arena();
+    let ground = w.fighters[0].y;
     raw(&mut w, &d, (0, 0), 0);
     raw(&mut w, &d, (0, 0), 1);
     for _ in 0..3 {
         raw(&mut w, &d, (0, 0), 1);
     }
     assert_eq!(w.fighters[0].state, State::Air);
-    assert!((w.fighters[0].vy + 13.5).abs() < 0.001);
-    raw(&mut w, &d, (0, 0), 0);
+    let h = ground - w.fighters[0].y + rise(&mut w, &d);
+    assert!((h - full).abs() < 1., "full hop {h} vs {full}");
+    let y = w.fighters[0].y;
     raw(&mut w, &d, (0, 0), 1);
     assert_eq!(w.fighters[0].jumps, 3);
-    assert!(w.fighters[0].vy < -12. && w.fighters[0].vy >= -13.);
+    let h = y - w.fighters[0].y + rise(&mut w, &d);
+    assert!((h - air).abs() < 1. && h < full, "air jump {h} vs {air}");
     let (d, mut w) = arena();
     raw(&mut w, &d, (0, 0), 0);
     raw(&mut w, &d, (0, 0), 1);
@@ -603,5 +618,6 @@ fn raw_jump_ascent_is_measured_and_midair_jumps_are_gentler() {
         raw(&mut w, &d, (0, 0), 0);
     }
     assert_eq!(w.fighters[0].state, State::Air);
-    assert!((w.fighters[0].vy + 9.4).abs() < 0.001);
+    let h = ground - w.fighters[0].y + rise(&mut w, &d);
+    assert!((h - short).abs() < 1., "short hop {h} vs {short}");
 }

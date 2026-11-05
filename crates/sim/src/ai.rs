@@ -116,7 +116,8 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
             && f.y > s.top - v.recovery_height
         {
             center(&mut inp, f.x, mid);
-            if c.moves.uspec.phases.iter().any(|p| p.travel_speed.is_some()) && f.y > s.top {
+            // A directional warp aims up from below the stage or the ground, so an out-of-shield one can't leave it.
+            if c.moves.uspec.phases.iter().any(|p| p.travel_speed.is_some()) && (f.y > s.top || f.ground) {
                 inp.up = true;
             }
             if c.ai

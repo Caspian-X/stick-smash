@@ -55,7 +55,7 @@ upper launching sphere ahead of the lower spike spheres in collision priority. H
 imported; base hitlag remains shared. Every fighter now uses the shared Ultimate-style knockback
 formula: source base knockback is unscaled, and source growth is divided by 100 (90 → 0.9).
 The no-staleness/no-rage Ultimate equation includes the hit's damage and post-hit victim percent;
-reference launch speed is converted at 0.03 × 3.5 pixels per unit. This replaces the original rough
+reference launch speed is converted at 0.03 × 5 pixels per unit (0.15; it was 0.03 × 4.67 before the 5 px/unit unification). This replaces the original rough
 linear conversion, which ignored damage-dependent growth. Fixed-knockback hits retain their adapted
 launch strengths in the shared reference units; autolinks retain their separate pull velocity. Launch
 decay, hitstun, blast zones, rage, staleness and the 1v1 damage bonus are not a full Ultimate trajectory simulation.
@@ -65,10 +65,13 @@ The equation is cross-checked against the primary implementation in
 Special travel, charge-column thresholds, counter scaling and flame-zone damage remain adaptations.
 All of these choices live in the fighter's editable data.
 
-Horizontal speeds use 3.5 pixels per reference speed unit; gravity and terminal
-speeds use 6, so run speed is 5.2745, air speed is 3.969, gravity is 0.552, and the fast-fall ratio stays
-1.6. Jump speeds target roughly the reference's 37/48-frame short/full-hop rhythm while reaching the
-built-in platforms. Weight is the reciprocal multiplier 100/107 because this sim represents heavier
+Movement uses the shared 5 px per unit (DESIGN.md, Units): Ike's run 1.507 → 7.535, air speed 1.134 → 5.67,
+initial dash 1.76 → 8.8, gravity 0.092 → 0.46, fall 1.65 → 8.25, fast fall 2.64 → 13.2. Jump speeds come from Ike's
+heights (ssbwiki [jump height table](https://www.ssbwiki.com/Jump), SSBU; accessed 2026-11-05): full hop 29.9,
+short hop 16, double jump 31 units → `units.jumps` 11.5 / 8.3505 / 12.1715 px/tick, measured 149.5 / 80 / 155 px
+(`mike_hop_tuning.rs`). Mike has no generator: `just unify-5px` rescaled his hand-fitted data (horizontal ×5/3.5,
+vertical ×5/6, so fitted kinetics keep their size in source units) and set these jump speeds. Before that,
+horizontal speeds used 3.5 px/unit, gravity and fall 6, and jump speeds were fitted to a 37/48-frame rhythm. Weight is the reciprocal multiplier 100/107 because this sim represents heavier
 fighters with smaller knockback multipliers.
 
 The shared movement system now supplies analog walking, initial dash, running and turnarounds, with an
@@ -136,11 +139,11 @@ rear-shoulder up-air coverage, verified forward-smash startup, and charge-gated 
 
 ### Short hop and Quickdraw feel
 
-The requested short-hop reduction is a deliberate playtest adjustment: launch speed is now
-7.0623076923 instead of 10.1, producing half the previous peak height under the existing discrete
-gravity integration. Full hop, double jump and gravity stay unchanged. This halves height rather
-than speed. It is not a claim that Ultimate uses this height in our world units. The raw-input
-regression in `mike_hop_tuning.rs` measures both short and full hops through the normal jump controls.
+*Superseded by the 5 px/unit unification:* the short hop is now Ike's source height (80 px, about half the
+149.5 px full hop). Earlier, playtesting found the fitted short hop too high (115.9 px under a 157 px full hop) and
+halved that height with launch speed 7.0623076923; the observation that Mike's short hop should sit well below
+half his full hop's reach is kept for the next playtest. `mike_hop_tuning.rs` now checks the source heights
+through the normal jump controls.
 
 Quickdraw now separates charge strength from how long it may remain held. Strength saturates after
 69 held ticks, followed by up to 120 extra held ticks before automatic release. The extra hold
@@ -160,11 +163,11 @@ sooner. This charge-dependent recovery is a requested adaptation, not an extract
 ### Momentum migration
 
 Under the subtractive momentum model (`movement.ultimate`, FORMAT.md) Mike's initial dash is Ike's 1.76 × 3.5 =
-6.16 (`stats.dashSpeed`), easing into the 5.2745 run. Aerials drop the per-phase 0.389 drift correction
+6.16 (`stats.dashSpeed`; 8.8 at 5 px/unit), easing into the 5.2745 run (7.535). Aerials drop the per-phase 0.389 drift correction
 (0.175 / the old shared 0.45): they now use `airAccel` 0.175 directly. Aether's air phases keep their previous
 effective drift (0.45 × the old 0.3 → 1.1868 × 0.175 × 0.65). Quickdraw's rush speed is refitted to 12.0667 with
 chargeVelocity 0.020227 so slide traction (0.35 per tick) still gives exactly 75% and 100% of the former ground
-distances.
+distances. At 5 px/unit both speed and traction are ×5/3.5 (17.2381, 0.5), so the distances are ×5/3.5 too.
 
 ### Aether capture correction
 

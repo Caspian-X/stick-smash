@@ -324,7 +324,9 @@ fn climhazzard_move_frame_windows_and_lingering_plunge() {
     assert!(follow.is_some_and(|f| f >= 19), "follow-up opens from source 20");
 
     // A fresh plunge keeps its attack live for more than one tick and lands into the 26-frame landing phase.
+    // Clear of the Arena's platforms, so the plunge falls the whole way to the floor.
     let mut w = start(&d, "uspec");
+    w.fighters[0].x = 1000.;
     w.fighters[0].y = 300.;
     w.fighters[0].ground = false;
     w.fighters[0].surf = None;

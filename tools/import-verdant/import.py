@@ -6,19 +6,24 @@ pinned Ultimate Frame Data rows (startup, active windows, totals, landing lag, a
 movement). Root-bone (`top`) geometry converts at 5 px per source unit; every weapon-bone hitbox is *fitted*
 to the per-move UFD hitbox visualisations and the stick-figure poses authored below. Run `just import-verdant`.
 """
-import copy, json, math, re
+import copy, importlib, json, math, re, sys
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools'))
+units = importlib.import_module('units')
+SCALE = units.SCALE  # px per source unit: geometry, speeds (units/frame) and accelerations (units/frame²)
+
 # Phase drift (`airAccelMult`) is written as a multiple of the old shared air accels (aerial 0.45, attack 0.25,
-# upSpecial 0.3). Under `movement.ultimate` it multiplies airAccel × the kind's multiplier instead, so drift()
-# stores the value that keeps the same effective acceleration.
-AIR_ACCEL = 0.1855
+# upSpecial 0.3, px/tick² at the retired 3.5 px/unit speed scale, hence × SCALE / 3.5). Under `movement.ultimate`
+# it multiplies airAccel × the kind's multiplier instead, so drift() stores the value that keeps the same
+# effective acceleration.
+AIR_ACCEL = round(0.053 * SCALE, 5)  # UFD air acceleration 0.053
 def drift(legacy, kind):
-    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind]
+    old = {'aerial': 0.45, 'attack': 0.25, 'upSpecial': 0.3}[kind] * SCALE / 3.5
     mult = {'aerial': 1.0, 'attack': 0.55, 'upSpecial': 0.65}[kind]
     return round(legacy * old / (AIR_ACCEL * mult), 4)
 
-ROOT = Path(__file__).resolve().parents[2]
 SOURCES = ROOT / 'docs/imports/sources/verdant'
 source = json.loads((SOURCES / 'scripts.json').read_text())
 ufd = json.loads((SOURCES / 'ufd.json').read_text())
@@ -100,8 +105,6 @@ def num(a, k, default=0):
 
 
 # ---------------------------------------------------------------- conversion
-SCALE = 5.0
-
 
 def frame(source_frame):
     """Source gameplay frame -> phase frame. The move's first tick is source frame 1 = phase frame 0."""
@@ -511,7 +514,7 @@ dashatk = [swept(take_bone(da, 'sword1', 13.0, 0)['source'],
 moves['dashatk'] = {'name': 'Dash Thrust', 'phases': [phase(
     'main', 44, dashatk, slide=frame(20), anim=swing('thrust', frame(9), frame(11), 44),
     attach=wield('sword', [[0, 120], [6, 20], [9, 0], [20, 30], [44, 70]]),
-    events=[{'at': 0, 'setVel': {'x': 4.2}}, {'at': frame(9), 'sfx': 'slash'}])]}
+    events=[{'at': 0, 'setVel': {'x': 6.0}}, {'at': frame(9), 'sfx': 'slash'}])]}
 
 # ---------------------------------------------------------------- smashes
 fs = raw('fsmash', 'master', 'AttackS4')
@@ -715,14 +718,14 @@ moves['sspec'] = {'name': 'Areadbhar Rush', 'bReverse': True, 'phases': [
                        {'on': 'airborne', 'from': 19, 'to': 'airThrust'}, wait('thrust')]),
     phase('thrust', 5, sspec, slide=frame(24), anim=[{'at': 0, 'pose': 'thrust'}],
           attach=wield('lance', [[0, 10], [4, 0]]),
-          events=[{'at': 0, 'setVel': {'x': 6.0}, 'sfx': 'slash'}],
+          events=[{'at': 0, 'setVel': {'x': 8.5714}, 'sfx': 'slash'}],
           transitions=[{'on': 'grounded', 'from': 5, 'to': 'recover'},
                        {'on': 'airborne', 'from': 5, 'to': 'airRecover'}, wait('recover')]),
     phase('recover', 41, anim=[{'at': 0, 'pose': 'thrust'}, {'at': 10, 'pose': 'stand', 'lerp': True}],
           attach=wield('lance', [[0, 0], [10, 95]])),
     phase('airThrust', 5, sspec_air, anim=[{'at': 0, 'pose': 'airLow'}, {'at': 4, 'pose': 'thrust'}],
           attach=wield('lance', [[0, 30], [4, 10]]),
-          events=[{'at': 0, 'setVel': {'x': 3.5}, 'sfx': 'slash'}],
+          events=[{'at': 0, 'setVel': {'x': 5.0}, 'sfx': 'slash'}],
           transitions=[{'on': 'land', 'to': 'landing', 'lag': 16}, wait('airRecover')]),
     phase('airRecover', 37, airAccelMult=drift(0.4, 'attack'), anim=[{'at': 0, 'pose': 'thrust'}, {'at': 12, 'pose': 'air', 'lerp': True}],
           attach=wield('lance', [[0, 10], [12, 60]]),
@@ -750,7 +753,7 @@ moves['uspec'] = {'name': 'Creator Tether', 'air': 'upSpecial', 'phases': [
           transitions=[wait('rise')]),
     phase('rise', 29, airAccelMult=drift(0.4, 'upSpecial'), ledgeGrab=0, anim=[{'at': 0, 'pose': 'airHigh'}],
           attach=wield('sword', [[0, 60], [10, 95]], scale=1.6),
-          events=[{'at': 0, 'setVel': {'y': 10.5}}],
+          events=[{'at': 0, 'setVel': {'y': 9.5851}}],
           transitions=[{'on': 'land', 'to': 'landing', 'lag': 24}, wait('helpless')]),
 ]}
 
@@ -815,11 +818,13 @@ def arrow(name, a, vel, r, life, shapes):
 
 
 projectiles = {
-    'arrow': arrow('Failnaught', sn, 14, 8, 90, arrow_shapes),
-    'arrowMax': arrow('Failnaught (full)', smax, 20, 11, 100, arrow_shapes),
+    'arrow': arrow('Failnaught', sn, 20, 8, 90, arrow_shapes),
+    'arrowMax': arrow('Failnaught (full)', smax, 28.5714, 11, 100, arrow_shapes),
 }
 
 # ---------------------------------------------------------------- fighter document
+GRAVITY = round(0.089 * SCALE, 5)  # UFD gravity 0.089
+JUMP_HEIGHTS = (26.5, 14, 28.5)  # SSBU full hop, short hop, double jump (units; ssbwiki "Jump")
 doc = {
     '$schema': '../../schema/fighter.schema.json',
     'schemaVersion': 1,
@@ -830,10 +835,13 @@ doc = {
              'charges a piercing arrow and the Sword of the Creator tethers a ledge.',
     'stats': {
         'weight': round(100 / 97, 8), 'pummelDamage': 1.5,
-        'walkSpeed': 3.395, 'runSpeed': 5.005, 'dashSpeed': 6.3, 'dashFrames': 15, 'runAccel': 0.62,
+        # UFD movement × SCALE; runAccel is fitted (0.62 at the old 3.5 px/unit speed scale).
+        'walkSpeed': round(0.97 * SCALE, 5), 'runSpeed': round(1.43 * SCALE, 5),
+        'dashSpeed': round(1.8 * SCALE, 5), 'dashFrames': 15, 'runAccel': 0.8857,
         'groundFriction': 0.85,
-        'jumpSpeed': 13.4, 'shortHopSpeed': 9.4, 'airJumpSpeed': 12.9, 'airJumpDrift': 3.115, 'airJumps': 1,
-        'airSpeed': 3.115, 'airAccel': AIR_ACCEL, 'gravity': 0.534, 'fallSpeed': 9.6, 'fastFallSpeed': 15.36,
+        **units.jumps(*JUMP_HEIGHTS, GRAVITY), 'airJumpDrift': round(0.89 * SCALE, 5), 'airJumps': 1,
+        'airSpeed': round(0.89 * SCALE, 5), 'airAccel': AIR_ACCEL, 'gravity': GRAVITY,
+        'fallSpeed': round(1.6 * SCALE, 5), 'fastFallSpeed': round(2.56 * SCALE, 5),
     },
     'ai': {
         'reach': 90, 'counterChance': 0,

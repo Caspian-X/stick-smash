@@ -7,20 +7,25 @@ documented in docs/imports/king.md. Run `just import-king` for the generated pac
 """
 import copy
 import hashlib
+import importlib
 import json
 import math
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools"))
+units = importlib.import_module("units")
 SOURCES = ROOT / "docs/imports/sources/king"
 source = json.loads((SOURCES / "scripts.json").read_text())
 ufd = json.loads((SOURCES / "ufd.json").read_text())
 scripts = {article: {s["Name"]: s["Data"] for s in entries} for article, entries in source["scripts"].items()}
 page = {row["movename"]: row for row in ufd["moves"]}
-SCALE = 5.0  # source gameplay units to stage pixels for attack geometry
-MOBILITY = 3.5  # source ground/air speed units to px/tick
-VERTICAL = 6.0  # source gravity/fall units to px/tick^2 or px/tick
+SCALE = units.SCALE  # source units to px for geometry, px/tick for speeds and px/tick^2 for accelerations
+# Source jump heights (units): ssbwiki "Jump" (SSBU jump height ranking), accessed 2026-11-05. The air jump
+# is the first of the four midair jumps; the sim uses one airJumpSpeed for all four.
+JUMP_HEIGHTS = {"full": 32.85, "short": 16.02, "air": 28.50284665}
 SHOULDER = [0.0, 64.0]
 HOLD_HAND = 30.0
 HEAD_DISTANCE = 50.0  # hammer head centre from the grip
@@ -293,9 +298,7 @@ ledger = {
     },
     "units": {
         "frame": FRAME,
-        "geometryScale": SCALE,
-        "mobilityScale": MOBILITY,
-        "verticalScale": VERTICAL,
+        "scale": SCALE,
         "hammerReach": HAMMER_REACH,
     },
     "ufd": page,
@@ -764,7 +767,7 @@ ledger["moves"]["jab"] = {"script": ["Attack11", "Attack12", "Attack100Sub", "At
 FTILT_KEYS = [[0, 20], [8, 120], [10, 10], [20, 10], [22, 20]]
 moves["ftilt"] = hammer_move("ftilt", "Hammer Sweep", "AttackS3", 48, FTILT_KEYS, "lean",
                              events=[{"at": 11, "sfx": "whack"}, {"at": 22, "sfx": "smash"}])
-moves["ftilt"]["phases"][0]["events"].append({"at": 11, "setVel": {"x": 1.2}})
+moves["ftilt"]["phases"][0]["events"].append({"at": 11, "setVel": {"x": 1.7143}})
 ledger["moves"]["ftilt"] = {"script": "AttackS3", "phases": [("main", 48)]}
 
 UTILT_KEYS = [[0, 70], [6, 80], [13, 80], [24, 50], [37, 40]]
@@ -788,7 +791,7 @@ dash, _, _ = body_move(
     "dashatk", "Body Check", "AttackDash", 66,
     lambda a, t: ([64 - (min(t, 41) - 26) * 1.9, 38 - (min(t, 41) - 26) * 0.75]
                   if num(a, "Damage") > 14 else [52 - (min(t, 41) - 28) * 0.75, 30 - (min(t, 41) - 28) * 0.4]),
-    "lean", events=[{"at": 0, "setVel": {"x": 4.5}}, {"at": 25, "sfx": "whack"}, {"at": 41, "sfx": "whack"}],
+    "lean", events=[{"at": 0, "setVel": {"x": 6.4286}}, {"at": 25, "sfx": "whack"}, {"at": 41, "sfx": "whack"}],
 )
 moves["dashatk"] = dash
 ledger["moves"]["dashatk"] = {"script": "AttackDash", "phases": [("main", 66)]}
@@ -799,7 +802,7 @@ fsmash = hammer_move("fsmash", "Hammer Drop", "AttackS4", 77, FSMASH_KEYS, "lean
                          {"at": 32, "sfx": "charge"},
                          {"at": 39, "sfx": "smash"},
                          {"at": 39, "sfx": "whack"},
-                         {"at": 39, "setVel": {"x": 2}},
+                         {"at": 39, "setVel": {"x": 2.8571}},
                          {"at": 43, "if": "grounded", "sfx": "quake",
                           "fx": [{"type": "dust", "x": 72, "y": 0, "n": 12},
                                  {"type": "ring", "x": 72, "y": 5, "r": 10, "grow": 6, "life": 14},
@@ -981,7 +984,7 @@ if dashgrab_raw:
     for z in (num(a, "Z"), num(a, "Z2")):
         dash_hits.append(hit(a, 10, 12, z * SCALE, 40, r, overrides={"type": "grab"}))
 moves["dashgrab"] = {"name": "Dash Hammer Grab", "phases": [
-    phase("main", 47, dash_hits, slide=10, events=[{"at": 0, "setVel": {"x": 5}}, {"at": 10, "sfx": "grab"}],
+    phase("main", 47, dash_hits, slide=10, events=[{"at": 0, "setVel": {"x": 7.1429}}, {"at": 10, "sfx": "grab"}],
           anim=source_anim("lean", 10, 12, 47))]}
 ledger["moves"]["dashgrab"] = {"script": "CatchDash", "phases": [("main", 47)]}
 
@@ -1082,12 +1085,12 @@ moves["uspec"] = {
               anim=[{"at": 0, "pose": "crouch"}, {"at": 7, "pose": "uspecWind", "lerp": True},
                     {"at": 13, "pose": "uspecWindHold", "lerp": True}], transitions=[timeout("launch")]),
         phase("launch", 17, armorThreshold=9999,
-              events=[{"at": 0, "setVel": {"x": 0, "y": 22}, "leaveGround": True, "invuln": 4, "sfx": "djump",
+              events=[{"at": 0, "setVel": {"x": 0, "y": 20.0832}, "leaveGround": True, "invuln": 4, "sfx": "djump",
                        "fx": [{"type": "dust", "x": 0, "y": 0, "n": 10}]}],
               attach=attach([[0, 100]]), anim=[{"at": 0, "pose": "uspecWindHold"}, {"at": 3, "pose": "win", "lerp": True}],
               transitions=[timeout("rise")]),
         phase("rise", None, ledgeGrab=1, attach=attach([[0, 100]]), anim=[{"at": 0, "pose": "win"}],
-              events=[{"from": 0, "capFall": 12}], transitions=[{"on": "falling", "to": "plungeArmor"},
+              events=[{"from": 0, "capFall": 10}], transitions=[{"on": "falling", "to": "plungeArmor"},
                                                                 {"on": "land", "to": "wave"}]),
         phase("plungeArmor", 8, USPEC_FALL_HIT, armorThreshold=9999, ledgeGrab=1,
               attach=attach([[0, -90]]), events=[{"at": 0, "sfx": "smash"}],
@@ -1130,7 +1133,7 @@ moves["dspec"] = {
         phase("start", JET_ENTRY, events=[{"at": 0, "sfx": "jet"}], attach=attach([[0, 100]]),
               anim=[{"at": 0, "pose": "swing"}, {"at": 10, "pose": "crouch", "lerp": True}],
               transitions=[timeout("charge")]),
-        phase("charge", None, groundSpeed=1.6, charge={"frame": 0, "max": JET_MAX, "button": "special", "jet": True},
+        phase("charge", None, groundSpeed=2.2857, charge={"frame": 0, "max": JET_MAX, "button": "special", "jet": True},
               # Braced carry: a slow settle into the charge and a strain wobble on the held hammer. The
               # last key returns to the resting 105 degrees the entry animation left it at.
               attach=attach([[0, 105], [12, 102], [24, 108], [36, 102.5], [48, 107], [60, 103.5], [JET_MAX, 105]]),
@@ -1167,25 +1170,25 @@ gordo_shapes = [
 ]
 projectiles = {
     "gordo": {
-        "name": "Gordo", "spawn": [52, 60], "vel": [5.5, 7], "r": 19, "life": 140, "max": 1,
+        "name": "Gordo", "spawn": [52, 60], "vel": [7.8571, 5.8333], "r": 19, "life": 140, "max": 1,
         "hit": {"x": 0, "y": 0, "r": 19, "damage": 14, "bkb": 70, "kbg": 0.66, "angle": 60,
                 "shieldDmgMult": 0.5, "hitlagMult": 1.5},
-        "spawnSfx": "toss", "fullSfx": "bonk", "gravity": 0.4, "maxFall": 12, "reflectVy": 4,
-        "bounce": {"restitution": 0.7, "minSpeed": 4, "friction": 0.85, "maxBounces": 3,
+        "spawnSfx": "toss", "fullSfx": "bonk", "gravity": 0.3333, "maxFall": 10, "reflectVy": 3.3333,
+        "bounce": {"restitution": 0.7, "minSpeed": 3.3333, "friction": 0.85, "maxBounces": 3,
                    "fizzleLife": 20, "wallRestitution": 0.6, "sfx": "bonk"},
-        "bat": {"speed": 10, "vy": 5, "life": 120, "cooldown": 12, "hitlag": 4},
+        "bat": {"speed": 14.2857, "vy": 4.1667, "life": 120, "cooldown": 12, "hitlag": 4},
         "spin": -3.438, "shapes": gordo_shapes,
     },
     "starR": {
-        "name": "Star", "spawn": [36, 6], "vel": [7, -1], "r": 11, "life": 16, "max": 1,
+        "name": "Star", "spawn": [36, 6], "vel": [10, -0.8333], "r": 11, "life": 16, "max": 1,
         "hit": {"x": 0, "y": 0, "r": 11, "damage": 5, "bkb": 8, "kbg": 0.65, "angle": 70},
-        "spawnSfx": "toss", "gravity": 0.25, "maxFall": 8,
+        "spawnSfx": "toss", "gravity": 0.2083, "maxFall": 6.6667,
         "shapes": [{"shape": "star", "at": [0, 0], "r": 11, "fill": "#ffe680"}],
     },
 }
 projectiles["starL"] = copy.deepcopy(projectiles["starR"])
 projectiles["starL"]["spawn"][0] *= -1
-projectiles["starL"]["vel"] = [-7, -1]
+projectiles["starL"]["vel"] = [-10, -0.8333]
 projectiles["starL"]["shapes"][0]["at"] = [0, 0]
 
 # -------------------------------------------------------------------------------------------------
@@ -1200,22 +1203,20 @@ fighter = {
     "stats": {
         "weight": round(100.0 / 127.0, 8),
         "pummelDamage": 1.6,
-        "walkSpeed": round(1.029 * MOBILITY, 5),
-        "runSpeed": round(1.496 * MOBILITY, 5),
-        "dashSpeed": round(1.815 * MOBILITY, 5),
+        "walkSpeed": round(1.029 * SCALE, 5),
+        "runSpeed": round(1.496 * SCALE, 5),
+        "dashSpeed": round(1.815 * SCALE, 5),
         "dashFrames": 15,
-        "runAccel": 0.72,
+        "runAccel": 1.0286,  # fitted
         "groundFriction": 0.86,
-        "jumpSpeed": 13.5,  # fitted slower ascent after controller playtesting feedback
-        "shortHopSpeed": 9.4,
-        "airJumpSpeed": 13.0,
-        "airJumpDrift": 3.8,
+        **units.jumps(JUMP_HEIGHTS["full"], JUMP_HEIGHTS["short"], JUMP_HEIGHTS["air"], 0.097 * SCALE),
+        "airJumpDrift": 5.4286,  # fitted
         "airJumps": 4,
-        "airSpeed": round(0.735 * MOBILITY, 5),
-        "airAccel": round(0.05 * MOBILITY, 5),
-        "gravity": round(0.097 * VERTICAL, 5),
-        "fallSpeed": round(1.95 * VERTICAL, 5),
-        "fastFallSpeed": round(3.12 * VERTICAL, 5),
+        "airSpeed": round(0.735 * SCALE, 5),
+        "airAccel": round(0.05 * SCALE, 5),
+        "gravity": round(0.097 * SCALE, 5),
+        "fallSpeed": round(1.95 * SCALE, 5),
+        "fastFallSpeed": round(3.12 * SCALE, 5),
     },
     # Arena's lowest platform leaves 76 px of body clearance; use the shared 74 px body while
     # the visual figure and hurtboxes keep Dedede's larger proportions.
@@ -1265,9 +1266,10 @@ ledger["gaps"] = [
 ledger["mobility"] = {
     "source": {"weight": 127, "walk": 1.029, "run": 1.496, "dash": 1.815, "airSpeed": 0.735,
                "airAccel": 0.05, "gravity": 0.097, "fall": 1.95, "fastFall": 3.12,
-               "jumpHeight": 32.85, "shortHopHeight": 16.02, "airJumps": 4},
-    "conversion": {"groundAirScale": MOBILITY, "verticalScale": VERTICAL,
-                   "jumpSpeed": "fitted full/short/air speeds 13.5/9.4/13; original sqrt(2 * gravity * height) baseline retained in import record"},
+               "jumpHeight": JUMP_HEIGHTS["full"], "shortHopHeight": JUMP_HEIGHTS["short"],
+               "airJumpHeight": JUMP_HEIGHTS["air"], "airJumps": 4},
+    "conversion": {"scale": SCALE,
+                   "jumpSpeed": "units.jumps(source heights x scale, source gravity x scale); supersedes the fitted 13.5/9.4/13"},
     "result": fighter["stats"],
 }
 

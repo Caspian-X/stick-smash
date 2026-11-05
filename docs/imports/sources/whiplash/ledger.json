@@ -1,6 +1,6 @@
 {
   "sourceCommit": "2e8f0d245481cb0c936524b6ffe1cdea867c4f68",
-  "geometryScale": 5,
+  "scale": 5.0,
   "rawAttackLedger": {
     "jab": {
       "article": "szerosuit",

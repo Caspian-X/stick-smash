@@ -11,7 +11,8 @@ Bundled movement now uses three jumpsquat frames (was four), four turnaround fra
 This pass changes bundled content only, so it does not require a SIM_VERSION change: old replay content retains its original settings. TS traces explicitly restore four-frame jumpsquat and disable gait/Ultimate knockback. The linear-content fixture restores damage as well as BKB/growth, keeping later damage edits out of the historical launch contract.
 
 Momentum then moved to the subtractive `movement.ultimate` model (FORMAT.md, Momentum): traction 0.35 px/frame²
-(Ultimate Mario 0.1 × 3.5, doubled above walk speed), air friction 0.035, fighter-relative air control with
+(Ultimate Mario 0.1 × 3.5, doubled above walk speed; 0.5 = 0.1 × 5 since the unit unification), air friction 0.035
+(now 0.05), fighter-relative air control with
 per-kind multipliers (aerial 1, other attacks 0.55, up special and helpless 0.65), instant fast fall and dash
 bursts easing into the run. No fighter sets its own `traction` or `airFriction` yet: per-character values from
 references are still to be gathered. Phase `airAccelMult` values were migrated to keep each phase's previous
@@ -19,3 +20,10 @@ effective acceleration (Mike's 0.389 aerial correction became the default 1); ph
 fighter's own air accel, which slows heavy fighters' aerial drift (King 0.175 instead of the shared 0.45). Mike's
 Quickdraw rush speed was refitted so its requested ground distances survive slide traction. This is a SIM_VERSION
 change (-sim-30); TS traces disable the block.
+
+The 5 px/unit unification (DESIGN.md, Units) then put all content on one scale: shared horizontal speeds and
+accelerations ×5/3.5 (dodge roll 7 → 10, directional air dodge 10 → 14.29, dash attack/grab slides, shield push,
+trip slide, drift in hitstun), shared vertical speeds ×5/6, the ledge jump and shield-break launch ×√(5/6) (15 → 13.69,
+same height under the lower gravity) and `launchSpeed` 0.14 → 0.15 (Ultimate's 0.03 × 5). The hitstun particle and audio
+strength thresholds follow launch speed (×15/14). Legacy TS-trace fields were left alone. Content-only:
+no SIM_VERSION change.

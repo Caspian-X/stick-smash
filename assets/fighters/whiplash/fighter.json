@@ -8,21 +8,21 @@
   "stats": {
     "weight": 1.25,
     "pummelDamage": 1.3,
-    "walkSpeed": 5.145,
-    "runSpeed": 8.085,
-    "dashSpeed": 8.469999999999999,
+    "walkSpeed": 7.35,
+    "runSpeed": 11.55,
+    "dashSpeed": 12.1,
     "dashFrames": 13,
-    "runAccel": 0.45,
+    "runAccel": 0.6429,
     "groundFriction": 0.84,
-    "airSpeed": 4.41,
-    "airAccel": 0.3325,
-    "gravity": 0.72,
-    "fallSpeed": 10.2,
-    "fastFallSpeed": 16.32,
-    "jumpSpeed": 18.1,
-    "shortHopSpeed": 12.4,
-    "airJumpSpeed": 18.0,
-    "airJumpDrift": 4.41
+    "airSpeed": 6.3,
+    "airAccel": 0.475,
+    "gravity": 0.6,
+    "fallSpeed": 8.5,
+    "fastFallSpeed": 13.6,
+    "jumpSpeed": 16.0407,
+    "shortHopSpeed": 11.0184,
+    "airJumpSpeed": 16.5852,
+    "airJumpDrift": 6.3
   },
   "body": { "halfWidth": 13, "height": 74 },
   "hurtboxes": {
@@ -1311,7 +1311,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 7.5 }
+              "setVel": { "x": 10.7143 }
             },
             { "at": 7, "sfx": "slash" }
           ],
@@ -2574,7 +2574,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 0, "y": 0.5 }
+              "setVel": { "x": 0, "y": 0.4167 }
             }
           ],
           "hover": true
@@ -2812,11 +2812,11 @@
             { "on": "timeout", "to": "late" }
           ],
           "airAccelMult": 0,
-          "fallCap": 30,
+          "fallCap": 25,
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 3.5, "y": -27 },
+              "setVel": { "x": 5, "y": -22.5 },
               "sfx": "slash"
             }
           ]
@@ -4082,17 +4082,17 @@
           "events": [
             {
               "at": 5,
-              "setVel": { "y": 23.4, "x": 1.6 },
+              "setVel": { "y": 21.3612, "x": 2.2857 },
               "leaveGround": true,
               "sfx": "jet"
             },
             {
               "at": 11,
-              "setVel": { "y": 15.6 }
+              "setVel": { "y": 14.2408 }
             },
             {
               "at": 27,
-              "setVel": { "x": 4.8, "y": 1.2 }
+              "setVel": { "x": 6.8571, "y": 1.0954 }
             },
             { "at": 33, "sfx": "smash" }
           ],
@@ -4247,17 +4247,17 @@
           "events": [
             {
               "at": 5,
-              "setVel": { "y": 23.4, "x": 1.6 },
+              "setVel": { "y": 21.3612, "x": 2.2857 },
               "leaveGround": true,
               "sfx": "jet"
             },
             {
               "at": 11,
-              "setVel": { "y": 15.6 }
+              "setVel": { "y": 14.2408 }
             },
             {
               "at": 27,
-              "setVel": { "x": 4.8, "y": 1.2 }
+              "setVel": { "x": 6.8571, "y": 1.0954 }
             },
             { "at": 33, "sfx": "smash" }
           ],
@@ -4283,7 +4283,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 7.5, "y": 12.6 },
+              "setVel": { "x": 10.7143, "y": 10.5 },
               "leaveGround": true,
               "sfx": "jump"
             },
@@ -4474,7 +4474,7 @@
             }
           ],
           "airAccelMult": 0.4101,
-          "fallCap": 20,
+          "fallCap": 16.6667,
           "anim": [
             { "at": 0, "pose": "flipTuck" },
             { "at": 7, "pose": "flipTuck" },
@@ -4488,11 +4488,11 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 7, "y": -3 }
+              "setVel": { "x": 10, "y": -2.5 }
             },
             {
               "at": 9,
-              "setVel": { "x": 10, "y": -8 },
+              "setVel": { "x": 14.2857, "y": -6.6667 },
               "sfx": "smash"
             }
           ],
@@ -4565,7 +4565,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": 2, "y": 12 },
+              "setVel": { "x": 2.8571, "y": 10 },
               "sfx": "djump"
             }
           ],
@@ -4586,7 +4586,7 @@
           "events": [
             {
               "at": 0,
-              "setVel": { "x": -3, "y": 11 }
+              "setVel": { "x": -4.2857, "y": 9.1667 }
             }
           ],
           "transitions": [
@@ -4683,7 +4683,7 @@
     "paralyzer": {
       "name": "Paralyzer",
       "spawn": [50, 45],
-      "vel": [12, 0],
+      "vel": [17.1429, 0],
       "r": 6.5,
       "life": 24,
       "max": 3,

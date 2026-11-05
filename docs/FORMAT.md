@@ -30,6 +30,10 @@ fits in 120 columns and contains no objects stays on one line (a hitbox, a keyfr
 ## Coordinates and units
 
 - World/stage: stage pixels, **y down**, 60 ticks per second, speeds in px/tick.
+- Scale: **5 px per Smash Ultimate unit** on both axes, for lengths, speeds (units/frame × 5 = px/tick),
+  accelerations and gravity (units/frame² × 5 = px/tick²); launch speed is 0.15 px/tick per reference knockback
+  unit. Built-in content and stage sizes use it ([DESIGN.md](DESIGN.md#scope), Units). A jump speed for a source
+  height `h` units comes from `tools/units.py` (`jumps`), which is exact for the sim's integration.
 - Fighter-local (hitboxes, hurtboxes, poses, events, projectile spawn): **x forward, y up**, origin at the feet.
   The sim mirrors x by facing and flips y.
 - Angles in degrees: 0 = forward, 90 = up. This holds for launch angles, attachment angles and pose `rot`
@@ -73,7 +77,7 @@ too) is stored on the fighter as a separate launch vector. Reference knockback i
 `knockback.ultimate.launchSpeed` (1 without it). Each airborne hitstun tick:
 
 - the launch vector's magnitude shrinks by `launchDecay` × launchSpeed px (reference units per frame; Ultimate
-  0.051 / 0.03 = 1.7, ≈ 0.238 px at launchSpeed 0.14), never past zero;
+  0.051 / 0.03 = 1.7, = 0.255 px at launchSpeed 0.15), never past zero;
 - the fighter's own component gets the victim's `stats.gravity`, capped at its `stats.fallSpeed`, and the stick
   accelerates it by `hitstun.driftAccel` up to `stats.airSpeed` (otherwise air friction under
   `movement.ultimate`, or `movement.airDrag`);
@@ -425,18 +429,18 @@ center position; additional player slots have their own points.
 ### Momentum (`global.movement.ultimate`)
 
 With `movement.ultimate` present, horizontal speed changes by fixed amounts per frame (px/frame², Ultimate units
-× 3.5) instead of by multipliers. Without it (TS traces) the multipliers marked *Legacy* in the schema apply:
+× 5) instead of by multipliers. Without it (TS traces) the multipliers marked *Legacy* in the schema apply:
 `stats.groundFriction`, `gait.turnFriction`/`brakeFriction`, `sim.jumpsquatFriction`/`landingFriction`/
 `shieldFriction`, `movement.attackFriction`/`attackSlideFriction`, `airDrag`/`airDragHeld`/`attackAirDrag`, the
 shared `aerialAccel`/`attackAirAccel`/`upSpecialAccel`/`helplessAccel` and `fastFallKick`. Those fields stay
 required so legacy data loads; the new model ignores them.
 
-- **Traction** (`stats.traction`, default `ultimate.traction` 0.35 ≈ Mario's 0.1): |vx| drops toward zero by
+- **Traction** (`stats.traction`, default `ultimate.traction` 0.5 = Mario's 0.1 × 5): |vx| drops toward zero by
   traction per frame in idle, crouch, brake, turn skid, jumpsquat, landing lag, dizzy, grab hold, throws, shield
   and grounded attacks, times `fastTraction` (2) while faster than the fighter's walk speed. A grounded attack
   phase's `slide` frames multiply it by `attackSlideTraction` (0.5). Dodge, knockdown, shield-break and hitstun
   ground drag stay multiplicative.
-- **Air friction** (`stats.airFriction`, default `ultimate.airFriction` 0.035): with the stick neutral (or no air
+- **Air friction** (`stats.airFriction`, default `ultimate.airFriction` 0.05 = 0.01 × 5): with the stick neutral (or no air
   control in the phase) |vx| drops toward zero by it; with the stick held and |vx| at or below `airSpeed` × tilt
   the fighter accelerates by its air accel × tilt up to that cap (opposite stick accelerates against the motion);
   above the cap |vx| drops toward the cap by air friction and is never clamped. The same rule runs in the air
@@ -598,7 +602,7 @@ Internally, surface ids are block indices followed by platform indices offset by
 
 `blast` sets the KO boundaries independently of the visible `camera` bounds. To keep fighters offscreen
 before a KO, place the camera bounds inside the blast rectangle with enough clearance for their bodies
-(the built-in stages use 80 pixels on each side). Increasing blast distances alone does not ensure offscreen
+(Arena uses Battlefield's: 350 px inside the blast sides, 310 below the top line, 300 above the bottom one). Increasing blast distances alone does not ensure offscreen
 KOs: the follow camera can chase a fighter to the boundary if its own bounds extend beyond it. Stage coordinates
 increase downward, so a larger `blast.bottom` gives more room to fall and a larger `blast.top` lowers the ceiling.
 
@@ -616,7 +620,9 @@ The automatic play area unions block rectangles (including undersides) and platf
 At the current aspect ratio, its padded fit height is compared with the padded reference dimensions in
 `global.render.camera.referencePlayWidth/Height`. The automatic maximum is `maxHeight` times that ratio
 (with a minimum multiplier of 1), enlarged if necessary to accommodate the follow camera's stage bias.
-Arena retains the global range at 16:9; camera bounds cap ultrawide framing, and portrait framing may widen to fit its padded play area. The automatic minimum is `minHeight` times
+The reference dimensions (680 × 395) are the play area of the Arena before the 5 px/unit rebuild; today's
+Arena is larger, so its automatic maximum exceeds `maxHeight` and its Battlefield camera bounds cap it (956 px
+tall at 16:9). Portrait framing may widen to fit a padded play area up to the camera bounds. The automatic minimum is `minHeight` times
 `clamp(max(width/referencePlayWidth, height/referencePlayHeight) / minScaleStart, minScaleFloor, 1)`.
 Thus only clearly smaller stages zoom in tighter. The editor displays both automatic and effective ranges
 at 16:9 and draws the effective maximum view with stage bias and camera-bound clamping when bounds are visible.

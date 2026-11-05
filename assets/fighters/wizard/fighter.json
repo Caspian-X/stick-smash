@@ -7,20 +7,20 @@
   "blurb": "A Zelda-inspired caster: precise lightning kicks, multi-hit magic, a guiding fireball, a directional warp and a delayed Phantom.",
   "stats": {
     "weight": 1.1764705882352942,
-    "walkSpeed": 3.1990000000000003,
-    "runSpeed": 5.005,
-    "dashSpeed": 6.853,
+    "walkSpeed": 4.57,
+    "runSpeed": 7.15,
+    "dashSpeed": 9.79,
     "dashFrames": 16,
-    "runAccel": 0.28,
-    "airSpeed": 3.822,
-    "airAccel": 0.2275,
-    "gravity": 0.42599999999999993,
-    "fallSpeed": 8.100000000000001,
-    "fastFallSpeed": 12.96,
-    "jumpSpeed": 11.75,
-    "shortHopSpeed": 8.6,
-    "airJumpSpeed": 12,
-    "airJumpDrift": 3.822
+    "runAccel": 0.4,
+    "airSpeed": 5.46,
+    "airAccel": 0.325,
+    "gravity": 0.355,
+    "fallSpeed": 6.75,
+    "fastFallSpeed": 10.8,
+    "jumpSpeed": 10.4058,
+    "shortHopSpeed": 7.1786,
+    "airJumpSpeed": 10.7608,
+    "airJumpDrift": 5.46
   },
   "ai": {
     "reach": 70,
@@ -3517,7 +3517,7 @@
           "name": "travel",
           "frames": 17,
           "hitboxes": [],
-          "travelSpeed": 21,
+          "travelSpeed": 30,
           "hidden": true,
           "ledgeGrab": 0,
           "events": [
@@ -3761,7 +3761,7 @@
     "fire": {
       "name": "Din's Fire",
       "spawn": [25, 45],
-      "vel": [8, 0],
+      "vel": [11.4286, 0],
       "r": 12,
       "life": 100,
       "max": 1,
@@ -3771,7 +3771,7 @@
         "minRelease": 16,
         "autoRelease": 42,
         "releaseOnUp": true,
-        "steer": 2.4,
+        "steer": 2,
         "stages": [
           {
             "from": 0,
@@ -5125,7 +5125,7 @@
             "from": 0,
             "startup": 11,
             "frames": 17,
-            "vel": [3.5, 0],
+            "vel": [5, 0],
             "health": 8,
             "hitboxes": [
               {
@@ -5174,7 +5174,7 @@
             "from": 20,
             "startup": 12,
             "frames": 21,
-            "vel": [5, 0],
+            "vel": [7.1429, 0],
             "health": 10,
             "hitboxes": [
               {
@@ -5279,7 +5279,7 @@
             "from": 28,
             "startup": 10,
             "frames": 19,
-            "vel": [7, 0],
+            "vel": [10, 0],
             "health": 13,
             "hitboxes": [
               {
@@ -5448,7 +5448,7 @@
             "from": 33,
             "startup": 10,
             "frames": 19,
-            "vel": [7, 0],
+            "vel": [10, 0],
             "health": 15,
             "hitboxes": [
               {
@@ -5617,7 +5617,7 @@
             "from": 38,
             "startup": 8,
             "frames": 17,
-            "vel": [9, 0],
+            "vel": [12.8571, 0],
             "health": 18,
             "hitboxes": [
               {
@@ -5782,7 +5782,7 @@
             "from": 45,
             "startup": 8,
             "frames": 17,
-            "vel": [9, 0],
+            "vel": [12.8571, 0],
             "health": 20,
             "hitboxes": [
               {
@@ -5947,7 +5947,7 @@
             "from": 50,
             "startup": 9,
             "frames": 25,
-            "vel": [12, 0],
+            "vel": [17.1429, 0],
             "health": 25,
             "hitboxes": [
               {

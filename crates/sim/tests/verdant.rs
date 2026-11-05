@@ -250,9 +250,10 @@ fn reference_damage_and_launch_values() {
         (f.throws.f.hit.damage, f.throws.b.hit.damage, f.throws.u.hit.damage, f.throws.d.hit.damage),
         (6., 7., 9., 5.)
     );
-    // Movement/weight conversions.
-    assert!((f.stats.run_speed - 1.43 * 3.5).abs() < 1e-9);
-    assert!((f.stats.gravity - 0.089 * 6.).abs() < 1e-9);
+    // Movement converts at 5 px per source unit on every axis (UFD run 1.43, gravity 0.089, fall 1.6).
+    assert!((f.stats.run_speed - 1.43 * 5.).abs() < 1e-9);
+    assert!((f.stats.gravity - 0.089 * 5.).abs() < 1e-9);
+    assert!((f.stats.fall_speed - 1.6 * 5.).abs() < 1e-9);
 }
 
 #[test]
