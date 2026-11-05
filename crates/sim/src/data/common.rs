@@ -5,6 +5,8 @@ use std::borrow::Cow;
 use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
 use serde::{Deserialize, Serialize};
 
+use super::unit;
+
 /// Fighter-local point `[x, y]`: x = forward, y = up, origin at the feet.
 pub type Pt = [f64; 2];
 
@@ -91,8 +93,12 @@ impl JsonSchema for Color {
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Rect {
+    #[schemars(transform = unit::px_x)]
     pub x1: f64,
+    #[schemars(transform = unit::px_x)]
     pub x2: f64,
+    #[schemars(transform = unit::px_y)]
     pub y1: f64,
+    #[schemars(transform = unit::px_y)]
     pub y2: f64,
 }

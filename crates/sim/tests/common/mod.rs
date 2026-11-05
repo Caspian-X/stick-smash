@@ -25,28 +25,32 @@ const THROW_OVERRIDE_FIGHTERS: [&str; 7] = [
     "fighters/tinker/fighter.json",
 ];
 
+/// Pre-import packages the TS traces compare against; they replace (or add to) the frozen content.
+const TS_FIGHTERS: [(&str, &str); 5] = [
+    ("fighters/lancer/fighter.json", include_str!("../fixtures/lancer-ts.json")),
+    ("fighters/ninja/fighter.json", include_str!("../fixtures/ninja-ts.json")),
+    ("fighters/dancer/fighter.json", include_str!("../fixtures/dancer-ts.json")),
+    ("fighters/wizard/fighter.json", include_str!("../fixtures/wizard-linear.json")),
+    // The production King package is a King Dedede import; keep the original TS King for baseline traces.
+    ("fighters/king/fighter.json", include_str!("../fixtures/king-ts.json")),
+];
+
+/// Linear data loads `fixtures/ts-content`, a frozen copy of the content the TS traces were matched against
+/// (`just freeze-ts-content`), so rescaling or retuning `assets/` leaves the traces alone.
 fn load_data(linear: bool) -> GameData {
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets");
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let root = if linear { dir.join("tests/fixtures/ts-content") } else { dir.join("../../assets") };
     let (mut sources, errors) = sim::data::sources(root);
     assert!(errors.is_empty(), "{errors:?}");
     if linear {
+        for (path, text) in TS_FIGHTERS {
+            sources.retain(|s| s.path != path);
+            sources.push(sim::data::Source { path: path.into(), text: text.into() });
+        }
+        sources.sort_by(|a, b| a.path.cmp(&b.path));
         let baseline = knockback_baseline();
         for s in &mut sources {
-            let text = if s.path == "fighters/lancer/fighter.json" {
-                include_str!("../fixtures/lancer-ts.json")
-            } else if s.path == "fighters/ninja/fighter.json" {
-                include_str!("../fixtures/ninja-ts.json")
-            } else if s.path == "fighters/dancer/fighter.json" {
-                include_str!("../fixtures/dancer-ts.json")
-            } else if s.path == "fighters/wizard/fighter.json" {
-                include_str!("../fixtures/wizard-linear.json")
-            } else if s.path == "fighters/king/fighter.json" {
-                // The production King package is a King Dedede import; keep the original TS King for baseline traces.
-                include_str!("../fixtures/king-ts.json")
-            } else {
-                &s.text
-            };
-            let mut json: serde_json::Value = serde_json::from_str(text).unwrap();
+            let mut json: serde_json::Value = serde_json::from_str(&s.text).unwrap();
             if let Some(hits) = baseline.get(&s.path) {
                 for (path, values) in hits {
                     let h = json.pointer_mut(path).unwrap();

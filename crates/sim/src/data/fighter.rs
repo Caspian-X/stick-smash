@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use super::common::{Color, Pt, Rect, is_default};
 use super::hitbox::Hitbox;
 use super::moves::{Fx, Moves, Throws};
+use super::unit;
 use super::visual::{Anim, Attachment, Pose, Shape, Style};
 
 /// `fighters/<id>/fighter.json`. With `extends`, the parent's data is merged in first (objects key by key,
@@ -18,6 +19,7 @@ pub struct Fighter {
     pub id: String,
     #[serde(rename = "$schema", default, skip_serializing)]
     pub schema: Option<String>,
+    #[schemars(transform = unit::none)]
     pub schema_version: u32,
     /// Id of the package this one inherits from.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -44,6 +46,7 @@ pub struct Fighter {
     pub hurt_regions: Option<Vec<super::hitbox::HurtRegion>>,
     /// Stable feet-relative autolink target; required with hurtRegions.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub combat_center: Option<Pt>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub interactions: Option<Interactions>,
@@ -71,53 +74,76 @@ pub struct Fighter {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Stats {
     /// Knockback taken multiplier. Lower = heavier.
+    #[schemars(transform = unit::ratio)]
     pub weight: f64,
     /// Override the shared grab pummel damage.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::damage)]
     pub pummel_damage: Option<f64>,
+    #[schemars(transform = unit::v_x)]
     pub run_speed: f64,
+    #[schemars(transform = unit::a_x)]
     pub run_accel: f64,
     /// Initial dash speed, held for dashFrames, then easing into the run (default runSpeed × gait.dashSpeed).
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::v_x)]
     pub dash_speed: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
     pub dash_frames: Option<u32>,
     /// Full-tilt walk speed; defaults to runSpeed × gait.walkSpeed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::v_x)]
     pub walk_speed: Option<f64>,
     /// Legacy (no `movement.ultimate`): idle and crouch velocity multiplier per frame.
+    #[schemars(transform = unit::ratio)]
     pub ground_friction: f64,
     /// Grounded slowdown in px/frame² with `movement.ultimate` (default its `traction`; Ultimate traction × 3.5).
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::a_x)]
     pub traction: Option<f64>,
     /// Full hop launch speed (upward).
+    #[schemars(transform = unit::v_y)]
     pub jump_speed: f64,
+    #[schemars(transform = unit::v_y)]
     pub short_hop_speed: f64,
+    #[schemars(transform = unit::v_y)]
     pub air_jump_speed: f64,
+    #[schemars(transform = unit::v_x)]
     pub air_jump_drift: f64,
     /// Mid-air jumps.
+    #[schemars(transform = unit::count)]
     pub air_jumps: u32,
+    #[schemars(transform = unit::v_x)]
     pub air_speed: f64,
     /// Air drift acceleration (px/frame²). With `movement.ultimate` it also drives attacks, up specials and helpless
     /// fall, times that movement's per-kind multiplier and the phase `airAccelMult`.
+    #[schemars(transform = unit::a_x)]
     pub air_accel: f64,
     /// Airborne slowdown in px/frame² with `movement.ultimate`: toward zero with the stick neutral, toward airSpeed
     /// when above it (default its `airFriction`; Ultimate air friction × 3.5).
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::a_x)]
     pub air_friction: Option<f64>,
+    #[schemars(transform = unit::a_y)]
     pub gravity: f64,
+    #[schemars(transform = unit::v_y)]
     pub fall_speed: f64,
+    #[schemars(transform = unit::v_y)]
     pub fast_fall_speed: f64,
     /// Positive downward speed cap while holding jump in normal Air control. Excludes attacks, hitstun,
     /// helplessness, ledge/climb, airdodge and every other non-Air state. Omit to disable float.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::v_y)]
     pub float_speed: Option<f64>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Body {
+    #[schemars(transform = unit::px_x)]
     pub half_width: f64,
+    #[schemars(transform = unit::px_y)]
     pub height: f64,
 }
 
@@ -133,8 +159,10 @@ pub struct Hurtboxes {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Ai {
     /// How close the CPU wants to be to attack.
+    #[schemars(transform = unit::px_x)]
     pub reach: f64,
     /// Chance to counter instead of shielding; zero skips the RNG call.
+    #[schemars(transform = unit::ratio)]
     pub counter_chance: f64,
     /// Recovery behavior is enabled by move air control, with this optional shield-cancel phase.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -165,19 +193,26 @@ pub struct Projectile {
     /// Training hit label.
     pub name: String,
     /// Spawn offset from the feet (x forward, y up).
+    #[schemars(transform = unit::px_pt)]
     pub spawn: Pt,
     /// Launch velocity (x forward, y up).
+    #[schemars(transform = unit::v_pt)]
     pub vel: Pt,
     /// Collision radius.
+    #[schemars(transform = unit::px_xy)]
     pub r: f64,
     /// Frames alive.
+    #[schemars(transform = unit::tick)]
     pub life: u32,
     /// Max alive per owner. Spawning past it does nothing (plays `fullSfx` if set).
+    #[schemars(transform = unit::count)]
     pub max: u32,
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::a_y)]
     pub gravity: f64,
     /// Max fall speed (with gravity).
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::v_y)]
     pub max_fall: Option<f64>,
     /// Collides with the stage and bounces. Without it the projectile flies through.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -187,6 +222,7 @@ pub struct Projectile {
     pub bat: Option<Bat>,
     /// Vertical speed (up) given when reflected by a counter. Omit to keep it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::v_y)]
     pub reflect_vy: Option<f64>,
     /// Geometry and window fields are ignored; the hit comes from the projectile's position.
     pub hit: Hitbox,
@@ -212,6 +248,7 @@ pub struct Projectile {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub overlay: Vec<Shape>,
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::deg_px)]
     pub spin: f64,
 }
 
@@ -219,7 +256,9 @@ pub struct Projectile {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Article {
     pub slot: String,
+    #[schemars(transform = unit::tick)]
     pub min_release: u32,
+    #[schemars(transform = unit::tick)]
     pub auto_release: u32,
     /// Release the special button to launch; otherwise a second special press launches.
     #[serde(default)]
@@ -230,12 +269,14 @@ pub struct Article {
     pub release_on_dir: bool,
     /// Ticks during which any reflector is ignored after reflection.
     #[serde(default)]
+    #[schemars(transform = unit::tick)]
     pub reflect_cooldown: u32,
     /// While unreleased, keep the article at this fighter-local point and let it breathe.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub hold: Option<ArticleHold>,
     /// Vertical speed selected by the live stick during travel, zero for stationary construction.
     #[serde(default)]
+    #[schemars(transform = unit::v_y)]
     pub steer: f64,
     /// Optional destructible body, relative to the projectile origin.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -249,12 +290,15 @@ pub struct Article {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ArticleHold {
     /// Fighter-local point (x forward, y up) for the article's origin.
+    #[schemars(transform = unit::px_pt)]
     pub offset: Pt,
     /// Vertical breathing amplitude in pixels.
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::px_y)]
     pub bob: f64,
     /// Breathing period in ticks. Required when `bob` is non-zero.
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::tick)]
     pub period: u32,
     /// Active while the article is held (inclusive `start`/`end` are construction-age ticks).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -265,15 +309,21 @@ pub struct ArticleHold {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ArticleStage {
     /// Select the last stage whose construction age has been reached, frozen at release.
+    #[schemars(transform = unit::tick)]
     pub from: u32,
+    #[schemars(transform = unit::tick)]
     pub startup: u32,
     /// Optional shorter windup for automatic release from standby. Hit windows shift by the same amount.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
     pub auto_startup: Option<u32>,
+    #[schemars(transform = unit::tick)]
     pub frames: u32,
+    #[schemars(transform = unit::v_pt)]
     pub vel: Pt,
     /// Zero means indestructible.
     #[serde(default)]
+    #[schemars(transform = unit::damage)]
     pub health: f64,
     pub hitboxes: Vec<Hitbox>,
     #[serde(default)]
@@ -288,6 +338,7 @@ pub struct ArticleStage {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ArticleStroke {
+    #[schemars(transform = unit::px_xy)]
     pub width: f64,
     pub color: Color,
 }
@@ -295,21 +346,29 @@ pub struct ArticleStroke {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ProjectileCharge {
+    #[schemars(transform = unit::ratio)]
     pub speed: f64,
+    #[schemars(transform = unit::ratio)]
     pub damage: f64,
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::ratio)]
     pub bkb: f64,
     /// Frames added to `hit.rehit` per held charge tick (rounds at each hit check).
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::tick)]
     pub rehit: f64,
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::ratio)]
     pub radius: f64,
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::ratio)]
     pub life: f64,
     /// Launch angle at maximum charge; interpolated from the base hit's angle.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::deg)]
     pub angle_to: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::deg)]
     pub ground_angle_to: Option<f64>,
 }
 
@@ -320,10 +379,13 @@ pub struct Explosion {
     #[serde(default, skip_serializing_if = "is_default")]
     pub manual: bool,
     /// Ticks before proximity can trigger. Unless manual, the fuse expires at projectile life zero.
+    #[schemars(transform = unit::tick)]
     pub arm_ticks: u32,
     /// Distance to an opponent's hurtbox that triggers; omit for fuse only.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_xy)]
     pub proximity: Option<f64>,
+    #[schemars(transform = unit::px_xy)]
     pub radius: f64,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sfx: Option<String>,
@@ -335,15 +397,21 @@ pub struct Explosion {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Bounce {
     /// Fraction of fall speed kept on a floor bounce.
+    #[schemars(transform = unit::ratio)]
     pub restitution: f64,
     /// Minimum bounce speed (up).
+    #[schemars(transform = unit::v_y)]
     pub min_speed: f64,
     /// Horizontal speed multiplier per floor bounce.
+    #[schemars(transform = unit::ratio)]
     pub friction: f64,
     /// After this many bounces, life drops to `fizzleLife`.
+    #[schemars(transform = unit::count)]
     pub max_bounces: u32,
+    #[schemars(transform = unit::tick)]
     pub fizzle_life: u32,
     /// Horizontal speed kept when hitting the stage's side walls.
+    #[schemars(transform = unit::ratio)]
     pub wall_restitution: f64,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sfx: Option<String>,
@@ -353,12 +421,17 @@ pub struct Bounce {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Bat {
     /// New horizontal speed (in the hit's launch direction) and vertical speed (up).
+    #[schemars(transform = unit::v_x)]
     pub speed: f64,
+    #[schemars(transform = unit::v_y)]
     pub vy: f64,
+    #[schemars(transform = unit::tick)]
     pub life: u32,
     /// Frames before it can be batted again.
+    #[schemars(transform = unit::tick)]
     pub cooldown: u32,
     /// Hitlag for the batter.
+    #[schemars(transform = unit::tick)]
     pub hitlag: u32,
 }
 
@@ -366,16 +439,20 @@ pub struct Bat {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SpecialTactic {
     /// Strict lower bound on horizontal target distance.
+    #[schemars(transform = unit::px_x)]
     pub min_distance: f64,
     /// Optional strict upper bound on horizontal target distance.
+    #[schemars(transform = unit::px_x)]
     pub max_distance: Option<f64>,
     /// Strict upper bound on absolute vertical target separation.
+    #[schemars(transform = unit::px_y)]
     pub height: f64,
     /// Require the CPU to be grounded.
     pub grounded: bool,
     /// Require no currently owned projectile.
     pub no_projectile: bool,
     /// Success probability, sampled after geometry and ownership checks pass.
+    #[schemars(transform = unit::ratio)]
     pub chance: f64,
     /// Grounded idle without hitlag only: face the target and clear stick directions to select neutral
     /// instead of side special (or down special with `down`).
@@ -384,6 +461,7 @@ pub struct SpecialTactic {
     /// Add down to the toward-target special input.
     pub down: bool,
     /// Optional special-button hold duration range; sampled then floored.
+    #[schemars(transform = unit::tick)]
     pub hold: Option<[f64; 2]>,
 }
 
@@ -399,25 +477,34 @@ pub struct Interactions {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct GrabInteraction {
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub catch_point: Option<Pt>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub hold_point: Option<Pt>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub held_anchor: Option<Pt>,
 }
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct LedgeInteraction {
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub catch_point: Option<Pt>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub hang_anchor: Option<Pt>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_x)]
     pub pull_in: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_x)]
     pub climb_distance: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_x)]
     pub roll_distance: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_x)]
     pub attack_distance: Option<f64>,
 }

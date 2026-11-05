@@ -99,6 +99,9 @@ Run commands from the repository root. `just` lists recipes.
 | `just test` | All workspace tests; accepts cargo test arguments |
 | `just traces [filter]` | `crates/sim/tests/ts_trace.rs`, optionally selecting fixture names by substring |
 | `just bless` | `BLESS=1` content tests: regenerate `assets/schema/*.schema.json` and canonically format assets; still runs content assertions |
+| `just rescale <config> [paths] [--dry-run]` | `tools/rescale.py`: multiply content numbers by unit tag (config format in the script's docstring); `--dry-run` prints per-file counts by `unit:axis` |
+| `just test-tools` | Python unit tests for `tools/rescale.py`, including a byte-for-byte check of its canonical JSON writer against every asset |
+| `just freeze-ts-content` | Re-snapshot the content TS traces load (see [TS baseline](#ts-baseline)) |
 | `just shots [dir] [sections]` | Rendered screenshot tour; optional comma-separated section names, default directory `/tmp/stick-smash-shots` |
 | `just verify-replays <dir>` | Headless re-simulation of `.replay.json` files; fails for desync or unfinished matches |
 | `just readme-shots` | Regenerates `docs/images/*.webp` from named shots (`17a-match-citadel`, `05-select-ready`, `05c-stage-roulette`, `14-training`, `12-results`, `03b-editor-move`, `03q-stage-moving-sandbox`); needs ImageMagick 7 with WebP |
@@ -116,6 +119,8 @@ d.global.hitstun.ultimate = None; // plus the old hitlag values and tech.lockout
 ```
 
 Keep that setup current when adding an optional improvement. The comparison uses a `1e-6` tolerance for floating state and exact comparisons for discrete fields.
+
+TS traces (and every test using `common::linear_data`) load frozen content, not `assets/`: `crates/sim/tests/fixtures/ts-content/` holds `global.json`, the four stages and the fighters the traces and knockback baseline need (`base`, `archer`, `brawler`, `golem`, `mike`, `swordfighter`, `tinker`, `wrangler`, `yoyo`); `common/mod.rs` adds the pre-import `lancer`, `ninja`, `dancer`, `wizard` and `king` fixtures, then restores the knockback baseline and removes `knockback.ultimate`. Retuning or rescaling `assets/` therefore leaves the traces alone. `just freeze-ts-content` copies those files from `assets/` again; only do that when the frozen files must follow a content format change (a renamed or newly required field), with the content still matching what the traces expect, and rerun `just traces`.
 
 `just record-traces` runs `tools/ts-trace/record.mjs` against the read-only sibling `../stick-smash` with Node 26, without npm dependencies. It rebuilds the suite twice and requires identical bytes before writing fixtures and coverage/report files. `node tools/ts-trace/record.mjs --verify` checks without writing. See [the recorder guide](../tools/ts-trace/README.md). Recording is only for an intentional reference change; normal Rust checks use committed fixtures and need no TS checkout.
 
@@ -153,7 +158,7 @@ Balance diagnostics print JSON damage, tip contacts, whiffs/punishes, KO moves, 
 
 1. Edit `assets/fighters/<id>/fighter.json`, under `moves.<slot>`. Reuse an existing slot from `crates/sim/src/data/moves.rs::Moves::SLOTS`; `sspec` is optional. Inherited moves can be thin object overrides, but phase arrays replace whole.
 2. Author phases, hitboxes, events, transitions, charge and pose/attachment keys using [FORMAT.md](FORMAT.md#moves). Add referenced poses, attachments or projectiles in that fighter package as needed. This normally needs no Rust behavior change.
-3. Add focused coverage in `crates/sim/tests/fighter_kits.rs` or the relevant behavior test. Preview the move in the editor with held-button/dummy options; use training for live interaction. Run `just bless`, relevant tests and `just check`; capture affected kits if presentation changed. TS traces run the built-in `brawler`, `king` and `swordfighter` on `arena`, so editing those (or `base`) can break `just traces`; `brawler` / `ninja` edits change the golden hash (see [Golden world hash](#golden-world-hash)).
+3. Add focused coverage in `crates/sim/tests/fighter_kits.rs` or the relevant behavior test. Preview the move in the editor with held-button/dummy options; use training for live interaction. Run `just bless`, relevant tests and `just check`; capture affected kits if presentation changed. TS traces run frozen copies of the content (see [TS baseline](#ts-baseline)), so asset edits don't affect them; `brawler` / `ninja` edits change the golden hash (see [Golden world hash](#golden-world-hash)).
 4. If adding a genuinely new input slot: extend `Moves` fields, `get`/`get_mut` and `SLOTS` in `data/moves.rs` (`base` must supply it unless it's optional like `sspec`; `runtime.rs` asserts `Moves::iter()` order matches `SLOTS`); add selection in `crates/sim/src/moves.rs` (`special`, `ground_actions`) or `states.rs` (aerials, jumpsquat); `ai.rs` intents if CPUs should use it; editor `lib.rs::SLOTS` (browser order, `every_screen_draws`, the copy-move dialog), `browser.rs` groups and `preview.rs::AERIALS`; and FORMAT.md. Audit slot consumers with e.g. `rg '"dspec"'` rather than adding an id exception.
 
 ### Add a fighter
@@ -174,7 +179,7 @@ For imports from another game, follow [Character imports](CHARACTER_IMPORTS.md),
 
 ### Add a move behavior or event kind
 
-1. First check whether phase transitions and existing event fields can express it. For a reusable extension, edit `crates/sim/src/data/moves.rs` (`Phase`, `Event`, `Trigger`, or content `Fx`), `data/hitbox.rs` (hit `kind`) or `data/fighter.rs` (projectile data), with serde/schema docs and defaults where compatible. `Event` is a timed struct, not a single tagged kind enum.
+1. First check whether phase transitions and existing event fields can express it. For a reusable extension, edit `crates/sim/src/data/moves.rs` (`Phase`, `Event`, `Trigger`, or content `Fx`), `data/hitbox.rs` (hit `kind`) or `data/fighter.rs` (projectile data), with serde/schema docs and defaults where compatible. Tag every numeric field with its unit (`#[schemars(transform = unit::v_x)]`; vocabulary in `crates/sim/src/data/unit.rs`); `crates/sim/tests/units.rs` fails on an untagged one. `Event` is a timed struct, not a single tagged kind enum.
 2. Implement execution in `crates/sim/src/moves.rs`; route collision/state/projectile semantics through `combat.rs`, `states.rs`, `physics.rs` or `projectiles.rs` as applicable. Dispatch on typed data; never compare a fighter/move id to pick behavior. Update `world.rs` if the behavior needs persistent snapshot state.
 3. Add constraints/references in `crates/sim/src/data/load.rs` (`check_phase`, `check_event`, `check_hitbox`, `check_fighter` as applicable) and negative content tests. Add focused simulation tests. For a new emitted presentation event, update `sim::world::Fx` and its consumers in `crates/render/src/fx.rs` / `crates/game/src/audio.rs` as needed.
 4. Run `just bless` to regenerate schemas. Update `docs/FORMAT.md` with timing, ordering, defaults and interactions; extend custom editor controls (`inspect.rs`, `timeline.rs`, `viewport.rs`) only where schema forms are insufficient. Author an asset exercising the behavior.
@@ -182,7 +187,7 @@ For imports from another game, follow [Character imports](CHARACTER_IMPORTS.md),
 
 ### Add a global tuning value
 
-1. Add a typed, documented field in `crates/sim/src/data/global.rs`, or `data/render.rs` / `data/audio.rs` for presentation. Supply the value in `assets/global.json`; choose a serde default when old embedded/user data should remain readable. `global.render`/`global.audio` are embedded in replays: a new required presentation field breaks decoding old replays unless serde-defaulted or backfilled in `game/src/replay/content.rs::presentation`. Gameplay fields need a `SIM_VERSION` bump and change the golden hash (see [Golden world hash](#golden-world-hash)).
+1. Add a typed, documented field in `crates/sim/src/data/global.rs`, or `data/render.rs` / `data/audio.rs` for presentation, with its unit tag (`#[schemars(transform = unit::…)]`, see `data/unit.rs`). Supply the value in `assets/global.json`; choose a serde default when old embedded/user data should remain readable. `global.render`/`global.audio` are embedded in replays: a new required presentation field breaks decoding old replays unless serde-defaulted or backfilled in `game/src/replay/content.rs::presentation`. Gameplay fields need a `SIM_VERSION` bump and change the golden hash (see [Golden world hash](#golden-world-hash)).
 2. Run `just bless` to generate schema/format changes. Add range, finiteness and cross-field validation in `crates/sim/src/data/load.rs` (`check_global` or the relevant helper), with valid/invalid cases in `crates/sim/tests/content.rs`.
 3. Read the field in the appropriate sim/render/game consumer, replacing the old tuning literal. Document units, defaults and semantics in `docs/FORMAT.md`.
 4. Test the behavior, review trace compatibility and versioning, rerun `just bless` if types changed again, then `just check`.

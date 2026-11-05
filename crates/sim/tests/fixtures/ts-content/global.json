@@ -1,0 +1,901 @@
+{
+  "$schema": "schema/global.schema.json",
+  "schemaVersion": 1,
+  "movement": {
+    "jumpsquat": 3,
+    "airDrag": 0.96,
+    "airDragHeld": 0.99,
+    "fastFallMinVy": 0,
+    "fastFallKick": 14,
+    "attackAirAccel": 0.25,
+    "aerialAccel": 0.45,
+    "helplessAccel": 0.3,
+    "upSpecialAccel": 0.3,
+    "attackFriction": 0.8,
+    "attackSlideFriction": 0.95,
+    "attackAirDrag": 0.98,
+    "platformDrop": 10,
+    "platformPass": true,
+    "pushRadius": 26,
+    "pushStrength": 0.15,
+    "dashAttackSpeed": 4.3,
+    "dashGrabSpeed": 3.9,
+    "tapWindow": 5,
+    "bReverseWindow": 4,
+    "ultimate": {
+      "traction": 0.35,
+      "fastTraction": 2,
+      "attackSlideTraction": 0.5,
+      "airFriction": 0.035,
+      "aerialAccelMult": 1,
+      "attackAirAccelMult": 0.55,
+      "upSpecialAccelMult": 0.65,
+      "helplessAccelMult": 0.65
+    }
+  },
+  "knockback": {
+    "kbPercentScale": 1.4,
+    "ultimate": { "percentScale": 0.1, "damageScale": 0.05, "weightScale": 1.4, "base": 18, "launchSpeed": 0.14 },
+    "tumbleThreshold": 13,
+    "groundBounce": 0.6,
+    "chargeDamageDivisor": 150,
+    "chargeKbRatio": 0.5
+  },
+  "hitstun": {
+    "perKnockback": 1.7,
+    "base": 4,
+    "gravity": 0.6,
+    "maxFall": 16,
+    "airDrag": 0.97,
+    "groundDrag": 0.85,
+    "driftAccel": 0.08,
+    "ultimate": { "perReferenceKnockback": 0.4, "base": 0, "launchDecay": 1.7, "tumbleThreshold": 80 }
+  },
+  "hitlag": { "base": 6, "perDamage": 0.65, "perKnockback": 0, "max": 30 },
+  "hitTypes": {
+    "trip": { "slide": 2.5 },
+    "sakurai": { "groundLow": 0, "groundHigh": 40, "air": 45 },
+    "autolink": { "pull": 0.22, "momentum": 1 },
+    "windbox": { "push": 0.6, "maxSpeed": 9 },
+    "electric": { "victimHitlagMult": 1.6 },
+    "paralyze": { "maxFrames": 90, "extraFrames": 1 },
+    "bury": {
+      "baseFrames": 55,
+      "perPercent": 0.5,
+      "perKnockback": 1.5,
+      "maxFrames": 600,
+      "mash": 8,
+      "buttonMash": 14.4,
+      "releaseThreshold": 90
+    }
+  },
+  "shield": {
+    "max": 50,
+    "decay": 0.16,
+    "regen": 0.1,
+    "damageMult": 1.2,
+    "stunPerDamage": 0.8,
+    "stunBase": 3,
+    "hitlagBase": 2,
+    "hitlagPerDamage": 0.3,
+    "pushPerDamage": 0.22,
+    "pushBase": 1.2,
+    "attackerPushback": 1.5,
+    "dropLag": 11,
+    "upSmash": true,
+    "breakLaunch": 15,
+    "breakGravity": 0.55,
+    "breakMaxFall": 10,
+    "dizzyBase": 480,
+    "dizzyMin": 240,
+    "dizzyPerPercent": 2,
+    "dizzyMash": 3,
+    "dizzyRecoverHP": 30
+  },
+  "dodge": {
+    "roll": { "frames": 30, "invulnStart": 3, "invulnEnd": 14, "moveStart": 3, "moveEnd": 18, "speed": 7 },
+    "spot": { "frames": 26, "invulnStart": 2, "invulnEnd": 16 },
+    "air": { "frames": 40, "invulnStart": 2, "invulnEnd": 28, "landingLag": 4 },
+    "dirAir": {
+      "frames": 44,
+      "invulnStart": 2,
+      "invulnEnd": 21,
+      "speed": 10,
+      "decay": 0.88,
+      "decayFrames": 18,
+      "landingLag": 10
+    },
+    "staling": {
+      "window": 90,
+      "steps": [
+        { "invuln": 0.93, "frames": 1.1 },
+        { "invuln": 0.87, "frames": 1.2 },
+        { "invuln": 0.8, "frames": 1.3 }
+      ]
+    }
+  },
+  "landing": { "hard": 3, "softLandSpeed": 4, "helpless": 14 },
+  "tech": { "window": 12, "invulnStart": 2, "invulnEnd": 19, "frames": 24, "lockout": 40 },
+  "knockdown": {
+    "minFrames": 12,
+    "autoGetup": 70,
+    "getup": { "frames": 24, "invulnStart": 2, "invulnEnd": 21 },
+    "getupAttack": { "frames": 32, "invulnStart": 2, "invulnEnd": 13 },
+    "attackActive": [14, 17],
+    "attack": [
+      { "x": 38, "y": 14, "r": 24, "damage": 6, "bkb": 35.7142857143, "kbg": 1.1904761905, "angle": 30, "dir": "away" },
+      {
+        "x": -38,
+        "y": 14,
+        "r": 24,
+        "damage": 6,
+        "bkb": 35.7142857143,
+        "kbg": 1.1904761905,
+        "angle": 30,
+        "dir": "away"
+      }
+    ]
+  },
+  "ledge": {
+    "invuln": 30,
+    "minHang": 8,
+    "maxHang": 300,
+    "regrabCooldown": 30,
+    "jumpSpeed": 15,
+    "climb": { "a": 14, "b": 28, "end": 30, "dist": 26, "invulnStart": 0, "invulnEnd": 29 },
+    "attack": { "a": 12, "b": 20, "end": 40, "dist": 26, "invulnStart": 0, "invulnEnd": 23 },
+    "roll": { "a": 10, "b": 36, "end": 40, "dist": 120, "invulnStart": 0, "invulnEnd": 33 },
+    "jump": { "a": 7, "b": 7, "end": 7, "dist": 0, "invulnStart": 0, "invulnEnd": 7 },
+    "attackActive": [22, 26],
+    "attackHit": [
+      { "x": 38, "y": 30, "r": 26, "damage": 7, "bkb": 34.2857142857, "kbg": 1.2698412698, "angle": 35 }
+    ],
+    "trump": { "pushX": 4, "pushY": 6, "regrabCooldown": 30, "minHang": 2 },
+    "freshInvuln": true
+  },
+  "parry": { "window": 5, "freeze": 6, "attackerFreeze": 12, "invuln": 8 },
+  "di": { "maxAngle": 15, "minStick": 0.3 },
+  "grab": {
+    "holdBase": 90,
+    "holdPerPercent": 0.9,
+    "mashPerPress": 4,
+    "minHold": 5,
+    "pummelFrames": 14,
+    "pummelHitFrame": 7,
+    "pummelDamage": 1.5,
+    "pummelHitlag": 3,
+    "heightTolerance": 40,
+    "releaseLag": 12
+  },
+  "respawn": { "deadFrames": 70, "descendFrames": 40, "maxWait": 220, "invuln": 100 },
+  "match": { "countdown": 180, "goFrames": 45, "endFrames": 48, "timerWarnSeconds": 10, "suddenDeathDamage": 300 },
+  "palette": [
+    { "main": "#ff5d5d", "dark": "#a63b3b", "light": "#ffd0d0" },
+    { "main": "#4fa8ff", "dark": "#2c66a6", "light": "#cfeaff" },
+    { "main": "#5cdb88", "dark": "#348650", "light": "#d1ffe0" },
+    { "main": "#ffd65d", "dark": "#a68935", "light": "#fff2c5" },
+    { "main": "#af80ff", "dark": "#6c48a6", "light": "#e9d8ff" },
+    { "main": "#ff9b50", "dark": "#a65e2e", "light": "#ffdfc5" },
+    { "main": "#50dce3", "dark": "#2e8990", "light": "#c9fbff" },
+    { "main": "#f77fbc", "dark": "#a64878", "light": "#ffd5eb" }
+  ],
+  "input": {
+    "stickThreshold": 64,
+    "deadzone": 18,
+    "flickThreshold": 100,
+    "flickFrames": 3,
+    "bufferFrames": 5,
+    "comboFrames": 2,
+    "fastFallBuffer": 6,
+    "jumpAerials": true
+  },
+  "gait": {
+    "poseRunSpeed": 0.8,
+    "enabled": true,
+    "walkSpeed": 0.55,
+    "walkAccel": 1,
+    "runThreshold": 0.75,
+    "walkThreshold": 0.6,
+    "dashLock": false,
+    "dashSpeed": 1.12,
+    "dashFrames": 10,
+    "turnFrames": 4,
+    "turnFriction": 0.9,
+    "brakeFrames": 5,
+    "brakeFriction": 0.86,
+    "crouchFrames": 6,
+    "crawlSpeed": 0.35
+  },
+  "sim": {
+    "separateCosmeticRng": true,
+    "jumpsquatFriction": 0.9,
+    "landingFriction": 0.8,
+    "shieldFriction": 0.85,
+    "dodgeFriction": 0.7,
+    "shieldbreakFriction": 0.95,
+    "knockdownFriction": 0.8,
+    "pushHeight": 50,
+    "mainPad": 14,
+    "platformPad": 4,
+    "surfaceTolerance": 0.5,
+    "techMinSpeed": 2,
+    "knockdownDrag": 0.3,
+    "flipFrames": 20,
+    "ledgeDropSpeed": 1,
+    "ledgeDropOffset": 4,
+    "ledgePullIn": 4,
+    "ledgeJumpOffset": 1,
+    "ledgeJumpDrift": 2,
+    "ledgeJumpCooldown": 20,
+    "grabOffset": 30,
+    "releaseVx": 3,
+    "releaseVy": 5,
+    "escapeAttackerVx": 4,
+    "escapeVx": 5,
+    "escapeVy": 6,
+    "throwForward": 14,
+    "throwBackHeight": 46,
+    "throwUpHeight": 80,
+    "throwDownOffset": 24,
+    "maxDamage": 999,
+    "projectilePad": 6,
+    "projectileWallTop": 2,
+    "platformDropOffset": 1,
+    "hitstunParticleSpeed": 10
+  },
+  "ai": {
+    "initialCool": 30,
+    "react": [26, 14, 6],
+    "aggression": [0.05, 0.12, 0.25],
+    "mash": [0.12, 0.3, 0.55],
+    "tech": [0.03, 0.1, 0.25],
+    "shieldResponse": [0.1, 0.3, 0.6],
+    "defend": [0.04, 0.15, 0.35],
+    "projectileDefend": [0.03, 0.15, 0.45],
+    "charge": [5, 15, 25],
+    "thresholds": {
+      "recoveryHeight": 200,
+      "recoveryEdge": 20,
+      "centerChance": 0.5,
+      "knockdownWait": 12,
+      "knockdownRandom": 30,
+      "knockdownAttack": 0.3,
+      "knockdownCenter": 0.6,
+      "ledgeWaitMin": 10,
+      "ledgeWaitMax": 50,
+      "ledgeJump": 0.25,
+      "ledgeAttack": 0.5,
+      "ledgeShield": 0.7,
+      "holdMin": 6,
+      "holdMax": 30,
+      "pummelMax": 3,
+      "pummelChance": 0.5,
+      "throwKillPercent": 90,
+      "throwDown": 0.35,
+      "throwUp": 0.6,
+      "throwForward": 0.8,
+      "shieldClose": 70,
+      "shieldGrab": 0.5,
+      "shieldSpecial": 0.75,
+      "jumpHold": 14,
+      "shieldMin": 12,
+      "underPad": 10,
+      "underBottom": 5,
+      "offstagePad": 5,
+      "recoverJumpVy": 0.5,
+      "recoverJumpHeight": 80,
+      "recoverSpecialVy": 1,
+      "recoverSpecialHeight": 30,
+      "recoverSpecialDistance": 220,
+      "recoverSpecialDepth": 150,
+      "centerDeadzone": 40,
+      "targetPad": 30,
+      "targetDeadzone": 50,
+      "defendDistance": 110,
+      "defendHeight": 80,
+      "shieldHoldMin": 12,
+      "shieldHoldMax": 30,
+      "projectileDistance": 120,
+      "projectileHeight": 40,
+      "projectileShieldChance": 0.5,
+      "projectileShieldFrames": 15,
+      "jumpTargetHeight": 80,
+      "jumpTargetDistance": 180,
+      "jumpChance": 0.06,
+      "dropHeight": 60,
+      "dropDistance": 140,
+      "dropChance": 0.06,
+      "attackHeight": 60,
+      "punishDizzyCharge": 55,
+      "punishCharge": 6,
+      "smashChance": 0.22,
+      "smashForward": 0.5,
+      "smashDown": 0.75,
+      "grabChance": 0.32,
+      "tiltChance": 0.6,
+      "downTiltChance": 0.75,
+      "jabChance": 0.9,
+      "upAttackHeight": 60,
+      "upAttackDistance": 60,
+      "downAttackHeight": 50,
+      "downAttackDistance": 40,
+      "projectileTargetHeight": 40,
+      "surfaceChaseTicks": 90
+    }
+  },
+  "render": {
+    "alphaGamma": 1.6,
+    "blastZone": { "color": "#ff5d78", "alpha": 0.55, "width": 2, "dash": 10, "gap": 12 },
+    "camera": {
+      "padX": 110,
+      "padTop": 150,
+      "padBottom": 70,
+      "minHeight": 560,
+      "maxHeight": 1100,
+      "referencePlayWidth": 680,
+      "referencePlayHeight": 395,
+      "minScaleStart": 0.8,
+      "minScaleFloor": 0.5,
+      "stageBias": 0.25,
+      "blastMargin": 40,
+      "follow": 0.12,
+      "zoomFollow": 0.08,
+      "shakeDecay": 0.85,
+      "shakeMin": 0.3
+    },
+    "overlays": {
+      "runSpeed": 0.8,
+      "glowAlpha": 0.12,
+      "flash": "#ffffff",
+      "helpless": "#888888",
+      "helplessBack": "#555555",
+      "hitJitter": 2,
+      "charge": { "color": "#ffe680", "blink": 4, "jitter": 2, "glowAlpha": 0.22 },
+      "blinkPeriod": 4,
+      "blinkAlpha": 0.45,
+      "dodge": {
+        "alpha": 0.75,
+        "glow": "#ffffff",
+        "glowAlpha": 0.22,
+        "ghosts": 3,
+        "spacing": 2.5,
+        "ghostAlpha": 0.12,
+        "ghostWidth": 5
+      },
+      "shield": {
+        "y": 38,
+        "minR": 12,
+        "growR": 36,
+        "alpha": 0.28,
+        "stunAlpha": 0.5,
+        "width": 2.5,
+        "strokeAlpha": 0.85
+      },
+      "dizzy": { "stars": 3, "y": 84, "rx": 18, "ry": 5, "r": 7, "speed": 6.875, "color": "#ffe680" },
+      "respawn": { "y": 4, "w": 68, "h": 14, "alpha": 0.5, "pulse": 0.2, "speed": 11.459 },
+      "trail": { "frames": 5, "fade": 4, "alpha": 0.45, "color": "playerLight" },
+      "xEyeWidth": 1.8,
+      "grabbed": { "bands": [[0.62, 0.28, 0.095], [0.42, 0.26, 0.08]], "width": 3, "color": "#ffd76b", "alpha": 0.95 }
+    },
+    "fx": {
+      "drag": 0.95,
+      "shrink": 0.4,
+      "ringWidth": 3,
+      "dust": { "color": "#aaaabb", "spread": 10, "vx": 2.5, "vy": [-1.6, -0.3], "life": 22, "size": [3, 6] },
+      "beam": {
+        "life": 45,
+        "length": 900,
+        "width": 30,
+        "grow": 90,
+        "bands": 6,
+        "alpha": 0.9,
+        "inset": 10,
+        "bursts": [
+          { "color": "player", "n": 50, "speed": 14, "life": 40, "size": 6 },
+          { "color": "#ffffff", "n": 30, "speed": 10, "life": 30, "size": 4 }
+        ],
+        "ring": { "r": 20, "grow": 10, "life": 20, "color": "#ffffff" }
+      }
+    },
+    "hud": {
+      "damageRamp": [[0, "#ffffff"], [50, "#ffe98a"], [100, "#ffa04a"], [150, "#ff4d4d"], [250, "#c41a3b"]],
+      "shake": 6,
+      "endSlowmo": { "speed": 0.35, "ticks": 16 },
+      "endBanner": { "secs": 1, "pop": 0.2, "fade": 0.25 },
+      "resultsDelay": 0,
+      "resultsHoldSecs": 0.25,
+      "resultsEnter": { "secs": 0.3, "slide": 30, "stagger": 0.035 },
+      "koCreditTicks": 480,
+      "look": {
+        "shakeSpeed": 91,
+        "tagHeight": 96,
+        "anchorHeight": 40,
+        "bubbleShrink": 900,
+        "bubbleMinScale": 0.7,
+        "popScale": 1.5,
+        "popSpeed": 6,
+        "timerPulse": 0.16
+      }
+    },
+    "select": {
+      "backHoldSecs": 1.5,
+      "flourish": "usmash",
+      "rosterColor": { "main": "#d9dcf5", "dark": "#8a8fb8", "light": "#ffffff" },
+      "flipSecs": 0.22,
+      "bannerSecs": 0.35,
+      "overshoot": 1.7,
+      "dropScale": 0.9,
+      "dropHeight": 26,
+      "bannerFrom": 110,
+      "roulette": {
+        "secs": 2.2,
+        "hops": 14,
+        "curve": 2.4,
+        "pause": 1.1,
+        "landScale": 1.1,
+        "landBounce": 0.16,
+        "landWobble": 16
+      },
+      "sizeSmall": 0.85,
+      "sizeLarge": 1.25,
+      "thumbCrop": [1.3, 1.5],
+      "pointer": {
+        "speed": 1050,
+        "curve": 1.7,
+        "accel": 11,
+        "deadzone": 0.2,
+        "magnetRadius": 80,
+        "magnetStrength": 16,
+        "magnetSpeed": 0.4,
+        "reach": 18,
+        "slideSecs": 0.13,
+        "slideOvershoot": 1.2,
+        "fan": 17,
+        "rest": 0.3,
+        "land": 0.12,
+        "drop": 0.32,
+        "bounceSecs": 0.4,
+        "bounceWobble": 22,
+        "stroke": 5.5,
+        "scale": 1,
+        "motion": {
+          "lean": 0.0006,
+          "leanMax": 0.26,
+          "leanSpring": [240, 0.45],
+          "stretch": 0.00016,
+          "stretchMax": 0.14,
+          "stretchSpring": [320, 0.4],
+          "chipSpring": [260, 0.38],
+          "chipLag": 9,
+          "chipSwing": 0.025,
+          "stillSpeed": 25,
+          "breathAfter": 1.2,
+          "breathSecs": 2.8,
+          "breathBob": 1.6,
+          "breathScale": 0.03,
+          "substeps": 240
+        }
+      },
+      "backRing": {
+        "offset": [12, 17],
+        "radius": 33,
+        "thickness": 5,
+        "ticks": 24,
+        "dash": 0.74,
+        "track": 0.16,
+        "rim": 2,
+        "hot": 4,
+        "spark": 1.6,
+        "follow": [900, 0.9],
+        "grow": [300, 0.5],
+        "pop": 0.55,
+        "wobble": 0.04,
+        "wobbleSecs": 0.8
+      },
+      "hints": { "showSecs": 6, "idleSecs": 4, "fadeSecs": 0.25 }
+    },
+    "interpolate": { "fighterJump": 150, "projectileJump": 80 }
+  },
+  "audio": {
+    "sampleRate": 24000,
+    "defaults": { "master": 0.8, "sfx": 0.85, "music": 0.5 },
+    "volumeStep": 0.05,
+    "maxVoices": 24,
+    "maxPerFrame": 8,
+    "cooldown": 0.025,
+    "pan": 0.9,
+    "depth": 0.7,
+    "pitchVariation": 0.045,
+    "strengthLevels": 6,
+    "strengthMax": 25,
+    "sounds": {
+      "jump": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          {
+            "wave": "triangle",
+            "from": 300.0,
+            "to": 600.0,
+            "duration": 0.1,
+            "attack": 0.002,
+            "decay": 8,
+            "gain": 0.06
+          }
+        ]
+      },
+      "djump": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          {
+            "wave": "triangle",
+            "from": 420.0,
+            "to": 950.0,
+            "duration": 0.12,
+            "attack": 0.002,
+            "decay": 8,
+            "gain": 0.06
+          }
+        ]
+      },
+      "swing": {
+        "volume": 0.8,
+        "priority": 20,
+        "cooldown": 0.09,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "noise", "from": 3500.0, "to": 100, "duration": 0.08, "attack": 0.002, "decay": 8, "gain": 0.05 }
+        ]
+      },
+      "smash": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "saw", "from": 320.0, "to": 110.0, "duration": 0.18, "attack": 0.002, "decay": 8, "gain": 0.05 },
+          { "wave": "noise", "from": 3000.0, "to": 100, "duration": 0.2, "attack": 0.002, "decay": 8, "gain": 0.12 }
+        ]
+      },
+      "charge": {
+        "volume": 0.8,
+        "priority": 20,
+        "cooldown": 0.09,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "sine", "from": 500.0, "to": 700.0, "duration": 0.06, "attack": 0.002, "decay": 8, "gain": 0.03 }
+        ]
+      },
+      "hit": {
+        "volume": 0.8,
+        "priority": 80,
+        "cooldown": 0.035,
+        "strengthDuration": 2.2,
+        "strengthGain": 0.35,
+        "layers": [
+          { "wave": "noise", "from": 3800, "to": 100, "duration": 0.14, "attack": 0.002, "decay": 8, "gain": 0.32 },
+          { "wave": "sine", "from": 170, "to": 40, "duration": 0.16, "attack": 0.002, "decay": 8, "gain": 0.48 }
+        ]
+      },
+      "shoot": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          {
+            "wave": "square",
+            "from": 900.0,
+            "to": 280.0,
+            "duration": 0.16,
+            "attack": 0.002,
+            "decay": 8,
+            "gain": 0.045
+          }
+        ]
+      },
+      "slash": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "sine", "from": 1500.0, "to": 500.0, "duration": 0.08, "attack": 0.002, "decay": 8, "gain": 0.025 },
+          { "wave": "noise", "from": 6000.0, "to": 100, "duration": 0.1, "attack": 0.002, "decay": 8, "gain": 0.08 }
+        ]
+      },
+      "counter": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          {
+            "wave": "triangle",
+            "from": 1800.0,
+            "to": 2400.0,
+            "duration": 0.12,
+            "attack": 0.002,
+            "decay": 8,
+            "gain": 0.08
+          },
+          { "wave": "noise", "from": 8000.0, "to": 100, "duration": 0.15, "attack": 0.002, "decay": 8, "gain": 0.1 }
+        ]
+      },
+      "whack": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          {
+            "wave": "triangle",
+            "from": 240.0,
+            "to": 90.0,
+            "duration": 0.12,
+            "attack": 0.002,
+            "decay": 8,
+            "gain": 0.05
+          },
+          { "wave": "noise", "from": 1400.0, "to": 100, "duration": 0.14, "attack": 0.002, "decay": 8, "gain": 0.1 }
+        ]
+      },
+      "toss": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "square", "from": 260.0, "to": 520.0, "duration": 0.12, "attack": 0.002, "decay": 8, "gain": 0.04 },
+          { "wave": "noise", "from": 2000.0, "to": 100, "duration": 0.1, "attack": 0.002, "decay": 8, "gain": 0.08 }
+        ]
+      },
+      "bonk": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "square", "from": 700.0, "to": 300.0, "duration": 0.07, "attack": 0.002, "decay": 8, "gain": 0.04 }
+        ]
+      },
+      "jet": {
+        "volume": 0.8,
+        "priority": 20,
+        "cooldown": 0.09,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "noise", "from": 900.0, "to": 100, "duration": 0.07, "attack": 0.002, "decay": 8, "gain": 0.05 }
+        ]
+      },
+      "quake": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "sine", "from": 120.0, "to": 35.0, "duration": 0.35, "attack": 0.002, "decay": 8, "gain": 0.35 },
+          { "wave": "noise", "from": 700.0, "to": 100, "duration": 0.35, "attack": 0.002, "decay": 8, "gain": 0.3 }
+        ]
+      },
+      "ko": {
+        "volume": 0.8,
+        "priority": 100,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "saw", "from": 600.0, "to": 40.0, "duration": 0.9, "attack": 0.002, "decay": 8, "gain": 0.1 },
+          { "wave": "noise", "from": 5000.0, "to": 100, "duration": 0.9, "attack": 0.002, "decay": 8, "gain": 0.4 },
+          { "wave": "sine", "from": 180, "to": 36, "duration": 0.5, "attack": 0.003, "decay": 5, "gain": 0.32 }
+        ]
+      },
+      "land": {
+        "volume": 0.8,
+        "priority": 20,
+        "cooldown": 0.09,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "noise", "from": 600.0, "to": 100, "duration": 0.08, "attack": 0.002, "decay": 5, "gain": 0.12 },
+          { "wave": "sine", "from": 90, "to": 50, "duration": 0.07, "attack": 0.002, "decay": 5, "gain": 0.08 }
+        ]
+      },
+      "grab": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "square", "from": 220.0, "to": 330.0, "duration": 0.08, "attack": 0.002, "decay": 8, "gain": 0.06 }
+        ]
+      },
+      "pummel": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "noise", "from": 1500.0, "to": 100, "duration": 0.06, "attack": 0.002, "decay": 8, "gain": 0.12 }
+        ]
+      },
+      "throw": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "noise", "from": 2500.0, "to": 100, "duration": 0.18, "attack": 0.002, "decay": 8, "gain": 0.12 }
+        ]
+      },
+      "shieldHit": {
+        "volume": 0.8,
+        "priority": 70,
+        "cooldown": 0.04,
+        "strengthDuration": 1.4,
+        "strengthGain": 0.6,
+        "layers": [
+          {
+            "wave": "triangle",
+            "from": 1100.0,
+            "to": 700.0,
+            "duration": 0.08,
+            "attack": 0.002,
+            "decay": 8,
+            "gain": 0.08
+          }
+        ]
+      },
+      "shieldBreak": {
+        "volume": 0.8,
+        "priority": 100,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "saw", "from": 1400.0, "to": 200.0, "duration": 0.6, "attack": 0.002, "decay": 8, "gain": 0.08 },
+          { "wave": "noise", "from": 7000.0, "to": 100, "duration": 0.6, "attack": 0.002, "decay": 8, "gain": 0.35 }
+        ]
+      },
+      "tech": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          {
+            "wave": "triangle",
+            "from": 1200.0,
+            "to": 1700.0,
+            "duration": 0.08,
+            "attack": 0.002,
+            "decay": 8,
+            "gain": 0.06
+          }
+        ]
+      },
+      "roll": {
+        "volume": 0.8,
+        "priority": 20,
+        "cooldown": 0.09,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "noise", "from": 1500.0, "to": 100, "duration": 0.12, "attack": 0.002, "decay": 8, "gain": 0.05 }
+        ]
+      },
+      "menu": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "square", "from": 620.0, "to": 620.0, "duration": 0.05, "attack": 0.002, "decay": 8, "gain": 0.04 }
+        ]
+      },
+      "beep": {
+        "volume": 0.8,
+        "priority": 40,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "square", "from": 440.0, "to": 440.0, "duration": 0.14, "attack": 0.002, "decay": 8, "gain": 0.05 }
+        ]
+      },
+      "tick": {
+        "volume": 0.8,
+        "priority": 70,
+        "cooldown": 0.05,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "square", "from": 880.0, "to": 880.0, "duration": 0.09, "attack": 0.002, "decay": 9, "gain": 0.07 }
+        ]
+      },
+      "go": {
+        "volume": 0.8,
+        "priority": 100,
+        "cooldown": 0.04,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          {
+            "wave": "square",
+            "from": 520.0,
+            "to": 1040.0,
+            "duration": 0.35,
+            "attack": 0.002,
+            "decay": 8,
+            "gain": 0.06
+          }
+        ]
+      },
+      "confirm": {
+        "volume": 0.8,
+        "priority": 90,
+        "cooldown": 0.06,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "triangle", "from": 720, "to": 1100, "duration": 0.14, "attack": 0.002, "decay": 8, "gain": 0.09 }
+        ]
+      },
+      "back": {
+        "volume": 0.8,
+        "priority": 90,
+        "cooldown": 0.06,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "triangle", "from": 480, "to": 250, "duration": 0.14, "attack": 0.002, "decay": 8, "gain": 0.09 }
+        ]
+      },
+      "join": {
+        "volume": 0.8,
+        "priority": 90,
+        "cooldown": 0.06,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "square", "from": 330, "to": 880, "duration": 0.14, "attack": 0.002, "decay": 8, "gain": 0.09 }
+        ]
+      },
+      "ready": {
+        "volume": 0.8,
+        "priority": 90,
+        "cooldown": 0.06,
+        "strengthDuration": 1,
+        "strengthGain": 1,
+        "layers": [
+          { "wave": "triangle", "from": 660, "to": 1320, "duration": 0.14, "attack": 0.002, "decay": 8, "gain": 0.09 }
+        ]
+      }
+    },
+    "earGap": 1.4
+  },
+  "replay": { "autoSaveCount": 10, "checkpointTicks": 300 }
+}

@@ -14,6 +14,7 @@ pub mod render;
 pub mod rig;
 pub mod schema;
 pub mod stage;
+pub mod unit;
 pub mod visual;
 
 pub use common::{Color, Num, Pt, Rect};

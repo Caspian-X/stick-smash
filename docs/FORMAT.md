@@ -35,6 +35,9 @@ fits in 120 columns and contains no objects stays on one line (a hitbox, a keyfr
 - Angles in degrees: 0 = forward, 90 = up. This holds for launch angles, attachment angles and pose `rot`
   (positive `rot` pitches the body forward).
 - Event velocities (`setVel`, `addVel`) are fighter-local too: `{"y": 17.5}` launches upward.
+- The schemas tag every numeric field with `x-unit` (`px`, `px/tick`, `px/tick2`, `px/kb`, `tick`, `s`, `ratio`,
+  `deg`, `damage`, `kb`, `uipx`, …) and spatial ones with `x-axis` (`x`, `y`, `xy`, or one per tuple element, such as
+  `["x", "y"]` for points). `crates/sim/src/data/unit.rs` defines them; `just rescale` uses them to rescale content.
 
 ## Knockback models
 

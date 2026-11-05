@@ -10,7 +10,8 @@ Tasks live in the `justfile` (`just` lists them). Add new scripts as `just` reci
 - `just feel [fighter]` prints the release feel report (jumps, gait, air drift, landing lag, synthetic launches, KO percents) as `FEEL <fighter> {json}` lines plus markdown tables; `just feel-baseline` rewrites `docs/balance/feel/baseline.{md,jsonl}` (metrics in `docs/balance/feel/README.md`).
 - `just throbbin-matchups [seeds] [stage]` runs Throbbin against every other fighter (default 1 seat-swapped seed on `arena`), printing per-opponent wins, KOs and self-KOs.
 - `just verify-replays <dir>` re-simulates all `.replay.json` files headlessly and fails on desync or unfinished matches.
-- `just bless` after changing content data types (regenerates schemas, reformats assets). `just shots [dir] [sections]` for screenshots (optional comma-separated section names; omit for the full tour).
+- `just bless` after changing content data types (regenerates schemas, reformats assets). Every numeric content field carries a unit tag (`#[schemars(transform = unit::…)]`, `data/unit.rs`; `tests/units.rs` enforces it); `just rescale <config> [--dry-run]` rescales content by tag (`tools/rescale.py`, tests via `just test-tools`).
+- TS traces load frozen content from `crates/sim/tests/fixtures/ts-content/` (`just freeze-ts-content` re-snapshots it), not `assets/`. `just shots [dir] [sections]` for screenshots (optional comma-separated section names; omit for the full tour).
 
 ## Character imports
 For reference-based fighter imports, read `docs/CHARACTER_IMPORTS.md` first. Use its source/conversion record template, inspect text plus per-frame visuals and numeric scripts where available, and document fitted/adapted data. `docs/MIKE.md` is the worked example; its conversion ratios are not universal.

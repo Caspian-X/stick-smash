@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use super::common::{Color, Pt, is_default, is_one, one};
 use super::moves::Cond;
+use super::unit;
 
 /// Joint positions in fighter-local space (x forward, y up, feet at the origin). A pose may be partial: missing
 /// joints come from `from` (another named pose), or from the `stand` pose.
@@ -19,36 +20,50 @@ pub struct Pose {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub from: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub head: Option<Pt>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub shoulder: Option<Pt>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub hip: Option<Pt>,
     /// Front arm (drawn over the body).
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub elbow_f: Option<Pt>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub hand_f: Option<Pt>,
     /// Back arm (drawn behind, darker).
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub elbow_b: Option<Pt>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub hand_b: Option<Pt>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub knee_f: Option<Pt>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub foot_f: Option<Pt>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub knee_b: Option<Pt>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub foot_b: Option<Pt>,
     /// Whole-body rotation in degrees, positive = pitching forward, around `(0, pivot)`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::deg)]
     pub rot: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_y)]
     pub pivot: Option<f64>,
     /// Vertical offset of the whole figure (up).
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_y)]
     pub offset_y: Option<f64>,
 }
 
@@ -64,6 +79,7 @@ pub enum PoseRef {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct AnimKey {
+    #[schemars(transform = unit::tick)]
     pub at: f64,
     pub pose: PoseRef,
     #[serde(default, skip_serializing_if = "is_default")]
@@ -74,6 +90,7 @@ pub struct AnimKey {
     /// Skip this key below this many held charge ticks. Lets a move's reach tier follow its charge without
     /// duplicating phases (the selected pose also moves any joint-bound collision).
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::tick)]
     pub min_charge: u32,
 }
 
@@ -99,6 +116,7 @@ pub struct Anim {
     pub clock: Clock,
     /// Repeat every this many clock units.
     #[serde(default, rename = "loop", skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
     pub period: Option<f64>,
     pub keys: Vec<AnimKey>,
 }
@@ -107,18 +125,27 @@ pub struct Anim {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Style {
+    #[schemars(transform = unit::px_xy)]
     pub head_radius: f64,
+    #[schemars(transform = unit::px_xy)]
     pub torso_width: f64,
+    #[schemars(transform = unit::px_xy)]
     pub front_limb_width: f64,
+    #[schemars(transform = unit::px_xy)]
     pub back_limb_width: f64,
     /// Soft glow drawn under the limbs.
+    #[schemars(transform = unit::px_xy)]
     pub glow_width: f64,
+    #[schemars(transform = unit::px_xy)]
     pub torso_glow_width: f64,
+    #[schemars(transform = unit::px_xy)]
     pub head_glow_radius: f64,
     /// Head outline width and fill.
+    #[schemars(transform = unit::px_xy)]
     pub head_ring: f64,
     pub head_fill: Color,
     /// Eye rectangle `[x, y, w, h]` from the head center (x forward, y up, `(x, y)` = bottom-left corner).
+    #[schemars(transform = unit::px_box)]
     pub eye: [f64; 4],
 }
 
@@ -159,6 +186,7 @@ pub struct Attachment {
     /// Resting angle in degrees (0 forward, 90 up). On a hand, it's added to the forearm's direction; otherwise
     /// absolute. A phase's `attach` angle keys override it.
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::deg)]
     pub angle: f64,
     /// Not drawn unless a phase's `attach.show` window says so.
     #[serde(default, skip_serializing_if = "is_default")]
@@ -185,22 +213,29 @@ pub struct Attachment {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Hold {
+    #[schemars(transform = unit::px_xy)]
     pub elbow: f64,
+    #[schemars(transform = unit::px_xy)]
     pub hand: f64,
+    #[schemars(transform = unit::deg)]
     pub bend: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Sway {
+    #[schemars(transform = unit::deg)]
     pub deg: f64,
+    #[schemars(transform = unit::tick)]
     pub period: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Trail {
+    #[schemars(transform = unit::px_xy)]
     pub inner: f64,
+    #[schemars(transform = unit::px_xy)]
     pub outer: f64,
 }
 
@@ -211,18 +246,23 @@ pub struct AttachAnim {
     /// `[frame, degrees]`, interpolated without wrapping. Use 350 → 430 to rotate forward through 360° to 70°;
     /// 350 → 70 rotates backward by 280°. Keep subsequent keys on the same turn for continuous trails.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[schemars(transform = unit::key_deg)]
     pub angle: Vec<[f64; 2]>,
     /// `[frame, x, y]` offset from the joint.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[schemars(transform = unit::key_offset)]
     pub offset: Vec<[f64; 3]>,
     /// `[frame, scale]`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[schemars(transform = unit::key_ratio)]
     pub scale: Vec<[f64; 2]>,
     /// Inclusive phase frames a `hidden` attachment is shown.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
     pub show: Option<[u32; 2]>,
     /// Inclusive phase frames a visible attachment is not shown (a weapon stowed while casting or grabbing).
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
     pub hide: Option<[u32; 2]>,
 }
 
@@ -240,69 +280,91 @@ pub enum ShapeWhen {
 #[serde(tag = "shape", rename_all = "camelCase", deny_unknown_fields)]
 pub enum Shape {
     Line {
+        #[schemars(transform = unit::px_pt)]
         from: Pt,
+        #[schemars(transform = unit::px_pt)]
         to: Pt,
+        #[schemars(transform = unit::px_xy)]
         width: f64,
         color: Color,
         #[serde(default = "one", skip_serializing_if = "is_one")]
+        #[schemars(transform = unit::ratio)]
         alpha: f64,
         #[serde(default, skip_serializing_if = "is_default")]
         when: ShapeWhen,
     },
     Circle {
+        #[schemars(transform = unit::px_pt)]
         at: Pt,
+        #[schemars(transform = unit::px_xy)]
         r: f64,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         fill: Option<Color>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         stroke: Option<Color>,
         #[serde(default, skip_serializing_if = "is_default")]
+        #[schemars(transform = unit::px_xy)]
         width: f64,
         #[serde(default = "one", skip_serializing_if = "is_one")]
+        #[schemars(transform = unit::ratio)]
         alpha: f64,
         #[serde(default, skip_serializing_if = "is_default")]
         when: ShapeWhen,
     },
     Poly {
+        #[schemars(transform = unit::px_pt)]
         points: Vec<Pt>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         fill: Option<Color>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         stroke: Option<Color>,
         #[serde(default, skip_serializing_if = "is_default")]
+        #[schemars(transform = unit::px_xy)]
         width: f64,
         #[serde(default = "one", skip_serializing_if = "is_one")]
+        #[schemars(transform = unit::ratio)]
         alpha: f64,
         #[serde(default, skip_serializing_if = "is_default")]
         when: ShapeWhen,
     },
     /// Four-pointed sparkle. With `blink`, it shows only every other `blink` ticks (world clock).
     Star {
+        #[schemars(transform = unit::px_pt)]
         at: Pt,
+        #[schemars(transform = unit::px_xy)]
         r: f64,
         fill: Color,
         #[serde(default = "one", skip_serializing_if = "is_one")]
+        #[schemars(transform = unit::ratio)]
         alpha: f64,
         #[serde(default, skip_serializing_if = "is_default")]
+        #[schemars(transform = unit::tick)]
         blink: u32,
         #[serde(default, skip_serializing_if = "is_default")]
         when: ShapeWhen,
     },
     /// Rectangle from corner `(x, y)` (the bottom-left in y-up space), with optional rounded corners.
     Rect {
+        #[schemars(transform = unit::px_x)]
         x: f64,
+        #[schemars(transform = unit::px_y)]
         y: f64,
+        #[schemars(transform = unit::px_x)]
         w: f64,
+        #[schemars(transform = unit::px_y)]
         h: f64,
         #[serde(default, skip_serializing_if = "is_default")]
+        #[schemars(transform = unit::px_xy)]
         radius: f64,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         fill: Option<Color>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         stroke: Option<Color>,
         #[serde(default, skip_serializing_if = "is_default")]
+        #[schemars(transform = unit::px_xy)]
         width: f64,
         #[serde(default = "one", skip_serializing_if = "is_one")]
+        #[schemars(transform = unit::ratio)]
         alpha: f64,
         #[serde(default, skip_serializing_if = "is_default")]
         when: ShapeWhen,

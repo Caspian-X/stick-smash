@@ -38,6 +38,28 @@ check: fmt-check lint test
 bless:
     BLESS=1 cargo test -p sim --test content -- --test-threads=1
 
+# Rescale content numbers by unit tag (tools/rescale.py documents the config); add --dry-run to only count
+rescale config *args:
+    python3 tools/rescale.py "{{config}}" {{args}}
+
+# Unit tests for the Python content tools (rescale, canonical JSON formatting)
+test-tools:
+    python3 -m unittest tools/rescale_test.py
+
+# Re-snapshot the content TS traces load (crates/sim/tests/fixtures/ts-content) from assets/
+freeze-ts-content:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    dst=crates/sim/tests/fixtures/ts-content
+    rm -rf "$dst"
+    mkdir -p "$dst"
+    cp assets/global.json "$dst/"
+    for p in stages/arena stages/citadel stages/foundry stages/isles fighters/base fighters/archer fighters/brawler \
+        fighters/golem fighters/mike fighters/swordfighter fighters/tinker fighters/wrangler fighters/yoyo; do
+        mkdir -p "$dst/$p"
+        cp assets/$p/*.json "$dst/$p/"
+    done
+
 # Save all screenshot sections, or a comma-separated subset
 shots dir="/tmp/stick-smash-shots" sections="":
     cargo run -p game -- --screenshot "{{dir}}" --shots "{{sections}}"

@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use super::common::{Color, Num, is_default, is_one, one};
 use super::hitbox::Hitbox;
+use super::unit;
 use super::visual::{AnimKey, AttachAnim};
 
 /// Move slots. Specials are chosen by input direction; without `sspec`, side + special does `nspec`.
@@ -128,6 +129,7 @@ pub struct Move {
     pub once_per_airtime: bool,
     /// Damage bonus per held charge tick. Omit to use the global smash-charge divisor.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::damage)]
     pub charge_damage: Option<f64>,
     /// Alternate timelines picked once when the move starts, by the fighter's charge resources (a weapon or tome
     /// with uses left). The first variant whose `needs` is satisfied wins; otherwise `phases` runs.
@@ -178,12 +180,15 @@ pub struct ChargePool {
     /// Referenced by `moves.*.variants[].needs`, `phases[].cost` and `hitboxes[].needs`.
     pub id: String,
     /// Uses at full.
+    #[schemars(transform = unit::count)]
     pub uses: u32,
     /// Ticks from empty back to full. Zero keeps it spent until respawn.
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::tick)]
     pub recharge: u32,
     /// Ticks after using the pool's last charge before its refill starts (a tome is thrown away first).
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::tick)]
     pub discard_delay: u32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub empty_sfx: Option<String>,
@@ -197,6 +202,7 @@ pub struct ChargePool {
 pub struct ChargeNeed {
     pub charge: String,
     #[serde(default = "one_use")]
+    #[schemars(transform = unit::count)]
     pub uses: u32,
 }
 
@@ -224,9 +230,11 @@ pub struct Phase {
     pub name: String,
     /// Phase length (see the frame convention). Omit for a phase that loops until a transition fires.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
     pub frames: Option<u32>,
     /// Extra phase frames per stored charge tick (rounded to the nearest whole frame).
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::tick)]
     pub charge_frames: f64,
     /// Spent from the fighter's charge resources when the phase is entered. A pool with fewer uses left than
     /// this spends what remains (and starts recharging); the phase still runs.
@@ -245,6 +253,7 @@ pub struct Phase {
     pub charge: Option<Charge>,
     /// Grounded: horizontal stick speed while retaining the move and its facing.
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::v_x)]
     pub ground_speed: f64,
     /// Counter stance: hits received during the window are countered.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -254,6 +263,7 @@ pub struct Phase {
     pub reflector: Option<Reflector>,
     /// Constant-speed directional travel, aimed once on phase entry; neutral aims upward.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::v_xy)]
     pub travel_speed: Option<f64>,
     /// Hide the figure during teleport travel; collision and invulnerability remain separate.
     #[serde(default, skip_serializing_if = "is_default")]
@@ -261,16 +271,19 @@ pub struct Phase {
     /// Hits dealing at most this damage preserve the phase and velocity (damage and hitlag still apply).
     /// Grabs bypass armor. Omit for normal hit reactions.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::damage)]
     pub armor_threshold: Option<f64>,
     /// Airborne: vertical speed is held at 0 (hovering startup).
     #[serde(default, skip_serializing_if = "is_default")]
     pub hover: bool,
     /// Airborne: max fall speed during this phase (default: the fighter's fall speed or fast-fall speed).
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::v_y)]
     pub fall_cap: Option<f64>,
     /// Multiplies the move's air acceleration (0 = no drift control): with `movement.ultimate` that is the fighter's
     /// airAccel × the `air` kind's multiplier, otherwise the shared legacy accel.
     #[serde(default = "one", skip_serializing_if = "is_one")]
+    #[schemars(transform = unit::ratio)]
     pub air_accel_mult: f64,
     /// Fighter-local rectangle that detects a hittable opponent for `targetNear` transitions.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -278,9 +291,11 @@ pub struct Phase {
     /// Grounded: phase frames below this use `attackSlideFriction` instead of `attackFriction` (dash attacks), or
     /// traction × `attackSlideTraction` with `movement.ultimate`.
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::tick)]
     pub slide: u32,
     /// Can grab a ledge (even while rising) from this phase frame on.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
     pub ledge_grab: Option<u32>,
     /// Extended forward ledge reach while this phase's ledgeGrab window is open.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -310,12 +325,15 @@ pub enum Button {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Charge {
     /// Phase frame that freezes while held.
+    #[schemars(transform = unit::tick)]
     pub frame: u32,
     /// Max frames of charge.
     #[serde(default = "sixty", skip_serializing_if = "is_sixty")]
+    #[schemars(transform = unit::tick)]
     pub max: u32,
     /// Additional ticks the button can hold after reaching max; strength stays capped.
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::tick)]
     pub hold_after_max: u32,
     #[serde(default, skip_serializing_if = "is_default")]
     pub button: Button,
@@ -336,28 +354,42 @@ fn is_sixty(v: &u32) -> bool {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Counter {
     /// Inclusive phase frames.
+    #[schemars(transform = unit::tick)]
     pub from: u32,
+    #[schemars(transform = unit::tick)]
     pub to: u32,
     /// Counter damage (used by `counterDamage` hitboxes) = max(minDamage, incoming × damageMult).
+    #[schemars(transform = unit::ratio)]
     pub damage_mult: f64,
+    #[schemars(transform = unit::damage)]
     pub min_damage: f64,
     /// Freeze frames for the countered attacker.
+    #[schemars(transform = unit::tick)]
     pub attacker_freeze: u32,
     /// Invulnerability frames granted on trigger.
+    #[schemars(transform = unit::tick)]
     pub invuln: u32,
     /// Reflected projectile: speed multiplier and new lifetime.
+    #[schemars(transform = unit::ratio)]
     pub reflect_speed: f64,
+    #[schemars(transform = unit::tick)]
     pub reflect_life: u32,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Reflector {
+    #[schemars(transform = unit::tick)]
     pub from: u32,
+    #[schemars(transform = unit::tick)]
     pub to: u32,
+    #[schemars(transform = unit::ratio)]
     pub speed: f64,
+    #[schemars(transform = unit::ratio)]
     pub damage: f64,
+    #[schemars(transform = unit::px_xy)]
     pub radius: f64,
+    #[schemars(transform = unit::px_y)]
     pub height: f64,
 }
 
@@ -368,18 +400,23 @@ pub struct Reflector {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Event {
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
     pub at: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
     pub from: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
     pub to: Option<u32>,
     /// Only on world frames divisible by this (alternate-frame particles).
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
     pub every: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none", rename = "if")]
     pub cond: Option<Cond>,
     /// Multiply velocity.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::ratio)]
     pub mul_vel: Option<Vel>,
     /// Set velocity (x forward, y up).
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -388,21 +425,25 @@ pub struct Event {
     pub add_vel: Option<Vel>,
     /// Scale `setVel` and `addVel` by (1 + held charge ticks × this); never scales `mulVel`.
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::ratio)]
     pub charge_velocity: f64,
     /// Reverse facing without reversing velocity.
     #[serde(default, skip_serializing_if = "is_default")]
     pub turn: bool,
     /// Skip this event below this many held charge ticks.
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::tick)]
     pub min_charge: u32,
     /// Cap downward speed at this (before gravity is applied this tick).
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::v_y)]
     pub cap_fall: Option<f64>,
     /// Leave the ground (needed for upward launches from the ground).
     #[serde(default, skip_serializing_if = "is_default")]
     pub leave_ground: bool,
     /// Invulnerable for this many frames (keeps the longer of this and any current invulnerability).
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
     pub invuln: Option<u32>,
     /// Spawn a projectile by id (from the fighter's `projectiles`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -435,8 +476,10 @@ impl Event {
 #[serde(deny_unknown_fields)]
 pub struct Vel {
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::v_x)]
     pub x: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::v_y)]
     pub y: Option<f64>,
 }
 
@@ -498,9 +541,11 @@ pub struct Transition {
     pub cond: Option<Cond>,
     /// Only from this phase frame on.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
     pub from: Option<u32>,
     /// Only fires with at least this many held charge ticks (a charged move can pick a phase per tier).
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::tick)]
     pub min_charge: u32,
     /// Only fires while this charge resource still has uses (a jab can fall back when its tome is empty).
     /// List the resource-gated transition before its fallback: the first match wins.
@@ -509,6 +554,7 @@ pub struct Transition {
     pub to: String,
     /// Landing lag frames for `to: "landing"`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
     pub lag: Option<u32>,
     /// Keep victim contact history when continuing the same attack in another phase.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
@@ -525,19 +571,27 @@ pub const LANDING: &str = "landing";
 pub enum Fx {
     Dust {
         #[serde(default)]
+        #[schemars(transform = unit::px_x)]
         x: Num,
         #[serde(default)]
+        #[schemars(transform = unit::px_y)]
         y: Num,
+        #[schemars(transform = unit::count)]
         n: u32,
     },
     Ring {
         #[serde(default)]
+        #[schemars(transform = unit::px_x)]
         x: Num,
         #[serde(default)]
+        #[schemars(transform = unit::px_y)]
         y: Num,
+        #[schemars(transform = unit::px_xy)]
         r: f64,
         /// Radius growth per frame.
+        #[schemars(transform = unit::v_xy)]
         grow: f64,
+        #[schemars(transform = unit::tick)]
         life: u32,
         #[serde(default = "white", skip_serializing_if = "is_white")]
         color: Color,
@@ -545,36 +599,52 @@ pub enum Fx {
     /// One particle. `inheritVel` adds the emitter's velocity times this.
     Part {
         #[serde(default)]
+        #[schemars(transform = unit::px_x)]
         x: Num,
         #[serde(default)]
+        #[schemars(transform = unit::px_y)]
         y: Num,
         #[serde(default)]
+        #[schemars(transform = unit::v_x)]
         vx: Num,
         #[serde(default)]
+        #[schemars(transform = unit::v_y)]
         vy: Num,
+        #[schemars(transform = unit::tick)]
         life: Num,
+        #[schemars(transform = unit::px_xy)]
         size: Num,
         color: Color,
         #[serde(default, skip_serializing_if = "is_default")]
+        #[schemars(transform = unit::a_y)]
         gravity: f64,
         #[serde(default, skip_serializing_if = "is_default")]
         #[serde(rename = "inheritVel")]
+        #[schemars(transform = unit::ratio)]
         inherit_vel: f64,
     },
     Burst {
         #[serde(default)]
+        #[schemars(transform = unit::px_x)]
         x: Num,
         #[serde(default)]
+        #[schemars(transform = unit::px_y)]
         y: Num,
         color: Color,
+        #[schemars(transform = unit::count)]
         n: u32,
+        #[schemars(transform = unit::v_xy)]
         speed: f64,
+        #[schemars(transform = unit::tick)]
         life: u32,
+        #[schemars(transform = unit::px_xy)]
         size: f64,
         #[serde(default, skip_serializing_if = "is_default")]
+        #[schemars(transform = unit::a_y)]
         gravity: f64,
     },
     Shake {
+        #[schemars(transform = unit::px_xy)]
         k: f64,
     },
 }
@@ -600,7 +670,9 @@ pub struct Throws {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Throw {
     /// Frame the victim is released and hit.
+    #[schemars(transform = unit::tick)]
     pub release: u32,
+    #[schemars(transform = unit::tick)]
     pub total: u32,
     /// Geometry and window fields are ignored.
     pub hit: Hitbox,
@@ -612,6 +684,8 @@ pub struct Throw {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ThrowTick {
+    #[schemars(transform = unit::tick)]
     pub at: u32,
+    #[schemars(transform = unit::damage)]
     pub damage: f64,
 }

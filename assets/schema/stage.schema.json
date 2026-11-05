@@ -3,14 +3,16 @@
   "additionalProperties": false,
   "properties": {
     "$schema": { "type": ["string", "null"], "writeOnly": true },
-    "schemaVersion": { "type": "integer", "format": "uint32", "minimum": 0 },
+    "schemaVersion": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "none" },
     "name": { "type": "string" },
     "width": {
       "type": "number",
       "format": "double",
-      "description": "Default view size; the camera starts framing `[0, width] × [0, height]`."
+      "description": "Default view size; the camera starts framing `[0, width] × [0, height]`.",
+      "x-unit": "px",
+      "x-axis": "x"
     },
-    "height": { "type": "number", "format": "double" },
+    "height": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
     "blocks": {
       "type": "array",
       "items": { "$ref": "#/$defs/Ground" },
@@ -64,19 +66,29 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "left": { "type": "number", "format": "double" },
-        "right": { "type": "number", "format": "double" },
-        "top": { "type": "number", "format": "double" },
-        "bottom": { "type": "number", "format": "double", "description": "Bottom of the vertical walls." },
+        "left": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "right": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "top": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+        "bottom": {
+          "type": "number",
+          "format": "double",
+          "description": "Bottom of the vertical walls.",
+          "x-unit": "px",
+          "x-axis": "y"
+        },
         "underDepth": {
           "type": "number",
           "format": "double",
-          "description": "Underside below `bottom`: slopes `depth` down while moving `inset` inward, so rising fighters slide out to\nthe wall."
+          "description": "Underside below `bottom`: slopes `depth` down while moving `inset` inward, so rising fighters slide out to\nthe wall.",
+          "x-unit": "px",
+          "x-axis": "y"
         },
         "underInset": {
           "type": "number",
           "format": "double",
-          "description": "Positive taper width on each side; cannot exceed half the block width."
+          "description": "Positive taper width on each side; cannot exceed half the block width.",
+          "x-unit": "px",
+          "x-axis": "x"
         },
         "leftLedge": { "type": "boolean", "description": "Whether the top-left corner can be grabbed." },
         "rightLedge": { "type": "boolean", "description": "Whether the top-right corner can be grabbed." }
@@ -88,9 +100,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "x1": { "type": "number", "format": "double" },
-        "x2": { "type": "number", "format": "double" },
-        "y": { "type": "number", "format": "double" },
+        "x1": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "x2": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "y": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
         "motion": {
           "anyOf": [
             { "$ref": "#/$defs/Motion" },
@@ -116,7 +128,8 @@
           "format": "uint64",
           "minimum": 0,
           "description": "Advance this many ticks into the repeating cycle at world frame zero.",
-          "default": 0
+          "default": 0,
+          "x-unit": "tick"
         }
       },
       "required": ["waypoints", "mode"],
@@ -129,25 +142,31 @@
         "x": {
           "type": "number",
           "format": "double",
-          "description": "Horizontal translation from the platform's base coordinates."
+          "description": "Horizontal translation from the platform's base coordinates.",
+          "x-unit": "px",
+          "x-axis": "x"
         },
         "y": {
           "type": "number",
           "format": "double",
-          "description": "Vertical translation from the platform's base height (positive is down)."
+          "description": "Vertical translation from the platform's base height (positive is down).",
+          "x-unit": "px",
+          "x-axis": "y"
         },
         "travelTicks": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Travel ticks to the next waypoint, also used on the return leg. Ignored at the last pingPong waypoint."
+          "description": "Travel ticks to the next waypoint, also used on the return leg. Ignored at the last pingPong waypoint.",
+          "x-unit": "tick"
         },
         "waitTicks": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
           "description": "Ticks spent at this waypoint before departing; defaults to zero.",
-          "default": 0
+          "default": 0,
+          "x-unit": "tick"
         }
       },
       "required": ["x", "y", "travelTicks"]
@@ -166,12 +185,12 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "r": { "type": "number", "format": "double" },
-        "cy": { "type": "number", "format": "double" },
-        "handY": { "type": "number", "format": "double" },
-        "reachIn": { "type": "number", "format": "double" },
-        "hangX": { "type": "number", "format": "double" },
-        "hangY": { "type": "number", "format": "double" }
+        "r": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "cy": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+        "handY": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+        "reachIn": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "hangX": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "hangY": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" }
       },
       "required": ["r", "cy", "handY", "reachIn", "hangX", "hangY"],
       "description": "Ledge grab zone: a half circle on the outside of each enabled block corner, centered `cy` below it. A falling\nfighter grabs when their hand point (`handY` above the feet) is inside. `reachIn` lets the flat side extend a\nfew pixels over the stage. `hangX`/`hangY` = where the feet sit while hanging."
@@ -180,10 +199,10 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "left": { "type": "number", "format": "double" },
-        "right": { "type": "number", "format": "double" },
-        "top": { "type": "number", "format": "double" },
-        "bottom": { "type": "number", "format": "double" }
+        "left": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "right": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "top": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+        "bottom": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" }
       },
       "required": ["left", "right", "top", "bottom"]
     },
@@ -194,12 +213,16 @@
         "minHeight": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Closest visible height in stage pixels; absent uses the automatic stage-size scaling."
+          "description": "Closest visible height in stage pixels; absent uses the automatic stage-size scaling.",
+          "x-unit": "px",
+          "x-axis": "y"
         },
         "maxHeight": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Widest visible height in stage pixels; absent fits the stage geometry automatically."
+          "description": "Widest visible height in stage pixels; absent fits the stage geometry automatically.",
+          "x-unit": "px",
+          "x-axis": "y"
         }
       },
       "description": "Optional follow-camera zoom overrides; omitted bounds are automatic."
@@ -208,18 +231,21 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "x": { "type": "number", "format": "double" },
+        "x": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
         "y": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Feet height; omit to stand on the highest block below x."
+          "description": "Feet height; omit to stand on the highest block below x.",
+          "x-unit": "px",
+          "x-axis": "y"
         },
         "face": {
           "type": "integer",
           "format": "int8",
           "minimum": -128,
           "maximum": 127,
-          "description": "1 = facing right, -1 = left."
+          "description": "1 = facing right, -1 = left.",
+          "x-unit": "none"
         }
       },
       "required": ["x", "face"]
@@ -228,9 +254,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "x": { "type": "number", "format": "double" },
-        "startY": { "type": "number", "format": "double" },
-        "endY": { "type": "number", "format": "double" }
+        "x": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "startY": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+        "endY": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" }
       },
       "required": ["x", "startY", "endY"],
       "description": "Respawn: descend from `startY` to `endY` above `x`, then wait on the respawn platform."
@@ -245,15 +271,23 @@
         "edge": { "$ref": "#/$defs/Color", "description": "Bright strip along the ground's top edge." },
         "platform": { "$ref": "#/$defs/Color" },
         "platformShadow": { "$ref": "#/$defs/Color", "description": "Soft band under each platform." },
-        "edgeWidth": { "type": "number", "format": "double", "description": "Height of the `edge` strip." },
-        "platformThickness": { "type": "number", "format": "double" },
-        "platformRadius": { "type": "number", "format": "double" },
+        "edgeWidth": {
+          "type": "number",
+          "format": "double",
+          "description": "Height of the `edge` strip.",
+          "x-unit": "px",
+          "x-axis": "y"
+        },
+        "platformThickness": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+        "platformRadius": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
         "platformShadowBand": {
           "type": "array",
           "items": { "type": "number", "format": "double" },
           "minItems": 3,
           "maxItems": 3,
-          "description": "Shadow band: starts `[offset]` below the platform top, `[height]` tall, at `[alpha]` opacity."
+          "description": "Shadow band: starts `[offset]` below the platform top, `[height]` tall, at `[alpha]` opacity.",
+          "x-unit": ["px", "px", "ratio"],
+          "x-axis": ["y", "y", null]
         },
         "stripes": {
           "anyOf": [
@@ -292,13 +326,13 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "x": { "type": "number", "format": "double" },
-        "y": { "type": "number", "format": "double" },
-        "w": { "type": "number", "format": "double" },
-        "h": { "type": "number", "format": "double" },
-        "every": { "type": "number", "format": "double" },
+        "x": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "y": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+        "w": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "h": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+        "every": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
         "color": { "$ref": "#/$defs/Color" },
-        "alpha": { "type": "number", "format": "double" }
+        "alpha": { "type": "number", "format": "double", "x-unit": "ratio" }
       },
       "required": ["x", "y", "w", "h", "every", "color", "alpha"],
       "description": "Dashes `w`×`h` every `every` px, `y` below the ground top, starting `x` from the left edge."
@@ -318,7 +352,9 @@
             "minItems": 2,
             "maxItems": 2
           },
-          "description": "Vertical gradient `[y, color]` stops, top to bottom. Solid above the first and below the last."
+          "description": "Vertical gradient `[y, color]` stops, top to bottom. Solid above the first and below the last.",
+          "x-unit": "px",
+          "x-axis": "y"
         },
         "moon": {
           "anyOf": [
@@ -341,7 +377,8 @@
           "type": "number",
           "format": "double",
           "description": "0..1: how much the backdrop stays put on screen while the camera moves (0 = moves with the stage).",
-          "default": 0.0
+          "default": 0.0,
+          "x-unit": "ratio"
         }
       },
       "required": ["sky"]
@@ -350,17 +387,17 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "x": { "type": "number", "format": "double" },
-        "y": { "type": "number", "format": "double" },
-        "r": { "type": "number", "format": "double" },
+        "x": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "y": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+        "r": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
         "color": { "$ref": "#/$defs/Color" },
         "glow": {
           "$ref": "#/$defs/Color",
           "description": "Halo: `rings` circles growing by `step` px, each at `alpha`."
         },
-        "rings": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "step": { "type": "number", "format": "double" },
-        "alpha": { "type": "number", "format": "double" }
+        "rings": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "count" },
+        "step": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "alpha": { "type": "number", "format": "double", "x-unit": "ratio" }
       },
       "required": ["x", "y", "r", "color", "glow", "rings", "step", "alpha"]
     },
@@ -368,9 +405,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "base": { "type": "number", "format": "double" },
-        "amp": { "type": "number", "format": "double" },
-        "seed": { "type": "number", "format": "double" },
+        "base": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+        "amp": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+        "seed": { "type": "number", "format": "double", "x-unit": "none" },
         "color": { "$ref": "#/$defs/Color" }
       },
       "required": ["base", "amp", "seed", "color"],
@@ -380,19 +417,26 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "n": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "x": { "type": "number", "format": "double" },
-        "y": { "type": "number", "format": "double" },
-        "w": { "type": "number", "format": "double" },
-        "h": { "type": "number", "format": "double" },
+        "n": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "count" },
+        "x": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "y": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+        "w": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "h": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
         "size": {
           "type": "array",
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": "xy"
         },
         "color": { "$ref": "#/$defs/Color" },
-        "twinkle": { "type": "number", "format": "double", "description": "Twinkle speed (degrees per tick)." }
+        "twinkle": {
+          "type": "number",
+          "format": "double",
+          "description": "Twinkle speed (degrees per tick).",
+          "x-unit": "deg"
+        }
       },
       "required": ["n", "x", "y", "w", "h", "size", "color", "twinkle"],
       "description": "Twinkling stars scattered (fixed pseudo-random layout) over the rectangle `x, y, w, h`."

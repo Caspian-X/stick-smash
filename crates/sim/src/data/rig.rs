@@ -5,6 +5,8 @@ use std::collections::BTreeMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use super::unit;
+
 use super::{
     common::{Color, Pt, is_default},
     visual::Shape,
@@ -25,6 +27,7 @@ pub struct Rig {
 pub struct RigBone {
     pub from: String,
     pub to: String,
+    #[schemars(transform = unit::px_xy)]
     pub width: f64,
     pub color: Color,
 }
@@ -38,9 +41,11 @@ pub struct RigJoint {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parent: Option<String>,
     /// Rest translation in the parent's rotated coordinate system.
+    #[schemars(transform = unit::px_pt)]
     pub translation: Pt,
     /// Rest rotation in degrees, counterclockwise, relative to the parent.
     #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::deg)]
     pub angle: f64,
     /// Vector appearance in joint-local space, after local rotation.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -55,8 +60,10 @@ pub type RigPose = BTreeMap<String, JointPose>;
 pub struct JointPose {
     /// Replaces the rest translation; it is not an additive offset.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_pt)]
     pub translation: Option<Pt>,
     /// Replaces the rest angle. Keep angles unwrapped when animating through a full turn.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::deg)]
     pub angle: Option<f64>,
 }

@@ -1,0 +1,125 @@
+{
+  "$schema": "../../schema/stage.schema.json",
+  "schemaVersion": 2,
+  "name": "Foundry Lifts",
+  "width": 1280,
+  "height": 720,
+  "blocks": [
+    {
+      "left": 430,
+      "right": 850,
+      "top": 520,
+      "bottom": 590,
+      "underDepth": 110,
+      "underInset": 60,
+      "leftLedge": true,
+      "rightLedge": true
+    }
+  ],
+  "platforms": [
+    {
+      "x1": 270,
+      "x2": 390,
+      "y": 420,
+      "motion": {
+        "mode": "pingPong",
+        "phase": 0,
+        "waypoints": [
+          { "x": 0, "y": 0, "travelTicks": 150, "waitTicks": 60 },
+          { "x": 0, "y": 180, "travelTicks": 150, "waitTicks": 60 }
+        ]
+      }
+    },
+    {
+      "x1": 890,
+      "x2": 1010,
+      "y": 420,
+      "motion": {
+        "mode": "pingPong",
+        "phase": 210,
+        "waypoints": [
+          { "x": 0, "y": 0, "travelTicks": 150, "waitTicks": 60 },
+          { "x": 0, "y": 180, "travelTicks": 150, "waitTicks": 60 }
+        ]
+      }
+    },
+    {
+      "x1": 575,
+      "x2": 705,
+      "y": 410,
+      "motion": {
+        "mode": "pingPong",
+        "phase": 280,
+        "waypoints": [
+          { "x": -180, "y": 0, "travelTicks": 240, "waitTicks": 40 },
+          { "x": 180, "y": 0, "travelTicks": 240, "waitTicks": 40 }
+        ]
+      }
+    }
+  ],
+  "ledge": { "r": 60, "cy": 20, "handY": 50, "reachIn": 4, "hangX": 12, "hangY": 80 },
+  "blast": { "left": -280, "right": 1560, "top": -120, "bottom": 1180 },
+  "camera": { "left": -200, "right": 1480, "top": -40, "bottom": 1100 },
+  "spawns": [
+    { "x": 540, "face": 1 },
+    { "x": 740, "face": -1 },
+    { "x": 470, "face": 1 },
+    { "x": 810, "face": -1 },
+    { "x": 600, "face": 1 },
+    { "x": 680, "face": -1 },
+    { "x": 505, "face": 1 },
+    { "x": 775, "face": -1 }
+  ],
+  "respawns": [
+    { "x": 640, "startY": -60, "endY": 170 },
+    { "x": 640, "startY": -60, "endY": 170 },
+    { "x": 780, "startY": -60, "endY": 170 },
+    { "x": 500, "startY": -60, "endY": 170 },
+    { "x": 720, "startY": -60, "endY": 170 },
+    { "x": 560, "startY": -60, "endY": 170 },
+    { "x": 820, "startY": -60, "endY": 170 },
+    { "x": 460, "startY": -60, "endY": 170 }
+  ],
+  "art": {
+    "groundTop": "#5d6170",
+    "groundBottom": "#353844",
+    "underside": "#24252e",
+    "edge": "#ffb35c",
+    "platform": "#ffcf7a",
+    "platformShadow": "#ff7a3a",
+    "edgeWidth": 6,
+    "platformThickness": 9,
+    "platformRadius": 1,
+    "platformShadowBand": [7, 12, 0.25],
+    "stripes": { "x": 14, "y": 14, "w": 18, "h": 6, "every": 36, "color": "#ffb35c", "alpha": 0.22 },
+    "background": {
+      "sky": [[-300, "#0b0606"], [320, "#2a0f0c"], [600, "#5c2014"], [760, "#9a3a18"]],
+      "moon": {
+        "x": 980,
+        "y": 160,
+        "r": 38,
+        "color": "#ff9a6a",
+        "glow": "#ff5a2a",
+        "rings": 5,
+        "step": 9,
+        "alpha": 0.045
+      },
+      "ridges": [
+        { "base": 620, "amp": 240, "seed": 5, "color": "#2a1210" },
+        { "base": 700, "amp": 150, "seed": 8, "color": "#1a0c0b" },
+        { "base": 780, "amp": 90, "seed": 12, "color": "#0e0707" }
+      ],
+      "stars": {
+        "n": 140,
+        "x": -700,
+        "y": -500,
+        "w": 2680,
+        "h": 900,
+        "size": [0.5, 2.2],
+        "color": "#ffb070",
+        "twinkle": 3.4
+      },
+      "parallax": 0.25
+    }
+  }
+}

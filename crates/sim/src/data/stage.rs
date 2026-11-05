@@ -4,6 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::common::Color;
+use super::unit;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -13,10 +14,13 @@ pub struct Stage {
     pub id: String,
     #[serde(rename = "$schema", default, skip_serializing)]
     pub schema: Option<String>,
+    #[schemars(transform = unit::none)]
     pub schema_version: u32,
     pub name: String,
     /// Default view size; the camera starts framing `[0, width] × [0, height]`.
+    #[schemars(transform = unit::px_x)]
     pub width: f64,
+    #[schemars(transform = unit::px_y)]
     pub height: f64,
     /// Static solids in collision tie-break order. At least one is required. Bounds including
     /// undersides must not overlap; touching blocks can form walls or a raised centre.
@@ -46,9 +50,11 @@ pub struct Stage {
 pub struct Zoom {
     /// Closest visible height in stage pixels; absent uses the automatic stage-size scaling.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_y)]
     pub min_height: Option<f64>,
     /// Widest visible height in stage pixels; absent fits the stage geometry automatically.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_y)]
     pub max_height: Option<f64>,
 }
 
@@ -56,15 +62,21 @@ pub struct Zoom {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Ground {
+    #[schemars(transform = unit::px_x)]
     pub left: f64,
+    #[schemars(transform = unit::px_x)]
     pub right: f64,
+    #[schemars(transform = unit::px_y)]
     pub top: f64,
     /// Bottom of the vertical walls.
+    #[schemars(transform = unit::px_y)]
     pub bottom: f64,
     /// Underside below `bottom`: slopes `depth` down while moving `inset` inward, so rising fighters slide out to
     /// the wall.
+    #[schemars(transform = unit::px_y)]
     pub under_depth: f64,
     /// Positive taper width on each side; cannot exceed half the block width.
+    #[schemars(transform = unit::px_x)]
     pub under_inset: f64,
     /// Whether the top-left corner can be grabbed.
     pub left_ledge: bool,
@@ -121,8 +133,11 @@ impl Ground {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Platform {
+    #[schemars(transform = unit::px_x)]
     pub x1: f64,
+    #[schemars(transform = unit::px_x)]
     pub x2: f64,
+    #[schemars(transform = unit::px_y)]
     pub y: f64,
     /// Translation relative to x1/x2/y; absent means stationary.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -139,6 +154,7 @@ pub struct Motion {
     pub mode: PathMode,
     /// Advance this many ticks into the repeating cycle at world frame zero.
     #[serde(default)]
+    #[schemars(transform = unit::tick)]
     pub phase: u64,
 }
 
@@ -155,13 +171,17 @@ pub enum PathMode {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Waypoint {
     /// Horizontal translation from the platform's base coordinates.
+    #[schemars(transform = unit::px_x)]
     pub x: f64,
     /// Vertical translation from the platform's base height (positive is down).
+    #[schemars(transform = unit::px_y)]
     pub y: f64,
     /// Travel ticks to the next waypoint, also used on the return leg. Ignored at the last pingPong waypoint.
+    #[schemars(transform = unit::tick)]
     pub travel_ticks: u32,
     #[serde(default)]
     /// Ticks spent at this waypoint before departing; defaults to zero.
+    #[schemars(transform = unit::tick)]
     pub wait_ticks: u32,
 }
 
@@ -219,31 +239,44 @@ impl Platform {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct LedgeZone {
+    #[schemars(transform = unit::px_xy)]
     pub r: f64,
+    #[schemars(transform = unit::px_y)]
     pub cy: f64,
+    #[schemars(transform = unit::px_y)]
     pub hand_y: f64,
+    #[schemars(transform = unit::px_x)]
     pub reach_in: f64,
+    #[schemars(transform = unit::px_x)]
     pub hang_x: f64,
+    #[schemars(transform = unit::px_y)]
     pub hang_y: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Bounds {
+    #[schemars(transform = unit::px_x)]
     pub left: f64,
+    #[schemars(transform = unit::px_x)]
     pub right: f64,
+    #[schemars(transform = unit::px_y)]
     pub top: f64,
+    #[schemars(transform = unit::px_y)]
     pub bottom: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Spawn {
+    #[schemars(transform = unit::px_x)]
     pub x: f64,
     /// Feet height; omit to stand on the highest block below x.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::px_y)]
     pub y: Option<f64>,
     /// 1 = facing right, -1 = left.
+    #[schemars(transform = unit::none)]
     pub face: i8,
 }
 
@@ -251,8 +284,11 @@ pub struct Spawn {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RespawnPoint {
+    #[schemars(transform = unit::px_x)]
     pub x: f64,
+    #[schemars(transform = unit::px_y)]
     pub start_y: f64,
+    #[schemars(transform = unit::px_y)]
     pub end_y: f64,
 }
 
@@ -269,10 +305,14 @@ pub struct StageArt {
     /// Soft band under each platform.
     pub platform_shadow: Color,
     /// Height of the `edge` strip.
+    #[schemars(transform = unit::px_y)]
     pub edge_width: f64,
+    #[schemars(transform = unit::px_y)]
     pub platform_thickness: f64,
+    #[schemars(transform = unit::px_xy)]
     pub platform_radius: f64,
     /// Shadow band: starts `[offset]` below the platform top, `[height]` tall, at `[alpha]` opacity.
+    #[schemars(transform = unit::shadow_band)]
     pub platform_shadow_band: [f64; 3],
     /// Dashes along the ground face.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -286,12 +326,18 @@ pub struct StageArt {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Stripes {
+    #[schemars(transform = unit::px_x)]
     pub x: f64,
+    #[schemars(transform = unit::px_y)]
     pub y: f64,
+    #[schemars(transform = unit::px_x)]
     pub w: f64,
+    #[schemars(transform = unit::px_y)]
     pub h: f64,
+    #[schemars(transform = unit::px_x)]
     pub every: f64,
     pub color: Color,
+    #[schemars(transform = unit::ratio)]
     pub alpha: f64,
 }
 
@@ -299,6 +345,7 @@ pub struct Stripes {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Background {
     /// Vertical gradient `[y, color]` stops, top to bottom. Solid above the first and below the last.
+    #[schemars(transform = unit::px_y)]
     pub sky: Vec<(f64, Color)>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub moon: Option<Moon>,
@@ -309,20 +356,27 @@ pub struct Background {
     pub stars: Option<Starfield>,
     /// 0..1: how much the backdrop stays put on screen while the camera moves (0 = moves with the stage).
     #[serde(default)]
+    #[schemars(transform = unit::ratio)]
     pub parallax: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Moon {
+    #[schemars(transform = unit::px_x)]
     pub x: f64,
+    #[schemars(transform = unit::px_y)]
     pub y: f64,
+    #[schemars(transform = unit::px_xy)]
     pub r: f64,
     pub color: Color,
     /// Halo: `rings` circles growing by `step` px, each at `alpha`.
     pub glow: Color,
+    #[schemars(transform = unit::count)]
     pub rings: u32,
+    #[schemars(transform = unit::px_xy)]
     pub step: f64,
+    #[schemars(transform = unit::ratio)]
     pub alpha: f64,
 }
 
@@ -330,8 +384,11 @@ pub struct Moon {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Ridge {
+    #[schemars(transform = unit::px_y)]
     pub base: f64,
+    #[schemars(transform = unit::px_y)]
     pub amp: f64,
+    #[schemars(transform = unit::none)]
     pub seed: f64,
     pub color: Color,
 }
@@ -340,14 +397,21 @@ pub struct Ridge {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Starfield {
+    #[schemars(transform = unit::count)]
     pub n: u32,
+    #[schemars(transform = unit::px_x)]
     pub x: f64,
+    #[schemars(transform = unit::px_y)]
     pub y: f64,
+    #[schemars(transform = unit::px_x)]
     pub w: f64,
+    #[schemars(transform = unit::px_y)]
     pub h: f64,
+    #[schemars(transform = unit::px_xy)]
     pub size: [f64; 2],
     pub color: Color,
     /// Twinkle speed (degrees per tick).
+    #[schemars(transform = unit::deg)]
     pub twinkle: f64,
 }
 

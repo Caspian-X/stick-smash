@@ -3,7 +3,7 @@
   "additionalProperties": false,
   "properties": {
     "$schema": { "type": ["string", "null"], "writeOnly": true },
-    "schemaVersion": { "type": "integer", "format": "uint32", "minimum": 0 },
+    "schemaVersion": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "none" },
     "extends": { "type": ["string", "null"], "description": "Id of the package this one inherits from." },
     "abstract": {
       "type": "boolean",
@@ -30,7 +30,9 @@
       "items": { "type": "number", "format": "double" },
       "minItems": 2,
       "maxItems": 2,
-      "description": "Stable feet-relative autolink target; required with hurtRegions."
+      "description": "Stable feet-relative autolink target; required with hurtRegions.",
+      "x-unit": "px",
+      "x-axis": ["x", "y"]
     },
     "interactions": {
       "anyOf": [
@@ -80,59 +82,86 @@
         "weight": {
           "type": "number",
           "format": "double",
-          "description": "Knockback taken multiplier. Lower = heavier."
+          "description": "Knockback taken multiplier. Lower = heavier.",
+          "x-unit": "ratio"
         },
         "pummelDamage": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Override the shared grab pummel damage."
+          "description": "Override the shared grab pummel damage.",
+          "x-unit": "damage"
         },
-        "runSpeed": { "type": "number", "format": "double" },
-        "runAccel": { "type": "number", "format": "double" },
+        "runSpeed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "x" },
+        "runAccel": { "type": "number", "format": "double", "x-unit": "px/tick2", "x-axis": "x" },
         "dashSpeed": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Initial dash speed, held for dashFrames, then easing into the run (default runSpeed × gait.dashSpeed)."
+          "description": "Initial dash speed, held for dashFrames, then easing into the run (default runSpeed × gait.dashSpeed).",
+          "x-unit": "px/tick",
+          "x-axis": "x"
         },
-        "dashFrames": { "type": ["integer", "null"], "format": "uint32", "minimum": 0 },
+        "dashFrames": { "type": ["integer", "null"], "format": "uint32", "minimum": 0, "x-unit": "tick" },
         "walkSpeed": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Full-tilt walk speed; defaults to runSpeed × gait.walkSpeed."
+          "description": "Full-tilt walk speed; defaults to runSpeed × gait.walkSpeed.",
+          "x-unit": "px/tick",
+          "x-axis": "x"
         },
         "groundFriction": {
           "type": "number",
           "format": "double",
-          "description": "Legacy (no `movement.ultimate`): idle and crouch velocity multiplier per frame."
+          "description": "Legacy (no `movement.ultimate`): idle and crouch velocity multiplier per frame.",
+          "x-unit": "ratio"
         },
         "traction": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Grounded slowdown in px/frame² with `movement.ultimate` (default its `traction`; Ultimate traction × 3.5)."
+          "description": "Grounded slowdown in px/frame² with `movement.ultimate` (default its `traction`; Ultimate traction × 3.5).",
+          "x-unit": "px/tick2",
+          "x-axis": "x"
         },
-        "jumpSpeed": { "type": "number", "format": "double", "description": "Full hop launch speed (upward)." },
-        "shortHopSpeed": { "type": "number", "format": "double" },
-        "airJumpSpeed": { "type": "number", "format": "double" },
-        "airJumpDrift": { "type": "number", "format": "double" },
-        "airJumps": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Mid-air jumps." },
-        "airSpeed": { "type": "number", "format": "double" },
+        "jumpSpeed": {
+          "type": "number",
+          "format": "double",
+          "description": "Full hop launch speed (upward).",
+          "x-unit": "px/tick",
+          "x-axis": "y"
+        },
+        "shortHopSpeed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "y" },
+        "airJumpSpeed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "y" },
+        "airJumpDrift": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "x" },
+        "airJumps": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Mid-air jumps.",
+          "x-unit": "count"
+        },
+        "airSpeed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "x" },
         "airAccel": {
           "type": "number",
           "format": "double",
-          "description": "Air drift acceleration (px/frame²). With `movement.ultimate` it also drives attacks, up specials and helpless\nfall, times that movement's per-kind multiplier and the phase `airAccelMult`."
+          "description": "Air drift acceleration (px/frame²). With `movement.ultimate` it also drives attacks, up specials and helpless\nfall, times that movement's per-kind multiplier and the phase `airAccelMult`.",
+          "x-unit": "px/tick2",
+          "x-axis": "x"
         },
         "airFriction": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Airborne slowdown in px/frame² with `movement.ultimate`: toward zero with the stick neutral, toward airSpeed\nwhen above it (default its `airFriction`; Ultimate air friction × 3.5)."
+          "description": "Airborne slowdown in px/frame² with `movement.ultimate`: toward zero with the stick neutral, toward airSpeed\nwhen above it (default its `airFriction`; Ultimate air friction × 3.5).",
+          "x-unit": "px/tick2",
+          "x-axis": "x"
         },
-        "gravity": { "type": "number", "format": "double" },
-        "fallSpeed": { "type": "number", "format": "double" },
-        "fastFallSpeed": { "type": "number", "format": "double" },
+        "gravity": { "type": "number", "format": "double", "x-unit": "px/tick2", "x-axis": "y" },
+        "fallSpeed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "y" },
+        "fastFallSpeed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "y" },
         "floatSpeed": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Positive downward speed cap while holding jump in normal Air control. Excludes attacks, hitstun,\nhelplessness, ledge/climb, airdodge and every other non-Air state. Omit to disable float."
+          "description": "Positive downward speed cap while holding jump in normal Air control. Excludes attacks, hitstun,\nhelplessness, ledge/climb, airdodge and every other non-Air state. Omit to disable float.",
+          "x-unit": "px/tick",
+          "x-axis": "y"
         }
       },
       "required": [
@@ -156,8 +185,8 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "halfWidth": { "type": "number", "format": "double" },
-        "height": { "type": "number", "format": "double" }
+        "halfWidth": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "height": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" }
       },
       "required": ["halfWidth", "height"]
     },
@@ -169,18 +198,26 @@
           "type": "string",
           "description": "Referenced by `moves.*.variants[].needs`, `phases[].cost` and `hitboxes[].needs`."
         },
-        "uses": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Uses at full." },
+        "uses": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Uses at full.",
+          "x-unit": "count"
+        },
         "recharge": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Ticks from empty back to full. Zero keeps it spent until respawn."
+          "description": "Ticks from empty back to full. Zero keeps it spent until respawn.",
+          "x-unit": "tick"
         },
         "discardDelay": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Ticks after using the pool's last charge before its refill starts (a tome is thrown away first)."
+          "description": "Ticks after using the pool's last charge before its refill starts (a tome is thrown away first).",
+          "x-unit": "tick"
         },
         "emptySfx": { "type": ["string", "null"] },
         "refillSfx": { "type": ["string", "null"] }
@@ -202,10 +239,10 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "x1": { "type": "number", "format": "double" },
-        "x2": { "type": "number", "format": "double" },
-        "y1": { "type": "number", "format": "double" },
-        "y2": { "type": "number", "format": "double" }
+        "x1": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "x2": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "y1": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+        "y2": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" }
       },
       "required": ["x1", "x2", "y1", "y2"],
       "description": "Axis-aligned box in fighter-local space (x forward, y up from the feet)."
@@ -289,7 +326,7 @@
           "properties": {
             "kind": { "type": "string", "const": "circle" },
             "center": { "$ref": "#/$defs/BoundPoint" },
-            "radius": { "type": "number", "format": "double" }
+            "radius": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" }
           },
           "required": ["kind", "center", "radius"]
         },
@@ -300,7 +337,7 @@
             "kind": { "type": "string", "const": "capsule" },
             "a": { "$ref": "#/$defs/BoundPoint" },
             "b": { "$ref": "#/$defs/BoundPoint" },
-            "radius": { "type": "number", "format": "double" }
+            "radius": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" }
           },
           "required": ["kind", "a", "b", "radius"]
         }
@@ -315,7 +352,9 @@
           "type": "array",
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         }
       },
       "required": ["offset"],
@@ -347,19 +386,25 @@
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "holdPoint": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "heldAnchor": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         }
       }
     },
@@ -371,29 +416,40 @@
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "hangAnchor": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
-        "pullIn": { "type": ["number", "null"], "format": "double" },
-        "climbDistance": { "type": ["number", "null"], "format": "double" },
-        "rollDistance": { "type": ["number", "null"], "format": "double" },
-        "attackDistance": { "type": ["number", "null"], "format": "double" }
+        "pullIn": { "type": ["number", "null"], "format": "double", "x-unit": "px", "x-axis": "x" },
+        "climbDistance": { "type": ["number", "null"], "format": "double", "x-unit": "px", "x-axis": "x" },
+        "rollDistance": { "type": ["number", "null"], "format": "double", "x-unit": "px", "x-axis": "x" },
+        "attackDistance": { "type": ["number", "null"], "format": "double", "x-unit": "px", "x-axis": "x" }
       }
     },
     "Ai": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "reach": { "type": "number", "format": "double", "description": "How close the CPU wants to be to attack." },
+        "reach": {
+          "type": "number",
+          "format": "double",
+          "description": "How close the CPU wants to be to attack.",
+          "x-unit": "px",
+          "x-axis": "x"
+        },
         "counterChance": {
           "type": "number",
           "format": "double",
-          "description": "Chance to counter instead of shielding; zero skips the RNG call."
+          "description": "Chance to counter instead of shielding; zero skips the RNG call.",
+          "x-unit": "ratio"
         },
         "recoveryShieldCancel": {
           "type": ["string", "null"],
@@ -415,24 +471,31 @@
         "minDistance": {
           "type": "number",
           "format": "double",
-          "description": "Strict lower bound on horizontal target distance."
+          "description": "Strict lower bound on horizontal target distance.",
+          "x-unit": "px",
+          "x-axis": "x"
         },
         "maxDistance": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Optional strict upper bound on horizontal target distance."
+          "description": "Optional strict upper bound on horizontal target distance.",
+          "x-unit": "px",
+          "x-axis": "x"
         },
         "height": {
           "type": "number",
           "format": "double",
-          "description": "Strict upper bound on absolute vertical target separation."
+          "description": "Strict upper bound on absolute vertical target separation.",
+          "x-unit": "px",
+          "x-axis": "y"
         },
         "grounded": { "type": "boolean", "description": "Require the CPU to be grounded." },
         "noProjectile": { "type": "boolean", "description": "Require no currently owned projectile." },
         "chance": {
           "type": "number",
           "format": "double",
-          "description": "Success probability, sampled after geometry and ownership checks pass."
+          "description": "Success probability, sampled after geometry and ownership checks pass.",
+          "x-unit": "ratio"
         },
         "neutral": {
           "type": "boolean",
@@ -444,7 +507,8 @@
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Optional special-button hold duration range; sampled then floored."
+          "description": "Optional special-button hold duration range; sampled then floored.",
+          "x-unit": "tick"
         }
       },
       "required": ["minDistance", "height", "grounded", "noProjectile", "chance", "down"]
@@ -524,7 +588,8 @@
         "chargeDamage": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Damage bonus per held charge tick. Omit to use the global smash-charge divisor."
+          "description": "Damage bonus per held charge tick. Omit to use the global smash-charge divisor.",
+          "x-unit": "damage"
         },
         "variants": {
           "type": "array",
@@ -580,7 +645,7 @@
       "additionalProperties": false,
       "properties": {
         "charge": { "type": "string" },
-        "uses": { "type": "integer", "format": "uint32", "minimum": 0, "default": 1 }
+        "uses": { "type": "integer", "format": "uint32", "minimum": 0, "default": 1, "x-unit": "count" }
       },
       "required": ["charge"],
       "description": "A charge requirement: a resource id and how many uses it takes."
@@ -606,12 +671,14 @@
           "type": ["integer", "null"],
           "format": "uint32",
           "minimum": 0,
-          "description": "Phase length (see the frame convention). Omit for a phase that loops until a transition fires."
+          "description": "Phase length (see the frame convention). Omit for a phase that loops until a transition fires.",
+          "x-unit": "tick"
         },
         "chargeFrames": {
           "type": "number",
           "format": "double",
-          "description": "Extra phase frames per stored charge tick (rounded to the nearest whole frame)."
+          "description": "Extra phase frames per stored charge tick (rounded to the nearest whole frame).",
+          "x-unit": "tick"
         },
         "cost": {
           "anyOf": [
@@ -643,7 +710,9 @@
         "groundSpeed": {
           "type": "number",
           "format": "double",
-          "description": "Grounded: horizontal stick speed while retaining the move and its facing."
+          "description": "Grounded: horizontal stick speed while retaining the move and its facing.",
+          "x-unit": "px/tick",
+          "x-axis": "x"
         },
         "counter": {
           "anyOf": [
@@ -662,7 +731,9 @@
         "travelSpeed": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Constant-speed directional travel, aimed once on phase entry; neutral aims upward."
+          "description": "Constant-speed directional travel, aimed once on phase entry; neutral aims upward.",
+          "x-unit": "px/tick",
+          "x-axis": "xy"
         },
         "hidden": {
           "type": "boolean",
@@ -671,18 +742,22 @@
         "armorThreshold": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Hits dealing at most this damage preserve the phase and velocity (damage and hitlag still apply).\nGrabs bypass armor. Omit for normal hit reactions."
+          "description": "Hits dealing at most this damage preserve the phase and velocity (damage and hitlag still apply).\nGrabs bypass armor. Omit for normal hit reactions.",
+          "x-unit": "damage"
         },
         "hover": { "type": "boolean", "description": "Airborne: vertical speed is held at 0 (hovering startup)." },
         "fallCap": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Airborne: max fall speed during this phase (default: the fighter's fall speed or fast-fall speed)."
+          "description": "Airborne: max fall speed during this phase (default: the fighter's fall speed or fast-fall speed).",
+          "x-unit": "px/tick",
+          "x-axis": "y"
         },
         "airAccelMult": {
           "type": "number",
           "format": "double",
-          "description": "Multiplies the move's air acceleration (0 = no drift control): with `movement.ultimate` that is the fighter's\nairAccel × the `air` kind's multiplier, otherwise the shared legacy accel."
+          "description": "Multiplies the move's air acceleration (0 = no drift control): with `movement.ultimate` that is the fighter's\nairAccel × the `air` kind's multiplier, otherwise the shared legacy accel.",
+          "x-unit": "ratio"
         },
         "detection": {
           "anyOf": [
@@ -695,13 +770,15 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Grounded: phase frames below this use `attackSlideFriction` instead of `attackFriction` (dash attacks), or\ntraction × `attackSlideTraction` with `movement.ultimate`."
+          "description": "Grounded: phase frames below this use `attackSlideFriction` instead of `attackFriction` (dash attacks), or\ntraction × `attackSlideTraction` with `movement.ultimate`.",
+          "x-unit": "tick"
         },
         "ledgeGrab": {
           "type": ["integer", "null"],
           "format": "uint32",
           "minimum": 0,
-          "description": "Can grab a ledge (even while rising) from this phase frame on."
+          "description": "Can grab a ledge (even while rising) from this phase frame on.",
+          "x-unit": "tick"
         },
         "tether": {
           "anyOf": [
@@ -741,9 +818,10 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Inclusive current phase MoveState.t, independent of elapsed move time."
+          "description": "Inclusive current phase MoveState.t, independent of elapsed move time.",
+          "x-unit": "tick"
         },
-        "to": { "type": "integer", "format": "uint32", "minimum": 0 }
+        "to": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" }
       },
       "required": ["region", "enabled", "from", "to"]
     },
@@ -751,40 +829,59 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "start": { "type": "integer", "format": "uint32", "minimum": 0, "description": "First active phase frame." },
+        "start": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "First active phase frame.",
+          "x-unit": "tick"
+        },
         "end": {
           "type": ["integer", "null"],
           "format": "uint32",
           "minimum": 0,
-          "description": "Last active phase frame (inclusive). Omit to stay active until the phase ends."
+          "description": "Last active phase frame (inclusive). Omit to stay active until the phase ends.",
+          "x-unit": "tick"
         },
         "x": {
           "type": "number",
           "format": "double",
-          "description": "Offset forward from the feet. Negative = behind."
+          "description": "Offset forward from the feet. Negative = behind.",
+          "x-unit": "px",
+          "x-axis": "x"
         },
-        "y": { "type": "number", "format": "double", "description": "Offset up from the feet." },
-        "r": { "type": "number", "format": "double", "description": "Radius." },
-        "damage": { "type": "number", "format": "double", "description": "Percent dealt." },
+        "y": {
+          "type": "number",
+          "format": "double",
+          "description": "Offset up from the feet.",
+          "x-unit": "px",
+          "x-axis": "y"
+        },
+        "r": { "type": "number", "format": "double", "description": "Radius.", "x-unit": "px", "x-axis": "xy" },
+        "damage": { "type": "number", "format": "double", "description": "Percent dealt.", "x-unit": "damage" },
         "bkb": {
           "type": "number",
           "format": "double",
-          "description": "Base knockback in reference units (converted by global.knockback.ultimate.launchSpeed).\nWindboxes use this as pixel-space force instead."
+          "description": "Base knockback in reference units (converted by global.knockback.ultimate.launchSpeed).\nWindboxes use this as pixel-space force instead.",
+          "x-unit": "kb"
         },
         "kbg": {
           "type": "number",
           "format": "double",
-          "description": "Knockback growth as a fraction (100% reference growth = 1)."
+          "description": "Knockback growth as a fraction (100% reference growth = 1).",
+          "x-unit": "ratio"
         },
         "angle": {
           "type": "number",
           "format": "double",
-          "description": "Launch angle in degrees. 0 = forward, 90 = straight up, negative = down."
+          "description": "Launch angle in degrees. 0 = forward, 90 = straight up, negative = down.",
+          "x-unit": "deg"
         },
         "groundAngle": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Optional launch angle for grounded victims (before the shared ground-bounce rule)."
+          "description": "Optional launch angle for grounded victims (before the shared ground-bounce rule).",
+          "x-unit": "deg"
         },
         "dir": { "$ref": "#/$defs/LaunchDir" },
         "type": { "$ref": "#/$defs/HitType" },
@@ -800,28 +897,47 @@
           "type": ["integer", "null"],
           "format": "uint32",
           "minimum": 0,
-          "description": "Multi-hit: can hit the same victim/group again every this many move ticks (default: once until history clears)."
+          "description": "Multi-hit: can hit the same victim/group again every this many move ticks (default: once until history clears).",
+          "x-unit": "tick"
         },
         "group": {
           "type": "integer",
           "format": "uint8",
           "minimum": 0,
           "maximum": 255,
-          "description": "Independent hit identity within one move. A victim can be hit once per group, so later rows with the\nsame group are alternatives (early/late tiers, coverage changes) while a different group is a new hit\n(multi-hit sequences such as Diddy Kong's forward smash)."
+          "description": "Independent hit identity within one move. A victim can be hit once per group, so later rows with the\nsame group are alternatives (early/late tiers, coverage changes) while a different group is a new hit\n(multi-hit sequences such as Diddy Kong's forward smash).",
+          "x-unit": "none"
         },
         "hitstunMult": {
           "type": "number",
           "format": "double",
-          "description": "Multiplies the hitstun this box causes."
+          "description": "Multiplies the hitstun this box causes.",
+          "x-unit": "ratio"
         },
-        "hitstunAdd": { "type": "number", "format": "double", "description": "Flat frames added to hitstun." },
+        "hitstunAdd": {
+          "type": "number",
+          "format": "double",
+          "description": "Flat frames added to hitstun.",
+          "x-unit": "tick"
+        },
         "hitlagMult": {
           "type": "number",
           "format": "double",
-          "description": "Multiplies hitlag (freeze frames) on hit."
+          "description": "Multiplies hitlag (freeze frames) on hit.",
+          "x-unit": "ratio"
         },
-        "shieldDmgMult": { "type": "number", "format": "double", "description": "Multiplies shield damage." },
-        "shieldStunMult": { "type": "number", "format": "double", "description": "Multiplies shield stun." },
+        "shieldDmgMult": {
+          "type": "number",
+          "format": "double",
+          "description": "Multiplies shield damage.",
+          "x-unit": "ratio"
+        },
+        "shieldStunMult": {
+          "type": "number",
+          "format": "double",
+          "description": "Multiplies shield stun.",
+          "x-unit": "ratio"
+        },
         "counterDamage": {
           "type": "boolean",
           "description": "Counter strike: damage comes from the countered hit (see `Counter`). Inactive if nothing was countered."
@@ -829,7 +945,8 @@
         "heal": {
           "type": "number",
           "format": "double",
-          "description": "Fraction of the damage dealt that heals the attacker (Nosferatu drains health). Capped at the\nattacker's current damage."
+          "description": "Fraction of the damage dealt that heals the attacker (Nosferatu drains health). Capped at the\nattacker's current damage.",
+          "x-unit": "ratio"
         },
         "unblockable": {
           "type": "boolean",
@@ -839,7 +956,8 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "In a move, inactive below this many held charge ticks."
+          "description": "In a move, inactive below this many held charge ticks.",
+          "x-unit": "tick"
         },
         "frames": {
           "type": "array",
@@ -849,7 +967,9 @@
             "minItems": 4,
             "maxItems": 4
           },
-          "description": "Per-frame position/size `[frame, x, y, r]`. A frame without an entry uses the closest earlier entry, or\nx/y/r before the first entry. Omit for a box that stays put."
+          "description": "Per-frame position/size `[frame, x, y, r]`. A frame without an entry uses the closest earlier entry, or\nx/y/r before the first entry. Omit for a box that stays put.",
+          "x-unit": ["tick", "px", "px", "px"],
+          "x-axis": [null, "x", "y", "xy"]
         },
         "geometry": {
           "anyOf": [
@@ -931,14 +1051,15 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "at": { "type": ["integer", "null"], "format": "uint32", "minimum": 0 },
-        "from": { "type": ["integer", "null"], "format": "uint32", "minimum": 0 },
-        "to": { "type": ["integer", "null"], "format": "uint32", "minimum": 0 },
+        "at": { "type": ["integer", "null"], "format": "uint32", "minimum": 0, "x-unit": "tick" },
+        "from": { "type": ["integer", "null"], "format": "uint32", "minimum": 0, "x-unit": "tick" },
+        "to": { "type": ["integer", "null"], "format": "uint32", "minimum": 0, "x-unit": "tick" },
         "every": {
           "type": ["integer", "null"],
           "format": "uint32",
           "minimum": 0,
-          "description": "Only on world frames divisible by this (alternate-frame particles)."
+          "description": "Only on world frames divisible by this (alternate-frame particles).",
+          "x-unit": "tick"
         },
         "if": {
           "anyOf": [
@@ -951,7 +1072,8 @@
             { "$ref": "#/$defs/Vel" },
             { "type": "null" }
           ],
-          "description": "Multiply velocity."
+          "description": "Multiply velocity.",
+          "x-unit": "ratio"
         },
         "setVel": {
           "anyOf": [
@@ -969,19 +1091,23 @@
         "chargeVelocity": {
           "type": "number",
           "format": "double",
-          "description": "Scale `setVel` and `addVel` by (1 + held charge ticks × this); never scales `mulVel`."
+          "description": "Scale `setVel` and `addVel` by (1 + held charge ticks × this); never scales `mulVel`.",
+          "x-unit": "ratio"
         },
         "turn": { "type": "boolean", "description": "Reverse facing without reversing velocity." },
         "minCharge": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Skip this event below this many held charge ticks."
+          "description": "Skip this event below this many held charge ticks.",
+          "x-unit": "tick"
         },
         "capFall": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Cap downward speed at this (before gravity is applied this tick)."
+          "description": "Cap downward speed at this (before gravity is applied this tick).",
+          "x-unit": "px/tick",
+          "x-axis": "y"
         },
         "leaveGround": {
           "type": "boolean",
@@ -991,7 +1117,8 @@
           "type": ["integer", "null"],
           "format": "uint32",
           "minimum": 0,
-          "description": "Invulnerable for this many frames (keeps the longer of this and any current invulnerability)."
+          "description": "Invulnerable for this many frames (keeps the longer of this and any current invulnerability).",
+          "x-unit": "tick"
         },
         "spawn": {
           "type": ["string", "null"],
@@ -1031,8 +1158,8 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "x": { "type": ["number", "null"], "format": "double" },
-        "y": { "type": ["number", "null"], "format": "double" }
+        "x": { "type": ["number", "null"], "format": "double", "x-unit": "px/tick", "x-axis": "x" },
+        "y": { "type": ["number", "null"], "format": "double", "x-unit": "px/tick", "x-axis": "y" }
       },
       "description": "Velocity components; a missing component is left alone."
     },
@@ -1043,9 +1170,9 @@
           "additionalProperties": false,
           "properties": {
             "type": { "type": "string", "const": "dust" },
-            "x": { "$ref": "#/$defs/Num", "default": 0.0 },
-            "y": { "$ref": "#/$defs/Num", "default": 0.0 },
-            "n": { "type": "integer", "format": "uint32", "minimum": 0 }
+            "x": { "$ref": "#/$defs/Num", "default": 0.0, "x-unit": "px", "x-axis": "x" },
+            "y": { "$ref": "#/$defs/Num", "default": 0.0, "x-unit": "px", "x-axis": "y" },
+            "n": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "count" }
           },
           "required": ["type", "n"]
         },
@@ -1054,11 +1181,17 @@
           "additionalProperties": false,
           "properties": {
             "type": { "type": "string", "const": "ring" },
-            "x": { "$ref": "#/$defs/Num", "default": 0.0 },
-            "y": { "$ref": "#/$defs/Num", "default": 0.0 },
-            "r": { "type": "number", "format": "double" },
-            "grow": { "type": "number", "format": "double", "description": "Radius growth per frame." },
-            "life": { "type": "integer", "format": "uint32", "minimum": 0 },
+            "x": { "$ref": "#/$defs/Num", "default": 0.0, "x-unit": "px", "x-axis": "x" },
+            "y": { "$ref": "#/$defs/Num", "default": 0.0, "x-unit": "px", "x-axis": "y" },
+            "r": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+            "grow": {
+              "type": "number",
+              "format": "double",
+              "description": "Radius growth per frame.",
+              "x-unit": "px/tick",
+              "x-axis": "xy"
+            },
+            "life": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
             "color": { "$ref": "#/$defs/Color" }
           },
           "required": ["type", "r", "grow", "life"]
@@ -1068,15 +1201,15 @@
           "additionalProperties": false,
           "properties": {
             "type": { "type": "string", "const": "part" },
-            "x": { "$ref": "#/$defs/Num", "default": 0.0 },
-            "y": { "$ref": "#/$defs/Num", "default": 0.0 },
-            "vx": { "$ref": "#/$defs/Num", "default": 0.0 },
-            "vy": { "$ref": "#/$defs/Num", "default": 0.0 },
-            "life": { "$ref": "#/$defs/Num" },
-            "size": { "$ref": "#/$defs/Num" },
+            "x": { "$ref": "#/$defs/Num", "default": 0.0, "x-unit": "px", "x-axis": "x" },
+            "y": { "$ref": "#/$defs/Num", "default": 0.0, "x-unit": "px", "x-axis": "y" },
+            "vx": { "$ref": "#/$defs/Num", "default": 0.0, "x-unit": "px/tick", "x-axis": "x" },
+            "vy": { "$ref": "#/$defs/Num", "default": 0.0, "x-unit": "px/tick", "x-axis": "y" },
+            "life": { "$ref": "#/$defs/Num", "x-unit": "tick" },
+            "size": { "$ref": "#/$defs/Num", "x-unit": "px", "x-axis": "xy" },
             "color": { "$ref": "#/$defs/Color" },
-            "gravity": { "type": "number", "format": "double" },
-            "inheritVel": { "type": "number", "format": "double" }
+            "gravity": { "type": "number", "format": "double", "x-unit": "px/tick2", "x-axis": "y" },
+            "inheritVel": { "type": "number", "format": "double", "x-unit": "ratio" }
           },
           "required": ["type", "life", "size", "color"],
           "description": "One particle. `inheritVel` adds the emitter's velocity times this."
@@ -1086,14 +1219,14 @@
           "additionalProperties": false,
           "properties": {
             "type": { "type": "string", "const": "burst" },
-            "x": { "$ref": "#/$defs/Num", "default": 0.0 },
-            "y": { "$ref": "#/$defs/Num", "default": 0.0 },
+            "x": { "$ref": "#/$defs/Num", "default": 0.0, "x-unit": "px", "x-axis": "x" },
+            "y": { "$ref": "#/$defs/Num", "default": 0.0, "x-unit": "px", "x-axis": "y" },
             "color": { "$ref": "#/$defs/Color" },
-            "n": { "type": "integer", "format": "uint32", "minimum": 0 },
-            "speed": { "type": "number", "format": "double" },
-            "life": { "type": "integer", "format": "uint32", "minimum": 0 },
-            "size": { "type": "number", "format": "double" },
-            "gravity": { "type": "number", "format": "double" }
+            "n": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "count" },
+            "speed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "xy" },
+            "life": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
+            "size": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+            "gravity": { "type": "number", "format": "double", "x-unit": "px/tick2", "x-axis": "y" }
           },
           "required": ["type", "color", "n", "speed", "life", "size"]
         },
@@ -1102,7 +1235,7 @@
           "additionalProperties": false,
           "properties": {
             "type": { "type": "string", "const": "shake" },
-            "k": { "type": "number", "format": "double" }
+            "k": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" }
           },
           "required": ["type", "k"]
         }
@@ -1141,13 +1274,15 @@
           "type": ["integer", "null"],
           "format": "uint32",
           "minimum": 0,
-          "description": "Only from this phase frame on."
+          "description": "Only from this phase frame on.",
+          "x-unit": "tick"
         },
         "minCharge": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Only fires with at least this many held charge ticks (a charged move can pick a phase per tier)."
+          "description": "Only fires with at least this many held charge ticks (a charged move can pick a phase per tier).",
+          "x-unit": "tick"
         },
         "needs": {
           "anyOf": [
@@ -1161,7 +1296,8 @@
           "type": ["integer", "null"],
           "format": "uint32",
           "minimum": 0,
-          "description": "Landing lag frames for `to: \"landing\"`."
+          "description": "Landing lag frames for `to: \"landing\"`.",
+          "x-unit": "tick"
         },
         "preserveHits": {
           "type": "boolean",
@@ -1236,14 +1372,22 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Phase frame that freezes while held."
+          "description": "Phase frame that freezes while held.",
+          "x-unit": "tick"
         },
-        "max": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Max frames of charge." },
+        "max": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Max frames of charge.",
+          "x-unit": "tick"
+        },
         "holdAfterMax": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Additional ticks the button can hold after reaching max; strength stays capped."
+          "description": "Additional ticks the button can hold after reaching max; strength stays capped.",
+          "x-unit": "tick"
         },
         "button": { "$ref": "#/$defs/Button" },
         "jet": {
@@ -1259,32 +1403,42 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "from": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Inclusive phase frames." },
-        "to": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "from": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Inclusive phase frames.",
+          "x-unit": "tick"
+        },
+        "to": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
         "damageMult": {
           "type": "number",
           "format": "double",
-          "description": "Counter damage (used by `counterDamage` hitboxes) = max(minDamage, incoming × damageMult)."
+          "description": "Counter damage (used by `counterDamage` hitboxes) = max(minDamage, incoming × damageMult).",
+          "x-unit": "ratio"
         },
-        "minDamage": { "type": "number", "format": "double" },
+        "minDamage": { "type": "number", "format": "double", "x-unit": "damage" },
         "attackerFreeze": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Freeze frames for the countered attacker."
+          "description": "Freeze frames for the countered attacker.",
+          "x-unit": "tick"
         },
         "invuln": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Invulnerability frames granted on trigger."
+          "description": "Invulnerability frames granted on trigger.",
+          "x-unit": "tick"
         },
         "reflectSpeed": {
           "type": "number",
           "format": "double",
-          "description": "Reflected projectile: speed multiplier and new lifetime."
+          "description": "Reflected projectile: speed multiplier and new lifetime.",
+          "x-unit": "ratio"
         },
-        "reflectLife": { "type": "integer", "format": "uint32", "minimum": 0 }
+        "reflectLife": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" }
       },
       "required": ["from", "to", "damageMult", "minDamage", "attackerFreeze", "invuln", "reflectSpeed", "reflectLife"],
       "description": "Counter window. A hit received in it fires the phase's `counter` transition: the attacker freezes, and\nprojectiles are reflected."
@@ -1293,12 +1447,12 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "from": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "to": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "speed": { "type": "number", "format": "double" },
-        "damage": { "type": "number", "format": "double" },
-        "radius": { "type": "number", "format": "double" },
-        "height": { "type": "number", "format": "double" }
+        "from": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
+        "to": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
+        "speed": { "type": "number", "format": "double", "x-unit": "ratio" },
+        "damage": { "type": "number", "format": "double", "x-unit": "ratio" },
+        "radius": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "height": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" }
       },
       "required": ["from", "to", "speed", "damage", "radius", "height"]
     },
@@ -1306,7 +1460,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "at": { "type": "number", "format": "double" },
+        "at": { "type": "number", "format": "double", "x-unit": "tick" },
         "pose": { "$ref": "#/$defs/PoseRef" },
         "lerp": { "type": "boolean" },
         "if": {
@@ -1320,7 +1474,8 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Skip this key below this many held charge ticks. Lets a move's reach tier follow its charge without\nduplicating phases (the selected pose also moves any joint-bound collision)."
+          "description": "Skip this key below this many held charge ticks. Lets a move's reach tier follow its charge without\nduplicating phases (the selected pose also moves any joint-bound collision).",
+          "x-unit": "tick"
         }
       },
       "required": ["at", "pose"],
@@ -1347,80 +1502,105 @@
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "shoulder": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "hip": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "elbowF": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Front arm (drawn over the body)."
+          "description": "Front arm (drawn over the body).",
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "handF": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "elbowB": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Back arm (drawn behind, darker)."
+          "description": "Back arm (drawn behind, darker).",
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "handB": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "kneeF": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "footF": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "kneeB": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "footB": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "rot": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Whole-body rotation in degrees, positive = pitching forward, around `(0, pivot)`."
+          "description": "Whole-body rotation in degrees, positive = pitching forward, around `(0, pivot)`.",
+          "x-unit": "deg"
         },
-        "pivot": { "type": ["number", "null"], "format": "double" },
+        "pivot": { "type": ["number", "null"], "format": "double", "x-unit": "px", "x-axis": "y" },
         "offsetY": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Vertical offset of the whole figure (up)."
+          "description": "Vertical offset of the whole figure (up).",
+          "x-unit": "px",
+          "x-axis": "y"
         }
       },
       "description": "Joint positions in fighter-local space (x forward, y up, feet at the origin). A pose may be partial: missing\njoints come from `from` (another named pose), or from the `stand` pose."
@@ -1434,12 +1614,15 @@
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Replaces the rest translation; it is not an additive offset."
+          "description": "Replaces the rest translation; it is not an additive offset.",
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "angle": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Replaces the rest angle. Keep angles unwrapped when animating through a full turn."
+          "description": "Replaces the rest angle. Keep angles unwrapped when animating through a full turn.",
+          "x-unit": "deg"
         }
       }
     },
@@ -1455,7 +1638,8 @@
             "minItems": 2,
             "maxItems": 2
           },
-          "description": "`[frame, degrees]`, interpolated without wrapping. Use 350 → 430 to rotate forward through 360° to 70°;\n350 → 70 rotates backward by 280°. Keep subsequent keys on the same turn for continuous trails."
+          "description": "`[frame, degrees]`, interpolated without wrapping. Use 350 → 430 to rotate forward through 360° to 70°;\n350 → 70 rotates backward by 280°. Keep subsequent keys on the same turn for continuous trails.",
+          "x-unit": ["tick", "deg"]
         },
         "offset": {
           "type": "array",
@@ -1465,7 +1649,9 @@
             "minItems": 3,
             "maxItems": 3
           },
-          "description": "`[frame, x, y]` offset from the joint."
+          "description": "`[frame, x, y]` offset from the joint.",
+          "x-unit": ["tick", "px", "px"],
+          "x-axis": [null, "x", "y"]
         },
         "scale": {
           "type": "array",
@@ -1475,21 +1661,24 @@
             "minItems": 2,
             "maxItems": 2
           },
-          "description": "`[frame, scale]`."
+          "description": "`[frame, scale]`.",
+          "x-unit": ["tick", "ratio"]
         },
         "show": {
           "type": ["array", "null"],
           "items": { "type": "integer", "format": "uint32", "minimum": 0 },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Inclusive phase frames a `hidden` attachment is shown."
+          "description": "Inclusive phase frames a `hidden` attachment is shown.",
+          "x-unit": "tick"
         },
         "hide": {
           "type": ["array", "null"],
           "items": { "type": "integer", "format": "uint32", "minimum": 0 },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Inclusive phase frames a visible attachment is not shown (a weapon stowed while casting or grabbing)."
+          "description": "Inclusive phase frames a visible attachment is not shown (a weapon stowed while casting or grabbing).",
+          "x-unit": "tick"
         }
       },
       "description": "Attachment animation within a move phase (phase frames). Angle, offset and scale keys interpolate linearly."
@@ -1514,9 +1703,10 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Frame the victim is released and hit."
+          "description": "Frame the victim is released and hit.",
+          "x-unit": "tick"
         },
-        "total": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "total": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
         "hit": { "$ref": "#/$defs/Hitbox", "description": "Geometry and window fields are ignored." },
         "ticks": {
           "type": "array",
@@ -1530,8 +1720,8 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "at": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "damage": { "type": "number", "format": "double" }
+        "at": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
+        "damage": { "type": "number", "format": "double", "x-unit": "damage" }
       },
       "required": ["at", "damage"]
     },
@@ -1545,25 +1735,48 @@
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Spawn offset from the feet (x forward, y up)."
+          "description": "Spawn offset from the feet (x forward, y up).",
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "vel": {
           "type": "array",
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Launch velocity (x forward, y up)."
+          "description": "Launch velocity (x forward, y up).",
+          "x-unit": "px/tick",
+          "x-axis": ["x", "y"]
         },
-        "r": { "type": "number", "format": "double", "description": "Collision radius." },
-        "life": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Frames alive." },
+        "r": {
+          "type": "number",
+          "format": "double",
+          "description": "Collision radius.",
+          "x-unit": "px",
+          "x-axis": "xy"
+        },
+        "life": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Frames alive.",
+          "x-unit": "tick"
+        },
         "max": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Max alive per owner. Spawning past it does nothing (plays `fullSfx` if set)."
+          "description": "Max alive per owner. Spawning past it does nothing (plays `fullSfx` if set).",
+          "x-unit": "count"
         },
-        "gravity": { "type": "number", "format": "double" },
-        "maxFall": { "type": ["number", "null"], "format": "double", "description": "Max fall speed (with gravity)." },
+        "gravity": { "type": "number", "format": "double", "x-unit": "px/tick2", "x-axis": "y" },
+        "maxFall": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Max fall speed (with gravity).",
+          "x-unit": "px/tick",
+          "x-axis": "y"
+        },
         "bounce": {
           "anyOf": [
             { "$ref": "#/$defs/Bounce" },
@@ -1581,7 +1794,9 @@
         "reflectVy": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Vertical speed (up) given when reflected by a counter. Omit to keep it."
+          "description": "Vertical speed (up) given when reflected by a counter. Omit to keep it.",
+          "x-unit": "px/tick",
+          "x-axis": "y"
         },
         "hit": {
           "$ref": "#/$defs/Hitbox",
@@ -1624,7 +1839,7 @@
           "type": "array",
           "items": { "$ref": "#/$defs/Shape" }
         },
-        "spin": { "type": "number", "format": "double" }
+        "spin": { "type": "number", "format": "double", "x-unit": "deg/px", "x-axis": "xy" }
       },
       "required": ["name", "spawn", "vel", "r", "life", "max", "hit"],
       "description": "A projectile spawned by a move's `spawn` event."
@@ -1636,25 +1851,35 @@
         "restitution": {
           "type": "number",
           "format": "double",
-          "description": "Fraction of fall speed kept on a floor bounce."
+          "description": "Fraction of fall speed kept on a floor bounce.",
+          "x-unit": "ratio"
         },
-        "minSpeed": { "type": "number", "format": "double", "description": "Minimum bounce speed (up)." },
+        "minSpeed": {
+          "type": "number",
+          "format": "double",
+          "description": "Minimum bounce speed (up).",
+          "x-unit": "px/tick",
+          "x-axis": "y"
+        },
         "friction": {
           "type": "number",
           "format": "double",
-          "description": "Horizontal speed multiplier per floor bounce."
+          "description": "Horizontal speed multiplier per floor bounce.",
+          "x-unit": "ratio"
         },
         "maxBounces": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "After this many bounces, life drops to `fizzleLife`."
+          "description": "After this many bounces, life drops to `fizzleLife`.",
+          "x-unit": "count"
         },
-        "fizzleLife": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "fizzleLife": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
         "wallRestitution": {
           "type": "number",
           "format": "double",
-          "description": "Horizontal speed kept when hitting the stage's side walls."
+          "description": "Horizontal speed kept when hitting the stage's side walls.",
+          "x-unit": "ratio"
         },
         "sfx": { "type": ["string", "null"] }
       },
@@ -1667,17 +1892,26 @@
         "speed": {
           "type": "number",
           "format": "double",
-          "description": "New horizontal speed (in the hit's launch direction) and vertical speed (up)."
+          "description": "New horizontal speed (in the hit's launch direction) and vertical speed (up).",
+          "x-unit": "px/tick",
+          "x-axis": "x"
         },
-        "vy": { "type": "number", "format": "double" },
-        "life": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "vy": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "y" },
+        "life": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
         "cooldown": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Frames before it can be batted again."
+          "description": "Frames before it can be batted again.",
+          "x-unit": "tick"
         },
-        "hitlag": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Hitlag for the batter." }
+        "hitlag": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Hitlag for the batter.",
+          "x-unit": "tick"
+        }
       },
       "required": ["speed", "vy", "life", "cooldown", "hitlag"]
     },
@@ -1685,22 +1919,24 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "speed": { "type": "number", "format": "double" },
-        "damage": { "type": "number", "format": "double" },
-        "bkb": { "type": "number", "format": "double" },
+        "speed": { "type": "number", "format": "double", "x-unit": "ratio" },
+        "damage": { "type": "number", "format": "double", "x-unit": "ratio" },
+        "bkb": { "type": "number", "format": "double", "x-unit": "ratio" },
         "rehit": {
           "type": "number",
           "format": "double",
-          "description": "Frames added to `hit.rehit` per held charge tick (rounds at each hit check)."
+          "description": "Frames added to `hit.rehit` per held charge tick (rounds at each hit check).",
+          "x-unit": "tick"
         },
-        "radius": { "type": "number", "format": "double" },
-        "life": { "type": "number", "format": "double" },
+        "radius": { "type": "number", "format": "double", "x-unit": "ratio" },
+        "life": { "type": "number", "format": "double", "x-unit": "ratio" },
         "angleTo": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Launch angle at maximum charge; interpolated from the base hit's angle."
+          "description": "Launch angle at maximum charge; interpolated from the base hit's angle.",
+          "x-unit": "deg"
         },
-        "groundAngleTo": { "type": ["number", "null"], "format": "double" }
+        "groundAngleTo": { "type": ["number", "null"], "format": "double", "x-unit": "deg" }
       },
       "required": ["speed", "damage"]
     },
@@ -1716,14 +1952,17 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Ticks before proximity can trigger. Unless manual, the fuse expires at projectile life zero."
+          "description": "Ticks before proximity can trigger. Unless manual, the fuse expires at projectile life zero.",
+          "x-unit": "tick"
         },
         "proximity": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Distance to an opponent's hurtbox that triggers; omit for fuse only."
+          "description": "Distance to an opponent's hurtbox that triggers; omit for fuse only.",
+          "x-unit": "px",
+          "x-axis": "xy"
         },
-        "radius": { "type": "number", "format": "double" },
+        "radius": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
         "sfx": { "type": ["string", "null"] },
         "fx": {
           "type": "array",
@@ -1737,8 +1976,8 @@
       "additionalProperties": false,
       "properties": {
         "slot": { "type": "string" },
-        "minRelease": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "autoRelease": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "minRelease": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
+        "autoRelease": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
         "releaseOnUp": {
           "type": "boolean",
           "description": "Release the special button to launch; otherwise a second special press launches.",
@@ -1754,7 +1993,8 @@
           "format": "uint32",
           "minimum": 0,
           "description": "Ticks during which any reflector is ignored after reflection.",
-          "default": 0
+          "default": 0,
+          "x-unit": "tick"
         },
         "hold": {
           "anyOf": [
@@ -1767,7 +2007,9 @@
           "type": "number",
           "format": "double",
           "description": "Vertical speed selected by the live stick during travel, zero for stationary construction.",
-          "default": 0.0
+          "default": 0.0,
+          "x-unit": "px/tick",
+          "x-axis": "y"
         },
         "hurtbox": {
           "anyOf": [
@@ -1792,14 +2034,23 @@
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Fighter-local point (x forward, y up) for the article's origin."
+          "description": "Fighter-local point (x forward, y up) for the article's origin.",
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
-        "bob": { "type": "number", "format": "double", "description": "Vertical breathing amplitude in pixels." },
+        "bob": {
+          "type": "number",
+          "format": "double",
+          "description": "Vertical breathing amplitude in pixels.",
+          "x-unit": "px",
+          "x-axis": "y"
+        },
         "period": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Breathing period in ticks. Required when `bob` is non-zero."
+          "description": "Breathing period in ticks. Required when `bob` is non-zero.",
+          "x-unit": "tick"
         },
         "hitboxes": {
           "type": "array",
@@ -1818,23 +2069,33 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Select the last stage whose construction age has been reached, frozen at release."
+          "description": "Select the last stage whose construction age has been reached, frozen at release.",
+          "x-unit": "tick"
         },
-        "startup": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "startup": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
         "autoStartup": {
           "type": ["integer", "null"],
           "format": "uint32",
           "minimum": 0,
-          "description": "Optional shorter windup for automatic release from standby. Hit windows shift by the same amount."
+          "description": "Optional shorter windup for automatic release from standby. Hit windows shift by the same amount.",
+          "x-unit": "tick"
         },
-        "frames": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "frames": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
         "vel": {
           "type": "array",
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px/tick",
+          "x-axis": ["x", "y"]
         },
-        "health": { "type": "number", "format": "double", "description": "Zero means indestructible.", "default": 0.0 },
+        "health": {
+          "type": "number",
+          "format": "double",
+          "description": "Zero means indestructible.",
+          "default": 0.0,
+          "x-unit": "damage"
+        },
         "hitboxes": {
           "type": "array",
           "items": { "$ref": "#/$defs/Hitbox" }
@@ -1869,17 +2130,21 @@
               "type": "array",
               "items": { "type": "number", "format": "double" },
               "minItems": 2,
-              "maxItems": 2
+              "maxItems": 2,
+              "x-unit": "px",
+              "x-axis": ["x", "y"]
             },
             "to": {
               "type": "array",
               "items": { "type": "number", "format": "double" },
               "minItems": 2,
-              "maxItems": 2
+              "maxItems": 2,
+              "x-unit": "px",
+              "x-axis": ["x", "y"]
             },
-            "width": { "type": "number", "format": "double" },
+            "width": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
             "color": { "$ref": "#/$defs/Color" },
-            "alpha": { "type": "number", "format": "double" },
+            "alpha": { "type": "number", "format": "double", "x-unit": "ratio" },
             "when": { "$ref": "#/$defs/ShapeWhen" }
           },
           "required": ["shape", "from", "to", "width", "color"]
@@ -1893,9 +2158,11 @@
               "type": "array",
               "items": { "type": "number", "format": "double" },
               "minItems": 2,
-              "maxItems": 2
+              "maxItems": 2,
+              "x-unit": "px",
+              "x-axis": ["x", "y"]
             },
-            "r": { "type": "number", "format": "double" },
+            "r": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
             "fill": {
               "anyOf": [
                 { "$ref": "#/$defs/Color" },
@@ -1908,8 +2175,8 @@
                 { "type": "null" }
               ]
             },
-            "width": { "type": "number", "format": "double" },
-            "alpha": { "type": "number", "format": "double" },
+            "width": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+            "alpha": { "type": "number", "format": "double", "x-unit": "ratio" },
             "when": { "$ref": "#/$defs/ShapeWhen" }
           },
           "required": ["shape", "at", "r"]
@@ -1926,7 +2193,9 @@
                 "items": { "type": "number", "format": "double" },
                 "minItems": 2,
                 "maxItems": 2
-              }
+              },
+              "x-unit": "px",
+              "x-axis": ["x", "y"]
             },
             "fill": {
               "anyOf": [
@@ -1940,8 +2209,8 @@
                 { "type": "null" }
               ]
             },
-            "width": { "type": "number", "format": "double" },
-            "alpha": { "type": "number", "format": "double" },
+            "width": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+            "alpha": { "type": "number", "format": "double", "x-unit": "ratio" },
             "when": { "$ref": "#/$defs/ShapeWhen" }
           },
           "required": ["shape", "points"]
@@ -1955,12 +2224,14 @@
               "type": "array",
               "items": { "type": "number", "format": "double" },
               "minItems": 2,
-              "maxItems": 2
+              "maxItems": 2,
+              "x-unit": "px",
+              "x-axis": ["x", "y"]
             },
-            "r": { "type": "number", "format": "double" },
+            "r": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
             "fill": { "$ref": "#/$defs/Color" },
-            "alpha": { "type": "number", "format": "double" },
-            "blink": { "type": "integer", "format": "uint32", "minimum": 0 },
+            "alpha": { "type": "number", "format": "double", "x-unit": "ratio" },
+            "blink": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
             "when": { "$ref": "#/$defs/ShapeWhen" }
           },
           "required": ["shape", "at", "r", "fill"],
@@ -1971,11 +2242,11 @@
           "additionalProperties": false,
           "properties": {
             "shape": { "type": "string", "const": "rect" },
-            "x": { "type": "number", "format": "double" },
-            "y": { "type": "number", "format": "double" },
-            "w": { "type": "number", "format": "double" },
-            "h": { "type": "number", "format": "double" },
-            "radius": { "type": "number", "format": "double" },
+            "x": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+            "y": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+            "w": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+            "h": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+            "radius": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
             "fill": {
               "anyOf": [
                 { "$ref": "#/$defs/Color" },
@@ -1988,8 +2259,8 @@
                 { "type": "null" }
               ]
             },
-            "width": { "type": "number", "format": "double" },
-            "alpha": { "type": "number", "format": "double" },
+            "width": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+            "alpha": { "type": "number", "format": "double", "x-unit": "ratio" },
             "when": { "$ref": "#/$defs/ShapeWhen" }
           },
           "required": ["shape", "x", "y", "w", "h"],
@@ -2003,7 +2274,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "width": { "type": "number", "format": "double" },
+        "width": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
         "color": { "$ref": "#/$defs/Color" }
       },
       "required": ["width", "color"]
@@ -2023,21 +2294,35 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "headRadius": { "type": "number", "format": "double" },
-        "torsoWidth": { "type": "number", "format": "double" },
-        "frontLimbWidth": { "type": "number", "format": "double" },
-        "backLimbWidth": { "type": "number", "format": "double" },
-        "glowWidth": { "type": "number", "format": "double", "description": "Soft glow drawn under the limbs." },
-        "torsoGlowWidth": { "type": "number", "format": "double" },
-        "headGlowRadius": { "type": "number", "format": "double" },
-        "headRing": { "type": "number", "format": "double", "description": "Head outline width and fill." },
+        "headRadius": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "torsoWidth": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "frontLimbWidth": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "backLimbWidth": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "glowWidth": {
+          "type": "number",
+          "format": "double",
+          "description": "Soft glow drawn under the limbs.",
+          "x-unit": "px",
+          "x-axis": "xy"
+        },
+        "torsoGlowWidth": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "headGlowRadius": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "headRing": {
+          "type": "number",
+          "format": "double",
+          "description": "Head outline width and fill.",
+          "x-unit": "px",
+          "x-axis": "xy"
+        },
         "headFill": { "$ref": "#/$defs/Color" },
         "eye": {
           "type": "array",
           "items": { "type": "number", "format": "double" },
           "minItems": 4,
           "maxItems": 4,
-          "description": "Eye rectangle `[x, y, w, h]` from the head center (x forward, y up, `(x, y)` = bottom-left corner)."
+          "description": "Eye rectangle `[x, y, w, h]` from the head center (x forward, y up, `(x, y)` = bottom-left corner).",
+          "x-unit": "px",
+          "x-axis": ["x", "y", "x", "y"]
         }
       },
       "required": [
@@ -2085,12 +2370,15 @@
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Rest translation in the parent's rotated coordinate system."
+          "description": "Rest translation in the parent's rotated coordinate system.",
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "angle": {
           "type": "number",
           "format": "double",
-          "description": "Rest rotation in degrees, counterclockwise, relative to the parent."
+          "description": "Rest rotation in degrees, counterclockwise, relative to the parent.",
+          "x-unit": "deg"
         },
         "shapes": {
           "type": "array",
@@ -2106,7 +2394,7 @@
       "properties": {
         "from": { "type": "string" },
         "to": { "type": "string" },
-        "width": { "type": "number", "format": "double" },
+        "width": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
         "color": { "$ref": "#/$defs/Color" }
       },
       "required": ["from", "to", "width", "color"]
@@ -2119,7 +2407,8 @@
         "loop": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Repeat every this many clock units."
+          "description": "Repeat every this many clock units.",
+          "x-unit": "tick"
         },
         "keys": {
           "type": "array",
@@ -2150,7 +2439,8 @@
         "angle": {
           "type": "number",
           "format": "double",
-          "description": "Resting angle in degrees (0 forward, 90 up). On a hand, it's added to the forearm's direction; otherwise\nabsolute. A phase's `attach` angle keys override it."
+          "description": "Resting angle in degrees (0 forward, 90 up). On a hand, it's added to the forearm's direction; otherwise\nabsolute. A phase's `attach` angle keys override it.",
+          "x-unit": "deg"
         },
         "hidden": { "type": "boolean", "description": "Not drawn unless a phase's `attach.show` window says so." },
         "behind": { "type": "boolean", "description": "Drawn behind the body." },
@@ -2199,9 +2489,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "elbow": { "type": "number", "format": "double" },
-        "hand": { "type": "number", "format": "double" },
-        "bend": { "type": "number", "format": "double" }
+        "elbow": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "hand": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "bend": { "type": "number", "format": "double", "x-unit": "deg" }
       },
       "required": ["elbow", "hand", "bend"]
     },
@@ -2209,8 +2499,8 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "inner": { "type": "number", "format": "double" },
-        "outer": { "type": "number", "format": "double" }
+        "inner": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "outer": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" }
       },
       "required": ["inner", "outer"]
     },
@@ -2226,8 +2516,8 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "deg": { "type": "number", "format": "double" },
-        "period": { "type": "number", "format": "double" }
+        "deg": { "type": "number", "format": "double", "x-unit": "deg" },
+        "period": { "type": "number", "format": "double", "x-unit": "tick" }
       },
       "required": ["deg", "period"]
     },
@@ -2238,59 +2528,86 @@
         "weight": {
           "type": "number",
           "format": "double",
-          "description": "Knockback taken multiplier. Lower = heavier."
+          "description": "Knockback taken multiplier. Lower = heavier.",
+          "x-unit": "ratio"
         },
         "pummelDamage": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Override the shared grab pummel damage."
+          "description": "Override the shared grab pummel damage.",
+          "x-unit": "damage"
         },
-        "runSpeed": { "type": "number", "format": "double" },
-        "runAccel": { "type": "number", "format": "double" },
+        "runSpeed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "x" },
+        "runAccel": { "type": "number", "format": "double", "x-unit": "px/tick2", "x-axis": "x" },
         "dashSpeed": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Initial dash speed, held for dashFrames, then easing into the run (default runSpeed × gait.dashSpeed)."
+          "description": "Initial dash speed, held for dashFrames, then easing into the run (default runSpeed × gait.dashSpeed).",
+          "x-unit": "px/tick",
+          "x-axis": "x"
         },
-        "dashFrames": { "type": ["integer", "null"], "format": "uint32", "minimum": 0 },
+        "dashFrames": { "type": ["integer", "null"], "format": "uint32", "minimum": 0, "x-unit": "tick" },
         "walkSpeed": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Full-tilt walk speed; defaults to runSpeed × gait.walkSpeed."
+          "description": "Full-tilt walk speed; defaults to runSpeed × gait.walkSpeed.",
+          "x-unit": "px/tick",
+          "x-axis": "x"
         },
         "groundFriction": {
           "type": "number",
           "format": "double",
-          "description": "Legacy (no `movement.ultimate`): idle and crouch velocity multiplier per frame."
+          "description": "Legacy (no `movement.ultimate`): idle and crouch velocity multiplier per frame.",
+          "x-unit": "ratio"
         },
         "traction": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Grounded slowdown in px/frame² with `movement.ultimate` (default its `traction`; Ultimate traction × 3.5)."
+          "description": "Grounded slowdown in px/frame² with `movement.ultimate` (default its `traction`; Ultimate traction × 3.5).",
+          "x-unit": "px/tick2",
+          "x-axis": "x"
         },
-        "jumpSpeed": { "type": "number", "format": "double", "description": "Full hop launch speed (upward)." },
-        "shortHopSpeed": { "type": "number", "format": "double" },
-        "airJumpSpeed": { "type": "number", "format": "double" },
-        "airJumpDrift": { "type": "number", "format": "double" },
-        "airJumps": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Mid-air jumps." },
-        "airSpeed": { "type": "number", "format": "double" },
+        "jumpSpeed": {
+          "type": "number",
+          "format": "double",
+          "description": "Full hop launch speed (upward).",
+          "x-unit": "px/tick",
+          "x-axis": "y"
+        },
+        "shortHopSpeed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "y" },
+        "airJumpSpeed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "y" },
+        "airJumpDrift": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "x" },
+        "airJumps": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Mid-air jumps.",
+          "x-unit": "count"
+        },
+        "airSpeed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "x" },
         "airAccel": {
           "type": "number",
           "format": "double",
-          "description": "Air drift acceleration (px/frame²). With `movement.ultimate` it also drives attacks, up specials and helpless\nfall, times that movement's per-kind multiplier and the phase `airAccelMult`."
+          "description": "Air drift acceleration (px/frame²). With `movement.ultimate` it also drives attacks, up specials and helpless\nfall, times that movement's per-kind multiplier and the phase `airAccelMult`.",
+          "x-unit": "px/tick2",
+          "x-axis": "x"
         },
         "airFriction": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Airborne slowdown in px/frame² with `movement.ultimate`: toward zero with the stick neutral, toward airSpeed\nwhen above it (default its `airFriction`; Ultimate air friction × 3.5)."
+          "description": "Airborne slowdown in px/frame² with `movement.ultimate`: toward zero with the stick neutral, toward airSpeed\nwhen above it (default its `airFriction`; Ultimate air friction × 3.5).",
+          "x-unit": "px/tick2",
+          "x-axis": "x"
         },
-        "gravity": { "type": "number", "format": "double" },
-        "fallSpeed": { "type": "number", "format": "double" },
-        "fastFallSpeed": { "type": "number", "format": "double" },
+        "gravity": { "type": "number", "format": "double", "x-unit": "px/tick2", "x-axis": "y" },
+        "fallSpeed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "y" },
+        "fastFallSpeed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "y" },
         "floatSpeed": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Positive downward speed cap while holding jump in normal Air control. Excludes attacks, hitstun,\nhelplessness, ledge/climb, airdodge and every other non-Air state. Omit to disable float."
+          "description": "Positive downward speed cap while holding jump in normal Air control. Excludes attacks, hitstun,\nhelplessness, ledge/climb, airdodge and every other non-Air state. Omit to disable float.",
+          "x-unit": "px/tick",
+          "x-axis": "y"
         }
       }
     },
@@ -2298,8 +2615,8 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "halfWidth": { "type": "number", "format": "double" },
-        "height": { "type": "number", "format": "double" }
+        "halfWidth": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "height": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" }
       }
     },
     "HurtboxesPartial": {
@@ -2315,10 +2632,10 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "x1": { "type": "number", "format": "double" },
-        "x2": { "type": "number", "format": "double" },
-        "y1": { "type": "number", "format": "double" },
-        "y2": { "type": "number", "format": "double" }
+        "x1": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "x2": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "y1": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+        "y2": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" }
       },
       "description": "Axis-aligned box in fighter-local space (x forward, y up from the feet)."
     },
@@ -2348,19 +2665,25 @@
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "holdPoint": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "heldAnchor": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         }
       }
     },
@@ -2372,29 +2695,40 @@
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "hangAnchor": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
-        "pullIn": { "type": ["number", "null"], "format": "double" },
-        "climbDistance": { "type": ["number", "null"], "format": "double" },
-        "rollDistance": { "type": ["number", "null"], "format": "double" },
-        "attackDistance": { "type": ["number", "null"], "format": "double" }
+        "pullIn": { "type": ["number", "null"], "format": "double", "x-unit": "px", "x-axis": "x" },
+        "climbDistance": { "type": ["number", "null"], "format": "double", "x-unit": "px", "x-axis": "x" },
+        "rollDistance": { "type": ["number", "null"], "format": "double", "x-unit": "px", "x-axis": "x" },
+        "attackDistance": { "type": ["number", "null"], "format": "double", "x-unit": "px", "x-axis": "x" }
       }
     },
     "AiPartial": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "reach": { "type": "number", "format": "double", "description": "How close the CPU wants to be to attack." },
+        "reach": {
+          "type": "number",
+          "format": "double",
+          "description": "How close the CPU wants to be to attack.",
+          "x-unit": "px",
+          "x-axis": "x"
+        },
         "counterChance": {
           "type": "number",
           "format": "double",
-          "description": "Chance to counter instead of shielding; zero skips the RNG call."
+          "description": "Chance to counter instead of shielding; zero skips the RNG call.",
+          "x-unit": "ratio"
         },
         "recoveryShieldCancel": {
           "type": ["string", "null"],
@@ -2463,7 +2797,8 @@
         "chargeDamage": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Damage bonus per held charge tick. Omit to use the global smash-charge divisor."
+          "description": "Damage bonus per held charge tick. Omit to use the global smash-charge divisor.",
+          "x-unit": "damage"
         },
         "variants": {
           "type": "array",
@@ -2516,9 +2851,10 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Frame the victim is released and hit."
+          "description": "Frame the victim is released and hit.",
+          "x-unit": "tick"
         },
-        "total": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "total": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
         "hit": { "$ref": "#/$defs/HitboxPartial", "description": "Geometry and window fields are ignored." },
         "ticks": {
           "type": "array",
@@ -2531,40 +2867,59 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "start": { "type": "integer", "format": "uint32", "minimum": 0, "description": "First active phase frame." },
+        "start": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "First active phase frame.",
+          "x-unit": "tick"
+        },
         "end": {
           "type": ["integer", "null"],
           "format": "uint32",
           "minimum": 0,
-          "description": "Last active phase frame (inclusive). Omit to stay active until the phase ends."
+          "description": "Last active phase frame (inclusive). Omit to stay active until the phase ends.",
+          "x-unit": "tick"
         },
         "x": {
           "type": "number",
           "format": "double",
-          "description": "Offset forward from the feet. Negative = behind."
+          "description": "Offset forward from the feet. Negative = behind.",
+          "x-unit": "px",
+          "x-axis": "x"
         },
-        "y": { "type": "number", "format": "double", "description": "Offset up from the feet." },
-        "r": { "type": "number", "format": "double", "description": "Radius." },
-        "damage": { "type": "number", "format": "double", "description": "Percent dealt." },
+        "y": {
+          "type": "number",
+          "format": "double",
+          "description": "Offset up from the feet.",
+          "x-unit": "px",
+          "x-axis": "y"
+        },
+        "r": { "type": "number", "format": "double", "description": "Radius.", "x-unit": "px", "x-axis": "xy" },
+        "damage": { "type": "number", "format": "double", "description": "Percent dealt.", "x-unit": "damage" },
         "bkb": {
           "type": "number",
           "format": "double",
-          "description": "Base knockback in reference units (converted by global.knockback.ultimate.launchSpeed).\nWindboxes use this as pixel-space force instead."
+          "description": "Base knockback in reference units (converted by global.knockback.ultimate.launchSpeed).\nWindboxes use this as pixel-space force instead.",
+          "x-unit": "kb"
         },
         "kbg": {
           "type": "number",
           "format": "double",
-          "description": "Knockback growth as a fraction (100% reference growth = 1)."
+          "description": "Knockback growth as a fraction (100% reference growth = 1).",
+          "x-unit": "ratio"
         },
         "angle": {
           "type": "number",
           "format": "double",
-          "description": "Launch angle in degrees. 0 = forward, 90 = straight up, negative = down."
+          "description": "Launch angle in degrees. 0 = forward, 90 = straight up, negative = down.",
+          "x-unit": "deg"
         },
         "groundAngle": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Optional launch angle for grounded victims (before the shared ground-bounce rule)."
+          "description": "Optional launch angle for grounded victims (before the shared ground-bounce rule).",
+          "x-unit": "deg"
         },
         "dir": { "$ref": "#/$defs/LaunchDirPartial" },
         "type": { "$ref": "#/$defs/HitTypePartial" },
@@ -2580,28 +2935,47 @@
           "type": ["integer", "null"],
           "format": "uint32",
           "minimum": 0,
-          "description": "Multi-hit: can hit the same victim/group again every this many move ticks (default: once until history clears)."
+          "description": "Multi-hit: can hit the same victim/group again every this many move ticks (default: once until history clears).",
+          "x-unit": "tick"
         },
         "group": {
           "type": "integer",
           "format": "uint8",
           "minimum": 0,
           "maximum": 255,
-          "description": "Independent hit identity within one move. A victim can be hit once per group, so later rows with the\nsame group are alternatives (early/late tiers, coverage changes) while a different group is a new hit\n(multi-hit sequences such as Diddy Kong's forward smash)."
+          "description": "Independent hit identity within one move. A victim can be hit once per group, so later rows with the\nsame group are alternatives (early/late tiers, coverage changes) while a different group is a new hit\n(multi-hit sequences such as Diddy Kong's forward smash).",
+          "x-unit": "none"
         },
         "hitstunMult": {
           "type": "number",
           "format": "double",
-          "description": "Multiplies the hitstun this box causes."
+          "description": "Multiplies the hitstun this box causes.",
+          "x-unit": "ratio"
         },
-        "hitstunAdd": { "type": "number", "format": "double", "description": "Flat frames added to hitstun." },
+        "hitstunAdd": {
+          "type": "number",
+          "format": "double",
+          "description": "Flat frames added to hitstun.",
+          "x-unit": "tick"
+        },
         "hitlagMult": {
           "type": "number",
           "format": "double",
-          "description": "Multiplies hitlag (freeze frames) on hit."
+          "description": "Multiplies hitlag (freeze frames) on hit.",
+          "x-unit": "ratio"
         },
-        "shieldDmgMult": { "type": "number", "format": "double", "description": "Multiplies shield damage." },
-        "shieldStunMult": { "type": "number", "format": "double", "description": "Multiplies shield stun." },
+        "shieldDmgMult": {
+          "type": "number",
+          "format": "double",
+          "description": "Multiplies shield damage.",
+          "x-unit": "ratio"
+        },
+        "shieldStunMult": {
+          "type": "number",
+          "format": "double",
+          "description": "Multiplies shield stun.",
+          "x-unit": "ratio"
+        },
         "counterDamage": {
           "type": "boolean",
           "description": "Counter strike: damage comes from the countered hit (see `Counter`). Inactive if nothing was countered."
@@ -2609,7 +2983,8 @@
         "heal": {
           "type": "number",
           "format": "double",
-          "description": "Fraction of the damage dealt that heals the attacker (Nosferatu drains health). Capped at the\nattacker's current damage."
+          "description": "Fraction of the damage dealt that heals the attacker (Nosferatu drains health). Capped at the\nattacker's current damage.",
+          "x-unit": "ratio"
         },
         "unblockable": {
           "type": "boolean",
@@ -2619,7 +2994,8 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "In a move, inactive below this many held charge ticks."
+          "description": "In a move, inactive below this many held charge ticks.",
+          "x-unit": "tick"
         },
         "frames": {
           "type": "array",
@@ -2629,7 +3005,9 @@
             "minItems": 4,
             "maxItems": 4
           },
-          "description": "Per-frame position/size `[frame, x, y, r]`. A frame without an entry uses the closest earlier entry, or\nx/y/r before the first entry. Omit for a box that stays put."
+          "description": "Per-frame position/size `[frame, x, y, r]`. A frame without an entry uses the closest earlier entry, or\nx/y/r before the first entry. Omit for a box that stays put.",
+          "x-unit": ["tick", "px", "px", "px"],
+          "x-axis": [null, "x", "y", "xy"]
         },
         "geometry": {
           "anyOf": [
@@ -2714,7 +3092,7 @@
           "properties": {
             "kind": { "type": "string", "const": "circle" },
             "center": { "$ref": "#/$defs/BoundPointPartial" },
-            "radius": { "type": "number", "format": "double" }
+            "radius": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" }
           }
         },
         {
@@ -2724,7 +3102,7 @@
             "kind": { "type": "string", "const": "capsule" },
             "a": { "$ref": "#/$defs/BoundPointPartial" },
             "b": { "$ref": "#/$defs/BoundPointPartial" },
-            "radius": { "type": "number", "format": "double" }
+            "radius": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" }
           }
         }
       ]
@@ -2738,7 +3116,9 @@
           "type": "array",
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         }
       },
       "description": "Feet-relative forward/up, or a named joint's rotated local space."
@@ -2753,25 +3133,48 @@
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Spawn offset from the feet (x forward, y up)."
+          "description": "Spawn offset from the feet (x forward, y up).",
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "vel": {
           "type": "array",
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Launch velocity (x forward, y up)."
+          "description": "Launch velocity (x forward, y up).",
+          "x-unit": "px/tick",
+          "x-axis": ["x", "y"]
         },
-        "r": { "type": "number", "format": "double", "description": "Collision radius." },
-        "life": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Frames alive." },
+        "r": {
+          "type": "number",
+          "format": "double",
+          "description": "Collision radius.",
+          "x-unit": "px",
+          "x-axis": "xy"
+        },
+        "life": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Frames alive.",
+          "x-unit": "tick"
+        },
         "max": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Max alive per owner. Spawning past it does nothing (plays `fullSfx` if set)."
+          "description": "Max alive per owner. Spawning past it does nothing (plays `fullSfx` if set).",
+          "x-unit": "count"
         },
-        "gravity": { "type": "number", "format": "double" },
-        "maxFall": { "type": ["number", "null"], "format": "double", "description": "Max fall speed (with gravity)." },
+        "gravity": { "type": "number", "format": "double", "x-unit": "px/tick2", "x-axis": "y" },
+        "maxFall": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Max fall speed (with gravity).",
+          "x-unit": "px/tick",
+          "x-axis": "y"
+        },
         "bounce": {
           "anyOf": [
             { "$ref": "#/$defs/BouncePartial" },
@@ -2789,7 +3192,9 @@
         "reflectVy": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Vertical speed (up) given when reflected by a counter. Omit to keep it."
+          "description": "Vertical speed (up) given when reflected by a counter. Omit to keep it.",
+          "x-unit": "px/tick",
+          "x-axis": "y"
         },
         "hit": {
           "$ref": "#/$defs/HitboxPartial",
@@ -2832,7 +3237,7 @@
           "type": "array",
           "items": { "$ref": "#/$defs/Shape" }
         },
-        "spin": { "type": "number", "format": "double" }
+        "spin": { "type": "number", "format": "double", "x-unit": "deg/px", "x-axis": "xy" }
       },
       "description": "A projectile spawned by a move's `spawn` event."
     },
@@ -2843,25 +3248,35 @@
         "restitution": {
           "type": "number",
           "format": "double",
-          "description": "Fraction of fall speed kept on a floor bounce."
+          "description": "Fraction of fall speed kept on a floor bounce.",
+          "x-unit": "ratio"
         },
-        "minSpeed": { "type": "number", "format": "double", "description": "Minimum bounce speed (up)." },
+        "minSpeed": {
+          "type": "number",
+          "format": "double",
+          "description": "Minimum bounce speed (up).",
+          "x-unit": "px/tick",
+          "x-axis": "y"
+        },
         "friction": {
           "type": "number",
           "format": "double",
-          "description": "Horizontal speed multiplier per floor bounce."
+          "description": "Horizontal speed multiplier per floor bounce.",
+          "x-unit": "ratio"
         },
         "maxBounces": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "After this many bounces, life drops to `fizzleLife`."
+          "description": "After this many bounces, life drops to `fizzleLife`.",
+          "x-unit": "count"
         },
-        "fizzleLife": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "fizzleLife": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
         "wallRestitution": {
           "type": "number",
           "format": "double",
-          "description": "Horizontal speed kept when hitting the stage's side walls."
+          "description": "Horizontal speed kept when hitting the stage's side walls.",
+          "x-unit": "ratio"
         },
         "sfx": { "type": ["string", "null"] }
       }
@@ -2873,39 +3288,50 @@
         "speed": {
           "type": "number",
           "format": "double",
-          "description": "New horizontal speed (in the hit's launch direction) and vertical speed (up)."
+          "description": "New horizontal speed (in the hit's launch direction) and vertical speed (up).",
+          "x-unit": "px/tick",
+          "x-axis": "x"
         },
-        "vy": { "type": "number", "format": "double" },
-        "life": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "vy": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "y" },
+        "life": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
         "cooldown": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Frames before it can be batted again."
+          "description": "Frames before it can be batted again.",
+          "x-unit": "tick"
         },
-        "hitlag": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Hitlag for the batter." }
+        "hitlag": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Hitlag for the batter.",
+          "x-unit": "tick"
+        }
       }
     },
     "ProjectileChargePartial": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "speed": { "type": "number", "format": "double" },
-        "damage": { "type": "number", "format": "double" },
-        "bkb": { "type": "number", "format": "double" },
+        "speed": { "type": "number", "format": "double", "x-unit": "ratio" },
+        "damage": { "type": "number", "format": "double", "x-unit": "ratio" },
+        "bkb": { "type": "number", "format": "double", "x-unit": "ratio" },
         "rehit": {
           "type": "number",
           "format": "double",
-          "description": "Frames added to `hit.rehit` per held charge tick (rounds at each hit check)."
+          "description": "Frames added to `hit.rehit` per held charge tick (rounds at each hit check).",
+          "x-unit": "tick"
         },
-        "radius": { "type": "number", "format": "double" },
-        "life": { "type": "number", "format": "double" },
+        "radius": { "type": "number", "format": "double", "x-unit": "ratio" },
+        "life": { "type": "number", "format": "double", "x-unit": "ratio" },
         "angleTo": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Launch angle at maximum charge; interpolated from the base hit's angle."
+          "description": "Launch angle at maximum charge; interpolated from the base hit's angle.",
+          "x-unit": "deg"
         },
-        "groundAngleTo": { "type": ["number", "null"], "format": "double" }
+        "groundAngleTo": { "type": ["number", "null"], "format": "double", "x-unit": "deg" }
       }
     },
     "ExplosionPartial": {
@@ -2920,14 +3346,17 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Ticks before proximity can trigger. Unless manual, the fuse expires at projectile life zero."
+          "description": "Ticks before proximity can trigger. Unless manual, the fuse expires at projectile life zero.",
+          "x-unit": "tick"
         },
         "proximity": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Distance to an opponent's hurtbox that triggers; omit for fuse only."
+          "description": "Distance to an opponent's hurtbox that triggers; omit for fuse only.",
+          "x-unit": "px",
+          "x-axis": "xy"
         },
-        "radius": { "type": "number", "format": "double" },
+        "radius": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
         "sfx": { "type": ["string", "null"] },
         "fx": {
           "type": "array",
@@ -2940,8 +3369,8 @@
       "additionalProperties": false,
       "properties": {
         "slot": { "type": "string" },
-        "minRelease": { "type": "integer", "format": "uint32", "minimum": 0 },
-        "autoRelease": { "type": "integer", "format": "uint32", "minimum": 0 },
+        "minRelease": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
+        "autoRelease": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
         "releaseOnUp": {
           "type": "boolean",
           "description": "Release the special button to launch; otherwise a second special press launches.",
@@ -2957,7 +3386,8 @@
           "format": "uint32",
           "minimum": 0,
           "description": "Ticks during which any reflector is ignored after reflection.",
-          "default": 0
+          "default": 0,
+          "x-unit": "tick"
         },
         "hold": {
           "anyOf": [
@@ -2970,7 +3400,9 @@
           "type": "number",
           "format": "double",
           "description": "Vertical speed selected by the live stick during travel, zero for stationary construction.",
-          "default": 0.0
+          "default": 0.0,
+          "x-unit": "px/tick",
+          "x-axis": "y"
         },
         "hurtbox": {
           "anyOf": [
@@ -2994,14 +3426,23 @@
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Fighter-local point (x forward, y up) for the article's origin."
+          "description": "Fighter-local point (x forward, y up) for the article's origin.",
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
-        "bob": { "type": "number", "format": "double", "description": "Vertical breathing amplitude in pixels." },
+        "bob": {
+          "type": "number",
+          "format": "double",
+          "description": "Vertical breathing amplitude in pixels.",
+          "x-unit": "px",
+          "x-axis": "y"
+        },
         "period": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Breathing period in ticks. Required when `bob` is non-zero."
+          "description": "Breathing period in ticks. Required when `bob` is non-zero.",
+          "x-unit": "tick"
         },
         "hitboxes": {
           "type": "array",
@@ -3026,21 +3467,35 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "headRadius": { "type": "number", "format": "double" },
-        "torsoWidth": { "type": "number", "format": "double" },
-        "frontLimbWidth": { "type": "number", "format": "double" },
-        "backLimbWidth": { "type": "number", "format": "double" },
-        "glowWidth": { "type": "number", "format": "double", "description": "Soft glow drawn under the limbs." },
-        "torsoGlowWidth": { "type": "number", "format": "double" },
-        "headGlowRadius": { "type": "number", "format": "double" },
-        "headRing": { "type": "number", "format": "double", "description": "Head outline width and fill." },
+        "headRadius": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "torsoWidth": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "frontLimbWidth": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "backLimbWidth": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "glowWidth": {
+          "type": "number",
+          "format": "double",
+          "description": "Soft glow drawn under the limbs.",
+          "x-unit": "px",
+          "x-axis": "xy"
+        },
+        "torsoGlowWidth": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "headGlowRadius": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "xy" },
+        "headRing": {
+          "type": "number",
+          "format": "double",
+          "description": "Head outline width and fill.",
+          "x-unit": "px",
+          "x-axis": "xy"
+        },
         "headFill": { "$ref": "#/$defs/ColorPartial" },
         "eye": {
           "type": "array",
           "items": { "type": "number", "format": "double" },
           "minItems": 4,
           "maxItems": 4,
-          "description": "Eye rectangle `[x, y, w, h]` from the head center (x forward, y up, `(x, y)` = bottom-left corner)."
+          "description": "Eye rectangle `[x, y, w, h]` from the head center (x forward, y up, `(x, y)` = bottom-left corner).",
+          "x-unit": "px",
+          "x-axis": ["x", "y", "x", "y"]
         }
       },
       "description": "Drawing style of the stick figure."
@@ -3080,80 +3535,105 @@
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "shoulder": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "hip": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "elbowF": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Front arm (drawn over the body)."
+          "description": "Front arm (drawn over the body).",
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "handF": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "elbowB": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Back arm (drawn behind, darker)."
+          "description": "Back arm (drawn behind, darker).",
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "handB": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "kneeF": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "footF": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "kneeB": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "footB": {
           "type": ["array", "null"],
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "rot": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Whole-body rotation in degrees, positive = pitching forward, around `(0, pivot)`."
+          "description": "Whole-body rotation in degrees, positive = pitching forward, around `(0, pivot)`.",
+          "x-unit": "deg"
         },
-        "pivot": { "type": ["number", "null"], "format": "double" },
+        "pivot": { "type": ["number", "null"], "format": "double", "x-unit": "px", "x-axis": "y" },
         "offsetY": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Vertical offset of the whole figure (up)."
+          "description": "Vertical offset of the whole figure (up).",
+          "x-unit": "px",
+          "x-axis": "y"
         }
       },
       "description": "Joint positions in fighter-local space (x forward, y up, feet at the origin). A pose may be partial: missing\njoints come from `from` (another named pose), or from the `stand` pose."
@@ -3167,12 +3647,15 @@
           "items": { "type": "number", "format": "double" },
           "minItems": 2,
           "maxItems": 2,
-          "description": "Replaces the rest translation; it is not an additive offset."
+          "description": "Replaces the rest translation; it is not an additive offset.",
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
         },
         "angle": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Replaces the rest angle. Keep angles unwrapped when animating through a full turn."
+          "description": "Replaces the rest angle. Keep angles unwrapped when animating through a full turn.",
+          "x-unit": "deg"
         }
       }
     },
@@ -3184,7 +3667,8 @@
         "loop": {
           "type": ["number", "null"],
           "format": "double",
-          "description": "Repeat every this many clock units."
+          "description": "Repeat every this many clock units.",
+          "x-unit": "tick"
         },
         "keys": {
           "type": "array",

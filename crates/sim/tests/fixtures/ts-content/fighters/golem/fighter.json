@@ -1,0 +1,1865 @@
+{
+  "$schema": "../../schema/fighter.schema.json",
+  "schemaVersion": 1,
+  "extends": "base",
+  "name": "Golem",
+  "tagline": "A walking mountain with a fragile return",
+  "blurb": "Heavy stone fists · special: seismic pound · side: shoulder charge · up: rock launch · down: stone skin",
+  "moves": {
+    "jab": {
+      "name": "Gravel Knuckle",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 21,
+          "hitboxes": [
+            {
+              "start": 6,
+              "end": 10,
+              "x": 38,
+              "y": 45,
+              "r": 22,
+              "damage": 5,
+              "bkb": 13.6054421769,
+              "kbg": 0.6530612245,
+              "angle": 30
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "back" },
+            {
+              "at": 1,
+              "pose": {
+                "from": "back",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [16.0, 0.0],
+                "kneeF": [10.536594, 13.199665],
+                "footB": [-18.0, -0.0],
+                "kneeB": [-9.44529, 12.87046],
+                "head": [-12.353764, 56.669798],
+                "shoulder": [-8.939296, 43.967774],
+                "hip": [-0.780844, 24.746961],
+                "elbowF": [7.951688, 36.777874],
+                "handF": [14.12857, 26.392976],
+                "elbowB": [-4.195312, 37.448985],
+                "handB": [4.414781, 32.363093]
+              },
+              "lerp": true
+            },
+            { "at": 6, "pose": "stonePunch", "lerp": true },
+            { "at": 10, "pose": "stonePunch" },
+            {
+              "at": 12,
+              "pose": {
+                "from": "stonePunch",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [28.0, 0.0],
+                "kneeF": [14.777601, 15.514819],
+                "footB": [-24.0, -0.0],
+                "kneeB": [-17.352763, 13.959618],
+                "head": [9.324824, 68.561396],
+                "shoulder": [5.161069, 52.824079],
+                "hip": [-5.645716, 28.550361],
+                "elbowF": [26.662558, 45.228952],
+                "handF": [53.370335, 40.259577],
+                "elbowB": [-20.577413, 43.684575],
+                "handB": [-27.733111, 28.166972]
+              },
+              "lerp": true
+            },
+            {
+              "at": 16,
+              "pose": {
+                "from": "stand",
+                "rot": 0,
+                "footF": [9.0, -0.0],
+                "kneeF": [6.145942, 14.046125],
+                "footB": [-9.0, -0.0],
+                "kneeB": [-4.853198, 13.987491],
+                "head": [-0.762251, 63.988824],
+                "shoulder": [-0.351808, 49.994842],
+                "hip": [0.293173, 28.004298],
+                "elbowF": [7.996561, 38.234539],
+                "handF": [13.316903, 27.385854],
+                "elbowB": [-6.996991, 37.794779],
+                "handB": [-10.672781, 26.682238],
+                "offsetY": 0
+              },
+              "lerp": true
+            },
+            { "at": 20, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 6, "sfx": "swing" }
+          ]
+        }
+      ]
+    },
+    "ftilt": {
+      "name": "Boulder Fist",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 33,
+          "hitboxes": [
+            {
+              "start": 8,
+              "end": 12,
+              "x": 52,
+              "y": 45,
+              "r": 25,
+              "damage": 12,
+              "bkb": 27.7551020408,
+              "kbg": 0.7836734694,
+              "angle": 38
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "back" },
+            {
+              "at": 1,
+              "pose": {
+                "from": "back",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [16.0, 0.0],
+                "kneeF": [10.757548, 12.874427],
+                "footB": [-18.0, -0.0],
+                "kneeB": [-9.205516, 12.405124],
+                "head": [-13.318442, 55.164799],
+                "shoulder": [-9.309417, 42.637719],
+                "hip": [-0.254598, 23.822559],
+                "elbowF": [7.901507, 36.251476],
+                "handF": [14.560728, 26.169076],
+                "elbowB": [-4.263622, 36.349639],
+                "handB": [4.576491, 31.674984]
+              },
+              "lerp": true
+            },
+            {
+              "at": 5,
+              "pose": {
+                "from": "back",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [16.0, -0.0],
+                "kneeF": [11.077353, 12.405736],
+                "footB": [-18.0, -0.0],
+                "kneeB": [-8.845167, 11.728332],
+                "head": [-14.709362, 52.823802],
+                "shoulder": [-9.825598, 40.61115],
+                "hip": [0.535467, 22.48249],
+                "elbowF": [7.793387, 35.45641],
+                "handF": [15.148068, 25.869509],
+                "elbowB": [-4.348296, 34.695142],
+                "handB": [4.799899, 30.656512]
+              },
+              "lerp": true
+            },
+            { "at": 8, "pose": "stonePunch", "lerp": true },
+            { "at": 12, "pose": "stonePunch" },
+            {
+              "at": 14,
+              "pose": {
+                "from": "stonePunch",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [28.0, -0.0],
+                "kneeF": [14.680936, 15.311905],
+                "footB": [-24.0, -0.0],
+                "kneeB": [-17.495252, 13.950033],
+                "head": [10.306564, 67.893001],
+                "shoulder": [5.650543, 52.294236],
+                "hip": [-5.913366, 28.371945],
+                "elbowF": [26.902854, 44.027479],
+                "handF": [53.44136, 38.221645],
+                "elbowB": [-20.362317, 43.967707],
+                "handB": [-28.001904, 28.682528]
+              },
+              "lerp": true
+            },
+            {
+              "at": 23,
+              "pose": {
+                "from": "stand",
+                "rot": 0,
+                "footF": [9.0, 0.0],
+                "kneeF": [6.208063, 14.0672],
+                "footB": [-9.0, -0.0],
+                "kneeB": [-4.790183, 13.983447],
+                "head": [-1.088767, 63.977194],
+                "shoulder": [-0.502508, 49.989474],
+                "hip": [0.418757, 28.008772],
+                "elbowF": [7.992983, 38.335005],
+                "handF": [13.449229, 27.554032],
+                "elbowB": [-6.99386, 37.70687],
+                "handB": [-10.529719, 26.549017],
+                "offsetY": 0
+              },
+              "lerp": true
+            },
+            { "at": 32, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 8, "sfx": "swing" }
+          ]
+        }
+      ]
+    },
+    "utilt": {
+      "name": "Quarry Lift",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 32,
+          "hitboxes": [
+            {
+              "start": 8,
+              "end": 12,
+              "x": 4,
+              "y": 99,
+              "r": 30,
+              "damage": 11,
+              "bkb": 28.1318681319,
+              "kbg": 0.7736263736,
+              "angle": 88
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "back" },
+            {
+              "at": 1,
+              "pose": {
+                "from": "back",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [16.0, 0.0],
+                "kneeF": [10.757548, 12.874427],
+                "footB": [-18.0, -0.0],
+                "kneeB": [-9.205516, 12.405124],
+                "head": [-13.318442, 55.164799],
+                "shoulder": [-9.309417, 42.637719],
+                "hip": [-0.254598, 23.822559],
+                "elbowF": [7.901507, 36.251476],
+                "handF": [14.560728, 26.169076],
+                "elbowB": [-4.263622, 36.349639],
+                "handB": [4.576491, 31.674984]
+              },
+              "lerp": true
+            },
+            {
+              "at": 5,
+              "pose": {
+                "from": "back",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [16.0, -0.0],
+                "kneeF": [11.077353, 12.405736],
+                "footB": [-18.0, -0.0],
+                "kneeB": [-8.845167, 11.728332],
+                "head": [-14.709362, 52.823802],
+                "shoulder": [-9.825598, 40.61115],
+                "hip": [0.535467, 22.48249],
+                "elbowF": [7.793387, 35.45641],
+                "handF": [15.148068, 25.869509],
+                "elbowB": [-4.348296, 34.695142],
+                "handB": [4.799899, 30.656512]
+              },
+              "lerp": true
+            },
+            { "at": 8, "pose": "stoneLift", "lerp": true },
+            { "at": 12, "pose": "stoneLift" },
+            {
+              "at": 14,
+              "pose": {
+                "from": "stoneLift",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [9.0, -0.0],
+                "kneeF": [5.46914, 13.270598],
+                "footB": [-9.0, -0.0],
+                "kneeB": [-5.519903, 13.479655],
+                "head": [3.344911, 68.624701],
+                "shoulder": [1.254342, 48.734263],
+                "hip": [-1.045285, 26.854781],
+                "elbowF": [28.781363, 81.033846],
+                "handF": [14.592231, 108.668399],
+                "elbowB": [-18.955688, 86.051212],
+                "handB": [0.668925, 110.131798]
+              },
+              "lerp": true
+            },
+            {
+              "at": 22,
+              "pose": {
+                "from": "stand",
+                "rot": 0,
+                "footF": [9.0, 0.0],
+                "kneeF": [6.208063, 14.0672],
+                "footB": [-9.0, -0.0],
+                "kneeB": [-4.790183, 13.983447],
+                "head": [-1.088767, 63.977194],
+                "shoulder": [-0.502508, 49.989474],
+                "hip": [0.418757, 28.008772],
+                "elbowF": [7.992983, 38.335005],
+                "handF": [13.449229, 27.554032],
+                "elbowB": [-6.99386, 37.70687],
+                "handB": [-10.529719, 26.549017],
+                "offsetY": 0
+              },
+              "lerp": true
+            },
+            { "at": 31, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 8, "sfx": "swing" }
+          ]
+        }
+      ]
+    },
+    "dtilt": {
+      "name": "Fault Line",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 29,
+          "hitboxes": [
+            {
+              "start": 7,
+              "end": 11,
+              "x": 39,
+              "y": 12,
+              "r": 25,
+              "damage": 10,
+              "bkb": 24.7619047619,
+              "kbg": 0.6095238095,
+              "angle": 25
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "back" },
+            {
+              "at": 1,
+              "pose": {
+                "from": "back",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [16.0, 0.0],
+                "kneeF": [10.757548, 12.874427],
+                "footB": [-18.0, -0.0],
+                "kneeB": [-9.205516, 12.405124],
+                "head": [-13.318442, 55.164799],
+                "shoulder": [-9.309417, 42.637719],
+                "hip": [-0.254598, 23.822559],
+                "elbowF": [7.901507, 36.251476],
+                "handF": [14.560728, 26.169076],
+                "elbowB": [-4.263622, 36.349639],
+                "handB": [4.576491, 31.674984]
+              },
+              "lerp": true
+            },
+            { "at": 7, "pose": "crouch", "lerp": true },
+            { "at": 11, "pose": "crouch" },
+            {
+              "at": 13,
+              "pose": {
+                "from": "crouch",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [14.0, 0.0],
+                "kneeF": [9.251866, 11.124761],
+                "footB": [-12.0, 0.0],
+                "kneeB": [-8.929799, 9.658359],
+                "head": [7.221473, 48.107092],
+                "shoulder": [2.983566, 36.486415],
+                "hip": [-2.090569, 16.909562],
+                "elbowF": [10.888978, 25.600439],
+                "handF": [16.019882, 17.017094],
+                "elbowB": [-6.803359, 29.470996],
+                "handB": [-11.617674, 21.932934]
+              },
+              "lerp": true
+            },
+            {
+              "at": 20,
+              "pose": {
+                "from": "stand",
+                "rot": 0,
+                "footF": [9.0, 0.0],
+                "kneeF": [6.208063, 14.0672],
+                "footB": [-9.0, -0.0],
+                "kneeB": [-4.790183, 13.983447],
+                "head": [-1.088767, 63.977194],
+                "shoulder": [-0.502508, 49.989474],
+                "hip": [0.418757, 28.008772],
+                "elbowF": [7.992983, 38.335005],
+                "handF": [13.449229, 27.554032],
+                "elbowB": [-6.99386, 37.70687],
+                "handB": [-10.529719, 26.549017],
+                "offsetY": 0
+              },
+              "lerp": true
+            },
+            { "at": 28, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 7, "sfx": "swing" }
+          ]
+        }
+      ]
+    },
+    "dashatk": {
+      "name": "Heavy Step",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 40,
+          "hitboxes": [
+            {
+              "start": 8,
+              "end": 12,
+              "x": 35,
+              "y": 43,
+              "r": 32,
+              "damage": 12,
+              "bkb": 35.1020408163,
+              "kbg": 0.587755102,
+              "angle": 55
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "back" },
+            {
+              "at": 1,
+              "pose": {
+                "from": "back",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [16.0, 0.0],
+                "kneeF": [10.757548, 12.874427],
+                "footB": [-18.0, -0.0],
+                "kneeB": [-9.205516, 12.405124],
+                "head": [-13.318442, 55.164799],
+                "shoulder": [-9.309417, 42.637719],
+                "hip": [-0.254598, 23.822559],
+                "elbowF": [7.901507, 36.251476],
+                "handF": [14.560728, 26.169076],
+                "elbowB": [-4.263622, 36.349639],
+                "handB": [4.576491, 31.674984]
+              },
+              "lerp": true
+            },
+            {
+              "at": 5,
+              "pose": {
+                "from": "back",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [16.0, -0.0],
+                "kneeF": [11.077353, 12.405736],
+                "footB": [-18.0, -0.0],
+                "kneeB": [-8.845167, 11.728332],
+                "head": [-14.709362, 52.823802],
+                "shoulder": [-9.825598, 40.61115],
+                "hip": [0.535467, 22.48249],
+                "elbowF": [7.793387, 35.45641],
+                "handF": [15.148068, 25.869509],
+                "elbowB": [-4.348296, 34.695142],
+                "handB": [4.799899, 30.656512]
+              },
+              "lerp": true
+            },
+            { "at": 8, "pose": "lean", "lerp": true },
+            { "at": 12, "pose": "lean" },
+            {
+              "at": 14,
+              "pose": {
+                "from": "lean",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [20.0, 1e-6],
+                "kneeF": [13.455446, 13.009277],
+                "footB": [-20.0, -0.0],
+                "kneeB": [-10.522642, 13.427391],
+                "head": [10.36033, 58.837776],
+                "shoulder": [7.012416, 46.118048],
+                "hip": [-1.045285, 26.854781],
+                "elbowF": [7.956175, 35.963772],
+                "handF": [11.778972, 24.501389],
+                "elbowB": [-5.758074, 39.416215],
+                "handB": [-16.121407, 36.483412]
+              },
+              "lerp": true
+            },
+            {
+              "at": 26,
+              "pose": {
+                "from": "stand",
+                "rot": 0,
+                "footF": [9.0, 0.0],
+                "kneeF": [6.208063, 14.0672],
+                "footB": [-9.0, -0.0],
+                "kneeB": [-4.790183, 13.983447],
+                "head": [-1.088767, 63.977194],
+                "shoulder": [-0.502508, 49.989474],
+                "hip": [0.418757, 28.008772],
+                "elbowF": [7.992983, 38.335005],
+                "handF": [13.449229, 27.554032],
+                "elbowB": [-6.99386, 37.70687],
+                "handB": [-10.529719, 26.549017],
+                "offsetY": 0
+              },
+              "lerp": true
+            },
+            { "at": 39, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 8, "sfx": "swing" }
+          ]
+        }
+      ]
+    },
+    "fsmash": {
+      "name": "Monolith",
+      "phases": [
+        {
+          "name": "windup",
+          "frames": 18,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" },
+            {
+              "at": 6,
+              "pose": {
+                "from": "stoneBrace",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [14.0, -0.0],
+                "kneeF": [10.218394, 11.797686],
+                "footB": [-12.0, 0.0],
+                "kneeB": [-7.716317, 9.64162],
+                "head": [5.62011, 49.582543],
+                "shoulder": [2.99852, 37.494232],
+                "hip": [0.628215, 17.409869],
+                "elbowF": [23.051472, 36.123434],
+                "handF": [16.269164, 60.922634],
+                "elbowB": [-22.925829, 34.678539],
+                "handB": [-17.714059, 59.854668]
+              },
+              "lerp": true
+            },
+            {
+              "at": 16,
+              "pose": {
+                "from": "stoneBrace",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [14.0, -0.0],
+                "kneeF": [10.380118, 11.650427],
+                "footB": [-12.0, 0.0],
+                "kneeB": [-7.502426, 9.378698],
+                "head": [5.331532, 49.26157],
+                "shoulder": [2.995467, 37.114851],
+                "hip": [1.099004, 16.980218],
+                "elbowF": [23.07515, 36.216876],
+                "handF": [15.710461, 60.849402],
+                "elbowB": [-22.855349, 33.689168],
+                "handB": [-18.238169, 58.981096]
+              },
+              "lerp": true
+            }
+          ],
+          "armorThreshold": 5,
+          "charge": { "frame": 8 },
+          "transitions": [
+            { "on": "timeout", "to": "strike" }
+          ]
+        },
+        {
+          "name": "strike",
+          "frames": 37,
+          "hitboxes": [
+            {
+              "start": 0,
+              "end": 4,
+              "x": 58,
+              "y": 43,
+              "r": 30,
+              "damage": 22,
+              "bkb": 58.5714285714,
+              "kbg": 0.7238095238,
+              "angle": 35
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stonePunch" },
+            { "at": 4, "pose": "stonePunch" },
+            {
+              "at": 6,
+              "pose": {
+                "from": "stonePunch",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [28.0, 0.0],
+                "kneeF": [14.583601, 15.112041],
+                "footB": [-24.0, 0.0],
+                "kneeB": [-17.632318, 13.944838],
+                "head": [11.278133, 67.193922],
+                "shoulder": [6.134441, 51.749103],
+                "hip": [-6.175179, 28.201847],
+                "elbowF": [27.1166, 42.818874],
+                "handF": [53.459645, 36.18231],
+                "elbowB": [-20.127127, 44.243766],
+                "handB": [-28.243063, 29.206094]
+              },
+              "lerp": true
+            },
+            {
+              "at": 21,
+              "pose": {
+                "from": "stand",
+                "rot": 0,
+                "footF": [9.0, 0.0],
+                "kneeF": [6.269914, 14.089052],
+                "footB": [-9.0, -0.0],
+                "kneeB": [-4.727122, 13.980197],
+                "head": [-1.415111, 63.961461],
+                "shoulder": [-0.653128, 49.982213],
+                "hip": [0.544274, 28.014823],
+                "elbowF": [7.988142, 38.435419],
+                "handF": [13.579432, 27.723861],
+                "elbowB": [-6.989624, 37.619008],
+                "handB": [-10.384994, 26.417604],
+                "offsetY": 0
+              },
+              "lerp": true
+            },
+            { "at": 36, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 0, "sfx": "smash" }
+          ]
+        }
+      ]
+    },
+    "usmash": {
+      "name": "Mountain Rise",
+      "phases": [
+        {
+          "name": "windup",
+          "frames": 18,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" },
+            {
+              "at": 6,
+              "pose": {
+                "from": "stoneBrace",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [14.0, -0.0],
+                "kneeF": [10.218394, 11.797686],
+                "footB": [-12.0, 0.0],
+                "kneeB": [-7.716317, 9.64162],
+                "head": [5.62011, 49.582543],
+                "shoulder": [2.99852, 37.494232],
+                "hip": [0.628215, 17.409869],
+                "elbowF": [23.051472, 36.123434],
+                "handF": [16.269164, 60.922634],
+                "elbowB": [-22.925829, 34.678539],
+                "handB": [-17.714059, 59.854668]
+              },
+              "lerp": true
+            },
+            {
+              "at": 16,
+              "pose": {
+                "from": "stoneBrace",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [14.0, -0.0],
+                "kneeF": [10.380118, 11.650427],
+                "footB": [-12.0, 0.0],
+                "kneeB": [-7.502426, 9.378698],
+                "head": [5.331532, 49.26157],
+                "shoulder": [2.995467, 37.114851],
+                "hip": [1.099004, 16.980218],
+                "elbowF": [23.07515, 36.216876],
+                "handF": [15.710461, 60.849402],
+                "elbowB": [-22.855349, 33.689168],
+                "handB": [-18.238169, 58.981096]
+              },
+              "lerp": true
+            }
+          ],
+          "armorThreshold": 5,
+          "charge": { "frame": 8 },
+          "transitions": [
+            { "on": "timeout", "to": "strike" }
+          ]
+        },
+        {
+          "name": "strike",
+          "frames": 37,
+          "hitboxes": [
+            {
+              "start": 0,
+              "end": 5,
+              "x": 0,
+              "y": 112,
+              "r": 36,
+              "damage": 19,
+              "bkb": 46.8027210884,
+              "kbg": 0.7836734694,
+              "angle": 88
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stoneLift" },
+            { "at": 5, "pose": "stoneLift" },
+            {
+              "at": 7,
+              "pose": {
+                "from": "stoneLift",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [9.0, 0.0],
+                "kneeF": [5.307544, 13.062688],
+                "footB": [-9.0, 0.0],
+                "kneeB": [-5.673952, 13.334119],
+                "head": [4.342898, 68.143931],
+                "shoulder": [1.628587, 48.328974],
+                "hip": [-1.357156, 26.532522],
+                "elbowF": [30.15658, 79.747975],
+                "handF": [16.842472, 107.814583],
+                "elbowB": [-17.399316, 86.262322],
+                "handB": [2.972002, 109.714601]
+              },
+              "lerp": true
+            },
+            {
+              "at": 21,
+              "pose": {
+                "from": "stand",
+                "rot": 0,
+                "footF": [9.0, 0.0],
+                "kneeF": [6.269914, 14.089052],
+                "footB": [-9.0, -0.0],
+                "kneeB": [-4.727122, 13.980197],
+                "head": [-1.415111, 63.961461],
+                "shoulder": [-0.653128, 49.982213],
+                "hip": [0.544274, 28.014823],
+                "elbowF": [7.988142, 38.435419],
+                "handF": [13.579432, 27.723861],
+                "elbowB": [-6.989624, 37.619008],
+                "handB": [-10.384994, 26.417604],
+                "offsetY": 0
+              },
+              "lerp": true
+            },
+            { "at": 36, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 0, "sfx": "smash" }
+          ]
+        }
+      ]
+    },
+    "dsmash": {
+      "name": "Tectonic Split",
+      "phases": [
+        {
+          "name": "windup",
+          "frames": 18,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" },
+            {
+              "at": 6,
+              "pose": {
+                "from": "stoneBrace",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [14.0, -0.0],
+                "kneeF": [10.218394, 11.797686],
+                "footB": [-12.0, 0.0],
+                "kneeB": [-7.716317, 9.64162],
+                "head": [5.62011, 49.582543],
+                "shoulder": [2.99852, 37.494232],
+                "hip": [0.628215, 17.409869],
+                "elbowF": [23.051472, 36.123434],
+                "handF": [16.269164, 60.922634],
+                "elbowB": [-22.925829, 34.678539],
+                "handB": [-17.714059, 59.854668]
+              },
+              "lerp": true
+            },
+            {
+              "at": 16,
+              "pose": {
+                "from": "stoneBrace",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [14.0, -0.0],
+                "kneeF": [10.380118, 11.650427],
+                "footB": [-12.0, 0.0],
+                "kneeB": [-7.502426, 9.378698],
+                "head": [5.331532, 49.26157],
+                "shoulder": [2.995467, 37.114851],
+                "hip": [1.099004, 16.980218],
+                "elbowF": [23.07515, 36.216876],
+                "handF": [15.710461, 60.849402],
+                "elbowB": [-22.855349, 33.689168],
+                "handB": [-18.238169, 58.981096]
+              },
+              "lerp": true
+            }
+          ],
+          "armorThreshold": 5,
+          "charge": { "frame": 8 },
+          "transitions": [
+            { "on": "timeout", "to": "strike" }
+          ]
+        },
+        {
+          "name": "strike",
+          "frames": 37,
+          "hitboxes": [
+            {
+              "start": 0,
+              "end": 5,
+              "x": 48,
+              "y": 13,
+              "r": 32,
+              "damage": 17,
+              "bkb": 37.7944862155,
+              "kbg": 0.769924812,
+              "angle": 28,
+              "dir": "away"
+            },
+            {
+              "start": 0,
+              "end": 5,
+              "x": -48,
+              "y": 13,
+              "r": 32,
+              "damage": 17,
+              "bkb": 37.7944862155,
+              "kbg": 0.769924812,
+              "angle": 28,
+              "dir": "away"
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 5, "pose": "crouch" },
+            {
+              "at": 7,
+              "pose": {
+                "from": "crouch",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [14.0, 0.0],
+                "kneeF": [9.022234, 10.877619],
+                "footB": [-12.0, 0.0],
+                "kneeB": [-9.202936, 9.574701],
+                "head": [7.573074, 47.514681],
+                "shoulder": [2.972244, 36.032853],
+                "hip": [-2.714311, 16.625043],
+                "elbowF": [10.531818, 24.903935],
+                "handF": [15.390581, 16.163659],
+                "elbowB": [-7.030212, 29.328311],
+                "handB": [-12.078928, 21.94519]
+              },
+              "lerp": true
+            },
+            {
+              "at": 21,
+              "pose": {
+                "from": "stand",
+                "rot": 0,
+                "footF": [9.0, 0.0],
+                "kneeF": [6.269914, 14.089052],
+                "footB": [-9.0, -0.0],
+                "kneeB": [-4.727122, 13.980197],
+                "head": [-1.415111, 63.961461],
+                "shoulder": [-0.653128, 49.982213],
+                "hip": [0.544274, 28.014823],
+                "elbowF": [7.988142, 38.435419],
+                "handF": [13.579432, 27.723861],
+                "elbowB": [-6.989624, 37.619008],
+                "handB": [-10.384994, 26.417604],
+                "offsetY": 0
+              },
+              "lerp": true
+            },
+            { "at": 36, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 0, "sfx": "smash" }
+          ]
+        }
+      ]
+    },
+    "nair": {
+      "name": "Rolling Stone",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 38,
+          "hitboxes": [
+            {
+              "start": 10,
+              "end": 15,
+              "x": 0,
+              "y": 43,
+              "r": 43,
+              "damage": 10,
+              "bkb": 21.9047619048,
+              "kbg": 0.6857142857,
+              "angle": 50
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            {
+              "at": 1,
+              "pose": { "from": "air", "rot": -4.5 },
+              "lerp": true
+            },
+            {
+              "at": 7,
+              "pose": { "from": "air", "rot": -6.525 },
+              "lerp": true
+            },
+            { "at": 10, "pose": "curl", "lerp": true },
+            { "at": 15, "pose": "curl" },
+            {
+              "at": 17,
+              "pose": { "from": "curl", "rot": 4.2 },
+              "lerp": true
+            },
+            {
+              "at": 27,
+              "pose": { "from": "air", "rot": -1.68 },
+              "lerp": true
+            },
+            { "at": 37, "pose": "air", "lerp": true }
+          ],
+          "events": [
+            { "at": 10, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 7 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "fair": {
+      "name": "Granite Hammer",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 38,
+          "hitboxes": [
+            {
+              "start": 10,
+              "end": 15,
+              "x": 46,
+              "y": 39,
+              "r": 29,
+              "damage": 14,
+              "bkb": 31.4285714286,
+              "kbg": 0.6857142857,
+              "angle": 38
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            {
+              "at": 1,
+              "pose": { "from": "air", "rot": -5.85 },
+              "lerp": true
+            },
+            {
+              "at": 7,
+              "pose": { "from": "air", "rot": -8.4825 },
+              "lerp": true
+            },
+            { "at": 10, "pose": "stonePunch", "lerp": true },
+            { "at": 15, "pose": "stonePunch" },
+            {
+              "at": 17,
+              "pose": { "from": "stonePunch", "rot": 5.46 },
+              "lerp": true
+            },
+            {
+              "at": 27,
+              "pose": { "from": "air", "rot": -2.184 },
+              "lerp": true
+            },
+            { "at": 37, "pose": "air", "lerp": true }
+          ],
+          "events": [
+            { "at": 10, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 10 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "bair": {
+      "name": "Back Boulder",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 38,
+          "hitboxes": [
+            {
+              "start": 10,
+              "end": 15,
+              "x": -40,
+              "y": 44,
+              "r": 29,
+              "damage": 13,
+              "bkb": 27.4285714286,
+              "kbg": 0.7923809524,
+              "angle": 40,
+              "dir": "back"
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            {
+              "at": 1,
+              "pose": { "from": "air", "rot": -4.5 },
+              "lerp": true
+            },
+            {
+              "at": 7,
+              "pose": { "from": "air", "rot": -6.525 },
+              "lerp": true
+            },
+            { "at": 10, "pose": "back", "lerp": true },
+            { "at": 15, "pose": "back" },
+            {
+              "at": 17,
+              "pose": { "from": "back", "rot": 4.2 },
+              "lerp": true
+            },
+            {
+              "at": 27,
+              "pose": { "from": "air", "rot": -1.68 },
+              "lerp": true
+            },
+            { "at": 37, "pose": "air", "lerp": true }
+          ],
+          "events": [
+            { "at": 10, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 10 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "uair": {
+      "name": "Ceiling Breaker",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 38,
+          "hitboxes": [
+            {
+              "start": 10,
+              "end": 15,
+              "x": 0,
+              "y": 102,
+              "r": 28,
+              "damage": 12,
+              "bkb": 32.6530612245,
+              "kbg": 0.6530612245,
+              "angle": 85
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "air" },
+            {
+              "at": 1,
+              "pose": { "from": "air", "rot": -4.5 },
+              "lerp": true
+            },
+            {
+              "at": 7,
+              "pose": { "from": "air", "rot": -6.525 },
+              "lerp": true
+            },
+            { "at": 10, "pose": "stoneLift", "lerp": true },
+            { "at": 15, "pose": "stoneLift" },
+            {
+              "at": 17,
+              "pose": { "from": "stoneLift", "rot": 4.2 },
+              "lerp": true
+            },
+            {
+              "at": 27,
+              "pose": { "from": "air", "rot": -1.68 },
+              "lerp": true
+            },
+            { "at": 37, "pose": "air", "lerp": true }
+          ],
+          "events": [
+            { "at": 10, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 8 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "dair": {
+      "name": "Falling Rubble",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 38,
+          "hitboxes": [
+            {
+              "start": 10,
+              "end": 15,
+              "x": 0,
+              "y": -7,
+              "r": 27,
+              "damage": 14,
+              "bkb": 16.6666666667,
+              "kbg": 0.5714285714,
+              "angle": -90,
+              "type": "spike"
+            }
+          ],
+          "anim": [
+            {
+              "at": 0,
+              "pose": { "from": "stoneBrace", "rot": -2.34 }
+            },
+            {
+              "at": 1,
+              "pose": { "from": "stoneBrace", "rot": -5.85 },
+              "lerp": true
+            },
+            {
+              "at": 7,
+              "pose": { "from": "stoneBrace", "rot": -8.4825 },
+              "lerp": true
+            },
+            { "at": 10, "pose": "stoneDrop", "lerp": true },
+            { "at": 15, "pose": "stoneDrop" },
+            {
+              "at": 17,
+              "pose": { "from": "stoneDrop", "rot": 5.46 },
+              "lerp": true
+            },
+            {
+              "at": 27,
+              "pose": { "from": "air", "rot": -2.184 },
+              "lerp": true
+            },
+            { "at": 37, "pose": "air", "lerp": true }
+          ],
+          "events": [
+            { "at": 10, "sfx": "swing" }
+          ],
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 14 }
+          ]
+        }
+      ],
+      "air": "aerial"
+    },
+    "sspec": {
+      "name": "Lumbering Charge",
+      "phases": [
+        {
+          "name": "main",
+          "frames": 48,
+          "hitboxes": [
+            {
+              "start": 12,
+              "end": 23,
+              "x": 32,
+              "y": 43,
+              "r": 32,
+              "damage": 13,
+              "bkb": 39.2380952381,
+              "kbg": 0.7314285714,
+              "angle": 38
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "back" },
+            {
+              "at": 1,
+              "pose": {
+                "from": "back",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [16.0, 0.0],
+                "kneeF": [10.757548, 12.874427],
+                "footB": [-18.0, -0.0],
+                "kneeB": [-9.205516, 12.405124],
+                "head": [-13.318442, 55.164799],
+                "shoulder": [-9.309417, 42.637719],
+                "hip": [-0.254598, 23.822559],
+                "elbowF": [7.901507, 36.251476],
+                "handF": [14.560728, 26.169076],
+                "elbowB": [-4.263622, 36.349639],
+                "handB": [4.576491, 31.674984]
+              },
+              "lerp": true
+            },
+            {
+              "at": 9,
+              "pose": {
+                "from": "back",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [16.0, -0.0],
+                "kneeF": [11.077353, 12.405736],
+                "footB": [-18.0, -0.0],
+                "kneeB": [-8.845167, 11.728332],
+                "head": [-14.709362, 52.823802],
+                "shoulder": [-9.825598, 40.61115],
+                "hip": [0.535467, 22.48249],
+                "elbowF": [7.793387, 35.45641],
+                "handF": [15.148068, 25.869509],
+                "elbowB": [-4.348296, 34.695142],
+                "handB": [4.799899, 30.656512]
+              },
+              "lerp": true
+            },
+            { "at": 12, "pose": "lean", "lerp": true },
+            { "at": 23, "pose": "lean" },
+            {
+              "at": 25,
+              "pose": {
+                "from": "lean",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [20.0, 1e-6],
+                "kneeF": [13.455446, 13.009277],
+                "footB": [-20.0, -0.0],
+                "kneeB": [-10.522642, 13.427391],
+                "head": [10.36033, 58.837776],
+                "shoulder": [7.012416, 46.118048],
+                "hip": [-1.045285, 26.854781],
+                "elbowF": [7.956175, 35.963772],
+                "handF": [11.778972, 24.501389],
+                "elbowB": [-5.758074, 39.416215],
+                "handB": [-16.121407, 36.483412]
+              },
+              "lerp": true
+            },
+            {
+              "at": 36,
+              "pose": {
+                "from": "stand",
+                "rot": 0,
+                "footF": [9.0, 0.0],
+                "kneeF": [6.208063, 14.0672],
+                "footB": [-9.0, -0.0],
+                "kneeB": [-4.790183, 13.983447],
+                "head": [-1.088767, 63.977194],
+                "shoulder": [-0.502508, 49.989474],
+                "hip": [0.418757, 28.008772],
+                "elbowF": [7.992983, 38.335005],
+                "handF": [13.449229, 27.554032],
+                "elbowB": [-6.99386, 37.70687],
+                "handB": [-10.529719, 26.549017],
+                "offsetY": 0
+              },
+              "lerp": true
+            },
+            { "at": 47, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 12, "sfx": "swing" },
+            {
+              "at": 12,
+              "setVel": { "x": 8 },
+              "sfx": "smash"
+            }
+          ],
+          "slide": 26
+        }
+      ]
+    },
+    "uspec": {
+      "name": "Rock Launch",
+      "phases": [
+        {
+          "name": "rise",
+          "frames": 42,
+          "hitboxes": [
+            {
+              "start": 5,
+              "end": 16,
+              "x": 0,
+              "y": 64,
+              "r": 33,
+              "damage": 10,
+              "bkb": 34.2857142857,
+              "kbg": 0.6095238095,
+              "angle": 80
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "back" },
+            {
+              "at": 1,
+              "pose": {
+                "from": "back",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [16.0, 0.0],
+                "kneeF": [10.757548, 12.874427],
+                "footB": [-18.0, -0.0],
+                "kneeB": [-9.205516, 12.405124],
+                "head": [-13.318442, 55.164799],
+                "shoulder": [-9.309417, 42.637719],
+                "hip": [-0.254598, 23.822559],
+                "elbowF": [7.901507, 36.251476],
+                "handF": [14.560728, 26.169076],
+                "elbowB": [-4.263622, 36.349639],
+                "handB": [4.576491, 31.674984]
+              },
+              "lerp": true
+            },
+            { "at": 5, "pose": "stoneLift", "lerp": true },
+            { "at": 16, "pose": "stoneLift" },
+            {
+              "at": 18,
+              "pose": {
+                "from": "stoneLift",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [9.0, -0.0],
+                "kneeF": [5.46914, 13.270598],
+                "footB": [-9.0, -0.0],
+                "kneeB": [-5.519903, 13.479655],
+                "head": [3.344911, 68.624701],
+                "shoulder": [1.254342, 48.734263],
+                "hip": [-1.045285, 26.854781],
+                "elbowF": [28.781363, 81.033846],
+                "handF": [14.592231, 108.668399],
+                "elbowB": [-18.955688, 86.051212],
+                "handB": [0.668925, 110.131798]
+              },
+              "lerp": true
+            },
+            {
+              "at": 29,
+              "pose": { "from": "air", "rot": -2.4 },
+              "lerp": true
+            },
+            { "at": 41, "pose": "air", "lerp": true }
+          ],
+          "events": [
+            {
+              "at": 5,
+              "setVel": { "x": 2, "y": 18 },
+              "leaveGround": true,
+              "sfx": "djump"
+            }
+          ],
+          "ledgeGrab": 5,
+          "transitions": [
+            { "on": "land", "to": "landing", "lag": 15 },
+            { "on": "timeout", "to": "helpless" }
+          ]
+        }
+      ],
+      "air": "upSpecial"
+    },
+    "dspec": {
+      "name": "Stone Skin",
+      "phases": [
+        {
+          "name": "brace",
+          "frames": 5,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "skin" }
+          ]
+        },
+        {
+          "name": "skin",
+          "frames": 16,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" }
+          ],
+          "armorThreshold": 10,
+          "events": [
+            {
+              "at": 0,
+              "sfx": "counter",
+              "fx": [
+                { "type": "ring", "x": 0, "y": 38, "r": 24, "grow": 1, "life": 16, "color": "#b3c5ce" }
+              ]
+            }
+          ],
+          "transitions": [
+            { "on": "timeout", "to": "recover" }
+          ]
+        },
+        {
+          "name": "recover",
+          "frames": 17,
+          "hitboxes": [
+            {
+              "start": 0,
+              "end": 3,
+              "x": 38,
+              "y": 43,
+              "r": 32,
+              "damage": 10,
+              "bkb": 23.8095238095,
+              "kbg": 1.1428571429,
+              "angle": 40
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stonePunch" },
+            { "at": 3, "pose": "stonePunch" },
+            {
+              "at": 5,
+              "pose": {
+                "from": "stonePunch",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [28.0, -0.0],
+                "kneeF": [14.680936, 15.311905],
+                "footB": [-24.0, -0.0],
+                "kneeB": [-17.495252, 13.950033],
+                "head": [10.306564, 67.893001],
+                "shoulder": [5.650543, 52.294236],
+                "hip": [-5.913366, 28.371945],
+                "elbowF": [26.902854, 44.027479],
+                "handF": [53.44136, 38.221645],
+                "elbowB": [-20.362317, 43.967707],
+                "handB": [-28.001904, 28.682528]
+              },
+              "lerp": true
+            },
+            {
+              "at": 10,
+              "pose": {
+                "from": "stand",
+                "rot": 0,
+                "footF": [9.0, 0.0],
+                "kneeF": [6.208063, 14.0672],
+                "footB": [-9.0, -0.0],
+                "kneeB": [-4.790183, 13.983447],
+                "head": [-1.088767, 63.977194],
+                "shoulder": [-0.502508, 49.989474],
+                "hip": [0.418757, 28.008772],
+                "elbowF": [7.992983, 38.335005],
+                "handF": [13.449229, 27.554032],
+                "elbowB": [-6.99386, 37.70687],
+                "handB": [-10.529719, 26.549017],
+                "offsetY": 0
+              },
+              "lerp": true
+            },
+            { "at": 16, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            { "at": 0, "sfx": "smash" }
+          ]
+        }
+      ]
+    },
+    "nspec": {
+      "name": "Seismic Pound",
+      "phases": [
+        {
+          "name": "windup",
+          "frames": 14,
+          "hitboxes": [],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" },
+            {
+              "at": 4,
+              "pose": {
+                "from": "stoneBrace",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [14.0, -0.0],
+                "kneeF": [10.218394, 11.797686],
+                "footB": [-12.0, 0.0],
+                "kneeB": [-7.716317, 9.64162],
+                "head": [5.62011, 49.582543],
+                "shoulder": [2.99852, 37.494232],
+                "hip": [0.628215, 17.409869],
+                "elbowF": [23.051472, 36.123434],
+                "handF": [16.269164, 60.922634],
+                "elbowB": [-22.925829, 34.678539],
+                "handB": [-17.714059, 59.854668]
+              },
+              "lerp": true
+            },
+            {
+              "at": 12,
+              "pose": {
+                "from": "stoneBrace",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [14.0, -0.0],
+                "kneeF": [10.380118, 11.650427],
+                "footB": [-12.0, 0.0],
+                "kneeB": [-7.502426, 9.378698],
+                "head": [5.331532, 49.26157],
+                "shoulder": [2.995467, 37.114851],
+                "hip": [1.099004, 16.980218],
+                "elbowF": [23.07515, 36.216876],
+                "handF": [15.710461, 60.849402],
+                "elbowB": [-22.855349, 33.689168],
+                "handB": [-18.238169, 58.981096]
+              },
+              "lerp": true
+            }
+          ],
+          "hover": true,
+          "transitions": [
+            { "on": "timeout", "to": "fall" }
+          ]
+        },
+        {
+          "name": "fall",
+          "frames": 65,
+          "hitboxes": [
+            {
+              "start": 0,
+              "end": 64,
+              "x": 0,
+              "y": 8,
+              "r": 31,
+              "damage": 12,
+              "bkb": 28.0272108844,
+              "kbg": 0.5224489796,
+              "angle": -65
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "stoneBrace" },
+            { "at": 64, "pose": "stoneBrace" }
+          ],
+          "events": [
+            {
+              "at": 0,
+              "setVel": { "y": -12 },
+              "sfx": "swing"
+            }
+          ],
+          "transitions": [
+            { "on": "grounded", "to": "impact" },
+            { "on": "land", "to": "impact" },
+            { "on": "timeout", "to": "helpless" }
+          ]
+        },
+        {
+          "name": "impact",
+          "frames": 32,
+          "hitboxes": [
+            {
+              "start": 0,
+              "end": 4,
+              "x": 0,
+              "y": 14,
+              "r": 45,
+              "damage": 11,
+              "bkb": 28.1318681319,
+              "kbg": 0.7736263736,
+              "angle": 65
+            }
+          ],
+          "anim": [
+            { "at": 0, "pose": "crouch" },
+            { "at": 4, "pose": "crouch" },
+            {
+              "at": 6,
+              "pose": {
+                "from": "crouch",
+                "rot": 0,
+                "offsetY": 0,
+                "footF": [14.0, 0.0],
+                "kneeF": [9.251866, 11.124761],
+                "footB": [-12.0, 0.0],
+                "kneeB": [-8.929799, 9.658359],
+                "head": [7.221473, 48.107092],
+                "shoulder": [2.983566, 36.486415],
+                "hip": [-2.090569, 16.909562],
+                "elbowF": [10.888978, 25.600439],
+                "handF": [16.019882, 17.017094],
+                "elbowB": [-6.803359, 29.470996],
+                "handB": [-11.617674, 21.932934]
+              },
+              "lerp": true
+            },
+            {
+              "at": 18,
+              "pose": {
+                "from": "stand",
+                "rot": 0,
+                "footF": [9.0, 0.0],
+                "kneeF": [6.208063, 14.0672],
+                "footB": [-9.0, -0.0],
+                "kneeB": [-4.790183, 13.983447],
+                "head": [-1.088767, 63.977194],
+                "shoulder": [-0.502508, 49.989474],
+                "hip": [0.418757, 28.008772],
+                "elbowF": [7.992983, 38.335005],
+                "handF": [13.449229, 27.554032],
+                "elbowB": [-6.99386, 37.70687],
+                "handB": [-10.529719, 26.549017],
+                "offsetY": 0
+              },
+              "lerp": true
+            },
+            { "at": 31, "pose": "stand", "lerp": true }
+          ],
+          "events": [
+            {
+              "at": 0,
+              "spawn": "waveF",
+              "sfx": "smash",
+              "fx": [
+                { "type": "dust", "n": 16 },
+                { "type": "shake", "k": 6 }
+              ]
+            },
+            { "at": 0, "spawn": "waveB" }
+          ]
+        }
+      ]
+    }
+  },
+  "stats": {
+    "weight": 0.78,
+    "runSpeed": 4.2,
+    "runAccel": 0.7,
+    "jumpSpeed": 14.9,
+    "shortHopSpeed": 9,
+    "airJumpSpeed": 12.8,
+    "airJumps": 1,
+    "airSpeed": 3.5,
+    "airAccel": 0.32,
+    "gravity": 0.85,
+    "fallSpeed": 11.5,
+    "fastFallSpeed": 16,
+    "dashSpeed": 4.704
+  },
+  "hurtboxes": {
+    "default": { "x1": -22, "x2": 22, "y1": 0, "y2": 83 }
+  },
+  "style": {
+    "headRadius": 13,
+    "headRing": 5,
+    "torsoWidth": 11,
+    "frontLimbWidth": 9,
+    "backLimbWidth": 8,
+    "headFill": "#343d48"
+  },
+  "poses": {
+    "stonePunch": {
+      "head": [7, 70],
+      "shoulder": [4, 54],
+      "hip": [-5, 29],
+      "elbowF": [26, 48],
+      "handF": [53, 45],
+      "elbowB": [-21, 43],
+      "handB": [-27, 27],
+      "kneeF": [15, 16],
+      "footF": [28, 0],
+      "kneeB": [-17, 14],
+      "footB": [-24, 0]
+    },
+    "stoneLift": { "head": [0, 70], "elbowF": [24, 85], "handF": [7, 111], "elbowB": [-24, 85], "handB": [-7, 111] },
+    "stoneBrace": { "from": "crouch", "elbowF": [23, 36], "handF": [17, 61], "elbowB": [-23, 36], "handB": [-17, 61] },
+    "stoneDrop": { "from": "stoneBrace", "kneeF": [16, 23], "footF": [17, -7], "kneeB": [-16, 23], "footB": [-17, -7] }
+  },
+  "attachments": [
+    {
+      "id": "chest",
+      "joint": "shoulder",
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[-18, 4], [-13, 15], [13, 15], [20, 0], [13, -25], [-13, -25]],
+          "fill": "playerDark",
+          "stroke": "playerLight",
+          "width": 2
+        }
+      ]
+    },
+    {
+      "id": "stoneF",
+      "joint": "handF",
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[-11, -9], [-15, 4], [-7, 13], [9, 11], [14, -3], [6, -12]],
+          "fill": "playerDark",
+          "stroke": "playerLight",
+          "width": 2
+        }
+      ]
+    },
+    {
+      "id": "stoneB",
+      "joint": "handB",
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[-11, -9], [-15, 4], [-7, 13], [9, 11], [14, -3], [6, -12]],
+          "fill": "playerDark",
+          "stroke": "playerLight",
+          "width": 2
+        }
+      ]
+    },
+    {
+      "id": "brow",
+      "joint": "head",
+      "shapes": [
+        { "shape": "line", "from": [-12, 5], "to": [13, 5], "width": 5, "color": "playerLight" }
+      ]
+    }
+  ],
+  "projectiles": {
+    "waveF": {
+      "name": "Fault wave",
+      "spawn": [30, 10],
+      "vel": [5, 0],
+      "r": 16,
+      "life": 22,
+      "max": 2,
+      "hit": {
+        "start": 6,
+        "end": 10,
+        "x": 0,
+        "y": 0,
+        "r": 16,
+        "damage": 6,
+        "bkb": 3.8095238095,
+        "kbg": 0.9142857143,
+        "angle": 55
+      },
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[-15, -8], [0, 15], [15, -8]],
+          "fill": "#8a9caa",
+          "stroke": "playerLight",
+          "width": 2
+        }
+      ]
+    },
+    "waveB": {
+      "name": "Fault wave",
+      "spawn": [-30, 10],
+      "vel": [-5, 0],
+      "r": 16,
+      "life": 22,
+      "max": 2,
+      "hit": {
+        "start": 6,
+        "end": 10,
+        "x": 0,
+        "y": 0,
+        "r": 16,
+        "damage": 6,
+        "bkb": 3.8095238095,
+        "kbg": 0.9142857143,
+        "angle": 55
+      },
+      "shapes": [
+        {
+          "shape": "poly",
+          "points": [[-15, -8], [0, 15], [15, -8]],
+          "fill": "#8a9caa",
+          "stroke": "playerLight",
+          "width": 2
+        }
+      ]
+    }
+  },
+  "ai": {
+    "reach": 85,
+    "counterChance": 0,
+    "specials": [
+      {
+        "minDistance": 50,
+        "maxDistance": 220,
+        "height": 65,
+        "chance": 0.13,
+        "grounded": true,
+        "noProjectile": false,
+        "down": false,
+        "hold": null
+      },
+      {
+        "minDistance": 15,
+        "maxDistance": 65,
+        "height": 55,
+        "chance": 0.08,
+        "grounded": true,
+        "noProjectile": false,
+        "down": true,
+        "hold": null
+      },
+      {
+        "minDistance": 300,
+        "maxDistance": null,
+        "height": 80,
+        "chance": 0.05,
+        "grounded": true,
+        "noProjectile": false,
+        "down": false,
+        "hold": null
+      }
+    ]
+  },
+  "throws": {
+    "f": {
+      "release": 8,
+      "total": 24,
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 7, "bkb": 32.380952381, "kbg": 0.9142857143, "angle": 40 }
+    },
+    "b": {
+      "release": 12,
+      "total": 28,
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 9, "bkb": 26.1471861472, "kbg": 1.0805194805, "angle": 40 }
+    },
+    "u": {
+      "release": 12,
+      "total": 28,
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 6, "bkb": 39.7619047619, "kbg": 0.9714285714, "angle": 90 }
+    },
+    "d": {
+      "release": 10,
+      "total": 26,
+      "hit": { "x": 0, "y": 0, "r": 0, "damage": 5, "bkb": 35.1020408163, "kbg": 0.587755102, "angle": 75 }
+    }
+  }
+}
