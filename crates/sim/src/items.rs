@@ -3,9 +3,9 @@
 //! Items are content (`Fighter.items`); nothing here knows a fighter or item id. A fighter holds at most one
 //! (`Fighter::item`), granted by a move event's `item`. Attacks and aerials throw it: after `toss.release` ticks the
 //! item's projectile is launched, tagged with the item (`Projectile::item`). A thrown item that lands, connects or
-//! runs out of projectile life becomes a [`LooseItem`]: it falls, bounces and rests on surfaces. The first throw
-//! starts the item's one clock (`Item.life`), which keeps running in flight, loose and back in a hand; the item
-//! vanishes wherever it is when it runs out.
+//! runs out of projectile life becomes a [`LooseItem`]: it falls, bounces and rests on surfaces. An item's one clock
+//! (`Item.life`) runs only while it is loose: it waits in flight and in a hand, a catch or pickup never restarts
+//! it, and the loose item vanishes when it runs out. Throwing keeps a full hop's initial rise and a float.
 //! Attack or grab picks up a landed item on the ground; attack, grab or air dodge catches one in flight.
 use crate::actions::{Action, accept};
 use crate::physics::*;
@@ -148,7 +148,7 @@ fn release(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, h: &Held) {
         p.hit.damage = (p.hit.damage + it.speed_damage * faster).max(0.);
     }
     p.item = Some(h.id.clone());
-    // The first throw starts the item's clock; later throws carry on with what is left.
+    // A fresh item starts with its whole clock; a re-thrown one carries what is left.
     p.item_life = h.life.unwrap_or(it.life);
     w.projs.push(p);
     if let Some(s) = &pd.spawn_sfx {
@@ -193,7 +193,7 @@ pub fn take(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) -> bool {
         return false;
     }
     let landed = w.items.iter().position(|it| it.surf.is_some() && f.ground && inside(f, &g.pickup, it.x, it.y));
-    // The item's clock keeps running in the hand.
+    // What is left of the item's clock waits in the hand.
     let hand = |it: LooseItem| Held { life: Some(it.life), ..it.item };
     if let Some(k) = landed {
         f.item = Some(hand(w.items.remove(k)));
@@ -225,34 +225,10 @@ pub fn take(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) -> bool {
     true
 }
 
-/// One tick of every item's clock (`Item.life`), wherever the item is: in a hand (once thrown), in flight or
-/// loose. An item whose clock is at 0 vanishes with a puff of dust; others count down.
-fn clocks(w: &mut World, d: &GameData) {
+/// One tick of every loose item's clock (`Item.life`); it does not run in flight or in a hand. A loose item whose
+/// clock is at 0 vanishes with a puff of dust; others count down.
+fn clocks(w: &mut World) {
     let mut gone = vec![];
-    for f in &mut w.fighters {
-        if let Some(h) = &mut f.item
-            && let Some(l) = &mut h.life
-        {
-            if *l == 0 {
-                let hold = def(d, h).hold;
-                gone.push((f.x + f.face * hold[0], f.y - hold[1]));
-                f.item = None;
-            } else {
-                *l -= 1;
-            }
-        }
-    }
-    w.projs.retain_mut(|p| {
-        if p.item.is_none() {
-            true
-        } else if p.item_life == 0 {
-            gone.push((p.x, p.y));
-            false
-        } else {
-            p.item_life -= 1;
-            true
-        }
-    });
     w.items.retain_mut(|it| {
         if it.life == 0 {
             gone.push((it.x, it.y));
@@ -267,17 +243,14 @@ fn clocks(w: &mut World, d: &GameData) {
     }
 }
 
-/// Count down item clocks, then move loose items: gravity and fall cap from their projectile, bounces
+/// Count down loose items' clocks, then move them: gravity and fall cap from their projectile, bounces
 /// (`bounce.restitution` / `friction`) until they settle below `items.settle`, stage walls, riding moving
 /// platforms; out-of-bounds ones vanish.
 pub fn step(w: &mut World, d: &GameData) {
-    if w.items.is_empty()
-        && !w.projs.iter().any(|p| p.item.is_some())
-        && !w.fighters.iter().any(|f| f.item.as_ref().is_some_and(|h| h.life.is_some()))
-    {
+    if w.items.is_empty() {
         return;
     }
-    clocks(w, d);
+    clocks(w);
     let s = &d.stages[w.stage];
     let g = &d.global;
     for k in 0..w.items.len() {

@@ -396,8 +396,9 @@ impl Fighter {
             self.launch = (0., 0.);
             self.top_launch = false;
         }
-        // An aerial keeps the initial rise and the float (`moves::start_move` ends them for other moves).
-        if !matches!(state, State::Air | State::Attack) {
+        // Aerials, throws and air dodges keep the initial rise and the float (`moves::start_move` ends them for
+        // other moves, `states::airdodge` the float, both through `physics::end_rise`).
+        if !matches!(state, State::Air | State::Attack | State::Toss | State::Airdodge) {
             self.rise = 0;
             self.floating = 0;
         }
@@ -470,7 +471,7 @@ pub struct Projectile {
     /// A thrown item (id in `fighter_data`'s `items`): it becomes a loose item when it lands, connects or expires.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub item: Option<String>,
-    /// The thrown item's clock (`Held::life`), counted down by `items::step`; it vanishes in flight after 0.
+    /// What is left of the thrown item's clock (`Held::life`); it waits during the flight.
     #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
     pub item_life: u32,
 }

@@ -181,7 +181,7 @@ pub fn start_move_as(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, slo
     f.set_state(State::Attack);
     if d.fighters[f.data].moves.get(slot).is_none_or(|m| m.air != AirControl::Aerial) {
         // Only aerials keep a full hop's initial rise and a float.
-        (f.rise, f.floating) = (0, 0);
+        crate::physics::end_rise(d, f);
     }
     f.mov = Some(MoveState {
         slot: slot.into(),

@@ -23,7 +23,9 @@ pub(super) const FORMAT_VERSION: u32 = 2;
 // -sim-38: 9-tick press buffer and the hold buffer (`input.holdBuffer`); `BufferedPress::held`, `Intent::grab_held`.
 // -sim-39: one item clock (`Item.life`) from the first throw through flight, loose and re-catches (`Held::life`,
 // `Projectile::item_life`); Duchess's turnip lasts 180 ticks.
-pub(super) const SIM_VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), "-sim-39");
+// -sim-40: item clocks run only while loose (they wait in flight and in a hand); a full hop's initial rise cut short
+// hands over `jumpSpeed` (`physics::end_rise`), and throws and neutral air dodges let it finish.
+pub(super) const SIM_VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), "-sim-40");
 pub(super) fn interval(data: &GameData) -> u64 {
     data.global.replay.checkpoint_ticks.max(u64::from(sim::TICK_HZ))
 }

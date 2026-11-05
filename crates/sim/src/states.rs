@@ -62,7 +62,10 @@ fn airdodge(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent,
         f.sd.dy = dy / l;
         f.vx = f.sd.dx * g.dir_air.speed;
         f.vy = f.sd.dy * g.dir_air.speed;
+        f.rise = 0;
     }
+    // A neutral dodge keeps the jump's momentum, so a full hop's initial rise still finishes; a float ends.
+    f.floating = 0;
 }
 fn air_jump(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, dir: f64) {
     accept(w, i, Action::AirJump);
@@ -279,6 +282,8 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
             let took = (inp.atk || inp.grab || inp.shield_p) && crate::items::take(w, d, i, &mut f);
             if !took && inp.shield_p && !f.ad_used {
                 airdodge(w, d, i, &mut f, inp, dir);
+                // A neutral dodge keeps a full hop's initial rise going (`end_rise` otherwise).
+                scripted_rise(d, &mut f);
                 integrate(w, d, i, &mut f, false);
             } else {
                 if took {

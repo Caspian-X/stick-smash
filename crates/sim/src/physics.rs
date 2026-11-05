@@ -250,6 +250,14 @@ pub fn scripted_rise(d: &GameData, f: &mut Fighter) -> bool {
     }
     false
 }
+/// End a full hop's initial rise early with the speed it was about to hand over (`jumpSpeed`), and any float.
+pub fn end_rise(d: &GameData, f: &mut Fighter) {
+    if f.rise > 0 {
+        f.rise = 0;
+        f.vy = -d.fighters[f.data].stats.jump_speed;
+    }
+    f.floating = 0;
+}
 /// Once per airtime: a float starts holding the vertical speed at `stats.float.speed` (see `data::Float`).
 pub fn start_float(d: &GameData, f: &mut Fighter) -> bool {
     let Some(fl) = &d.fighters[f.data].stats.float else {

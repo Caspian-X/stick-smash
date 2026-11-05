@@ -178,11 +178,12 @@ everything after that is shared (`sim::items`, FORMAT.md "Items"). Holding an it
 option and specials; attacks and aerials become throws (the `toss` state), as in Ultimate. A thrown item is an
 ordinary projectile tagged with the item, so hits, shields, counters, reflection and clashes reuse the projectile
 rules; when it lands, connects or expires it becomes a loose world item (`World::items`) that falls, rests on
-surfaces and can be picked up or caught by anyone. An item's `life` is one clock, as in Ultimate (a turnip's 180
-frames): it starts on the first throw (a fresh item can be held indefinitely), keeps running in flight, on the
-floor and back in a hand (`Held::life`), is never restarted by a catch, pickup or re-throw, and the item vanishes
-wherever it is when it runs out. The projectile's own `life` is only a flight cap (then the item goes loose with
-the rest of its clock), so the item clock always bounds the whole lifetime. Damage per throw strength comes from the projectiles, with an
+surfaces and can be picked up or caught by anyone. An item's `life` is one clock (a turnip's 180
+frames) that runs only while the item is loose: it waits through a throw's flight and in a hand (`Held::life`), is
+never restarted by a catch, pickup or re-throw, and the loose item vanishes when it runs out, so an item never
+disappears in the air or out of someone's hand (what Ultimate's turnip does in play; the wiki's "3.5 seconds in the
+air" is not a rule we could pin down). The projectile's own `life` is only a flight cap (then the item goes loose).
+Throwing keeps a full hop's initial rise and a float, like an aerial. Damage per throw strength comes from the projectiles, with an
 optional speed term (`speedDamage`) for Ultimate's speed-scaled item damage. Items live in fighter packages for
 now (Duchess's turnip is the first); a match item mode would add global item definitions and spawning on top of
 the same held / thrown / loose model.

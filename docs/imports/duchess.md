@@ -114,7 +114,7 @@ the authored phases. The parsed rows are in `sources/duchess/ledger.json`.
 | Neutral special (Toad) | `SpecialN`/`SpecialNHit`, `peach_kinopiospore/Shot` | counter 9-34; 62 / 60 on hit | spores 3.5 each, 45°, KBG 210, BKB 40, shield +2 | `counter` phase 8-33; six spore births at 3,6,9,12,15,18. The source's 8-10 intangibility is not authored: an intangible victim is skipped before the counter check, so the window itself is the guard. |
 | Side special (Peach Bomber) | `SpecialSJump`/`SpecialSHitEnd` | searchbox 13-36; hit 2-3 after contact; 62 ground whiff | 12.0, 361 (Sakurai), KBG 73, BKB 60, ShieldDamage 6 | Windup 12, thrust 24 (ledge grab from source 16), 25-frame burst on contact, 26 recovery; air whiff falls with ledge grabs |
 | Up special (Peach Parasol) | `SpecialHiStart`/`Open`/`Fall` | hits 7-9, 11-15, 16-21, 22-27 (rehit 5), 31-32; attack 39 | 3.0 (FKB 160/130), 1.0 rehit 5 (93°, 87° and the frame-22 368 autolink replacements), 4.0 final (hitlag 3); open parasol 2.0 rehit 18 | Five rise phases (one per script window), then open (caps descent at a fitted 1.6667 px/tick, 2.0 at the old ×6 scale, closes on a fresh special press or after 480 frames) and a closed special-fall phase that runs until landing with 40 frames of lag (it still grabs ledges, as in the source); every rise phase lands into 26 frames of lag rather than staying in the move; open landing lag 26 |
-| Down special (Vegetable) | `SpecialLw`, `peachdaikon` | pluck 39; toss 22 | Turnip 8.3 (tilt throw) or 11.4 (smash throw), angle 30, KBG 0.45, BKB 25, hitlag 0.8 | Pluck (39) gives `items.turnip` on phase frame 29 (source 30) and ends; the turnip is then thrown like any held item: the shared 22-frame `toss` (release on frame 6), tilt → `turnip`, smash → `turnip_strong`, `speedDamage` 0.6 for other speeds; item `life` 180 frames (SmashWiki Down special "Lifetime"), one clock from the first throw that catches do not restart |
+| Down special (Vegetable) | `SpecialLw`, `peachdaikon` | pluck 39; toss 22 | Turnip 8.3 (tilt throw) or 11.4 (smash throw), angle 30, KBG 0.45, BKB 25, hitlag 0.8 | Pluck (39) gives `items.turnip` on phase frame 29 (source 30) and ends; the turnip is then thrown like any held item: the shared 22-frame `toss` (release on frame 6), tilt → `turnip`, smash → `turnip_strong`, `speedDamage` 0.6 for other speeds; item `life` 180 frames (SmashWiki Down special "Lifetime"), one clock spent only while loose that catches do not restart |
 
 ## Float
 
@@ -158,17 +158,20 @@ sources), so they keep the tier damage and a drop does 1.2. A thrown turnip lose
 there; a connecting one bounces back and up (`rebound` [2.5, 6], fitted). Anyone can pick it up or catch it in
 flight. The rare faces, Mr. Saturn and Bob-omb are omitted.
 
-Turnip lifetime (2026-11-05, SIM_VERSION -sim-39): SmashWiki [Peach (SSBU)/Down special](https://www.ssbwiki.com/Peach_(SSBU)/Down_special)
-lists the turnip item "Lifetime: 180 frames", and [Vegetable](https://www.ssbwiki.com/Vegetable) says turnips "only
-last for around 3.5 seconds in the air before they disappear, and regrabbing the turnips does not restart the timer".
-`items.turnip.life` is **180** (source-exact; was 600 ticks on the floor, restarted after the flight). It is one clock
-from the first throw: flight, bounces, the floor, catches and pickups all spend it, and the turnip vanishes (a dust
-puff) wherever it is when it runs out, including from a hand. Neither page says when the clock starts or whether a
-held, never-thrown turnip expires; the engine starts it on the first throw, so a fresh pluck can be held
-indefinitely (the commonly described Ultimate behaviour, unsourced here). The projectile's own `life` (90) stays a
-flight cap: a turnip still airborne after 90 ticks becomes a loose item with the rest of its 180. Forward tilt
-throw on flat ground: released on tick 5, loose from tick 39, resting from tick 56, gone at tick 185. Test:
-`turnip_vanishes_three_seconds_after_the_first_throw_wherever_it_is`.
+Turnip lifetime (2026-11-05, SIM_VERSION -sim-39, loose-only clock -sim-40): SmashWiki
+[Peach (SSBU)/Down special](https://www.ssbwiki.com/Peach_(SSBU)/Down_special) lists the turnip item "Lifetime: 180
+frames", and [Vegetable](https://www.ssbwiki.com/Vegetable) says turnips "only last for around 3.5 seconds in the air
+before they disappear, and regrabbing the turnips does not restart the timer". `items.turnip.life` is **180**
+(source-exact; was 600 ticks on the floor, restarted after the flight). It is one clock that is never restarted by a
+catch, pickup or re-throw. -sim-39 ran it from the first throw through flight, the floor and re-catches, and the
+turnip vanished wherever it was; the playtester (an Ultimate Peach player) reported that a turnip never disappears
+in flight or in hand there, and neither wiki page pins the rule down (the Vegetable line is the only mention of
+"in the air"). Since -sim-40 the clock runs only while the turnip is loose (falling, bouncing or resting after a
+throw) and waits in flight and in a hand (adapted to the reported behaviour; the exact Ultimate rule is unsourced),
+so a held turnip and one in flight never vanish, and one left on the floor goes after 180 loose ticks. A fresh pluck
+that was never thrown has no running clock. The projectile's own `life` (90) stays a flight cap: a turnip still
+airborne after 90 ticks becomes a loose item. Forward tilt throw on flat ground: released on tick 5, loose from
+tick 39, resting from tick 56, gone at tick 219. Test: `turnip_vanishes_after_three_seconds_loose_never_in_flight_or_in_hand`.
 
 ## Validation and handoff
 

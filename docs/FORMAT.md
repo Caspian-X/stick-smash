@@ -367,12 +367,12 @@ event while one is held does nothing.
   figures draw it at the front hand).
 - `rebound`: velocity a thrown item bounces off with when its hit connects (x back against its travel, y up).
   Omit it and a hit uses the item up.
-- `life`: ticks from the item's first release until it vanishes. It is one clock: it starts on the first throw
-  (a freshly made item that was never thrown has none and can be held indefinitely), keeps running in flight,
-  bouncing, resting, and in a hand after a catch or pickup, and is not restarted by a re-throw. When it runs out
-  the item vanishes wherever it is, with a dust puff (`Fx::Dust`). With `life` L, an item released on tick R is
-  gone at tick R + L. The thrown projectile's own `life` only caps the flight (the item then goes loose with the
-  rest of its clock), so whichever is smaller ends the flight and the item never outlives its clock.
+- `life`: ticks the item can spend loose (falling, bouncing or resting after a throw) before it vanishes. It is
+  one clock: it runs only while the item is loose, waits during a throw's flight and in a hand after a catch or
+  pickup, and is never restarted by a re-throw (a freshly made item that was never thrown can be held
+  indefinitely, and an item never vanishes in flight or out of a hand). When it runs out the loose item vanishes
+  with a dust puff (`Fx::Dust`). With `life` L, an item that first goes loose on tick R is gone at tick R + L if
+  nobody takes it. The thrown projectile's own `life` only caps the flight (the item then goes loose).
 - `catch`: can be caught out of the air.
 - `toss`: optional `{ frames, release }` override of the shared throw timing.
 
@@ -413,11 +413,11 @@ thrower cannot catch its own throw for `items.regrab` ticks. Being KO'd loses th
 out, but an attack or grab near a landed one picks it up.
 
 Snapshot state: `Fighter.item` (`Held { data, id, life }`: package index, item id and the remaining clock, `None`
-until the first throw), `Projectile.item` and `Projectile.item_life` (the clock in flight), `World.items`
-(`LooseItem`, whose `life` is the clock) and `AiState.item_t`; all empty or default without items (and omitted
-from serialized snapshots then), so content without them behaves as before. Each clock counts down once per tick in
-`items::step`, after projectiles move; at 0 the item vanishes on the next tick. SIM_VERSION -sim-36; the single
-item clock -sim-39.
+until the first throw), `Projectile.item` and `Projectile.item_life` (the clock waiting through the flight),
+`World.items` (`LooseItem`, whose `life` is the running clock) and `AiState.item_t`; all empty or default without
+items (and omitted from serialized snapshots then), so content without them behaves as before. Loose clocks count
+down once per tick in `items::step`, after projectiles move; at 0 the item vanishes on the next tick. SIM_VERSION
+-sim-36; the single item clock -sim-39; loose-only clocks -sim-40.
 
 ## Visuals
 

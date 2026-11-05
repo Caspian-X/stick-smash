@@ -754,8 +754,8 @@ projectiles = {
 # forward speed, so the forward throws keep 8.3 / 11.4 and other directions scale by their speed. Back, up and down
 # use the forward speeds (adapted: the source's per-direction item-throw speeds are not in the pinned data); a drop
 # lets go at rest. A connecting turnip bounces back and up (catchable), as in the source. `life` is the SmashWiki
-# Peach (SSBU)/Down special item row "Lifetime: 180 frames": one clock from the first throw through flight, the floor
-# and re-catches (Vegetable: "regrabbing the turnips does not restart the timer").
+# Peach (SSBU)/Down special item row "Lifetime: 180 frames": one clock, spent only while the turnip is loose (it
+# waits in flight and in a hand; Vegetable: "regrabbing the turnips does not restart the timer").
 turnip_item = {
     'name': 'Turnip', 'projectile': 'turnip', 'smashProjectile': 'turnip_strong', 'hold': [24, 56],
     'throws': {
