@@ -348,7 +348,7 @@ this age; fuse expiry still detonates even before arming.
   `throw.d`, `grabbed`, `hitstun`, `tumble`, `shieldbreak`, `knockdown`, `getup`, `getupAttack`, `tech`, `ledge`,
   `climb`, `ledgeAttack`, `ledgeRoll`, `ledgeJump`, `dizzy`, `win`, `respawn`.
   `walk`, `crawl`, `turn` and `brake` are optional authored gait clips; a package without them keeps the
-  legacy `idle`/`run`/`crouch` selection. `turn` and `brake` sample the gait clock (`gait_t`, reset by every
+  legacy `idle`/`run`/`crouch` selection (`turn` also plays during a dash-back's `dashturn` window). `turn` and `brake` sample the gait clock (`gait_t`, reset by every
   gait change), not the idle state clock, so the one-shot transition starts at its first key after any idle age;
   `walk`/`crawl` keep their authored clock and `run` uses the run-cycle phase. Holding down while grounded selects `crouch` through the ground gait; horizontal movement
   retains the stance when `global.gait.crawlSpeed` is enabled. Its
@@ -475,6 +475,24 @@ required so legacy data loads; the new model ignores them.
 - **Fast fall** sets vertical speed to the fighter's `fastFallSpeed` at once (still capped by a phase `fallCap`).
 - **Initial dash** holds `stats.dashSpeed` (default runSpeed × `gait.dashSpeed` 1.12) for its frames; a faster
   fighter entering the run then slows toward `runSpeed` by its traction instead of snapping to it.
+
+### Gait frames (`stats.turnFrames`, `brakeFrames`, `dashTurnFrames`)
+
+Optional per-fighter frame counts for the ground gait, each falling back to the same-named `global.gait` field
+(bundled 4, 5 and 2). Deceleration is always the fighter's traction (or the legacy `turnFriction` /
+`brakeFriction`); only the lengths are per fighter.
+- `turnFrames`: holding back while running flips facing at once (the `turn` gait), slides the old way under
+  traction, and runs the new way (run acceleration from whatever speed is left) once this many frames have passed.
+  Imports take the frame of Ultimate's `TurnRun` script that sets `RUN_BRAKE_FLAG_STOP`.
+- `brakeFrames`: releasing the stick while running is the `brake` gait for this many frames (holding back turns
+  around, holding forward resumes the run, a forward flick dashes), then `stand`, still under traction. Imports
+  take `RunBrakeR`'s `RUN_BRAKE_FLAG_STOP` frame.
+- `dashTurnFrames`: a dash against the current facing (a dash-back, or a backward flick from standing or a brake)
+  still flips facing and speed at once, but its first frames are the `dashturn` gait: the `turn` clip if the
+  package has one, else a backward lean of `global.gait.dashTurnLean` degrees that straightens over the window.
+  The window counts toward `dashFrames`. Zero is a plain dash. Imports take the frames before `TurnDash` sets
+  `DASH_FLAG_TURN_DASH` (frame 3, so 2).
+Every gait is the idle state, so attacks, jumps, shield and grabs cancel all of them.
 
 ## Match and input snapshots
 
@@ -688,7 +706,8 @@ It operates during invulnerability and preserves the phase, unlike a counter sta
 captures a normalized movement-stick direction once on phase entry (neutral means up), then travels at that
 speed without gravity or drift until the phase changes. Normal stage collision still applies; `ledgeGrab`
 controls whether travel can catch a ledge. `hidden` affects only rendering; author invulnerability separately.
-Optional `stats.dashSpeed` / `dashFrames` override the shared initial dash, independently of run speed.
+Optional `stats.dashSpeed` / `dashFrames` override the shared initial dash, independently of run speed
+(`turnFrames` / `brakeFrames` / `dashTurnFrames`: see Momentum, Gait frames).
 `Throw.ticks` are damage-only contacts with the held victim before the release hit, each with `at` and `damage`.
 
 ## Aerial tethers, follow-ups and status hits

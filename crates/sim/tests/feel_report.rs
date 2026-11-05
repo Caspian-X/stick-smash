@@ -158,8 +158,25 @@ fn ground(d: &GameData, id: &str) -> Value {
     let mut w = running();
     let face = until(&mut w, d, 60, inp(-127, 0, 0), |f| f.face < 0.);
     let mut w = running();
+    let x0 = f0(&w).x;
     let cross = until(&mut w, d, 60, inp(-127, 0, 0), |f| f.vx <= 0.);
-    json!({ "dash20": r2(dash), "run95": run95, "stop": stop, "turn": { "face": face, "cross": cross } })
+    let slide = f0(&w).x - x0;
+    let full = until(&mut w, d, 120, inp(-127, 0, 0), |f| f.vx <= -0.95 * s.run_speed).zip(cross).map(|(a, b)| a + b);
+    let turn = json!({ "face": face, "cross": cross, "full": full, "slide": r2(slide) });
+    // Dash-back: a flick right held 3 ticks, then a one-tick flick left and the stick neutral for 19 more.
+    let mut w = world(d, &[id]);
+    for _ in 0..3 {
+        tick(&mut w, d, inp(127, 0, 0));
+    }
+    let x0 = f0(&w).x;
+    tick(&mut w, d, inp(-127, 0, 0));
+    let mut window = u32::from(f0(&w).gait == Gait::DashTurn);
+    for _ in 1..20 {
+        tick(&mut w, d, IDLE);
+        window += u32::from(f0(&w).gait == Gait::DashTurn);
+    }
+    let back = json!({ "distance": r2(x0 - f0(&w).x), "turn": window });
+    json!({ "dash20": r2(dash), "run95": run95, "stop": stop, "turn": turn, "dashBack": back })
 }
 
 fn air(d: &GameData, id: &str) -> Value {
@@ -451,15 +468,16 @@ fn cells(v: &Value, ptrs: &[&str]) -> String {
 fn tables(rows: &[Value]) -> String {
     let mut s = String::from(
         "### Movement\n\n| Fighter | Full hop h / apex / air | Short hop h / apex / air | SH:FH | Air jump h / apex / air \
-         | Dash 20f px | Run 95% f | Stop f / px | Turn face / vx≤0 | Drift / nair kept | Fast fall f |\n\
-         |---|---|---|---|---|---|---|---|---|---|---|\n",
+         | Dash 20f px | Run 95% f | Stop f / px | Turn face / vx≤0 / full f, slide px | Dash-back 20f px / turn f \
+         | Drift / nair kept | Fast fall f |\n\
+         |---|---|---|---|---|---|---|---|---|---|---|---|\n",
     );
     for r in rows {
         let j = |k: &str| {
             cells(r, &[&format!("/jumps/{k}/height"), &format!("/jumps/{k}/apex"), &format!("/jumps/{k}/air")])
         };
         s += &format!(
-            "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |\n",
+            "| {} | {} | {} | {} | {} | {} | {} | {} | {}, {} | {} | {} | {} |\n",
             cell(&r["fighter"]).trim_matches('"'),
             j("full"),
             j("short"),
@@ -468,7 +486,9 @@ fn tables(rows: &[Value]) -> String {
             cell(&r["ground"]["dash20"]),
             cell(&r["ground"]["run95"]),
             cells(r, &["/ground/stop/frames", "/ground/stop/distance"]),
-            cells(r, &["/ground/turn/face", "/ground/turn/cross"]),
+            cells(r, &["/ground/turn/face", "/ground/turn/cross", "/ground/turn/full"]),
+            cell(&r["ground"]["turn"]["slide"]),
+            cells(r, &["/ground/dashBack/distance", "/ground/dashBack/turn"]),
             cells(r, &["/air/drift/retained15", "/air/nair/retained15"]),
             cell(&r["air"]["fastFall"]),
         );

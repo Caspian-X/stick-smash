@@ -888,6 +888,7 @@ doc = {
         'weight': round(100 / 89, 8), 'pummelDamage': 1.3,
         'walkSpeed': round(0.924 * SCALE, 4), 'runSpeed': round(1.595 * SCALE, 4),
         'dashSpeed': round(1.826 * SCALE, 4), 'dashFrames': 16, 'runAccel': round(0.6 * 5 / 3.5, 4),
+        **units.gait(scripts['peach']),  # TurnDash / TurnRun / RunBrakeR flag frames
         'groundFriction': 0.74,
         **units.jumps(*JUMP_HEIGHTS, GRAVITY), 'airJumpDrift': round(1.029 * SCALE, 4), 'airJumps': 1,
         'airSpeed': round(1.029 * SCALE, 4), 'airAccel': AIR_ACCEL,

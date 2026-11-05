@@ -18,6 +18,8 @@ constant-gravity jump of the same height (Peach: 57 frames, not 63). Short hops 
 `tools/units_test.py` checks both against a step-by-step integration.
 """
 
+import re
+
 SCALE = 5.0  # px per source unit (geometry, speed, gravity)
 INITIAL = 0.55  # Ultimate jump initial height / full hop height (ssbwiki Jump)
 
@@ -57,6 +59,32 @@ def jumps(full, short, air, gravity, initial=INITIAL):
            'airJumpSpeed': round(jump_speed(h(air), gravity, air=True), 4)}
     if rise > 0:
         out['jumpInitialHeight'] = rise
+    return out
+
+
+def flag_frame(script, flag):
+    """The source frame of the `frame(Frame=N)` marker before `flag` first appears in a script, or None."""
+    at = None
+    for line in script.splitlines():
+        m = re.match(r'\s*frame\(Frame=(\d+)\)', line)
+        if m:
+            at = int(m.group(1))
+        elif flag in line:
+            return at
+    return None
+
+
+def gait(body):
+    """`stats` gait frames from the fighter body's Ultimate scripts (`{name: data}`): `turnFrames` and `brakeFrames`
+    are the frames `TurnRun` and `RunBrakeR` raise FIGHTER_STATUS_RUN_BRAKE_FLAG_STOP (where the slide stops and the
+    run, or idle, takes over); `dashTurnFrames` the frames of `TurnDash` before FIGHTER_STATUS_DASH_FLAG_TURN_DASH."""
+    out = {}
+    for key, script, flag, offset in [('dashTurnFrames', 'TurnDash', 'FIGHTER_STATUS_DASH_FLAG_TURN_DASH', -1),
+                                      ('turnFrames', 'TurnRun', 'FIGHTER_STATUS_RUN_BRAKE_FLAG_STOP', 0),
+                                      ('brakeFrames', 'RunBrakeR', 'FIGHTER_STATUS_RUN_BRAKE_FLAG_STOP', 0)]:
+        at = flag_frame(body.get(script, ''), flag)
+        if at is not None:
+            out[key] = at + offset
     return out
 
 
