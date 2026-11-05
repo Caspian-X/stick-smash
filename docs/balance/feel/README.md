@@ -70,10 +70,21 @@ in the air. Each move reports two setups:
 - `first`: the outermost spacing that connects (the earliest timing at that spacing).
 - `best`: the spacing and timing whose first hit launches the dummy hardest at 100%.
 
-For each setup a binary search finds the lowest dummy percent (before the move) at which the dummy is KO'd, with
-`range` (attacker distance, px) and, for the back air, `delay` (ticks after the jump press). `percent: null` with
-reason `none below 300%` means the move connects but never KOs; `never connects within 300px` means no setup hit.
-The table prints `first / best` when they differ, `none` and `no hit` for those two cases.
+For each setup a binary search finds the lowest dummy percent (before the move) for two outcomes, with `range`
+(attacker distance, px) and, for the back air, `delay` (ticks after the jump press):
+- `percent` is the **launch KO**: the dummy crosses a blast line while still in the launch, meaning in hitstun,
+  or airborne without having touched the ground or a ledge since the hit. A dummy that lands and then drops off
+  the block (it has no inputs) does not count. `null` with reason `no launch KO below 300%` means it never
+  happens below the cap.
+- `ringOut` is the lowest percent at which the dummy leaves the main block at all (hangs on a ledge, or dies),
+  reported only when that first exit is not already a launch KO. It shows where a move pushes a helpless dummy
+  off the stage before it can kill. `null` means the move launch-KOs first or never moves the dummy off.
+
+The table prints `first / best` when they differ, `none` for no launch KO and `no hit` when no setup connected.
+The ring-out column lists forward smash / up tilt / back air / forward throw, each as `first/best` when they
+differ.
+
+The synthetic launch's `died` and `death45` use the same launch-KO rule.
 
 A move with several hitboxes reports whatever it hits at those spacings, so `first` often finds a sourspot or
 late hit. Both numbers are for this one dummy, weight and stage.

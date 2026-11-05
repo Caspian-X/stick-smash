@@ -241,10 +241,12 @@ fn launch(d: &GameData, id: &str, angle: f64, pct: f64) -> Value {
     let (hitlag, hitstun, speed, tumble) = (f.lag, f.hitstun, f.vx.hypot(f.vy), f.tumble);
     let (mut top, mut dx, mut died, mut landed) = (y0, None, false, None);
     for t in 1..=900 {
+        let prev = f0(&w).state;
         tick(&mut w, d, IDLE);
         let f = f0(&w);
         if f.state == State::Dead {
-            died = true;
+            // Same launch-KO rule as the KO percents: a fall after landing doesn't count.
+            died = prev == State::Hitstun || prev == State::Air && landed.is_none();
             break;
         }
         top = top.min(f.y);
@@ -271,9 +273,17 @@ enum Ko {
     Bair,
     Fthrow,
 }
+#[derive(Clone, Copy, PartialEq)]
+enum Out {
+    Stay,
+    /// Off the main block (hanging on a ledge, or dead) without a launch KO.
+    Ring,
+    /// Crossed a blast line while still launched: in hitstun, or airborne without touching ground since the hit.
+    Ko,
+}
 struct Trial {
     hit: bool,
-    ko: bool,
+    out: Out,
     /// Dummy launch speed on the first hit tick (0 for a grab).
     speed: f64,
 }
@@ -287,7 +297,10 @@ fn trial(d: &GameData, id: &str, mv: Ko, (dx, delay): (f64, u32), pct: f64, stop
     w.cfg.players[0].controls.stick_tilts = matches!(mv, Ko::Utilt);
     let fwd = (127. * face) as i8;
     let min_hold = d.global.grab.min_hold;
+    let miss = Trial { hit: false, out: Out::Stay, speed: 0. };
+    let mut touched = false;
     for t in 0..900u32 {
+        let (prev, launched) = (w.fighters[1].state, !touched);
         let a = f0(&w);
         let i = match (mv, t) {
             (Ko::Fsmash, 0) => astick(fwd, 0),
@@ -308,39 +321,55 @@ fn trial(d: &GameData, id: &str, mv: Ko, (dx, delay): (f64, u32), pct: f64, stop
         let pressed = if matches!(mv, Ko::Bair) { delay } else { 0 };
         if t == pressed && f0(&w).mov.as_ref().is_none_or(|m| m.slot != slot) && f0(&w).state != State::Jumpsquat {
             // Pressed too late (a back air after landing) or the move didn't start as intended.
-            return Trial { hit: false, ko: false, speed: 0. };
+            return miss;
         }
         let v = &w.fighters[1];
         if v.state == State::Dead {
-            return Trial { hit: true, ko: true, speed: 0. };
+            let ko = prev == State::Hitstun || prev == State::Air && launched;
+            return Trial { hit: true, out: if ko { Out::Ko } else { Out::Ring }, speed: 0. };
         }
         if v.dmg > pct || v.state == State::Grabbed {
             let speed = v.vx.hypot(v.vy);
             if stop_on_hit {
-                return Trial { hit: true, ko: false, speed };
+                return Trial { hit: true, out: Out::Stay, speed };
             }
+            if v.state == State::Ledge {
+                return Trial { hit: true, out: Out::Ring, speed };
+            }
+            touched |= v.ground && v.state != State::Grabbed;
             if v.ground && v.actionable(&d.global) && t > 30 {
-                return Trial { hit: true, ko: false, speed };
+                return Trial { hit: true, out: Out::Stay, speed };
             }
         } else if t > 120 {
             break;
         }
     }
-    Trial { hit: w.fighters[1].dmg > pct, ko: false, speed: 0. }
+    Trial { hit: w.fighters[1].dmg > pct, ..miss }
 }
-fn ko_at(d: &GameData, id: &str, mv: Ko, setup: (f64, u32)) -> Value {
-    let kos = |p: u32| trial(d, id, mv, setup, f64::from(p), false).ko;
-    let (dx, delay) = setup;
-    let delay = matches!(mv, Ko::Bair).then_some(delay);
-    if !kos(KO_CAP) {
-        return json!({ "percent": null, "range": dx, "delay": delay, "reason": format!("none below {KO_CAP}%") });
+/// Lowest percent in `0..=KO_CAP` where `yes` holds, assuming it stays true above.
+fn lowest(yes: impl Fn(u32) -> bool) -> Option<u32> {
+    if !yes(KO_CAP) {
+        return None;
     }
     let (mut lo, mut hi) = (0, KO_CAP);
     while lo < hi {
         let mid = (lo + hi) / 2;
-        if kos(mid) { hi = mid } else { lo = mid + 1 }
+        if yes(mid) { hi = mid } else { lo = mid + 1 }
     }
-    json!({ "percent": lo, "range": dx, "delay": delay })
+    Some(lo)
+}
+fn ko_at(d: &GameData, id: &str, mv: Ko, setup: (f64, u32)) -> Value {
+    let out = |p: u32| trial(d, id, mv, setup, f64::from(p), false).out;
+    let (dx, delay) = setup;
+    let delay = matches!(mv, Ko::Bair).then_some(delay);
+    let ko = lowest(|p| out(p) == Out::Ko);
+    // The first percent that takes the dummy off the block counts as a ring-out unless it is already a launch KO.
+    let ring = lowest(|p| out(p) != Out::Stay).filter(|p| out(*p) == Out::Ring);
+    let mut v = json!({ "percent": ko, "ringOut": ring, "range": dx, "delay": delay });
+    if ko.is_none() {
+        v["reason"] = json!(format!("no launch KO below {KO_CAP}%"));
+    }
+    v
 }
 /// KO percent at the outermost connecting spacing (`first`) and at the spacing / timing that launches hardest at
 /// 100% (`best`).
@@ -448,7 +477,8 @@ fn tables(rows: &[Value]) -> String {
     }
     s += "\n### Launch (12% / 40 BKB / 1.0 KBG) and KO percents\n\n| Fighter | 45° speed @0/50/100/150 \
           | 45° hitstun @0/50/100/150 | 45° dx at hitstun end @100 | 45° KO% | Spike speed / hitstun @100 \
-          | F-smash KO% | U-tilt KO% | SH bair KO% | F-throw KO% |\n|---|---|---|---|---|---|---|---|---|---|\n";
+          | F-smash KO% | U-tilt KO% | SH bair KO% | F-throw KO% | Ring-out % F-smash / U-tilt / bair / F-throw \
+          |\n|---|---|---|---|---|---|---|---|---|---|---|\n";
     for r in rows {
         let l = r["launch"]["angle45"].as_array().unwrap();
         let col = |k: &str| l.iter().map(|x| cell(&x[k])).collect::<Vec<_>>().join(" / ");
@@ -463,8 +493,15 @@ fn tables(rows: &[Value]) -> String {
             let (first, best) = (one(&r["ko"][k]["first"]), one(&r["ko"][k]["best"]));
             if first == best || r["ko"][k]["best"].is_null() { first } else { format!("{first} / {best}") }
         };
+        let ring = ["fsmash", "utilt", "bair", "fthrow"]
+            .map(|k| {
+                let one = |v: &Value| cell(&v["ringOut"]);
+                let (first, best) = (one(&r["ko"][k]["first"]), one(&r["ko"][k]["best"]));
+                if first == best || r["ko"][k]["best"].is_null() { first } else { format!("{first}/{best}") }
+            })
+            .join(" / ");
         s += &format!(
-            "| {} | {} | {} | {} | {} | {} / {} | {} | {} | {} | {} |\n",
+            "| {} | {} | {} | {} | {} | {} / {} | {} | {} | {} | {} | {} |\n",
             cell(&r["fighter"]).trim_matches('"'),
             col("speed"),
             col("hitstun"),
@@ -476,6 +513,7 @@ fn tables(rows: &[Value]) -> String {
             ko("utilt"),
             ko("bair"),
             ko("fthrow"),
+            ring,
         );
     }
     s
