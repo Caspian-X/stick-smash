@@ -27,3 +27,12 @@ trip slide, drift in hitstun), shared vertical speeds ×5/6, the ledge jump and 
 same height under the lower gravity) and `launchSpeed` 0.14 → 0.15 (Ultimate's 0.03 × 5). The hitstun particle and audio
 strength thresholds follow launch speed (×15/14). Legacy TS-trace fields were left alone. Content-only:
 no SIM_VERSION change.
+
+Gait lengths then became per fighter (`stats.turnFrames` / `brakeFrames` / `dashTurnFrames`, DESIGN.md and
+FORMAT.md, Gait frames; -sim-35). The shared defaults stay at 4-frame run turnaround and 5-frame brake, so originals
+measure exactly as before in the feel baseline; `gait.dashTurnFrames` 2 with a 14° `dashTurnLean` only renames the
+first two ticks of a dash-back and leans the figure (no speed or timing change). Imports use their source scripts:
+run turnaround 11 / 17 / 15 frames (Duchess / King / Stratus), brake 11. Feel baseline: run turnaround to 95% run
+speed the other way Duchess 20 → 22 frames, King 17 → 25, Stratus 18 → 24 (the slide before reversing:
+39.8 → 37.9, 39.0 → 51.0, 60.6 → 75.2 px); run stop distance drops 2.5–3.7 px because the brake-to-stand tick, which
+applies no traction, now comes at a lower speed. Dash and dash-back distances are unchanged.

@@ -374,6 +374,8 @@ pub enum Gait {
     Brake,
     Crouch,
     Rise,
+    /// The first frames of a dash against the previous facing (already flipped, at dash speed).
+    DashTurn,
 }
 impl Fighter {
     pub fn set_state(&mut self, state: State) {

@@ -16,6 +16,7 @@ pub(super) const FORMAT_VERSION: u32 = 2;
 // multiplier before the cap, weight-based fixed knockback (`fkb`), Peach-style `stats.float`, per-fighter traction /
 // air friction; Fighter snapshot fields `rise`, `top_launch`, `floating`, `float_used`.
 // -sim-34: ground float (`stats.float.groundHeight`) and Duchess's braking Peach Bomber lunge.
+// -sim-35: per-fighter gait frames (`stats.turnFrames` / `brakeFrames` / `dashTurnFrames`) and the `dashturn` gait.
 // -sim-36: held items (`Fighter::item`, `Projectile::item`, `World::items`, `AiState::item_t`, the `toss` state);
 // Duchess's Vegetable plucks a held turnip.
 pub(super) const SIM_VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), "-sim-36");

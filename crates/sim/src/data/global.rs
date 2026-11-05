@@ -693,13 +693,22 @@ pub struct Gait {
     pub dash_speed: f64,
     #[schemars(transform = unit::tick)]
     pub dash_frames: u32,
+    /// Dash-back turn window (frames of the dash shown as the `dashTurn` gait; `stats.dashTurnFrames` overrides).
+    #[schemars(transform = unit::tick)]
+    pub dash_turn_frames: u32,
+    /// Backward body lean at the start of a dash-back turn, easing out over the window (figures without a `turn`
+    /// clip).
+    #[schemars(transform = unit::deg)]
+    pub dash_turn_lean: f64,
     /// Holding the other way while running turns around: facing flips at once and speed skids with turnFriction
-    /// (the fighter's traction with `movement.ultimate`).
+    /// (the fighter's traction with `movement.ultimate`) for turnFrames (`stats.turnFrames` overrides), then the
+    /// run accelerates the new way.
     #[schemars(transform = unit::tick)]
     pub turn_frames: u32,
     #[schemars(transform = unit::ratio)]
     pub turn_friction: f64,
-    /// Letting go while running skids for brakeFrames with brakeFriction (traction with `movement.ultimate`).
+    /// Letting go while running skids for brakeFrames (`stats.brakeFrames` overrides) with brakeFriction (traction
+    /// with `movement.ultimate`).
     #[schemars(transform = unit::tick)]
     pub brake_frames: u32,
     #[schemars(transform = unit::ratio)]
@@ -724,6 +733,8 @@ impl Default for Gait {
             dash_lock: false,
             dash_speed: 0.,
             dash_frames: 0,
+            dash_turn_frames: 0,
+            dash_turn_lean: 0.,
             turn_frames: 0,
             turn_friction: 0.,
             brake_frames: 0,

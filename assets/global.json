@@ -205,6 +205,8 @@
     "dashLock": false,
     "dashSpeed": 1.12,
     "dashFrames": 10,
+    "dashTurnFrames": 2,
+    "dashTurnLean": 14,
     "turnFrames": 4,
     "turnFriction": 0.9,
     "brakeFrames": 5,

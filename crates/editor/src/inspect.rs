@@ -1357,6 +1357,9 @@ fn fighter_panel(ui: &mut egui::Ui, ed: &mut Editor, errors: &[ContentError]) {
             opt_num(ui, "walk speed", &d("Stats", "walkSpeed"), &mut s.walk_speed, 3., "global ratio");
             opt_num(ui, "dash speed", &d("Stats", "dashSpeed"), &mut s.dash_speed, 6., "global ratio");
             opt_int(ui, "dash frames", &d("Stats", "dashFrames"), &mut s.dash_frames, 16, "global");
+            opt_int(ui, "dash turn frames", &d("Stats", "dashTurnFrames"), &mut s.dash_turn_frames, 2, "global");
+            opt_int(ui, "turn frames", &d("Stats", "turnFrames"), &mut s.turn_frames, 11, "global");
+            opt_int(ui, "brake frames", &d("Stats", "brakeFrames"), &mut s.brake_frames, 11, "global");
             num(ui, "ground friction", &stat_tip("groundFriction"), &mut s.ground_friction, 0.005);
             opt_num(ui, "traction", &d("Stats", "traction"), &mut s.traction, 0.35, "global");
             num(ui, "jump speed", &stat_tip("jumpSpeed"), &mut s.jump_speed, 0.05);

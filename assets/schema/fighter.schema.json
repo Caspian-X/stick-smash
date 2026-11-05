@@ -106,6 +106,27 @@
           "x-axis": "x"
         },
         "dashFrames": { "type": ["integer", "null"], "format": "uint32", "minimum": 0, "x-unit": "tick" },
+        "dashTurnFrames": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Dash-back turn: a dash against facing flips facing and takes the dash speed at once, but its first frames are\nthe `dashTurn` gait (turn pose) instead of `dash`. Counts toward dashFrames (default gait.dashTurnFrames).",
+          "x-unit": "tick"
+        },
+        "turnFrames": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Run turnaround: facing flips at once, traction slides the old way, then the run accelerates the new way\nafter this many frames (default gait.turnFrames; Ultimate's `TurnRun` stop frame).",
+          "x-unit": "tick"
+        },
+        "brakeFrames": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Run brake (stick released while running): skids under traction for this many frames, during which holding\nback turns around and a flick dashes (default gait.brakeFrames; Ultimate's `RunBrake` stop frame).",
+          "x-unit": "tick"
+        },
         "walkSpeed": {
           "type": ["number", "null"],
           "format": "double",
@@ -2716,6 +2737,27 @@
           "x-axis": "x"
         },
         "dashFrames": { "type": ["integer", "null"], "format": "uint32", "minimum": 0, "x-unit": "tick" },
+        "dashTurnFrames": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Dash-back turn: a dash against facing flips facing and takes the dash speed at once, but its first frames are\nthe `dashTurn` gait (turn pose) instead of `dash`. Counts toward dashFrames (default gait.dashTurnFrames).",
+          "x-unit": "tick"
+        },
+        "turnFrames": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Run turnaround: facing flips at once, traction slides the old way, then the run accelerates the new way\nafter this many frames (default gait.turnFrames; Ultimate's `TurnRun` stop frame).",
+          "x-unit": "tick"
+        },
+        "brakeFrames": {
+          "type": ["integer", "null"],
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Run brake (stick released while running): skids under traction for this many frames, during which holding\nback turns around and a flick dashes (default gait.brakeFrames; Ultimate's `RunBrake` stop frame).",
+          "x-unit": "tick"
+        },
         "walkSpeed": {
           "type": ["number", "null"],
           "format": "double",

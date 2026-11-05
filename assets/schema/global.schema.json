@@ -19,6 +19,8 @@
         "dashLock": false,
         "dashSpeed": 0.0,
         "dashFrames": 0,
+        "dashTurnFrames": 0,
+        "dashTurnLean": 0.0,
         "turnFrames": 0,
         "turnFriction": 0.0,
         "brakeFrames": 0,
@@ -441,11 +443,26 @@
           "x-unit": "ratio"
         },
         "dashFrames": { "type": "integer", "format": "uint32", "minimum": 0, "default": 0, "x-unit": "tick" },
+        "dashTurnFrames": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Dash-back turn window (frames of the dash shown as the `dashTurn` gait; `stats.dashTurnFrames` overrides).",
+          "default": 0,
+          "x-unit": "tick"
+        },
+        "dashTurnLean": {
+          "type": "number",
+          "format": "double",
+          "description": "Backward body lean at the start of a dash-back turn, easing out over the window (figures without a `turn`\nclip).",
+          "default": 0.0,
+          "x-unit": "deg"
+        },
         "turnFrames": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Holding the other way while running turns around: facing flips at once and speed skids with turnFriction\n(the fighter's traction with `movement.ultimate`).",
+          "description": "Holding the other way while running turns around: facing flips at once and speed skids with turnFriction\n(the fighter's traction with `movement.ultimate`) for turnFrames (`stats.turnFrames` overrides), then the\nrun accelerates the new way.",
           "default": 0,
           "x-unit": "tick"
         },
@@ -454,7 +471,7 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Letting go while running skids for brakeFrames with brakeFriction (traction with `movement.ultimate`).",
+          "description": "Letting go while running skids for brakeFrames (`stats.brakeFrames` overrides) with brakeFriction (traction\nwith `movement.ultimate`).",
           "default": 0,
           "x-unit": "tick"
         },

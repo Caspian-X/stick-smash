@@ -228,7 +228,7 @@ pub fn state_anim(d: &GameData, f: &Fighter) -> (String, Option<f64>) {
         State::Idle if f.ground && f.gait == Gait::Walk && has_clip(d, f, "walk") => "walk".into(),
         // Optional gait clips are one-shot per gait transition: sample them from the gait clock, not from the
         // state clock, so entering them after any amount of idle time starts at their first key.
-        State::Idle if f.ground && f.gait == Gait::Turn && has_clip(d, f, "turn") => {
+        State::Idle if f.ground && matches!(f.gait, Gait::Turn | Gait::DashTurn) && has_clip(d, f, "turn") => {
             return ("turn".into(), Some(f64::from(f.gait_t)));
         }
         State::Idle if f.ground && f.gait == Gait::Brake && has_clip(d, f, "brake") => {
@@ -294,6 +294,10 @@ pub fn fighter_pose(d: &GameData, f: &Fighter, frame: u64) -> Skel {
             |a| sample(fd, &a.keys, clock_value(a, f, frame), a.period, f),
         );
         idle.lerp(&pose, amount)
+    } else if name != "turn" && f.state == State::Idle && f.ground && f.gait == Gait::DashTurn {
+        // A dash-back without a turn clip leans back (away from the new travel) and straightens over the window.
+        let n = f64::from(crate::gait::dash_turn_frames(d, f).max(1));
+        Skel { rot: pose.rot - d.global.gait.dash_turn_lean * ((n - f64::from(f.gait_t)) / n).max(0.), ..pose }
     } else {
         pose
     }

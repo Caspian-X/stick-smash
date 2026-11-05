@@ -95,6 +95,21 @@ pub struct Stats {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schemars(transform = unit::tick)]
     pub dash_frames: Option<u32>,
+    /// Dash-back turn: a dash against facing flips facing and takes the dash speed at once, but its first frames are
+    /// the `dashTurn` gait (turn pose) instead of `dash`. Counts toward dashFrames (default gait.dashTurnFrames).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
+    pub dash_turn_frames: Option<u32>,
+    /// Run turnaround: facing flips at once, traction slides the old way, then the run accelerates the new way
+    /// after this many frames (default gait.turnFrames; Ultimate's `TurnRun` stop frame).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
+    pub turn_frames: Option<u32>,
+    /// Run brake (stick released while running): skids under traction for this many frames, during which holding
+    /// back turns around and a flick dashes (default gait.brakeFrames; Ultimate's `RunBrake` stop frame).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(transform = unit::tick)]
+    pub brake_frames: Option<u32>,
     /// Full-tilt walk speed; defaults to runSpeed × gait.walkSpeed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schemars(transform = unit::v_x)]
