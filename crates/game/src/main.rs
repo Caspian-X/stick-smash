@@ -1,9 +1,11 @@
 use std::fs;
+use std::num::NonZero;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use bevy::input::InputSystems;
 use bevy::prelude::*;
+use bevy::render::pipelined_rendering::PipelinedRenderingPlugin;
 use bevy_egui::{EguiContexts, EguiPlugin, EguiPrimaryContextPass, egui};
 use render::{RenderPlugin, RenderSystems, Scene};
 use sim::data::load;
@@ -128,8 +130,13 @@ fn main() {
         settings::Persist(if shot_dir.is_some() || layout_dir.is_some() { None } else { settings::config_file() });
     let saved = if layout_dir.is_some() { layout_shots::saved() } else { settings::load(persist.0.as_ref()) };
     let mut app = App::new();
+    // Pipelined rendering and a two-frame swapchain queue each add a frame of input latency; a fighting game wants
+    // the newest tick on screen as soon as possible, so render on the main thread with one frame in flight (vsync
+    // stays on).
     app.add_plugins(
         DefaultPlugins
+            .build()
+            .disable::<PipelinedRenderingPlugin>()
             .set(bevy::render::RenderPlugin { synchronous_pipeline_compilation: shot_dir.is_some(), ..default() })
             .set(WindowPlugin {
                 primary_window: Some(Window {
@@ -137,6 +144,7 @@ fn main() {
                     resolution: (1280, 720).into(),
                     resizable: shot_dir.is_none(),
                     mode: menu::window_mode(saved.fullscreen && shot_dir.is_none()),
+                    desired_maximum_frame_latency: NonZero::new(1),
                     ..default()
                 }),
                 // `editing::close_requested` quits, after the editor's unsaved-changes prompt.
