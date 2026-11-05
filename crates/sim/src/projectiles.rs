@@ -74,6 +74,7 @@ pub fn make(w: &World, d: &GameData, i: usize, f: &Fighter, data: usize, id: &st
         power: 1.,
         speed: 1.,
         item: None,
+        item_life: 0,
     }
 }
 pub fn bat(w: &mut World, d: &GameData, a: usize, bx: &[ActiveBox]) {

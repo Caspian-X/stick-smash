@@ -345,6 +345,10 @@ pub struct Fighter {
 pub struct Held {
     pub data: usize,
     pub id: String,
+    /// Ticks left on the item's clock (`Item.life`), started by its first throw and kept through catches and
+    /// pickups; `None` while freshly made and never thrown.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub life: Option<u32>,
 }
 /// An item lying in the world or falling freely (not thrown): no hitbox, picked up or caught by anyone.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -359,6 +363,7 @@ pub struct LooseItem {
     pub vy: f64,
     /// Resting on this surface.
     pub surf: Option<usize>,
+    /// Ticks left on the item's clock; it vanishes on the tick after this reaches 0.
     pub life: u32,
     pub age: u32,
 }
@@ -465,6 +470,9 @@ pub struct Projectile {
     /// A thrown item (id in `fighter_data`'s `items`): it becomes a loose item when it lands, connects or expires.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub item: Option<String>,
+    /// The thrown item's clock (`Held::life`), counted down by `items::step`; it vanishes in flight after 0.
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub item_life: u32,
 }
 fn unit_multiplier() -> f64 {
     1.

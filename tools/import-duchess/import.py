@@ -753,7 +753,9 @@ projectiles = {
 # `base - 0.4 + speed x 3` (3 per unit/frame = 0.6 per px/tick) is applied relative to each projectile's own
 # forward speed, so the forward throws keep 8.3 / 11.4 and other directions scale by their speed. Back, up and down
 # use the forward speeds (adapted: the source's per-direction item-throw speeds are not in the pinned data); a drop
-# lets go at rest. A connecting turnip bounces back and up (catchable), as in the source.
+# lets go at rest. A connecting turnip bounces back and up (catchable), as in the source. `life` is the SmashWiki
+# Peach (SSBU)/Down special item row "Lifetime: 180 frames": one clock from the first throw through flight, the floor
+# and re-catches (Vegetable: "regrabbing the turnips does not restart the timer").
 turnip_item = {
     'name': 'Turnip', 'projectile': 'turnip', 'smashProjectile': 'turnip_strong', 'hold': [24, 56],
     'throws': {
@@ -763,7 +765,7 @@ turnip_item = {
         'down': {'tilt': [0, -11.9048], 'smash': [0, -14.7281]},
         'drop': [0, 0],
     },
-    'speedDamage': 0.6, 'rebound': [2.5, 6], 'life': 600, 'catch': True,
+    'speedDamage': 0.6, 'rebound': [2.5, 6], 'life': 180, 'catch': True,
 }
 spore_shape = [{'shape': 'circle', 'at': [0, 0], 'r': 5.5, 'fill': '#efe6cf', 'stroke': '#b4a98d', 'width': 1.4}]
 for key, (vel, spawn) in {'spore_up': ([8.5714, 5.8333], [24, 54]), 'spore_fwd': ([14.2857, 1.25], [26, 46]),

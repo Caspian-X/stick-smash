@@ -348,7 +348,7 @@ event while one is held does nothing.
       "down": { "tilt": [0, -11.9048], "smash": [0, -14.7281] },
       "drop": [0, 0]
     },
-    "speedDamage": 0.6, "rebound": [2.5, 6], "life": 600, "catch": true
+    "speedDamage": 0.6, "rebound": [2.5, 6], "life": 180, "catch": true
   }
 }
 ```
@@ -367,7 +367,13 @@ event while one is held does nothing.
   figures draw it at the front hand).
 - `rebound`: velocity a thrown item bounces off with when its hit connects (x back against its travel, y up).
   Omit it and a hit uses the item up.
-- `life`: ticks a loose item stays in the world. `catch`: can be caught out of the air.
+- `life`: ticks from the item's first release until it vanishes. It is one clock: it starts on the first throw
+  (a freshly made item that was never thrown has none and can be held indefinitely), keeps running in flight,
+  bouncing, resting, and in a hand after a catch or pickup, and is not restarted by a re-throw. When it runs out
+  the item vanishes wherever it is, with a dust puff (`Fx::Dust`). With `life` L, an item released on tick R is
+  gone at tick R + L. The thrown projectile's own `life` only caps the flight (the item then goes loose with the
+  rest of its clock), so whichever is smaller ends the flight and the item never outlives its clock.
+- `catch`: can be caught out of the air.
 - `toss`: optional `{ frames, release }` override of the shared throw timing.
 
 **Holding.** While holding, every action stays available (jumps, float, specials, shield, dodges, dash, walk,
@@ -393,8 +399,8 @@ state frame `release` the projectile spawns at `hold` with the throw's velocity,
 **Loose items.** A thrown item becomes a loose item (`World.items`) when it touches the floor (it loses its hitbox
 there, as in Smash), when its hit connects (with `rebound`), or when its life runs out or it clashes. Loose items
 fall with the projectile's gravity, bounce with its `bounce.restitution` / `friction` until the rebound would be
-slower than `items.settle`, rest on (and ride) surfaces, bounce off block sides, and vanish after `life` ticks or
-outside the blast zones. They never hit anyone.
+slower than `items.settle`, rest on (and ride) surfaces, bounce off block sides, and vanish when the item's clock
+(`life`) runs out or outside the blast zones. They never hit anyone.
 
 **Pickup and catch.** With an empty hand, attack or grab on the ground picks up a landed item whose centre is in
 `items.pickup` (`landing` state with kind `pickup` for `pickupLag` ticks, animation `pickup`). Attack, grab or (in
@@ -406,9 +412,12 @@ thrower cannot catch its own throw for `items.regrab` ticks. Being KO'd loses th
 `items.cpuRange` (and `ai.thresholds.attackHeight`), or after holding it `cpuHold` ticks. CPUs do not seek items
 out, but an attack or grab near a landed one picks it up.
 
-Snapshot state: `Fighter.item` (`Held { data, id }`: package index and item id), `Projectile.item`,
-`World.items` (`LooseItem`) and `AiState.item_t`; all empty without items, so content without them behaves as
-before. SIM_VERSION -sim-36.
+Snapshot state: `Fighter.item` (`Held { data, id, life }`: package index, item id and the remaining clock, `None`
+until the first throw), `Projectile.item` and `Projectile.item_life` (the clock in flight), `World.items`
+(`LooseItem`, whose `life` is the clock) and `AiState.item_t`; all empty or default without items (and omitted
+from serialized snapshots then), so content without them behaves as before. Each clock counts down once per tick in
+`items::step`, after projectiles move; at 0 the item vanishes on the next tick. SIM_VERSION -sim-36; the single
+item clock -sim-39.
 
 ## Visuals
 

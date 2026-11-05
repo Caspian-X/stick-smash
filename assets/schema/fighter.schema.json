@@ -2382,7 +2382,7 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Ticks a loose item stays in the world.",
+          "description": "Ticks from the item's first release until it vanishes, wherever it is then (in flight, loose or caught back\nin a hand). One clock: catches, pickups and re-throws do not restart it. A never-thrown item has no clock.",
           "x-unit": "tick"
         },
         "catch": {
@@ -3734,7 +3734,7 @@
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Ticks a loose item stays in the world.",
+          "description": "Ticks from the item's first release until it vanishes, wherever it is then (in flight, loose or caught back\nin a hand). One clock: catches, pickups and re-throws do not restart it. A never-thrown item has no clock.",
           "x-unit": "tick"
         },
         "catch": {

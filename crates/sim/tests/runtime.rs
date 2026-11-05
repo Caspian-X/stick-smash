@@ -296,6 +296,7 @@ fn cpu_match_golden_world_hash() {
     // Per-fighter gait frames (-sim-35) leave it alone: neither original sets them, and the dash-back turn window
     // only renames the first dash ticks. Held items (-sim-36) add `item` / `item_t` to fighters, `item` to
     // projectiles and `items` to the World (Debug text only; no item plays). `gait.dashRelease` (-sim-37) moves it:
-    // CPU dashes that let go of the stick now skid instead of holding dash speed.
+    // CPU dashes that let go of the stick now skid instead of holding dash speed. The item clock (-sim-39) leaves it
+    // alone: no item plays, no projectile is live at the end (`Projectile::item_life`) and no fighter holds one.
     assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x935b3190824db1c0);
 }

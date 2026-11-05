@@ -4,7 +4,7 @@ mod common;
 
 use sim::actions::Action;
 use sim::input::{ATTACK, GRAB, Intent, JUMP, SHIELD, SPECIAL, Strike};
-use sim::world::{Held, LooseItem, Projectile, State};
+use sim::world::{Fx, Held, LooseItem, Projectile, State};
 use sim::{GameData, Input, PlayerConfig, World, items, moves, step_world};
 
 const FLOOR: f64 = 520.;
@@ -18,7 +18,7 @@ fn setup(d: &GameData) -> World {
 }
 
 fn turnip(d: &GameData) -> Held {
-    Held { data: d.fighters.iter().position(|f| f.id == "duchess").unwrap(), id: "turnip".into() }
+    Held { data: d.fighters.iter().position(|f| f.id == "duchess").unwrap(), id: "turnip".into(), life: None }
 }
 
 fn holding(d: &GameData) -> World {
@@ -49,6 +49,11 @@ fn airborne(w: &mut World, i: usize, y: f64) {
     let f = &mut w.fighters[i];
     (f.ground, f.surf, f.y, f.vy) = (false, None, y, 0.);
     f.set_state(State::Air);
+}
+
+/// The id of the item in fighter `i`'s hand.
+fn held(w: &World, i: usize) -> Option<&str> {
+    w.fighters[i].item.as_ref().map(|h| h.id.as_str())
 }
 
 /// The thrown item, once it leaves the hand.
@@ -213,9 +218,10 @@ fn a_thrown_item_lands_loose_and_is_picked_up() {
     let acts = tick(&mut w, &d, press(ATTACK));
     assert_eq!(acts, [Action::Pickup]);
     assert!(w.items.is_empty());
-    assert_eq!(w.fighters[0].item, Some(turnip(&d)));
+    assert_eq!(held(&w, 0), Some("turnip"));
+    assert_eq!(w.fighters[0].item.as_ref().unwrap().life, Some(it.life - 1), "the clock keeps running in the hand");
     assert_eq!((w.fighters[0].state, w.fighters[0].sd.kind.as_str()), (State::Landing, "pickup"));
-    // Loose items expire.
+    // A loose item vanishes the tick after its clock reaches 0.
     let mut w = setup(&d);
     w.items.push(LooseItem {
         item: turnip(&d),
@@ -229,6 +235,8 @@ fn a_thrown_item_lands_loose_and_is_picked_up() {
         age: 0,
     });
     idle(&mut w, &d, 3);
+    assert_eq!(w.items[0].life, 0);
+    idle(&mut w, &d, 1);
     assert!(w.items.is_empty());
 }
 
@@ -251,7 +259,7 @@ fn items_in_flight_are_caught_with_grab_attack_or_air_dodge() {
             age: 40,
         });
         assert_eq!(tick(&mut w, &d, press(buttons)), [Action::Catch], "buttons {buttons}");
-        assert_eq!(w.fighters[0].item, Some(turnip(&d)));
+        assert_eq!(w.fighters[0].item.as_ref().unwrap().life, Some(599), "a catch keeps the item's clock");
         assert!(w.items.is_empty());
         assert_eq!(w.fighters[0].state, State::Air, "a catch is not an air dodge");
     }
@@ -265,7 +273,7 @@ fn items_in_flight_are_caught_with_grab_attack_or_air_dodge() {
     step_world(&mut w, &d, &[Input::default(), press(GRAB)]);
     assert!(w.acts.iter().any(|a| a.player == 1 && a.action == Action::Catch));
     assert!(w.projs.is_empty() && w.items.is_empty());
-    assert_eq!(w.fighters[1].item, Some(turnip(&d)));
+    assert_eq!(held(&w, 1), Some("turnip"));
     assert_eq!(w.fighters[1].dmg, 0.);
     // Its thrower cannot catch it straight back.
     let mut w = holding(&d);
@@ -371,4 +379,64 @@ fn item_play_is_deterministic() {
         assert_eq!(a, b, "tick {t}");
     }
     assert!(a.fighters[1].dmg > 0. || !a.items.is_empty() || a.fighters[0].item.is_some());
+}
+
+#[test]
+fn turnip_vanishes_three_seconds_after_the_first_throw_wherever_it_is() {
+    let d = common::data();
+    assert_eq!(d.fighters[turnip(&d).data].items["turnip"].life, 180, "SmashWiki: Lifetime 180 frames");
+    // Thrown forward and left on the floor: loose on landing, resting, then gone 180 ticks after the release.
+    let mut w = holding(&d);
+    let start = w.frame;
+    tick(&mut w, &d, press(ATTACK));
+    while w.projs.is_empty() {
+        tick(&mut w, &d, Input::default());
+    }
+    let release = w.frame;
+    assert_eq!(thrown(&w).item_life, 179, "the clock starts on the throw");
+    let (mut loose, mut rest) = (None, None);
+    while w.frame < release + 179 {
+        tick(&mut w, &d, Input::default());
+        if let Some(it) = w.items.first() {
+            loose.get_or_insert(w.frame);
+            if it.surf.is_some() {
+                rest.get_or_insert(w.frame);
+            }
+        }
+    }
+    let (loose, rest) = (loose.expect("lands loose"), rest.expect("comes to rest"));
+    eprintln!(
+        "tilt throw (ticks from the press): release {}, loose {}, resting {}, vanish {}",
+        release - start,
+        loose - start,
+        rest - start,
+        release + 180 - start
+    );
+    assert!(loose < rest && rest < release + 179, "{loose} {rest}");
+    assert_eq!(w.items.len(), 1, "still there one tick before");
+    step_world(&mut w, &d, &[Input::default(), Input::default()]);
+    assert_eq!(w.frame, release + 180);
+    assert!(w.items.is_empty() && w.projs.is_empty(), "gone at release + 180");
+    assert!(w.fx.iter().any(|f| matches!(f, Fx::Dust { .. })), "with a puff");
+    // Thrown, caught out of the air and held: it vanishes from the hand on the same tick.
+    let mut w = holding(&d);
+    w.fighters[1].x = 900.;
+    throw(&mut w, &d, "f", false);
+    let release = w.frame;
+    let p = thrown(&w).clone();
+    airborne(&mut w, 1, p.y + 50.);
+    (w.fighters[1].x, w.fighters[1].face) = (p.x + 30., -1.);
+    step_world(&mut w, &d, &[Input::default(), press(GRAB)]);
+    assert_eq!(held(&w, 1), Some("turnip"), "caught");
+    while w.frame < release + 179 {
+        tick(&mut w, &d, Input::default());
+    }
+    assert_eq!(w.fighters[1].item.as_ref().unwrap().life, Some(0), "the catch did not restart the clock");
+    tick(&mut w, &d, Input::default());
+    assert_eq!(w.frame, release + 180);
+    assert_eq!(w.fighters[1].item, None, "vanished from the hand");
+    // A plucked turnip that was never thrown has no running clock.
+    let mut w = holding(&d);
+    idle(&mut w, &d, 600);
+    assert_eq!(w.fighters[0].item, Some(turnip(&d)), "held for 10 s");
 }

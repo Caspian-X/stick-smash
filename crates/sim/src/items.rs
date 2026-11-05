@@ -3,7 +3,9 @@
 //! Items are content (`Fighter.items`); nothing here knows a fighter or item id. A fighter holds at most one
 //! (`Fighter::item`), granted by a move event's `item`. Attacks and aerials throw it: after `toss.release` ticks the
 //! item's projectile is launched, tagged with the item (`Projectile::item`). A thrown item that lands, connects or
-//! runs out of life becomes a [`LooseItem`]: it falls, bounces, rests on surfaces and expires after `life` ticks.
+//! runs out of projectile life becomes a [`LooseItem`]: it falls, bounces and rests on surfaces. The first throw
+//! starts the item's one clock (`Item.life`), which keeps running in flight, loose and back in a hand; the item
+//! vanishes wherever it is when it runs out.
 //! Attack or grab picks up a landed item on the ground; attack, grab or air dodge catches one in flight.
 use crate::actions::{Action, accept};
 use crate::physics::*;
@@ -31,7 +33,7 @@ fn timing(d: &GameData, h: &Held) -> Toss {
 /// Put item `id` of the fighter's own package in its hand (a move event's `item`); nothing if it holds one.
 pub fn give(f: &mut Fighter, id: &str) {
     if f.item.is_none() {
-        f.item = Some(Held { data: f.data, id: id.into() });
+        f.item = Some(Held { data: f.data, id: id.into(), life: None });
     }
 }
 
@@ -146,6 +148,8 @@ fn release(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, h: &Held) {
         p.hit.damage = (p.hit.damage + it.speed_damage * faster).max(0.);
     }
     p.item = Some(h.id.clone());
+    // The first throw starts the item's clock; later throws carry on with what is left.
+    p.item_life = h.life.unwrap_or(it.life);
     w.projs.push(p);
     if let Some(s) = &pd.spawn_sfx {
         w.sfx(s.clone());
@@ -164,14 +168,14 @@ pub fn loosen(w: &mut World, d: &GameData, p: &mut Projectile, connected: bool) 
         (true, None) => return,
     };
     w.items.push(LooseItem {
-        item: Held { data: p.fighter_data, id },
+        item: Held { data: p.fighter_data, id, life: None },
         owner: p.owner,
         x: p.x,
         y: p.y,
         vx,
         vy,
         surf: None,
-        life: it.life,
+        life: p.item_life,
         age: 0,
     });
 }
@@ -189,8 +193,10 @@ pub fn take(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) -> bool {
         return false;
     }
     let landed = w.items.iter().position(|it| it.surf.is_some() && f.ground && inside(f, &g.pickup, it.x, it.y));
+    // The item's clock keeps running in the hand.
+    let hand = |it: LooseItem| Held { life: Some(it.life), ..it.item };
     if let Some(k) = landed {
-        f.item = Some(w.items.remove(k).item);
+        f.item = Some(hand(w.items.remove(k)));
         accept(w, i, Action::Pickup);
         landing(f, g.pickup_lag);
         f.sd.kind = "pickup".into();
@@ -201,7 +207,7 @@ pub fn take(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) -> bool {
         it.surf.is_none() && def(d, &it.item).catch && !own(it.owner, it.age) && inside(f, &g.catch, it.x, it.y)
     });
     let held = if let Some(k) = falling {
-        w.items.remove(k).item
+        hand(w.items.remove(k))
     } else {
         let Some(p) = w.projs.iter_mut().find(|p| {
             p.life > 0
@@ -212,19 +218,66 @@ pub fn take(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) -> bool {
             return false;
         };
         p.life = 0;
-        Held { data: p.fighter_data, id: p.item.take().unwrap() }
+        Held { data: p.fighter_data, id: p.item.take().unwrap(), life: Some(p.item_life) }
     };
     f.item = Some(held);
     accept(w, i, Action::Catch);
     true
 }
 
-/// Move loose items: gravity and fall cap from their projectile, bounces (`bounce.restitution` / `friction`) until
-/// they settle below `items.settle`, stage walls, riding moving platforms; expired or out-of-bounds ones vanish.
+/// One tick of every item's clock (`Item.life`), wherever the item is: in a hand (once thrown), in flight or
+/// loose. An item whose clock is at 0 vanishes with a puff of dust; others count down.
+fn clocks(w: &mut World, d: &GameData) {
+    let mut gone = vec![];
+    for f in &mut w.fighters {
+        if let Some(h) = &mut f.item
+            && let Some(l) = &mut h.life
+        {
+            if *l == 0 {
+                let hold = def(d, h).hold;
+                gone.push((f.x + f.face * hold[0], f.y - hold[1]));
+                f.item = None;
+            } else {
+                *l -= 1;
+            }
+        }
+    }
+    w.projs.retain_mut(|p| {
+        if p.item.is_none() {
+            true
+        } else if p.item_life == 0 {
+            gone.push((p.x, p.y));
+            false
+        } else {
+            p.item_life -= 1;
+            true
+        }
+    });
+    w.items.retain_mut(|it| {
+        if it.life == 0 {
+            gone.push((it.x, it.y));
+            false
+        } else {
+            it.life -= 1;
+            true
+        }
+    });
+    for (x, y) in gone {
+        w.dust(x, y, 3);
+    }
+}
+
+/// Count down item clocks, then move loose items: gravity and fall cap from their projectile, bounces
+/// (`bounce.restitution` / `friction`) until they settle below `items.settle`, stage walls, riding moving
+/// platforms; out-of-bounds ones vanish.
 pub fn step(w: &mut World, d: &GameData) {
-    if w.items.is_empty() {
+    if w.items.is_empty()
+        && !w.projs.iter().any(|p| p.item.is_some())
+        && !w.fighters.iter().any(|f| f.item.as_ref().is_some_and(|h| h.life.is_some()))
+    {
         return;
     }
+    clocks(w, d);
     let s = &d.stages[w.stage];
     let g = &d.global;
     for k in 0..w.items.len() {
@@ -232,7 +285,6 @@ pub fn step(w: &mut World, d: &GameData) {
         let pd = &d.fighters[it.item.data].projectiles[&def(d, &it.item).projectile];
         let b = pd.bounce.as_ref();
         it.age = it.age.saturating_add(1);
-        it.life = it.life.saturating_sub(1);
         if let Some(id) = it.surf {
             let (x1, x2, y) = surface(d, w, id);
             if let Some(platform) = id.checked_sub(s.blocks.len()).and_then(|i| s.platforms.get(i)) {
@@ -284,5 +336,5 @@ pub fn step(w: &mut World, d: &GameData) {
         w.items[k] = it;
     }
     let b = &s.blast;
-    w.items.retain(|it| it.life > 0 && it.x > b.left && it.x < b.right && it.y < b.bottom);
+    w.items.retain(|it| it.x > b.left && it.x < b.right && it.y < b.bottom);
 }

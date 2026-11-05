@@ -325,7 +325,8 @@ pub struct Item {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schemars(transform = unit::v_pt)]
     pub rebound: Option<Pt>,
-    /// Ticks a loose item stays in the world.
+    /// Ticks from the item's first release until it vanishes, wherever it is then (in flight, loose or caught back
+    /// in a hand). One clock: catches, pickups and re-throws do not restart it. A never-thrown item has no clock.
     #[schemars(transform = unit::tick)]
     pub life: u32,
     /// Can be caught out of the air (thrown or falling). A landed item can always be picked up.

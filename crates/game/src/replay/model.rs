@@ -21,7 +21,9 @@ pub(super) const FORMAT_VERSION: u32 = 2;
 // Duchess's Vegetable plucks a held turnip.
 // -sim-37: `gait.dashRelease` (a released initial dash skids by traction) and source dash / turn / brake frames.
 // -sim-38: 9-tick press buffer and the hold buffer (`input.holdBuffer`); `BufferedPress::held`, `Intent::grab_held`.
-pub(super) const SIM_VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), "-sim-38");
+// -sim-39: one item clock (`Item.life`) from the first throw through flight, loose and re-catches (`Held::life`,
+// `Projectile::item_life`); Duchess's turnip lasts 180 ticks.
+pub(super) const SIM_VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), "-sim-39");
 pub(super) fn interval(data: &GameData) -> u64 {
     data.global.replay.checkpoint_ticks.max(u64::from(sim::TICK_HZ))
 }
