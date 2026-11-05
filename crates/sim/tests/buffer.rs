@@ -47,16 +47,17 @@ fn smash_keeps_press_time_tap_and_direction() {
 #[test]
 fn expired_press_does_nothing() {
     let d = common::data();
-    let mut w = landing(&d, 6);
+    let n = d.global.input.buffer_frames;
+    let mut w = landing(&d, n + 1);
     tick(&mut w, &d, Input { buttons: 2, ..Default::default() });
-    neutral(&mut w, &d, 7);
+    neutral(&mut w, &d, n + 2);
     assert_eq!(w.fighters[0].state, State::Idle);
     assert!(w.fighters[0].buffer.cmd.is_none());
 }
 #[test]
 fn lifetime_is_inclusive_and_a_press_is_used_once() {
     let d = common::data();
-    let mut w = landing(&d, 5);
+    let mut w = landing(&d, d.global.input.buffer_frames);
     tick(&mut w, &d, Input { buttons: 2, ..Default::default() });
     let mut jabs = 0;
     let mut was_jab = false;

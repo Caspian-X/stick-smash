@@ -113,6 +113,7 @@ Run commands from the repository root. `just` lists recipes.
 
 ```rust
 d.global.input.buffer_frames = 0;
+d.global.input.hold_buffer = false;
 d.global.sim.separate_cosmetic_rng = false;
 d.global.ai.thresholds.surface_chase_ticks = 0;
 d.global.hitstun.ultimate = None; // plus the old hitlag values and tech.lockout = 0

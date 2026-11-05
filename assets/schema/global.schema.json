@@ -364,6 +364,11 @@
           "description": "Human press buffer lifetime in ticks (inclusive); 0 disables re-delivery.",
           "x-unit": "tick"
         },
+        "holdBuffer": {
+          "type": "boolean",
+          "description": "A buffered press stays alive while its button is held (Ultimate's hold buffer), expiring `bufferFrames`\nafter release. Off for TS fidelity.",
+          "default": false
+        },
         "comboFrames": {
           "type": "integer",
           "format": "uint32",

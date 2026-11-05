@@ -181,6 +181,8 @@ fn hitstun_cancel_is_off_by_default_and_opens_after_its_frames() {
     let mut d = wide(common::data());
     assert!(d.global.hitstun.ultimate.as_ref().unwrap().cancel.is_none());
     d.global.hitstun.ultimate.as_mut().unwrap().cancel = Some(HitstunCancel { air_dodge_after: 10, aerial_after: 15 });
+    // A buffer short enough for the early presses below to expire before the cancel opens.
+    d.global.input.buffer_frames = 5;
     let mut w = sky(&d, "brawler");
     combat::apply_hit(&mut w, &d, 0, &hit(150., 90.), src());
     assert!(w.fighters[0].tumble);

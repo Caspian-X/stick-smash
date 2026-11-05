@@ -867,6 +867,10 @@ pub struct InputRules {
     /// Human press buffer lifetime in ticks (inclusive); 0 disables re-delivery.
     #[schemars(transform = unit::tick)]
     pub buffer_frames: u32,
+    /// A buffered press stays alive while its button is held (Ultimate's hold buffer), expiring `bufferFrames`
+    /// after release. Off for TS fidelity.
+    #[serde(default)]
+    pub hold_buffer: bool,
     /// Buffered presses this many ticks apart combine (jump + attack, two jumps, attack + special).
     #[serde(default)]
     #[schemars(transform = unit::tick)]

@@ -479,8 +479,10 @@ threshold, no greater than a nonzero `runThreshold`. Between them the current ga
 attacks and shield during initial dash when enabled (bundled tuning disables it): tilts and forward/down smashes queue within `bufferFrames`, while
 jump, dash attack, up smash, grab and specials can cancel. Opposite flicks still dash back. Crouching can
 cancel a run after initial dash. The settings affect all fighters; they are not per-character speed fixes.
-`global.input.bufferFrames` is the human press buffer lifetime in ticks (u32, currently 5); age equal to
-the lifetime is still live, and 0 disables buffering for TS fidelity. Press-time directions and taps are
+`global.input.bufferFrames` is the human press buffer lifetime in ticks (u32, currently 9, Ultimate's window); age
+equal to the lifetime is still live, and 0 disables buffering for TS fidelity. `global.input.holdBuffer` (bool,
+default false, bundled true) keeps the buffered press alive while a button that made it stays held, the lifetime
+counting from the last held tick; an accepted press never repeats while held. Press-time directions and taps are
 replayed once at the next buffer-actionable update, while held buttons use current input (see DESIGN.md).
 `global.input.jumpAerials` (default true) enables the jump-button + attack short-hop aerial shortcut.
 The combination stays one buffered action during recovery. An attack pressed during jumpsquat is saved

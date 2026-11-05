@@ -190,7 +190,8 @@
     "deadzone": 18,
     "flickThreshold": 100,
     "flickFrames": 3,
-    "bufferFrames": 5,
+    "bufferFrames": 9,
+    "holdBuffer": true,
     "comboFrames": 2,
     "fastFallBuffer": 6,
     "jumpAerials": true

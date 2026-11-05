@@ -54,6 +54,7 @@ fn mismatch(a: &Value, b: &Value, path: &str) -> Option<String> {
 fn matches_typescript_traces() {
     let mut d = common::linear_data();
     d.global.input.buffer_frames = 0;
+    d.global.input.hold_buffer = false;
     d.global.input.jump_aerials = false;
     d.global.input.fast_fall_buffer = 0;
     d.global.movement.platform_pass = false;

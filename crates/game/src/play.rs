@@ -1098,6 +1098,7 @@ mod tests {
         m.world.fighters[0].buffer.cmd = Some(sim::input::BufferedPress {
             tick: m.world.frame,
             intent: sim::input::Intent { atk: true, ..default() },
+            held: m.world.frame,
         });
         m.clear_input(&mut Devices::default());
         assert_eq!(m.world.fighters[0].history, default());

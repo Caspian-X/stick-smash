@@ -76,6 +76,8 @@ pub struct Intent {
     pub sp: bool,
     pub sp_held: bool,
     pub grab: bool,
+    #[serde(default)]
+    pub grab_held: bool,
     pub shield: bool,
     pub shield_p: bool,
     pub down_p: bool,
@@ -170,6 +172,18 @@ impl Intent {
             }
             _ => None,
         }
+    }
+    /// `now` still holds a button that made this command.
+    fn held_by(&self, now: &Self) -> bool {
+        let atk = match self.strike {
+            Strike::Stick { .. } => now.stick_held,
+            _ => now.atk_held,
+        };
+        self.jump && now.jump_held
+            || self.atk && atk
+            || self.sp && now.sp_held
+            || self.grab && now.grab_held
+            || self.shield_p && now.shield
     }
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -282,6 +296,7 @@ impl History {
             sp: pressed[6] && !combo,
             sp_held: held[6],
             grab: pressed[7],
+            grab_held: held[7],
             shield: held[8],
             shield_p: pressed[8],
             down_p: pressed[3],
@@ -300,11 +315,17 @@ impl History {
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BufferedPress {
+    /// Press tick (combos, the input display).
     pub tick: u64,
     pub intent: Intent,
+    /// The lifetime runs from here: the press tick, or with `holdBuffer` the last tick its button was held.
+    #[serde(default)]
+    pub held: u64,
 }
 /// The latest command pressed while unable to act. It's re-delivered each actionable tick until an action
-/// accepts it or it expires; a fresh press supersedes it (combining when close enough).
+/// accepts it or it expires; a fresh press supersedes it (combining when close enough). With `holdBuffer` it
+/// doesn't expire while its button stays held. Accepted, it's gone: a held button presses again only when
+/// released and pressed.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Buffer {
     pub cmd: Option<BufferedPress>,
@@ -319,7 +340,10 @@ impl Buffer {
         actionable: bool,
         ab_smash: bool,
     ) -> Option<u64> {
-        self.cmd = self.cmd.filter(|c| rules.buffer_frames > 0 && tick - c.tick <= u64::from(rules.buffer_frames));
+        if let Some(c) = self.cmd.as_mut().filter(|c| rules.hold_buffer && c.intent.held_by(inp)) {
+            c.held = tick;
+        }
+        self.cmd = self.cmd.filter(|c| rules.buffer_frames > 0 && tick - c.held <= u64::from(rules.buffer_frames));
         let recent = self.cmd.filter(|c| tick - c.tick <= u64::from(rules.combo_frames));
         if inp.presses() {
             let fresh = inp.command();
@@ -330,7 +354,7 @@ impl Buffer {
                     *inp = live(inp, m);
                 }
             } else if rules.buffer_frames > 0 {
-                self.cmd = Some(BufferedPress { tick, intent: merged.unwrap_or(fresh) });
+                self.cmd = Some(BufferedPress { tick, intent: merged.unwrap_or(fresh), held: tick });
             }
             return None;
         }

@@ -36,3 +36,10 @@ run turnaround 11 / 17 / 15 frames (Duchess / King / Stratus), brake 11. Feel ba
 speed the other way Duchess 20 → 22 frames, King 17 → 25, Stratus 18 → 24 (the slide before reversing:
 39.8 → 37.9, 39.0 → 51.0, 60.6 → 75.2 px); run stop distance drops 2.5–3.7 px because the brake-to-stand tick, which
 applies no traction, now comes at a lower speed. Dash and dash-back distances are unchanged.
+
+The press buffer then went from 5 to Ultimate's 9 ticks with the hold buffer on (`input.bufferFrames` / `holdBuffer`,
+DESIGN.md, Input buffer; -sim-38). A playtester couldn't air jump after a full-hop Duchess up air (45 frames; the
+full hop is 57 ticks in the air, so the double jump fits): with 5 ticks a jump pressed 12 ticks before the first
+actionable frame, or pressed then held, was dropped, and only a press in the last 5 ticks jumped. Now a held jump, or
+a press within 9 ticks, air jumps on the first actionable tick (`hold_buffer` tests). CPU intents bypass the buffer,
+so CPU play is unchanged; TS traces disable both.
