@@ -119,11 +119,12 @@ impl DevState {
         }
         self.jump2 = held;
     }
-    fn sample(&mut self, held: [bool; 10]) -> [bool; 10] {
+    /// `tapped`: controls that went down since the last poll, so a press released within one frame still counts.
+    fn sample(&mut self, held: [bool; 10], tapped: [bool; 10]) -> [bool; 10] {
         for (i, h) in held.iter().enumerate() {
             self.blocked[i] &= h;
         }
-        let pressed: [bool; 10] = std::array::from_fn(|i| held[i] && !self.held[i] && !self.blocked[i]);
+        let pressed: [bool; 10] = std::array::from_fn(|i| (held[i] && !self.held[i] || tapped[i]) && !self.blocked[i]);
         self.held = held;
         self.pressed = pressed;
         if pressed[0] {
@@ -503,6 +504,7 @@ pub fn poll(
     let raw_key = KEYS.iter().find(|(k, _)| keys.just_pressed(*k)).map(|(_, n)| n.to_string());
     for d in live {
         let mut held = [false; 10];
+        let mut tapped = [false; 10];
         let mut stick = Vec2::ZERO;
         let mut attack_stick = (0, 0);
         let mut jumps = 0;
@@ -516,6 +518,7 @@ pub fn poll(
                 let b = binds(&saved, &prof);
                 for (i, ctl) in b.iter().enumerate() {
                     held[i] = ctl.iter().any(|c| KEYS.iter().any(|(k, n)| n == c && keys.pressed(*k)));
+                    tapped[i] = ctl.iter().any(|c| KEYS.iter().any(|(k, n)| n == c && keys.just_pressed(*k)));
                 }
                 jumps = b[4].iter().filter(|c| KEYS.iter().any(|(k, n)| n == *c && keys.pressed(*k))).count();
                 raw.clone_from(&raw_key);
@@ -537,6 +540,7 @@ pub fn poll(
                 let b = binds(&saved, &prof);
                 for (i, ctl) in b.iter().enumerate() {
                     held[i] = ctl.iter().any(|c| BUTTONS.iter().any(|(k, n)| n == c && pad.pressed(*k)));
+                    tapped[i] = ctl.iter().any(|c| BUTTONS.iter().any(|(k, n)| n == c && pad.just_pressed(*k)));
                 }
                 jumps = b[4].iter().filter(|c| BUTTONS.iter().any(|(k, n)| n == *c && pad.pressed(*k))).count();
                 stick = full_tilt(pad.left_stick(), crate::settings::control_prefs(&saved, &prof).stick_range);
@@ -556,7 +560,7 @@ pub fn poll(
         let s = devs.map.entry(d).or_default();
         s.back_blocked &= back_key || held[6];
         s.back_key = back_key;
-        let pressed = s.sample(held);
+        let pressed = s.sample(held, tapped);
         s.sample_jump2(jumps >= 2);
         s.sample_attack(attack_stick);
         s.stick = stick;
@@ -665,6 +669,53 @@ mod tests {
     }
 
     #[test]
+    fn presses_released_within_a_frame_latch_once_and_respect_blocks() {
+        let mut d = Devices::default();
+        let s = d.map.entry(Dev::Keys).or_default();
+        let attack: [bool; 10] = std::array::from_fn(|i| i == 5);
+        assert!(s.sample([false; 10], attack)[5], "down and up between polls is still a press");
+        assert_eq!(d.take(Dev::Keys).buttons, sim::input::ATTACK);
+        assert_eq!(d.take(Dev::Keys).buttons, 0, "nothing held afterwards");
+        let s = d.map.get_mut(&Dev::Keys).unwrap();
+        assert!(s.sample(attack, attack)[5]);
+        assert!(!s.sample(attack, [false; 10])[5], "still held: no second press");
+        d.clear();
+        let s = d.map.get_mut(&Dev::Keys).unwrap();
+        assert!(!s.sample(attack, attack)[5], "blocked until release");
+        assert_eq!(d.take(Dev::Keys).buttons, 0);
+        let s = d.map.get_mut(&Dev::Keys).unwrap();
+        s.sample([false; 10], [false; 10]);
+        assert!(s.sample([false; 10], attack)[5], "a tap after the release counts");
+        assert_eq!(d.take(Dev::Keys).buttons, sim::input::ATTACK);
+    }
+
+    #[test]
+    fn keyboard_poll_catches_a_tap_inside_one_frame() {
+        use bevy::input::{ButtonState, InputPlugin, InputSystems, keyboard::KeyboardInput};
+        let mut app = App::new();
+        app.add_plugins((MinimalPlugins, InputPlugin))
+            .insert_resource(crate::Data(crate::test_data()))
+            .init_resource::<Saved>()
+            .init_resource::<Devices>()
+            .add_systems(PreUpdate, poll.after(InputSystems));
+        let window = app.world_mut().spawn_empty().id();
+        for state in [ButtonState::Pressed, ButtonState::Released] {
+            app.world_mut().write_message(KeyboardInput {
+                key_code: KeyCode::KeyJ,
+                logical_key: bevy::input::keyboard::Key::Character("j".into()),
+                state,
+                text: None,
+                repeat: false,
+                window,
+            });
+        }
+        app.update();
+        let mut devs = app.world_mut().resource_mut::<Devices>();
+        assert!(devs.map[&Dev::Keys].nav.contains(&Nav::Confirm));
+        assert_eq!(devs.take(Dev::Keys).buttons, sim::input::ATTACK);
+    }
+
+    #[test]
     fn controller_poll_passes_both_sticks_and_keeps_dpad_in_menus() {
         use bevy::input::{
             InputPlugin, InputSystems,
@@ -698,7 +749,7 @@ mod tests {
         let s = d.map.entry(Dev::Keys).or_default();
         let mut held = [false; 10];
         held[4] = true;
-        s.sample(held);
+        s.sample(held, [false; 10]);
         s.sample_jump2(true);
         s.sample_jump2(false);
         let i = d.take(Dev::Keys);
@@ -720,10 +771,10 @@ mod tests {
         let s = d.map.get_mut(&Dev::Keys).unwrap();
         let mut held = [false; 10];
         held[5] = true;
-        s.sample(held);
+        s.sample(held, [false; 10]);
         assert_eq!(s.input().buttons, 0);
-        s.sample([false; 10]);
-        s.sample(held);
+        s.sample([false; 10], [false; 10]);
+        s.sample(held, [false; 10]);
         assert_eq!(d.take(Dev::Keys).buttons, 2);
     }
     #[test]
@@ -751,15 +802,15 @@ mod back_hold_tests {
             let mut devs = Devices::default();
             let s = devs.map.entry(Dev::Keys).or_default();
             s.back_key = keyboard;
-            s.sample(std::array::from_fn(|i| !keyboard && i == 6));
+            s.sample(std::array::from_fn(|i| !keyboard && i == 6), [false; 10]);
             assert!(s.back_held());
             devs.clear();
             let s = devs.map.get_mut(&Dev::Keys).unwrap();
             assert!(!s.back_held());
             s.back_key = false;
             s.back_blocked = false;
-            s.sample([false; 10]);
-            s.sample(std::array::from_fn(|i| i == 6));
+            s.sample([false; 10], [false; 10]);
+            s.sample(std::array::from_fn(|i| i == 6), [false; 10]);
             assert!(s.back_held());
         }
     }
