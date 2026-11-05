@@ -60,6 +60,8 @@ The editor also feeds `Scene`: fighter previews keep every sandbox frame for scr
 
 `crates/game/src/ui.rs` orders `UiSystems::{Input, Draw, Animate}` before `render::RenderSystems`. Read devices/update the plain model in Input, rebuild changed UI in Draw, and advance presentation in Animate. `ui::staying` skips work when a screen transition is pending. `ui::Rebuild<K>` and `ui::rebuild` compare a model/key and replace the screen root only when it changes; roots get `DespawnOnExit(screen)`. Focus survives rebuilds through stable `Focusable::key`s, optionally restricted to one owner.
 
+Presentation that must not wait on the simulation counts real seconds in `Update` (`Time::delta_secs` / `elapsed_secs`), not sim ticks or frames: the end banner's clock pacing the results screen (`play::match_flow`), the results entrance (`results::animate`) and the pointer/hint/select animations. That keeps a 30, 60 or 144 Hz display and a long or short end freeze from changing how they feel. `Match` keeps ticking while the results are up, so a match that opens the results screen during its end freeze still finishes, poses and closes its replay behind it.
+
 Give transient screen resources an explicit lifetime: insert them on enter and remove them on exit. Examples: select's `Moments`/`HintClock`, stage vote's `Vote`/`Clock`. Some state deliberately persists across screens: `Select` keeps the lobby for stage voting/return, `Match` can animate behind results, and the editor survives its Test round trip. Do not remove those as incidental cleanup. `UiPlugin` registers `input::clear` on entry to every `Screen::ALL` member so the button that changed screens cannot trigger the next screen. Input clearing also suppresses held controls until release.
 
 Shared modules:

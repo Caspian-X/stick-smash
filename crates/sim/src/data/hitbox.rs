@@ -27,6 +27,9 @@ pub enum HitType {
     Bury,
     /// Grabs instead of hitting.
     Grab,
+    /// Damage and shield damage only: no hitstun, hitlag, launch or state change. Used by lingering
+    /// no-flinch hazards such as Poison Breath.
+    DamageOnly,
 }
 
 /// Launch direction rule.
@@ -94,9 +97,14 @@ pub struct Hitbox {
     /// Fixed knockback: ignores damage/percent (launch speed = bkb × launchSpeed × victim weight multiplier).
     #[serde(default, skip_serializing_if = "is_default")]
     pub set_kb: bool,
-    /// Multi-hit: can hit the same victim again every this many frames (default: once per phase).
+    /// Multi-hit: can hit the same victim/group again every this many move ticks (default: once until history clears).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rehit: Option<u32>,
+    /// Independent hit identity within one move. A victim can be hit once per group, so later rows with the
+    /// same group are alternatives (early/late tiers, coverage changes) while a different group is a new hit
+    /// (multi-hit sequences such as Diddy Kong's forward smash).
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub group: u8,
     /// Multiplies the hitstun this box causes.
     #[serde(default = "one", skip_serializing_if = "is_one")]
     pub hitstun_mult: f64,
@@ -115,6 +123,13 @@ pub struct Hitbox {
     /// Counter strike: damage comes from the countered hit (see `Counter`). Inactive if nothing was countered.
     #[serde(default, skip_serializing_if = "is_default")]
     pub counter_damage: bool,
+    /// Fraction of the damage dealt that heals the attacker (Nosferatu drains health). Capped at the
+    /// attacker's current damage.
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub heal: f64,
+    /// Ignores shields, counters and parries (a command grab such as Nosferatu still lands on a guarding victim).
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub unblockable: bool,
     /// In a move, inactive below this many held charge ticks.
     #[serde(default, skip_serializing_if = "is_default")]
     pub min_charge: u32,

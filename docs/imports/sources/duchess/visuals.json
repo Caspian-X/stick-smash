@@ -1,0 +1,480 @@
+{
+ "base": "https://ultimateframedata.com/",
+ "files": {
+  "PeachBAir.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachBAir.gif",
+   "size": 1712840,
+   "sha256": "df3ceb61bc0ec2321eff608ae4acd18fa0c6ef3354bdfe835ab49f03ff26f19a",
+   "frames": 53,
+   "montage": "PeachBAir-frames.png",
+   "kept": [
+    4,
+    5,
+    6,
+    7,
+    10,
+    16
+   ]
+  },
+  "PeachBThrow.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachBThrow.gif",
+   "size": 3053615,
+   "sha256": "221dd16f43667b9328948b3f09d999ee47868635087b61a813d6334d5253917b",
+   "frames": 49,
+   "montage": "PeachBThrow-frames.png",
+   "kept": [
+    17,
+    19,
+    20,
+    21,
+    26,
+    34
+   ]
+  },
+  "PeachDAir.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachDAir.gif",
+   "size": 1919213,
+   "sha256": "527a66a2b4a1788e41e2712b29d29b5763f1340444f377c32bbb0f87f02806d7",
+   "frames": 38,
+   "montage": "PeachDAir-frames.png",
+   "kept": [
+    8,
+    11,
+    12,
+    17,
+    23,
+    29
+   ]
+  },
+  "PeachDSmash.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachDSmash.gif",
+   "size": 1685089,
+   "sha256": "18f9ddde4cb9c29c098bbd28258955e185994714ca8a6051738d63a22d0671ff",
+   "frames": 54,
+   "montage": "PeachDSmash-frames.png",
+   "kept": [
+    2,
+    5,
+    6,
+    9,
+    17,
+    29
+   ]
+  },
+  "PeachDThrow.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachDThrow.gif",
+   "size": 2106788,
+   "sha256": "84b7a49179e0daf106471ed4feffa5ab88edb6656199a9c9800f4c6c7b16b27a",
+   "frames": 64,
+   "montage": "PeachDThrow-frames.png",
+   "kept": [
+    30,
+    33,
+    34,
+    35,
+    40,
+    48
+   ]
+  },
+  "PeachDTilt.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachDTilt.gif",
+   "size": 572082,
+   "sha256": "ac52fbb6fb5753992eea243cd8b8101ab4442c02829873191a0b0482cb846241",
+   "frames": 23,
+   "montage": "PeachDTilt-frames.png",
+   "kept": [
+    3,
+    7,
+    8,
+    9,
+    14,
+    20
+   ]
+  },
+  "PeachDashAttack.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachDashAttack.gif",
+   "size": 1360533,
+   "sha256": "b867868771a282f4c2e42ae560b63b05c8e37b0581606eb1048681e0c2cb2cfd",
+   "frames": 37,
+   "montage": "PeachDashAttack-frames.png",
+   "kept": [
+    2,
+    5,
+    6,
+    8,
+    16,
+    18
+   ]
+  },
+  "PeachDashGrab.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachDashGrab.gif",
+   "size": 1589339,
+   "sha256": "6fe7b84863446c431dae115a5059f2d7e5d048bac6a6c4750cce13c5ecb00984",
+   "frames": 44,
+   "montage": "PeachDashGrab-frames.png",
+   "kept": [
+    6,
+    8,
+    9,
+    10,
+    14,
+    20
+   ]
+  },
+  "PeachFAir.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachFAir.gif",
+   "size": 1944457,
+   "sha256": "a59c169751b240a0a3c1d76691cd7143e668be5827bfad56165b1cbc09acc7b0",
+   "frames": 57,
+   "montage": "PeachFAir-frames.png",
+   "kept": [
+    12,
+    15,
+    16,
+    18,
+    20,
+    26
+   ]
+  },
+  "PeachFSmashFryingPan.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachFSmashFryingPan.gif",
+   "size": 2008939,
+   "sha256": "f2a184bb1981eb1a0bd45d3397ba7d47095ccca51aaee777e7b97349e5f2ed68",
+   "frames": 45,
+   "montage": "PeachFSmashFryingPan-frames.png",
+   "kept": [
+    4,
+    10,
+    14,
+    15,
+    16,
+    22
+   ]
+  },
+  "PeachFSmashGolfClub.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachFSmashGolfClub.gif",
+   "size": 2013903,
+   "sha256": "a820ea076c0713e5b36c76a67f19cf3e9e1f948b9dd188f3f7d27a85527fe227",
+   "frames": 45,
+   "montage": "PeachFSmashGolfClub-frames.png",
+   "kept": [
+    4,
+    10,
+    14,
+    15,
+    16,
+    22
+   ]
+  },
+  "PeachFSmashTennisRacket.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachFSmashTennisRacket.gif",
+   "size": 2015041,
+   "sha256": "824726a9afe44d0d04bbfe868a58b91565ff23397ede055902d5388d981cbfd6",
+   "frames": 45,
+   "montage": "PeachFSmashTennisRacket-frames.png",
+   "kept": [
+    4,
+    10,
+    14,
+    15,
+    16,
+    22
+   ]
+  },
+  "PeachFThrow.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachFThrow.gif",
+   "size": 1428418,
+   "sha256": "89a9f7a39e72e334995537b351af3eb980737e35d5739edfa17a825a6dd5ac37",
+   "frames": 39,
+   "montage": "PeachFThrow-frames.png",
+   "kept": [
+    12,
+    13,
+    14,
+    15,
+    20,
+    28
+   ]
+  },
+  "PeachFTilt.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachFTilt.gif",
+   "size": 2728501,
+   "sha256": "00a6d04f0aee7bf49444be32d4071619544e905c0e71feaacf2dc777fa2b383d",
+   "frames": 36,
+   "montage": "PeachFTilt-frames.png",
+   "kept": [
+    3,
+    6,
+    7,
+    8,
+    9,
+    14
+   ]
+  },
+  "PeachGrab.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachGrab.gif",
+   "size": 1296436,
+   "sha256": "d6b97e78d3d979aff8bdf205ac8a1eae1c6fd3e028ff243c55cfc9d88f991e31",
+   "frames": 36,
+   "montage": "PeachGrab-frames.png",
+   "kept": [
+    3,
+    5,
+    6,
+    7,
+    10,
+    16
+   ]
+  },
+  "PeachJab1.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachJab1.gif",
+   "size": 1305954,
+   "sha256": "68a7fa98035c65dc91a817e8a3319c7e20c9fde1d4b52ba340c60844fde61d36",
+   "frames": 27,
+   "montage": "PeachJab1-frames.png",
+   "kept": [
+    0,
+    1,
+    2,
+    5,
+    10,
+    18
+   ]
+  },
+  "PeachJab2.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachJab2.gif",
+   "size": 1350100,
+   "sha256": "76391287b648f8b8676150702bd3a1bb61dd85b51f8f41a297ae75328e5767f6",
+   "frames": 29,
+   "montage": "PeachJab2-frames.png",
+   "kept": [
+    0,
+    1,
+    2,
+    3,
+    8,
+    16
+   ]
+  },
+  "PeachNAir.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachNAir.gif",
+   "size": 1523519,
+   "sha256": "b6176cea31a0a09e7627147c45690543e6d295e1a6d61e74213a9906769693dc",
+   "frames": 48,
+   "montage": "PeachNAir-frames.png",
+   "kept": [
+    4,
+    5,
+    7,
+    8,
+    12,
+    18
+   ]
+  },
+  "PeachPeachBomber.png": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachPeachBomber.png",
+   "size": 114792,
+   "sha256": "b9583ade8290f92724f1e22d90cf343a79a5dd51c5049c8e98dc93ba99293f04",
+   "frames": 1,
+   "montage": "PeachPeachBomber-frames.png",
+   "kept": [
+    0,
+    0,
+    0
+   ]
+  },
+  "PeachPeachBomberHit.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachPeachBomberHit.gif",
+   "size": 1459287,
+   "sha256": "72fdbbcaacfee2014939b715f92373a151f3a0e44fc84e7baacbb057312973e4",
+   "frames": 25,
+   "montage": "PeachPeachBomberHit-frames.png",
+   "kept": [
+    0,
+    1,
+    2,
+    3,
+    6,
+    12
+   ]
+  },
+  "PeachPeachParasol.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachPeachParasol.gif",
+   "size": 558589,
+   "sha256": "dfa28181ee4af710867922586e0a53c911e104394ba0cb88a49addadc1c4f6b9",
+   "frames": 39,
+   "montage": "PeachPeachParasol-frames.png",
+   "kept": [
+    5,
+    6,
+    8,
+    10,
+    15,
+    26
+   ]
+  },
+  "PeachPeachParasolFall.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachPeachParasolFall.gif",
+   "size": 3433024,
+   "sha256": "cb7f3866d591eefa97c55439899595fd0eea85707ca5a0eb1a3076980a924260",
+   "frames": 95,
+   "montage": "PeachPeachParasolFall-frames.png",
+   "kept": [
+    0,
+    4,
+    8,
+    12,
+    20,
+    30
+   ]
+  },
+  "PeachPivotGrab.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachPivotGrab.gif",
+   "size": 1396300,
+   "sha256": "e05c197e4f8f0852cc415a5c3569295c571a4606bff53ee1e0bc95d00030d1ac",
+   "frames": 39,
+   "montage": "PeachPivotGrab-frames.png",
+   "kept": [
+    7,
+    9,
+    10,
+    11,
+    16,
+    24
+   ]
+  },
+  "PeachPummel.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachPummel.gif",
+   "size": 583789,
+   "sha256": "464bc36e272984271eac8858d6ca68a07cb7e186719aad78a83088728b87df11",
+   "frames": 6,
+   "montage": "PeachPummel-frames.png",
+   "kept": [
+    0,
+    1,
+    2,
+    3
+   ]
+  },
+  "PeachTurnip.png": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachTurnip.png",
+   "size": 164103,
+   "sha256": "125d968ea5bba13cdb60f9dc9bc057fe33d9b871de7364c285a7dae6318ae99b",
+   "frames": 1,
+   "montage": "PeachTurnip-frames.png",
+   "kept": [
+    0,
+    0,
+    0
+   ]
+  },
+  "PeachUAir.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachUAir.gif",
+   "size": 1475954,
+   "sha256": "51f3cd4a9e985bac8caeb455b3a4cbfd5bdb59196721a5e88ea0c9bf2d921e52",
+   "frames": 45,
+   "montage": "PeachUAir-frames.png",
+   "kept": [
+    6,
+    9,
+    10,
+    12,
+    14,
+    16
+   ]
+  },
+  "PeachUSmash.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachUSmash.gif",
+   "size": 1923664,
+   "sha256": "f74fe7d6ad07c0af6b9f1bb1495be0c6ac50a78c8a39af71dc950f1cf49dce06",
+   "frames": 44,
+   "montage": "PeachUSmash-frames.png",
+   "kept": [
+    8,
+    12,
+    13,
+    15,
+    17,
+    19
+   ]
+  },
+  "PeachUThrow.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachUThrow.gif",
+   "size": 1581010,
+   "sha256": "a426244cddc5c8498a1c81e83df635cdf73ff46b970f42d816e17b401c769fba",
+   "frames": 49,
+   "montage": "PeachUThrow-frames.png",
+   "kept": [
+    16,
+    18,
+    19,
+    20,
+    24,
+    32
+   ]
+  },
+  "PeachUTilt.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/Peach/PeachUTilt.gif",
+   "size": 1232877,
+   "sha256": "bf07356054538209ac1fbec8fce8fd627915dc36649e6b2a431296d2ce648047",
+   "frames": 37,
+   "montage": "PeachUTilt-frames.png",
+   "kept": [
+    4,
+    8,
+    10,
+    12,
+    18,
+    26
+   ]
+  },
+  "peachGetupAttackD.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/peach/peachGetupAttackD.gif",
+   "size": 1768681,
+   "sha256": "0c37cc5ad7145d134910f17bf51c8d7c94a23528c74a893220c34dea0b2c5c95",
+   "frames": 45,
+   "montage": "peachGetupAttackD-frames.png",
+   "kept": [
+    0,
+    22,
+    44
+   ]
+  },
+  "peachGetupAttackU.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/peach/peachGetupAttackU.gif",
+   "size": 1965692,
+   "sha256": "afcb1c87373001f2628b8a4fb1cb93d942ebd2ad97507eeff6b33ced83e5b936",
+   "frames": 45,
+   "montage": "peachGetupAttackU-frames.png",
+   "kept": [
+    0,
+    22,
+    44
+   ]
+  },
+  "peachLedgeAttack.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/peach/peachLedgeAttack.gif",
+   "size": 1542411,
+   "sha256": "2f77f758fb79e62cc0717039ad718cd57bd20cd19e5cdb97139350658fdd18df",
+   "frames": 55,
+   "montage": "peachLedgeAttack-frames.png",
+   "kept": [
+    0,
+    27,
+    54
+   ]
+  },
+  "peachTripAttack.gif": {
+   "url": "https://ultimateframedata.com/hitboxes/peach/peachTripAttack.gif",
+   "size": 2287310,
+   "sha256": "24418bc72ef9cc25ee88d50cf7a0fc4542b75eeca4ae67d77b0ed05203b33a3e",
+   "frames": 49,
+   "montage": "peachTripAttack-frames.png",
+   "kept": [
+    0,
+    24,
+    48
+   ]
+  }
+ }
+}

@@ -13,7 +13,24 @@ pub fn definition<'a>(d: &'a GameData, f: &Fighter) -> &'a Move {
     d.fighters[f.data].moves.get(slot).expect("known, present move slot")
 }
 pub fn phase<'a>(d: &'a GameData, f: &Fighter) -> &'a Phase {
-    &definition(d, f).phases[f.mov.as_ref().unwrap().phase]
+    let m = f.mov.as_ref().unwrap();
+    &definition(d, f).timeline(m.variant)[m.phase]
+}
+/// The timeline the current move run is using (variant selected at move start).
+pub fn timeline<'a>(d: &'a GameData, f: &Fighter) -> &'a [Phase] {
+    definition(d, f).timeline(f.mov.as_ref().map_or(0, |m| m.variant))
+}
+/// Charge resources: the first variant whose `needs` is satisfied, else the default timeline.
+fn choose_variant(d: &GameData, f: &Fighter, m: &Move) -> u8 {
+    m.variants.iter().position(|v| crate::charges::has(f, d, &v.needs)).map_or(0, |i| i as u8 + 1)
+}
+/// Spend a phase's cost, if any, from `f` (the move's own fighter copy), playing the depletion sound.
+pub fn pay_cost(w: &mut World, d: &GameData, f: &mut Fighter, p: &Phase) {
+    if let Some(cost) = &p.cost
+        && let Some(sfx) = crate::charges::spend(d, f, cost)
+    {
+        w.sfx(sfx);
+    }
 }
 pub fn cond(f: &Fighter, c: Option<Cond>) -> bool {
     match c {
@@ -127,6 +144,16 @@ fn events(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) {
         if let Some(id) = &e.spawn {
             crate::projectiles::spawn(w, d, i, f, id);
         }
+        if let Some(need) = &e.restore
+            && let Some(s) = crate::charges::restore(d, f, need)
+        {
+            w.sfx(s);
+        }
+        if let Some(ids) = &e.detonate {
+            w.fighters[i] = f.clone();
+            crate::projectiles::detonate(w, d, i, ids);
+            *f = w.fighters[i].clone();
+        }
         if let Some(s) = &e.sfx {
             w.sfx(s.clone());
         }
@@ -134,16 +161,26 @@ fn events(w: &mut World, d: &GameData, i: usize, f: &mut Fighter) {
     }
 }
 pub fn start_move(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, slot: &str) {
+    start_move_as(w, d, i, f, slot, None);
+}
+/// `start_move` with an optional forced phase timeline (editor previews edit a specific variant). A forced
+/// variant is selected before the first phase's entry events and cost run, exactly like a resource-chosen one.
+pub fn start_move_as(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, slot: &str, forced: Option<u8>) {
     if d.fighters[f.data].moves.get(slot).is_some_and(|m| m.once_per_airtime)
         && !f.used_air_moves.iter().any(|s| s == slot)
     {
         f.used_air_moves.push(slot.into());
     }
+    let variant = match forced {
+        Some(v) => d.fighters[f.data].moves.get(slot).map_or(0, |m| v.min(m.variants.len() as u8)),
+        None => d.fighters[f.data].moves.get(slot).map_or(0, |m| choose_variant(d, f, m)),
+    };
     f.set_state(State::Attack);
     f.mov = Some(MoveState {
         slot: slot.into(),
         started: w.frame,
         phase: 0,
+        variant,
         t: 0,
         elapsed: 0,
         charge: 0,
@@ -152,6 +189,8 @@ pub fn start_move(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, slot: 
         reversed: false,
         stick: false,
     });
+    let p = phase(d, f).clone();
+    pay_cost(w, d, f, &p);
     events(w, d, i, f);
 }
 /// A move chosen by a player's press: recorded as accepted, held by the control that started it.
@@ -166,13 +205,22 @@ pub fn start_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, slot
 pub fn attack_held(f: &Fighter, inp: &Intent) -> bool {
     if f.mov.as_ref().is_some_and(|m| m.stick) { inp.stick_held } else { inp.atk_held }
 }
+/// Everything a transition must satisfy apart from its trigger: `from`, the held-charge tier, the condition
+/// and the charge-resource gate. Every path that selects a transition filters on this, so a gated branch cannot
+/// be taken by one caller and refused by another.
+fn eligible(d: &GameData, f: &Fighter, tr: &Transition, t: u32) -> bool {
+    tr.from.is_none_or(|n| t >= n)
+        && f.mov.as_ref().is_none_or(|m| m.charge >= tr.min_charge)
+        && cond(f, tr.cond)
+        && tr.needs.as_ref().is_none_or(|need| crate::charges::has(f, d, need))
+}
 /// A phase input window can accept a buffered follow-up while the containing move remains locked.
 pub fn accepts_command(d: &GameData, f: &Fighter, inp: &Intent) -> bool {
     f.state == State::Attack
         && f.mov.is_some()
         && phase(d, f).transitions.iter().any(|tr| {
-            tr.from.is_none_or(|n| f.mov.as_ref().unwrap().t.saturating_add(1) >= n)
-                && cond(f, tr.cond)
+            // Commands are delivered on the next tick, so `from` is checked against that frame.
+            eligible(d, f, tr, f.mov.as_ref().unwrap().t.saturating_add(1))
                 && match tr.on {
                     Trigger::AttackPress => inp.atk,
                     Trigger::SpecialPress => inp.sp,
@@ -186,13 +234,17 @@ fn transition(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, tr: &Trans
         "helpless" => f.set_state(if f.ground { State::Idle } else { State::Helpless }),
         "landing" => landing(f, tr.lag.unwrap_or(0)),
         name => {
-            let n = definition(d, f).phases.iter().position(|p| p.name == name).expect("validated phase");
-            let m = f.mov.as_mut().unwrap();
-            m.phase = n;
-            m.t = 0;
+            let n = timeline(d, f).iter().position(|p| p.name == name).expect("validated phase");
+            {
+                let m = f.mov.as_mut().unwrap();
+                m.phase = n;
+                m.t = 0;
+            }
             if !tr.preserve_hits {
                 f.sd.clear_hits();
             }
+            let p = phase(d, f).clone();
+            pay_cost(w, d, f, &p);
             events(w, d, i, f);
         }
     }
@@ -202,9 +254,7 @@ pub fn trigger(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, on: Trigg
         return false;
     }
     let t = f.mov.as_ref().unwrap().t;
-    if let Some(tr) =
-        phase(d, f).transitions.iter().find(|tr| tr.on == on && tr.from.is_none_or(|n| t >= n) && cond(f, tr.cond))
-    {
+    if let Some(tr) = phase(d, f).transitions.iter().find(|tr| tr.on == on && eligible(d, f, tr, t)) {
         transition(w, d, i, f, tr);
         true
     } else {
@@ -411,15 +461,21 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
                 w.sfx("jet");
             }
         }
-    } else {
+        // A charging move can still aim once within its own window (Long-Stem Strike's direction input).
         let m = f.mov.as_ref().unwrap();
-        if def.b_reverse && !m.reversed && m.elapsed < mv.b_reverse_window && dir == -f.face {
+        if def.b_reverse && !m.reversed && (phase(d, f).aim || m.elapsed < mv.b_reverse_window) && dir == -f.face {
             f.mov.as_mut().unwrap().reversed = true;
             reverse(f, dir);
         }
+    } else {
         let m = f.mov.as_mut().unwrap();
         m.t += 1;
         m.elapsed += 1;
+        let m = f.mov.as_ref().unwrap();
+        if def.b_reverse && !m.reversed && (phase(d, f).aim || m.elapsed < mv.b_reverse_window) && dir == -f.face {
+            f.mov.as_mut().unwrap().reversed = true;
+            reverse(f, dir);
+        }
         events(w, d, i, f);
         let p = phase(d, f);
         let t = f.mov.as_ref().unwrap().t;
@@ -432,14 +488,16 @@ pub fn st_attack(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: In
             attack_held(f, &inp)
         };
         let tr = p.transitions.iter().find(|tr| {
-            tr.from.is_none_or(|n| t >= n)
-                && cond(f, tr.cond)
+            eligible(d, f, tr, t)
                 && match tr.on {
                     Trigger::Timeout => frames.is_some_and(|n| t >= n),
                     Trigger::Grounded => f.ground,
                     Trigger::Airborne => !f.ground,
                     Trigger::Falling => f.vy >= 0.,
                     Trigger::Release => !held,
+                    // A directional throw: the same release, gated on which way the stick points.
+                    Trigger::ReleaseToward => !held && inp.x * f.face > 0.,
+                    Trigger::ReleaseAway => !held && inp.x * f.face < 0.,
                     Trigger::AttackHeld => attack_held(f, &inp),
                     Trigger::AttackPress => inp.atk,
                     Trigger::SpecialPress => inp.sp,

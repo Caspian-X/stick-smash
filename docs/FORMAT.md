@@ -98,8 +98,8 @@ next phase's frame 0 is that same tick. A one-phase move with `frames: N` lasts 
    A connecting hit fires the attacker's `hit` transitions. A hit taken inside a `counter` window is countered
    instead and fires the defender's `counter` transition.
 
-**Entering a phase** (any transition): phase frame = 0, the "already hit" list is cleared (the new phase can hit
-everyone again), and `at: 0` events run immediately.
+**Entering a phase** (any transition): phase frame = 0, victim/group contact history is cleared unless the transition
+sets `preserveHits: true`, and `at: 0` events run immediately.
 
 **Ending tick.** When a transition ends the move during the step (step 5), that tick's movement (step 6) still uses
 the phase that just ended, then the fighter is in its new state. This matches the TS version.
@@ -112,7 +112,12 @@ ground or helpless in the air. `landing` goes to landing lag for `lag` frames. A
 `at: N` fires on frame N. `from`/`to` (inclusive) fire on a range. `from` alone fires from that frame on, and
 neither fires on every frame from 1. Frame-0 events must use `at: 0`. `every: K` also requires the world frame to
 be divisible by K. `if` restricts to `grounded`, `airborne` or `countered`. One event's actions run in this order:
-`mulVel`, `setVel`, `addVel`, `capFall`, `leaveGround`, `invuln`, `spawn`, `sfx`, `fx`. Random ranges (`[a, b]`)
+`mulVel`, `setVel`, `addVel`, `capFall`, `leaveGround`, `invuln`, `spawn`, `restore`, `detonate`, `sfx`, `fx`.
+`restore: {"charge": "id", "uses": N}` restores uses capped at capacity while preserving a pending recharge
+until full. `detonate: ["c4"]` immediately explodes live owned explosives with those projectile ids;
+`detonate: []` selects every owned remote (`explosion.manual`) gadget, so a timed fuse such as a grenade is
+never fired by accident. Omit the field to leave explosives alone. Detonation does not move or age
+projectiles and uses their current owner (including reflection), teams, shields and counters. Random ranges (`[a, b]`)
 in effects draw in field order (x, y, vx, vy, life, size). With `global.sim.separateCosmeticRng` (default true),
 effect ranges and charge particles use a separate rollback-owned RNG seeded from the match seed, leaving the
 gameplay RNG unchanged. Set it false to share the gameplay RNG for TS compatibility. Both streams are deterministic.
@@ -125,7 +130,15 @@ elapsed clock, so resetting the phase frame does not reset those cooldowns. Othe
 
 `{ "on": <trigger>, "if": <cond>, "from": <min phase frame>, "to": <phase|end|helpless|landing>, "lag": <frames> }`.
 Triggers: `timeout`, `land`, `grounded`, `airborne`, `falling` (vertical speed ≥ 0, y down), `release` (charge
-button, else attack, not held), `attackHeld` (attack held), `targetNear`, `shieldPress`, `counter`, `hit`.
+button, else attack, not held), `releaseToward` / `releaseAway` (the same release, additionally requiring the
+live movement stick to point toward / away from the fighter's facing, so a held special can pick a throw arc),
+`attackHeld` (attack held), `attackPress`, `specialPress`, `upHeld`, `targetNear`,
+`shieldPress`, `articleRelease` (a held controlled projectile was launched), `articleEnd` (it ended without a
+launch, e.g. the caster let go), `counter`, `hit`.
+
+`Phase.aim` keeps the move's single `bReverse` turnaround open for that phase, after the shared opening
+window has closed. A charged move can therefore accept a direction during its charge (Long-Stem Strike) while
+the committed strike phases ignore it. The one-turn lock is unchanged.
 
 `targetNear` needs a phase `detection` rectangle (`x1 < x2`, `y1 < y2`), in fighter-local space
 (x forward, y up). It fires when a hittable opponent's hurtbox overlaps that rectangle; facing, teams,
@@ -141,6 +154,17 @@ These fields default to existing behavior; projectile damage still uses its own 
 Hitboxes also accept `situation: "both" | "ground" | "air"` (default `both`), filtering victims by
 whether they are grounded. This applies to melee, grabs, windboxes and projectile contact/explosion hits;
 geometry and collision priority are otherwise unchanged.
+
+Hitboxes may set `group` (u8, default 0): contact history is keyed by victim and group. Overlapping
+coverage/tier rows share one group; separate hit windows use different groups. Only one box connects per
+victim per hit pass (first listed wins). `rehit` cooldowns apply independently to each victim/group pair;
+`preserveHits` retains all groups and their move-elapsed cooldowns across phase boundaries.
+
+Importers cluster inclusive source creation/clear windows by transitive overlap. Rows with `rehit` form a
+loop identity. A following cluster touching only the loop's final seam and declaring a different `rehit`
+(including none) starts a new identity, so a multihit finisher connects. Equal rehit, ordinary coverage/damage
+changes without rehit, and overlaps wider than the seam continue the existing identity. Engine active ends
+exclude the source clear tick; that tick still participates in source identity clustering.
 
 ### Counter
 
@@ -159,6 +183,35 @@ state and recovery resources. Stronger hits react normally. Grabs bypass armor; 
 Armor also blocks windbox pushes. Armored hits emit a small ring and never chain into or out of training combos.
 Use a separate startup phase to limit armor to wind-up (charge holds retain that phase).
 
+## Durability resources and move variants
+
+A fighter may declare limited-use resources and moves may pick a whole phase timeline from them. This models
+weapons and tomes that break after a number of uses and come back later (Throbbin's Levin Sword and four
+tomes). Nothing here is fighter-specific.
+
+```json
+"charges": [{ "id": "levin", "uses": 8, "recharge": 600, "emptySfx": "toss", "refillSfx": "ready" }]
+```
+
+- `uses`: capacity. `recharge`: ticks from empty back to full. Uses return one at a time every
+  `ceil(recharge / uses)` ticks, so a pool is full after `uses × that step` (at most one tick per use longer than
+  `recharge`). Zero stays spent until respawn. `discardDelay`: ticks added before the first restored use.
+  `emptySfx` / `refillSfx` are sound names. Spending a use while the pool recharges never refunds it: the
+  countdown to the next restored use keeps running.
+- `moves.<slot>.variants[]`: `{ "needs": { "charge": "levin", "uses": 1 }, "phases": [...] }`. The first
+  variant whose need is satisfied is chosen **once, when the move starts**, and runs instead of `phases`. A
+  move without variants uses `phases`.
+- `phases[].cost`: `{ "charge": "...", "uses": n }` is spent when the phase is entered. A pool with fewer
+  uses left spends what it has and is emptied (the item is used up) but the phase still runs.
+- `transitions[].minCharge`: the transition only fires with at least that many held charge ticks. Transitions
+  are checked in list order, so a charged special lists its highest tier first and the uncharged fallback last.
+- Respawning refills every pool. The runtime state (`Fighter::charges`, `charge_wait`) is part of the rollback
+  snapshot; `moves.*.variants` phase lists are validated exactly like the default timeline.
+
+Two combat fields support resource-limited attacks: `hitboxes[].heal` (fraction of the damage dealt that heals
+**the attacker**, capped at their current damage) and `hitboxes[].unblockable` (skips shields, counters and
+parries, so a command grab such as Nosferatu still lands on a guarding victim).
+
 ## Projectiles
 
 Defined per fighter under `projectiles.<id>` and spawned by a `spawn` event. Each tick a projectile moves by its
@@ -168,8 +221,14 @@ owners destroy each other on contact. `trail` events run every tick in projectil
 direction).
 
 Optional `chargeScale: { "speed": 0.024, "damage": 0.035 }` multiplies spawn velocity and damage
-by `1 + held charge ticks × coefficient`. It reads the spawning move's charge; it does not change lifetime,
-gravity, or radius. Omit it for unscaled projectiles.
+by `1 + held charge ticks × coefficient`. It reads the spawning move's charge; it does not change gravity or
+radius. `life` scales the fuse the same way and may be negative, which shortens it with charge (cooking a
+grenade); the result is clamped to at least one tick. Omit it for unscaled projectiles. Optional `bkb`, `radius`, `life`, `rehit`, `angleTo` and
+`groundAngleTo` scale those properties too; `rehit` adds whole frames per held tick (rounded, at least 1). A
+projectile whose `hit.rehit` is set stays in play between contact windows and cannot hit the same victim again
+until the interval elapses; a projectile without it is consumed by its first contact. `hit.type: "damageOnly"`
+deals damage and shield damage but skips hitstun, hitlag, launch, state changes and combo linking, which is
+useful for lingering no-flinch hazards such as Poison Breath.
 
 Optional `explosion: { "armTicks": 30, "proximity": 42, "radius": 52, "sfx": "quake", "fx": [...] }`
 suppresses contact hits. After `armTicks` elapsed ticks, an opposing hittable hurtbox within `proximity`
@@ -188,25 +247,31 @@ this age; fuse expiry still detonates even before arming.
 
 - **Poses** (`poses.<name>`): joints `head, shoulder, hip, elbowF, handF, elbowB, handB, kneeF, footF, kneeB,
   footB`, plus `rot`, `pivot` (rotation center height) and `offsetY`. Missing joints come from `from` or `stand`.
-- **Animations**: a list of keys `{ "at": t, "pose": <name or inline pose>, "lerp": bool, "if": cond }`. A key
-  holds until the next one. With `lerp` the figure blends from the previous key. A key with `if` (`grounded`,
-  `airborne`, `countered`) is skipped while the condition is false. Move phases animate in phase frames
+- **Animations**: a list of keys `{ "at": t, "pose": <name or inline pose>, "lerp": bool, "if": cond, "minCharge": n }`.
+  A key holds until the next one. With `lerp` the figure blends from the previous key. A key with `if` (`grounded`,
+  `airborne`, `countered`) is skipped while the condition is false; a key with `minCharge` is skipped below that
+  many held charge ticks, which lets one phase change its posed reach as charge grows. Move phases animate in phase frames
   (`anim`). State animations (`anims.<name>`) pick a `clock`: `state` (frames in state), `world`, `run` (run
   cycle degrees), or `spin` (tumble spin degrees, signed), and may `loop`. Exceptions: `air.flip` counts frames
   since the flip started, `pummel` frames since the pummel started. `idle` above `render.overlays.runSpeed`
   shows `run`.
-- **State animation names**: `idle`, `crouch`, `run`, `jumpsquat`, `landing`, `air.rise`, `air.fall`, `air.flip`, `helpless`,
-  `shield`, `shieldDrop`, `roll`, `spot`, `airdodge`, `hold`, `pummel`, `throw.f`, `throw.b`, `throw.u`,
+- **State animation names**: `idle`, `walk`, `crawl`, `run`, `turn`, `brake`, `crouch`, `jumpsquat`, `landing`,
+  `air.rise`, `air.fall`, `air.flip`, `helpless`, `shield`, `shieldDrop`, `roll`, `spot`, `airdodge`, `hold`,
+  `pummel`, `throw.f`, `throw.b`, `throw.u`,
   `throw.d`, `grabbed`, `hitstun`, `tumble`, `shieldbreak`, `knockdown`, `getup`, `getupAttack`, `tech`, `ledge`,
   `climb`, `ledgeAttack`, `ledgeRoll`, `ledgeJump`, `dizzy`, `win`, `respawn`.
-  Holding down while grounded selects `crouch` through the ground gait; horizontal movement
+  `walk`, `crawl`, `turn` and `brake` are optional authored gait clips; a package without them keeps the
+  legacy `idle`/`run`/`crouch` selection. `turn` and `brake` sample the gait clock (`gait_t`, reset by every
+  gait change), not the idle state clock, so the one-shot transition starts at its first key after any idle age;
+  `walk`/`crawl` keep their authored clock and `run` uses the run-cycle phase. Holding down while grounded selects `crouch` through the ground gait; horizontal movement
   retains the stance when `global.gait.crawlSpeed` is enabled. Its
   animation blends with `idle` over `global.gait.crouchFrames` on entry and release; reversing the input
   reverses the blend from its current depth. The base fighter supplies a breathing loop inherited by the roster.
   Override `anims.crouch` and `poses.crouch` to customize it. Attacks, jumps and platform drops interrupt it normally.
 - **Attachments**: vector `shapes` (line, circle, poly, rect) hung on a joint at an angle. On a hand the angle is
-  relative to the forearm. A phase's `attach.<id>` can key `angle`, `offset` and `scale`, and `show` a hidden
-  attachment. Angle keys interpolate linearly without wrapping: use 350 → 430 to continue forward through 360°
+  relative to the forearm. A phase's `attach.<id>` can key `angle`, `offset` and `scale`, `show` a hidden
+  attachment and `hide` a visible one (a sheathed weapon while casting or grabbing). Angle keys interpolate
+  linearly without wrapping: use 350 → 430 to continue forward through 360°
   to 70°; 350 → 70 rotates backward by 280°. Keep subsequent keys on the same turn for continuous trails and
   recovery. While a phase keys the angle, the angle is absolute, `hold` poses the front arm to grip it, and a
   `trail` sweeps a ring sector around the shoulder over the last `render.overlays.trail.frames` ticks of each
@@ -308,6 +373,18 @@ a prior elimination. Winner is the last surviving team (or individual in free-fo
 winning teammates enter the win state. Simultaneous elimination is a draw. Training replenishes stocks and
 never ends. Once the result is committed and `end_t` starts, KO processing is disabled (also after `over`);
 movement, combat, and effects continue, but stocks cannot change during the ending animation. Pair passes run in player-index order, and overlapping push pairs run in lexicographic order.
+
+`MatchConfig::time_limit` (seconds) runs a clock: `World::time_left` counts down once the countdown reaches GO
+and stops during the ending animation or after `over`. `None` (and training) plays until stocks run out. With
+`match.timerWarnSeconds` seconds left the sim emits a `tick` sfx on each whole second. At zero the match ends like a
+stock ending, with `World::time_up = true`; `World::time_winner()` picks the side with the most stocks left, then
+the lowest pooled damage (teams pool both, and a fighter in the death sequence no longer counts the damage of the
+stock they just lost) and returns `None` on a tie or when nobody has a stock left. `World::time_leaders()` lists
+the fighters on the sides tied for the lead; that list is fixed into `World::time_tied` when the clock hits zero,
+so hits during the ending animation cannot change who plays sudden death.
+`MatchConfig::sudden_death` starts every fighter at `match.suddenDeathDamage` with one stock and no timer; players
+whose `PlayerConfig::eliminated` is set (the sides that lost the time-up) start with no stocks and out. It is the
+same config with `sudden_death: true` (see `MatchConfig::sudden_death()`), so replays reproduce the start.
 
 Raw `Input` is `(i8,i8)` stick (y up) and button bits jump=1, attack=2, special=4, grab=8, shield=16. Human
 history advances during countdown, hitlag, respawn/death, and match ending. Rising direction edges update
@@ -474,6 +551,18 @@ can change article ownership. Optional `hurtbox` plus stage `health` makes an ar
 means indestructible. Melee, direct projectiles and explosions damage that body separately from the caster.
 Owner stock loss removes an article. These timelines cannot combine with legacy `explosion`, `bounce`, `bat`
 or `chargeScale`; ordinary projectiles keep their existing behavior.
+
+Simulation recordings use `sim-25` after the held-article, damage-only hit and optional gait-clip additions;
+the replay container stays version 2.
+
+Optional `releaseOnDir` launches the article when a left/right stick direction is held while special is still
+held; letting go of special instead fires `articleEnd` (the caster swallows the article). The launch captures
+the stick direction as the article's facing, so a held ball can be blown in front of or behind the caster.
+Optional `hold: { "offset": [x,y], "bob": 6, "period": 24, "hitboxes": [...] }` keeps an unreleased article at
+a fighter-local point (x forward, y up) and bobs it vertically on its construction clock. The held hitboxes are
+active while the article is unreleased, share the article's contact history, and use construction age for
+`start`/`end`. The first stage still supplies the standby shapes, and the last stage reached at construction age
+is frozen on release.
 
 `Phase.reflector` is an inclusive frame window with radius/height, projectile speed and damage multipliers.
 It operates during invulnerability and preserves the phase, unlike a counter stance. `Phase.travelSpeed`
@@ -684,6 +773,8 @@ Simulation recordings now use `sim-21`; the replay container version is unchange
 
 `global.render.select.backHoldSecs` is the positive real-time hold duration for leaving selection screens (default 1.5 seconds for older embedded presentation data). UI updates cap each contribution at 50 ms. Contextual Back actions consume the hold until release.
 
+`global.render.select.backRing` draws that hold as a ring of `ticks` dashes around the player's pointer arrow (`offset` from the arrow's tip, `radius`, `thickness`, `dash` length, the unfilled `track` opacity, and each dash's dark `rim`), the `hot` dashes behind the filled end whitening like a comet head around the `spark`. It pops in from `pop` scale on the `grow` spring as a hold starts, follows the hold on the `follow` spring, and swings `wobble` radians every `wobbleSecs`. A released hold drains the ring, which then shrinks away; no text is drawn.
+
 `moves.*.phases[].groundSpeed` (default 0) enables grounded stick-controlled movement during
 an attack phase, in pixels per tick at full tilt. It preserves facing and stored charge; zero
 uses ordinary attack friction. Airborne phases retain their existing drift control.
@@ -697,3 +788,38 @@ rule, rather than a claim that every reference fighter can crawl.
 `global.render.overlays.grabbed` optionally draws persistent binding bands on a captured fighter.
 Each `bands` entry is [height above feet, horizontal radius, vertical radius] in fractions of body height; `width`, `color`
 and `alpha` control the stroke. It appears whenever the fighter is grabbed and disappears on release.
+
+`projectiles.*.article.reflectCooldown` defaults to zero and sets how many ticks any reflector is ignored after article reflection or a counter steals a held article. The old caster receives `articleEnd` when its held article becomes an independently owned shot.
+
+### Resource restore, remote gadgets and float
+
+Move events may use `restore: {"charge": "<pool id>", "uses": 1}` to add uses, capped at the pool's
+capacity. The pool must exist and uses must be at least 1. Restore preserves an active recharge countdown,
+including when an empty pool becomes nonempty; reaching capacity clears the countdown and plays
+`refillSfx` once. A pool with no active countdown stays inactive. This also permits explicit refill of
+`recharge: 0` pools. Within an event, spawn runs before restore, then detonate, then sfx and fx.
+Phase entry costs still run before frame-zero events.
+
+`detonate: true` immediately explodes every live projectile currently owned by the fighter that has a
+**manual** `explosion`, in projectile order, even before its arm time. Timed fuses are not remotely fired and
+keep running. No remote gadget is a no-op. Each uses the normal
+blast radius, hit, target masks, opponent/team eligibility, shield/counter handling, article contacts,
+damage/healing credit, hit records, fx and sfx, then is removed. It does not advance movement or age.
+A reflected gadget belongs to its current owner.
+
+`explosion.manual: true` (default false) disables proximity and fuse detonation and freezes the life
+countdown. It still moves, collides, can be reflected/batted, clashes with opposing projectiles and is removed
+outside the stage bounds as usual. External removal is still possible. With manual false, existing proximity
+and fuse behavior is unchanged. For a planted remote bomb, declare a normal projectile with `vel: [0, 0]`,
+an `explosion` containing `manual: true`, `armTicks` and `radius`, plus its ordinary `hit`, positive
+`life`, radius and presentation fields. Use existing gravity/bounce data to settle it on terrain if needed;
+trigger it from another move's detonate event. This is a remote blast gadget, not a pickup or trip-item system.
+
+Optional `stats.floatSpeed` is a finite positive downward speed in px/tick. Holding jump caps gravity's
+result at the smaller of this value and the normal/fast-fall cap only while airborne in normal `Air` control.
+Release restores the ordinary cap immediately; rising velocity remains rising. Hitstun, helplessness,
+ledge hang/climb, attacks, airdodge and every other non-Air state are excluded. Float has no duration,
+fuel or activation latch; fast-fall state is preserved.
+
+These opt-in fields add no rollback snapshot state. Existing content omits them and keeps its behavior;
+the replay SIM_VERSION and golden world hash are unchanged.

@@ -163,6 +163,7 @@ fn projectile_hits_explosion_and_proximity_reach_only_new_regions() {
         def.bounce = None;
         def.vel = [0., 0.];
         def.explosion = explosion.then(|| sim::data::fighter::Explosion {
+            manual: false,
             arm_ticks: 0,
             proximity: Some(2.),
             radius: 10.,
@@ -285,6 +286,8 @@ fn rehit_clock_survives_preserving_phase_transition() {
         on: sim::data::Trigger::Hit,
         cond: None,
         from: None,
+        min_charge: 0,
+        needs: None,
         to: "second".into(),
         lag: None,
         preserve_hits: true,
@@ -329,6 +332,8 @@ fn target_near_transition_uses_regions() {
         on: sim::data::Trigger::TargetNear,
         cond: None,
         from: None,
+        min_charge: 0,
+        needs: None,
         to: "end".into(),
         lag: None,
         preserve_hits: false,
@@ -358,13 +363,13 @@ fn invalid_regions_and_projectile_article_throw_bindings_report_paths() {
             assert!(sim::data::load::check_fighter("fixture", &f).unwrap_err().path.ends_with("hit.geometry"));
             if projectile.article.is_some() {
                 let mut f = source.clone();
-                f.projectiles.get_mut(id).unwrap().article.as_mut().unwrap().stages[0].hitboxes[0].geometry =
-                    Some(circle(0., 0.));
+                let article = f.projectiles.get_mut(id).unwrap().article.as_mut().unwrap();
+                let Some(stage) = article.stages.iter_mut().find(|s| !s.hitboxes.is_empty()) else {
+                    continue;
+                };
+                stage.hitboxes[0].geometry = Some(circle(0., 0.));
                 assert!(
-                    sim::data::load::check_fighter("fixture", &f)
-                        .unwrap_err()
-                        .path
-                        .contains("article.stages[0].hitboxes[0].geometry")
+                    sim::data::load::check_fighter("fixture", &f).unwrap_err().path.contains("hitboxes[0].geometry")
                 );
             }
         }
@@ -543,6 +548,8 @@ fn empty_active_set_never_uses_legacy_rectangles() {
         on: sim::data::Trigger::TargetNear,
         cond: None,
         from: None,
+        min_charge: 0,
+        needs: None,
         to: "end".into(),
         lag: None,
         preserve_hits: false,

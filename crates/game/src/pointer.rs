@@ -8,13 +8,14 @@
 //! the player's colour). Whatever chip the player holds rides on its tail: their own until they drop it, or a CPU's
 //! while carrying it. An empty arrow shows only a small player number. It squashes and bounces when it lands on a
 //! target or drops a chip, leans into and stretches along its travel, the chip trails on a spring, and a pointer left
-//! still breathes.
+//! still breathes. Holding Back to leave a select screen fills a ring of dashes around the arrow ([`Ring`]) in the
+//! player's colour, with a spark riding its filled end; letting go drains it away. No text is involved.
 
 use std::collections::BTreeMap;
 use std::ops::{Add, Mul, Sub};
 
 use bevy::prelude::*;
-use sim::data::render::{PointerLook, PointerMotion};
+use sim::data::render::{BackRing, PointerLook, PointerMotion, SelectLook};
 
 use crate::grid;
 use crate::input::{Dev, DevState, Devices, Nav};
@@ -115,6 +116,8 @@ pub struct Pointer {
 #[derive(Resource, Default)]
 pub struct Pointers {
     pub back: BTreeMap<Dev, BackHold>,
+    /// The ring each device's hold fills ([`Ring`]). It outlives the hold, so a released one can drain away.
+    pub ring: BTreeMap<Dev, Ring>,
     pub map: BTreeMap<Dev, Pointer>,
     /// Last mouse position; only motion moves the keyboard player's pointer.
     pub mouse: Option<Vec2>,
@@ -126,31 +129,76 @@ pub struct Pointers {
 pub struct BackHold {
     elapsed: f32,
     consumed: bool,
-    label: String,
+}
+
+/// A device's hold-to-go-back ring: the filled part chases the hold and swings as it fills, and a released hold
+/// drains it and shrinks it away.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Ring {
+    /// Filled fraction and its velocity.
+    shown: (f32, f32),
+    /// Group scale and its velocity.
+    pop: (f32, f32),
+    /// Seconds of wobble.
+    clock: f32,
+    /// Where the pointer carrying it is (the screen centre for a device without one).
+    pub at: Vec2,
+    pub color: Color,
+}
+
+impl Ring {
+    /// A ring just starting to show: it pops in from the configured scale.
+    fn start(look: &BackRing) -> Self {
+        Self { pop: (look.pop, 0.), ..Self::default() }
+    }
+    /// Steps toward a hold of `target` progress (`0..1`) by `dt` real seconds, in slices short enough that any frame
+    /// rate moves alike.
+    fn step(&mut self, target: f32, look: &BackRing, dt: f32) {
+        let dt = dt.clamp(0., 0.05);
+        let n = (dt * 240.).ceil().max(1.);
+        let h = dt / n;
+        // A released hold (0) drains the ring and shrinks it away.
+        let (follow, grow) = (look.follow, look.grow);
+        for _ in 0..n as usize {
+            spring(&mut self.shown.0, &mut self.shown.1, target, follow, h);
+            spring(&mut self.pop.0, &mut self.pop.1, if target > 0. { 1. } else { 0. }, grow, h);
+        }
+        self.shown.0 = self.shown.0.clamp(0., 1.2);
+        self.clock += dt;
+    }
+    /// Grown away: nothing to draw.
+    fn dead(&self) -> bool {
+        self.pop.0 < 0.02 && self.shown.0 < 0.02
+    }
+    /// How much of the ring is filled.
+    fn shown(&self) -> f32 {
+        self.shown.0.clamp(0., 1.)
+    }
+    /// Scale of the whole ring this frame, wobbling as it fills.
+    fn scale(&self, look: &BackRing) -> f32 {
+        let w = (self.clock * std::f32::consts::TAU / look.wobble_secs.max(0.05)).sin();
+        (self.pop.0 * (1. + w * look.wobble * 0.5 * self.shown())).max(0.)
+    }
+    /// Its lean this frame, in radians.
+    fn lean(&self, look: &BackRing) -> f32 {
+        let w = (self.clock * std::f32::consts::TAU / look.wobble_secs.max(0.05)).sin();
+        w * look.wobble * self.shown()
+    }
 }
 
 impl Pointers {
-    pub fn hold_back(
-        &mut self,
-        dev: Dev,
-        st: &crate::input::DevState,
-        contextual: bool,
-        dt: f32,
-        secs: f32,
-        label: String,
-    ) -> bool {
-        let h = self.back.entry(dev).or_default();
+    pub fn hold_back(&mut self, dev: Dev, st: &crate::input::DevState, contextual: bool, dt: f32, secs: f32) -> bool {
         if !st.back_held() {
-            *h = BackHold::default();
+            self.back.remove(&dev);
             return false;
         }
+        let h = self.back.entry(dev).or_default();
         if st.nav.contains(&Nav::Back) && contextual {
             h.consumed = true;
         }
         if h.consumed {
             return false;
         }
-        h.label = label;
         h.elapsed += dt.clamp(0., 0.05);
         if h.elapsed + f32::EPSILON * 8. >= secs {
             h.consumed = true;
@@ -162,6 +210,7 @@ impl Pointers {
     pub fn reset(&mut self) {
         self.map.clear();
         self.back.clear();
+        self.ring.clear();
         self.mouse = None;
     }
     /// `dev`'s pointer, made on cursor `c`'s target (else mid-screen) the first time; `fan`: its place among
@@ -445,56 +494,53 @@ pub fn drive(
 pub struct PointerLayer;
 
 #[derive(Component)]
-pub struct BackProgress;
-
-#[derive(Component)]
 pub struct PointerNode(Dev, Look);
+
+/// A device's back-hold ring, drawn at its centre (zero-sized, so scaling and leaning it turn the whole gauge).
+#[derive(Component)]
+pub struct BackRingNode(Dev);
+
+/// One dash of a back-hold ring, lit as the hold fills.
+#[derive(Component)]
+pub struct BackDash(Dev, u32);
+
+/// The pivot carrying a back-hold ring's spark round the filled end.
+#[derive(Component)]
+pub struct BackHead(Dev);
 
 /// The chip riding on a pointer's arrow; pivots where it hangs.
 #[derive(Component)]
 pub struct PointerChip(Dev);
 
-/// Keeps one arrow per pointer, above all select UI: rebuilt when its look changes, animated every frame.
+/// Keeps one arrow per pointer, above all select UI: rebuilt when its look changes, animated every frame. A device
+/// holding Back wears a ring around its arrow that fills as the hold runs, in the player's colour.
 pub fn draw(
     mut commands: Commands,
     mut ptrs: ResMut<Pointers>,
     layer: Single<Entity, With<PointerLayer>>,
-    mut nodes: Query<(Entity, &PointerNode, &mut Node, &mut UiTransform), Without<PointerChip>>,
-    mut chips: Query<(&PointerChip, &mut UiTransform), Without<PointerNode>>,
+    mut nodes: Query<
+        (Entity, &PointerNode, &mut Node, &mut UiTransform),
+        (Without<PointerChip>, Without<BackRingNode>, Without<BackHead>, Without<BackDash>),
+    >,
+    mut chips: Query<(&PointerChip, &mut UiTransform), (Without<PointerNode>, Without<BackHead>)>,
+    mut rings: Query<
+        (Entity, &BackRingNode, &mut Node, &mut UiTransform),
+        (Without<PointerNode>, Without<BackHead>, Without<PointerChip>),
+    >,
+    mut heads: Query<(&BackHead, &mut UiTransform), Without<PointerNode>>,
+    mut dashes: Query<(&BackDash, &mut BackgroundColor)>,
     f: Res<Fonts>,
     data: Res<crate::Data>,
     time: Res<Time<Real>>,
-    mut progress: Query<&mut Text, With<BackProgress>>,
 ) {
-    let cfg = &data.0.global.render.select.pointer;
+    let look = &data.0.global.render.select;
+    let cfg = &look.pointer;
+    let ring = &look.back_ring;
     let dt = time.delta_secs();
     for p in ptrs.map.values_mut() {
         p.animate(&cfg.motion, dt);
     }
-    let message = ptrs
-        .back
-        .values()
-        .filter(|h| !h.consumed && h.elapsed > 0.)
-        .map(|h| {
-            let ratio = (h.elapsed / data.0.global.render.select.back_hold_secs).clamp(0., 1.);
-            format!("{}  Hold Back  {}%", h.label, (ratio * 100.).round() as u32)
-        })
-        .collect::<Vec<_>>()
-        .join("    ");
-    if let Ok(mut text) = progress.single_mut() {
-        text.0 = message;
-    } else {
-        commands.entity(*layer).with_children(|p| {
-            p.spawn(node(|n| {
-                n.position_type = PositionType::Absolute;
-                n.top = Val::Px(80.);
-                n.left = Val::Px(36.);
-            }))
-            .with_children(|p| {
-                p.spawn((txt(&f.heavy, 22., GOLD, message), BackProgress));
-            });
-        });
-    }
+    step_rings(&mut ptrs, look, dt);
     let poses: BTreeMap<Dev, Pose> = ptrs.map.iter().map(|(d, p)| (*d, p.pose(cfg))).collect();
     let mut have = vec![];
     for (e, pn, mut n, mut tf) in &mut nodes {
@@ -537,6 +583,161 @@ pub fn draw(
             .with_children(|c| arrow(c, &f, *dev, &p.look, cfg));
         });
     }
+    // The gauge draws over every arrow: the chip on a pointer's tail overlaps it, and the gauge must win.
+    let mut showing = vec![];
+    for (e, b, mut n, mut tf) in &mut rings {
+        let Some(r) = ptrs.ring.get(&b.0) else {
+            commands.entity(e).despawn();
+            continue;
+        };
+        showing.push(b.0);
+        n.left = Val::Px(r.at.x);
+        n.top = Val::Px(r.at.y);
+        tf.set_if_neq(ring_form(r, ring));
+    }
+    for (h, mut tf) in &mut heads {
+        if let Some(r) = ptrs.ring.get(&h.0) {
+            tf.set_if_neq(UiTransform::from_rotation(Rot2::radians(r.shown() * std::f32::consts::TAU)));
+        }
+    }
+    for (d, mut bg) in &mut dashes {
+        let Some(r) = ptrs.ring.get(&d.0) else { continue };
+        let c = dash_color(r, d.1, ring);
+        if bg.0 != c {
+            bg.0 = c;
+        }
+    }
+    for (dev, r) in &ptrs.ring {
+        if showing.contains(dev) {
+            continue;
+        }
+        commands.entity(*layer).with_children(|p| back_ring(p, *dev, r, ring));
+    }
+}
+
+/// Steps every ring toward its device's hold progress, dropping the ones that finished draining.
+fn step_rings(ptrs: &mut Pointers, look: &SelectLook, dt: f32) {
+    let ring = &look.back_ring;
+    let mut want: Vec<(Dev, f32)> =
+        ptrs.back.iter().map(|(dev, h)| (*dev, (h.elapsed / look.back_hold_secs.max(1e-3)).clamp(0., 1.))).collect();
+    // Released holds keep their ring until it has drained.
+    for dev in ptrs.ring.keys() {
+        if !want.iter().any(|(d, _)| d == dev) {
+            want.push((*dev, 0.));
+        }
+    }
+    for (dev, target) in want {
+        // Only a hold that has started wears one; a ring already draining steps on to nothing.
+        if target <= 0. && !ptrs.ring.contains_key(&dev) {
+            continue;
+        }
+        // The pointer carries it, over its arrow; a device without one (nobody has joined) fills one mid-screen.
+        let (at, color) = match ptrs.map.get(&dev) {
+            Some(p) => {
+                let off = Vec2::new(ring.offset[0], ring.offset[1]) * look.pointer.scale;
+                (p.pos + off, p.look.color)
+            }
+            None => (ptrs.screen / 2., GOLD),
+        };
+        let r = ptrs.ring.entry(dev).or_insert_with(|| Ring::start(ring));
+        (r.at, r.color) = (at, color);
+        r.step(target, ring, dt);
+    }
+    ptrs.ring.retain(|_, r| !r.dead());
+}
+
+/// A player's gauge: the dashes that fill, and the spark riding the filled end.
+fn back_ring(p: &mut ChildSpawnerCommands, dev: Dev, ring: &Ring, look: &BackRing) {
+    let (r, w) = (look.radius, look.thickness);
+    let spark = look.spark * w;
+    // Over every arrow (they stack from 0 down per player) and rimmed, so it reads on any tile.
+    p.spawn((
+        node(|n| {
+            n.position_type = PositionType::Absolute;
+            n.left = Val::Px(ring.at.x);
+            n.top = Val::Px(ring.at.y);
+        }),
+        ring_form(ring, look),
+        ZIndex(5),
+        BackRingNode(dev),
+    ))
+    .with_children(|p| {
+        let len = dash_len(look);
+        for i in 0..look.ticks {
+            let (at, angle) = dash(i, look.ticks, r);
+            p.spawn((
+                node(|n| {
+                    n.position_type = PositionType::Absolute;
+                    n.left = Val::Px(at.x - len / 2.);
+                    n.top = Val::Px(at.y - w / 2.);
+                    n.width = Val::Px(len);
+                    n.height = Val::Px(w);
+                    n.border_radius = BorderRadius::all(Val::Px(w / 2.));
+                }),
+                BackgroundColor(ring.color.with_alpha(look.track)),
+                BoxShadow::new(NIGHT.with_alpha(0.85), Val::Px(0.), Val::Px(0.), Val::Px(1.), Val::Px(look.rim)),
+                UiTransform::from_rotation(Rot2::radians(angle)),
+                BackDash(dev, i),
+            ));
+        }
+        // One pivot for the spark and its two tails: rotating it sweeps them round the filled end.
+        p.spawn((node(|n| n.position_type = PositionType::Absolute), BackHead(dev))).with_children(|p| {
+            for (lag, size, alpha) in [(0., 1., 1.), (0.03, 0.6, 0.5), (0.06, 0.36, 0.26)] {
+                let d = spark * size;
+                let a = -std::f32::consts::FRAC_PI_2 - lag * std::f32::consts::TAU;
+                let (x, y) = (r * a.cos(), r * a.sin());
+                p.spawn((
+                    node(|n| {
+                        n.position_type = PositionType::Absolute;
+                        n.left = Val::Px(x - d / 2.);
+                        n.top = Val::Px(y - d / 2.);
+                        n.width = Val::Px(d);
+                        n.height = Val::Px(d);
+                        n.border_radius = BorderRadius::MAX;
+                    }),
+                    BackgroundColor(Color::WHITE.with_alpha(alpha)),
+                    BoxShadow::new(
+                        ring.color.with_alpha(0.7),
+                        Val::Px(0.),
+                        Val::Px(0.),
+                        Val::Px(d * 0.5),
+                        Val::Px(d * 0.7),
+                    ),
+                ));
+            }
+        });
+    });
+}
+
+/// A dash's length: its even share of the circle, shortened by `dash`.
+fn dash_len(look: &BackRing) -> f32 {
+    std::f32::consts::TAU * look.radius / look.ticks.max(1) as f32 * look.dash
+}
+
+/// Dash `i` of `n` around a ring of radius `r`: where its middle sits, and the angle its long axis lies along (a chord
+/// of the circle, from 12 o'clock clockwise).
+fn dash(i: u32, n: u32, r: f32) -> (Vec2, f32) {
+    let a = i as f32 / n.max(1) as f32 * std::f32::consts::TAU - std::f32::consts::FRAC_PI_2;
+    (Vec2::new(r * a.cos(), r * a.sin()), a + std::f32::consts::FRAC_PI_2)
+}
+
+/// How a ring's nodes are drawn this frame: its pop and wobble about their shared centre.
+fn ring_form(r: &Ring, look: &BackRing) -> UiTransform {
+    UiTransform { scale: Vec2::splat(r.scale(look)), rotation: Rot2::radians(r.lean(look)), ..default() }
+}
+
+/// How lit dash `i` is when the ring has filled `shown` of the way: `(filled, heat)`, the heat whitening the dashes
+/// just behind the leading edge like a comet head.
+fn lit(i: u32, n: u32, shown: f32, hot: f32) -> (f32, f32) {
+    let d = shown * n.max(1) as f32 - i as f32;
+    let filled = d.clamp(0., 1.);
+    (filled, filled * (1. - d / hot.max(0.01)).clamp(0., 1.))
+}
+
+/// A dash's colour this frame: the player's colour, whitened at the leading edge and fading in from the track.
+fn dash_color(r: &Ring, i: u32, look: &BackRing) -> Color {
+    let (filled, heat) = lit(i, look.ticks, r.shown(), look.hot);
+    r.color.mix(&Color::WHITE, heat * 0.55).with_alpha(look.track + (1. - look.track) * filled)
 }
 
 /// A rounded stroke from `a` to `b`, `w` thick.
@@ -793,18 +994,130 @@ mod back_tests {
         let mut st = DevState::default();
         st.held[6] = true;
         for _ in 0..29 {
-            assert!(!p.hold_back(Dev::Bot(0), &st, false, 0.05, 1.5, String::new()));
+            assert!(!p.hold_back(Dev::Bot(0), &st, false, 0.05, 1.5));
         }
-        assert!(!p.hold_back(Dev::Bot(1), &st, false, 0.05, 1.5, String::new()));
-        assert!(p.hold_back(Dev::Bot(0), &st, false, 0.05, 1.5, String::new()));
+        assert!(!p.hold_back(Dev::Bot(1), &st, false, 0.05, 1.5));
+        assert!(p.hold_back(Dev::Bot(0), &st, false, 0.05, 1.5));
         st.held[6] = false;
-        p.hold_back(Dev::Bot(0), &st, false, 0.05, 1.5, String::new());
+        p.hold_back(Dev::Bot(0), &st, false, 0.05, 1.5);
         st.held[6] = true;
         st.nav.push(Nav::Back);
-        assert!(!p.hold_back(Dev::Bot(0), &st, true, 0.05, 1.5, String::new()));
+        assert!(!p.hold_back(Dev::Bot(0), &st, true, 0.05, 1.5));
         st.nav.clear();
         for _ in 0..40 {
-            assert!(!p.hold_back(Dev::Bot(0), &st, false, 0.05, 1.5, String::new()));
+            assert!(!p.hold_back(Dev::Bot(0), &st, false, 0.05, 1.5));
         }
+    }
+
+    fn ring() -> BackRing {
+        crate::test_data().global.render.select.back_ring.clone()
+    }
+
+    /// A ring filling `target` for `frames`, then released.
+    fn run(look: &BackRing, frames: usize, target: f32) -> Ring {
+        let mut r = Ring::start(look);
+        for _ in 0..frames {
+            r.step(target, look, 1. / 60.);
+        }
+        r
+    }
+
+    #[test]
+    fn the_ring_pops_in_with_a_hold_and_drains_away_once_released() {
+        let look = ring();
+        let mut r = Ring::start(&look);
+        assert_eq!(r.scale(&look), look.pop, "a hold starts at the pop scale");
+        r.step(0.5, &look, 1. / 60.);
+        assert!(r.pop.0 > look.pop && r.pop.0 < 1., "grows in from the pop scale: {}", r.pop.0);
+        r = run(&look, 60, 0.5);
+        assert!((r.shown() - 0.5).abs() < 0.1, "chases the hold: {}", r.shown());
+        assert!((r.scale(&look) - 1.).abs() < 0.1, "settles at full size: {}", r.scale(&look));
+        let released = run(&look, 90, 0.);
+        assert!(released.dead(), "drains and shrinks away");
+        // Partway through the drain it is still drawn, and less full than it was.
+        let mut draining = r;
+        for _ in 0..3 {
+            draining.step(0., &look, 1. / 60.);
+        }
+        assert!(draining.shown() > 0. && draining.shown() < 0.5 && !draining.dead(), "{}", draining.shown());
+    }
+
+    #[test]
+    fn only_a_started_hold_wears_a_ring_and_a_released_one_drains_away() {
+        let d = crate::test_data();
+        let look = &d.global.render.select;
+        let mut p = Pointers { screen: Vec2::new(1280., 720.), ..default() };
+        let mut st = DevState::default();
+        // Not holding (the screen still asks every frame): nothing to show.
+        assert!(!p.hold_back(Dev::Bot(0), &st, false, 0.05, look.back_hold_secs));
+        step_rings(&mut p, look, 1. / 60.);
+        assert!(p.ring.is_empty(), "no ring before a hold");
+        // A contextual Back that got used up is not leaving either.
+        st.held[6] = true;
+        st.nav.push(Nav::Back);
+        assert!(!p.hold_back(Dev::Bot(0), &st, true, 0.05, look.back_hold_secs));
+        st.nav.clear();
+        step_rings(&mut p, look, 1. / 60.);
+        assert!(p.ring.is_empty(), "a consumed Back pops nothing in");
+        // A real hold fills one, and letting go drains it away.
+        st.held[6] = false;
+        p.hold_back(Dev::Bot(0), &st, false, 0.05, look.back_hold_secs);
+        st.held[6] = true;
+        for _ in 0..12 {
+            p.hold_back(Dev::Bot(0), &st, false, 0.05, look.back_hold_secs);
+            step_rings(&mut p, look, 1. / 60.);
+        }
+        let shown = p.ring.get(&Dev::Bot(0)).map(|r| r.shown()).expect("a ring while held");
+        assert!(shown > 0.2, "fills as the hold runs: {shown}");
+        st.held[6] = false;
+        p.hold_back(Dev::Bot(0), &st, false, 0.05, look.back_hold_secs);
+        for _ in 0..60 {
+            step_rings(&mut p, look, 1. / 60.);
+        }
+        assert!(p.ring.is_empty(), "a released ring drains away");
+    }
+
+    #[test]
+    fn any_frame_rate_fills_the_ring_alike() {
+        let look = ring();
+        let mut slow = Ring::start(&look);
+        let mut fast = Ring::start(&look);
+        for _ in 0..30 {
+            slow.step(0.7, &look, 1. / 30.);
+        }
+        for _ in 0..120 {
+            fast.step(0.7, &look, 1. / 120.);
+        }
+        assert!((slow.shown() - fast.shown()).abs() < 0.02, "{} vs {}", slow.shown(), fast.shown());
+        assert!((slow.scale(&look) - fast.scale(&look)).abs() < 0.02);
+    }
+
+    #[test]
+    fn dashes_sit_on_the_ring_from_the_top_round_clockwise_and_light_from_the_fill() {
+        let (n, r) = (24, 40.);
+        let (top, angle) = dash(0, n, r);
+        assert!(top.distance(Vec2::new(0., -r)) < 1e-3, "the first dash is at 12 o'clock: {top}");
+        assert!(angle.abs() < 1e-5, "and lies flat, along the circle: {angle}");
+        let (right, angle) = dash(n / 4, n, r);
+        assert!(right.distance(Vec2::new(r, 0.)) < 1e-3, "a quarter turn is on the right: {right}");
+        assert!((angle - std::f32::consts::FRAC_PI_2).abs() < 1e-5, "standing upright: {angle}");
+        assert_eq!(lit(0, n, 0., 4.), (0., 0.), "an empty ring shows only its track");
+        assert_eq!(lit(0, n, 1., 4.), (1., 0.), "a full turn leaves the first dash behind the head");
+        assert_eq!(lit(n - 1, n, 1., 4.), (1., 0.75), "the dashes behind the head whiten");
+        let (filled, heat) = lit(5, n, 0.25, 4.); // a quarter filled: dash 5 sits just behind the edge
+        assert!(filled == 1. && heat > 0. && heat < 1., "{filled} {heat}");
+    }
+
+    #[test]
+    fn a_full_hold_lights_the_whole_ring() {
+        let look = ring();
+        let mut r = Ring::start(&look);
+        for _ in 0..120 {
+            r.step(1., &look, 1. / 60.);
+        }
+        assert_eq!(r.shown(), 1.);
+        let alpha = |i: u32| dash_color(&r, i, &look).alpha();
+        assert!((alpha(0) - 1.).abs() < 0.02, "filled dashes are solid: {}", alpha(0));
+        assert!(look.track < 1.);
     }
 }

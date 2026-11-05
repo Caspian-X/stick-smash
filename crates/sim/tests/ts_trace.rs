@@ -67,6 +67,8 @@ fn matches_typescript_traces() {
     d.global.ledge.fresh_invuln = false;
     d.global.sim.separate_cosmetic_rng = false;
     d.global.ai.thresholds.surface_chase_ticks = 0;
+    // The reference froze longer after the final KO; the results screen now follows it closely.
+    d.global.match_.end_frames = 110;
     // Reference traces predate the larger side/bottom zones and lower ceiling.
     for s in &mut d.stages {
         if s.id == "arena" {
@@ -105,6 +107,7 @@ fn matches_typescript_traces() {
                 team: None,
                 tap_jump: p["tapJump"].as_bool().unwrap_or(false),
                 controls: Default::default(),
+                eliminated: false,
             })
             .collect();
         let mut w = World::new(
@@ -115,6 +118,8 @@ fn matches_typescript_traces() {
                 training: cfg["training"].as_bool().unwrap_or(false),
                 players,
                 friendly_fire: false,
+                time_limit: None,
+                sudden_death: false,
             },
             &d,
         )

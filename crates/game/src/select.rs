@@ -37,6 +37,7 @@ const BEHAVIOR: u32 = 12;
 const ADD: u32 = 6;
 /// Rules panel.
 pub(crate) const STOCKS: u32 = 7;
+pub(crate) const TIME: u32 = 11;
 const STAGE: u32 = 8;
 const TEAMS: u32 = 9;
 const FF: u32 = 10;
@@ -135,6 +136,8 @@ pub struct Select {
     pub mode: Mode,
     pub slots: Vec<Pick>,
     pub stocks: i32,
+    /// Time limit in seconds (`None`: off).
+    pub time: Option<u32>,
     pub stage: usize,
     pub teams: bool,
     pub ff: bool,
@@ -288,7 +291,7 @@ impl Select {
     /// A card was inserted at `at`: references to later cards (CPU rows being edited, carried chips) move along.
     fn inserted(&mut self, at: usize) {
         let up = |k: u32| match kind(k) {
-            (0 | TILE | STOCKS | STAGE | TEAMS | FF | ADD, _) => k,
+            (0 | TILE | STOCKS | TIME | STAGE | TEAMS | FF | ADD, _) => k,
             (kd, si) if si >= at => key(kd, si + 1),
             _ => k,
         };
@@ -400,6 +403,7 @@ impl Select {
                 }
             }
             STOCKS => self.stocks = cyc(self.stocks - 1, 9) + 1,
+            TIME => self.time = play::cycle_time(self.time, by),
             STAGE => {
                 let stages = self.fitting(d);
                 if !stages.is_empty() {
@@ -426,7 +430,7 @@ impl Select {
         let shift = |k: u32| {
             let (kd, si) = kind(k);
             match kd {
-                0 | TILE | STOCKS | STAGE | TEAMS | FF => k,
+                0 | TILE | STOCKS | TIME | STAGE | TEAMS | FF => k,
                 ADD if add => k,
                 ADD => NONE,
                 _ if removed.contains(&si) => NONE,
@@ -484,14 +488,7 @@ impl Select {
             let Some(st) = devs.map.get(&dev).filter(|_| !remove.contains(&i)) else { continue };
             let p = &s.slots[i];
             let contextual = p.menu.is_some() || p.carry.is_some() || p.ready || kind(p.cursor.key).0 != TILE;
-            let exit = ptrs.hold_back(
-                dev,
-                st,
-                contextual,
-                dt,
-                d.global.render.select.back_hold_secs,
-                format!("{} · {}", s.tag(i), if s.humans().count() == 1 { "back to title" } else { "leave selection" }),
-            );
+            let exit = ptrs.hold_back(dev, st, contextual, dt, d.global.render.select.back_hold_secs);
             if exit {
                 backed_out = true;
                 remove.push(i);
@@ -543,14 +540,7 @@ impl Select {
             // A device leaving this frame cannot immediately join again.
             if st.back_held() || st.nav.contains(&Nav::Back) {
                 leave |= s.humans().count() == 0
-                    && ptrs.hold_back(
-                        *dev,
-                        st,
-                        false,
-                        dt,
-                        d.global.render.select.back_hold_secs,
-                        "Back to title".into(),
-                    );
+                    && ptrs.hold_back(*dev, st, false, dt, d.global.render.select.back_hold_secs);
                 continue;
             }
             if st.any_press() {
@@ -688,7 +678,7 @@ impl Select {
     }
     /// The rules for a match on stage `stage`.
     pub(crate) fn rules(&self, d: &GameData, stage: usize) -> Rules {
-        Rules { stocks: self.stocks, stage: d.stages[stage].id.clone(), friendly_fire: self.ff }
+        Rules { stocks: self.stocks, stage: d.stages[stage].id.clone(), friendly_fire: self.ff, time_limit: self.time }
     }
     /// Remembers everyone's picks and starts the match on [`Self::stage`].
     pub(crate) fn start(
@@ -747,6 +737,7 @@ pub fn enter(
         mode: init.mode,
         slots: vec![],
         stocks: v.stocks.clamp(1, 9),
+        time: play::time_choices().find(|c| *c == v.time_limit).unwrap_or(None),
         stage: d.stages.iter().position(|s| &s.id == stage_id).unwrap_or(0),
         teams: v.teams && init.mode == Mode::Versus,
         ff: v.friendly_fire,
@@ -923,6 +914,7 @@ pub(crate) fn remember(sel: &Select, saved: &mut Saved, d: &GameData) {
     }
     let v = &mut saved.versus;
     v.stocks = sel.stocks;
+    v.time_limit = sel.time;
     v.stage = d.stages[sel.stage].id.clone();
     v.teams = sel.teams;
     v.friendly_fire = sel.ff;
@@ -1570,6 +1562,7 @@ mod tests {
                 mode: Mode::Versus,
                 slots: vec![],
                 stocks: 3,
+                time: None,
                 stage: 0,
                 teams: false,
                 ff: false,
@@ -1958,6 +1951,7 @@ mod tests {
             mode: Mode::Versus,
             slots: vec![],
             stocks: 3,
+            time: None,
             stage: 0,
             teams: false,
             ff: false,
@@ -2027,7 +2021,7 @@ mod tests {
         let slots = t.s.match_slots_with(&t.saved, &t.devs);
         assert!(!slots[0].tap_jump && !slots[1].tap_jump);
         assert!(slots[2].tap_jump, "the CPU keeps its own preference");
-        let rules = Rules { stocks: 1, stage: "arena".into(), friendly_fire: false };
+        let rules = Rules { stocks: 1, stage: "arena".into(), friendly_fire: false, time_limit: None };
         let data = std::sync::Arc::new(t.d.clone());
         let m = Match::new(&data, Mode::Versus, slots, rules, 7).unwrap();
         assert!(!m.world.cfg.players[0].tap_jump);

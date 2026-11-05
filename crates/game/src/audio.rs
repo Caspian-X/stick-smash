@@ -327,6 +327,7 @@ mod tests {
             "roll",
             "menu",
             "beep",
+            "tick",
             "go",
             "confirm",
             "back",

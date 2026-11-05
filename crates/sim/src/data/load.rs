@@ -220,7 +220,8 @@ pub fn validate(data: &GameData) -> Vec<ContentError> {
             let uses = f
                 .moves
                 .iter()
-                .flat_map(|(_, m)| &m.phases)
+                .flat_map(|(_, m)| m.timelines())
+                .flatten()
                 .flat_map(|p| &p.hitboxes)
                 .chain(f.projectiles.values().map(|p| &p.hit))
                 .chain(
@@ -658,6 +659,18 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
         }
     }
     nonnegative(file, "ai.reach", f.ai.reach)?;
+    for (i, c) in f.charges.iter().enumerate() {
+        let path = format!("charges[{i}]");
+        if c.id.trim().is_empty() {
+            return Err(err(file, format!("{path}.id"), "requires a nonblank id"));
+        }
+        if f.charges[..i].iter().any(|o| o.id == c.id) {
+            return Err(err(file, format!("{path}.id"), format!("duplicate charge pool {:?}", c.id)));
+        }
+        if c.uses == 0 {
+            return Err(err(file, format!("{path}.uses"), "needs at least one use"));
+        }
+    }
     for (name, t) in [("f", &f.throws.f), ("b", &f.throws.b), ("u", &f.throws.u), ("d", &f.throws.d)] {
         if t.release == 0 || t.total < t.release {
             return Err(err(file, format!("throws.{name}"), "needs 0 < release <= total"));
@@ -778,9 +791,16 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
         }
     }
     for (slot, m) in f.moves.iter() {
-        for (i, p) in m.phases.iter().enumerate() {
+        let mut phases: Vec<(String, &Phase)> =
+            m.phases.iter().enumerate().map(|(i, p)| (format!("moves.{slot}.phases[{i}]"), p)).collect();
+        for (vi, v) in m.variants.iter().enumerate() {
+            for (i, p) in v.phases.iter().enumerate() {
+                phases.push((format!("moves.{slot}.variants[{vi}].phases[{i}]"), p));
+            }
+        }
+        for (pp, p) in phases {
             for (j, window) in p.hurt_regions.iter().enumerate() {
-                let path = format!("moves.{slot}.phases[{i}].hurtRegions[{j}]");
+                let path = format!("{pp}.hurtRegions[{j}]");
                 if !f.hurt_regions.as_ref().is_some_and(|rs| rs.iter().any(|r| r.id == window.region)) {
                     return Err(err(
                         file,
@@ -804,7 +824,7 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
             }
             for (j, h) in p.hitboxes.iter().enumerate() {
                 if let Some(g) = &h.geometry {
-                    check_combat_geometry(file, &format!("moves.{slot}.phases[{i}].hitboxes[{j}].geometry"), g, f)?;
+                    check_combat_geometry(file, &format!("{pp}.hitboxes[{j}].geometry"), g, f)?;
                 }
             }
         }
@@ -841,9 +861,11 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
         if let Some(c) = &p.charge_scale {
             nonnegative(file, &format!("{path}.chargeScale.speed"), c.speed)?;
             nonnegative(file, &format!("{path}.chargeScale.damage"), c.damage)?;
-            for (name, n) in [("bkb", c.bkb), ("radius", c.radius), ("life", c.life)] {
+            for (name, n) in [("bkb", c.bkb), ("radius", c.radius), ("rehit", c.rehit)] {
                 nonnegative(file, &format!("{path}.chargeScale.{name}"), n)?;
             }
+            // A negative life coefficient shortens the fuse per held charge tick (cooking).
+            finite(file, &format!("{path}.chargeScale.life"), c.life)?;
             if let Some(angle) = c.angle_to {
                 finite(file, &format!("{path}.chargeScale.angleTo"), angle)?;
             }
@@ -892,6 +914,21 @@ pub fn check_fighter(file: &str, f: &Fighter) -> Result<(), ContentError> {
                 return Err(err(file, format!("{path}.article.autoRelease"), "needs minRelease <= autoRelease < life"));
             }
             nonnegative(file, &format!("{path}.article.steer"), a.steer)?;
+            if let Some(h) = &a.hold {
+                for n in h.offset {
+                    finite(file, &format!("{path}.article.hold.offset"), n)?;
+                }
+                nonnegative(file, &format!("{path}.article.hold.bob"), h.bob)?;
+                if h.bob != 0. && h.period == 0 {
+                    return Err(err(file, format!("{path}.article.hold.period"), "must be positive with bob"));
+                }
+                if h.period != 0 && h.bob == 0. {
+                    return Err(err(file, format!("{path}.article.hold.bob"), "needs a bob for a non-zero period"));
+                }
+                for (j, b) in h.hitboxes.iter().enumerate() {
+                    check_hitbox(file, &format!("{path}.article.hold.hitboxes[{j}]"), b, true)?;
+                }
+            }
             if let Some(r) = a.hurtbox {
                 for n in [r.x1, r.x2, r.y1, r.y2] {
                     finite(file, &format!("{path}.article.hurtbox"), n)?;
@@ -939,67 +976,92 @@ fn check_move(
     e: &impl Fn(String, String) -> ContentError,
     check_anim: &impl Fn(String, &[super::visual::AnimKey]) -> Result<(), ContentError>,
 ) -> Result<(), ContentError> {
-    if m.phases.is_empty() {
-        return Err(e(format!("{path}.phases"), "needs at least one phase".into()));
+    let charges: BTreeSet<&str> = f.charges.iter().map(|c| c.id.as_str()).collect();
+    if m.variants.len() > u8::MAX as usize {
+        return Err(e(format!("{path}.variants"), "at most 255 variants".into()));
+    }
+    let mut timelines = vec![(format!("{path}.phases"), &m.phases)];
+    for (i, v) in m.variants.iter().enumerate() {
+        if !charges.contains(v.needs.charge.as_str()) {
+            return Err(e(
+                format!("{path}.variants[{i}].needs.charge"),
+                format!("no charge pool {:?}", v.needs.charge),
+            ));
+        }
+        if v.needs.uses == 0 {
+            return Err(e(format!("{path}.variants[{i}].needs.uses"), "needs at least one use".into()));
+        }
+        timelines.push((format!("{path}.variants[{i}].phases"), &v.phases));
     }
     if let Some(n) = m.charge_damage {
         nonnegative(file, &format!("{path}.chargeDamage"), n)?;
     }
-    let names: BTreeSet<&str> = m.phases.iter().map(|p| p.name.as_str()).collect();
-    if names.len() != m.phases.len() {
-        return Err(e(format!("{path}.phases"), "phase names must be unique".into()));
-    }
-    for (pi, p) in m.phases.iter().enumerate() {
-        let pp = format!("{path}.phases[{pi}]");
-        if [END, HELPLESS, LANDING].contains(&p.name.as_str()) {
-            return Err(e(format!("{pp}.name"), format!("{:?} is reserved", p.name)));
+    for (path, phases) in timelines {
+        let path = path.as_str();
+        if phases.is_empty() {
+            return Err(e(path.to_string(), "needs at least one phase".into()));
         }
-        for (i, h) in p.hitboxes.iter().enumerate() {
-            check_hitbox(file, &format!("{pp}.hitboxes[{i}]"), h, true)?;
+        let names: BTreeSet<&str> = phases.iter().map(|p| p.name.as_str()).collect();
+        if names.len() != phases.len() {
+            return Err(e(path.to_string(), "phase names must be unique".into()));
         }
-        if let Some(n) = p.armor_threshold {
-            nonnegative(file, &format!("{pp}.armorThreshold"), n)?;
-        }
-        if let Some(n) = p.fall_cap {
-            positive(file, &format!("{pp}.fallCap"), n)?;
-        }
-        if let Some(n) = p.travel_speed {
-            positive(file, &format!("{pp}.travelSpeed"), n)?;
-        }
-        if let Some(r) = &p.reflector {
-            if r.from > r.to {
-                return Err(err(file, format!("{pp}.reflector"), "from is after to"));
+        for (pi, p) in phases.iter().enumerate() {
+            let pp = format!("{path}[{pi}]");
+            if [END, HELPLESS, LANDING].contains(&p.name.as_str()) {
+                return Err(e(format!("{pp}.name"), format!("{:?} is reserved", p.name)));
             }
-            for (name, n) in [("speed", r.speed), ("damage", r.damage), ("radius", r.radius)] {
-                positive(file, &format!("{pp}.reflector.{name}"), n)?;
-            }
-            finite(file, &format!("{pp}.reflector.height"), r.height)?;
-        }
-        nonnegative(file, &format!("{pp}.airAccelMult"), p.air_accel_mult)?;
-        nonnegative(file, &format!("{pp}.groundSpeed"), p.ground_speed)?;
-        nonnegative(file, &format!("{pp}.chargeFrames"), p.charge_frames)?;
-        if p.charge_frames != 0. && p.frames.is_none() {
-            return Err(e(format!("{pp}.chargeFrames"), "needs a finite phase length".into()));
-        }
-        for (name, r) in [("detection", p.detection), ("tether", p.tether)] {
-            let Some(r) = r else { continue };
-            for (field, n) in [("x1", r.x1), ("x2", r.x2), ("y1", r.y1), ("y2", r.y2)] {
-                finite(file, &format!("{pp}.{name}.{field}"), n)?;
-            }
-            if r.x1 >= r.x2 || r.y1 >= r.y2 {
-                return Err(e(format!("{pp}.{name}"), "needs x1 < x2 and y1 < y2".into()));
-            }
-        }
-        if let Some(c) = &p.counter {
-            for (name, n) in
-                [("damageMult", c.damage_mult), ("minDamage", c.min_damage), ("reflectSpeed", c.reflect_speed)]
+            if let Some(cost) = &p.cost
+                && !charges.contains(cost.charge.as_str())
             {
-                nonnegative(file, &format!("{pp}.counter.{name}"), n)?;
+                return Err(e(format!("{pp}.cost.charge"), format!("no charge pool {:?}", cost.charge)));
             }
-            check_life(file, &format!("{pp}.counter.reflectLife"), c.reflect_life)?;
+            for (i, h) in p.hitboxes.iter().enumerate() {
+                check_hitbox(file, &format!("{pp}.hitboxes[{i}]"), h, true)?;
+            }
+            if let Some(n) = p.armor_threshold {
+                nonnegative(file, &format!("{pp}.armorThreshold"), n)?;
+            }
+            if let Some(n) = p.fall_cap {
+                positive(file, &format!("{pp}.fallCap"), n)?;
+            }
+            if let Some(n) = p.travel_speed {
+                positive(file, &format!("{pp}.travelSpeed"), n)?;
+            }
+            if let Some(r) = &p.reflector {
+                if r.from > r.to {
+                    return Err(err(file, format!("{pp}.reflector"), "from is after to"));
+                }
+                for (name, n) in [("speed", r.speed), ("damage", r.damage), ("radius", r.radius)] {
+                    positive(file, &format!("{pp}.reflector.{name}"), n)?;
+                }
+                finite(file, &format!("{pp}.reflector.height"), r.height)?;
+            }
+            nonnegative(file, &format!("{pp}.airAccelMult"), p.air_accel_mult)?;
+            nonnegative(file, &format!("{pp}.groundSpeed"), p.ground_speed)?;
+            nonnegative(file, &format!("{pp}.chargeFrames"), p.charge_frames)?;
+            if p.charge_frames != 0. && p.frames.is_none() {
+                return Err(e(format!("{pp}.chargeFrames"), "needs a finite phase length".into()));
+            }
+            for (name, r) in [("detection", p.detection), ("tether", p.tether)] {
+                let Some(r) = r else { continue };
+                for (field, n) in [("x1", r.x1), ("x2", r.x2), ("y1", r.y1), ("y2", r.y2)] {
+                    finite(file, &format!("{pp}.{name}.{field}"), n)?;
+                }
+                if r.x1 >= r.x2 || r.y1 >= r.y2 {
+                    return Err(e(format!("{pp}.{name}"), "needs x1 < x2 and y1 < y2".into()));
+                }
+            }
+            if let Some(c) = &p.counter {
+                for (name, n) in
+                    [("damageMult", c.damage_mult), ("minDamage", c.min_damage), ("reflectSpeed", c.reflect_speed)]
+                {
+                    nonnegative(file, &format!("{pp}.counter.{name}"), n)?;
+                }
+                check_life(file, &format!("{pp}.counter.reflectLife"), c.reflect_life)?;
+            }
+            check_phase(file, &pp, p, &names, f, attach_ids, e)?;
+            check_anim(format!("{pp}.anim"), &p.anim)?;
         }
-        check_phase(file, &pp, p, &names, f, attach_ids, e)?;
-        check_anim(format!("{pp}.anim"), &p.anim)?;
     }
     Ok(())
 }
@@ -1017,6 +1079,25 @@ fn check_phase(
         check_event(file, &format!("{pp}.events[{i}]"), ev)?;
         if ev.at.is_some() && (ev.from.is_some() || ev.to.is_some()) {
             return Err(e(format!("{pp}.events[{i}]"), "use either `at` or `from`/`to`".into()));
+        }
+        if let Some(need) = &ev.restore {
+            let path = format!("{pp}.events[{i}].restore");
+            if !f.charges.iter().any(|c| c.id == need.charge) {
+                return Err(e(format!("{path}.charge"), format!("no charge pool {:?}", need.charge)));
+            }
+            if need.uses == 0 {
+                return Err(e(format!("{path}.uses"), "must be positive".into()));
+            }
+        }
+        if let Some(ids) = &ev.detonate {
+            for (j, id) in ids.iter().enumerate() {
+                if !f.projectiles.get(id).is_some_and(|p| p.explosion.is_some()) {
+                    return Err(e(
+                        format!("{pp}.events[{i}].detonate[{j}]"),
+                        format!("no explosive projectile {id:?}"),
+                    ));
+                }
+            }
         }
         if let Some(s) = &ev.spawn
             && !f.projectiles.contains_key(s)
@@ -1041,6 +1122,16 @@ fn check_phase(
         }
         if t.on == Trigger::TargetNear && p.detection.is_none() {
             return Err(e(format!("{tp}.on"), "targetNear needs a detection rectangle".into()));
+        }
+        if let Some(need) = &t.needs
+            && !f.charges.iter().any(|c| c.id == need.charge)
+        {
+            return Err(e(format!("{tp}.needs.charge"), format!("no charge pool {:?}", need.charge)));
+        }
+        if let Some(need) = &t.needs
+            && need.uses == 0
+        {
+            return Err(e(format!("{tp}.needs.uses"), "needs at least one use".into()));
         }
     }
     if p.frames.is_none() && p.transitions.is_empty() {
@@ -1155,6 +1246,7 @@ fn check_hitbox(file: &str, path: &str, h: &super::Hitbox, geometry: bool) -> Re
     if geometry && h.geometry.is_none() {
         positive(file, &format!("{path}.r"), h.r)?;
     }
+    nonnegative(file, &format!("{path}.heal"), h.heal)?;
     for (name, n) in [
         ("damage", h.damage),
         ("bkb", h.bkb),
@@ -1247,6 +1339,7 @@ pub fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
     positive(file, "shield.breakMaxFall", g.shield.break_max_fall)?;
     positive(file, "respawn.descendFrames", f64::from(g.respawn.descend_frames))?;
     positive(file, "match.endFrames", f64::from(g.match_.end_frames))?;
+    nonnegative(file, "match.suddenDeathDamage", g.match_.sudden_death_damage)?;
     for (name, c) in
         [("climb", &g.ledge.climb), ("attack", &g.ledge.attack), ("roll", &g.ledge.roll), ("jump", &g.ledge.jump)]
     {
@@ -1315,6 +1408,13 @@ fn check_render(file: &str, r: &super::render::Render) -> Result<(), ContentErro
     }
     finite(file, "render.hud.look.tagHeight", r.hud.look.tag_height)?;
     finite(file, "render.hud.look.anchorHeight", r.hud.look.anchor_height)?;
+    nonnegative(file, "render.hud.resultsHoldSecs", f64::from(r.hud.results_hold_secs))?;
+    positive(file, "render.hud.endBanner.secs", f64::from(r.hud.end_banner.secs))?;
+    nonnegative(file, "render.hud.endBanner.pop", f64::from(r.hud.end_banner.pop))?;
+    nonnegative(file, "render.hud.endBanner.fade", f64::from(r.hud.end_banner.fade))?;
+    positive(file, "render.hud.resultsEnter.secs", f64::from(r.hud.results_enter.secs))?;
+    nonnegative(file, "render.hud.resultsEnter.slide", f64::from(r.hud.results_enter.slide))?;
+    nonnegative(file, "render.hud.resultsEnter.stagger", f64::from(r.hud.results_enter.stagger))?;
     nonnegative(file, "render.hud.look.shakeSpeed", f64::from(r.hud.look.shake_speed))?;
     positive(file, "render.hud.look.bubbleShrink", f64::from(r.hud.look.bubble_shrink))?;
     range(file, "render.hud.look.bubbleMinScale", f64::from(r.hud.look.bubble_min_scale), 0., 1.)?;
@@ -1350,6 +1450,7 @@ fn check_render(file: &str, r: &super::render::Render) -> Result<(), ContentErro
         nonnegative(file, &format!("render.select.{name}"), f64::from(n))?;
     }
     check_pointer_look(file, &s.pointer)?;
+    check_back_ring(file, &s.back_ring)?;
     positive(file, "render.select.hints.fadeSecs", f64::from(s.hints.fade_secs))?;
     nonnegative(file, "render.select.hints.showSecs", f64::from(s.hints.show_secs))?;
     nonnegative(file, "render.select.hints.idleSecs", f64::from(s.hints.idle_secs))?;
@@ -1402,6 +1503,29 @@ fn check_pointer_look(file: &str, p: &super::render::PointerLook) -> Result<(), 
     ] {
         positive(file, &format!("render.select.pointer.{name}"), f64::from(stiffness))?;
         nonnegative(file, &format!("render.select.pointer.{name}"), f64::from(damping))?;
+    }
+    Ok(())
+}
+
+fn check_back_ring(file: &str, b: &super::render::BackRing) -> Result<(), ContentError> {
+    for (i, n) in b.offset.iter().enumerate() {
+        finite(file, &format!("render.select.backRing.offset[{i}]"), f64::from(*n))?;
+    }
+    for (name, n) in [("radius", b.radius), ("thickness", b.thickness), ("wobbleSecs", b.wobble_secs)] {
+        positive(file, &format!("render.select.backRing.{name}"), f64::from(n))?;
+    }
+    for (name, n) in [("track", b.track), ("rim", b.rim), ("pop", b.pop), ("wobble", b.wobble)] {
+        nonnegative(file, &format!("render.select.backRing.{name}"), f64::from(n))?;
+    }
+    for (name, n) in [("dash", b.dash), ("spark", b.spark)] {
+        positive(file, &format!("render.select.backRing.{name}"), f64::from(n))?;
+    }
+    range(file, "render.select.backRing.track", f64::from(b.track), 0., 1.)?;
+    range(file, "render.select.backRing.ticks", f64::from(b.ticks), 2., 96.)?;
+    nonnegative(file, "render.select.backRing.hot", f64::from(b.hot))?;
+    for (name, [stiffness, damping]) in [("follow", b.follow), ("grow", b.grow)] {
+        positive(file, &format!("render.select.backRing.{name}"), f64::from(stiffness))?;
+        nonnegative(file, &format!("render.select.backRing.{name}"), f64::from(damping))?;
     }
     Ok(())
 }
@@ -1493,6 +1617,9 @@ fn check_stats(file: &str, v: &super::Stats) -> Result<(), ContentError> {
         ("fastFallSpeed", v.fast_fall_speed),
     ] {
         positive(file, &format!("stats.{name}"), n)?;
+    }
+    if let Some(n) = v.float_speed {
+        positive(file, "stats.floatSpeed", n)?;
     }
     Ok(())
 }

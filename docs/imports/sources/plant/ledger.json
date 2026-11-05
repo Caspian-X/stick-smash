@@ -1,0 +1,6537 @@
+{
+ "source": {
+  "ufd": "f1f595683038f0f033d1a9c4b6c382f485a4e9996be2c310c5b0042604607e7d",
+  "scripts": "38c60513b2db6ebed5f950505285696fc40b91a71a1082fab32ffe0bc7f99ea6",
+  "patch": "13.0.1",
+  "commit": "2e8f0d245481cb0c936524b6ffe1cdea867c4f68"
+ },
+ "scale": 5.0,
+ "frame": "sourceFrame - 1",
+ "sourceFacts": {
+  "ufd": {
+   "jab": [
+    {
+     "movename": "Jab 1",
+     "startup": "2",
+     "totalframes": "19",
+     "landinglag": "--",
+     "notes": "Transitions to jab 2 on frame 5",
+     "basedamage": "2.4",
+     "activeframes": "2\u20143",
+     "whichhitbox": "--",
+     "advantage": "-13",
+     "shieldlag": "10",
+     "shieldstun": "3",
+     "endlag": "16",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantJab1.gif"
+    },
+    {
+     "movename": "Jab 2",
+     "startup": "2",
+     "totalframes": "20",
+     "landinglag": "--",
+     "notes": "Transitions to jab 3 as early as frame 8 and rapid as early as frame 7",
+     "basedamage": "2.2",
+     "activeframes": "2\u20143",
+     "whichhitbox": "--",
+     "advantage": "-15",
+     "shieldlag": "5",
+     "shieldstun": "3",
+     "endlag": "17",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantJab2.gif"
+    },
+    {
+     "movename": "Jab 3",
+     "startup": "7",
+     "totalframes": "25",
+     "landinglag": "--",
+     "notes": "--",
+     "basedamage": "4.4",
+     "activeframes": "7\u20148",
+     "whichhitbox": "5",
+     "advantage": "-13",
+     "shieldlag": "--",
+     "shieldstun": "10",
+     "endlag": "17",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantJab3.gif"
+    },
+    {
+     "movename": "Rapid Jab",
+     "startup": "6/10/14...",
+     "totalframes": "--",
+     "landinglag": "--",
+     "notes": "--",
+     "basedamage": "0.6",
+     "activeframes": "6/10/14...",
+     "whichhitbox": "--",
+     "advantage": "**",
+     "shieldlag": "4",
+     "shieldstun": "5",
+     "endlag": "--",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantJabRapid.gif"
+    },
+    {
+     "movename": "Rapid Jab Finisher",
+     "startup": "7",
+     "totalframes": "40",
+     "landinglag": "--",
+     "notes": "--",
+     "basedamage": "3.4",
+     "activeframes": "6\u20147",
+     "whichhitbox": "4",
+     "advantage": "-29",
+     "shieldlag": "--",
+     "shieldstun": "15",
+     "endlag": "33",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantJabRapidEnd.gif"
+    }
+   ],
+   "ftilt": [
+    {
+     "movename": "Forward Tilt 1",
+     "startup": "7",
+     "totalframes": "27",
+     "landinglag": "--",
+     "notes": "Transitions to F-tilt 2 as early as frame 12",
+     "basedamage": "5.5",
+     "activeframes": "7\u20148",
+     "whichhitbox": "--",
+     "advantage": "-14",
+     "shieldlag": "8",
+     "shieldstun": "6",
+     "endlag": "19",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantFTilt1.gif"
+    },
+    {
+     "movename": "Forward Tilt 2",
+     "startup": "5",
+     "totalframes": "31",
+     "landinglag": "--",
+     "notes": "--",
+     "basedamage": "6.0",
+     "activeframes": "5\u20146",
+     "whichhitbox": "--",
+     "advantage": "-20",
+     "shieldlag": "9",
+     "shieldstun": "6",
+     "endlag": "25",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantFTilt2.gif"
+    }
+   ],
+   "utilt": [
+    {
+     "movename": "Up Tilt",
+     "startup": "6",
+     "totalframes": "26",
+     "landinglag": "--",
+     "notes": "Head intangibility on frame 6-13",
+     "basedamage": "9.0/7.0",
+     "activeframes": "6\u201413",
+     "whichhitbox": "Head/Body",
+     "advantage": "-11/-13",
+     "shieldlag": "7/7",
+     "shieldstun": "9/7",
+     "endlag": "13",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantUTilt.gif"
+    }
+   ],
+   "dtilt": [
+    {
+     "movename": "Down Tilt",
+     "startup": "9",
+     "totalframes": "26",
+     "landinglag": "--",
+     "notes": "--",
+     "basedamage": "6.0/7.0",
+     "activeframes": "9\u201411",
+     "whichhitbox": "Close/Far",
+     "advantage": "-10/-10",
+     "shieldlag": "6/7",
+     "shieldstun": "6/7",
+     "endlag": "15",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantDTilt.gif"
+    }
+   ],
+   "dashatk": [
+    {
+     "movename": "Dash Attack",
+     "startup": "7",
+     "totalframes": "47",
+     "landinglag": "--",
+     "notes": "--",
+     "basedamage": "10.0/7.0",
+     "activeframes": "7\u20149/10\u201414",
+     "whichhitbox": "Early/Late",
+     "advantage": "-28",
+     "shieldlag": "8/7",
+     "shieldstun": "12/9",
+     "endlag": "33",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantDashAttack.gif"
+    }
+   ],
+   "fsmash": [
+    {
+     "movename": "Forward Smash",
+     "startup": "16",
+     "totalframes": "51",
+     "landinglag": "--",
+     "notes": "Head intangibility on frame 16-17. Charge hold is frame 5",
+     "basedamage": "15.0/19.0",
+     "activeframes": "16\u201417",
+     "whichhitbox": "Close/Far",
+     "advantage": "-25/-22",
+     "shieldlag": "10/13",
+     "shieldstun": "10/13",
+     "endlag": "34",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantFSmash.gif"
+    }
+   ],
+   "usmash": [
+    {
+     "movename": "Up Smash",
+     "startup": "12/16",
+     "totalframes": "51",
+     "landinglag": "--",
+     "notes": "Head intangibility on frame 12-18. Charge hold is frame 6",
+     "basedamage": "3.0/12.0",
+     "activeframes": "12\u201415/16\u201418",
+     "whichhitbox": "--",
+     "advantage": "-27",
+     "shieldlag": "5/10",
+     "shieldstun": "3/8",
+     "endlag": "33",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantUSmash.gif"
+    }
+   ],
+   "dsmash": [
+    {
+     "movename": "Down Smash",
+     "startup": "10/14",
+     "totalframes": "43",
+     "landinglag": "--",
+     "notes": "Charge hold is frame 5",
+     "basedamage": "12.0/14.0",
+     "activeframes": "10\u201411/14\u201415",
+     "whichhitbox": "--",
+     "advantage": "-24",
+     "shieldlag": "9/10",
+     "shieldstun": "8/10",
+     "endlag": "28",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantDSmash.gif"
+    }
+   ],
+   "nair": [
+    {
+     "movename": "Neutral Air",
+     "startup": "8/11/14/17/18",
+     "totalframes": "47",
+     "landinglag": "15",
+     "notes": "Autocancels on frame 1-4 and 40 onward",
+     "basedamage": "2.0/3.0",
+     "activeframes": "8\u201417/18\u201419",
+     "whichhitbox": "Multi/Final",
+     "advantage": "-13/-13",
+     "shieldlag": "4/9",
+     "shieldstun": "2/2",
+     "endlag": "28",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantNAir.gif"
+    }
+   ],
+   "fair": [
+    {
+     "movename": "Forward Air",
+     "startup": "7",
+     "totalframes": "44",
+     "landinglag": "13",
+     "notes": "Autocancels on frame 1-2 and 36 onward",
+     "basedamage": "9.0/11.0",
+     "activeframes": "7\u20149",
+     "whichhitbox": "Close/Far",
+     "advantage": "-9/-9",
+     "shieldlag": "7/8",
+     "shieldstun": "4/4",
+     "endlag": "35",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantFAir.gif"
+    }
+   ],
+   "bair": [
+    {
+     "movename": "Back Air",
+     "startup": "14",
+     "totalframes": "61",
+     "landinglag": "16",
+     "notes": "Autocancels on frame 1-4 and 43 onward",
+     "basedamage": "14.5",
+     "activeframes": "14\u201415",
+     "whichhitbox": "--",
+     "advantage": "-11",
+     "shieldlag": "10",
+     "shieldstun": "5",
+     "endlag": "46",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantBAir.gif"
+    }
+   ],
+   "uair": [
+    {
+     "movename": "Up Air",
+     "startup": "7",
+     "totalframes": "38",
+     "landinglag": "10",
+     "notes": "Autocancels on frame 22 onward. Head and stem intangibility 7\u20149.",
+     "basedamage": "10.0",
+     "activeframes": "7\u20149",
+     "whichhitbox": "--",
+     "advantage": "-6",
+     "shieldlag": "7",
+     "shieldstun": "4",
+     "endlag": "29",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantUAir.gif"
+    }
+   ],
+   "dair": [
+    {
+     "movename": "Down Air",
+     "startup": "9",
+     "totalframes": "44",
+     "landinglag": "18",
+     "notes": "Autocancels on frame 1-2 and 33 onward",
+     "basedamage": "11.0/9.0",
+     "activeframes": "9\u201411/12\u201414",
+     "whichhitbox": "Early/Late",
+     "advantage": "-14/-14",
+     "shieldlag": "8/7",
+     "shieldstun": "4/4",
+     "endlag": "30",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantDAir.gif"
+    }
+   ],
+   "grab": [
+    {
+     "movename": "Grab",
+     "startup": "6",
+     "totalframes": "34",
+     "landinglag": "--",
+     "notes": "--",
+     "basedamage": "--",
+     "activeframes": "6\u20147",
+     "whichhitbox": null,
+     "advantage": null,
+     "shieldlag": null,
+     "shieldstun": null,
+     "endlag": "27",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantGrab.gif"
+    }
+   ],
+   "dashgrab": [
+    {
+     "movename": "Dash Grab",
+     "startup": "9",
+     "totalframes": "42",
+     "landinglag": "--",
+     "notes": "--",
+     "basedamage": "--",
+     "activeframes": "9\u201410",
+     "whichhitbox": null,
+     "advantage": null,
+     "shieldlag": null,
+     "shieldstun": null,
+     "endlag": "32",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantDashGrab.gif"
+    }
+   ],
+   "nspec": [
+    {
+     "movename": "Neutral B (Ptooie)",
+     "startup": "9",
+     "totalframes": "--",
+     "landinglag": "--",
+     "notes": "To blow away is 41 total frames. Earliest you can blow away is on 22. Endlag is 18 if projectile makes contact. Eating projectile is 44 frames or 30 if it's close to you. Ptooie can eat a single attack of up to 10% while hovering before being knocked down (like damage based armor but for a projectile).",
+     "basedamage": "14.0/18.0/15.3",
+     "activeframes": "9...",
+     "whichhitbox": "Initial/Blown Away/After Bounce",
+     "advantage": "+6/-3",
+     "shieldlag": "12/14/12",
+     "shieldstun": "13/6/5",
+     "endlag": "--",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantPtooie.gif"
+    }
+   ],
+   "sspec": [
+    {
+     "movename": "Side B (Poison Breath)",
+     "startup": "10(+11)",
+     "totalframes": "38",
+     "landinglag": "--",
+     "notes": "10 frames to enter charge state, 11 startup from charge. Hitbox lasts 82 frames at no charge. Cloud grows from frame 1-25 and slowly moves, stops moving on frame 45. Wind box 12-25.",
+     "basedamage": "!!!",
+     "activeframes": "21\u2014102",
+     "whichhitbox": "--",
+     "advantage": "**",
+     "shieldlag": "0",
+     "shieldstun": "3",
+     "endlag": "--",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantPoisonBreathMin.gif"
+    },
+    {
+     "movename": "Side B, Full Charge (Poison Breath, Full Charge)",
+     "startup": "10",
+     "totalframes": "48",
+     "landinglag": "--",
+     "notes": "Cloud deals damage every 4 frames at first then every 7 towards the end. Hitbox lasts 122 frames. Takes 95 frames to reach full charge. Takes 2 frames to cancel charge with hield. Cloud grows from frame 1-25 and slowly moves, stops moving on frame 75. Wind box 12-25.",
+     "basedamage": "!!!",
+     "activeframes": "21\u2014142",
+     "whichhitbox": "--",
+     "advantage": "**",
+     "shieldlag": "0",
+     "shieldstun": "3",
+     "endlag": "--",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantPoisonBreathMax.gif"
+    }
+   ],
+   "uspec": [
+    {
+     "movename": "Up B (Piranhacopter)",
+     "startup": "13...",
+     "totalframes": "--",
+     "landinglag": "20",
+     "notes": "16-55/56-61/62-67 are rehitting hitboxes, rehit rate of 6.",
+     "basedamage": "1.2/4.0",
+     "activeframes": "13-14/15/16-55/56-61/62-67",
+     "whichhitbox": "Hit 1/Multihits (Early)/Multihits (Mid)/Multihits (Late)/Final Hit",
+     "advantage": "**",
+     "shieldlag": "4/--",
+     "shieldstun": "2/--",
+     "endlag": "--",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantPiranhacopter.gif"
+    }
+   ],
+   "dspec": [
+    {
+     "movename": "Down B (Long Stem Strike)",
+     "startup": "2(+18)",
+     "totalframes": "39/49",
+     "landinglag": "--",
+     "notes": "Startup is 2 upon reaching target. Reaches full charge on frame 78. Takes 18 frames to enter charge state Endlag on hit is 39, or 49 if you tipped over. Endlag on whiff is 49 or 59 if you tipped over. Head intangibility begins on frame 3 of travel or frame 1 of reaching a target, whichever comes first. Pot damage-based armor begins on frame 18, 15% (18% in 1v1).",
+     "basedamage": "8.4\u201426.0",
+     "activeframes": "**",
+     "whichhitbox": "--",
+     "advantage": "-31 to -17 (-10 more when tipped over)",
+     "shieldlag": "7\u201417",
+     "shieldstun": "8\u201422",
+     "endlag": "--",
+     "gif": "hitboxes/piranha_plant/PiranhaPlantLong-StemStrike.gif"
+    }
+   ],
+   "throws": [
+    {
+     "movename": "Forward Throw",
+     "startup": "13/14",
+     "totalframes": "31",
+     "landinglag": "--",
+     "notes": "--",
+     "basedamage": "**",
+     "activeframes": null,
+     "whichhitbox": null,
+     "advantage": null,
+     "shieldlag": null,
+     "shieldstun": null,
+     "endlag": null,
+     "gif": "hitboxes/piranha_plant/PiranhaPlantFThrow.gif"
+    },
+    {
+     "movename": "Backward Throw",
+     "startup": "19",
+     "totalframes": "34",
+     "landinglag": "--",
+     "notes": "--",
+     "basedamage": "**",
+     "activeframes": null,
+     "whichhitbox": null,
+     "advantage": null,
+     "shieldlag": null,
+     "shieldstun": null,
+     "endlag": null,
+     "gif": "hitboxes/piranha_plant/PiranhaPlantBThrow.gif"
+    },
+    {
+     "movename": "Up Throw",
+     "startup": "20",
+     "totalframes": "49",
+     "landinglag": "--",
+     "notes": "--",
+     "basedamage": "**",
+     "activeframes": null,
+     "whichhitbox": null,
+     "advantage": null,
+     "shieldlag": null,
+     "shieldstun": null,
+     "endlag": null,
+     "gif": "hitboxes/piranha_plant/PiranhaPlantUThrow.gif"
+    },
+    {
+     "movename": "Down Throw",
+     "startup": "20/30/31",
+     "totalframes": "47",
+     "landinglag": "--",
+     "notes": "--",
+     "basedamage": "**",
+     "activeframes": null,
+     "whichhitbox": null,
+     "advantage": null,
+     "shieldlag": null,
+     "shieldstun": null,
+     "endlag": null,
+     "gif": "hitboxes/piranha_plant/PiranhaPlantDThrow.gif"
+    },
+    {
+     "movename": "Pummel",
+     "startup": "**",
+     "totalframes": "**",
+     "landinglag": "**",
+     "notes": "**",
+     "basedamage": "**",
+     "activeframes": null,
+     "whichhitbox": null,
+     "advantage": null,
+     "shieldlag": null,
+     "shieldstun": null,
+     "endlag": null,
+     "gif": "hitboxes/piranha_plant/PiranhaPlantPummel.gif"
+    }
+   ]
+  },
+  "scripts": {
+   "jab": {
+    "Attack11": [
+     {
+      "start": 2,
+      "end": 3,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "2.4",
+       "Angle": "361",
+       "KBG": "25",
+       "FKB": "0",
+       "BKB": "20",
+       "Size": "1.8",
+       "X": "0.0",
+       "Y": "6.3",
+       "Z": "5.3",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "2.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 2,
+      "end": 3,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "2.4",
+       "Angle": "361",
+       "KBG": "25",
+       "FKB": "0",
+       "BKB": "18",
+       "Size": "1.8",
+       "X": "0.0",
+       "Y": "6.3",
+       "Z": "8.7",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "2.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 2,
+      "end": 3,
+      "source": {
+       "ID": "2",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "2.4",
+       "Angle": "180",
+       "KBG": "20",
+       "FKB": "0",
+       "BKB": "18",
+       "Size": "2.0",
+       "X": "0.0",
+       "Y": "6.3",
+       "Z": "12.5",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "2.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_FIGHTER",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 2,
+      "end": 3,
+      "source": {
+       "ID": "3",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "2.4",
+       "Angle": "361",
+       "KBG": "20",
+       "FKB": "0",
+       "BKB": "18",
+       "Size": "2.0",
+       "X": "0.0",
+       "Y": "6.3",
+       "Z": "12.5",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "2.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     }
+    ],
+    "Attack12": [
+     {
+      "start": 2,
+      "end": 3,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "2.2",
+       "Angle": "361",
+       "KBG": "30",
+       "FKB": "0",
+       "BKB": "18",
+       "Size": "2.6",
+       "X": "0.0",
+       "Y": "6.5",
+       "Z": "6.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.2",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK",
+      "reaction": 6
+     },
+     {
+      "start": 2,
+      "end": 3,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "2.2",
+       "Angle": "361",
+       "KBG": "30",
+       "FKB": "0",
+       "BKB": "18",
+       "Size": "2.8",
+       "X": "0.0",
+       "Y": "6.5",
+       "Z": "10.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.2",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK",
+      "reaction": 6
+     },
+     {
+      "start": 2,
+      "end": 3,
+      "source": {
+       "ID": "2",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "2.2",
+       "Angle": "180",
+       "KBG": "25",
+       "FKB": "0",
+       "BKB": "15",
+       "Size": "3.0",
+       "X": "0.0",
+       "Y": "6.5",
+       "Z": "15.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.2",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_FIGHTER",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK",
+      "reaction": 6
+     },
+     {
+      "start": 2,
+      "end": 3,
+      "source": {
+       "ID": "3",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "2.2",
+       "Angle": "361",
+       "KBG": "15",
+       "FKB": "0",
+       "BKB": "15",
+       "Size": "3.0",
+       "X": "0.0",
+       "Y": "6.5",
+       "Z": "15.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.2",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     }
+    ],
+    "Attack13": [
+     {
+      "start": 7,
+      "end": 8,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "4.4",
+       "Angle": "361",
+       "KBG": "70",
+       "FKB": "0",
+       "BKB": "60",
+       "Size": "5.5",
+       "X": "0.0",
+       "Y": "8.0",
+       "Z": "12.8",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "2.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_PUNCH",
+       "Type": "ATTACK_REGION_HEAD"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 7,
+      "end": 8,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "4.4",
+       "Angle": "361",
+       "KBG": "70",
+       "FKB": "0",
+       "BKB": "60",
+       "Size": "2.5",
+       "X": "0.0",
+       "Y": "8.0",
+       "Z": "7.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "2.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_PUNCH",
+       "Type": "ATTACK_REGION_HEAD"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 7,
+      "end": 8,
+      "source": {
+       "ID": "2",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "4.4",
+       "Angle": "361",
+       "KBG": "70",
+       "FKB": "0",
+       "BKB": "60",
+       "Size": "2.5",
+       "X": "0.0",
+       "Y": "8.0",
+       "Z": "4.7",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "2.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_PUNCH",
+       "Type": "ATTACK_REGION_HEAD"
+      },
+      "kind": "ATTACK"
+     }
+    ],
+    "Attack100Sub": [
+     {
+      "start": 0,
+      "end": 0,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "0.6",
+       "Angle": "361",
+       "KBG": "10",
+       "FKB": "0",
+       "BKB": "8",
+       "Size": "5.2",
+       "X": "0.0",
+       "Y": "8.0",
+       "Z": "8.0",
+       "X2": "0.0",
+       "Y2": "8.0",
+       "Z2": "13.0",
+       "Hitlag": "0.5",
+       "SDI": "0.8",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_BITE"
+      },
+      "kind": "ATTACK",
+      "reaction": 4,
+      "shieldstun": 9.0
+     }
+    ],
+    "Attack100End": [
+     {
+      "start": 6,
+      "end": 7,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "3.4",
+       "Angle": "50",
+       "KBG": "150",
+       "FKB": "0",
+       "BKB": "40",
+       "Size": "6.0",
+       "X": "0.0",
+       "Y": "7.5",
+       "Z": "9.0",
+       "X2": "0.0",
+       "Y2": "7.5",
+       "Z2": "15.0",
+       "Hitlag": "3.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_BITE"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "ftilt": {
+    "AttackS3": [
+     {
+      "start": 7,
+      "end": 8,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "5.5",
+       "Angle": "366",
+       "KBG": "20",
+       "FKB": "0",
+       "BKB": "20",
+       "Size": "6.3",
+       "X": "0.0",
+       "Y": "7.5",
+       "Z": "12.0",
+       "X2": "0.0",
+       "Y2": "10.5",
+       "Z2": "13.0",
+       "Hitlag": "1.3",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_BITE"
+      },
+      "kind": "ATTACK"
+     }
+    ],
+    "AttackS32": [
+     {
+      "start": 5,
+      "end": 6,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "6.0",
+       "Angle": "361",
+       "KBG": "117",
+       "FKB": "0",
+       "BKB": "40",
+       "Size": "6.5",
+       "X": "0.0",
+       "Y": "7.5",
+       "Z": "15.0",
+       "X2": "0.0",
+       "Y2": "10.5",
+       "Z2": "15.0",
+       "Hitlag": "1.5",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_BITE"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "utilt": {
+    "AttackHi3": [
+     {
+      "start": 8,
+      "end": 15,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"virtualhit1\")",
+       "Damage": "7.0",
+       "Angle": "85",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "55",
+       "Size": "3.5",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_PUNCH",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 8,
+      "end": 15,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"virtualhit2\")",
+       "Damage": "7.0",
+       "Angle": "85",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "55",
+       "Size": "3.5",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_PUNCH",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 8,
+      "end": 15,
+      "source": {
+       "ID": "2",
+       "Part": "0",
+       "Bone": "hash40(\"virtualhit3\")",
+       "Damage": "7.0",
+       "Angle": "85",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "55",
+       "Size": "3.5",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_PUNCH",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 8,
+      "end": 15,
+      "source": {
+       "ID": "3",
+       "Part": "0",
+       "Bone": "hash40(\"mouth\")",
+       "Damage": "9.0",
+       "Angle": "90",
+       "KBG": "120",
+       "FKB": "0",
+       "BKB": "28",
+       "Size": "6.0",
+       "X": "2.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_PUNCH",
+       "Type": "ATTACK_REGION_HEAD"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "dtilt": {
+    "AttackLw3": [
+     {
+      "start": 9,
+      "end": 11,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "6.0",
+       "Angle": "73",
+       "KBG": "85",
+       "FKB": "0",
+       "BKB": "55",
+       "Size": "3.0",
+       "X": "0.0",
+       "Y": "4.0",
+       "Z": "5.5",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.4",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 9,
+      "end": 11,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "6.0",
+       "Angle": "73",
+       "KBG": "85",
+       "FKB": "0",
+       "BKB": "55",
+       "Size": "3.0",
+       "X": "0.0",
+       "Y": "3.4",
+       "Z": "9.5",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.4",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 9,
+      "end": 11,
+      "source": {
+       "ID": "2",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "7.0",
+       "Angle": "78",
+       "KBG": "85",
+       "FKB": "0",
+       "BKB": "55",
+       "Size": "3.0",
+       "X": "0.0",
+       "Y": "2.8",
+       "Z": "13.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.4",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 9,
+      "end": 11,
+      "source": {
+       "ID": "3",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "7.0",
+       "Angle": "78",
+       "KBG": "85",
+       "FKB": "0",
+       "BKB": "55",
+       "Size": "3.0",
+       "X": "0.0",
+       "Y": "2.0",
+       "Z": "17.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.4",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "dashatk": {
+    "AttackDash": [
+     {
+      "start": 7,
+      "end": 9,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"potc\")",
+       "Damage": "10.0",
+       "Angle": "45",
+       "KBG": "43",
+       "FKB": "0",
+       "BKB": "100",
+       "Size": "5.3",
+       "X": "-5.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "1",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 7,
+      "end": 9,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "10.0",
+       "Angle": "45",
+       "KBG": "43",
+       "FKB": "0",
+       "BKB": "100",
+       "Size": "4.0",
+       "X": "0.0",
+       "Y": "11.0",
+       "Z": "0.0",
+       "X2": "0.0",
+       "Y2": "5.0",
+       "Z2": "0.0",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "1",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 10,
+      "end": 14,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"potc\")",
+       "Damage": "7.0",
+       "Angle": "45",
+       "KBG": "43",
+       "FKB": "0",
+       "BKB": "100",
+       "Size": "5.3",
+       "X": "-5.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "1",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 10,
+      "end": 14,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "7.0",
+       "Angle": "45",
+       "KBG": "43",
+       "FKB": "0",
+       "BKB": "100",
+       "Size": "4.0",
+       "X": "0.0",
+       "Y": "11.0",
+       "Z": "-2.0",
+       "X2": "0.0",
+       "Y2": "5.0",
+       "Z2": "-2.0",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "1",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "fsmash": {
+    "AttackS4": [
+     {
+      "start": 16,
+      "end": 17,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"virtualhit2\")",
+       "Damage": "15.0",
+       "Angle": "45",
+       "KBG": "103",
+       "FKB": "0",
+       "BKB": "25",
+       "Size": "3.5",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_PUNCH",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 16,
+      "end": 17,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"virtualhit3\")",
+       "Damage": "15.0",
+       "Angle": "45",
+       "KBG": "103",
+       "FKB": "0",
+       "BKB": "25",
+       "Size": "3.5",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_PUNCH",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 16,
+      "end": 17,
+      "source": {
+       "ID": "2",
+       "Part": "0",
+       "Bone": "hash40(\"mouth\")",
+       "Damage": "19.0",
+       "Angle": "45",
+       "KBG": "99",
+       "FKB": "0",
+       "BKB": "25",
+       "Size": "6.3",
+       "X": "2.5",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.2",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_PUNCH",
+       "Type": "ATTACK_REGION_HEAD"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "usmash": {
+    "AttackHi4": [
+     {
+      "start": 12,
+      "end": 15,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "3.0",
+       "Angle": "75",
+       "KBG": "0",
+       "FKB": "0",
+       "BKB": "75",
+       "Size": "5.5",
+       "X": "0.0",
+       "Y": "12.0",
+       "Z": "-4.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.8",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_BITE"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 12,
+      "end": 15,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "3.0",
+       "Angle": "105",
+       "KBG": "0",
+       "FKB": "0",
+       "BKB": "75",
+       "Size": "5.5",
+       "X": "0.0",
+       "Y": "12.0",
+       "Z": "4.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.8",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_BITE"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 16,
+      "end": 18,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"mouth\")",
+       "Damage": "12.0",
+       "Angle": "90",
+       "KBG": "82",
+       "FKB": "0",
+       "BKB": "90",
+       "Size": "9.0",
+       "X": "2.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "3.5",
+       "Y2": "0.0",
+       "Z2": "0.0",
+       "Hitlag": "1.2",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_BITE"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "dsmash": {
+    "AttackLw4": [
+     {
+      "start": 14,
+      "end": 15,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "12.0",
+       "Angle": "30",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "25",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "4.0",
+       "Z": "12.5",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 14,
+      "end": 15,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "12.0",
+       "Angle": "30",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "25",
+       "Size": "4.0",
+       "X": "0.0",
+       "Y": "3.5",
+       "Z": "7.5",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 18,
+      "end": 19,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "14.0",
+       "Angle": "32",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "25",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "4.0",
+       "Z": "-13.5",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_B",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 18,
+      "end": 19,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "14.0",
+       "Angle": "32",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "25",
+       "Size": "4.0",
+       "X": "0.0",
+       "Y": "3.6",
+       "Z": "-8.5",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_B",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "nair": {
+    "AttackAirN": [
+     {
+      "start": 8,
+      "end": 17,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"arml\")",
+       "Damage": "2.0",
+       "Angle": "367",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "10",
+       "Size": "4.5",
+       "X": "1.8",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.5",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "3",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 8,
+      "end": 17,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"armr\")",
+       "Damage": "2.0",
+       "Angle": "367",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "10",
+       "Size": "4.5",
+       "X": "1.8",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.5",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "3",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 18,
+      "end": 19,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"arml\")",
+       "Damage": "3.0",
+       "Angle": "361",
+       "KBG": "140",
+       "FKB": "0",
+       "BKB": "45",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.8",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 18,
+      "end": 19,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"armr\")",
+       "Damage": "3.0",
+       "Angle": "361",
+       "KBG": "140",
+       "FKB": "0",
+       "BKB": "45",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.8",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "fair": {
+    "AttackAirF": [
+     {
+      "start": 10,
+      "end": 12,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"potc\")",
+       "Damage": "9.0",
+       "Angle": "361",
+       "KBG": "60",
+       "FKB": "0",
+       "BKB": "50",
+       "Size": "4.5",
+       "X": "3.0",
+       "Y": "0.5",
+       "Z": "0.0",
+       "X2": "3.0",
+       "Y2": "0.5",
+       "Z2": "0.0",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 10,
+      "end": 12,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"potc\")",
+       "Damage": "11.0",
+       "Angle": "361",
+       "KBG": "60",
+       "FKB": "0",
+       "BKB": "55",
+       "Size": "6.5",
+       "X": "-3.0",
+       "Y": "0.5",
+       "Z": "0.0",
+       "X2": "-3.0",
+       "Y2": "0.5",
+       "Z2": "0.0",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "bair": {
+    "AttackAirB": [
+     {
+      "start": 14,
+      "end": 15,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "14.5",
+       "Angle": "361",
+       "KBG": "105",
+       "FKB": "0",
+       "BKB": "23",
+       "Size": "8.0",
+       "X": "0.0",
+       "Y": "4.0",
+       "Z": "-10.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_B",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_fire\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_FIRE",
+       "Type": "ATTACK_REGION_BOMB"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "uair": {
+    "AttackAirHi": [
+     {
+      "start": 7,
+      "end": 9,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"mouth\")",
+       "Damage": "10.0",
+       "Angle": "85",
+       "KBG": "104",
+       "FKB": "0",
+       "BKB": "40",
+       "Size": "6.0",
+       "X": "2.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_PUNCH",
+       "Type": "ATTACK_REGION_HEAD"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "dair": {
+    "AttackAirLw": [
+     {
+      "start": 9,
+      "end": 11,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"potc\")",
+       "Damage": "11.0",
+       "Angle": "361",
+       "KBG": "92",
+       "FKB": "0",
+       "BKB": "15",
+       "Size": "4.5",
+       "X": "-0.3",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "-0.3",
+       "Y2": "0.0",
+       "Z2": "0.0",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 9,
+      "end": 11,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"potc\")",
+       "Damage": "11.0",
+       "Angle": "270",
+       "KBG": "90",
+       "FKB": "0",
+       "BKB": "25",
+       "Size": "4.5",
+       "X": "-7.0",
+       "Y": "-0.5",
+       "Z": "0.5",
+       "X2": "-7.0",
+       "Y2": "-0.5",
+       "Z2": "0.5",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 12,
+      "end": 14,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"potc\")",
+       "Damage": "9.0",
+       "Angle": "361",
+       "KBG": "92",
+       "FKB": "0",
+       "BKB": "15",
+       "Size": "4.5",
+       "X": "-0.3",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "-0.3",
+       "Y2": "0.0",
+       "Z2": "0.0",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 12,
+      "end": 14,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"potc\")",
+       "Damage": "9.0",
+       "Angle": "361",
+       "KBG": "92",
+       "FKB": "0",
+       "BKB": "15",
+       "Size": "4.5",
+       "X": "-7.0",
+       "Y": "-0.5",
+       "Z": "0.5",
+       "X2": "-7.0",
+       "Y2": "-0.5",
+       "Z2": "0.5",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_BODY"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "grab": {
+    "Catch": [
+     {
+      "start": 6,
+      "end": 8,
+      "source": {
+       "ID": "0",
+       "Bone": "hash40(\"top\")",
+       "Size": "3.3",
+       "X": "0.0",
+       "Y": "6.6",
+       "Z": "4.0",
+       "X2": "0.0",
+       "Y2": "6.6",
+       "Z2": "11.0",
+       "Status": "FIGHTER_STATUS_KIND_CAPTURE_PULLED",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_G"
+      },
+      "kind": "CATCH"
+     },
+     {
+      "start": 6,
+      "end": 8,
+      "source": {
+       "ID": "1",
+       "Bone": "hash40(\"top\")",
+       "Size": "1.65",
+       "X": "0.0",
+       "Y": "6.6",
+       "Z": "2.35",
+       "X2": "0.0",
+       "Y2": "6.6",
+       "Z2": "12.65",
+       "Status": "FIGHTER_STATUS_KIND_CAPTURE_PULLED",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_A"
+      },
+      "kind": "CATCH"
+     }
+    ]
+   },
+   "dashgrab": {
+    "CatchDash": [
+     {
+      "start": 9,
+      "end": 11,
+      "source": {
+       "ID": "0",
+       "Bone": "hash40(\"top\")",
+       "Size": "3.0",
+       "X": "0.0",
+       "Y": "6.6",
+       "Z": "4.0",
+       "X2": "0.0",
+       "Y2": "6.6",
+       "Z2": "11.5",
+       "Status": "FIGHTER_STATUS_KIND_CAPTURE_PULLED",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_G"
+      },
+      "kind": "CATCH"
+     },
+     {
+      "start": 9,
+      "end": 11,
+      "source": {
+       "ID": "1",
+       "Bone": "hash40(\"top\")",
+       "Size": "1.5",
+       "X": "0.0",
+       "Y": "6.6",
+       "Z": "2.5",
+       "X2": "0.0",
+       "Y2": "6.6",
+       "Z2": "13.0",
+       "Status": "FIGHTER_STATUS_KIND_CAPTURE_PULLED",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_A"
+      },
+      "kind": "CATCH"
+     }
+    ]
+   },
+   "nspec": {
+    "SpecialNStart": [],
+    "SpecialNShootF": [],
+    "SpecialNShootB": []
+   },
+   "sspec": {
+    "SpecialSStart": [],
+    "SpecialSShoot": [
+     {
+      "start": 2,
+      "end": 20,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "0.0",
+       "Angle": "18",
+       "KBG": "100",
+       "FKB": "30",
+       "BKB": "0",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "7.0",
+       "Z": "7.0",
+       "X2": "0.0",
+       "Y2": "7.0",
+       "Z2": "10.0",
+       "Hitlag": "0.0",
+       "SDI": "0.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "hash40(\"no\")",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "true",
+       "DisableHitlag": "true",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_NONE",
+       "Type": "ATTACK_REGION_NONE"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "uspec": {
+    "SpecialHi": [
+     {
+      "start": 15,
+      "end": 16,
+      "source": {
+       "ID": "0",
+       "Part": "1",
+       "Bone": "hash40(\"top\")",
+       "Damage": "1.2",
+       "Angle": "145",
+       "KBG": "100",
+       "FKB": "40",
+       "BKB": "0",
+       "Size": "4.0",
+       "X": "0.0",
+       "Y": "6.0",
+       "Z": "-8.0",
+       "X2": "0.0",
+       "Y2": "6.0",
+       "Z2": "8.0",
+       "Hitlag": "0.6",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "true",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 17,
+      "end": 17,
+      "source": {
+       "ID": "3",
+       "Part": "0",
+       "Bone": "hash40(\"arml\")",
+       "Damage": "1.2",
+       "Angle": "100",
+       "KBG": "100",
+       "FKB": "20",
+       "BKB": "0",
+       "Size": "5.5",
+       "X": "3.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.6",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "true",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "6",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 17,
+      "end": 17,
+      "source": {
+       "ID": "4",
+       "Part": "0",
+       "Bone": "hash40(\"armr\")",
+       "Damage": "1.2",
+       "Angle": "100",
+       "KBG": "100",
+       "FKB": "20",
+       "BKB": "0",
+       "Size": "5.5",
+       "X": "3.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.6",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "true",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "6",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 18,
+      "end": 57,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"arml\")",
+       "Damage": "1.2",
+       "Angle": "367",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "20",
+       "Size": "3.5",
+       "X": "6.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.6",
+       "SDI": "3.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "true",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "6",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 18,
+      "end": 57,
+      "source": {
+       "ID": "2",
+       "Part": "0",
+       "Bone": "hash40(\"armr\")",
+       "Damage": "1.2",
+       "Angle": "367",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "20",
+       "Size": "3.5",
+       "X": "6.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.6",
+       "SDI": "3.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "true",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "6",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 18,
+      "end": 57,
+      "source": {
+       "ID": "3",
+       "Part": "0",
+       "Bone": "hash40(\"arml\")",
+       "Damage": "1.2",
+       "Angle": "367",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "20",
+       "Size": "5.0",
+       "X": "1.5",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.6",
+       "SDI": "3.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "true",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "6",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 18,
+      "end": 57,
+      "source": {
+       "ID": "4",
+       "Part": "0",
+       "Bone": "hash40(\"armr\")",
+       "Damage": "1.2",
+       "Angle": "367",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "20",
+       "Size": "5.0",
+       "X": "1.5",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.6",
+       "SDI": "3.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "true",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "6",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 58,
+      "end": 63,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"arml\")",
+       "Damage": "4.0",
+       "Angle": "60",
+       "KBG": "60",
+       "FKB": "0",
+       "BKB": "90",
+       "Size": "3.0",
+       "X": "8.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.6",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_SPEED",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "6",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 58,
+      "end": 63,
+      "source": {
+       "ID": "2",
+       "Part": "0",
+       "Bone": "hash40(\"armr\")",
+       "Damage": "4.0",
+       "Angle": "60",
+       "KBG": "60",
+       "FKB": "0",
+       "BKB": "90",
+       "Size": "3.0",
+       "X": "8.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.6",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_SPEED",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "6",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 58,
+      "end": 63,
+      "source": {
+       "ID": "3",
+       "Part": "0",
+       "Bone": "hash40(\"arml\")",
+       "Damage": "0.8",
+       "Angle": "367",
+       "KBG": "90",
+       "FKB": "0",
+       "BKB": "15",
+       "Size": "4.0",
+       "X": "2.5",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.6",
+       "SDI": "3.5",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "true",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "6",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 58,
+      "end": 63,
+      "source": {
+       "ID": "4",
+       "Part": "0",
+       "Bone": "hash40(\"armr\")",
+       "Damage": "0.8",
+       "Angle": "367",
+       "KBG": "90",
+       "FKB": "0",
+       "BKB": "15",
+       "Size": "4.0",
+       "X": "2.5",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.6",
+       "SDI": "3.5",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "true",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "6",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 64,
+      "end": 69,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"arml\")",
+       "Damage": "4.0",
+       "Angle": "60",
+       "KBG": "60",
+       "FKB": "0",
+       "BKB": "90",
+       "Size": "3.0",
+       "X": "8.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.6",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_SPEED",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 64,
+      "end": 69,
+      "source": {
+       "ID": "2",
+       "Part": "0",
+       "Bone": "hash40(\"armr\")",
+       "Damage": "4.0",
+       "Angle": "60",
+       "KBG": "60",
+       "FKB": "0",
+       "BKB": "90",
+       "Size": "3.0",
+       "X": "8.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.6",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_SPEED",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 64,
+      "end": 69,
+      "source": {
+       "ID": "3",
+       "Part": "0",
+       "Bone": "hash40(\"arml\")",
+       "Damage": "4.0",
+       "Angle": "60",
+       "KBG": "60",
+       "FKB": "0",
+       "BKB": "90",
+       "Size": "4.0",
+       "X": "2.5",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.6",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_SPEED",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 64,
+      "end": 69,
+      "source": {
+       "ID": "4",
+       "Part": "0",
+       "Bone": "hash40(\"armr\")",
+       "Damage": "4.0",
+       "Angle": "60",
+       "KBG": "60",
+       "FKB": "0",
+       "BKB": "90",
+       "Size": "4.0",
+       "X": "2.5",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.6",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_ON",
+       "FacingRestrict": "ATTACK_LR_CHECK_SPEED",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_PUNCH"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "dspec": {
+    "SpecialLwStart": [],
+    "SpecialLwFallF": [],
+    "SpecialLwBite_Attack": [
+     {
+      "start": 0,
+      "end": 0,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"mouth\")",
+       "Damage": "0.0",
+       "Angle": "55",
+       "KBG": "55",
+       "FKB": "0",
+       "BKB": "75",
+       "Size": "7.9",
+       "X": "2.4",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_THRU",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "5",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_BITE"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "throws": {
+    "CatchAttack": [
+     {
+      "start": 1,
+      "end": 1,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "1.4",
+       "Angle": "361",
+       "KBG": "100",
+       "FKB": "30",
+       "BKB": "0",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "10.0",
+       "Z": "10.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "2.1",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_HEAD"
+      },
+      "kind": "ATTACK"
+     }
+    ],
+    "ThrowF": [
+     {
+      "start": 0,
+      "end": 12,
+      "source": {
+       "Kind": "FIGHTER_ATTACK_ABSOLUTE_KIND_CATCH",
+       "ID": "0",
+       "Damage": "3.0",
+       "Angle": "361",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "60",
+       "Hitlag": "0.0",
+       "Unk": "true",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_NONE",
+       "Type": "ATTACK_REGION_THROW"
+      },
+      "kind": "ATTACK_ABS"
+     },
+     {
+      "start": 13,
+      "end": 13,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"mouth\")",
+       "Damage": "3.0",
+       "Angle": "361",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "50",
+       "Size": "6.0",
+       "X": "2.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.2",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_PUNCH",
+       "Type": "ATTACK_REGION_HEAD"
+      },
+      "kind": "ATTACK"
+     }
+    ],
+    "ThrowB": [
+     {
+      "start": 0,
+      "end": 19,
+      "source": {
+       "Kind": "FIGHTER_ATTACK_ABSOLUTE_KIND_CATCH",
+       "ID": "0",
+       "Damage": "3.0",
+       "Angle": "361",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "40",
+       "Hitlag": "0.0",
+       "Unk": "true",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_NONE",
+       "Type": "ATTACK_REGION_THROW"
+      },
+      "kind": "ATTACK_ABS"
+     }
+    ],
+    "ThrowHi": [
+     {
+      "start": 0,
+      "end": 19,
+      "source": {
+       "Kind": "FIGHTER_ATTACK_ABSOLUTE_KIND_CATCH",
+       "ID": "0",
+       "Damage": "3.0",
+       "Angle": "361",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "40",
+       "Hitlag": "0.0",
+       "Unk": "true",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_NONE",
+       "Type": "ATTACK_REGION_THROW"
+      },
+      "kind": "ATTACK_ABS"
+     }
+    ],
+    "ThrowLw": [
+     {
+      "start": 1,
+      "end": 19,
+      "source": {
+       "Kind": "FIGHTER_ATTACK_ABSOLUTE_KIND_CATCH",
+       "ID": "0",
+       "Damage": "3.0",
+       "Angle": "361",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "40",
+       "Hitlag": "0.0",
+       "Unk": "true",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_NONE",
+       "Type": "ATTACK_REGION_THROW"
+      },
+      "kind": "ATTACK_ABS"
+     },
+     {
+      "start": 20,
+      "end": 20,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "2.5",
+       "Angle": "0",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "0",
+       "Size": "6.0",
+       "X": "0.0",
+       "Y": "7.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_BITE"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 30,
+      "end": 30,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "2.5",
+       "Angle": "0",
+       "KBG": "100",
+       "FKB": "0",
+       "BKB": "0",
+       "Size": "6.0",
+       "X": "0.0",
+       "Y": "7.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.6",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "false",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "true",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_cutup\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_CUTUP",
+       "Type": "ATTACK_REGION_BITE"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   }
+  },
+  "articles": {
+   "packun_spikeball": {
+    "Start": [
+     {
+      "start": 1,
+      "end": 1,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"trans\")",
+       "Damage": "14.0",
+       "Angle": "55",
+       "KBG": "80",
+       "FKB": "0",
+       "BKB": "50",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.2",
+       "SDI": "0.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_OBJECT"
+      },
+      "kind": "ATTACK"
+     }
+    ],
+    "Loop": [
+     {
+      "start": 0,
+      "end": 0,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"trans\")",
+       "Damage": "14.0",
+       "Angle": "55",
+       "KBG": "80",
+       "FKB": "0",
+       "BKB": "50",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.2",
+       "SDI": "0.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_OBJECT"
+      },
+      "kind": "ATTACK"
+     }
+    ],
+    "Wait": [
+     {
+      "start": 0,
+      "end": 0,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "14.0",
+       "Angle": "55",
+       "KBG": "80",
+       "FKB": "0",
+       "BKB": "50",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.2",
+       "SDI": "0.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_OBJECT"
+      },
+      "kind": "ATTACK"
+     }
+    ],
+    "Shoot": [
+     {
+      "start": 0,
+      "end": 3,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "14.0",
+       "Angle": "55",
+       "KBG": "80",
+       "FKB": "0",
+       "BKB": "50",
+       "Size": "3.8",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.2",
+       "SDI": "0.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_OBJECT"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 4,
+      "end": 4,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "18.0",
+       "Angle": "55",
+       "KBG": "80",
+       "FKB": "0",
+       "BKB": "45",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.2",
+       "SDI": "0.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_OBJECT"
+      },
+      "kind": "ATTACK"
+     }
+    ],
+    "Fall": [
+     {
+      "start": 0,
+      "end": 0,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"trans\")",
+       "Damage": "14.0",
+       "Angle": "55",
+       "KBG": "80",
+       "FKB": "0",
+       "BKB": "50",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "1.2",
+       "SDI": "0.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_F",
+       "SetWeight": "false",
+       "ShieldDamage": "0",
+       "Trip": "0.0",
+       "Rehit": "0",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "false",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_normal\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_L",
+       "SFXType": "COLLISION_SOUND_ATTR_KICK",
+       "Type": "ATTACK_REGION_OBJECT"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   },
+   "packun_poisonbreath": {
+    "Start": [
+     {
+      "start": 3,
+      "end": 3,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "1.2",
+       "Angle": "361",
+       "KBG": "0",
+       "FKB": "0",
+       "BKB": "0",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0.1",
+       "Trip": "0.0",
+       "Rehit": "4",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "true",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_purple\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_FIRE",
+       "Type": "ATTACK_REGION_ENERGY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 3,
+      "end": 3,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "2.8",
+       "Angle": "361",
+       "KBG": "0",
+       "FKB": "0",
+       "BKB": "0",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0.1",
+       "Trip": "0.0",
+       "Rehit": "4",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "true",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_purple\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_FIRE",
+       "Type": "ATTACK_REGION_ENERGY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 3,
+      "end": 3,
+      "source": {
+       "ID": "2",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "0.6",
+       "Angle": "361",
+       "KBG": "0",
+       "FKB": "0",
+       "BKB": "0",
+       "Size": "10.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0.1",
+       "Trip": "0.0",
+       "Rehit": "4",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "true",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_purple\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_FIRE",
+       "Type": "ATTACK_REGION_ENERGY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 3,
+      "end": 3,
+      "source": {
+       "ID": "3",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "1.6",
+       "Angle": "361",
+       "KBG": "0",
+       "FKB": "0",
+       "BKB": "0",
+       "Size": "10.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0.1",
+       "Trip": "0.0",
+       "Rehit": "4",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "true",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_purple\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_FIRE",
+       "Type": "ATTACK_REGION_ENERGY"
+      },
+      "kind": "ATTACK"
+     }
+    ],
+    "Shoot": [
+     {
+      "start": 0,
+      "end": 0,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "1.2",
+       "Angle": "361",
+       "KBG": "0",
+       "FKB": "0",
+       "BKB": "0",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0.1",
+       "Trip": "0.0",
+       "Rehit": "4",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "true",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_purple\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_FIRE",
+       "Type": "ATTACK_REGION_ENERGY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 0,
+      "end": 0,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "2.8",
+       "Angle": "361",
+       "KBG": "0",
+       "FKB": "0",
+       "BKB": "0",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0.1",
+       "Trip": "0.0",
+       "Rehit": "4",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "true",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_purple\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_FIRE",
+       "Type": "ATTACK_REGION_ENERGY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 0,
+      "end": 0,
+      "source": {
+       "ID": "2",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "0.6",
+       "Angle": "361",
+       "KBG": "0",
+       "FKB": "0",
+       "BKB": "0",
+       "Size": "10.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0.1",
+       "Trip": "0.0",
+       "Rehit": "4",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "true",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_purple\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_FIRE",
+       "Type": "ATTACK_REGION_ENERGY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 0,
+      "end": 0,
+      "source": {
+       "ID": "3",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "1.6",
+       "Angle": "361",
+       "KBG": "0",
+       "FKB": "0",
+       "BKB": "0",
+       "Size": "10.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0.1",
+       "Trip": "0.0",
+       "Rehit": "4",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "true",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_purple\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_S",
+       "SFXType": "COLLISION_SOUND_ATTR_FIRE",
+       "Type": "ATTACK_REGION_ENERGY"
+      },
+      "kind": "ATTACK"
+     }
+    ],
+    "StartMax": [
+     {
+      "start": 3,
+      "end": 3,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "2.8",
+       "Angle": "361",
+       "KBG": "0",
+       "FKB": "0",
+       "BKB": "0",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0.1",
+       "Trip": "0.0",
+       "Rehit": "7",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "true",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_purple\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_FIRE",
+       "Type": "ATTACK_REGION_ENERGY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 3,
+      "end": 3,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "1.6",
+       "Angle": "361",
+       "KBG": "0",
+       "FKB": "0",
+       "BKB": "0",
+       "Size": "10.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0.1",
+       "Trip": "0.0",
+       "Rehit": "7",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "true",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_purple\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_FIRE",
+       "Type": "ATTACK_REGION_ENERGY"
+      },
+      "kind": "ATTACK"
+     }
+    ],
+    "ShootMax": [
+     {
+      "start": 0,
+      "end": 0,
+      "source": {
+       "ID": "0",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "2.8",
+       "Angle": "361",
+       "KBG": "0",
+       "FKB": "0",
+       "BKB": "0",
+       "Size": "5.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0.1",
+       "Trip": "0.0",
+       "Rehit": "7",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "true",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_purple\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_FIRE",
+       "Type": "ATTACK_REGION_ENERGY"
+      },
+      "kind": "ATTACK"
+     },
+     {
+      "start": 0,
+      "end": 0,
+      "source": {
+       "ID": "1",
+       "Part": "0",
+       "Bone": "hash40(\"top\")",
+       "Damage": "1.6",
+       "Angle": "361",
+       "KBG": "0",
+       "FKB": "0",
+       "BKB": "0",
+       "Size": "10.0",
+       "X": "0.0",
+       "Y": "0.0",
+       "Z": "0.0",
+       "X2": "LUA_VOID",
+       "Y2": "LUA_VOID",
+       "Z2": "LUA_VOID",
+       "Hitlag": "0.0",
+       "SDI": "1.0",
+       "Clang_Rebound": "ATTACK_SETOFF_KIND_OFF",
+       "FacingRestrict": "ATTACK_LR_CHECK_POS",
+       "SetWeight": "false",
+       "ShieldDamage": "0.1",
+       "Trip": "0.0",
+       "Rehit": "7",
+       "Reflectable": "true",
+       "Absorbable": "false",
+       "Flinchless": "false",
+       "DisableHitlag": "true",
+       "Direct_Hitbox": "false",
+       "Ground_or_Air": "COLLISION_SITUATION_MASK_GA",
+       "Hitbits": "COLLISION_CATEGORY_MASK_ALL",
+       "CollisionPart": "COLLISION_PART_MASK_ALL",
+       "FriendlyFire": "false",
+       "Effect": "hash40(\"collision_attr_purple\")",
+       "SFXLevel": "ATTACK_SOUND_LEVEL_M",
+       "SFXType": "COLLISION_SOUND_ATTR_FIRE",
+       "Type": "ATTACK_REGION_ENERGY"
+      },
+      "kind": "ATTACK"
+     }
+    ]
+   }
+  }
+ },
+ "moves": {
+  "jab": {
+   "name": "Jab",
+   "phases": [
+    {
+     "name": "jab1",
+     "frames": 19,
+     "charge": null,
+     "hits": [
+      {
+       "start": 1,
+       "end": 2,
+       "damage": 2.4,
+       "angle": 45,
+       "bkb": 20.0,
+       "kbg": 0.25,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          26.5,
+          31.5
+         ]
+        },
+        "radius": 9.0
+       }
+      },
+      {
+       "start": 1,
+       "end": 2,
+       "damage": 2.4,
+       "angle": 45,
+       "bkb": 18.0,
+       "kbg": 0.25,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          43.5,
+          31.5
+         ]
+        },
+        "radius": 9.0
+       }
+      },
+      {
+       "start": 1,
+       "end": 2,
+       "damage": 2.4,
+       "angle": 180.0,
+       "bkb": 18.0,
+       "kbg": 0.2,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          62.5,
+          31.5
+         ]
+        },
+        "radius": 10.0
+       }
+      },
+      {
+       "start": 1,
+       "end": 2,
+       "damage": 2.4,
+       "angle": 45,
+       "bkb": 18.0,
+       "kbg": 0.2,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          62.5,
+          31.5
+         ]
+        },
+        "radius": 10.0
+       }
+      }
+     ],
+     "transitions": [
+      {
+       "on": "attackHeld",
+       "from": 4,
+       "to": "jab2"
+      }
+     ]
+    },
+    {
+     "name": "jab2",
+     "frames": 20,
+     "charge": null,
+     "hits": [
+      {
+       "start": 1,
+       "end": 2,
+       "damage": 2.2,
+       "angle": 45,
+       "bkb": 18.0,
+       "kbg": 0.3,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          30.0,
+          32.5
+         ]
+        },
+        "radius": 13.0
+       }
+      },
+      {
+       "start": 1,
+       "end": 2,
+       "damage": 2.2,
+       "angle": 45,
+       "bkb": 18.0,
+       "kbg": 0.3,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          50.0,
+          32.5
+         ]
+        },
+        "radius": 14.0
+       }
+      },
+      {
+       "start": 1,
+       "end": 2,
+       "damage": 2.2,
+       "angle": 180.0,
+       "bkb": 15.0,
+       "kbg": 0.25,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          75.0,
+          32.5
+         ]
+        },
+        "radius": 15.0
+       }
+      },
+      {
+       "start": 1,
+       "end": 2,
+       "damage": 2.2,
+       "angle": 45,
+       "bkb": 15.0,
+       "kbg": 0.15,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          75.0,
+          32.5
+         ]
+        },
+        "radius": 15.0
+       }
+      }
+     ],
+     "transitions": [
+      {
+       "on": "attackHeld",
+       "from": 6,
+       "to": "jab3"
+      }
+     ]
+    },
+    {
+     "name": "jab3",
+     "frames": 25,
+     "charge": null,
+     "hits": [
+      {
+       "start": 6,
+       "end": 7,
+       "damage": 4.4,
+       "angle": 45,
+       "bkb": 60.0,
+       "kbg": 0.7,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          64.0,
+          40.0
+         ]
+        },
+        "radius": 27.5
+       }
+      },
+      {
+       "start": 6,
+       "end": 7,
+       "damage": 4.4,
+       "angle": 45,
+       "bkb": 60.0,
+       "kbg": 0.7,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          35.0,
+          40.0
+         ]
+        },
+        "radius": 12.5
+       }
+      },
+      {
+       "start": 6,
+       "end": 7,
+       "damage": 4.4,
+       "angle": 45,
+       "bkb": 60.0,
+       "kbg": 0.7,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          23.5,
+          40.0
+         ]
+        },
+        "radius": 12.5
+       }
+      }
+     ],
+     "transitions": [
+      {
+       "on": "attackHeld",
+       "from": 8,
+       "to": "rapid"
+      }
+     ]
+    },
+    {
+     "name": "rapid",
+     "frames": 4,
+     "charge": null,
+     "hits": [
+      {
+       "start": 0,
+       "end": 0,
+       "damage": 0.6,
+       "angle": 45,
+       "bkb": 8.0,
+       "kbg": 0.1,
+       "rehit": null,
+       "geometry": {
+        "kind": "capsule",
+        "a": {
+         "offset": [
+          40.0,
+          40.0
+         ]
+        },
+        "b": {
+         "offset": [
+          65.0,
+          40.0
+         ]
+        },
+        "radius": 26.0
+       }
+      }
+     ],
+     "transitions": [
+      {
+       "on": "timeout",
+       "to": "rapid"
+      },
+      {
+       "on": "release",
+       "to": "rapidEnd"
+      }
+     ]
+    },
+    {
+     "name": "rapidEnd",
+     "frames": 40,
+     "charge": null,
+     "hits": [
+      {
+       "start": 5,
+       "end": 6,
+       "damage": 3.4,
+       "angle": 50.0,
+       "bkb": 40.0,
+       "kbg": 1.5,
+       "rehit": null,
+       "geometry": {
+        "kind": "capsule",
+        "a": {
+         "offset": [
+          45.0,
+          37.5
+         ]
+        },
+        "b": {
+         "offset": [
+          75.0,
+          37.5
+         ]
+        },
+        "radius": 30.0
+       }
+      }
+     ],
+     "transitions": []
+    }
+   ]
+  },
+  "ftilt": {
+   "name": "Forward Tilt",
+   "phases": [
+    {
+     "name": "first",
+     "frames": 27,
+     "charge": null,
+     "hits": [
+      {
+       "start": 6,
+       "end": 7,
+       "damage": 5.5,
+       "angle": 90,
+       "bkb": 20.0,
+       "kbg": 0.2,
+       "rehit": null,
+       "geometry": {
+        "kind": "capsule",
+        "a": {
+         "offset": [
+          60.0,
+          37.5
+         ]
+        },
+        "b": {
+         "offset": [
+          65.0,
+          52.5
+         ]
+        },
+        "radius": 31.5
+       }
+      }
+     ],
+     "transitions": [
+      {
+       "on": "attackPress",
+       "from": 11,
+       "to": "second"
+      }
+     ]
+    },
+    {
+     "name": "second",
+     "frames": 31,
+     "charge": null,
+     "hits": [
+      {
+       "start": 4,
+       "end": 5,
+       "damage": 6.0,
+       "angle": 45,
+       "bkb": 40.0,
+       "kbg": 1.17,
+       "rehit": null,
+       "geometry": {
+        "kind": "capsule",
+        "a": {
+         "offset": [
+          75.0,
+          37.5
+         ]
+        },
+        "b": {
+         "offset": [
+          75.0,
+          52.5
+         ]
+        },
+        "radius": 32.5
+       }
+      }
+     ],
+     "transitions": []
+    }
+   ]
+  },
+  "utilt": {
+   "name": "Up Tilt",
+   "phases": [
+    {
+     "name": "main",
+     "frames": 26,
+     "charge": null,
+     "hits": [
+      {
+       "start": 7,
+       "end": 14,
+       "damage": 7.0,
+       "angle": 85.0,
+       "bkb": 55.0,
+       "kbg": 1.0,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          0.0,
+          0.0
+         ],
+         "joint": "head"
+        },
+        "radius": 17.5
+       }
+      },
+      {
+       "start": 7,
+       "end": 14,
+       "damage": 7.0,
+       "angle": 85.0,
+       "bkb": 55.0,
+       "kbg": 1.0,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          0.0,
+          0.0
+         ],
+         "joint": "head"
+        },
+        "radius": 17.5
+       }
+      },
+      {
+       "start": 7,
+       "end": 14,
+       "damage": 7.0,
+       "angle": 85.0,
+       "bkb": 55.0,
+       "kbg": 1.0,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          0.0,
+          0.0
+         ],
+         "joint": "head"
+        },
+        "radius": 17.5
+       }
+      },
+      {
+       "start": 7,
+       "end": 14,
+       "damage": 9.0,
+       "angle": 90.0,
+       "bkb": 28.0,
+       "kbg": 1.2,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          10.0,
+          0.0
+         ],
+         "joint": "mouth"
+        },
+        "radius": 30.0
+       }
+      }
+     ],
+     "transitions": []
+    }
+   ]
+  },
+  "dtilt": {
+   "name": "Down Tilt",
+   "phases": [
+    {
+     "name": "main",
+     "frames": 26,
+     "charge": null,
+     "hits": [
+      {
+       "start": 8,
+       "end": 10,
+       "damage": 6.0,
+       "angle": 73.0,
+       "bkb": 55.0,
+       "kbg": 0.85,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          27.5,
+          20.0
+         ]
+        },
+        "radius": 15.0
+       }
+      },
+      {
+       "start": 8,
+       "end": 10,
+       "damage": 6.0,
+       "angle": 73.0,
+       "bkb": 55.0,
+       "kbg": 0.85,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          47.5,
+          17.0
+         ]
+        },
+        "radius": 15.0
+       }
+      },
+      {
+       "start": 8,
+       "end": 10,
+       "damage": 7.0,
+       "angle": 78.0,
+       "bkb": 55.0,
+       "kbg": 0.85,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          65.0,
+          14.0
+         ]
+        },
+        "radius": 15.0
+       }
+      },
+      {
+       "start": 8,
+       "end": 10,
+       "damage": 7.0,
+       "angle": 78.0,
+       "bkb": 55.0,
+       "kbg": 0.85,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          85.0,
+          10.0
+         ]
+        },
+        "radius": 15.0
+       }
+      }
+     ],
+     "transitions": []
+    }
+   ]
+  },
+  "dashatk": {
+   "name": "Dash Attack",
+   "phases": [
+    {
+     "name": "main",
+     "frames": 47,
+     "charge": null,
+     "hits": [
+      {
+       "start": 6,
+       "end": 8,
+       "damage": 10.0,
+       "angle": 45.0,
+       "bkb": 100.0,
+       "kbg": 0.43,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          -25.0,
+          0.0
+         ],
+         "joint": "pot"
+        },
+        "radius": 26.5
+       }
+      },
+      {
+       "start": 6,
+       "end": 8,
+       "damage": 10.0,
+       "angle": 45.0,
+       "bkb": 100.0,
+       "kbg": 0.43,
+       "rehit": null,
+       "geometry": {
+        "kind": "capsule",
+        "a": {
+         "offset": [
+          0.0,
+          55.0
+         ]
+        },
+        "b": {
+         "offset": [
+          0.0,
+          25.0
+         ]
+        },
+        "radius": 20.0
+       }
+      },
+      {
+       "start": 9,
+       "end": 13,
+       "damage": 7.0,
+       "angle": 45.0,
+       "bkb": 100.0,
+       "kbg": 0.43,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          -25.0,
+          0.0
+         ],
+         "joint": "pot"
+        },
+        "radius": 26.5
+       }
+      },
+      {
+       "start": 9,
+       "end": 13,
+       "damage": 7.0,
+       "angle": 45.0,
+       "bkb": 100.0,
+       "kbg": 0.43,
+       "rehit": null,
+       "geometry": {
+        "kind": "capsule",
+        "a": {
+         "offset": [
+          -10.0,
+          55.0
+         ]
+        },
+        "b": {
+         "offset": [
+          -10.0,
+          25.0
+         ]
+        },
+        "radius": 20.0
+       }
+      }
+     ],
+     "transitions": []
+    }
+   ]
+  },
+  "fsmash": {
+   "name": "Forward Smash",
+   "phases": [
+    {
+     "name": "main",
+     "frames": 51,
+     "charge": {
+      "frame": 5,
+      "max": 60
+     },
+     "hits": [
+      {
+       "start": 15,
+       "end": 16,
+       "damage": 15.0,
+       "angle": 45.0,
+       "bkb": 25.0,
+       "kbg": 1.03,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          0.0,
+          0.0
+         ],
+         "joint": "head"
+        },
+        "radius": 17.5
+       }
+      },
+      {
+       "start": 15,
+       "end": 16,
+       "damage": 15.0,
+       "angle": 45.0,
+       "bkb": 25.0,
+       "kbg": 1.03,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          0.0,
+          0.0
+         ],
+         "joint": "head"
+        },
+        "radius": 17.5
+       }
+      },
+      {
+       "start": 15,
+       "end": 16,
+       "damage": 19.0,
+       "angle": 45.0,
+       "bkb": 25.0,
+       "kbg": 0.99,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          12.5,
+          0.0
+         ],
+         "joint": "mouth"
+        },
+        "radius": 31.5
+       }
+      }
+     ],
+     "transitions": []
+    }
+   ]
+  },
+  "usmash": {
+   "name": "Up Smash",
+   "phases": [
+    {
+     "name": "main",
+     "frames": 51,
+     "charge": {
+      "frame": 6,
+      "max": 60
+     },
+     "hits": [
+      {
+       "start": 11,
+       "end": 14,
+       "damage": 3.0,
+       "angle": 75.0,
+       "bkb": 75.0,
+       "kbg": 0.0,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          -20.0,
+          60.0
+         ]
+        },
+        "radius": 27.5
+       }
+      },
+      {
+       "start": 11,
+       "end": 14,
+       "damage": 3.0,
+       "angle": 105.0,
+       "bkb": 75.0,
+       "kbg": 0.0,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          20.0,
+          60.0
+         ]
+        },
+        "radius": 27.5
+       }
+      },
+      {
+       "start": 15,
+       "end": 17,
+       "damage": 12.0,
+       "angle": 90.0,
+       "bkb": 90.0,
+       "kbg": 0.82,
+       "rehit": null,
+       "geometry": {
+        "kind": "capsule",
+        "a": {
+         "offset": [
+          10.0,
+          0.0
+         ],
+         "joint": "mouth"
+        },
+        "b": {
+         "offset": [
+          17.5,
+          0.0
+         ],
+         "joint": "mouth"
+        },
+        "radius": 45.0
+       }
+      }
+     ],
+     "transitions": []
+    }
+   ]
+  },
+  "dsmash": {
+   "name": "Down Smash",
+   "phases": [
+    {
+     "name": "main",
+     "frames": 43,
+     "charge": {
+      "frame": 5,
+      "max": 60
+     },
+     "hits": [
+      {
+       "start": 13,
+       "end": 14,
+       "damage": 12.0,
+       "angle": 30.0,
+       "bkb": 25.0,
+       "kbg": 1.0,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          62.5,
+          20.0
+         ]
+        },
+        "radius": 25.0
+       }
+      },
+      {
+       "start": 13,
+       "end": 14,
+       "damage": 12.0,
+       "angle": 30.0,
+       "bkb": 25.0,
+       "kbg": 1.0,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          37.5,
+          17.5
+         ]
+        },
+        "radius": 20.0
+       }
+      },
+      {
+       "start": 17,
+       "end": 18,
+       "damage": 14.0,
+       "angle": 32.0,
+       "bkb": 25.0,
+       "kbg": 1.0,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          -67.5,
+          20.0
+         ]
+        },
+        "radius": 25.0
+       }
+      },
+      {
+       "start": 17,
+       "end": 18,
+       "damage": 14.0,
+       "angle": 32.0,
+       "bkb": 25.0,
+       "kbg": 1.0,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          -42.5,
+          18.0
+         ]
+        },
+        "radius": 20.0
+       }
+      }
+     ],
+     "transitions": []
+    }
+   ]
+  },
+  "nair": {
+   "name": "Neutral Air",
+   "phases": [
+    {
+     "name": "main",
+     "frames": 47,
+     "charge": null,
+     "hits": [
+      {
+       "start": 7,
+       "end": 16,
+       "damage": 2.0,
+       "angle": 90,
+       "bkb": 10.0,
+       "kbg": 1.0,
+       "rehit": 3,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          9.0,
+          0.0
+         ],
+         "joint": "leafL"
+        },
+        "radius": 22.5
+       }
+      },
+      {
+       "start": 7,
+       "end": 16,
+       "damage": 2.0,
+       "angle": 90,
+       "bkb": 10.0,
+       "kbg": 1.0,
+       "rehit": 3,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          9.0,
+          0.0
+         ],
+         "joint": "leafR"
+        },
+        "radius": 22.5
+       }
+      },
+      {
+       "start": 17,
+       "end": 18,
+       "damage": 3.0,
+       "angle": 45,
+       "bkb": 45.0,
+       "kbg": 1.4,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          0.0,
+          0.0
+         ],
+         "joint": "leafL"
+        },
+        "radius": 25.0
+       }
+      },
+      {
+       "start": 17,
+       "end": 18,
+       "damage": 3.0,
+       "angle": 45,
+       "bkb": 45.0,
+       "kbg": 1.4,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          0.0,
+          0.0
+         ],
+         "joint": "leafR"
+        },
+        "radius": 25.0
+       }
+      }
+     ],
+     "transitions": [
+      {
+       "on": "land",
+       "to": "landing",
+       "lag": 15
+      }
+     ]
+    }
+   ]
+  },
+  "fair": {
+   "name": "Forward Air",
+   "phases": [
+    {
+     "name": "main",
+     "frames": 44,
+     "charge": null,
+     "hits": [
+      {
+       "start": 6,
+       "end": 8,
+       "damage": 9.0,
+       "angle": 45,
+       "bkb": 50.0,
+       "kbg": 0.6,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          15.0,
+          2.5
+         ],
+         "joint": "pot"
+        },
+        "radius": 22.5
+       }
+      },
+      {
+       "start": 6,
+       "end": 8,
+       "damage": 11.0,
+       "angle": 45,
+       "bkb": 55.0,
+       "kbg": 0.6,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          -15.0,
+          2.5
+         ],
+         "joint": "pot"
+        },
+        "radius": 32.5
+       }
+      }
+     ],
+     "transitions": [
+      {
+       "on": "land",
+       "to": "landing",
+       "lag": 13
+      }
+     ]
+    }
+   ]
+  },
+  "bair": {
+   "name": "Back Air",
+   "phases": [
+    {
+     "name": "main",
+     "frames": 61,
+     "charge": null,
+     "hits": [
+      {
+       "start": 13,
+       "end": 14,
+       "damage": 14.5,
+       "angle": 45,
+       "bkb": 23.0,
+       "kbg": 1.05,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          -50.0,
+          20.0
+         ]
+        },
+        "radius": 40.0
+       }
+      }
+     ],
+     "transitions": [
+      {
+       "on": "land",
+       "to": "landing",
+       "lag": 16
+      }
+     ]
+    }
+   ]
+  },
+  "uair": {
+   "name": "Up Air",
+   "phases": [
+    {
+     "name": "main",
+     "frames": 38,
+     "charge": null,
+     "hits": [
+      {
+       "start": 6,
+       "end": 8,
+       "damage": 10.0,
+       "angle": 85.0,
+       "bkb": 40.0,
+       "kbg": 1.04,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          10.0,
+          0.0
+         ],
+         "joint": "mouth"
+        },
+        "radius": 30.0
+       }
+      }
+     ],
+     "transitions": [
+      {
+       "on": "land",
+       "to": "landing",
+       "lag": 10
+      }
+     ]
+    }
+   ]
+  },
+  "dair": {
+   "name": "Down Air",
+   "phases": [
+    {
+     "name": "main",
+     "frames": 44,
+     "charge": null,
+     "hits": [
+      {
+       "start": 8,
+       "end": 10,
+       "damage": 11.0,
+       "angle": 45,
+       "bkb": 15.0,
+       "kbg": 0.92,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          -1.5,
+          0.0
+         ],
+         "joint": "pot"
+        },
+        "radius": 22.5
+       }
+      },
+      {
+       "start": 8,
+       "end": 10,
+       "damage": 11.0,
+       "angle": -90,
+       "bkb": 25.0,
+       "kbg": 0.9,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          -35.0,
+          -2.5
+         ],
+         "joint": "pot"
+        },
+        "radius": 22.5
+       }
+      },
+      {
+       "start": 11,
+       "end": 13,
+       "damage": 9.0,
+       "angle": 45,
+       "bkb": 15.0,
+       "kbg": 0.92,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          -1.5,
+          0.0
+         ],
+         "joint": "pot"
+        },
+        "radius": 22.5
+       }
+      },
+      {
+       "start": 11,
+       "end": 13,
+       "damage": 9.0,
+       "angle": 45,
+       "bkb": 15.0,
+       "kbg": 0.92,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          -35.0,
+          -2.5
+         ],
+         "joint": "pot"
+        },
+        "radius": 22.5
+       }
+      }
+     ],
+     "transitions": [
+      {
+       "on": "land",
+       "to": "landing",
+       "lag": 18
+      }
+     ]
+    }
+   ]
+  },
+  "grab": {
+   "name": "Grab",
+   "phases": [
+    {
+     "name": "main",
+     "frames": 34,
+     "charge": null,
+     "hits": [
+      {
+       "start": 5,
+       "end": 7,
+       "damage": 0,
+       "angle": 0,
+       "bkb": 0,
+       "kbg": 0,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "joint": "mouth",
+         "offset": [
+          4,
+          0
+         ]
+        },
+        "radius": 17
+       }
+      }
+     ],
+     "transitions": []
+    }
+   ]
+  },
+  "dashgrab": {
+   "name": "Dash Grab",
+   "phases": [
+    {
+     "name": "main",
+     "frames": 42,
+     "charge": null,
+     "hits": [
+      {
+       "start": 8,
+       "end": 10,
+       "damage": 0,
+       "angle": 0,
+       "bkb": 0,
+       "kbg": 0,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "joint": "mouth",
+         "offset": [
+          4,
+          0
+         ]
+        },
+        "radius": 17
+       }
+      }
+     ],
+     "transitions": []
+    }
+   ]
+  },
+  "nspec": {
+   "name": "Ptooie",
+   "phases": [
+    {
+     "name": "start",
+     "frames": 10,
+     "charge": null,
+     "hits": [],
+     "transitions": [
+      {
+       "on": "timeout",
+       "to": "hold"
+      },
+      {
+       "on": "articleEnd",
+       "to": "swallow"
+      }
+     ]
+    },
+    {
+     "name": "hold",
+     "frames": 300,
+     "charge": null,
+     "hits": [],
+     "transitions": [
+      {
+       "on": "articleRelease",
+       "to": "shoot"
+      },
+      {
+       "on": "articleEnd",
+       "to": "swallow"
+      },
+      {
+       "on": "timeout",
+       "to": "swallow"
+      }
+     ]
+    },
+    {
+     "name": "shoot",
+     "frames": 41,
+     "charge": null,
+     "hits": [],
+     "transitions": []
+    },
+    {
+     "name": "swallow",
+     "frames": 30,
+     "charge": null,
+     "hits": [],
+     "transitions": []
+    }
+   ]
+  },
+  "sspec": {
+   "name": "Poison Breath",
+   "phases": [
+    {
+     "name": "start",
+     "frames": 10,
+     "charge": null,
+     "hits": [],
+     "transitions": [
+      {
+       "on": "timeout",
+       "to": "charge"
+      }
+     ]
+    },
+    {
+     "name": "charge",
+     "frames": null,
+     "charge": {
+      "frame": 2,
+      "max": 95,
+      "button": "special"
+     },
+     "hits": [],
+     "transitions": [
+      {
+       "on": "release",
+       "to": "shoot"
+      }
+     ]
+    },
+    {
+     "name": "shoot",
+     "frames": 38,
+     "charge": null,
+     "hits": [],
+     "transitions": []
+    }
+   ]
+  },
+  "uspec": {
+   "name": "Piranhacopter",
+   "phases": [
+    {
+     "name": "spin",
+     "frames": 58,
+     "charge": null,
+     "hits": [
+      {
+       "start": 2,
+       "end": 3,
+       "damage": 1.2,
+       "angle": 145.0,
+       "bkb": 47.4,
+       "kbg": 1.0,
+       "rehit": null,
+       "geometry": {
+        "kind": "capsule",
+        "a": {
+         "offset": [
+          -40.0,
+          30.0
+         ]
+        },
+        "b": {
+         "offset": [
+          40.0,
+          30.0
+         ]
+        },
+        "radius": 20.0
+       }
+      },
+      {
+       "start": 4,
+       "end": 4,
+       "damage": 1.2,
+       "angle": 100.0,
+       "bkb": 33.4,
+       "kbg": 1.0,
+       "rehit": 6,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          15.0,
+          0.0
+         ],
+         "joint": "leafL"
+        },
+        "radius": 27.5
+       }
+      },
+      {
+       "start": 4,
+       "end": 4,
+       "damage": 1.2,
+       "angle": 100.0,
+       "bkb": 33.4,
+       "kbg": 1.0,
+       "rehit": 6,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          15.0,
+          0.0
+         ],
+         "joint": "leafR"
+        },
+        "radius": 27.5
+       }
+      },
+      {
+       "start": 5,
+       "end": 44,
+       "damage": 1.2,
+       "angle": 90,
+       "bkb": 20.0,
+       "kbg": 1.0,
+       "rehit": 6,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          30.0,
+          0.0
+         ],
+         "joint": "leafL"
+        },
+        "radius": 17.5
+       }
+      },
+      {
+       "start": 5,
+       "end": 44,
+       "damage": 1.2,
+       "angle": 90,
+       "bkb": 20.0,
+       "kbg": 1.0,
+       "rehit": 6,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          30.0,
+          0.0
+         ],
+         "joint": "leafR"
+        },
+        "radius": 17.5
+       }
+      },
+      {
+       "start": 5,
+       "end": 44,
+       "damage": 1.2,
+       "angle": 90,
+       "bkb": 20.0,
+       "kbg": 1.0,
+       "rehit": 6,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          7.5,
+          0.0
+         ],
+         "joint": "leafL"
+        },
+        "radius": 25.0
+       }
+      },
+      {
+       "start": 5,
+       "end": 44,
+       "damage": 1.2,
+       "angle": 90,
+       "bkb": 20.0,
+       "kbg": 1.0,
+       "rehit": 6,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          7.5,
+          0.0
+         ],
+         "joint": "leafR"
+        },
+        "radius": 25.0
+       }
+      },
+      {
+       "start": 45,
+       "end": 50,
+       "damage": 4.0,
+       "angle": 60.0,
+       "bkb": 90.0,
+       "kbg": 0.6,
+       "rehit": 6,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          40.0,
+          0.0
+         ],
+         "joint": "leafL"
+        },
+        "radius": 15.0
+       }
+      },
+      {
+       "start": 45,
+       "end": 50,
+       "damage": 4.0,
+       "angle": 60.0,
+       "bkb": 90.0,
+       "kbg": 0.6,
+       "rehit": 6,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          40.0,
+          0.0
+         ],
+         "joint": "leafR"
+        },
+        "radius": 15.0
+       }
+      },
+      {
+       "start": 45,
+       "end": 50,
+       "damage": 0.8,
+       "angle": 90,
+       "bkb": 15.0,
+       "kbg": 0.9,
+       "rehit": 6,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          12.5,
+          0.0
+         ],
+         "joint": "leafL"
+        },
+        "radius": 20.0
+       }
+      },
+      {
+       "start": 45,
+       "end": 50,
+       "damage": 0.8,
+       "angle": 90,
+       "bkb": 15.0,
+       "kbg": 0.9,
+       "rehit": 6,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          12.5,
+          0.0
+         ],
+         "joint": "leafR"
+        },
+        "radius": 20.0
+       }
+      },
+      {
+       "start": 51,
+       "end": 56,
+       "damage": 4.0,
+       "angle": 60.0,
+       "bkb": 90.0,
+       "kbg": 0.6,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          40.0,
+          0.0
+         ],
+         "joint": "leafL"
+        },
+        "radius": 15.0
+       }
+      },
+      {
+       "start": 51,
+       "end": 56,
+       "damage": 4.0,
+       "angle": 60.0,
+       "bkb": 90.0,
+       "kbg": 0.6,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          40.0,
+          0.0
+         ],
+         "joint": "leafR"
+        },
+        "radius": 15.0
+       }
+      },
+      {
+       "start": 51,
+       "end": 56,
+       "damage": 4.0,
+       "angle": 60.0,
+       "bkb": 90.0,
+       "kbg": 0.6,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          12.5,
+          0.0
+         ],
+         "joint": "leafL"
+        },
+        "radius": 20.0
+       }
+      },
+      {
+       "start": 51,
+       "end": 56,
+       "damage": 4.0,
+       "angle": 60.0,
+       "bkb": 90.0,
+       "kbg": 0.6,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          12.5,
+          0.0
+         ],
+         "joint": "leafR"
+        },
+        "radius": 20.0
+       }
+      }
+     ],
+     "transitions": [
+      {
+       "on": "land",
+       "to": "landing",
+       "lag": 20
+      }
+     ]
+    },
+    {
+     "name": "fall",
+     "frames": 20,
+     "charge": null,
+     "hits": [],
+     "transitions": [
+      {
+       "on": "timeout",
+       "to": "helpless"
+      },
+      {
+       "on": "land",
+       "to": "landing",
+       "lag": 20
+      }
+     ]
+    }
+   ]
+  },
+  "dspec": {
+   "name": "Long-Stem Strike",
+   "phases": [
+    {
+     "name": "start",
+     "frames": 18,
+     "charge": null,
+     "hits": [],
+     "transitions": [
+      {
+       "on": "timeout",
+       "to": "charge"
+      }
+     ]
+    },
+    {
+     "name": "charge",
+     "frames": null,
+     "charge": {
+      "frame": 3,
+      "max": 60,
+      "button": "special"
+     },
+     "hits": [],
+     "transitions": [
+      {
+       "on": "release",
+       "to": "lunge"
+      }
+     ]
+    },
+    {
+     "name": "lunge",
+     "frames": 8,
+     "charge": null,
+     "hits": [],
+     "transitions": [
+      {
+       "on": "timeout",
+       "to": "bite"
+      }
+     ]
+    },
+    {
+     "name": "bite",
+     "frames": 4,
+     "charge": null,
+     "hits": [
+      {
+       "start": 0,
+       "end": 0,
+       "damage": 12.0,
+       "angle": 55.0,
+       "bkb": 75.0,
+       "kbg": 0.55,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          12.0,
+          0.0
+         ],
+         "joint": "mouth"
+        },
+        "radius": 39.5
+       }
+      },
+      {
+       "start": 0,
+       "end": 0,
+       "damage": 10.2,
+       "angle": 55.0,
+       "bkb": 75.0,
+       "kbg": 0.55,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          12.0,
+          0.0
+         ],
+         "joint": "mouth"
+        },
+        "radius": 39.5
+       }
+      },
+      {
+       "start": 0,
+       "end": 0,
+       "damage": 9.3,
+       "angle": 55.0,
+       "bkb": 75.0,
+       "kbg": 0.55,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          12.0,
+          0.0
+         ],
+         "joint": "mouth"
+        },
+        "radius": 39.5
+       }
+      },
+      {
+       "start": 0,
+       "end": 0,
+       "damage": 8.4,
+       "angle": 55.0,
+       "bkb": 75.0,
+       "kbg": 0.55,
+       "rehit": null,
+       "geometry": {
+        "kind": "circle",
+        "center": {
+         "offset": [
+          12.0,
+          0.0
+         ],
+         "joint": "mouth"
+        },
+        "radius": 39.5
+       }
+      }
+     ],
+     "transitions": [
+      {
+       "on": "hit",
+       "to": "recoverHit"
+      },
+      {
+       "on": "timeout",
+       "to": "recover"
+      }
+     ]
+    },
+    {
+     "name": "recover",
+     "frames": 37,
+     "charge": null,
+     "hits": [],
+     "transitions": []
+    },
+    {
+     "name": "recoverHit",
+     "frames": 27,
+     "charge": null,
+     "hits": [],
+     "transitions": []
+    }
+   ]
+  }
+ },
+ "rigJoints": [
+  "pot",
+  "stem0",
+  "stem1",
+  "stem2",
+  "neck",
+  "head",
+  "jaw",
+  "mouth",
+  "top",
+  "leafBase",
+  "leafL",
+  "leafR"
+ ],
+ "hurtRegions": [
+  "pot",
+  "stem",
+  "head",
+  "jaw"
+ ],
+ "projectiles": [
+  "ptooie",
+  "poison"
+ ]
+}

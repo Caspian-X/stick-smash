@@ -71,6 +71,10 @@ pub struct AnimKey {
     /// Only used while this holds (`grounded` / `airborne` / `countered`); otherwise the key is skipped.
     #[serde(default, skip_serializing_if = "Option::is_none", rename = "if")]
     pub cond: Option<Cond>,
+    /// Skip this key below this many held charge ticks. Lets a move's reach tier follow its charge without
+    /// duplicating phases (the selected pose also moves any joint-bound collision).
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub min_charge: u32,
 }
 
 /// Time source for a state animation.
@@ -217,6 +221,9 @@ pub struct AttachAnim {
     /// Inclusive phase frames a `hidden` attachment is shown.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub show: Option<[u32; 2]>,
+    /// Inclusive phase frames a visible attachment is not shown (a weapon stowed while casting or grabbing).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hide: Option<[u32; 2]>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]

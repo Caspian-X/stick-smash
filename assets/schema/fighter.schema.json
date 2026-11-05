@@ -14,6 +14,11 @@
     "tagline": { "type": "string", "description": "One-line pitch on the character select card.", "default": "" },
     "stats": { "$ref": "#/$defs/StatsPartial" },
     "body": { "$ref": "#/$defs/BodyPartial", "description": "Collision body for stage geometry." },
+    "charges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ChargePool" },
+      "description": "Limited-use resources (weapons, tomes). Moves reference them by id for variants, costs and gates."
+    },
     "hurtboxes": { "$ref": "#/$defs/HurtboxesPartial" },
     "hurtRegions": {
       "type": ["array", "null"],
@@ -101,7 +106,12 @@
         "airAccel": { "type": "number", "format": "double" },
         "gravity": { "type": "number", "format": "double" },
         "fallSpeed": { "type": "number", "format": "double" },
-        "fastFallSpeed": { "type": "number", "format": "double" }
+        "fastFallSpeed": { "type": "number", "format": "double" },
+        "floatSpeed": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Positive downward speed cap while holding jump in normal Air control. Excludes attacks, hitstun,\nhelplessness, ledge/climb, airdodge and every other non-Air state. Omit to disable float."
+        }
       },
       "required": [
         "weight",
@@ -128,6 +138,33 @@
         "height": { "type": "number", "format": "double" }
       },
       "required": ["halfWidth", "height"]
+    },
+    "ChargePool": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Referenced by `moves.*.variants[].needs`, `phases[].cost` and `hitboxes[].needs`."
+        },
+        "uses": { "type": "integer", "format": "uint32", "minimum": 0, "description": "Uses at full." },
+        "recharge": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks from empty back to full. Zero keeps it spent until respawn."
+        },
+        "discardDelay": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks after using the pool's last charge before its refill starts (a tome is thrown away first)."
+        },
+        "emptySfx": { "type": ["string", "null"] },
+        "refillSfx": { "type": ["string", "null"] }
+      },
+      "required": ["id", "uses"],
+      "description": "A charge resource (a weapon, tome or other limited-use tool) and its recharge behavior."
     },
     "Hurtboxes": {
       "type": "object",
@@ -467,6 +504,11 @@
           "format": "double",
           "description": "Damage bonus per held charge tick. Omit to use the global smash-charge divisor."
         },
+        "variants": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/MoveVariant" },
+          "description": "Alternate timelines picked once when the move starts, by the fighter's charge resources (a weapon or tome\nwith uses left). The first variant whose `needs` is satisfied wins; otherwise `phases` runs."
+        },
         "phases": {
           "type": "array",
           "items": { "$ref": "#/$defs/Phase" },
@@ -483,6 +525,32 @@
       ],
       "description": "Which global air acceleration a move uses while airborne (`global.movement`)."
     },
+    "MoveVariant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "needs": {
+          "$ref": "#/$defs/ChargeNeed",
+          "description": "The charge resource that must still have uses for this variant to be picked."
+        },
+        "phases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Phase" }
+        }
+      },
+      "required": ["needs", "phases"],
+      "description": "An alternate phase timeline, chosen at move start by a charge resource."
+    },
+    "ChargeNeed": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "charge": { "type": "string" },
+        "uses": { "type": "integer", "format": "uint32", "minimum": 0, "default": 1 }
+      },
+      "required": ["charge"],
+      "description": "A charge requirement: a resource id and how many uses it takes."
+    },
     "Phase": {
       "type": "object",
       "additionalProperties": false,
@@ -491,6 +559,10 @@
           "type": "array",
           "items": { "$ref": "#/$defs/HurtRegionWindow" },
           "description": "Inclusive phase-tick activation overrides of named fighter hurt regions."
+        },
+        "aim": {
+          "type": "boolean",
+          "description": "This phase still accepts the move's single `bReverse` turnaround (a charged move can aim after the\nshared opening window)."
         },
         "name": {
           "type": "string",
@@ -506,6 +578,13 @@
           "type": "number",
           "format": "double",
           "description": "Extra phase frames per stored charge tick (rounded to the nearest whole frame)."
+        },
+        "cost": {
+          "anyOf": [
+            { "$ref": "#/$defs/ChargeNeed" },
+            { "type": "null" }
+          ],
+          "description": "Spent from the fighter's charge resources when the phase is entered. A pool with fewer uses left than\nthis spends what remains (and starts recharging); the phase still runs."
         },
         "hitboxes": {
           "type": "array",
@@ -687,7 +766,14 @@
           "type": ["integer", "null"],
           "format": "uint32",
           "minimum": 0,
-          "description": "Multi-hit: can hit the same victim again every this many frames (default: once per phase)."
+          "description": "Multi-hit: can hit the same victim/group again every this many move ticks (default: once until history clears)."
+        },
+        "group": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Independent hit identity within one move. A victim can be hit once per group, so later rows with the\nsame group are alternatives (early/late tiers, coverage changes) while a different group is a new hit\n(multi-hit sequences such as Diddy Kong's forward smash)."
         },
         "hitstunMult": {
           "type": "number",
@@ -705,6 +791,15 @@
         "counterDamage": {
           "type": "boolean",
           "description": "Counter strike: damage comes from the countered hit (see `Counter`). Inactive if nothing was countered."
+        },
+        "heal": {
+          "type": "number",
+          "format": "double",
+          "description": "Fraction of the damage dealt that heals the attacker (Nosferatu drains health). Capped at the\nattacker's current damage."
+        },
+        "unblockable": {
+          "type": "boolean",
+          "description": "Ignores shields, counters and parries (a command grab such as Nosferatu still lands on a guarding victim)."
         },
         "minCharge": {
           "type": "integer",
@@ -784,7 +879,12 @@
           "const": "bury",
           "description": "Trap grounded targets in place; airborne targets launch normally."
         },
-        { "type": "string", "const": "grab", "description": "Grabs instead of hitting." }
+        { "type": "string", "const": "grab", "description": "Grabs instead of hitting." },
+        {
+          "type": "string",
+          "const": "damageOnly",
+          "description": "Damage and shield damage only: no hitstun, hitlag, launch or state change. Used by lingering\nno-flinch hazards such as Poison Breath."
+        }
       ],
       "description": "Hitbox behavior, modeled on Smash."
     },
@@ -863,13 +963,25 @@
           "type": ["string", "null"],
           "description": "Spawn a projectile by id (from the fighter's `projectiles`)."
         },
+        "restore": {
+          "anyOf": [
+            { "$ref": "#/$defs/ChargeNeed" },
+            { "type": "null" }
+          ],
+          "description": "Restore uses to a charge pool, capped at capacity. Keeps recharge running until full."
+        },
+        "detonate": {
+          "type": ["array", "null"],
+          "items": { "type": "string" },
+          "description": "Explode owned gadgets matching these projectile ids (including unarmed ones). Empty means all."
+        },
         "sfx": { "type": ["string", "null"] },
         "fx": {
           "type": "array",
           "items": { "$ref": "#/$defs/Fx" }
         }
       },
-      "description": "Frame-scoped actions. Use `at` for one frame, or `from`/`to` (inclusive) for a range. `from` alone means\nfrom there on; neither means every frame from 1. Actions in one event run in field order (velocity, then\n`leaveGround`, `invuln`, `spawn`, `sfx`, `fx`); events on the same frame run in list order."
+      "description": "Frame-scoped actions. Use `at` for one frame, or `from`/`to` (inclusive) for a range. `from` alone means\nfrom there on; neither means every frame from 1. Actions in one event run in field order (velocity, then\n`leaveGround`, `invuln`, `spawn`, `restore`, `detonate`, `sfx`, `fx`); events on the same frame run in list order."
     },
     "Cond": {
       "oneOf": [
@@ -997,6 +1109,19 @@
           "minimum": 0,
           "description": "Only from this phase frame on."
         },
+        "minCharge": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Only fires with at least this many held charge ticks (a charged move can pick a phase per tier)."
+        },
+        "needs": {
+          "anyOf": [
+            { "$ref": "#/$defs/ChargeNeed" },
+            { "type": "null" }
+          ],
+          "description": "Only fires while this charge resource still has uses (a jab can fall back when its tome is empty).\nList the resource-gated transition before its fallback: the first match wins."
+        },
         "to": { "type": "string" },
         "lag": {
           "type": ["integer", "null"],
@@ -1033,6 +1158,16 @@
           "const": "release",
           "description": "The charge button (or attack, without `charge`) isn't held."
         },
+        {
+          "type": "string",
+          "const": "releaseToward",
+          "description": "Like `release`, and the live movement stick points toward the fighter's facing (a forward throw)."
+        },
+        {
+          "type": "string",
+          "const": "releaseAway",
+          "description": "Like `release`, and the live movement stick points away from the fighter's facing (a back throw)."
+        },
         { "type": "string", "const": "attackHeld", "description": "Attack is held (jab follow-ups)." },
         {
           "type": "string",
@@ -1049,6 +1184,11 @@
           "type": "string",
           "const": "articleRelease",
           "description": "An owned controlled projectile was manually released."
+        },
+        {
+          "type": "string",
+          "const": "articleEnd",
+          "description": "A held projectile ended without being launched (its caster let go or lost control)."
         },
         { "type": "string", "const": "counter", "description": "A hit was countered in the phase's `counter` window." },
         { "type": "string", "const": "hit", "description": "A hitbox of this phase connected (hit or shield)." }
@@ -1141,6 +1281,12 @@
             { "type": "null" }
           ],
           "description": "Only used while this holds (`grounded` / `airborne` / `countered`); otherwise the key is skipped."
+        },
+        "minCharge": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Skip this key below this many held charge ticks. Lets a move's reach tier follow its charge without\nduplicating phases (the selected pose also moves any joint-bound collision)."
         }
       },
       "required": ["at", "pose"],
@@ -1303,6 +1449,13 @@
           "minItems": 2,
           "maxItems": 2,
           "description": "Inclusive phase frames a `hidden` attachment is shown."
+        },
+        "hide": {
+          "type": ["array", "null"],
+          "items": { "type": "integer", "format": "uint32", "minimum": 0 },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Inclusive phase frames a visible attachment is not shown (a weapon stowed while casting or grabbing)."
         }
       },
       "description": "Attachment animation within a move phase (phase frames). Angle, offset and scale keys interpolate linearly."
@@ -1501,6 +1654,11 @@
         "speed": { "type": "number", "format": "double" },
         "damage": { "type": "number", "format": "double" },
         "bkb": { "type": "number", "format": "double" },
+        "rehit": {
+          "type": "number",
+          "format": "double",
+          "description": "Frames added to `hit.rehit` per held charge tick (rounds at each hit check)."
+        },
         "radius": { "type": "number", "format": "double" },
         "life": { "type": "number", "format": "double" },
         "angleTo": {
@@ -1516,11 +1674,15 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "manual": {
+          "type": "boolean",
+          "description": "Ignore proximity and freeze the fuse; only a detonate event explodes this gadget."
+        },
         "armTicks": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Ticks before proximity can trigger. The fuse still expires at projectile life zero."
+          "description": "Ticks before proximity can trigger. Unless manual, the fuse expires at projectile life zero."
         },
         "proximity": {
           "type": ["number", "null"],
@@ -1548,6 +1710,25 @@
           "description": "Release the special button to launch; otherwise a second special press launches.",
           "default": false
         },
+        "releaseOnDir": {
+          "type": "boolean",
+          "description": "A fresh left/right stick input while still holding special launches the article in that direction;\nletting go of special ends it instead (Ptooie's blow-away and swallow).",
+          "default": false
+        },
+        "reflectCooldown": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks during which any reflector is ignored after reflection.",
+          "default": 0
+        },
+        "hold": {
+          "anyOf": [
+            { "$ref": "#/$defs/ArticleHold" },
+            { "type": "null" }
+          ],
+          "description": "While unreleased, keep the article at this fighter-local point and let it breathe."
+        },
         "steer": {
           "type": "number",
           "format": "double",
@@ -1567,6 +1748,33 @@
         }
       },
       "required": ["slot", "minRelease", "autoRelease", "stages"]
+    },
+    "ArticleHold": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "offset": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Fighter-local point (x forward, y up) for the article's origin."
+        },
+        "bob": { "type": "number", "format": "double", "description": "Vertical breathing amplitude in pixels." },
+        "period": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Breathing period in ticks. Required when `bob` is non-zero."
+        },
+        "hitboxes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Hitbox" },
+          "description": "Active while the article is held (inclusive `start`/`end` are construction-age ticks)."
+        }
+      },
+      "required": ["offset"],
+      "description": "Standby placement of a held article. The point follows the caster, so a held ball stays at the mouth\nwhile the fighter moves or turns."
     },
     "ArticleStage": {
       "type": "object",
@@ -2022,7 +2230,12 @@
         "airAccel": { "type": "number", "format": "double" },
         "gravity": { "type": "number", "format": "double" },
         "fallSpeed": { "type": "number", "format": "double" },
-        "fastFallSpeed": { "type": "number", "format": "double" }
+        "fastFallSpeed": { "type": "number", "format": "double" },
+        "floatSpeed": {
+          "type": ["number", "null"],
+          "format": "double",
+          "description": "Positive downward speed cap while holding jump in normal Air control. Excludes attacks, hitstun,\nhelplessness, ledge/climb, airdodge and every other non-Air state. Omit to disable float."
+        }
       }
     },
     "BodyPartial": {
@@ -2196,6 +2409,11 @@
           "format": "double",
           "description": "Damage bonus per held charge tick. Omit to use the global smash-charge divisor."
         },
+        "variants": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/MoveVariant" },
+          "description": "Alternate timelines picked once when the move starts, by the fighter's charge resources (a weapon or tome\nwith uses left). The first variant whose `needs` is satisfied wins; otherwise `phases` runs."
+        },
         "phases": {
           "type": "array",
           "items": { "$ref": "#/$defs/Phase" },
@@ -2294,7 +2512,14 @@
           "type": ["integer", "null"],
           "format": "uint32",
           "minimum": 0,
-          "description": "Multi-hit: can hit the same victim again every this many frames (default: once per phase)."
+          "description": "Multi-hit: can hit the same victim/group again every this many move ticks (default: once until history clears)."
+        },
+        "group": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Independent hit identity within one move. A victim can be hit once per group, so later rows with the\nsame group are alternatives (early/late tiers, coverage changes) while a different group is a new hit\n(multi-hit sequences such as Diddy Kong's forward smash)."
         },
         "hitstunMult": {
           "type": "number",
@@ -2312,6 +2537,15 @@
         "counterDamage": {
           "type": "boolean",
           "description": "Counter strike: damage comes from the countered hit (see `Counter`). Inactive if nothing was countered."
+        },
+        "heal": {
+          "type": "number",
+          "format": "double",
+          "description": "Fraction of the damage dealt that heals the attacker (Nosferatu drains health). Capped at the\nattacker's current damage."
+        },
+        "unblockable": {
+          "type": "boolean",
+          "description": "Ignores shields, counters and parries (a command grab such as Nosferatu still lands on a guarding victim)."
         },
         "minCharge": {
           "type": "integer",
@@ -2390,7 +2624,12 @@
           "const": "bury",
           "description": "Trap grounded targets in place; airborne targets launch normally."
         },
-        { "type": "string", "const": "grab", "description": "Grabs instead of hitting." }
+        { "type": "string", "const": "grab", "description": "Grabs instead of hitting." },
+        {
+          "type": "string",
+          "const": "damageOnly",
+          "description": "Damage and shield damage only: no hitstun, hitlag, launch or state change. Used by lingering\nno-flinch hazards such as Poison Breath."
+        }
       ],
       "description": "Hitbox behavior, modeled on Smash."
     },
@@ -2586,6 +2825,11 @@
         "speed": { "type": "number", "format": "double" },
         "damage": { "type": "number", "format": "double" },
         "bkb": { "type": "number", "format": "double" },
+        "rehit": {
+          "type": "number",
+          "format": "double",
+          "description": "Frames added to `hit.rehit` per held charge tick (rounds at each hit check)."
+        },
         "radius": { "type": "number", "format": "double" },
         "life": { "type": "number", "format": "double" },
         "angleTo": {
@@ -2600,11 +2844,15 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "manual": {
+          "type": "boolean",
+          "description": "Ignore proximity and freeze the fuse; only a detonate event explodes this gadget."
+        },
         "armTicks": {
           "type": "integer",
           "format": "uint32",
           "minimum": 0,
-          "description": "Ticks before proximity can trigger. The fuse still expires at projectile life zero."
+          "description": "Ticks before proximity can trigger. Unless manual, the fuse expires at projectile life zero."
         },
         "proximity": {
           "type": ["number", "null"],
@@ -2631,6 +2879,25 @@
           "description": "Release the special button to launch; otherwise a second special press launches.",
           "default": false
         },
+        "releaseOnDir": {
+          "type": "boolean",
+          "description": "A fresh left/right stick input while still holding special launches the article in that direction;\nletting go of special ends it instead (Ptooie's blow-away and swallow).",
+          "default": false
+        },
+        "reflectCooldown": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks during which any reflector is ignored after reflection.",
+          "default": 0
+        },
+        "hold": {
+          "anyOf": [
+            { "$ref": "#/$defs/ArticleHoldPartial" },
+            { "type": "null" }
+          ],
+          "description": "While unreleased, keep the article at this fighter-local point and let it breathe."
+        },
         "steer": {
           "type": "number",
           "format": "double",
@@ -2649,6 +2916,32 @@
           "items": { "$ref": "#/$defs/ArticleStage" }
         }
       }
+    },
+    "ArticleHoldPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "offset": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Fighter-local point (x forward, y up) for the article's origin."
+        },
+        "bob": { "type": "number", "format": "double", "description": "Vertical breathing amplitude in pixels." },
+        "period": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Breathing period in ticks. Required when `bob` is non-zero."
+        },
+        "hitboxes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Hitbox" },
+          "description": "Active while the article is held (inclusive `start`/`end` are construction-age ticks)."
+        }
+      },
+      "description": "Standby placement of a held article. The point follows the caster, so a held ball stays at the mouth\nwhile the fighter moves or turns."
     },
     "FighterFxPartial": {
       "type": "object",

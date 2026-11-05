@@ -1,0 +1,512 @@
+{
+ "base": "https://ultimateframedata.com/hitboxes/diddy_kong/",
+ "files": {
+  "DiddyKongBAir": {
+   "slot": "bair",
+   "size": 799923,
+   "sha256": "b1bd0a77a1280a4be78ad5ab10eafad3eb095f273c1f07980cbd36c28b631251",
+   "frames": 30,
+   "montage": "DiddyKongBAir-frames.png",
+   "kept": [
+    0,
+    4,
+    5,
+    7,
+    9,
+    19,
+    29
+   ]
+  },
+  "DiddyKongBThrow": {
+   "slot": "throws",
+   "size": 1466802,
+   "sha256": "864c6c8206902a9379dbbf79cc7007ceb26d8012ca09c8e723625628f2a68641",
+   "frames": 51,
+   "montage": "DiddyKongBThrow-frames.png",
+   "kept": [
+    0,
+    25,
+    50
+   ]
+  },
+  "DiddyKongBanana": {
+   "slot": "dspec",
+   "size": 760291,
+   "sha256": "08f2ff50ac53f005768d78795322101f5e58e824758d49313b7e5bdc393afa71",
+   "frames": 26,
+   "montage": "DiddyKongBanana-frames.png",
+   "kept": [
+    0,
+    5,
+    10,
+    15,
+    19,
+    20,
+    25
+   ]
+  },
+  "DiddyKongDAir": {
+   "slot": "dair",
+   "size": 1746847,
+   "sha256": "b4d01e4671476f6b5f625f53fb624a04c43d32b14380e5d2afbeb70f466569a1",
+   "frames": 46,
+   "montage": "DiddyKongDAir-frames.png",
+   "kept": [
+    0,
+    13,
+    14,
+    15,
+    16,
+    18,
+    34,
+    45
+   ]
+  },
+  "DiddyKongDSmash": {
+   "slot": "dsmash",
+   "size": 2902731,
+   "sha256": "3a9d3cb4fd251f69e011c1b655567797e48103e05746c74192d76ec4ddf0b3fd",
+   "frames": 50,
+   "montage": "DiddyKongDSmash-frames.png",
+   "kept": [
+    0,
+    6,
+    7,
+    8,
+    11,
+    12,
+    20,
+    49
+   ]
+  },
+  "DiddyKongDThrow": {
+   "slot": "throws",
+   "size": 749717,
+   "sha256": "c7bf6a249a034f1ccb103b5f9fb56779c64709b19ffab2ac18f5ff49db14bd02",
+   "frames": 31,
+   "montage": "DiddyKongDThrow-frames.png",
+   "kept": [
+    0,
+    15,
+    30
+   ]
+  },
+  "DiddyKongDTilt": {
+   "slot": "dtilt",
+   "size": 606966,
+   "sha256": "d2483be0e6339c5f4628b639f7ee02611f99a0431f08ac7e8f002e3edae12f8f",
+   "frames": 19,
+   "montage": "DiddyKongDTilt-frames.png",
+   "kept": [
+    0,
+    3,
+    4,
+    5,
+    18
+   ]
+  },
+  "DiddyKongDashAttack": {
+   "slot": "dashatk",
+   "size": 1680801,
+   "sha256": "90c3dee81a07a24384176f9d7f52cac1c18f290f9b7fea0f45787140596d8d23",
+   "frames": 40,
+   "montage": "DiddyKongDashAttack-frames.png",
+   "kept": [
+    0,
+    7,
+    8,
+    15,
+    16,
+    21,
+    22,
+    39
+   ]
+  },
+  "DiddyKongDashGrab": {
+   "slot": "grab",
+   "size": 1290749,
+   "sha256": "441b6235a6fa53fa4536bc3ac7d17713f39c54e75d43d51943114ec6f775a398",
+   "frames": 44,
+   "montage": "DiddyKongDashGrab-frames.png",
+   "kept": [
+    0,
+    9,
+    10,
+    11,
+    19,
+    43
+   ]
+  },
+  "DiddyKongFAir": {
+   "slot": "fair",
+   "size": 2967464,
+   "sha256": "69a34187e47b07ef9d5e44064e125652112bb2c07447d53f83be7eb83d4f0247",
+   "frames": 46,
+   "montage": "DiddyKongFAir-frames.png",
+   "kept": [
+    0,
+    5,
+    8,
+    9,
+    15,
+    25,
+    45
+   ]
+  },
+  "DiddyKongFSmash": {
+   "slot": "fsmash",
+   "size": 3162982,
+   "sha256": "4e94b8f67d710b61ca99fc6a339633322f6fa1ad03f1bbf5cccdbf3b6ee3c6bf",
+   "frames": 50,
+   "montage": "DiddyKongFSmash-frames.png",
+   "kept": [
+    0,
+    3,
+    4,
+    11,
+    12,
+    20,
+    21,
+    22,
+    49
+   ]
+  },
+  "DiddyKongFThrow": {
+   "slot": "throws",
+   "size": 779515,
+   "sha256": "206279a3185f7047380f016b3a99c6fff1b240a91c7af2db5948fbb4ab42ddf3",
+   "frames": 31,
+   "montage": "DiddyKongFThrow-frames.png",
+   "kept": [
+    0,
+    15,
+    30
+   ]
+  },
+  "DiddyKongFTilt": {
+   "slot": "ftilt",
+   "size": 2585715,
+   "sha256": "303cbbbc878f037f76e9769be58df0bcdfd69ec2422137af90c909e276c4edb0",
+   "frames": 36,
+   "montage": "DiddyKongFTilt-frames.png",
+   "kept": [
+    0,
+    9,
+    10,
+    12,
+    16,
+    35
+   ]
+  },
+  "DiddyKongFTiltDown": {
+   "slot": "ftilt",
+   "size": 2644288,
+   "sha256": "c20a54464c0237625c34ca5ba2fb28c49369deb62fce047f34c3ca8ab2e15ed2",
+   "frames": 36,
+   "montage": "DiddyKongFTiltDown-frames.png",
+   "kept": [
+    0,
+    9,
+    10,
+    16,
+    35
+   ]
+  },
+  "DiddyKongFTiltUp": {
+   "slot": "ftilt",
+   "size": 2584940,
+   "sha256": "9f6645d6ddf4c53a23b4992f3ce2e479f52ede5252a5015b2a279a23159588e9",
+   "frames": 36,
+   "montage": "DiddyKongFTiltUp-frames.png",
+   "kept": [
+    0,
+    9,
+    10,
+    16,
+    35
+   ]
+  },
+  "DiddyKongGrab": {
+   "slot": "grab",
+   "size": 953816,
+   "sha256": "209fe8b7e5aaa133ab0f17fad0a781bdd9256a1b5b1892a37010afc7ce7d5bda",
+   "frames": 36,
+   "montage": "DiddyKongGrab-frames.png",
+   "kept": [
+    0,
+    6,
+    7,
+    8,
+    19,
+    35
+   ]
+  },
+  "DiddyKongJab1": {
+   "slot": "jab",
+   "size": 617128,
+   "sha256": "e6adac8c9f7e41b0bef29cc2b12b50fadbe11a4b0a1576f2977c25ddd1990d0d",
+   "frames": 19,
+   "montage": "DiddyKongJab1-frames.png",
+   "kept": [
+    0,
+    2,
+    4,
+    9,
+    18
+   ]
+  },
+  "DiddyKongJab2": {
+   "slot": "jab",
+   "size": 612165,
+   "sha256": "f9791348f972f193504f84c124254f944feb31de1a50f3141f863a6e2311625f",
+   "frames": 20,
+   "montage": "DiddyKongJab2-frames.png",
+   "kept": [
+    0,
+    4,
+    5,
+    9,
+    19
+   ]
+  },
+  "DiddyKongJab3": {
+   "slot": "jab",
+   "size": 1068100,
+   "sha256": "04a5d82ee819e5f1830c2d58d47f7edbfd151c6963eb20d170940e6754022a08",
+   "frames": 34,
+   "montage": "DiddyKongJab3-frames.png",
+   "kept": [
+    0,
+    4,
+    5,
+    9,
+    33
+   ]
+  },
+  "DiddyKongMonkeyFlip": {
+   "slot": "sspec",
+   "size": 1151479,
+   "sha256": "376ffe4c424aee1a2401c94618a3750fe26c10b98dbc022e8bc8e012236cab8f",
+   "frames": 47,
+   "montage": "DiddyKongMonkeyFlip-frames.png",
+   "kept": [
+    0,
+    6,
+    12,
+    17,
+    18,
+    25,
+    30,
+    36,
+    40,
+    46
+   ]
+  },
+  "DiddyKongMonkeyFlipKick": {
+   "slot": "sspec",
+   "size": 779390,
+   "sha256": "3e0071170d65f99fa43c6cb22cea00a4d10146dfa76329f466691c5a71631dff",
+   "frames": 32,
+   "montage": "DiddyKongMonkeyFlipKick-frames.png",
+   "kept": [
+    0,
+    5,
+    8,
+    12,
+    18,
+    24,
+    31
+   ]
+  },
+  "DiddyKongMonkeyFlipStick": {
+   "slot": "sspec",
+   "size": 1035445,
+   "sha256": "2082d30ac7ae943593905fdfb703c5c385471f0873001644b944c21a76275d8f",
+   "frames": 45,
+   "montage": "DiddyKongMonkeyFlipStick-frames.png",
+   "kept": [
+    0,
+    10,
+    20,
+    30,
+    44
+   ]
+  },
+  "DiddyKongMonkeyFlipStickAttack": {
+   "slot": "sspec",
+   "size": 538252,
+   "sha256": "8bbd6927df59fe526e80eacf31184ca2c43bdc4e73a04f0e2e6664089bb16ad7",
+   "frames": 20,
+   "montage": "DiddyKongMonkeyFlipStickAttack-frames.png",
+   "kept": [
+    0,
+    5,
+    10,
+    15,
+    19
+   ]
+  },
+  "DiddyKongNAir": {
+   "slot": "nair",
+   "size": 2830695,
+   "sha256": "a3423b22d1a5f8ce4468542fb4d127b9525290e5ea8a588ba6373a54e2185184",
+   "frames": 48,
+   "montage": "DiddyKongNAir-frames.png",
+   "kept": [
+    0,
+    6,
+    7,
+    8,
+    19,
+    20,
+    26,
+    47
+   ]
+  },
+  "DiddyKongPeanut": {
+   "slot": "nspec",
+   "size": 107360,
+   "sha256": "3129b1a5102f5ebae11557435bbaf1aee7f5edba94d05e1b60ecca33ef7f25ea",
+   "frames": 2,
+   "montage": "DiddyKongPeanut-frames.png",
+   "kept": [
+    0,
+    1,
+    1
+   ]
+  },
+  "DiddyKongPeanutPopgunBoom": {
+   "slot": "nspec",
+   "size": 2875087,
+   "sha256": "3a0a5264c425b8713b44dce9ade9c4b919779e1383b41207f80b36589cfd1e1c",
+   "frames": 109,
+   "montage": "DiddyKongPeanutPopgunBoom-frames.png",
+   "kept": [
+    0,
+    4,
+    8,
+    12,
+    20,
+    40,
+    80,
+    108
+   ]
+  },
+  "DiddyKongPivotGrab": {
+   "slot": "grab",
+   "size": 1128522,
+   "sha256": "e9d39953ce37cba8df3d2f4ac66b9fde6d7fc8edca104cc4cd13684a32212f8e",
+   "frames": 39,
+   "montage": "DiddyKongPivotGrab-frames.png",
+   "kept": [
+    0,
+    10,
+    11,
+    12,
+    38
+   ]
+  },
+  "DiddyKongPummel": {
+   "slot": "throws",
+   "size": 159702,
+   "sha256": "0dd8e80c9b32c19f9d7cc505d63aa888ef3dc109fca77ee6f2b4cd922889ac59",
+   "frames": 6,
+   "montage": "DiddyKongPummel-frames.png",
+   "kept": [
+    0,
+    3,
+    5
+   ]
+  },
+  "DiddyKongRocketBarrels": {
+   "slot": "uspec",
+   "size": 1739900,
+   "sha256": "5d69e1cfd295bf54ab1955da93b592e63fadf96a21e53b768c82c3c7fc498316",
+   "frames": 61,
+   "montage": "DiddyKongRocketBarrels-frames.png",
+   "kept": [
+    0,
+    7,
+    20,
+    40,
+    55,
+    60
+   ]
+  },
+  "DiddyKongRocketBarrelsExplosion.png": {
+   "slot": "uspec",
+   "size": 66155,
+   "sha256": "c8d7b13f27000ee0060a632adf9417e0bf830db1c2b5c19ae823fbf94c142d01",
+   "frames": 1,
+   "montage": "DiddyKongRocketBarrelsExplosion.png-frames.png",
+   "kept": [
+    0,
+    0,
+    0
+   ]
+  },
+  "DiddyKongUAir": {
+   "slot": "uair",
+   "size": 938059,
+   "sha256": "bbb304518c935482027ebe351661baf8cf18f1ba7bb9297e2c647dd1d549b14f",
+   "frames": 36,
+   "montage": "DiddyKongUAir-frames.png",
+   "kept": [
+    0,
+    3,
+    4,
+    6,
+    7,
+    8,
+    26,
+    35
+   ]
+  },
+  "DiddyKongUSmash": {
+   "slot": "usmash",
+   "size": 1420648,
+   "sha256": "0fdaa48ea715bcbc67f6b190b43b9addc845fe332d108930cf3e3a9f211a01f9",
+   "frames": 53,
+   "montage": "DiddyKongUSmash-frames.png",
+   "kept": [
+    0,
+    4,
+    5,
+    8,
+    11,
+    12,
+    15,
+    18,
+    19,
+    22,
+    52
+   ]
+  },
+  "DiddyKongUThrow": {
+   "slot": "throws",
+   "size": 697852,
+   "sha256": "514a643a465daaa2334818c53ecdbd27dc0994b103b8f8a92186d28805e0d2d3",
+   "frames": 26,
+   "montage": "DiddyKongUThrow-frames.png",
+   "kept": [
+    0,
+    13,
+    25
+   ]
+  },
+  "DiddyKongUTilt": {
+   "slot": "utilt",
+   "size": 874760,
+   "sha256": "796514c9b0a17fa265bf348bbf6b23f7ae353c021866bfe02f28da0c5da14ed8",
+   "frames": 29,
+   "montage": "DiddyKongUTilt-frames.png",
+   "kept": [
+    0,
+    5,
+    6,
+    11,
+    28
+   ]
+  }
+ }
+}

@@ -21,14 +21,20 @@ use crate::{
 #[derive(Clone, Debug, PartialEq)]
 pub enum PoseTarget {
     Named(String),
-    Inline { slot: String, phase: usize, key: usize },
+    Inline {
+        slot: String,
+        phase: usize,
+        key: usize,
+        /// Phase timeline the key lives in (0 = the move's default `phases`).
+        variant: u8,
+    },
 }
 
 pub fn pose_mut<'a>(f: &'a mut sim::data::Fighter, t: &PoseTarget) -> Option<&'a mut Pose> {
     match t {
         PoseTarget::Named(n) => f.poses.get_mut(n),
-        PoseTarget::Inline { slot, phase, key } => {
-            match &mut f.moves.get_mut(slot)?.phases.get_mut(*phase)?.anim.get_mut(*key)?.pose {
+        PoseTarget::Inline { slot, phase, key, variant } => {
+            match &mut f.moves.get_mut(slot)?.timeline_mut(*variant).get_mut(*phase)?.anim.get_mut(*key)?.pose {
                 PoseRef::Inline(p) => Some(p),
                 PoseRef::Named(_) => None,
             }
@@ -40,12 +46,14 @@ pub fn pose_mut<'a>(f: &'a mut sim::data::Fighter, t: &PoseTarget) -> Option<&'a
 pub(crate) struct Playhead {
     pub fighter: Fighter,
     pub phase: Option<(usize, u32)>,
+    /// Timeline the simulated move ran (see `preview::Mark::variant`).
+    pub variant: u8,
 }
 
 pub(crate) fn at_playhead(ed: &Editor) -> Option<Playhead> {
     let r = ed.run.as_ref()?;
     let k = ed.frame.min(r.frames.len() - 1);
-    Some(Playhead { fighter: r.frames[k].fighters[0].clone(), phase: r.marks[k].phase })
+    Some(Playhead { fighter: r.frames[k].fighters[0].clone(), phase: r.marks[k].phase, variant: r.marks[k].variant })
 }
 
 /// The pose shown on the playhead, if it's exactly a key (not mid-blend), and its skeleton.
@@ -54,8 +62,8 @@ pub(crate) fn pose_target(ed: &Editor) -> Option<(PoseTarget, Skel)> {
     match &ed.subject {
         Subject::Pose(n) => fd.poses.get(n).map(|p| (PoseTarget::Named(n.clone()), resolve(fd, p))),
         Subject::Move(slot) => {
-            let Playhead { fighter: f, phase: Some((p, t)) } = at_playhead(ed)? else { return None };
-            let anim = &fd.moves.get(slot)?.phases.get(p)?.anim;
+            let Playhead { fighter: f, phase: Some((p, t)), variant } = at_playhead(ed)? else { return None };
+            let anim = &fd.moves.get(slot)?.timeline(variant).get(p)?.anim;
             let live: Vec<usize> = (0..anim.len()).filter(|&i| sim::moves::cond(&f, anim[i].cond)).collect();
             let t = f64::from(t);
             let li = live.iter().rposition(|&i| anim[i].at <= t).unwrap_or(0);
@@ -70,7 +78,7 @@ pub(crate) fn pose_target(ed: &Editor) -> Option<(PoseTarget, Skel)> {
             match &anim[key].pose {
                 PoseRef::Named(n) => fd.poses.get(n).map(|p| (PoseTarget::Named(n.clone()), resolve(fd, p))),
                 PoseRef::Inline(pose) => {
-                    Some((PoseTarget::Inline { slot: slot.clone(), phase: p, key }, resolve(fd, pose)))
+                    Some((PoseTarget::Inline { slot: slot.clone(), phase: p, key, variant }, resolve(fd, pose)))
                 }
             }
         }

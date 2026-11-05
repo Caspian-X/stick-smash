@@ -24,6 +24,8 @@ pub const STAR: Color = Color::srgb(0.93, 0.94, 1.0);
 pub const DIM: Color = Color::srgb(0.55, 0.58, 0.78);
 pub const FAINT: Color = Color::srgb(0.36, 0.39, 0.6);
 pub const GOLD: Color = Color::srgb(1.0, 0.83, 0.35);
+/// Warning red (the match timer running out, TIME!).
+pub const ALERT: Color = Color::srgb(1.0, 0.32, 0.3);
 
 /// Each screen's frame: read input and update its model, rebuild what changed, then animate. Before the renderer.
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]

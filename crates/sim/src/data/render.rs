@@ -76,7 +76,38 @@ pub struct SelectLook {
     /// Stage thumbnails show the play area scaled by `[width, height]` (then widened to the tile's aspect).
     pub thumb_crop: [f64; 2],
     pub pointer: PointerLook,
+    pub back_ring: BackRing,
     pub hints: HintLook,
+}
+
+/// The ring that fills around a pointer while its player holds Back to leave a select screen. Units are logical UI
+/// pixels (the screen is 720 high) and seconds.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BackRing {
+    /// Its centre from the arrow's tip, and its radius (both scaled by `pointer.scale`).
+    pub offset: [f32; 2],
+    pub radius: f32,
+    /// Each dash's thickness, and how many dashes go round the ring.
+    pub thickness: f32,
+    pub ticks: u32,
+    /// A dash's length as its share of the circle (below 1 leaves gaps), and an unfilled dash's opacity.
+    pub dash: f32,
+    pub track: f32,
+    /// Each dash's dark rim, so the gauge reads over a portrait (0 leaves it out).
+    pub rim: f32,
+    /// The filled end whitens the `hot` dashes behind it like a comet head.
+    pub hot: f32,
+    /// The spark riding the filled end, as a multiple of the dash thickness.
+    pub spark: f32,
+    /// Springs as (stiffness, damping ratio): the filled part chases the hold, and the ring pops in as it starts.
+    pub follow: [f32; 2],
+    pub grow: [f32; 2],
+    /// Scale a starting hold grows from.
+    pub pop: f32,
+    /// While it fills, the ring swings `wobble` radians one way and back every `wobble_secs`.
+    pub wobble: f32,
+    pub wobble_secs: f32,
 }
 
 /// Select screens' player pointers. Units are logical UI pixels (the screen is 720 high) and seconds.
@@ -184,14 +215,64 @@ pub struct Hud {
     pub damage_ramp: Vec<(f64, Color)>,
     /// Percent number shake (logical px) while the sim's `hudShake` timer runs, scaled by the timer.
     pub shake: f64,
-    /// When the match ends ("GAME!"), the sim runs at `speed` for its first `ticks` end-freeze ticks.
+    /// When the match ends ("GAME!"), the sim runs at `speed` for its first `ticks` end-freeze ticks. This
+    /// stretches real time by `ticks / speed`.
     pub end_slowmo: Slowmo,
-    /// Ticks the winner pose shows after the match is over, before the results screen.
+    /// The end-of-match banner ("GAME!" / "TIME!") and its handoff to the results screen, timed in real seconds.
+    /// The results never wait for `match.endFrames`: only the winner's pose does.
+    #[serde(default)]
+    pub end_banner: EndBanner,
+    /// Ticks the winner pose shows after the match is over, before the results screen (`0`: it opens as the pose
+    /// starts). [`Hud::end_banner`] usually opens the screen first.
     pub results_delay: u32,
+    /// Real seconds the focused results button must be held before it fires, so a press buffered from the match
+    /// cannot pick one.
+    #[serde(default = "results_hold_secs")]
+    pub results_hold_secs: f32,
+    /// How the results screen enters (it arrives while the end freeze is still running).
+    #[serde(default)]
+    pub results_enter: ResultsEnter,
     /// Results stats: a fall counts as a KO for the last hitter if they hit within this many ticks, otherwise
     /// as a self-destruct.
     pub ko_credit_ticks: u64,
     pub look: HudLook,
+}
+
+/// The results screen's entrance, timed in real seconds so display refresh and the end freeze don't change it.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ResultsEnter {
+    /// Real seconds an element takes to settle once its entrance starts.
+    pub secs: f32,
+    /// Logical pixels the content rises into place; the backdrop darkens over the same time.
+    pub slide: f32,
+    /// Real seconds between one card's entrance and the next (the buttons follow the cards).
+    pub stagger: f32,
+}
+
+impl Default for ResultsEnter {
+    fn default() -> Self {
+        Self { secs: 0.3, slide: 30., stagger: 0.035 }
+    }
+}
+
+/// The end banner's real-time clock: it slams in, holds, then fades out, and the results screen enters from the
+/// moment it's gone. Keeping it in real seconds means the end slow motion can't stretch the banner or skip it.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct EndBanner {
+    /// From the deciding KO (or TIME!) to the results screen.
+    pub secs: f32,
+    /// The slam-in: the banner starts at `look.popScale`, fading in, and settles over this many seconds.
+    pub pop: f32,
+    /// The fade-out, over the last of `secs`.
+    pub fade: f32,
+}
+
+impl Default for EndBanner {
+    fn default() -> Self {
+        Self { secs: 1., pop: 0.2, fade: 0.25 }
+    }
 }
 
 /// Where name tags and offscreen bubbles sit and how HUD text moves. Logical UI pixels unless noted.
@@ -210,6 +291,12 @@ pub struct HudLook {
     /// Countdown / GO! / GAME! text pops in from `popScale`, settling in the first 1 / `popSpeed` of its time.
     pub pop_scale: f32,
     pub pop_speed: f32,
+    /// The match timer's scale bump on each second of its warning time, back to 1 by the next second.
+    #[serde(default = "default_timer_pulse")]
+    pub timer_pulse: f32,
+}
+fn default_timer_pulse() -> f32 {
+    0.16
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -423,6 +510,10 @@ pub struct RingLook {
 
 fn back_hold_secs() -> f32 {
     1.5
+}
+
+fn results_hold_secs() -> f32 {
+    0.25
 }
 
 /// Binding bands [height, horizontal radius, vertical radius], as fractions of fighter body height.

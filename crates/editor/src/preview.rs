@@ -92,11 +92,13 @@ pub struct Setup {
     pub dummy_pct: f64,
     /// Hold the move's button for this many frames (charge, `release` transitions).
     pub hold: u32,
+    /// Force a phase timeline instead of letting charge resources pick it (0 = the move's default `phases`).
+    pub variant: Option<u8>,
 }
 
 impl Default for Setup {
     fn default() -> Self {
-        Setup { air: None, dummy: false, dummy_dist: 70., dummy_pct: 0., hold: 0 }
+        Setup { air: None, dummy: false, dummy_dist: 70., dummy_pct: 0., hold: 0, variant: None }
     }
 }
 
@@ -105,6 +107,8 @@ impl Default for Setup {
 pub struct Mark {
     /// Phase index and phase frame while in the move.
     pub phase: Option<(usize, u32)>,
+    /// Phase timeline the move ran (0 = the default, `i + 1` = `variants[i]`): charge resources pick it at start.
+    pub variant: u8,
     pub state: State,
 }
 
@@ -168,7 +172,8 @@ pub fn simulate(data: Arc<GameData>, fighter: &str, subj: &Subject, setup: &Setu
                 button = 4;
             }
             let mut f = w.fighters[0].clone();
-            sim::moves::start_move(&mut w, d, 0, &mut f, slot);
+            // Editing a specific timeline: preview that one even when the pool would choose another.
+            sim::moves::start_move_as(&mut w, d, 0, &mut f, slot, setup.variant);
             w.fighters[0] = f;
         }
         Subject::Throw(_) => {
@@ -188,7 +193,8 @@ pub fn simulate(data: Arc<GameData>, fighter: &str, subj: &Subject, setup: &Setu
     };
     let mark = |w: &World| {
         let f = &w.fighters[0];
-        Mark { phase: f.mov.as_ref().filter(|_| f.state == State::Attack).map(|m| (m.phase, m.t)), state: f.state }
+        let m = f.mov.as_ref().filter(|_| f.state == State::Attack);
+        Mark { phase: m.map(|m| (m.phase, m.t)), variant: m.map_or(0, |m| m.variant), state: f.state }
     };
     let mut frames = vec![w.clone()];
     let mut marks = vec![mark(&w)];

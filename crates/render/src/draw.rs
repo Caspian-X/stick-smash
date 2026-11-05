@@ -135,8 +135,10 @@ pub fn draw_fighter(cv: &mut Canvas, d: &GameData, frame: u64, v: &FighterView, 
     let mut trails = Vec::new();
     for a in fd.attachments.iter().filter(|_| fd.rig.is_none()) {
         let anim = mc.phase.and_then(|ph| ph.attach.get(&a.id));
-        let show = anim.and_then(|an| an.show).is_some_and(|[s, e]| mc.t >= f64::from(s) && mc.t <= f64::from(e));
-        if a.hidden && !show {
+        let window = |w: [u32; 2]| mc.t >= f64::from(w[0]) && mc.t <= f64::from(w[1]);
+        let shown = anim.and_then(|an| an.show).is_some_and(window);
+        let hidden = anim.and_then(|an| an.hide).is_some_and(window);
+        if (a.hidden && !shown) || (!a.hidden && hidden) {
             continue;
         }
         let keyed_angle = anim.filter(|an| !an.angle.is_empty()).map(|an| keyed(&an.angle, mc.t));
@@ -519,6 +521,10 @@ pub fn draw_projectile(cv: &mut Canvas, d: &GameData, p: &Projectile, x: f64, y:
     cv.scale(1., -1.);
     if let Some(a) = &pd.article {
         cv.scale(p.face, 1.);
+        if pd.spin != 0. {
+            // Article projectiles don't carry a travel-direction ring; spin them on their own age.
+            cv.rotate((pd.spin * p.age as f64).to_radians());
+        }
         let stage = &a.stages[p.stage];
         let startup = if p.automatic { stage.auto_startup.unwrap_or(stage.startup) } else { stage.startup };
         let attacking = p.released.is_some_and(|age| p.age - age >= startup);
@@ -555,6 +561,44 @@ pub fn draw_projectile(cv: &mut Canvas, d: &GameData, p: &Projectile, x: f64, y:
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn duchess_parasol_is_drawn_through_every_rising_phase() {
+        let sources = [
+            ("global.json", include_str!("../../../assets/global.json")),
+            ("stages/arena/stage.json", include_str!("../../../assets/stages/arena/stage.json")),
+            ("fighters/base/fighter.json", include_str!("../../../assets/fighters/base/fighter.json")),
+            ("fighters/duchess/fighter.json", include_str!("../../../assets/fighters/duchess/fighter.json")),
+        ]
+        .map(|(path, text)| sim::data::Source { path: path.into(), text: text.into() });
+        let (d, errors) = sim::data::load(sources).unwrap();
+        assert!(errors.is_empty(), "{errors:?}");
+        let mut w =
+            sim::World::new(sim::MatchConfig::sandbox("arena", vec![sim::PlayerConfig::human("duchess")], 1), &d)
+                .unwrap();
+        let mut f = w.fighters[0].clone();
+        f.y = 100.;
+        f.ground = false;
+        f.surf = None;
+        sim::moves::start_move(&mut w, &d, 0, &mut f, "uspec");
+        let mut without = d.clone();
+        without.fighters[f.data].attachments.retain(|a| a.id != "parasol");
+        for frame in 0..39 {
+            let view =
+                FighterView { i: 0, f: &f, x: f.x, y: f.y, skel: sim::pose::fighter_pose(&d, &f, frame), rig: None };
+            let mut shown = Canvas::new(1.);
+            let mut hidden = Canvas::new(1.);
+            draw_fighter(&mut shown, &d, frame, &view, &mut Rand(7));
+            draw_fighter(&mut hidden, &without, frame, &view, &mut Rand(7));
+            assert!(
+                shown.idx.len() > hidden.idx.len(),
+                "missing parasol on source frame {} ({})",
+                frame + 1,
+                sim::moves::phase(&d, &f).name
+            );
+            sim::moves::st_attack(&mut w, &d, 0, &mut f, Default::default(), 0.);
+        }
+    }
 
     #[test]
     fn mike_up_smash_keeps_swinging_forward_through_zero() {

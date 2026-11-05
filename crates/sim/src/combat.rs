@@ -199,12 +199,35 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     let HitSource { attacker, direction: sgn, point, projectile: proj, label } = source;
     let g = &d.global;
     let ht = &g.hit_types;
+    if b.kind == HitType::DamageOnly {
+        // Chip damage without any reaction: no hitlag, hitstun, launch, state change or combo link.
+        credit_damage(w, d, attacker, v, b.damage);
+        let (px, py) = point;
+        let hx = (px + w.fighters[v].x) / 2.;
+        let hy = (py + w.fighters[v].y - 40.) / 2.;
+        w.fx.push(Fx::Burst {
+            x: hx,
+            y: hy,
+            color: Color::Rgb(0xb45ad0),
+            player: attacker,
+            n: 4.,
+            speed: 2.,
+            life: 10.,
+            size: 3.,
+            gravity: 0.,
+        });
+        w.fx.push(Fx::Sfx { name: "hit".into(), arg: Some(0.), x: Some(hx) });
+        return;
+    }
     let grounded = w.fighters[v].ground;
     let armored = armors_hit(d, &w.fighters[v], b.damage);
     release_grab(w, d, v);
     let label = label.unwrap_or_else(|| attack_label(d, &w.fighters[attacker]));
     let (avx, avy) = (w.fighters[attacker].vx, w.fighters[attacker].vy);
     credit_damage(w, d, attacker, v, b.damage);
+    if b.heal > 0. {
+        credit_heal(w, attacker, b.damage * b.heal);
+    }
     let vic = &mut w.fighters[v];
     let kb = knockback(d, b, vic.dmg, d.fighters[vic.data].stats.weight);
     let hl = hitlag_of(d, b, kb);
@@ -371,6 +394,28 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     w.ring(hx, hy, 6., 3. + kb * 0.15, 14);
     w.fx.push(Fx::Shake { k: kb * 0.45 });
     w.fx.push(Fx::Sfx { name: "hit".into(), arg: Some(kb), x: Some(hx) });
+}
+/// Heal the attacker's own damage (Nosferatu). Emits the drain ring; the damage cannot go below zero.
+pub fn credit_heal(w: &mut World, i: usize, amount: f64) {
+    let f = &mut w.fighters[i];
+    let healed = amount.min(f.dmg).max(0.);
+    if healed <= 0. {
+        return;
+    }
+    f.dmg -= healed;
+    let (x, y) = (f.x, f.y - 46.);
+    w.fx.push(Fx::Ring { x, y, r: 16., grow: 4., life: 16, color: Color::Rgb(0x74e89a), player: i });
+    w.fx.push(Fx::Burst {
+        x,
+        y,
+        color: Color::Rgb(0x74e89a),
+        player: i,
+        n: 8.,
+        speed: 2.5,
+        life: 18.,
+        size: 3.,
+        gravity: -0.2,
+    });
 }
 /// Directional influence, read once when the victim's hitlag ends: rotate the launch toward the stick by up to
 /// `di.maxAngle`, scaled by how perpendicular the stick is to the launch. Speed is unchanged.
@@ -544,10 +589,10 @@ pub fn hit_pass(w: &mut World, d: &GameData) {
                     continue;
                 }
                 let f = &mut w.fighters[a];
-                if !f.sd.can_hit(v, t, b.hit.rehit) {
+                if !f.sd.can_hit(v, b.hit.group, t, b.hit.rehit) {
                     continue;
                 }
-                f.sd.record_hit(v, t);
+                f.sd.record_hit(v, b.hit.group, t);
                 hit = true;
                 let sgn = direction(&w.fighters[a], w.fighters[v].x, b.hit.dir);
                 if b.hit.kind == HitType::Grab {
@@ -557,6 +602,14 @@ pub fn hit_pass(w: &mut World, d: &GameData) {
                     {
                         start_hold(w, d, a, v);
                     }
+                } else if b.hit.unblockable {
+                    apply_hit(
+                        w,
+                        d,
+                        v,
+                        &b.hit,
+                        HitSource { attacker: a, direction: sgn, point: (b.x, b.y), projectile: false, label: None },
+                    );
                 } else if countering(d, &w.fighters[v]).is_some() {
                     counter(w, d, v, Some(a), b.hit.damage);
                 } else if parrying(d, &w.fighters[v]) {

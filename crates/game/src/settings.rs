@@ -284,6 +284,8 @@ pub fn control_prefs(saved: &Saved, profile: &str) -> ControlPrefs {
 #[serde(default, rename_all = "camelCase")]
 pub struct VersusPrefs {
     pub stocks: i32,
+    /// Time limit in seconds (`None`: off).
+    pub time_limit: Option<u32>,
     pub stage: String,
     pub teams: bool,
     pub friendly_fire: bool,
@@ -294,7 +296,15 @@ pub struct VersusPrefs {
 
 impl Default for VersusPrefs {
     fn default() -> Self {
-        Self { stocks: 3, stage: "arena".into(), teams: false, friendly_fire: false, humans: vec![], cpus: vec![] }
+        Self {
+            stocks: 3,
+            time_limit: None,
+            stage: "arena".into(),
+            teams: false,
+            friendly_fire: false,
+            humans: vec![],
+            cpus: vec![],
+        }
     }
 }
 

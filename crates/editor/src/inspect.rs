@@ -19,13 +19,15 @@ use crate::style::{self, DIM, FAINT, GOLD, RED, STAR, caps, faint, heading};
 use crate::ui::at_playhead;
 use crate::{Dialog, Editor, doc, form, throw_mut};
 
-const TRIGGERS: [(Trigger, &str); 15] = [
+const TRIGGERS: [(Trigger, &str); 17] = [
     (Trigger::Timeout, "timeout"),
     (Trigger::Land, "land"),
     (Trigger::Grounded, "grounded"),
     (Trigger::Airborne, "airborne"),
     (Trigger::Falling, "falling"),
     (Trigger::Release, "release"),
+    (Trigger::ReleaseToward, "releaseToward"),
+    (Trigger::ReleaseAway, "releaseAway"),
     (Trigger::AttackHeld, "attackHeld"),
     (Trigger::AttackPress, "attackPress"),
     (Trigger::SpecialPress, "specialPress"),
@@ -285,21 +287,22 @@ struct PhaseSelection {
 
 fn phase_list(
     ui: &mut egui::Ui,
-    mv: &mut Move,
+    phases: &mut Vec<sim::data::Phase>,
     mut ph: usize,
     mut hb: Option<usize>,
     base: &str,
     errors: &[ContentError],
 ) -> PhaseSelection {
-    let phase_n = mv.phases.len();
+    let phase_n = phases.len().max(1);
     ph = ph.min(phase_n - 1);
     let mut jump: Option<usize> = None;
     let mut phases_changed = false;
     section(ui, "Phases", true, |ui| {
         let mut op: Option<(usize, i32)> = None;
-        for i in 0..mv.phases.len() {
+        #[allow(clippy::needless_range_loop)]
+        for i in 0..phases.len() {
             ui.horizontal(|ui| {
-                let p = &mv.phases[i];
+                let p = &phases[i];
                 let (r, _) = ui.allocate_exact_size(egui::vec2(6., 18.), egui::Sense::hover());
                 ui.painter().rect_filled(r, 2, style::PHASE_COLORS[i % 6]);
                 let len = p.frames.map_or("loops".into(), |n| format!("{n}f"));
@@ -358,27 +361,27 @@ fn phase_list(
             });
         }
         if ui.button("+ Phase").on_hover_text("Add a phase after the selected one").clicked() {
-            let name = doc::unique_name("phase", |n| mv.phases.iter().any(|p| p.name == n));
-            mv.phases.insert(ph + 1, Phase { name, frames: Some(10), air_accel_mult: 1., ..Default::default() });
+            let name = doc::unique_name("phase", |n| phases.iter().any(|p| p.name == n));
+            phases.insert(ph + 1, Phase { name, frames: Some(10), air_accel_mult: 1., ..Default::default() });
             ph += 1;
             phases_changed = true;
         }
         match op {
             Some((i, 0)) => {
-                mv.phases.remove(i);
-                ph = ph.min(mv.phases.len() - 1);
+                phases.remove(i);
+                ph = ph.min(phases.len() - 1);
                 phases_changed = true;
             }
             Some((i, 2)) => {
-                let mut c = mv.phases[i].clone();
-                c.name = doc::unique_name(&c.name, |n| mv.phases.iter().any(|p| p.name == n));
-                mv.phases.insert(i + 1, c);
+                let mut c = phases[i].clone();
+                c.name = doc::unique_name(&c.name, |n| phases.iter().any(|p| p.name == n));
+                phases.insert(i + 1, c);
                 ph = i + 1;
                 phases_changed = true;
             }
             Some((i, d)) => {
                 let j = (i as i32 + d) as usize;
-                mv.phases.swap(i, j);
+                phases.swap(i, j);
                 ph = j;
                 phases_changed = true;
             }
@@ -437,7 +440,10 @@ fn hitbox_panel(
         }
         ui.horizontal(|ui| {
             if ui.button("+ Hitbox").on_hover_text("New hitbox active from the playhead  N").clicked() {
-                p.hitboxes.push(new_hitbox(playhead_t.unwrap_or(0)));
+                let g = next_group(p);
+                let mut b = new_hitbox(playhead_t.unwrap_or(0));
+                b.group = g;
+                p.hitboxes.push(b);
                 hb = Some(p.hitboxes.len() - 1);
             }
             if ui.add_enabled(hb.is_some(), egui::Button::new("Duplicate")).on_hover_text("⌘D").clicked()
@@ -482,7 +488,10 @@ fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<G
     let note = inherited_note(ed, &format!("moves.{slot}"));
     let (mut ph, mut hb) = (ed.phase, ed.hitbox);
     let mut copy = false;
+    let mut variant = ed.variant;
+    let mut variant_changed = false;
     let Some(mv) = ed.fighter().moves.get_mut(slot) else { return };
+    variant = variant.min(mv.variants.len() as u8);
     let base = format!("moves.{slot}");
     ui.horizontal(|ui| {
         ui.add(
@@ -500,16 +509,43 @@ fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<G
     if let Some(n) = note {
         ui.label(faint(n));
     }
+    if !mv.variants.is_empty() {
+        let labels: Vec<String> = mv
+            .variants
+            .iter()
+            .enumerate()
+            .map(|(i, v)| format!("Variant {i}: needs {} x{}", v.needs.charge, v.needs.uses))
+            .collect();
+        ui.horizontal_wrapped(|ui| {
+            ui.label(faint("Timeline"));
+            let mut want = variant;
+            ui.selectable_value(&mut want, 0, "Base");
+            for (i, label) in labels.iter().enumerate() {
+                let v = (i + 1) as u8;
+                ui.selectable_value(&mut want, v, label);
+            }
+            if want != variant {
+                variant = want;
+                variant_changed = true;
+            }
+        });
+    }
+    let tbase = if variant == 0 {
+        format!("{base}.phases")
+    } else {
+        format!("{base}.variants[{}].phases", usize::from(variant) - 1)
+    };
     let move_errs: Vec<ContentError> =
         errors.iter().filter(|e| under(&e.path, &base) && !e.path.contains("phases[")).cloned().collect();
     errs(ui, &move_errs, &base);
-    let selection = phase_list(ui, mv, ph, hb, &base, errors);
+    let phases = mv.timeline_mut(variant);
+    let selection = phase_list(ui, phases, ph, hb, &tbase, errors);
     ph = selection.phase;
     hb = selection.hitbox;
     let (jump, phases_changed) = (selection.jump, selection.changed);
-    let names: Vec<String> = mv.phases.iter().map(|p| p.name.clone()).collect();
-    let pbase = format!("{base}.phases[{ph}]");
-    let p = &mut mv.phases[ph];
+    let names: Vec<String> = mv.timeline(variant).iter().map(|p| p.name.clone()).collect();
+    let pbase = format!("{tbase}[{ph}]");
+    let p = &mut mv.timeline_mut(variant)[ph];
     hb = hitbox_panel(ui, p, hb, &pbase, playhead_t, data.as_deref(), w, errors);
     let rename = section(ui, &format!("Phase · {}", p.name), true, |ui| {
         let mut rename = None;
@@ -575,7 +611,7 @@ fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<G
     })
     .flatten();
     if let Some((old, new)) = rename {
-        for q in &mut mv.phases {
+        for q in mv.timeline_mut(variant).iter_mut() {
             for t in &mut q.transitions {
                 if t.to == old {
                     t.to = new.clone();
@@ -591,8 +627,16 @@ fn move_panel(ui: &mut egui::Ui, ed: &mut Editor, slot: &str, data: Option<Arc<G
             opt_num(ui, "charge damage", &d("Move", "chargeDamage"), &mut mv.charge_damage, 0.01, "global");
         });
     });
-    ed.phase = ph;
-    ed.hitbox = hb;
+    if variant_changed {
+        ed.variant = variant;
+        ed.setup.variant = Some(variant);
+        ed.phase = 0;
+        ed.hitbox = None;
+        ed.pane.stale = true;
+    } else {
+        ed.phase = ph;
+        ed.hitbox = hb;
+    }
     if phases_changed {
         ed.followed = ed.frame;
     }
@@ -613,6 +657,11 @@ fn sub(ui: &mut egui::Ui, title: &str, tip: &str) {
     if !tip.is_empty() {
         r.on_hover_text(tip);
     }
+}
+
+/// A new hitbox starts a new hit identity, so adding one never silently merges it into an existing hit.
+fn next_group(p: &sim::data::moves::Phase) -> u8 {
+    p.hitboxes.iter().map(|b| b.group).max().map_or(0, |g| g.saturating_add(1))
 }
 
 pub fn new_hitbox(t: u32) -> Hitbox {
@@ -678,6 +727,9 @@ fn hit_fields(ui: &mut egui::Ui, b: &mut Hitbox, geometry: bool, data: Option<&G
     }
     grid(ui, "hit", |ui| {
         if geometry {
+            let mut g = u32::from(b.group);
+            int(ui, "group", &d("Hitbox", "group"), &mut g);
+            b.group = g.min(u32::from(u8::MAX)) as u8;
             int(ui, "start", &d("Hitbox", "start"), &mut b.start);
             let start = b.start;
             row(ui, "end", &d("Hitbox", "end"), |ui| {
@@ -854,7 +906,16 @@ fn transitions(ui: &mut egui::Ui, p: &mut Phase, names: &[String]) {
     }
     if ui.small_button("+ Transition").clicked() {
         let on = if p.frames.is_some() { Trigger::Timeout } else { Trigger::Land };
-        p.transitions.push(Transition { on, cond: None, from: None, to: END.into(), lag: None, preserve_hits: false });
+        p.transitions.push(Transition {
+            on,
+            cond: None,
+            from: None,
+            min_charge: 0,
+            needs: None,
+            to: END.into(),
+            lag: None,
+            preserve_hits: false,
+        });
     }
 }
 
@@ -1318,8 +1379,14 @@ fn fighter_panel(ui: &mut egui::Ui, ed: &mut Editor, errors: &[ContentError]) {
         f.combat_center = Some([(r.x1 + r.x2) / 2., (r.y1 + r.y2) / 2.]);
         f.hurt_regions = Some(vec![]);
     }
-    let referenced: Vec<String> =
-        f.moves.iter().flat_map(|(_, m)| &m.phases).flat_map(|p| &p.hurt_regions).map(|w| w.region.clone()).collect();
+    let referenced: Vec<String> = f
+        .moves
+        .iter()
+        .flat_map(|(_, m)| m.timelines())
+        .flatten()
+        .flat_map(|p| &p.hurt_regions)
+        .map(|w| w.region.clone())
+        .collect();
     let mut region_renames = Vec::new();
     if let Some(regions) = &mut f.hurt_regions {
         let ids: Vec<String> = regions.iter().map(|r| r.id.clone()).collect();
@@ -1372,7 +1439,7 @@ fn fighter_panel(ui: &mut egui::Ui, ed: &mut Editor, errors: &[ContentError]) {
     for (old, new) in region_renames {
         for slot in sim::data::moves::Moves::SLOTS {
             if let Some(m) = f.moves.get_mut(slot) {
-                for p in &mut m.phases {
+                for p in m.timelines_mut().flat_map(|phases| phases.iter_mut()) {
                     for w in &mut p.hurt_regions {
                         if w.region == old {
                             w.region = new.clone();
@@ -1476,8 +1543,9 @@ fn cur_phase(ed: &mut Editor) -> Option<(&mut Phase, Option<u32>)> {
     let Subject::Move(slot) = ed.subject.clone() else { return None };
     let t = at_playhead(ed).and_then(|p| p.phase).filter(|(p, _)| *p == ed.phase).map(|(_, t)| t);
     let ph = ed.phase;
+    let variant = ed.variant;
     let mv: &mut Move = ed.fighter().moves.get_mut(&slot)?;
-    Some((mv.phases.get_mut(ph)?, t))
+    Some((mv.timeline_mut(variant).get_mut(ph)?, t))
 }
 
 pub fn add_hitbox(ed: &mut Editor) {
@@ -1533,7 +1601,7 @@ fn insert_key(p: &mut Phase, t: u32) {
         Some(PoseRef::Named(n)) => PoseRef::Inline(Box::new(Pose { from: Some(n), ..Default::default() })),
         None => PoseRef::Inline(Box::new(Pose { from: Some("stand".into()), ..Default::default() })),
     };
-    p.anim.push(AnimKey { at: f64::from(t), pose, lerp: false, cond: None });
+    p.anim.push(AnimKey { at: f64::from(t), pose, lerp: false, cond: None, min_charge: 0 });
     p.anim.sort_by(|a, b| a.at.total_cmp(&b.at));
 }
 

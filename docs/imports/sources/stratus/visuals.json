@@ -1,0 +1,581 @@
+{
+ "base": "https://ultimateframedata.com/hitboxes/cloud/",
+ "files": {
+  "CloudBAir": {
+   "slot": "bair",
+   "size": 2648525,
+   "sha256": "625d59b4ff3ae6ace0519ef4e9e75a3788d028657e091f82fee4e32af3e063a1",
+   "frames": 42,
+   "montage": "CloudBAir-frames.png",
+   "kept": [
+    0,
+    8,
+    10,
+    11,
+    12,
+    16,
+    24
+   ]
+  },
+  "CloudBThrow": {
+   "slot": "throws",
+   "size": 1755103,
+   "sha256": "7c34e183612d0139a7e8d6f32030ed3b9e4282859d474260761d60d5db7e029d",
+   "frames": 31,
+   "montage": "CloudBThrow-frames.png",
+   "kept": [
+    0,
+    15,
+    30
+   ]
+  },
+  "CloudBladeBeamA": {
+   "slot": "nspec",
+   "size": 1416658,
+   "sha256": "587ba752c9baa38754ae5737b7dd9af17590a33af4a9db4b12133f7d2b145a8e",
+   "frames": 67,
+   "montage": "CloudBladeBeamA-frames.png",
+   "kept": [
+    0,
+    33,
+    66
+   ]
+  },
+  "CloudBladeBeamG": {
+   "slot": "nspec",
+   "size": 1180167,
+   "sha256": "31f45b0d8761c6ef86630cc89b67fcd2ea3d79e486df47e75325b2791546b943",
+   "frames": 67,
+   "montage": "CloudBladeBeamG-frames.png",
+   "kept": [
+    0,
+    10,
+    15,
+    17,
+    20,
+    30
+   ]
+  },
+  "CloudBladeBeamLimitA": {
+   "slot": "nspec",
+   "size": 1086191,
+   "sha256": "992b7413264af5848258f431051dd184745eb0c47cbda74eb187918187fd4c94",
+   "frames": 62,
+   "montage": "CloudBladeBeamLimitA-frames.png",
+   "kept": [
+    0,
+    31,
+    61
+   ]
+  },
+  "CloudBladeBeamLimitG": {
+   "slot": "nspec",
+   "size": 1015308,
+   "sha256": "8c6e9dff41182b2132aef5338698078c2e1ff17018af77999d655876cf51ca95",
+   "frames": 74,
+   "montage": "CloudBladeBeamLimitG-frames.png",
+   "kept": [
+    0,
+    10,
+    15,
+    17,
+    20,
+    30
+   ]
+  },
+  "CloudClimhazzard": {
+   "slot": "uspec",
+   "size": 949728,
+   "sha256": "2662827eb15337454400dc7bd10635c42d53484c2bb2c3bc1e75b838f1f3ee1c",
+   "frames": 65,
+   "montage": "CloudClimhazzard-frames.png",
+   "kept": [
+    0,
+    5,
+    6,
+    8,
+    10,
+    14
+   ]
+  },
+  "CloudClimhazzardFall": {
+   "slot": "uspec",
+   "size": 578455,
+   "sha256": "fbc62fcac11d1b0688d0101b9aadca197610e6ad371f6c828113d522f4c67257",
+   "frames": 12,
+   "montage": "CloudClimhazzardFall-frames.png",
+   "kept": [
+    0,
+    5,
+    10
+   ]
+  },
+  "CloudClimhazzardLanding": {
+   "slot": "uspec",
+   "size": 1919222,
+   "sha256": "f4e3de96a7ee2f2b060a627f34d31a9b2b2663c1d87d2437a5ea97329abbd56f",
+   "frames": 26,
+   "montage": "CloudClimhazzardLanding-frames.png",
+   "kept": [
+    0,
+    2,
+    6
+   ]
+  },
+  "CloudClimhazzardLimit": {
+   "slot": "uspec",
+   "size": 936823,
+   "sha256": "04a8b91ad54cbca7630bc9cae0d31e48717c8f42b226c931ef5338455b62b74a",
+   "frames": 68,
+   "montage": "CloudClimhazzardLimit-frames.png",
+   "kept": [
+    0,
+    5,
+    6,
+    8,
+    10,
+    14,
+    22
+   ]
+  },
+  "CloudCrossSlash1Left": {
+   "slot": "sspec",
+   "size": 1663749,
+   "sha256": "d12a44148f4008bafd1647428d49599ff15666d9767533fa40c2ab618687f3ef",
+   "frames": 40,
+   "montage": "CloudCrossSlash1Left-frames.png",
+   "kept": [
+    0,
+    20,
+    39
+   ]
+  },
+  "CloudCrossSlash1Right": {
+   "slot": "sspec",
+   "size": 1650128,
+   "sha256": "ed337915a2e99114d95d186c7f6e64beae96d8680dd4dfb1c0dce4c897b8a001",
+   "frames": 40,
+   "montage": "CloudCrossSlash1Right-frames.png",
+   "kept": [
+    0,
+    8,
+    9,
+    10,
+    12,
+    16
+   ]
+  },
+  "CloudCrossSlash2Left": {
+   "slot": "sspec",
+   "size": 1195360,
+   "sha256": "4d30c8db8ce3248b0d559ebb8e545e5b711eebd5c8a72ba055f3ee927eeac5c2",
+   "frames": 31,
+   "montage": "CloudCrossSlash2Left-frames.png",
+   "kept": [
+    0,
+    15,
+    30
+   ]
+  },
+  "CloudCrossSlash2Right": {
+   "slot": "sspec",
+   "size": 1282473,
+   "sha256": "5d0eb85e5dc9251482aa9217dd8b84852ed222af277e9c072b592684d3b16a85",
+   "frames": 31,
+   "montage": "CloudCrossSlash2Right-frames.png",
+   "kept": [
+    0,
+    1,
+    2,
+    3,
+    6,
+    10
+   ]
+  },
+  "CloudCrossSlash3Left": {
+   "slot": "sspec",
+   "size": 2391004,
+   "sha256": "9460d6bf3e322d73c14fb72074a4ab2c7b5c6b0db7464582c1eb7f69b3f09774",
+   "frames": 55,
+   "montage": "CloudCrossSlash3Left-frames.png",
+   "kept": [
+    0,
+    27,
+    54
+   ]
+  },
+  "CloudCrossSlash3Right": {
+   "slot": "sspec",
+   "size": 2292022,
+   "sha256": "05d55c0a0914d47b5cc4d875df6a5887328d67e6689ad398b9bac3db12f96389",
+   "frames": 55,
+   "montage": "CloudCrossSlash3Right-frames.png",
+   "kept": [
+    0,
+    1,
+    2,
+    10,
+    11,
+    24,
+    25,
+    34
+   ]
+  },
+  "CloudCrossSlashLimitLeft": {
+   "slot": "sspec",
+   "size": 2555553,
+   "sha256": "e6921c607e5a37c257f2a1e91c78b62fcb81bca7616d566f1fda96e182b064d2",
+   "frames": 60,
+   "montage": "CloudCrossSlashLimitLeft-frames.png",
+   "kept": [
+    0,
+    30,
+    59
+   ]
+  },
+  "CloudCrossSlashLimitRight": {
+   "slot": "sspec",
+   "size": 2476099,
+   "sha256": "35b9861c6cd9237974138556a34771da66dc12eed19d2104762124d9b16b7e57",
+   "frames": 60,
+   "montage": "CloudCrossSlashLimitRight-frames.png",
+   "kept": [
+    0,
+    5,
+    9,
+    10,
+    14,
+    20,
+    27,
+    37
+   ]
+  },
+  "CloudDAir": {
+   "slot": "dair",
+   "size": 3147571,
+   "sha256": "a9906c4f3d449ebcf1492e5bf5b7c2264882c0f17f90cda62ebe43929f8a2e65",
+   "frames": 64,
+   "montage": "CloudDAir-frames.png",
+   "kept": [
+    0,
+    8,
+    10,
+    12,
+    15,
+    25
+   ]
+  },
+  "CloudDSmash": {
+   "slot": "dsmash",
+   "size": 2894238,
+   "sha256": "dbee66ed549b77f2033fc5b139099818faabcf36aee24d2542306cbbc18f0412",
+   "frames": 49,
+   "montage": "CloudDSmash-frames.png",
+   "kept": [
+    0,
+    5,
+    7,
+    8,
+    20,
+    22,
+    30
+   ]
+  },
+  "CloudDThrow": {
+   "slot": "throws",
+   "size": 2249298,
+   "sha256": "18554e73e5f6933e3defec6b69a2e49c827e713f21677acd3a2559a38f8f0bd7",
+   "frames": 43,
+   "montage": "CloudDThrow-frames.png",
+   "kept": [
+    0,
+    21,
+    42
+   ]
+  },
+  "CloudDTilt": {
+   "slot": "dtilt",
+   "size": 1474621,
+   "sha256": "fa8b5c6e89e2c8b0d45c5e88b24a95dcdee63da19d6a38f7e318214a99f2acaa",
+   "frames": 40,
+   "montage": "CloudDTilt-frames.png",
+   "kept": [
+    0,
+    5,
+    6,
+    8,
+    12,
+    18
+   ]
+  },
+  "CloudDashAttack": {
+   "slot": "dashatk",
+   "size": 3754083,
+   "sha256": "89d5535319c04d0885324e361df03690abf1e51d4bdf192409f18259102e3325",
+   "frames": 45,
+   "montage": "CloudDashAttack-frames.png",
+   "kept": [
+    0,
+    6,
+    8,
+    10,
+    13,
+    16
+   ]
+  },
+  "CloudDashGrab": {
+   "slot": "grab",
+   "size": 2876083,
+   "sha256": "400b1aebb60804e21614ae2358850b3a95f22eeb94f51b62b72321f04f8fdd09",
+   "frames": 44,
+   "montage": "CloudDashGrab-frames.png",
+   "kept": [
+    0,
+    10,
+    11,
+    12,
+    16,
+    24
+   ]
+  },
+  "CloudFAir": {
+   "slot": "fair",
+   "size": 3092378,
+   "sha256": "16d40ef2a67c4dfb5daf910bf9e7058c1f105dbdc02a178618f6af0a6a5e47d8",
+   "frames": 53,
+   "montage": "CloudFAir-frames.png",
+   "kept": [
+    0,
+    15,
+    17,
+    18,
+    20,
+    22,
+    28
+   ]
+  },
+  "CloudFSmash": {
+   "slot": "fsmash",
+   "size": 2795082,
+   "sha256": "5f0ebfda73d69ca7fc46379a39384b7a4b5af732ed37f13911653c4d97eeb268",
+   "frames": 45,
+   "montage": "CloudFSmash-frames.png",
+   "kept": [
+    0,
+    9,
+    12,
+    15,
+    18,
+    23,
+    27,
+    34
+   ]
+  },
+  "CloudFThrow": {
+   "slot": "throws",
+   "size": 1840658,
+   "sha256": "ce0d1483f605a637c91184dc7c494dd43877e50fa0d4ca7c78a3ba950fa96ec9",
+   "frames": 35,
+   "montage": "CloudFThrow-frames.png",
+   "kept": [
+    0,
+    17,
+    34
+   ]
+  },
+  "CloudFTilt": {
+   "slot": "ftilt",
+   "size": 2086766,
+   "sha256": "43ea2ca5c1865a85ce43cd28cb67c7789b4230e64016839172d7d8cdd8115da1",
+   "frames": 35,
+   "montage": "CloudFTilt-frames.png",
+   "kept": [
+    0,
+    6,
+    8,
+    9,
+    12,
+    18
+   ]
+  },
+  "CloudFinishingTouchA": {
+   "slot": "dspec",
+   "size": 3817386,
+   "sha256": "3ebc28dd2e8e3b95514c48debb38e90dd8ca1916c44d2e2e422a5262666953d3",
+   "frames": 87,
+   "montage": "CloudFinishingTouchA-frames.png",
+   "kept": [
+    0,
+    43,
+    86
+   ]
+  },
+  "CloudFinishingTouchG": {
+   "slot": "dspec",
+   "size": 4504118,
+   "sha256": "e66b7f3c8de89f15476238b6ec2466b142b7b6d7b0d255ce7610c9830039a35b",
+   "frames": 83,
+   "montage": "CloudFinishingTouchG-frames.png",
+   "kept": [
+    0,
+    10,
+    12,
+    14,
+    16,
+    22,
+    30
+   ]
+  },
+  "CloudGrab": {
+   "slot": "grab",
+   "size": 2257664,
+   "sha256": "c004e0ebf983b0cdb20154fbbff8191b0113d82bb148a260d226692b5629aa70",
+   "frames": 36,
+   "montage": "CloudGrab-frames.png",
+   "kept": [
+    0,
+    7,
+    8,
+    9,
+    12,
+    20
+   ]
+  },
+  "CloudJab1": {
+   "slot": "jab1",
+   "size": 1606106,
+   "sha256": "faba47a13b32e336d1db174723bb779a14fd981236e2b77f8b3626c53468ef70",
+   "frames": 29,
+   "montage": "CloudJab1-frames.png",
+   "kept": [
+    0,
+    14,
+    28
+   ]
+  },
+  "CloudJab2": {
+   "slot": "jab2",
+   "size": 2059462,
+   "sha256": "46a7bbc8d7c81c17041ad9b4187e56defb6c97ffcbb77f9f2b960ebf113e1bd5",
+   "frames": 32,
+   "montage": "CloudJab2-frames.png",
+   "kept": [
+    0,
+    16,
+    31
+   ]
+  },
+  "CloudJab3": {
+   "slot": "jab3",
+   "size": 2397887,
+   "sha256": "6e19fabfe404f3d668a114f1ba91613c036a4f0e8eb21df9d71bc5dbda93ee6e",
+   "frames": 37,
+   "montage": "CloudJab3-frames.png",
+   "kept": [
+    0,
+    4,
+    5,
+    6,
+    9,
+    14
+   ]
+  },
+  "CloudNAir": {
+   "slot": "nair",
+   "size": 2454542,
+   "sha256": "fc2ce59bf4e0e56c8bec038c88506dd5bbbb6a9f8fe335f489f3dafd74b459d3",
+   "frames": 38,
+   "montage": "CloudNAir-frames.png",
+   "kept": [
+    3,
+    5,
+    8,
+    11,
+    14,
+    20
+   ]
+  },
+  "CloudPivotGrab": {
+   "slot": "grab",
+   "size": 2390968,
+   "sha256": "837a90f338cf6552abe63f309ccdcc90e3bd65d9efd362a8ab5fdb9de4e7fb7e",
+   "frames": 39,
+   "montage": "CloudPivotGrab-frames.png",
+   "kept": [
+    0,
+    19,
+    38
+   ]
+  },
+  "CloudPummel": {
+   "slot": "grab",
+   "size": 356611,
+   "sha256": "feb0f4211a8c21976efd0b325b2559fbaf1c58a997cbae54f6ad4f33007ac831",
+   "frames": 6,
+   "montage": "CloudPummel-frames.png",
+   "kept": [
+    0,
+    3,
+    5
+   ]
+  },
+  "CloudUAir": {
+   "slot": "uair",
+   "size": 2433995,
+   "sha256": "d5b1363c2a9db0a676008714521e753214e66a7a769f946cb6713758bfb88aac",
+   "frames": 44,
+   "montage": "CloudUAir-frames.png",
+   "kept": [
+    0,
+    5,
+    7,
+    9,
+    12,
+    20
+   ]
+  },
+  "CloudUSmash": {
+   "slot": "usmash",
+   "size": 2350118,
+   "sha256": "8d5fd6287d021e196c5d860904ba4fb45958e520280fbd797bc7ef3313cb9e42",
+   "frames": 45,
+   "montage": "CloudUSmash-frames.png",
+   "kept": [
+    0,
+    9,
+    11,
+    12,
+    13,
+    15,
+    20
+   ]
+  },
+  "CloudUThrow": {
+   "slot": "throws",
+   "size": 2930151,
+   "sha256": "51378c33b03daffb2c993114b2b0c76bc862d26610dca779a0c502d9cbdefe76",
+   "frames": 50,
+   "montage": "CloudUThrow-frames.png",
+   "kept": [
+    0,
+    25,
+    49
+   ]
+  },
+  "CloudUTilt": {
+   "slot": "utilt",
+   "size": 1446810,
+   "sha256": "2b5b3f89e0825f52f4acbca732f1d9d5a2919b87646450d984cbad4e5a85fcea",
+   "frames": 32,
+   "montage": "CloudUTilt-frames.png",
+   "kept": [
+    0,
+    4,
+    5,
+    7,
+    9,
+    14
+   ]
+  }
+ }
+}
