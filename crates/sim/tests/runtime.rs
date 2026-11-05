@@ -286,7 +286,7 @@ fn cpu_match_golden_world_hash() {
         w.hits.clear();
         w.acts.clear();
     }
-    // Hit history now stores (victim, group, tick), adding group 0 to this scenario's Debug snapshot.
-    // The brawler/ninja inputs and gameplay are unchanged; replay SIM_VERSION is now -sim-28.
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xaae0275d681189af);
+    // The decaying launch model (`hitstun.ultimate`), Ultimate hitlag and tech lockout change this scenario's
+    // trajectories and add `launch` / `tech_lock` to the Debug snapshot; replay SIM_VERSION is now -sim-29.
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xf7110186e7bad2d1);
 }

@@ -36,6 +36,7 @@ fn air_jump(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, dir: f64) {
     accept(w, i, Action::AirJump);
     let fighter = &d.fighters[f.data];
     f.jumps -= 1;
+    f.launch = (0., 0.);
     f.vy = -fighter.stats.air_jump_speed;
     if dir != 0. {
         f.vx = dir * fighter.stats.air_jump_drift;
@@ -122,8 +123,11 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
     let g = &d.global;
     let s = &d.fighters[f.data].stats;
     let r = &g.sim;
-    if inp.shield_p {
+    if inp.shield_p && !(f.state == State::Hitstun && w.frame < f.tech_lock) {
         f.last_sp = w.frame as i64;
+        if f.state == State::Hitstun && g.tech.lockout > 0 {
+            f.tech_lock = w.frame + u64::from(g.tech.lockout);
+        }
     }
     f.inv = f.inv.saturating_sub(1);
     f.blink = f.blink.saturating_sub(1);
@@ -327,16 +331,48 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
         State::Hitstun => {
             let h = &g.hitstun;
             f.hitstun = f.hitstun.saturating_sub(1);
-            f.vx *= if f.ground { h.ground_drag } else { h.air_drag };
-            f.vx += inp.x * h.drift_accel;
+            if let Some(c) = f.hitstun_cancel(g) {
+                let dodge = inp.shield_p && !f.ad_used && f.t >= c.air_dodge_after;
+                if dodge || inp.atk && f.t >= c.aerial_after {
+                    f.hitstun = 0;
+                    f.tumble = false;
+                    if dodge {
+                        airdodge(w, d, i, &mut f, inp, dir);
+                        integrate(w, d, i, &mut f, false);
+                    } else {
+                        let slot = moves::aerial_slot(&f, inp);
+                        moves::start_attack(w, d, i, &mut f, slot, inp);
+                        air_phys(w, d, i, &mut f, inp, inp.x, s.air_accel);
+                    }
+                    w.fighters[i] = f;
+                    return;
+                }
+            }
+            let launch = h.ultimate.is_some();
+            if launch && f.ground {
+                f.launch = (0., 0.);
+            }
+            if launch && !f.ground {
+                // Stick drift accelerates the fighter's own velocity up to its air speed, apart from the launch.
+                f.vx -= f.launch.0;
+                air_drift(d, &mut f, inp.x, h.drift_accel, g.movement.air_drag);
+                f.vx += f.launch.0;
+            } else {
+                f.vx *= if f.ground { h.ground_drag } else { h.air_drag };
+                f.vx += inp.x * h.drift_accel;
+            }
             if f.tumble {
                 f.spin += 0.3 * if f.vx >= 0. { 1. } else { -1. };
             }
             if libm::hypot(f.vx, f.vy) > r.hitstun_particle_speed && w.frame.is_multiple_of(2) {
                 w.part((f.x, f.y - 40.), (0., 0.), 26., Color::Rgb(0xbbbbcc), 7., -0.05);
             }
-            f.vy = (f.vy + h.gravity).min(h.max_fall);
-            integrate(w, d, i, &mut f, false);
+            if launch {
+                fall(w, d, i, &mut f, false, None);
+            } else {
+                f.vy = (f.vy + h.gravity).min(h.max_fall);
+                integrate(w, d, i, &mut f, false);
+            }
             if f.state == State::Hitstun && f.hitstun <= 0 {
                 f.tumble = false;
                 f.set_state(if f.ground { State::Idle } else { State::Air });

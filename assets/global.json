@@ -38,9 +38,10 @@
     "maxFall": 16,
     "airDrag": 0.97,
     "groundDrag": 0.85,
-    "driftAccel": 0.08
+    "driftAccel": 0.08,
+    "ultimate": { "perReferenceKnockback": 0.4, "base": 0, "launchDecay": 1.7, "tumbleThreshold": 80 }
   },
-  "hitlag": { "base": 3, "perDamage": 0.45, "perKnockback": 0.1, "max": 16 },
+  "hitlag": { "base": 6, "perDamage": 0.65, "perKnockback": 0, "max": 30 },
   "hitTypes": {
     "trip": { "slide": 2.5 },
     "sakurai": { "groundLow": 0, "groundHigh": 40, "air": 45 },
@@ -100,7 +101,7 @@
     "dirAirDodgeLandingLag": 10
   },
   "landing": { "hard": 3, "softLandSpeed": 4, "helpless": 14 },
-  "tech": { "window": 12, "invuln": 20, "frames": 24 },
+  "tech": { "window": 12, "invuln": 20, "frames": 24, "lockout": 40 },
   "knockdown": {
     "minFrames": 12,
     "autoGetup": 70,

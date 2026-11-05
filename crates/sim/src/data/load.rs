@@ -1684,6 +1684,16 @@ fn check_hitstun(file: &str, v: &super::global::Hitstun) -> Result<(), ContentEr
     for (name, n) in [("gravity", v.gravity), ("maxFall", v.max_fall)] {
         positive(file, &format!("hitstun.{name}"), n)?;
     }
+    if let Some(u) = &v.ultimate {
+        for (name, n) in [
+            ("perReferenceKnockback", u.per_reference_knockback),
+            ("base", u.base),
+            ("tumbleThreshold", u.tumble_threshold),
+        ] {
+            nonnegative(file, &format!("hitstun.ultimate.{name}"), n)?;
+        }
+        positive(file, "hitstun.ultimate.launchDecay", u.launch_decay)?;
+    }
     Ok(())
 }
 

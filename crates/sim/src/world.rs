@@ -297,6 +297,13 @@ pub struct Fighter {
     /// Ticks until each pool is full again (0 = not recharging).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub charge_wait: Vec<u32>,
+    /// The part of `vx`/`vy` left from the last launch (`hitstun.ultimate`), shrinking linearly to zero. Kept through
+    /// hitstun and the air state after it; any other state, landing, a ledge or an air jump clears it.
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub launch: (f64, f64),
+    /// World frame until which shield presses in hitstun cannot tech (`tech.lockout`).
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub tech_lock: u64,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -321,11 +328,18 @@ impl Fighter {
         if state != State::Attack {
             self.mov = None;
         }
+        if !matches!(state, State::Hitstun | State::Air) {
+            self.launch = (0., 0.);
+        }
     }
     pub fn hittable(&self) -> bool {
         !matches!(self.state, State::Dead | State::Respawn | State::Grabbed | State::Out | State::Win)
             && self.inv == 0
             && self.blink == 0
+    }
+    /// The hitstun cancel rule that applies to this fighter right now: airborne in tumble with one configured.
+    pub fn hitstun_cancel(&self, g: &crate::data::global::Global) -> Option<crate::data::global::HitstunCancel> {
+        g.hitstun.ultimate.as_ref().and_then(|u| u.cancel).filter(|_| self.tumble && !self.ground)
     }
     /// Can take a new action this tick (before the state clock advances). Shared by buffering, frame advantage
     /// and the editor sandbox.
@@ -336,6 +350,9 @@ impl Fighter {
                 State::Shield => self.sd.stun <= 0,
                 State::Ledge => self.t.saturating_add(1) >= g.ledge.min_hang,
                 State::Knockdown => self.t >= g.knockdown.min_frames,
+                State::Hitstun => self
+                    .hitstun_cancel(g)
+                    .is_some_and(|c| self.t.saturating_add(1) >= c.air_dodge_after.min(c.aerial_after)),
                 _ => false,
             }
     }
@@ -544,6 +561,8 @@ impl World {
                     paralyze_used: false,
                     charges: crate::charges::full(data, di),
                     charge_wait: vec![0; data.fighters[di].charges.len()],
+                    launch: (0., 0.),
+                    tech_lock: 0,
                 }
             })
             .collect();

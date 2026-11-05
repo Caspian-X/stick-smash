@@ -525,8 +525,8 @@ fn nosferatu_capture_window_and_whiff_recovery() {
     let (active, first) = hit_frames("dspec");
     assert_eq!(active, vec![0, 1, 2, 3], "grabboxes run the source's four frames (15-18)");
     assert_eq!(first, 14, "capture starts on engine frame 14");
-    // The whiff branch lasts the source's 49 frames; catching on the first capture tick also totals 49 (a later
-    // capture tick runs up to three ticks longer, because the drain length is fixed).
+    // The whiff branch lasts the source's 49 frames; catching on the first capture tick also totals 49 plus the
+    // capture hitlag (a later capture tick runs up to three ticks longer, because the drain length is fixed).
     let mut whiff = start(&d, "dspec");
     whiff.fighters[1].x = 1300.;
     let mut ticks = 0;
@@ -536,7 +536,7 @@ fn nosferatu_capture_window_and_whiff_recovery() {
     }
     assert_eq!(ticks, 49, "whiffed Nosferatu ends after the source's 49 frames");
     // A real catch goes through collision, so it needs the normal step: the drain branch starts on the capture
-    // tick and the whole move lasts 49 frames when caught on the first window tick (up to 52 on the last).
+    // tick and the whole move lasts 49 frames plus hitlag when caught on the first window tick (up to 52 on the last).
     let catch = |dx: f64, enter: u32| -> (u32, bool) {
         let mut w = start(&d, "dspec");
         w.fighters[1].x = 640. + dx;
@@ -560,12 +560,16 @@ fn nosferatu_capture_window_and_whiff_recovery() {
         }
         (ticks, drained)
     };
+    // The capture contact freezes Throbbin too (Ultimate hitlag: floor(floor(1 × 0.65 + 6) × 0.2) = 1 frame).
+    let capture = &d.fighter("throbbin").unwrap().moves.dspec.timeline(1)[1].hitboxes[0];
+    let lag = sim::combat::hitlag_of(&d, capture, 0.);
+    assert_eq!(lag, 1);
     let (early, drained) = catch(50., 0);
     assert!(drained, "a catch enters the drain branch");
-    assert_eq!(early, 49, "caught on the first capture tick totals the source's 49 frames");
+    assert_eq!(early, 49 + lag, "caught on the first capture tick totals the source's 49 frames plus hitlag");
     let (late, drained_late) = catch(50., 16);
     assert!(drained_late, "a late catch still drains");
-    assert!((50..=52).contains(&late), "a later catch runs 50-52 ticks (got {late})");
+    assert!((50 + lag..=52 + lag).contains(&late), "a later catch runs 50-52 ticks plus hitlag (got {late})");
 }
 
 /// Durations come from the pinned UFD totals (the number of frames in the move). Hit windows shift by one

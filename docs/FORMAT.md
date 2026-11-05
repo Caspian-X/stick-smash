@@ -63,6 +63,38 @@ Hitstun, launch decay, stage dimensions and DI remain shared game rules, so matc
 alone does not promise matching SSBU KO percentages. Weight interactions and charge strength deliberately
 follow the new shared equation and still need human playtesting.
 
+### Hitstun and launch (`global.hitstun.ultimate`)
+
+When `hitstun.ultimate` is present, a hit's launch velocity (knockback × angle, after ground bounce; autolink pulls
+too) is stored on the fighter as a separate launch vector. Reference knockback is launch px /
+`knockback.ultimate.launchSpeed` (1 without it). Each airborne hitstun tick:
+
+- the launch vector's magnitude shrinks by `launchDecay` × launchSpeed px (reference units per frame; Ultimate
+  0.051 / 0.03 = 1.7, ≈ 0.238 px at launchSpeed 0.14), never past zero;
+- the fighter's own component gets the victim's `stats.gravity`, capped at its `stats.fallSpeed`, and the stick
+  accelerates it by `hitstun.driftAccel` up to `stats.airSpeed` (otherwise `movement.airDrag`);
+- `vx`/`vy` stay the sum, so a spike keeps its full speed with no fall cap on the launch part.
+
+On the ground (non-tumble landing) the launch is cleared and `groundDrag` / `driftAccel` apply to the whole
+velocity as before. The launch survives hitstun ending in the air: the `air` state keeps decaying it, with drift,
+drag, fast fall and the fall cap acting on the own component only. Landing, a wall or ceiling (that component),
+an air jump, a ledge grab, a new hit and any state other than `hitstun`/`air` clear it; remaining velocity then
+belongs to the new state's physics. DI rotates the launch vector with the velocity.
+
+Hitstun = floor(floor(reference × `perReferenceKnockback`) + `base`) × hitstunMult + hitstunAdd (Ultimate 0.4 and
+0). Tumble starts above `tumbleThreshold` reference knockback (Ultimate 80; also picks the Sakurai ground angle).
+Hitlag uses `global.hitlag` (Ultimate: base 6, perDamage 0.65, perKnockback 0, max 30 before hitlagMult).
+Optional `cancel: { airDodgeAfter, aerialAfter }` lets a tumbling airborne fighter air dodge / start an aerial
+after that many hitstun ticks; it is absent (off) pending verification against Ultimate.
+
+Without `hitstun.ultimate` (TS traces) hitstun is floor(floor(launch px × `perKnockback`) + `base`) × mult + add,
+tumble compares launch px with `knockback.tumbleThreshold`, and launches fly with `hitstun.gravity` capped at
+`maxFall` and multiplicative `airDrag`.
+
+`tech.lockout` (frames, 0 = off, bundled 40): a shield press in hitstun starts a lockout during which further
+hitstun presses don't count toward teching; a successful tech clears it. A single press within `tech.window`
+frames before a tumble landing still techs; mashing from far out does not.
+
 ## Moves
 
 Moves sit in fixed slots (`jab` … `dspec`, optional `sspec`). A move is a list of **phases**, starting with the
@@ -419,7 +451,7 @@ ledge options require `0 < a < b <= end` (jump allows `a == b`). Ground `underDe
 respawn `descendFrames` must be positive. Projectile lifetimes must fit a positive `i32`. Throw/projectile legacy static
 hitbox geometry is ignored (explicit `geometry` is rejected); only projectile `r` and active melee hitbox radii must be positive.
 Global validation errors abort loading; invalid fighter/stage packages are skipped with a file and JSON path.
-Global rules are stricter than before: `hitstun.gravity` / `maxFall`, `shield.max`, `shield.breakGravity` /
+Global rules are stricter than before: `hitstun.gravity` / `maxFall`, `hitstun.ultimate.launchDecay`, `shield.max`, `shield.breakGravity` /
 `breakMaxFall`, `knockback.chargeDamageDivisor` and `hitTypes.windbox.maxSpeed` must be positive, every
 `ai.thresholds` value is range-checked, and `render.select`, `render.interpolate` and `render.hud.look`
 presentation knobs (durations, scales, jump distances) are rejected when out of range.

@@ -257,8 +257,10 @@ fn di_bends_the_launch_once_at_hitlag_end_and_replays() {
     assert!(acts.iter().any(|a| matches!(a, Action::Influence(n) if *n != 0)));
     let angle = |f: &sim::world::Fighter| libm::atan2(-f.vy, f.vx);
     assert!(angle(&bent.fighters[0]) < angle(&none.fighters[0]));
-    let speed = |f: &sim::world::Fighter| libm::hypot(f.vx, f.vy);
-    assert!((speed(&bent.fighters[0]) - speed(&none.fighters[0])).abs() < 0.2);
+    // DI turns the launch without changing its speed; gravity and drift add separately.
+    let speed = |f: &sim::world::Fighter| libm::hypot(f.launch.0, f.launch.1);
+    assert!(speed(&none.fighters[0]) > 0.);
+    assert!((speed(&bent.fighters[0]) - speed(&none.fighters[0])).abs() < 1e-9);
     // Restored snapshot replays identically.
     tick(&mut copy, &d, inp(127, -127, 0));
     assert_eq!(copy.fighters[0], bent.fighters[0]);

@@ -25,6 +25,16 @@ iroh datagrams; the networking stack is not a settled decision.
 - **Units.** Keep TS units: stage pixels, y down, velocities in px/frame, 60 Hz, `f64` + `libm`. Convert to Bevy's y-up world only when rendering.
 - **Multiplayer.** Local multiplayer + CPUs first. Keep simulation state and inputs suitable for eventual rollback; see "Status and next" for the proposed networking stack.
 
+**Launch model** (`hitstun.ultimate`, off in TS traces): a launch is a separate vector that loses a fixed
+`launchDecay` per frame (Ultimate's linear decay, in reference knockback units) while the victim's own gravity,
+fall speed and drift act on a second component, so horizontal travel grows with the square of knockback, spikes
+are not fall-capped and floaty fighters stay up longer. It persists through hitstun and the air state after it
+and is cleared by landing, ledges, air jumps and other states. Hitstun is 0.4 × reference knockback, tumble starts
+above 80, hitlag is floor(damage × 0.65 + 6) capped at 30, and `tech.lockout` stops mashed techs. An optional
+hitstun cancel exists but is off until verified. Launch speed (`launchSpeed` 0.14) was raised under the old
+multiplicative drag, so KO percents moved earlier with this change; blast zones and launch speed have not been
+retuned for it.
+
 The walk/run transition uses separate entry and release tilt thresholds (`gait.runThreshold` and
 `walkThreshold`) so pushing farther works after either a slow tilt or a flick, and easing off restores
 walking without oscillation. `gait.dashLock` applies command-specific initial-dash restrictions: the

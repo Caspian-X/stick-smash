@@ -152,9 +152,26 @@ pub fn knockback(d: &GameData, b: &Hitbox, pct: f64, weight: f64) -> f64 {
     }
     (if b.set_kb { b.bkb } else { b.bkb + pct * b.kbg * d.global.knockback.kb_percent_scale }) * weight
 }
+/// Launch pixels per reference knockback unit (1 without `knockback.ultimate`).
+pub fn reference_scale(d: &GameData) -> f64 {
+    d.global.knockback.ultimate.as_ref().map_or(1., |k| k.launch_speed)
+}
+/// Hitstun frames for a launch of `kb` pixels/tick.
 pub fn hitstun_of(d: &GameData, b: &Hitbox, kb: f64) -> i32 {
     let h = &d.global.hitstun;
-    libm::floor((libm::floor(kb * h.per_knockback) + h.base) * b.hitstun_mult + b.hitstun_add) as i32
+    let stun = match &h.ultimate {
+        // The epsilon keeps the pixel → reference round trip (80 → 79.999…) from losing a frame.
+        Some(u) => libm::floor(kb / reference_scale(d) * u.per_reference_knockback + 1e-9) + u.base,
+        None => libm::floor(kb * h.per_knockback) + h.base,
+    };
+    libm::floor(stun * b.hitstun_mult + b.hitstun_add) as i32
+}
+/// A launch of `kb` pixels/tick tumbles (can tech, lands in knockdown).
+pub fn tumbles(d: &GameData, kb: f64) -> bool {
+    match &d.global.hitstun.ultimate {
+        Some(u) => kb / reference_scale(d) > u.tumble_threshold + 1e-9,
+        None => kb > d.global.knockback.tumble_threshold,
+    }
 }
 pub fn hitlag_of(d: &GameData, b: &Hitbox, kb: f64) -> u32 {
     let h = &d.global.hitlag;
@@ -170,7 +187,7 @@ pub fn launch_angle(d: &GameData, b: &Hitbox, kb: f64, ground: bool) -> f64 {
             let s = &d.global.hit_types.sakurai;
             if !ground {
                 s.air
-            } else if kb > d.global.knockback.tumble_threshold {
+            } else if tumbles(d, kb) {
                 s.ground_high
             } else {
                 s.ground_low
@@ -264,8 +281,7 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
         && let Some(rule) = &ht.bury
     {
         vic.set_state(State::Buried);
-        let scale = g.knockback.ultimate.as_ref().map_or(1., |k| k.launch_speed);
-        let reference = knockback(d, b, vic.dmg, 1.) / scale;
+        let reference = knockback(d, b, vic.dmg, 1.) / reference_scale(d);
         vic.sd.n = libm::ceil(rule.base_frames + vic.dmg * rule.per_percent + reference * rule.per_knockback)
             .min(rule.max_frames);
         vic.vx = 0.;
@@ -279,21 +295,19 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     if vic.state == State::Buried
         && grounded
         && let Some(rule) = &ht.bury
+        && kb / reference_scale(d) < rule.release_threshold
     {
-        let scale = g.knockback.ultimate.as_ref().map_or(1., |k| k.launch_speed);
-        if kb / scale < rule.release_threshold {
-            w.sfx("hit");
-            return;
-        }
+        w.sfx("hit");
+        return;
     }
     if b.kind == HitType::Paralyze
         && !vic.paralyze_used
         && let Some(rule) = &ht.paralyze
     {
         let reference = knockback(d, b, vic.dmg, 1.);
-        let scale = g.knockback.ultimate.as_ref().map_or(1., |k| k.launch_speed);
-        vic.lag =
-            libm::floor((reference / scale * b.hitlag_mult + rule.extra_frames).min(f64::from(rule.max_frames))) as u32;
+        vic.lag = libm::floor(
+            (reference / reference_scale(d) * b.hitlag_mult + rule.extra_frames).min(f64::from(rule.max_frames)),
+        ) as u32;
         vic.paralyze_used = true;
         vic.flash = vic.lag;
     }
@@ -341,8 +355,11 @@ pub fn apply_hit(w: &mut World, d: &GameData, v: usize, b: &Hitbox, source: HitS
     vic.ground = false;
     vic.surf = None;
     vic.set_state(State::Hitstun);
+    if g.hitstun.ultimate.is_some() {
+        vic.launch = (vic.vx, vic.vy);
+    }
     vic.hitstun = hitstun_of(d, b, kb);
-    vic.tumble = b.kind != HitType::Autolink && kb > g.knockback.tumble_threshold;
+    vic.tumble = b.kind != HitType::Autolink && tumbles(d, kb);
     let (x, y, lag) = (vic.x, vic.y, vic.lag);
     w.fx.push(Fx::Burst {
         x: hx,
@@ -418,7 +435,8 @@ pub fn credit_heal(w: &mut World, i: usize, amount: f64) {
     });
 }
 /// Directional influence, read once when the victim's hitlag ends: rotate the launch toward the stick by up to
-/// `di.maxAngle`, scaled by how perpendicular the stick is to the launch. Speed is unchanged.
+/// `di.maxAngle`, scaled by how perpendicular the stick is to the launch. Speed is unchanged; the decaying launch
+/// vector turns with it.
 pub fn influence(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, (x, y): (f64, f64)) {
     let di = &d.global.di;
     let (speed, m) = (libm::hypot(f.vx, f.vy), libm::hypot(x, y));
@@ -430,6 +448,8 @@ pub fn influence(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, (x, y):
     let a = cross * di.max_angle * std::f64::consts::PI / 180.;
     let (c, s) = (libm::cos(a), libm::sin(a));
     (f.vx, f.vy) = (f.vx * c - f.vy * s, f.vx * s + f.vy * c);
+    let (lx, ly) = f.launch;
+    f.launch = (lx * c - ly * s, lx * s + ly * c);
     let deg = libm::round(a * 180. / std::f64::consts::PI) as i32;
     if deg != 0 {
         crate::actions::accept(w, i, crate::actions::Action::Influence(deg));

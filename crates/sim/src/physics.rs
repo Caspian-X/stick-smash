@@ -186,8 +186,42 @@ pub fn resolve_solids(d: &GameData, s: &crate::data::Stage, f: &mut Fighter, px:
 }
 pub fn fall(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, edge: bool, cap: Option<f64>) {
     let s = &d.fighters[f.data].stats;
-    f.vy = (f.vy + s.gravity).min(cap.unwrap_or(s.fall_speed));
+    let cap = cap.unwrap_or(s.fall_speed);
+    let l = f.launch;
+    if l == (0., 0.) {
+        f.vy = (f.vy + s.gravity).min(cap);
+        integrate(w, d, i, f, edge);
+        return;
+    }
+    // Gravity and the fall cap act on the fighter's own velocity; the launch decays on top of it.
+    let next = decay_launch(d, l);
+    f.vy = (f.vy - l.1 + s.gravity).min(cap) + next.1;
+    f.vx += next.0 - l.0;
+    f.launch = next;
+    let v = (f.vx, f.vy);
     integrate(w, d, i, f, edge);
+    // Landing ends the launch; a wall or ceiling stops its component.
+    if f.ground {
+        f.launch = (0., 0.);
+    } else {
+        if f.vx != v.0 {
+            f.launch.0 = 0.;
+        }
+        if f.vy != v.1 {
+            f.launch.1 = 0.;
+        }
+    }
+}
+/// Shrink a launch vector's magnitude by `hitstun.ultimate.launchDecay` (reference units → pixels), never past zero.
+pub fn decay_launch(d: &GameData, (x, y): (f64, f64)) -> (f64, f64) {
+    let k = d.global.hitstun.ultimate.as_ref().map_or(0., |u| u.launch_decay * crate::combat::reference_scale(d));
+    let speed = libm::hypot(x, y);
+    if speed <= k {
+        (0., 0.)
+    } else {
+        let r = (speed - k) / speed;
+        (x * r, y * r)
+    }
 }
 /// Fast fall on a fresh down press (or one within `fastFallBuffer` ticks, still held) once falling. True when it
 /// starts.
@@ -214,6 +248,12 @@ pub fn air_drift(d: &GameData, f: &mut Fighter, x: f64, acc: f64, drag: f64) {
 pub fn air_phys(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, x: f64, acc: f64) {
     let m = &d.global.movement;
     let s = &d.fighters[f.data].stats;
+    // Drift, drag and fast fall act on the fighter's own velocity, not on what remains of a launch.
+    let l = f.launch;
+    if l != (0., 0.) {
+        f.vx -= l.0;
+        f.vy -= l.1;
+    }
     if x != 0. && acc != 0. && f.vx * sign(x) < s.air_speed * x.abs().min(1.) {
         air_drift(d, f, x, acc, 1.);
     } else {
@@ -229,6 +269,10 @@ pub fn air_phys(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Int
         && let Some(speed) = s.float_speed
     {
         cap = cap.min(speed);
+    }
+    if l != (0., 0.) {
+        f.vx += l.0;
+        f.vy += l.1;
     }
     fall(w, d, i, f, false, Some(cap));
 }
@@ -265,6 +309,7 @@ pub fn on_land(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, vy: f64) 
             f.hitstun = 0;
             f.tumble = false;
             if w.frame as i64 - f.last_sp <= i64::from(g.tech.window) {
+                f.tech_lock = 0;
                 if f.in_dir != 0. {
                     crate::states::roll(w, d, i, f, f.in_dir);
                 } else {

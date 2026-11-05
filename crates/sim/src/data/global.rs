@@ -104,7 +104,8 @@ pub struct Knockback {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ultimate: Option<UltimateKnockback>,
     pub kb_percent_scale: f64,
-    /// Knockback above this sends the victim tumbling (can tech, lands in knockdown).
+    /// Launch speed (px/tick) above which the victim tumbles (can tech, lands in knockdown). Replaced by
+    /// `hitstun.ultimate.tumbleThreshold` when that model is on.
     pub tumble_threshold: f64,
     /// Hitting a grounded victim downward bounces them up at this fraction.
     pub ground_bounce: f64,
@@ -125,7 +126,8 @@ pub struct UltimateKnockback {
     pub launch_speed: f64,
 }
 
-/// Hitstun = floor(knockback × perKnockback) + base, then per-hitbox hitstunMult/hitstunAdd.
+/// Legacy model: hitstun = floor(launch px × perKnockback) + base, then per-hitbox hitstunMult/hitstunAdd; launches
+/// fly under the shared gravity/maxFall with multiplicative airDrag. `ultimate` replaces all of that.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Hitstun {
@@ -134,12 +136,41 @@ pub struct Hitstun {
     pub gravity: f64,
     pub max_fall: f64,
     pub air_drag: f64,
+    /// Velocity multiplier per frame while in hitstun on the ground (both models).
     pub ground_drag: f64,
-    /// Horizontal drift you can add while in hitstun (per frame).
+    /// Horizontal drift you can add while in hitstun (per frame, both models).
     pub drift_accel: f64,
+    /// Ultimate-style decaying launch. Absent = the legacy model above (TS compatibility).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ultimate: Option<UltimateHitstun>,
 }
 
-/// Hitlag (freeze frames for both fighters) = min(max, floor(base + damage × perDamage + knockback × perKnockback)).
+/// The launch is a separate vector that shrinks linearly to zero; the victim's own gravity, fall speed and drift
+/// act on a second component. Knockback values here are reference units (launch px / `knockback.ultimate.launchSpeed`).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct UltimateHitstun {
+    /// Hitstun = floor(reference knockback × perReferenceKnockback) + base, then hitstunMult/hitstunAdd (Ultimate 0.4).
+    pub per_reference_knockback: f64,
+    pub base: f64,
+    /// Launch speed lost per frame, in reference knockback units (Ultimate: 0.051 decay / 0.03 speed per unit = 1.7).
+    pub launch_decay: f64,
+    /// Reference knockback above which the victim tumbles (Ultimate 80).
+    pub tumble_threshold: f64,
+    /// Out of tumble, allow an air dodge / aerial after this many frames of hitstun. Absent = never.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cancel: Option<HitstunCancel>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct HitstunCancel {
+    pub air_dodge_after: u32,
+    pub aerial_after: u32,
+}
+
+/// Hitlag (freeze frames for both fighters) = min(max, floor(base + damage × perDamage + knockback × perKnockback)),
+/// then × the hitbox's hitlagMult (floored). Ultimate: base 6, perDamage 0.65, perKnockback 0, max 30.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Hitlag {
@@ -299,6 +330,10 @@ pub struct Tech {
     pub window: u32,
     pub invuln: u32,
     pub frames: u32,
+    /// A shield press in hitstun that doesn't tech blocks further tech presses for this many frames (Ultimate 40),
+    /// so mashing cannot tech. 0 = off.
+    #[serde(default)]
+    pub lockout: u32,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
