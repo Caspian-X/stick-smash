@@ -199,7 +199,8 @@ ground or helpless in the air. `landing` goes to landing lag for `lag` frames. A
 `at: N` fires on frame N. `from`/`to` (inclusive) fire on a range. `from` alone fires from that frame on, and
 neither fires on every frame from 1. Frame-0 events must use `at: 0`. `every: K` also requires the world frame to
 be divisible by K. `if` restricts to `grounded`, `airborne` or `countered`. One event's actions run in this order:
-`mulVel`, `setVel`, `addVel`, `capFall`, `leaveGround`, `invuln`, `spawn`, `restore`, `detonate`, `sfx`, `fx`.
+`mulVel`, `setVel`, `addVel`, `capFall`, `leaveGround`, `invuln`, `spawn`, `item`, `restore`, `detonate`, `sfx`,
+`fx`. `item: "id"` puts one of the fighter's `items` in its hand (see Items).
 `restore: {"charge": "id", "uses": N}` restores uses capped at capacity while preserving a pending recharge
 until full. `detonate: ["c4"]` immediately explodes live owned explosives with those projectile ids;
 `detonate: []` selects every owned remote (`explosion.manual`) gadget, so a timed fuse such as a grenade is
@@ -330,6 +331,85 @@ a resting projectile retains its supporting surface and rides its motion delta. 
 counts elapsed ticks independently of life changes from batting, reflection and bounce fizzling. Proximity uses
 this age; fuse expiry still detonates even before arming.
 
+## Items
+
+Held items, Smash-style (`crates/sim/src/items.rs`). An item is defined per fighter under `items.<id>` and put in
+the fighter's hand by a move event's `item` (Duchess's Vegetable pluck). A fighter holds at most one; an `item`
+event while one is held does nothing.
+
+```json
+"items": {
+  "turnip": {
+    "name": "Turnip", "projectile": "turnip", "smashProjectile": "turnip_strong", "hold": [24, 56],
+    "throws": {
+      "forward": { "tilt": [11.4286, 3.3333], "smash": [14.2857, 3.5833] },
+      "back": { "tilt": [11.4286, 3.3333], "smash": [14.2857, 3.5833] },
+      "up": { "tilt": [0, 11.9048], "smash": [0, 14.7281] },
+      "down": { "tilt": [0, -11.9048], "smash": [0, -14.7281] },
+      "drop": [0, 0]
+    },
+    "speedDamage": 0.6, "rebound": [2.5, 6], "life": 600, "catch": true
+  }
+}
+```
+
+- `projectile` / `smashProjectile` name plain projectiles of the same package, with `bounce` (no article or
+  explosion). A tilt throw or a drop launches `projectile`, a smash throw `smashProjectile` (default `projectile`),
+  so the two strengths can carry different hits. The projectile's `shapes` draw the item in hand and on the floor;
+  its `r`, `gravity`, `maxFall` and `bounce` move the loose item.
+- `throws`: velocity (x forward, y up) by direction and strength. A back throw turns the fighter around first,
+  so its x points the new way. `drop` is letting go. The projectile's `maxFall` still caps downward speed, so a
+  down throw starts at most that fast.
+- `speedDamage`: damage added per px/tick of throw speed above the projectile's own `vel` speed (taken away
+  below it, never under zero). Ultimate's thrown-item damage `base − 0.4 + speed × 3` is 0.6 here; measured
+  against each projectile's own speed, the forward throws keep the projectile's authored damage.
+- `hold`: where a throw starts (fighter-local), and where the held item is drawn on named-joint figures (legacy
+  figures draw it at the front hand).
+- `rebound`: velocity a thrown item bounces off with when its hit connects (x back against its travel, y up).
+  Omit it and a hit uses the item up.
+- `life`: ticks a loose item stays in the world. `catch`: can be caught out of the air.
+- `toss`: optional `{ frames, release }` override of the shared throw timing.
+
+**Holding.** While holding, every action stays available (jumps, float, specials, shield, dodges, dash, walk,
+run, ledge) except attacks and aerials, which throw:
+
+| Input | Throw |
+| --- | --- |
+| Attack on the ground or in the air, neutral | forward tilt |
+| Attack with a held direction (button) | that direction, tilt (behind = back) |
+| Attack with a recent flick, the attack stick, attack + special, or out of a dash | that direction, smash |
+| Grab on the ground | as attack |
+| Grab in the air | drop |
+| Shield + attack / grab | drop (up smash out of shield: up smash throw) |
+| Jump + attack (short-hop aerial), jumpsquat attack | air throw by the aerial's direction; jumpsquat attack is an up smash throw |
+
+A throw is the `toss` state (`sd.kind` `f` / `b` / `u` / `d` / `drop`, `sd.n` 1 for smash): `global.items.toss`
+(`frames: 22`, `release: 5`, Ultimate's item throw) unless the item overrides it. Grounded, it slides with
+landing friction; airborne, it drifts like an attack and can fast-fall, and landing keeps the throw going. On
+state frame `release` the projectile spawns at `hold` with the throw's velocity, tagged with the item
+(`Projectile.item`), and the hand empties. The state animation is `toss.<kind>`, falling back to `toss`
+(`fighters/base` has a generic overhand one; Duchess overrides it).
+
+**Loose items.** A thrown item becomes a loose item (`World.items`) when it touches the floor (it loses its hitbox
+there, as in Smash), when its hit connects (with `rebound`), or when its life runs out or it clashes. Loose items
+fall with the projectile's gravity, bounce with its `bounce.restitution` / `friction` until the rebound would be
+slower than `items.settle`, rest on (and ride) surfaces, bounce off block sides, and vanish after `life` ticks or
+outside the blast zones. They never hit anyone.
+
+**Pickup and catch.** With an empty hand, attack or grab on the ground picks up a landed item whose centre is in
+`items.pickup` (`landing` state with kind `pickup` for `pickupLag` ticks, animation `pickup`). Attack, grab or (in
+the air) an air-dodge press catches an item in flight (loose and falling, or still thrown) whose centre is in
+`items.catch`, with no lag; a catch replaces the air dodge or attack. Anyone can take anyone's item, but a
+thrower cannot catch its own throw for `items.regrab` ticks. Being KO'd loses the item.
+
+**CPU.** A CPU holding an item walks toward its target and smash-throws it forward once the target is within
+`items.cpuRange` (and `ai.thresholds.attackHeight`), or after holding it `cpuHold` ticks. CPUs do not seek items
+out, but an attack or grab near a landed one picks it up.
+
+Snapshot state: `Fighter.item` (`Held { data, id }`: package index and item id), `Projectile.item`,
+`World.items` (`LooseItem`) and `AiState.item_t`; all empty without items, so content without them behaves as
+before. SIM_VERSION -sim-36.
+
 ## Visuals
 
 - **Poses** (`poses.<name>`): joints `head, shoulder, hip, elbowF, handF, elbowB, handB, kneeF, footF, kneeB,
@@ -346,7 +426,8 @@ this age; fuse expiry still detonates even before arming.
   `air.rise`, `air.fall`, `air.flip`, `helpless`, `shield`, `shieldDrop`, `roll`, `spot`, `airdodge`, `hold`,
   `pummel`, `throw.f`, `throw.b`, `throw.u`,
   `throw.d`, `grabbed`, `hitstun`, `tumble`, `shieldbreak`, `knockdown`, `getup`, `getupAttack`, `tech`, `ledge`,
-  `climb`, `ledgeAttack`, `ledgeRoll`, `ledgeJump`, `dizzy`, `win`, `respawn`.
+  `climb`, `ledgeAttack`, `ledgeRoll`, `ledgeJump`, `dizzy`, `win`, `respawn`, `toss` (optional `toss.f`, `toss.b`,
+  `toss.u`, `toss.d`, `toss.drop`), `pickup` (optional; falls back to `landing`).
   `walk`, `crawl`, `turn` and `brake` are optional authored gait clips; a package without them keeps the
   legacy `idle`/`run`/`crouch` selection. `turn` and `brake` sample the gait clock (`gait_t`, reset by every
   gait change), not the idle state clock, so the one-shot transition starts at its first key after any idle age;
@@ -940,7 +1021,11 @@ while not rising, or a jump press with down held (instead of the air jump), star
 started during the float keeps it (the float continues through the aerial and after it); fast fall is ignored while
 floating. Releasing jump, the frame limit, an air jump, a hit, a ledge, any non-aerial move or other state, and
 landing end it; only landing makes it available again (`Fighter::floating` / `float_used` in the snapshot). The air
-jump stays available. This replaced `stats.floatSpeed` (a descent cap while jump was held, with no duration or latch);
+jump stays available. Optional `groundHeight` (px, default 0 = off) adds a ground float: leaving jumpsquat with down
+held and the float unused lifts the fighter `groundHeight` above the ground with no vertical speed and starts the
+float at once, instead of a short or full hop (the jump button with down, or a tap jump pulled down before
+jumpsquat ends; the float then runs as above, so with tap jump alone it ends as soon as the stick leaves up and
+jump is not held). SIM_VERSION -sim-34. This replaced `stats.floatSpeed` (a descent cap while jump was held, with no duration or latch);
 SIM_VERSION -sim-33.
 
 `restore`, `detonate` and `explosion.manual` add no rollback snapshot state; content that omits them keeps its

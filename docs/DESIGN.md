@@ -104,6 +104,12 @@ Choices made on purpose; later tuning should not "fix" them back without a reaso
 - **Ledge trump** (`ledge.trump`) with our own push, cooldown and a minimum hang before an occupant can be trumped, so simultaneous grabs don't trade.
 - **Float** (`stats.float`): holding jump at the top of a jump floats, as well as Ultimate's down + jump; no float
   cancel into fast fall (release jump first).
+- **Held items** (`items`): one shared 22-frame throw (release on frame 6) for every direction and strength
+  rather than per-item, per-direction animations; Z on the ground throws (by direction), Z in the air and shield +
+  attack drop; dash throws are forward smash throws. Pickup is a 6-tick lag on the ground and instant in the air.
+  No glide toss, item tossing out of a dodge roll, or attacking with a held item (battering items); a grounded
+  down throw lands at once (the item loses its hitbox on the floor) instead of bouncing up. Down throws start at
+  the projectile's fall cap. A thrown item that hits a shield rebounds like a hit.
 
 Calibration values set to Ultimate in the defensive-window pass (Ultimate frame = state clock + 1):
 - Dodge windows: roll 30 frames, intangible 3–14 (Ultimate 4–15); spot dodge 26, 2–16 (3–17); neutral air dodge
@@ -136,6 +142,18 @@ The five TS kinds (`projectile`, `gordo`, `groundPound`, `counter`, `superJump`)
 phases. Projectiles are data too: spawn velocity, gravity, optional `bounce`, lifetime, hitbox, optional `bat`,
 and `reflectVy` for counter reflections. No scripting language is needed; an extra event type can extend the
 model later. See [FORMAT.md](FORMAT.md#moves) for exact frame timing, events and transition semantics.
+
+### Held items
+Items are an engine capability, not a fighter feature: a fighter package declares `items` (a projectile per throw
+strength, throw velocities by direction, a lifetime, catchability), a move event's `item` puts one in hand, and
+everything after that is shared (`sim::items`, FORMAT.md "Items"). Holding an item keeps every movement and defensive
+option and specials; attacks and aerials become throws (the `toss` state), as in Ultimate. A thrown item is an
+ordinary projectile tagged with the item, so hits, shields, counters, reflection and clashes reuse the projectile
+rules; when it lands, connects or expires it becomes a loose world item (`World::items`) that falls, rests on
+surfaces and can be picked up or caught by anyone. Damage per throw strength comes from the projectiles, with an
+optional speed term (`speedDamage`) for Ultimate's speed-scaled item damage. Items live in fighter packages for
+now (Duchess's turnip is the first); a match item mode would add global item definitions and spawning on top of
+the same held / thrown / loose model.
 
 ### Visuals
 - **Skeleton:** the current stick figure (head, shoulders, hips, elbows/hands, knees/feet, plus body rotation/pivot). Proportions are per fighter.

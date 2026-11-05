@@ -120,7 +120,7 @@ pub enum State {
     Climb,
     Hold,
     Throw,
-    /// Throwing a held item (`sd.kind`: `f`, `b`, `u`, `d` or `drop`; `sd.n` 1 for a smash throw).
+    // Throwing a held item (`sd.kind`: `f`, `b`, `u`, `d` or `drop`; `sd.n` 1 for a smash throw).
     Toss,
     Grabbed,
     Shieldbreak,

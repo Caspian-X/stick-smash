@@ -527,7 +527,8 @@ fn draw_shape_palette(
 
 /// A loose item: its projectile's shapes, unrotated, centred at `(x, y)`.
 pub fn draw_item(cv: &mut Canvas, d: &GameData, it: &sim::world::LooseItem, x: f64, y: f64, frame: u64) {
-    let Some(pd) = d.fighters.get(it.item.data).and_then(|p| Some(&p.projectiles[&p.items.get(&it.item.id)?.projectile]))
+    let Some(pd) =
+        d.fighters.get(it.item.data).and_then(|p| Some(&p.projectiles[&p.items.get(&it.item.id)?.projectile]))
     else {
         return;
     };

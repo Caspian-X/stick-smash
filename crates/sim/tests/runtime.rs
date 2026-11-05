@@ -292,5 +292,7 @@ fn cpu_match_golden_world_hash() {
     // content unification (speeds, launch 0.15, Battlefield-sized Arena) changes it again (content only). The
     // Ultimate calibration pass (-sim-33: jump initial height, upward-launch gravity, Sakurai ramp, hitlag rounding,
     // `fkb`, float, per-fighter traction) adds `rise` / `top_launch` / `floating` / `float_used` and moves it again.
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x516185616a1deed4);
+    // -sim-34 (ground float, Duchess's braking Bomber) leaves this scenario unchanged. Held items (-sim-36) add
+    // `item` / `item_t` to fighters, `item` to projectiles and `items` to the World (Debug text only; no item plays).
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x7d15b0a190f6c2ca);
 }

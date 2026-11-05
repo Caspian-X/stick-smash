@@ -128,7 +128,7 @@ Pick a fighter in the top bar (or **+ New fighter…**: an id, a name and which 
   drag to scrub. Space plays, ← → (or , .) step a frame (⇧ ×10), Home / End jump, [ ] go to the previous / next phase,
   L loops, ↑ ↓ select the previous / next visible browser entry.
 - **Inspector** (right): every field of the selection (hitbox, phase, move, throw, pose, stats), with problems shown
-  next to the field. Data without a hand-made inspector (projectiles, attachments, effects, style, AI…) gets forms
+  next to the field. Data without a hand-made inspector (projectiles, items, attachments, effects, style, AI…) gets forms
   generated from the schema, with the field docs as hover help. A value that doesn't parse stays red and doesn't
   reach the fighter.
 - **▶ Test** (⌘↵) opens training with your fighter against the dummy you last set up in training.

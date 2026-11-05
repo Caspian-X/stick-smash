@@ -749,10 +749,7 @@ fn training() -> Vec<Step> {
     v.push(Step::Set(0, Special, false));
     v.push(Step::Set(0, Down, false));
     // The pluck leaves a held turnip; attack throws it (the shared item `toss` state).
-    v.push(Step::Fast(
-        |m, _, _| m.world.fighters[0].item.is_some() && m.world.fighters[0].state == FState::Idle,
-        200,
-    ));
+    v.push(Step::Fast(|m, _, _| m.world.fighters[0].item.is_some() && m.world.fighters[0].state == FState::Idle, 200));
     v.push(Step::Set(0, Attack, true));
     v.push(Step::Fast(|m, _, _| m.world.fighters[0].state == FState::Toss && m.world.fighters[0].t >= 4, 60));
     v.push(Step::Shot("35k-duchess-turnip-toss", Screen::Match));

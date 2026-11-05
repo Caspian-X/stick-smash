@@ -112,6 +112,8 @@ fn forward_tilt_throw_launches_the_turnip_at_tilt_speed() {
     close(p.x, f.x + 24. + 11.4286);
     close(p.vy, -3.3333 + 0.2667);
     idle(&mut w, &d, 16);
+    assert_eq!(w.fighters[0].state, State::Toss);
+    tick(&mut w, &d, Input::default());
     assert_eq!(w.fighters[0].state, State::Idle, "the throw is 22 frames");
 }
 
@@ -146,7 +148,8 @@ fn up_down_back_and_drop_throws_use_their_own_velocities() {
         throw(&mut w, &d, kind, smash);
         let p = thrown(&w);
         close(p.vx, v.0);
-        close(p.vy, v.1 + 0.2667);
+        // A downward throw starts at the projectile's fall cap (`maxFall` 7.5).
+        close(p.vy, f64::min(v.1 + 0.2667, 7.5));
         close(p.hit.damage, damage);
         if kind == "b" {
             assert_eq!(w.fighters[0].face, -1., "a back throw turns around");
@@ -214,7 +217,17 @@ fn a_thrown_item_lands_loose_and_is_picked_up() {
     assert_eq!((w.fighters[0].state, w.fighters[0].sd.kind.as_str()), (State::Landing, "pickup"));
     // Loose items expire.
     let mut w = setup(&d);
-    w.items.push(LooseItem { item: turnip(&d), owner: 0, x: 700., y: FLOOR - 9., vx: 0., vy: 0., surf: Some(0), life: 3, age: 0 });
+    w.items.push(LooseItem {
+        item: turnip(&d),
+        owner: 0,
+        x: 700.,
+        y: FLOOR - 9.,
+        vx: 0.,
+        vy: 0.,
+        surf: Some(0),
+        life: 3,
+        age: 0,
+    });
     idle(&mut w, &d, 3);
     assert!(w.items.is_empty());
 }
@@ -226,7 +239,17 @@ fn items_in_flight_are_caught_with_grab_attack_or_air_dodge() {
         // A falling loose item in front of an airborne fighter.
         let mut w = setup(&d);
         airborne(&mut w, 0, 300.);
-        w.items.push(LooseItem { item: turnip(&d), owner: 1, x: 470., y: 250., vx: 0., vy: 2., surf: None, life: 600, age: 40 });
+        w.items.push(LooseItem {
+            item: turnip(&d),
+            owner: 1,
+            x: 470.,
+            y: 250.,
+            vx: 0.,
+            vy: 2.,
+            surf: None,
+            life: 600,
+            age: 40,
+        });
         assert_eq!(tick(&mut w, &d, press(buttons)), [Action::Catch], "buttons {buttons}");
         assert_eq!(w.fighters[0].item, Some(turnip(&d)));
         assert!(w.items.is_empty());
@@ -294,7 +317,11 @@ fn holding_keeps_jumps_float_shield_and_specials() {
 #[test]
 fn a_cpu_holding_an_item_throws_it() {
     let d = common::data();
-    let mut w = common::sandbox(&d, "arena", vec![PlayerConfig { cpu: Some(2), ..PlayerConfig::human("duchess") }, PlayerConfig::human("brawler")]);
+    let mut w = common::sandbox(
+        &d,
+        "arena",
+        vec![PlayerConfig { cpu: Some(2), ..PlayerConfig::human("duchess") }, PlayerConfig::human("brawler")],
+    );
     w.fighters[0].item = Some(turnip(&d));
     let mut tossed = false;
     for _ in 0..d.global.items.cpu_hold + 60 {
@@ -315,7 +342,17 @@ fn item_play_is_deterministic() {
     let d = common::data();
     let mut a = holding(&d);
     a.fighters[1].x = 700.;
-    a.items.push(LooseItem { item: turnip(&d), owner: 1, x: 500., y: 100., vx: 1., vy: 0., surf: None, life: 600, age: 0 });
+    a.items.push(LooseItem {
+        item: turnip(&d),
+        owner: 1,
+        x: 500.,
+        y: 100.,
+        vx: 1.,
+        vy: 0.,
+        surf: None,
+        life: 600,
+        age: 0,
+    });
     let mut b = a.clone();
     let script = |t: usize| match t {
         3 => Input { attack_stick: (127, 0), ..Default::default() },

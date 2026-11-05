@@ -64,6 +64,20 @@
     "replay": {
       "$ref": "#/$defs/Replay",
       "default": { "autoSaveCount": 10, "checkpointTicks": 300 }
+    },
+    "items": {
+      "$ref": "#/$defs/Items",
+      "description": "Held items: throw timing, pickup and catch reach, loose-item landing, CPU use.",
+      "default": {
+        "toss": { "frames": 22, "release": 5 },
+        "pickup": { "x1": -30.0, "x2": 45.0, "y1": -10.0, "y2": 40.0 },
+        "catch": { "x1": -35.0, "x2": 50.0, "y1": -10.0, "y2": 110.0 },
+        "pickupLag": 6,
+        "regrab": 15,
+        "settle": 1.5,
+        "cpuRange": 260.0,
+        "cpuHold": 180
+      }
     }
   },
   "required": [
@@ -3132,6 +3146,102 @@
         "autoSaveCount": { "type": "integer", "format": "uint", "minimum": 0, "default": 10, "x-unit": "count" },
         "checkpointTicks": { "type": "integer", "format": "uint64", "minimum": 0, "default": 300, "x-unit": "tick" }
       }
+    },
+    "Items": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "toss": {
+          "$ref": "#/$defs/Toss",
+          "description": "Item throw timing (Ultimate: the item leaves the hand on frame 6 of about 22).",
+          "default": { "frames": 22, "release": 5 }
+        },
+        "pickup": {
+          "$ref": "#/$defs/Rect",
+          "description": "Attack or grab on the ground picks up a landed item whose centre is in this box.",
+          "default": { "x1": -30.0, "x2": 45.0, "y1": -10.0, "y2": 40.0 }
+        },
+        "catch": {
+          "$ref": "#/$defs/Rect",
+          "description": "Attack, grab or (in the air) air dodge catches an item in flight whose centre is in this box.",
+          "default": { "x1": -35.0, "x2": 50.0, "y1": -10.0, "y2": 110.0 }
+        },
+        "pickupLag": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Lag after a ground pickup (`landing` state, kind `pickup`).",
+          "default": 6,
+          "x-unit": "tick"
+        },
+        "regrab": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks before a fighter can catch an item it threw.",
+          "default": 15,
+          "x-unit": "tick"
+        },
+        "settle": {
+          "type": "number",
+          "format": "double",
+          "description": "A landing loose item comes to rest when it would bounce back up slower than this.",
+          "default": 1.5,
+          "x-unit": "px/tick",
+          "x-axis": "y"
+        },
+        "cpuRange": {
+          "type": "number",
+          "format": "double",
+          "description": "CPU: smash-throw a held item forward at an opponent closer than this (and within `ai.thresholds.attackHeight`).",
+          "default": 260.0,
+          "x-unit": "px",
+          "x-axis": "x"
+        },
+        "cpuHold": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "CPU: throw a held item toward the target after holding it this long.",
+          "default": 180,
+          "x-unit": "tick"
+        }
+      },
+      "description": "Shared held-item rules (`docs/FORMAT.md`, Items). Boxes are fighter-local (x forward, y up from the feet)."
+    },
+    "Toss": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "frames": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "The throw ends (actionable again).",
+          "x-unit": "tick"
+        },
+        "release": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "The item leaves the hand.",
+          "x-unit": "tick"
+        }
+      },
+      "required": ["frames", "release"],
+      "description": "Item throw timing, on the `toss` state clock (0 = the tick the throw starts)."
+    },
+    "Rect": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "x1": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "x2": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "x" },
+        "y1": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" },
+        "y2": { "type": "number", "format": "double", "x-unit": "px", "x-axis": "y" }
+      },
+      "required": ["x1", "x2", "y1", "y2"],
+      "description": "Axis-aligned box in fighter-local space (x forward, y up from the feet)."
     }
   }
 }

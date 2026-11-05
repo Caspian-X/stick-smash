@@ -47,6 +47,11 @@
       "type": "object",
       "additionalProperties": { "$ref": "#/$defs/ProjectilePartial" }
     },
+    "items": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/ItemPartial" },
+      "description": "Holdable items, granted by a move event's `item`. Holding one turns attacks into throws (`docs/FORMAT.md`,\nItems)."
+    },
     "fx": { "$ref": "#/$defs/FighterFxPartial", "description": "Effects for fighter-wide moments." },
     "style": { "$ref": "#/$defs/StylePartial" },
     "rig": {
@@ -193,10 +198,17 @@
       "additionalProperties": false,
       "properties": {
         "speed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "y" },
-        "frames": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" }
+        "frames": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
+        "groundHeight": {
+          "type": "number",
+          "format": "double",
+          "description": "Ground float: leaving jumpsquat with down held (float unused) starts the float at once, lifted this far\nabove the ground with no vertical speed, instead of a hop. 0 (default) disables it.",
+          "x-unit": "px",
+          "x-axis": "y"
+        }
       },
       "required": ["speed", "frames"],
-      "description": "`stats.float`. Starts in the air (normal `Air` control) once per airtime when jump is held while not rising,\nor on a jump press with down held. While it lasts the fighter's vertical speed is `speed` (0 = hover; positive\nsinks) and drift, aerials and the air jump work as usual; an aerial started during the float keeps it.\nReleasing jump, the frame limit, an air jump, fast fall, being hit, a ledge, any non-aerial state and landing end\nit; landing (not a ledge) makes it available again."
+      "description": "`stats.float`. Starts in the air (normal `Air` control) once per airtime when jump is held while not rising,\nor on a jump press with down held (from the ground too, with `groundHeight`). While it lasts the fighter's vertical speed is `speed` (0 = hover; positive\nsinks) and drift, aerials and the air jump work as usual; an aerial started during the float keeps it.\nReleasing jump, the frame limit, an air jump, fast fall, being hit, a ledge, any non-aerial state and landing end\nit; landing (not a ledge) makes it available again."
     },
     "Body": {
       "type": "object",
@@ -325,6 +337,7 @@
         "climb",
         "hold",
         "throw",
+        "toss",
         "grabbed",
         "shieldbreak",
         "dizzy",
@@ -1147,6 +1160,10 @@
           "type": ["string", "null"],
           "description": "Spawn a projectile by id (from the fighter's `projectiles`)."
         },
+        "item": {
+          "type": ["string", "null"],
+          "description": "Put this item (from the fighter's `items`) in its hand; nothing when it already holds one."
+        },
         "restore": {
           "anyOf": [
             { "$ref": "#/$defs/ChargeNeed" },
@@ -1165,7 +1182,7 @@
           "items": { "$ref": "#/$defs/Fx" }
         }
       },
-      "description": "Frame-scoped actions. Use `at` for one frame, or `from`/`to` (inclusive) for a range. `from` alone means\nfrom there on; neither means every frame from 1. Actions in one event run in field order (velocity, then\n`leaveGround`, `invuln`, `spawn`, `restore`, `detonate`, `sfx`, `fx`); events on the same frame run in list order."
+      "description": "Frame-scoped actions. Use `at` for one frame, or `from`/`to` (inclusive) for a range. `from` alone means\nfrom there on; neither means every frame from 1. Actions in one event run in field order (velocity, then\n`leaveGround`, `invuln`, `spawn`, `item`, `restore`, `detonate`, `sfx`, `fx`); events on the same frame run in list order."
     },
     "Cond": {
       "oneOf": [
@@ -2302,6 +2319,135 @@
       },
       "required": ["width", "color"]
     },
+    "Item": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "Training label." },
+        "projectile": {
+          "type": "string",
+          "description": "Projectile (from `projectiles`, with `bounce`) a tilt throw or a drop launches. Its shapes draw the item;\nits radius, gravity, fall cap and bounce move the loose item."
+        },
+        "smashProjectile": {
+          "type": ["string", "null"],
+          "description": "Projectile a smash throw launches (default `projectile`)."
+        },
+        "hold": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Fighter-local point (x forward, y up) a throw starts from; also where the held item is drawn on figures\nwithout a front hand.",
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
+        },
+        "throws": { "$ref": "#/$defs/ItemThrows" },
+        "speedDamage": {
+          "type": "number",
+          "format": "double",
+          "description": "Damage added per px/tick of throw speed above the projectile's own `vel` speed (taken away below it),\nnever below zero. Ultimate's thrown-item damage adds 3 per unit/frame: 0.6 at 5 px per unit.",
+          "x-unit": "damage"
+        },
+        "rebound": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Velocity a thrown item bounces off with when its hit connects (x back against its travel, y up). Omit to use\nthe item up on a hit.",
+          "x-unit": "px/tick",
+          "x-axis": ["x", "y"]
+        },
+        "life": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks a loose item stays in the world.",
+          "x-unit": "tick"
+        },
+        "catch": {
+          "type": "boolean",
+          "description": "Can be caught out of the air (thrown or falling). A landed item can always be picked up."
+        },
+        "toss": {
+          "anyOf": [
+            { "$ref": "#/$defs/Toss" },
+            { "type": "null" }
+          ],
+          "description": "Throw timing for this item (default `global.items.toss`)."
+        }
+      },
+      "required": ["name", "projectile", "hold", "throws", "life"],
+      "description": "A holdable item (`items.<id>`), Smash-style. While it is held, attacks and aerials throw it (the `toss` state);\na thrown item is its `projectile` (smash throws: `smashProjectile`) launched at the throw's velocity. It turns\ninto a loose world item when it lands, connects or runs out of life, and a loose item can be picked up on the\nground or caught in the air by anyone."
+    },
+    "ItemThrows": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "forward": { "$ref": "#/$defs/ThrowSpeeds" },
+        "back": {
+          "$ref": "#/$defs/ThrowSpeeds",
+          "description": "The fighter turns around first, so x points the new way."
+        },
+        "up": { "$ref": "#/$defs/ThrowSpeeds" },
+        "down": { "$ref": "#/$defs/ThrowSpeeds" },
+        "drop": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Letting go: grab in the air, or attack / grab from shield.",
+          "x-unit": "px/tick",
+          "x-axis": ["x", "y"]
+        }
+      },
+      "required": ["forward", "back", "up", "down", "drop"],
+      "description": "Item throw velocities (x forward, y up) by direction and strength."
+    },
+    "ThrowSpeeds": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tilt": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "x-unit": "px/tick",
+          "x-axis": ["x", "y"]
+        },
+        "smash": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "x-unit": "px/tick",
+          "x-axis": ["x", "y"]
+        }
+      },
+      "required": ["tilt", "smash"]
+    },
+    "Toss": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "frames": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "The throw ends (actionable again).",
+          "x-unit": "tick"
+        },
+        "release": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "The item leaves the hand.",
+          "x-unit": "tick"
+        }
+      },
+      "required": ["frames", "release"],
+      "description": "Item throw timing, on the `toss` state clock (0 = the tick the throw starts)."
+    },
     "FighterFx": {
       "type": "object",
       "additionalProperties": false,
@@ -2646,9 +2792,16 @@
       "additionalProperties": false,
       "properties": {
         "speed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "y" },
-        "frames": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" }
+        "frames": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
+        "groundHeight": {
+          "type": "number",
+          "format": "double",
+          "description": "Ground float: leaving jumpsquat with down held (float unused) starts the float at once, lifted this far\nabove the ground with no vertical speed, instead of a hop. 0 (default) disables it.",
+          "x-unit": "px",
+          "x-axis": "y"
+        }
       },
-      "description": "`stats.float`. Starts in the air (normal `Air` control) once per airtime when jump is held while not rising,\nor on a jump press with down held. While it lasts the fighter's vertical speed is `speed` (0 = hover; positive\nsinks) and drift, aerials and the air jump work as usual; an aerial started during the float keeps it.\nReleasing jump, the frame limit, an air jump, fast fall, being hit, a ledge, any non-aerial state and landing end\nit; landing (not a ledge) makes it available again."
+      "description": "`stats.float`. Starts in the air (normal `Air` control) once per airtime when jump is held while not rising,\nor on a jump press with down held (from the ground too, with `groundHeight`). While it lasts the fighter's vertical speed is `speed` (0 = hover; positive\nsinks) and drift, aerials and the air jump work as usual; an aerial started during the float keeps it.\nReleasing jump, the frame limit, an air jump, fast fall, being hit, a ledge, any non-aerial state and landing end\nit; landing (not a ledge) makes it available again."
     },
     "BodyPartial": {
       "type": "object",
@@ -3496,6 +3649,131 @@
         }
       },
       "description": "Standby placement of a held article. The point follows the caster, so a held ball stays at the mouth\nwhile the fighter moves or turns."
+    },
+    "ItemPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "Training label." },
+        "projectile": {
+          "type": "string",
+          "description": "Projectile (from `projectiles`, with `bounce`) a tilt throw or a drop launches. Its shapes draw the item;\nits radius, gravity, fall cap and bounce move the loose item."
+        },
+        "smashProjectile": {
+          "type": ["string", "null"],
+          "description": "Projectile a smash throw launches (default `projectile`)."
+        },
+        "hold": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Fighter-local point (x forward, y up) a throw starts from; also where the held item is drawn on figures\nwithout a front hand.",
+          "x-unit": "px",
+          "x-axis": ["x", "y"]
+        },
+        "throws": { "$ref": "#/$defs/ItemThrowsPartial" },
+        "speedDamage": {
+          "type": "number",
+          "format": "double",
+          "description": "Damage added per px/tick of throw speed above the projectile's own `vel` speed (taken away below it),\nnever below zero. Ultimate's thrown-item damage adds 3 per unit/frame: 0.6 at 5 px per unit.",
+          "x-unit": "damage"
+        },
+        "rebound": {
+          "type": ["array", "null"],
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Velocity a thrown item bounces off with when its hit connects (x back against its travel, y up). Omit to use\nthe item up on a hit.",
+          "x-unit": "px/tick",
+          "x-axis": ["x", "y"]
+        },
+        "life": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "Ticks a loose item stays in the world.",
+          "x-unit": "tick"
+        },
+        "catch": {
+          "type": "boolean",
+          "description": "Can be caught out of the air (thrown or falling). A landed item can always be picked up."
+        },
+        "toss": {
+          "anyOf": [
+            { "$ref": "#/$defs/TossPartial" },
+            { "type": "null" }
+          ],
+          "description": "Throw timing for this item (default `global.items.toss`)."
+        }
+      },
+      "description": "A holdable item (`items.<id>`), Smash-style. While it is held, attacks and aerials throw it (the `toss` state);\na thrown item is its `projectile` (smash throws: `smashProjectile`) launched at the throw's velocity. It turns\ninto a loose world item when it lands, connects or runs out of life, and a loose item can be picked up on the\nground or caught in the air by anyone."
+    },
+    "ItemThrowsPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "forward": { "$ref": "#/$defs/ThrowSpeedsPartial" },
+        "back": {
+          "$ref": "#/$defs/ThrowSpeedsPartial",
+          "description": "The fighter turns around first, so x points the new way."
+        },
+        "up": { "$ref": "#/$defs/ThrowSpeedsPartial" },
+        "down": { "$ref": "#/$defs/ThrowSpeedsPartial" },
+        "drop": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Letting go: grab in the air, or attack / grab from shield.",
+          "x-unit": "px/tick",
+          "x-axis": ["x", "y"]
+        }
+      },
+      "description": "Item throw velocities (x forward, y up) by direction and strength."
+    },
+    "ThrowSpeedsPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tilt": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "x-unit": "px/tick",
+          "x-axis": ["x", "y"]
+        },
+        "smash": {
+          "type": "array",
+          "items": { "type": "number", "format": "double" },
+          "minItems": 2,
+          "maxItems": 2,
+          "x-unit": "px/tick",
+          "x-axis": ["x", "y"]
+        }
+      }
+    },
+    "TossPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "frames": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "The throw ends (actionable again).",
+          "x-unit": "tick"
+        },
+        "release": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "description": "The item leaves the hand.",
+          "x-unit": "tick"
+        }
+      },
+      "description": "Item throw timing, on the `toss` state clock (0 = the tick the throw starts)."
     },
     "FighterFxPartial": {
       "type": "object",

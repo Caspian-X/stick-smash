@@ -27,10 +27,7 @@
     "fastFallSpeed": 9.52,
     "traction": 0.555,
     "airFriction": 0.05,
-    "float": {
-      "speed": 0,
-      "frames": 150
-    }
+    "float": { "speed": 0, "frames": 150, "groundHeight": 10.0 }
   },
   "ai": {
     "reach": 74,
@@ -132,41 +129,17 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "stand"
-            },
-            {
-              "at": 0,
-              "pose": "slapIn",
-              "lerp": true
-            },
-            {
-              "at": 1,
-              "pose": "slapIn"
-            },
-            {
-              "at": 4,
-              "pose": "stand",
-              "lerp": true
-            }
+            { "at": 0, "pose": "stand" },
+            { "at": 0, "pose": "slapIn", "lerp": true },
+            { "at": 1, "pose": "slapIn" },
+            { "at": 4, "pose": "stand", "lerp": true }
           ],
           "events": [
-            {
-              "at": 1,
-              "sfx": "hit"
-            }
+            { "at": 1, "sfx": "hit" }
           ],
           "transitions": [
-            {
-              "on": "attackHeld",
-              "from": 6,
-              "to": "jab2"
-            },
-            {
-              "on": "timeout",
-              "to": "end"
-            }
+            { "on": "attackHeld", "from": 6, "to": "jab2" },
+            { "on": "timeout", "to": "end" }
           ]
         },
         {
@@ -211,30 +184,13 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "stand"
-            },
-            {
-              "at": 0,
-              "pose": "slapOut",
-              "lerp": true
-            },
-            {
-              "at": 2,
-              "pose": "slapOut"
-            },
-            {
-              "at": 5,
-              "pose": "stand",
-              "lerp": true
-            }
+            { "at": 0, "pose": "stand" },
+            { "at": 0, "pose": "slapOut", "lerp": true },
+            { "at": 2, "pose": "slapOut" },
+            { "at": 5, "pose": "stand", "lerp": true }
           ],
           "events": [
-            {
-              "at": 1,
-              "sfx": "hit"
-            }
+            { "at": 1, "sfx": "hit" }
           ]
         }
       ]
@@ -281,37 +237,16 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "stand"
-            },
-            {
-              "at": 4,
-              "pose": "kickLow",
-              "lerp": true
-            },
-            {
-              "at": 8,
-              "pose": "kickLow"
-            },
-            {
-              "at": 8,
-              "pose": "stand",
-              "lerp": true
-            }
+            { "at": 0, "pose": "stand" },
+            { "at": 4, "pose": "kickLow", "lerp": true },
+            { "at": 8, "pose": "kickLow" },
+            { "at": 8, "pose": "stand", "lerp": true }
           ],
           "events": [
-            {
-              "at": 6,
-              "sfx": "hit"
-            }
+            { "at": 6, "sfx": "hit" }
           ],
           "transitions": [
-            {
-              "on": "timeout",
-              "to": "late",
-              "preserveHits": true
-            }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ]
         },
         {
@@ -332,30 +267,13 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "stand"
-            },
-            {
-              "at": 0,
-              "pose": "kickLow",
-              "lerp": true
-            },
-            {
-              "at": 5,
-              "pose": "kickLow"
-            },
-            {
-              "at": 8,
-              "pose": "stand",
-              "lerp": true
-            }
+            { "at": 0, "pose": "stand" },
+            { "at": 0, "pose": "kickLow", "lerp": true },
+            { "at": 5, "pose": "kickLow" },
+            { "at": 8, "pose": "stand", "lerp": true }
           ],
           "events": [
-            {
-              "at": 0,
-              "sfx": "hit"
-            }
+            { "at": 0, "sfx": "hit" }
           ]
         }
       ]
@@ -405,30 +323,13 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "stand"
-            },
-            {
-              "at": 6,
-              "pose": "sweepUp",
-              "lerp": true
-            },
-            {
-              "at": 12,
-              "pose": "sweepUp"
-            },
-            {
-              "at": 15,
-              "pose": "stand",
-              "lerp": true
-            }
+            { "at": 0, "pose": "stand" },
+            { "at": 6, "pose": "sweepUp", "lerp": true },
+            { "at": 12, "pose": "sweepUp" },
+            { "at": 15, "pose": "stand", "lerp": true }
           ],
           "events": [
-            {
-              "at": 8,
-              "sfx": "swing"
-            }
+            { "at": 8, "sfx": "swing" }
           ]
         }
       ]
@@ -496,30 +397,13 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "stand"
-            },
-            {
-              "at": 5,
-              "pose": "kickLow",
-              "lerp": true
-            },
-            {
-              "at": 8,
-              "pose": "kickLow"
-            },
-            {
-              "at": 11,
-              "pose": "stand",
-              "lerp": true
-            }
+            { "at": 0, "pose": "stand" },
+            { "at": 5, "pose": "kickLow", "lerp": true },
+            { "at": 8, "pose": "kickLow" },
+            { "at": 11, "pose": "stand", "lerp": true }
           ],
           "events": [
-            {
-              "at": 7,
-              "sfx": "hit"
-            }
+            { "at": 7, "sfx": "hit" }
           ]
         }
       ]
@@ -590,43 +474,20 @@
           ],
           "slide": 12,
           "anim": [
-            {
-              "at": 0,
-              "pose": "stand"
-            },
-            {
-              "at": 3,
-              "pose": "dashPush",
-              "lerp": true
-            },
-            {
-              "at": 8,
-              "pose": "dashPush"
-            },
-            {
-              "at": 11,
-              "pose": "stand",
-              "lerp": true
-            }
+            { "at": 0, "pose": "stand" },
+            { "at": 3, "pose": "dashPush", "lerp": true },
+            { "at": 8, "pose": "dashPush" },
+            { "at": 11, "pose": "stand", "lerp": true }
           ],
           "events": [
             {
               "at": 0,
-              "setVel": {
-                "x": 5.1429
-              }
+              "setVel": { "x": 5.1429 }
             },
-            {
-              "at": 5,
-              "sfx": "shoot"
-            }
+            { "at": 5, "sfx": "shoot" }
           ],
           "transitions": [
-            {
-              "on": "timeout",
-              "to": "push",
-              "preserveHits": true
-            }
+            { "on": "timeout", "to": "push", "preserveHits": true }
           ]
         },
         {
@@ -661,30 +522,13 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "stand"
-            },
-            {
-              "at": 0,
-              "pose": "dashPush",
-              "lerp": true
-            },
-            {
-              "at": 2,
-              "pose": "dashPush"
-            },
-            {
-              "at": 5,
-              "pose": "stand",
-              "lerp": true
-            }
+            { "at": 0, "pose": "stand" },
+            { "at": 0, "pose": "dashPush", "lerp": true },
+            { "at": 2, "pose": "dashPush" },
+            { "at": 5, "pose": "stand", "lerp": true }
           ],
           "events": [
-            {
-              "at": 0,
-              "sfx": "slash"
-            }
+            { "at": 0, "sfx": "slash" }
           ]
         }
       ]
@@ -731,68 +575,19 @@
               "hitlagMult": 1.1
             }
           ],
-          "charge": {
-            "frame": 4
-          },
+          "charge": { "frame": 4 },
           "anim": [
-            {
-              "at": 0,
-              "pose": "stand"
-            },
-            {
-              "at": 12,
-              "pose": "clubSwing",
-              "lerp": true
-            },
-            {
-              "at": 16,
-              "pose": "clubSwing"
-            },
-            {
-              "at": 19,
-              "pose": "stand",
-              "lerp": true
-            }
+            { "at": 0, "pose": "stand" },
+            { "at": 12, "pose": "clubSwing", "lerp": true },
+            { "at": 16, "pose": "clubSwing" },
+            { "at": 19, "pose": "stand", "lerp": true }
           ],
           "attach": {
-            "club": {
-              "show": [
-                0,
-                44
-              ],
-              "angle": [
-                [
-                  0,
-                  150
-                ],
-                [
-                  12,
-                  200
-                ],
-                [
-                  15,
-                  20
-                ],
-                [
-                  17,
-                  -30
-                ],
-                [
-                  45,
-                  60
-                ]
-              ]
-            }
+            "club": { "show": [0, 44], "angle": [[0, 150], [12, 200], [15, 20], [17, -30], [45, 60]] }
           },
           "events": [
-            {
-              "at": 4,
-              "sfx": "smash"
-            },
-            {
-              "at": 14,
-              "sfx": "whack"
-            }
+            { "at": 4, "sfx": "smash" },
+            { "at": 14, "sfx": "whack" }
           ]
         }
       ]
@@ -804,26 +599,14 @@
           "name": "windup",
           "frames": 13,
           "anim": [
-            {
-              "at": 0,
-              "pose": "stand"
-            }
+            { "at": 0, "pose": "stand" }
           ],
-          "charge": {
-            "frame": 8
-          },
+          "charge": { "frame": 8 },
           "events": [
-            {
-              "at": 8,
-              "sfx": "smash"
-            }
+            { "at": 8, "sfx": "smash" }
           ],
           "transitions": [
-            {
-              "on": "timeout",
-              "to": "early",
-              "preserveHits": true
-            }
+            { "on": "timeout", "to": "early", "preserveHits": true }
           ]
         },
         {
@@ -884,37 +667,16 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "stand"
-            },
-            {
-              "at": 0,
-              "pose": "riseMagic",
-              "lerp": true
-            },
-            {
-              "at": 2,
-              "pose": "riseMagic"
-            },
-            {
-              "at": 2,
-              "pose": "stand",
-              "lerp": true
-            }
+            { "at": 0, "pose": "stand" },
+            { "at": 0, "pose": "riseMagic", "lerp": true },
+            { "at": 2, "pose": "riseMagic" },
+            { "at": 2, "pose": "stand", "lerp": true }
           ],
           "events": [
-            {
-              "at": 0,
-              "sfx": "shoot"
-            }
+            { "at": 0, "sfx": "shoot" }
           ],
           "transitions": [
-            {
-              "on": "timeout",
-              "to": "late",
-              "preserveHits": true
-            }
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ]
         },
         {
@@ -949,32 +711,18 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "riseMagic"
-            }
+            { "at": 0, "pose": "riseMagic" }
           ],
           "transitions": [
-            {
-              "on": "timeout",
-              "to": "cooldown",
-              "preserveHits": true
-            }
+            { "on": "timeout", "to": "cooldown", "preserveHits": true }
           ]
         },
         {
           "name": "cooldown",
           "frames": 24,
           "anim": [
-            {
-              "at": 0,
-              "pose": "riseMagic"
-            },
-            {
-              "at": 10,
-              "pose": "stand",
-              "lerp": true
-            }
+            { "at": 0, "pose": "riseMagic" },
+            { "at": 10, "pose": "stand", "lerp": true }
           ]
         }
       ]
@@ -986,26 +734,14 @@
           "name": "windup",
           "frames": 5,
           "anim": [
-            {
-              "at": 0,
-              "pose": "stand"
-            }
+            { "at": 0, "pose": "stand" }
           ],
-          "charge": {
-            "frame": 1
-          },
+          "charge": { "frame": 1 },
           "events": [
-            {
-              "at": 1,
-              "sfx": "smash"
-            }
+            { "at": 1, "sfx": "smash" }
           ],
           "transitions": [
-            {
-              "on": "timeout",
-              "to": "spin1",
-              "preserveHits": true
-            }
+            { "on": "timeout", "to": "spin1", "preserveHits": true }
           ]
         },
         {
@@ -1104,23 +840,13 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "spinLow"
-            }
+            { "at": 0, "pose": "spinLow" }
           ],
           "events": [
-            {
-              "at": 0,
-              "sfx": "shoot"
-            }
+            { "at": 0, "sfx": "shoot" }
           ],
           "transitions": [
-            {
-              "on": "timeout",
-              "to": "spin2",
-              "preserveHits": true
-            }
+            { "on": "timeout", "to": "spin2", "preserveHits": true }
           ]
         },
         {
@@ -1225,23 +951,13 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "spinLow"
-            }
+            { "at": 0, "pose": "spinLow" }
           ],
           "events": [
-            {
-              "at": 0,
-              "sfx": "shoot"
-            }
+            { "at": 0, "sfx": "shoot" }
           ],
           "transitions": [
-            {
-              "on": "timeout",
-              "to": "spin3",
-              "preserveHits": true
-            }
+            { "on": "timeout", "to": "spin3", "preserveHits": true }
           ]
         },
         {
@@ -1346,23 +1062,13 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "spinLow"
-            }
+            { "at": 0, "pose": "spinLow" }
           ],
           "events": [
-            {
-              "at": 0,
-              "sfx": "shoot"
-            }
+            { "at": 0, "sfx": "shoot" }
           ],
           "transitions": [
-            {
-              "on": "timeout",
-              "to": "spin4",
-              "preserveHits": true
-            }
+            { "on": "timeout", "to": "spin4", "preserveHits": true }
           ]
         },
         {
@@ -1467,23 +1173,13 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "spinLow"
-            }
+            { "at": 0, "pose": "spinLow" }
           ],
           "events": [
-            {
-              "at": 0,
-              "sfx": "shoot"
-            }
+            { "at": 0, "sfx": "shoot" }
           ],
           "transitions": [
-            {
-              "on": "timeout",
-              "to": "spin5",
-              "preserveHits": true
-            }
+            { "on": "timeout", "to": "spin5", "preserveHits": true }
           ]
         },
         {
@@ -1588,23 +1284,13 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "spinLow"
-            }
+            { "at": 0, "pose": "spinLow" }
           ],
           "events": [
-            {
-              "at": 0,
-              "sfx": "shoot"
-            }
+            { "at": 0, "sfx": "shoot" }
           ],
           "transitions": [
-            {
-              "on": "timeout",
-              "to": "spin6",
-              "preserveHits": true
-            }
+            { "on": "timeout", "to": "spin6", "preserveHits": true }
           ]
         },
         {
@@ -1709,23 +1395,13 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "spinLow"
-            }
+            { "at": 0, "pose": "spinLow" }
           ],
           "events": [
-            {
-              "at": 0,
-              "sfx": "shoot"
-            }
+            { "at": 0, "sfx": "shoot" }
           ],
           "transitions": [
-            {
-              "on": "timeout",
-              "to": "final",
-              "preserveHits": true
-            }
+            { "on": "timeout", "to": "final", "preserveHits": true }
           ]
         },
         {
@@ -1809,15 +1485,8 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "spinLow"
-            },
-            {
-              "at": 12,
-              "pose": "stand",
-              "lerp": true
-            }
+            { "at": 0, "pose": "spinLow" },
+            { "at": 12, "pose": "stand", "lerp": true }
           ]
         }
       ]
@@ -1830,21 +1499,11 @@
           "name": "startup",
           "frames": 4,
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            }
+            { "at": 0, "pose": "air" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "end"
-            },
-            {
-              "on": "timeout",
-              "to": "hit1",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "end" },
+            { "on": "timeout", "to": "hit1", "preserveHits": true }
           ]
         },
         {
@@ -1892,36 +1551,14 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            },
-            {
-              "at": 0,
-              "pose": "airSpread",
-              "lerp": true
-            },
-            {
-              "at": 3,
-              "pose": "airSpread"
-            },
-            {
-              "at": 3,
-              "pose": "air",
-              "lerp": true
-            }
+            { "at": 0, "pose": "air" },
+            { "at": 0, "pose": "airSpread", "lerp": true },
+            { "at": 3, "pose": "airSpread" },
+            { "at": 3, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 7
-            },
-            {
-              "on": "timeout",
-              "to": "hit2",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 7 },
+            { "on": "timeout", "to": "hit2", "preserveHits": true }
           ]
         },
         {
@@ -1969,52 +1606,24 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            },
-            {
-              "at": 0,
-              "pose": "airSpread",
-              "lerp": true
-            },
-            {
-              "at": 10,
-              "pose": "airSpread"
-            },
-            {
-              "at": 13,
-              "pose": "air",
-              "lerp": true
-            }
+            { "at": 0, "pose": "air" },
+            { "at": 0, "pose": "airSpread", "lerp": true },
+            { "at": 10, "pose": "airSpread" },
+            { "at": 13, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 7
-            },
-            {
-              "on": "timeout",
-              "to": "late",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 7 },
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ]
         },
         {
           "name": "late",
           "frames": 13,
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            }
+            { "at": 0, "pose": "air" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "end"
-            }
+            { "on": "land", "to": "end" }
           ]
         }
       ]
@@ -2027,21 +1636,11 @@
           "name": "startup",
           "frames": 9,
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            }
+            { "at": 0, "pose": "air" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "end"
-            },
-            {
-              "on": "timeout",
-              "to": "main",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "end" },
+            { "on": "timeout", "to": "main", "preserveHits": true }
           ]
         },
         {
@@ -2058,26 +1657,7 @@
               "bkb": 50.0,
               "kbg": 0.71,
               "angle": 42.0,
-              "frames": [
-                [
-                  6,
-                  10,
-                  78,
-                  17
-                ],
-                [
-                  8,
-                  16,
-                  70,
-                  17
-                ],
-                [
-                  10,
-                  20,
-                  60,
-                  17
-                ]
-              ]
+              "frames": [[6, 10, 78, 17], [8, 16, 70, 17], [10, 20, 60, 17]]
             },
             {
               "start": 6,
@@ -2089,97 +1669,32 @@
               "bkb": 50.0,
               "kbg": 0.74,
               "angle": 42.0,
-              "frames": [
-                [
-                  6,
-                  18,
-                  86,
-                  22
-                ],
-                [
-                  8,
-                  28,
-                  76,
-                  22
-                ],
-                [
-                  10,
-                  32,
-                  64,
-                  22
-                ]
-              ]
+              "frames": [[6, 18, 86, 22], [8, 28, 76, 22], [10, 32, 64, 22]]
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            },
-            {
-              "at": 4,
-              "pose": "crownStrike",
-              "lerp": true
-            },
-            {
-              "at": 10,
-              "pose": "crownStrike"
-            },
-            {
-              "at": 13,
-              "pose": "air",
-              "lerp": true
-            }
+            { "at": 0, "pose": "air" },
+            { "at": 4, "pose": "crownStrike", "lerp": true },
+            { "at": 10, "pose": "crownStrike" },
+            { "at": 13, "pose": "air", "lerp": true }
           ],
           "attach": {
-            "crown": {
-              "scale": [
-                [
-                  0,
-                  0
-                ]
-              ]
-            },
-            "crownHand": {
-              "show": [
-                6,
-                10
-              ],
-              "angle": [
-                [
-                  0,
-                  0
-                ]
-              ]
-            }
+            "crown": { "scale": [[0, 0]] },
+            "crownHand": { "show": [6, 10], "angle": [[0, 0]] }
           },
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 13
-            },
-            {
-              "on": "timeout",
-              "to": "late",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 13 },
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ]
         },
         {
           "name": "late",
           "frames": 17,
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            }
+            { "at": 0, "pose": "air" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "end"
-            }
+            { "on": "land", "to": "end" }
           ]
         }
       ]
@@ -2192,21 +1707,11 @@
           "name": "startup",
           "frames": 4,
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            }
+            { "at": 0, "pose": "air" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "end"
-            },
-            {
-              "on": "timeout",
-              "to": "main",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "end" },
+            { "on": "timeout", "to": "main", "preserveHits": true }
           ]
         },
         {
@@ -2241,52 +1746,24 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            },
-            {
-              "at": 0,
-              "pose": "hipBack",
-              "lerp": true
-            },
-            {
-              "at": 8,
-              "pose": "hipBack"
-            },
-            {
-              "at": 11,
-              "pose": "air",
-              "lerp": true
-            }
+            { "at": 0, "pose": "air" },
+            { "at": 0, "pose": "hipBack", "lerp": true },
+            { "at": 8, "pose": "hipBack" },
+            { "at": 11, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 11
-            },
-            {
-              "on": "timeout",
-              "to": "late",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 11 },
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ]
         },
         {
           "name": "late",
           "frames": 24,
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            }
+            { "at": 0, "pose": "air" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "end"
-            }
+            { "on": "land", "to": "end" }
           ]
         }
       ]
@@ -2299,43 +1776,22 @@
           "name": "startup",
           "frames": 4,
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            }
+            { "at": 0, "pose": "air" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "end"
-            },
-            {
-              "on": "timeout",
-              "to": "windup",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "end" },
+            { "on": "timeout", "to": "windup", "preserveHits": true }
           ]
         },
         {
           "name": "windup",
           "frames": 5,
           "anim": [
-            {
-              "at": 0,
-              "pose": "airHigh"
-            }
+            { "at": 0, "pose": "airHigh" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 7
-            },
-            {
-              "on": "timeout",
-              "to": "hit1",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 7 },
+            { "on": "timeout", "to": "hit1", "preserveHits": true }
           ]
         },
         {
@@ -2539,36 +1995,14 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            },
-            {
-              "at": 0,
-              "pose": "airHigh",
-              "lerp": true
-            },
-            {
-              "at": 3,
-              "pose": "airHigh"
-            },
-            {
-              "at": 3,
-              "pose": "air",
-              "lerp": true
-            }
+            { "at": 0, "pose": "air" },
+            { "at": 0, "pose": "airHigh", "lerp": true },
+            { "at": 3, "pose": "airHigh" },
+            { "at": 3, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 7
-            },
-            {
-              "on": "timeout",
-              "to": "hit2",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 7 },
+            { "on": "timeout", "to": "hit2", "preserveHits": true }
           ]
         },
         {
@@ -2703,52 +2137,24 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            },
-            {
-              "at": 0,
-              "pose": "airHigh",
-              "lerp": true
-            },
-            {
-              "at": 5,
-              "pose": "airHigh"
-            },
-            {
-              "at": 8,
-              "pose": "air",
-              "lerp": true
-            }
+            { "at": 0, "pose": "air" },
+            { "at": 0, "pose": "airHigh", "lerp": true },
+            { "at": 5, "pose": "airHigh" },
+            { "at": 8, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 7
-            },
-            {
-              "on": "timeout",
-              "to": "late",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 7 },
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ]
         },
         {
           "name": "late",
           "frames": 5,
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            }
+            { "at": 0, "pose": "air" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "end"
-            }
+            { "on": "land", "to": "end" }
           ]
         }
       ]
@@ -2761,21 +2167,11 @@
           "name": "startup",
           "frames": 11,
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            }
+            { "at": 0, "pose": "air" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "end"
-            },
-            {
-              "on": "timeout",
-              "to": "stomp1",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "end" },
+            { "on": "timeout", "to": "stomp1", "preserveHits": true }
           ]
         },
         {
@@ -2808,50 +2204,25 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "airLow"
-            }
+            { "at": 0, "pose": "airLow" }
           ],
           "events": [
-            {
-              "at": 0,
-              "sfx": "hit"
-            }
+            { "at": 0, "sfx": "hit" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 8
-            },
-            {
-              "on": "timeout",
-              "to": "gap1",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 8 },
+            { "on": "timeout", "to": "gap1", "preserveHits": true }
           ]
         },
         {
           "name": "gap1",
           "frames": 4,
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            }
+            { "at": 0, "pose": "air" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 8
-            },
-            {
-              "on": "timeout",
-              "to": "stomp2",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 8 },
+            { "on": "timeout", "to": "stomp2", "preserveHits": true }
           ]
         },
         {
@@ -2886,45 +2257,23 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "airLow"
-            }
+            { "at": 0, "pose": "airLow" }
           ],
           "events": [],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 8
-            },
-            {
-              "on": "timeout",
-              "to": "gap2",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 8 },
+            { "on": "timeout", "to": "gap2", "preserveHits": true }
           ]
         },
         {
           "name": "gap2",
           "frames": 4,
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            }
+            { "at": 0, "pose": "air" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 8
-            },
-            {
-              "on": "timeout",
-              "to": "stomp3",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 8 },
+            { "on": "timeout", "to": "stomp3", "preserveHits": true }
           ]
         },
         {
@@ -2959,45 +2308,23 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "airLow"
-            }
+            { "at": 0, "pose": "airLow" }
           ],
           "events": [],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 8
-            },
-            {
-              "on": "timeout",
-              "to": "gap3",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 8 },
+            { "on": "timeout", "to": "gap3", "preserveHits": true }
           ]
         },
         {
           "name": "gap3",
           "frames": 4,
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            }
+            { "at": 0, "pose": "air" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 8
-            },
-            {
-              "on": "timeout",
-              "to": "finish",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 8 },
+            { "on": "timeout", "to": "finish", "preserveHits": true }
           ]
         },
         {
@@ -3032,43 +2359,22 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "airLow"
-            },
-            {
-              "at": 6,
-              "pose": "air",
-              "lerp": true
-            }
+            { "at": 0, "pose": "airLow" },
+            { "at": 6, "pose": "air", "lerp": true }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 8
-            },
-            {
-              "on": "timeout",
-              "to": "late",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 8 },
+            { "on": "timeout", "to": "late", "preserveHits": true }
           ]
         },
         {
           "name": "late",
           "frames": 1,
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            }
+            { "at": 0, "pose": "air" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "end"
-            }
+            { "on": "land", "to": "end" }
           ]
         }
       ]
@@ -3118,24 +2424,10 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "stand"
-            },
-            {
-              "at": 2,
-              "pose": "slapOut",
-              "lerp": true
-            },
-            {
-              "at": 6,
-              "pose": "slapOut"
-            },
-            {
-              "at": 12,
-              "pose": "stand",
-              "lerp": true
-            }
+            { "at": 0, "pose": "stand" },
+            { "at": 2, "pose": "slapOut", "lerp": true },
+            { "at": 6, "pose": "slapOut" },
+            { "at": 12, "pose": "stand", "lerp": true }
           ]
         }
       ]
@@ -3198,24 +2490,10 @@
           ],
           "slide": 17,
           "anim": [
-            {
-              "at": 0,
-              "pose": "stand"
-            },
-            {
-              "at": 5,
-              "pose": "slapOut",
-              "lerp": true
-            },
-            {
-              "at": 9,
-              "pose": "slapOut"
-            },
-            {
-              "at": 15,
-              "pose": "stand",
-              "lerp": true
-            }
+            { "at": 0, "pose": "stand" },
+            { "at": 5, "pose": "slapOut", "lerp": true },
+            { "at": 9, "pose": "slapOut" },
+            { "at": 15, "pose": "stand", "lerp": true }
           ]
         }
       ]
@@ -3227,10 +2505,7 @@
           "name": "counter",
           "frames": 62,
           "anim": [
-            {
-              "at": 0,
-              "pose": "counter"
-            }
+            { "at": 0, "pose": "counter" }
           ],
           "counter": {
             "from": 8,
@@ -3243,83 +2518,31 @@
             "reflectLife": 24
           },
           "attach": {
-            "toad": {
-              "show": [
-                0,
-                61
-              ],
-              "offset": [
-                [
-                  0,
-                  30,
-                  -16
-                ]
-              ]
-            }
+            "toad": { "show": [0, 61], "offset": [[0, 30, -16]] }
           },
           "events": [
-            {
-              "at": 0,
-              "sfx": "shieldHit"
-            }
+            { "at": 0, "sfx": "shieldHit" }
           ],
           "transitions": [
-            {
-              "on": "counter",
-              "to": "spores"
-            }
+            { "on": "counter", "to": "spores" }
           ]
         },
         {
           "name": "spores",
           "frames": 60,
           "anim": [
-            {
-              "at": 0,
-              "pose": "counter"
-            }
+            { "at": 0, "pose": "counter" }
           ],
           "attach": {
-            "toad": {
-              "show": [
-                0,
-                59
-              ],
-              "offset": [
-                [
-                  0,
-                  30,
-                  -16
-                ]
-              ]
-            }
+            "toad": { "show": [0, 59], "offset": [[0, 30, -16]] }
           },
           "events": [
-            {
-              "at": 2,
-              "spawn": "spore_up",
-              "sfx": "shoot"
-            },
-            {
-              "at": 5,
-              "spawn": "spore_fwd"
-            },
-            {
-              "at": 8,
-              "spawn": "spore_low"
-            },
-            {
-              "at": 11,
-              "spawn": "spore_up"
-            },
-            {
-              "at": 14,
-              "spawn": "spore_fwd"
-            },
-            {
-              "at": 17,
-              "spawn": "spore_low"
-            }
+            { "at": 2, "spawn": "spore_up", "sfx": "shoot" },
+            { "at": 5, "spawn": "spore_fwd" },
+            { "at": 8, "spawn": "spore_low" },
+            { "at": 11, "spawn": "spore_up" },
+            { "at": 14, "spawn": "spore_fwd" },
+            { "at": 17, "spawn": "spore_low" }
           ]
         }
       ]
@@ -3331,60 +2554,123 @@
           "name": "windup",
           "frames": 11,
           "anim": [
-            {
-              "at": 0,
-              "pose": "stand"
-            },
-            {
-              "at": 7,
-              "pose": "bomber",
-              "lerp": true
-            }
+            { "at": 0, "pose": "stand" },
+            { "at": 7, "pose": "bomber", "lerp": true }
           ],
           "events": [
-            {
-              "at": 0,
-              "sfx": "charge"
-            }
+            { "at": 0, "sfx": "charge" }
           ],
           "transitions": [
-            {
-              "on": "timeout",
-              "to": "thrust"
-            }
+            { "on": "timeout", "to": "thrust" }
           ]
         },
         {
           "name": "thrust",
           "frames": 25,
-          "detection": {
-            "x1": 6,
-            "x2": 62,
-            "y1": 6,
-            "y2": 70
-          },
+          "detection": { "x1": 6, "x2": 62, "y1": 6, "y2": 70 },
           "anim": [
-            {
-              "at": 0,
-              "pose": "bomber"
-            }
+            { "at": 0, "pose": "bomber" }
           ],
           "ledgeGrab": 3,
           "events": [
             {
               "at": 0,
-              "setVel": {
-                "x": 14.5,
-                "y": 0.4167
-              },
+              "setVel": { "x": 14.5, "y": 0.4167 },
               "leaveGround": true,
               "sfx": "swing"
             },
             {
               "from": 1,
-              "setVel": {
-                "x": 14.5
-              }
+              "to": 2,
+              "setVel": { "x": 14.5 }
+            },
+            {
+              "at": 3,
+              "setVel": { "x": 14.025 }
+            },
+            {
+              "at": 4,
+              "setVel": { "x": 13.55 }
+            },
+            {
+              "at": 5,
+              "setVel": { "x": 13.075 }
+            },
+            {
+              "at": 6,
+              "setVel": { "x": 12.6 }
+            },
+            {
+              "at": 7,
+              "setVel": { "x": 12.125 }
+            },
+            {
+              "at": 8,
+              "setVel": { "x": 11.65 }
+            },
+            {
+              "at": 9,
+              "setVel": { "x": 11.175 }
+            },
+            {
+              "at": 10,
+              "setVel": { "x": 10.7 }
+            },
+            {
+              "at": 11,
+              "setVel": { "x": 10.225 }
+            },
+            {
+              "at": 12,
+              "setVel": { "x": 9.75 }
+            },
+            {
+              "at": 13,
+              "setVel": { "x": 9.275 }
+            },
+            {
+              "at": 14,
+              "setVel": { "x": 8.8 }
+            },
+            {
+              "at": 15,
+              "setVel": { "x": 8.325 }
+            },
+            {
+              "at": 16,
+              "setVel": { "x": 7.85 }
+            },
+            {
+              "at": 17,
+              "setVel": { "x": 7.375 }
+            },
+            {
+              "at": 18,
+              "setVel": { "x": 6.9 }
+            },
+            {
+              "at": 19,
+              "setVel": { "x": 6.425 }
+            },
+            {
+              "at": 20,
+              "setVel": { "x": 5.95 }
+            },
+            {
+              "at": 21,
+              "setVel": { "x": 5.475 }
+            },
+            {
+              "at": 22,
+              "setVel": { "x": 5.0 }
+            },
+            {
+              "at": 23,
+              "setVel": { "x": 4.525 }
+            },
+            {
+              "at": 24,
+              "setVel": { "x": 4.05 }
             },
             {
               "from": 3,
@@ -3404,19 +2690,9 @@
             }
           ],
           "transitions": [
-            {
-              "on": "timeout",
-              "if": "grounded",
-              "to": "recover"
-            },
-            {
-              "on": "timeout",
-              "to": "fall"
-            },
-            {
-              "on": "targetNear",
-              "to": "burst"
-            }
+            { "on": "timeout", "if": "grounded", "to": "recover" },
+            { "on": "timeout", "to": "fall" },
+            { "on": "targetNear", "to": "burst" }
           ]
         },
         {
@@ -3438,64 +2714,37 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "bomber"
-            }
+            { "at": 0, "pose": "bomber" }
           ],
           "ledgeGrab": 0,
           "events": [
             {
               "at": 0,
-              "setVel": {
-                "x": -4.75,
-                "y": 7.0
-              },
+              "setVel": { "x": -4.75, "y": 7.0 },
               "sfx": "whack"
             }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 35
-            },
-            {
-              "on": "timeout",
-              "to": "fall"
-            }
+            { "on": "land", "to": "landing", "lag": 35 },
+            { "on": "timeout", "to": "fall" }
           ]
         },
         {
           "name": "recover",
           "frames": 26,
           "anim": [
-            {
-              "at": 0,
-              "pose": "crouch"
-            },
-            {
-              "at": 12,
-              "pose": "stand",
-              "lerp": true
-            }
+            { "at": 0, "pose": "crouch" },
+            { "at": 12, "pose": "stand", "lerp": true }
           ]
         },
         {
           "name": "fall",
           "ledgeGrab": 0,
           "anim": [
-            {
-              "at": 0,
-              "pose": "air"
-            }
+            { "at": 0, "pose": "air" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 35
-            }
+            { "on": "land", "to": "landing", "lag": 35 }
           ]
         }
       ]
@@ -3537,46 +2786,22 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "parasol"
-            }
+            { "at": 0, "pose": "parasol" }
           ],
           "attach": {
-            "parasol": {
-              "show": [
-                0,
-                38
-              ],
-              "angle": [
-                [
-                  0,
-                  0
-                ]
-              ]
-            }
+            "parasol": { "show": [0, 38], "angle": [[0, 0]] }
           },
           "events": [
             {
               "at": 5,
               "leaveGround": true,
-              "setVel": {
-                "y": 11.4109
-              },
+              "setVel": { "y": 11.4109 },
               "sfx": "swing"
             }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 26
-            },
-            {
-              "on": "timeout",
-              "to": "rise2",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 26 },
+            { "on": "timeout", "to": "rise2", "preserveHits": true }
           ]
         },
         {
@@ -3631,36 +2856,14 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "parasol"
-            }
+            { "at": 0, "pose": "parasol" }
           ],
           "attach": {
-            "parasol": {
-              "show": [
-                0,
-                5
-              ],
-              "angle": [
-                [
-                  0,
-                  0
-                ]
-              ]
-            }
+            "parasol": { "show": [0, 5], "angle": [[0, 0]] }
           },
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 26
-            },
-            {
-              "on": "timeout",
-              "to": "rise3",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 26 },
+            { "on": "timeout", "to": "rise3", "preserveHits": true }
           ]
         },
         {
@@ -3700,37 +2903,15 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "parasol"
-            }
+            { "at": 0, "pose": "parasol" }
           ],
           "ledgeGrab": 0,
           "attach": {
-            "parasol": {
-              "show": [
-                0,
-                5
-              ],
-              "angle": [
-                [
-                  0,
-                  0
-                ]
-              ]
-            }
+            "parasol": { "show": [0, 5], "angle": [[0, 0]] }
           },
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 26
-            },
-            {
-              "on": "timeout",
-              "to": "rise4",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 26 },
+            { "on": "timeout", "to": "rise4", "preserveHits": true }
           ]
         },
         {
@@ -3771,37 +2952,15 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "parasol"
-            }
+            { "at": 0, "pose": "parasol" }
           ],
           "ledgeGrab": 0,
           "attach": {
-            "parasol": {
-              "show": [
-                0,
-                5
-              ],
-              "angle": [
-                [
-                  0,
-                  0
-                ]
-              ]
-            }
+            "parasol": { "show": [0, 5], "angle": [[0, 0]] }
           },
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 26
-            },
-            {
-              "on": "timeout",
-              "to": "rise5",
-              "preserveHits": true
-            }
+            { "on": "land", "to": "landing", "lag": 26 },
+            { "on": "timeout", "to": "rise5", "preserveHits": true }
           ]
         },
         {
@@ -3823,42 +2982,18 @@
             }
           ],
           "anim": [
-            {
-              "at": 0,
-              "pose": "parasol"
-            }
+            { "at": 0, "pose": "parasol" }
           ],
           "ledgeGrab": 0,
           "attach": {
-            "parasol": {
-              "show": [
-                0,
-                10
-              ],
-              "angle": [
-                [
-                  0,
-                  0
-                ]
-              ]
-            }
+            "parasol": { "show": [0, 10], "angle": [[0, 0]] }
           },
           "events": [
-            {
-              "at": 0,
-              "sfx": "slash"
-            }
+            { "at": 0, "sfx": "slash" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 26
-            },
-            {
-              "on": "timeout",
-              "to": "open"
-            }
+            { "on": "land", "to": "landing", "lag": 26 },
+            { "on": "timeout", "to": "open" }
           ]
         },
         {
@@ -3912,87 +3047,35 @@
           "airAccelMult": 1.3187,
           "ledgeGrab": 0,
           "anim": [
-            {
-              "at": 0,
-              "pose": "parasol"
-            },
-            {
-              "at": 30,
-              "pose": "parasolFall",
-              "lerp": true
-            }
+            { "at": 0, "pose": "parasol" },
+            { "at": 30, "pose": "parasolFall", "lerp": true }
           ],
           "attach": {
-            "parasol": {
-              "show": [
-                0,
-                479
-              ],
-              "angle": [
-                [
-                  0,
-                  0
-                ]
-              ]
-            }
+            "parasol": { "show": [0, 479], "angle": [[0, 0]] }
           },
           "events": [
-            {
-              "at": 0,
-              "sfx": "swing"
-            }
+            { "at": 0, "sfx": "swing" }
           ],
           "transitions": [
-            {
-              "on": "specialPress",
-              "to": "closed"
-            },
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 26
-            },
-            {
-              "on": "timeout",
-              "to": "closed"
-            }
+            { "on": "specialPress", "to": "closed" },
+            { "on": "land", "to": "landing", "lag": 26 },
+            { "on": "timeout", "to": "closed" }
           ]
         },
         {
           "name": "closed",
           "anim": [
-            {
-              "at": 0,
-              "pose": "helpless"
-            }
+            { "at": 0, "pose": "helpless" }
           ],
           "ledgeGrab": 0,
           "attach": {
-            "parasol": {
-              "show": [
-                0,
-                14
-              ],
-              "angle": [
-                [
-                  0,
-                  0
-                ]
-              ]
-            }
+            "parasol": { "show": [0, 14], "angle": [[0, 0]] }
           },
           "events": [
-            {
-              "at": 0,
-              "sfx": "swing"
-            }
+            { "at": 0, "sfx": "swing" }
           ],
           "transitions": [
-            {
-              "on": "land",
-              "to": "landing",
-              "lag": 40
-            }
+            { "on": "land", "to": "landing", "lag": 40 }
           ]
         }
       ]
@@ -4004,31 +3087,13 @@
           "name": "pluck",
           "frames": 39,
           "anim": [
-            {
-              "at": 0,
-              "pose": "crouch"
-            },
-            {
-              "at": 10,
-              "pose": "pluck",
-              "lerp": true
-            },
-            {
-              "at": 30,
-              "pose": "holdTurnip",
-              "lerp": true
-            }
+            { "at": 0, "pose": "crouch" },
+            { "at": 10, "pose": "pluck", "lerp": true },
+            { "at": 30, "pose": "holdTurnip", "lerp": true }
           ],
           "events": [
-            {
-              "at": 19,
-              "sfx": "toss"
-            },
-            {
-              "at": 29,
-              "sfx": "ready",
-              "item": "turnip"
-            }
+            { "at": 19, "sfx": "toss" },
+            { "at": 29, "sfx": "ready", "item": "turnip" }
           ]
         }
       ]
@@ -4051,10 +3116,7 @@
         "hitlagMult": 0.0
       },
       "ticks": [
-        {
-          "at": 13,
-          "damage": 2.0
-        }
+        { "at": 13, "damage": 2.0 }
       ]
     },
     "b": {
@@ -4073,10 +3135,7 @@
         "hitlagMult": 0.0
       },
       "ticks": [
-        {
-          "at": 19,
-          "damage": 2.0
-        }
+        { "at": 19, "damage": 2.0 }
       ]
     },
     "u": {
@@ -4095,10 +3154,7 @@
         "hitlagMult": 0.0
       },
       "ticks": [
-        {
-          "at": 18,
-          "damage": 2.0
-        }
+        { "at": 18, "damage": 2.0 }
       ]
     },
     "d": {
@@ -4117,24 +3173,15 @@
         "hitlagMult": 0.0
       },
       "ticks": [
-        {
-          "at": 33,
-          "damage": 1.0
-        }
+        { "at": 33, "damage": 1.0 }
       ]
     }
   },
   "projectiles": {
     "turnip": {
       "name": "Turnip",
-      "spawn": [
-        24,
-        56
-      ],
-      "vel": [
-        11.4286,
-        3.3333
-      ],
+      "spawn": [24, 56],
+      "vel": [11.4286, 3.3333],
       "r": 9,
       "life": 90,
       "max": 1,
@@ -4164,92 +3211,17 @@
       },
       "spawnSfx": "swing",
       "shapes": [
-        {
-          "shape": "circle",
-          "at": [
-            2,
-            0
-          ],
-          "r": 9,
-          "fill": "#f3dede",
-          "stroke": "#c9a9a2",
-          "width": 1.6
-        },
-        {
-          "shape": "circle",
-          "at": [
-            9,
-            2
-          ],
-          "r": 2.2,
-          "fill": "#6b5f4a"
-        },
-        {
-          "shape": "poly",
-          "points": [
-            [
-              -3,
-              -6
-            ],
-            [
-              1,
-              -14
-            ],
-            [
-              4,
-              -6
-            ]
-          ],
-          "fill": "#5fae52"
-        },
-        {
-          "shape": "poly",
-          "points": [
-            [
-              4,
-              -6
-            ],
-            [
-              9,
-              -15
-            ],
-            [
-              10,
-              -6
-            ]
-          ],
-          "fill": "#77c466"
-        },
-        {
-          "shape": "poly",
-          "points": [
-            [
-              -8,
-              -5
-            ],
-            [
-              -4,
-              -13
-            ],
-            [
-              -1,
-              -5
-            ]
-          ],
-          "fill": "#4f9846"
-        }
+        { "shape": "circle", "at": [2, 0], "r": 9, "fill": "#f3dede", "stroke": "#c9a9a2", "width": 1.6 },
+        { "shape": "circle", "at": [9, 2], "r": 2.2, "fill": "#6b5f4a" },
+        { "shape": "poly", "points": [[-3, -6], [1, -14], [4, -6]], "fill": "#5fae52" },
+        { "shape": "poly", "points": [[4, -6], [9, -15], [10, -6]], "fill": "#77c466" },
+        { "shape": "poly", "points": [[-8, -5], [-4, -13], [-1, -5]], "fill": "#4f9846" }
       ]
     },
     "turnip_strong": {
       "name": "Turnip (smash throw)",
-      "spawn": [
-        24,
-        56
-      ],
-      "vel": [
-        14.2857,
-        3.5833
-      ],
+      "spawn": [24, 56],
+      "vel": [14.2857, 3.5833],
       "r": 9,
       "life": 90,
       "max": 1,
@@ -4279,92 +3251,17 @@
       },
       "spawnSfx": "swing",
       "shapes": [
-        {
-          "shape": "circle",
-          "at": [
-            2,
-            0
-          ],
-          "r": 9,
-          "fill": "#f3dede",
-          "stroke": "#c9a9a2",
-          "width": 1.6
-        },
-        {
-          "shape": "circle",
-          "at": [
-            9,
-            2
-          ],
-          "r": 2.2,
-          "fill": "#6b5f4a"
-        },
-        {
-          "shape": "poly",
-          "points": [
-            [
-              -3,
-              -6
-            ],
-            [
-              1,
-              -14
-            ],
-            [
-              4,
-              -6
-            ]
-          ],
-          "fill": "#5fae52"
-        },
-        {
-          "shape": "poly",
-          "points": [
-            [
-              4,
-              -6
-            ],
-            [
-              9,
-              -15
-            ],
-            [
-              10,
-              -6
-            ]
-          ],
-          "fill": "#77c466"
-        },
-        {
-          "shape": "poly",
-          "points": [
-            [
-              -8,
-              -5
-            ],
-            [
-              -4,
-              -13
-            ],
-            [
-              -1,
-              -5
-            ]
-          ],
-          "fill": "#4f9846"
-        }
+        { "shape": "circle", "at": [2, 0], "r": 9, "fill": "#f3dede", "stroke": "#c9a9a2", "width": 1.6 },
+        { "shape": "circle", "at": [9, 2], "r": 2.2, "fill": "#6b5f4a" },
+        { "shape": "poly", "points": [[-3, -6], [1, -14], [4, -6]], "fill": "#5fae52" },
+        { "shape": "poly", "points": [[4, -6], [9, -15], [10, -6]], "fill": "#77c466" },
+        { "shape": "poly", "points": [[-8, -5], [-4, -13], [-1, -5]], "fill": "#4f9846" }
       ]
     },
     "spore_up": {
       "name": "Spore",
-      "spawn": [
-        24,
-        54
-      ],
-      "vel": [
-        8.5714,
-        5.8333
-      ],
+      "spawn": [24, 54],
+      "vel": [8.5714, 5.8333],
       "r": 6,
       "life": 16,
       "max": 2,
@@ -4382,29 +3279,13 @@
       },
       "spawnSfx": "toss",
       "shapes": [
-        {
-          "shape": "circle",
-          "at": [
-            0,
-            0
-          ],
-          "r": 5.5,
-          "fill": "#efe6cf",
-          "stroke": "#b4a98d",
-          "width": 1.4
-        }
+        { "shape": "circle", "at": [0, 0], "r": 5.5, "fill": "#efe6cf", "stroke": "#b4a98d", "width": 1.4 }
       ]
     },
     "spore_fwd": {
       "name": "Spore",
-      "spawn": [
-        26,
-        46
-      ],
-      "vel": [
-        14.2857,
-        1.25
-      ],
+      "spawn": [26, 46],
+      "vel": [14.2857, 1.25],
       "r": 6,
       "life": 16,
       "max": 2,
@@ -4422,29 +3303,13 @@
       },
       "spawnSfx": "toss",
       "shapes": [
-        {
-          "shape": "circle",
-          "at": [
-            0,
-            0
-          ],
-          "r": 5.5,
-          "fill": "#efe6cf",
-          "stroke": "#b4a98d",
-          "width": 1.4
-        }
+        { "shape": "circle", "at": [0, 0], "r": 5.5, "fill": "#efe6cf", "stroke": "#b4a98d", "width": 1.4 }
       ]
     },
     "spore_low": {
       "name": "Spore",
-      "spawn": [
-        24,
-        36
-      ],
-      "vel": [
-        10.7143,
-        -2.5
-      ],
+      "spawn": [24, 36],
+      "vel": [10.7143, -2.5],
       "r": 6,
       "life": 16,
       "max": 2,
@@ -4462,17 +3327,7 @@
       },
       "spawnSfx": "toss",
       "shapes": [
-        {
-          "shape": "circle",
-          "at": [
-            0,
-            0
-          ],
-          "r": 5.5,
-          "fill": "#efe6cf",
-          "stroke": "#b4a98d",
-          "width": 1.4
-        }
+        { "shape": "circle", "at": [0, 0], "r": 5.5, "fill": "#efe6cf", "stroke": "#b4a98d", "width": 1.4 }
       ]
     }
   },
@@ -4481,61 +3336,16 @@
       "name": "Turnip",
       "projectile": "turnip",
       "smashProjectile": "turnip_strong",
-      "hold": [
-        24,
-        56
-      ],
+      "hold": [24, 56],
       "throws": {
-        "forward": {
-          "tilt": [
-            11.4286,
-            3.3333
-          ],
-          "smash": [
-            14.2857,
-            3.5833
-          ]
-        },
-        "back": {
-          "tilt": [
-            11.4286,
-            3.3333
-          ],
-          "smash": [
-            14.2857,
-            3.5833
-          ]
-        },
-        "up": {
-          "tilt": [
-            0,
-            11.9048
-          ],
-          "smash": [
-            0,
-            14.7281
-          ]
-        },
-        "down": {
-          "tilt": [
-            0,
-            -11.9048
-          ],
-          "smash": [
-            0,
-            -14.7281
-          ]
-        },
-        "drop": [
-          0,
-          0
-        ]
+        "forward": { "tilt": [11.4286, 3.3333], "smash": [14.2857, 3.5833] },
+        "back": { "tilt": [11.4286, 3.3333], "smash": [14.2857, 3.5833] },
+        "up": { "tilt": [0, 11.9048], "smash": [0, 14.7281] },
+        "down": { "tilt": [0, -11.9048], "smash": [0, -14.7281] },
+        "drop": [0, 0]
       },
       "speedDamage": 0.6,
-      "rebound": [
-        2.5,
-        6
-      ],
+      "rebound": [2.5, 6],
       "life": 600,
       "catch": true
     }
@@ -4550,1209 +3360,346 @@
     "headGlowRadius": 2.6,
     "headRing": 2.4,
     "headFill": "#f7dc9a",
-    "eye": [
-      2,
-      0,
-      4,
-      2
-    ]
+    "eye": [2, 0, 4, 2]
   },
   "poses": {
     "stand": {
-      "head": [
-        2,
-        64
-      ],
-      "shoulder": [
-        0,
-        50
-      ],
-      "hip": [
-        0,
-        30
-      ],
-      "elbowF": [
-        10,
-        43
-      ],
-      "handF": [
-        18,
-        40
-      ],
-      "elbowB": [
-        -10,
-        43
-      ],
-      "handB": [
-        -17,
-        38
-      ],
-      "kneeF": [
-        3,
-        15
-      ],
-      "footF": [
-        4,
-        1
-      ],
-      "kneeB": [
-        -4,
-        15
-      ],
-      "footB": [
-        -6,
-        1
-      ]
+      "head": [2, 64],
+      "shoulder": [0, 50],
+      "hip": [0, 30],
+      "elbowF": [10, 43],
+      "handF": [18, 40],
+      "elbowB": [-10, 43],
+      "handB": [-17, 38],
+      "kneeF": [3, 15],
+      "footF": [4, 1],
+      "kneeB": [-4, 15],
+      "footB": [-6, 1]
     },
     "crouch": {
-      "head": [
-        8,
-        46
-      ],
-      "shoulder": [
-        4,
-        34
-      ],
-      "hip": [
-        0,
-        20
-      ],
-      "elbowF": [
-        14,
-        30
-      ],
-      "handF": [
-        22,
-        22
-      ],
-      "elbowB": [
-        -8,
-        30
-      ],
-      "handB": [
-        -14,
-        20
-      ],
-      "kneeF": [
-        10,
-        10
-      ],
-      "footF": [
-        12,
-        1
-      ],
-      "kneeB": [
-        -8,
-        10
-      ],
-      "footB": [
-        -12,
-        1
-      ]
+      "head": [8, 46],
+      "shoulder": [4, 34],
+      "hip": [0, 20],
+      "elbowF": [14, 30],
+      "handF": [22, 22],
+      "elbowB": [-8, 30],
+      "handB": [-14, 20],
+      "kneeF": [10, 10],
+      "footF": [12, 1],
+      "kneeB": [-8, 10],
+      "footB": [-12, 1]
     },
     "pluck": {
-      "head": [
-        14,
-        42
-      ],
-      "shoulder": [
-        8,
-        31
-      ],
-      "hip": [
-        2,
-        18
-      ],
-      "elbowF": [
-        18,
-        24
-      ],
-      "handF": [
-        26,
-        4
-      ],
-      "elbowB": [
-        -6,
-        24
-      ],
-      "handB": [
-        -12,
-        8
-      ],
-      "kneeF": [
-        14,
-        9
-      ],
-      "footF": [
-        14,
-        1
-      ],
-      "kneeB": [
-        -10,
-        9
-      ],
-      "footB": [
-        -14,
-        1
-      ]
+      "head": [14, 42],
+      "shoulder": [8, 31],
+      "hip": [2, 18],
+      "elbowF": [18, 24],
+      "handF": [26, 4],
+      "elbowB": [-6, 24],
+      "handB": [-12, 8],
+      "kneeF": [14, 9],
+      "footF": [14, 1],
+      "kneeB": [-10, 9],
+      "footB": [-14, 1]
     },
     "holdTurnip": {
-      "head": [
-        4,
-        62
-      ],
-      "shoulder": [
-        2,
-        49
-      ],
-      "hip": [
-        0,
-        29
-      ],
-      "elbowF": [
-        12,
-        54
-      ],
-      "handF": [
-        16,
-        64
-      ],
-      "elbowB": [
-        -10,
-        44
-      ],
-      "handB": [
-        -18,
-        42
-      ],
-      "kneeF": [
-        4,
-        15
-      ],
-      "footF": [
-        5,
-        1
-      ],
-      "kneeB": [
-        -5,
-        15
-      ],
-      "footB": [
-        -8,
-        1
-      ]
+      "head": [4, 62],
+      "shoulder": [2, 49],
+      "hip": [0, 29],
+      "elbowF": [12, 54],
+      "handF": [16, 64],
+      "elbowB": [-10, 44],
+      "handB": [-18, 42],
+      "kneeF": [4, 15],
+      "footF": [5, 1],
+      "kneeB": [-5, 15],
+      "footB": [-8, 1]
     },
     "tossOver": {
-      "head": [
-        8,
-        60
-      ],
-      "shoulder": [
-        4,
-        47
-      ],
-      "hip": [
-        0,
-        28
-      ],
-      "elbowF": [
-        18,
-        50
-      ],
-      "handF": [
-        34,
-        56
-      ],
-      "elbowB": [
-        -8,
-        42
-      ],
-      "handB": [
-        -14,
-        38
-      ],
-      "kneeF": [
-        8,
-        14
-      ],
-      "footF": [
-        12,
-        1
-      ],
-      "kneeB": [
-        -8,
-        14
-      ],
-      "footB": [
-        -12,
-        1
-      ]
+      "head": [8, 60],
+      "shoulder": [4, 47],
+      "hip": [0, 28],
+      "elbowF": [18, 50],
+      "handF": [34, 56],
+      "elbowB": [-8, 42],
+      "handB": [-14, 38],
+      "kneeF": [8, 14],
+      "footF": [12, 1],
+      "kneeB": [-8, 14],
+      "footB": [-12, 1]
     },
     "slapIn": {
-      "head": [
-        4,
-        63
-      ],
-      "shoulder": [
-        2,
-        49
-      ],
-      "hip": [
-        -2,
-        29
-      ],
-      "elbowF": [
-        16,
-        50
-      ],
-      "handF": [
-        30,
-        54
-      ],
-      "elbowB": [
-        -12,
-        44
-      ],
-      "handB": [
-        -18,
-        40
-      ],
-      "kneeF": [
-        5,
-        15
-      ],
-      "footF": [
-        6,
-        1
-      ],
-      "kneeB": [
-        -6,
-        15
-      ],
-      "footB": [
-        -9,
-        1
-      ]
+      "head": [4, 63],
+      "shoulder": [2, 49],
+      "hip": [-2, 29],
+      "elbowF": [16, 50],
+      "handF": [30, 54],
+      "elbowB": [-12, 44],
+      "handB": [-18, 40],
+      "kneeF": [5, 15],
+      "footF": [6, 1],
+      "kneeB": [-6, 15],
+      "footB": [-9, 1]
     },
     "slapOut": {
-      "head": [
-        2,
-        64
-      ],
-      "shoulder": [
-        0,
-        50
-      ],
-      "hip": [
-        0,
-        30
-      ],
-      "elbowF": [
-        18,
-        48
-      ],
-      "handF": [
-        36,
-        46
-      ],
-      "elbowB": [
-        -10,
-        42
-      ],
-      "handB": [
-        -14,
-        40
-      ],
-      "kneeF": [
-        4,
-        15
-      ],
-      "footF": [
-        5,
-        1
-      ],
-      "kneeB": [
-        -5,
-        15
-      ],
-      "footB": [
-        -8,
-        1
-      ]
+      "head": [2, 64],
+      "shoulder": [0, 50],
+      "hip": [0, 30],
+      "elbowF": [18, 48],
+      "handF": [36, 46],
+      "elbowB": [-10, 42],
+      "handB": [-14, 40],
+      "kneeF": [4, 15],
+      "footF": [5, 1],
+      "kneeB": [-5, 15],
+      "footB": [-8, 1]
     },
     "kickLow": {
-      "head": [
-        6,
-        56
-      ],
-      "shoulder": [
-        2,
-        42
-      ],
-      "hip": [
-        -4,
-        22
-      ],
-      "elbowF": [
-        12,
-        38
-      ],
-      "handF": [
-        18,
-        32
-      ],
-      "elbowB": [
-        -14,
-        36
-      ],
-      "handB": [
-        -20,
-        30
-      ],
-      "kneeF": [
-        20,
-        16
-      ],
-      "footF": [
-        42,
-        12
-      ],
-      "kneeB": [
-        -8,
-        14
-      ],
-      "footB": [
-        -12,
-        1
-      ]
+      "head": [6, 56],
+      "shoulder": [2, 42],
+      "hip": [-4, 22],
+      "elbowF": [12, 38],
+      "handF": [18, 32],
+      "elbowB": [-14, 36],
+      "handB": [-20, 30],
+      "kneeF": [20, 16],
+      "footF": [42, 12],
+      "kneeB": [-8, 14],
+      "footB": [-12, 1]
     },
     "sweepUp": {
-      "head": [
-        -2,
-        66
-      ],
-      "shoulder": [
-        0,
-        52
-      ],
-      "hip": [
-        0,
-        32
-      ],
-      "elbowF": [
-        10,
-        64
-      ],
-      "handF": [
-        16,
-        84
-      ],
-      "elbowB": [
-        -10,
-        60
-      ],
-      "handB": [
-        -16,
-        78
-      ],
-      "kneeF": [
-        4,
-        16
-      ],
-      "footF": [
-        6,
-        1
-      ],
-      "kneeB": [
-        -6,
-        16
-      ],
-      "footB": [
-        -8,
-        1
-      ]
+      "head": [-2, 66],
+      "shoulder": [0, 52],
+      "hip": [0, 32],
+      "elbowF": [10, 64],
+      "handF": [16, 84],
+      "elbowB": [-10, 60],
+      "handB": [-16, 78],
+      "kneeF": [4, 16],
+      "footF": [6, 1],
+      "kneeB": [-6, 16],
+      "footB": [-8, 1]
     },
     "stompLow": {
-      "head": [
-        10,
-        48
-      ],
-      "shoulder": [
-        4,
-        36
-      ],
-      "hip": [
-        0,
-        20
-      ],
-      "elbowF": [
-        12,
-        28
-      ],
-      "handF": [
-        16,
-        14
-      ],
-      "elbowB": [
-        -12,
-        28
-      ],
-      "handB": [
-        -18,
-        14
-      ],
-      "kneeF": [
-        18,
-        10
-      ],
-      "footF": [
-        34,
-        2
-      ],
-      "kneeB": [
-        -6,
-        10
-      ],
-      "footB": [
-        -12,
-        1
-      ]
+      "head": [10, 48],
+      "shoulder": [4, 36],
+      "hip": [0, 20],
+      "elbowF": [12, 28],
+      "handF": [16, 14],
+      "elbowB": [-12, 28],
+      "handB": [-18, 14],
+      "kneeF": [18, 10],
+      "footF": [34, 2],
+      "kneeB": [-6, 10],
+      "footB": [-12, 1]
     },
     "dashPush": {
-      "head": [
-        8,
-        60
-      ],
-      "shoulder": [
-        4,
-        47
-      ],
-      "hip": [
-        -2,
-        27
-      ],
-      "elbowF": [
-        22,
-        48
-      ],
-      "handF": [
-        44,
-        48
-      ],
-      "elbowB": [
-        10,
-        46
-      ],
-      "handB": [
-        40,
-        44
-      ],
-      "kneeF": [
-        16,
-        14
-      ],
-      "footF": [
-        32,
-        2
-      ],
-      "kneeB": [
-        -10,
-        14
-      ],
-      "footB": [
-        -18,
-        1
-      ]
+      "head": [8, 60],
+      "shoulder": [4, 47],
+      "hip": [-2, 27],
+      "elbowF": [22, 48],
+      "handF": [44, 48],
+      "elbowB": [10, 46],
+      "handB": [40, 44],
+      "kneeF": [16, 14],
+      "footF": [32, 2],
+      "kneeB": [-10, 14],
+      "footB": [-18, 1]
     },
     "clubSwing": {
-      "head": [
-        -2,
-        61
-      ],
-      "shoulder": [
-        0,
-        48
-      ],
-      "hip": [
-        2,
-        29
-      ],
-      "elbowF": [
-        14,
-        56
-      ],
-      "handF": [
-        26,
-        66
-      ],
-      "elbowB": [
-        -12,
-        42
-      ],
-      "handB": [
-        -18,
-        38
-      ],
-      "kneeF": [
-        8,
-        15
-      ],
-      "footF": [
-        12,
-        1
-      ],
-      "kneeB": [
-        -8,
-        15
-      ],
-      "footB": [
-        -14,
-        1
-      ]
+      "head": [-2, 61],
+      "shoulder": [0, 48],
+      "hip": [2, 29],
+      "elbowF": [14, 56],
+      "handF": [26, 66],
+      "elbowB": [-12, 42],
+      "handB": [-18, 38],
+      "kneeF": [8, 15],
+      "footF": [12, 1],
+      "kneeB": [-8, 15],
+      "footB": [-14, 1]
     },
     "riseMagic": {
-      "head": [
-        -4,
-        66
-      ],
-      "shoulder": [
-        0,
-        52
-      ],
-      "hip": [
-        0,
-        32
-      ],
-      "elbowF": [
-        8,
-        64
-      ],
-      "handF": [
-        10,
-        86
-      ],
-      "elbowB": [
-        -8,
-        64
-      ],
-      "handB": [
-        -12,
-        84
-      ],
-      "kneeF": [
-        4,
-        16
-      ],
-      "footF": [
-        6,
-        1
-      ],
-      "kneeB": [
-        -6,
-        16
-      ],
-      "footB": [
-        -8,
-        1
-      ]
+      "head": [-4, 66],
+      "shoulder": [0, 52],
+      "hip": [0, 32],
+      "elbowF": [8, 64],
+      "handF": [10, 86],
+      "elbowB": [-8, 64],
+      "handB": [-12, 84],
+      "kneeF": [4, 16],
+      "footF": [6, 1],
+      "kneeB": [-6, 16],
+      "footB": [-8, 1]
     },
     "spinLow": {
-      "head": [
-        4,
-        48
-      ],
-      "shoulder": [
-        0,
-        36
-      ],
-      "hip": [
-        -2,
-        18
-      ],
-      "elbowF": [
-        20,
-        34
-      ],
-      "handF": [
-        44,
-        30
-      ],
-      "elbowB": [
-        -18,
-        32
-      ],
-      "handB": [
-        -38,
-        28
-      ],
-      "kneeF": [
-        12,
-        9
-      ],
-      "footF": [
-        20,
-        1
-      ],
-      "kneeB": [
-        -10,
-        9
-      ],
-      "footB": [
-        -18,
-        1
-      ]
+      "head": [4, 48],
+      "shoulder": [0, 36],
+      "hip": [-2, 18],
+      "elbowF": [20, 34],
+      "handF": [44, 30],
+      "elbowB": [-18, 32],
+      "handB": [-38, 28],
+      "kneeF": [12, 9],
+      "footF": [20, 1],
+      "kneeB": [-10, 9],
+      "footB": [-18, 1]
     },
     "air": {
-      "head": [
-        2,
-        62
-      ],
-      "shoulder": [
-        0,
-        49
-      ],
-      "hip": [
-        0,
-        30
-      ],
-      "elbowF": [
-        12,
-        44
-      ],
-      "handF": [
-        22,
-        42
-      ],
-      "elbowB": [
-        -12,
-        42
-      ],
-      "handB": [
-        -22,
-        38
-      ],
-      "kneeF": [
-        8,
-        18
-      ],
-      "footF": [
-        10,
-        6
-      ],
-      "kneeB": [
-        -8,
-        16
-      ],
-      "footB": [
-        -14,
-        5
-      ]
+      "head": [2, 62],
+      "shoulder": [0, 49],
+      "hip": [0, 30],
+      "elbowF": [12, 44],
+      "handF": [22, 42],
+      "elbowB": [-12, 42],
+      "handB": [-22, 38],
+      "kneeF": [8, 18],
+      "footF": [10, 6],
+      "kneeB": [-8, 16],
+      "footB": [-14, 5]
     },
     "airSpread": {
-      "head": [
-        2,
-        62
-      ],
-      "shoulder": [
-        0,
-        52
-      ],
-      "hip": [
-        0,
-        34
-      ],
-      "elbowF": [
-        16,
-        52
-      ],
-      "handF": [
-        32,
-        54
-      ],
-      "elbowB": [
-        -16,
-        52
-      ],
-      "handB": [
-        -32,
-        52
-      ],
-      "kneeF": [
-        6,
-        20
-      ],
-      "footF": [
-        12,
-        8
-      ],
-      "kneeB": [
-        -6,
-        18
-      ],
-      "footB": [
-        -16,
-        8
-      ]
+      "head": [2, 62],
+      "shoulder": [0, 52],
+      "hip": [0, 34],
+      "elbowF": [16, 52],
+      "handF": [32, 54],
+      "elbowB": [-16, 52],
+      "handB": [-32, 52],
+      "kneeF": [6, 20],
+      "footF": [12, 8],
+      "kneeB": [-6, 18],
+      "footB": [-16, 8]
     },
     "airHigh": {
-      "head": [
-        0,
-        62
-      ],
-      "shoulder": [
-        0,
-        49
-      ],
-      "hip": [
-        -2,
-        30
-      ],
-      "elbowF": [
-        10,
-        62
-      ],
-      "handF": [
-        14,
-        80
-      ],
-      "elbowB": [
-        -10,
-        62
-      ],
-      "handB": [
-        -18,
-        78
-      ],
-      "kneeF": [
-        10,
-        18
-      ],
-      "footF": [
-        14,
-        6
-      ],
-      "kneeB": [
-        -6,
-        16
-      ],
-      "footB": [
-        -10,
-        6
-      ]
+      "head": [0, 62],
+      "shoulder": [0, 49],
+      "hip": [-2, 30],
+      "elbowF": [10, 62],
+      "handF": [14, 80],
+      "elbowB": [-10, 62],
+      "handB": [-18, 78],
+      "kneeF": [10, 18],
+      "footF": [14, 6],
+      "kneeB": [-6, 16],
+      "footB": [-10, 6]
     },
     "airLow": {
-      "head": [
-        8,
-        56
-      ],
-      "shoulder": [
-        4,
-        44
-      ],
-      "hip": [
-        -2,
-        26
-      ],
-      "elbowF": [
-        18,
-        32
-      ],
-      "handF": [
-        26,
-        18
-      ],
-      "elbowB": [
-        -12,
-        32
-      ],
-      "handB": [
-        -20,
-        18
-      ],
-      "kneeF": [
-        18,
-        12
-      ],
-      "footF": [
-        34,
-        4
-      ],
-      "kneeB": [
-        -8,
-        12
-      ],
-      "footB": [
-        -14,
-        2
-      ]
+      "head": [8, 56],
+      "shoulder": [4, 44],
+      "hip": [-2, 26],
+      "elbowF": [18, 32],
+      "handF": [26, 18],
+      "elbowB": [-12, 32],
+      "handB": [-20, 18],
+      "kneeF": [18, 12],
+      "footF": [34, 4],
+      "kneeB": [-8, 12],
+      "footB": [-14, 2]
     },
     "crownStrike": {
-      "head": [
-        2,
-        62
-      ],
-      "shoulder": [
-        0,
-        50
-      ],
-      "hip": [
-        0,
-        30
-      ],
-      "elbowF": [
-        14,
-        60
-      ],
-      "handF": [
-        22,
-        78
-      ],
-      "elbowB": [
-        -12,
-        42
-      ],
-      "handB": [
-        -20,
-        38
-      ],
-      "kneeF": [
-        8,
-        18
-      ],
-      "footF": [
-        12,
-        6
-      ],
-      "kneeB": [
-        -8,
-        16
-      ],
-      "footB": [
-        -12,
-        6
-      ]
+      "head": [2, 62],
+      "shoulder": [0, 50],
+      "hip": [0, 30],
+      "elbowF": [14, 60],
+      "handF": [22, 78],
+      "elbowB": [-12, 42],
+      "handB": [-20, 38],
+      "kneeF": [8, 18],
+      "footF": [12, 6],
+      "kneeB": [-8, 16],
+      "footB": [-12, 6]
     },
     "hipBack": {
-      "head": [
-        8,
-        58
-      ],
-      "shoulder": [
-        4,
-        46
-      ],
-      "hip": [
-        -6,
-        26
-      ],
-      "elbowF": [
-        18,
-        40
-      ],
-      "handF": [
-        26,
-        34
-      ],
-      "elbowB": [
-        -14,
-        38
-      ],
-      "handB": [
-        -24,
-        32
-      ],
-      "kneeF": [
-        10,
-        16
-      ],
-      "footF": [
-        16,
-        6
-      ],
-      "kneeB": [
-        -12,
-        14
-      ],
-      "footB": [
-        -26,
-        8
-      ]
+      "head": [8, 58],
+      "shoulder": [4, 46],
+      "hip": [-6, 26],
+      "elbowF": [18, 40],
+      "handF": [26, 34],
+      "elbowB": [-14, 38],
+      "handB": [-24, 32],
+      "kneeF": [10, 16],
+      "footF": [16, 6],
+      "kneeB": [-12, 14],
+      "footB": [-26, 8]
     },
     "counter": {
-      "head": [
-        -2,
-        60
-      ],
-      "shoulder": [
-        -2,
-        48
-      ],
-      "hip": [
-        -2,
-        28
-      ],
-      "elbowF": [
-        8,
-        58
-      ],
-      "handF": [
-        4,
-        66
-      ],
-      "elbowB": [
-        -10,
-        56
-      ],
-      "handB": [
-        -4,
-        66
-      ],
-      "kneeF": [
-        2,
-        15
-      ],
-      "footF": [
-        2,
-        1
-      ],
-      "kneeB": [
-        -8,
-        15
-      ],
-      "footB": [
-        -12,
-        1
-      ]
+      "head": [-2, 60],
+      "shoulder": [-2, 48],
+      "hip": [-2, 28],
+      "elbowF": [8, 58],
+      "handF": [4, 66],
+      "elbowB": [-10, 56],
+      "handB": [-4, 66],
+      "kneeF": [2, 15],
+      "footF": [2, 1],
+      "kneeB": [-8, 15],
+      "footB": [-12, 1]
     },
     "bomber": {
-      "head": [
-        10,
-        54
-      ],
-      "shoulder": [
-        6,
-        42
-      ],
-      "hip": [
-        -2,
-        24
-      ],
-      "elbowF": [
-        -6,
-        38
-      ],
-      "handF": [
-        0,
-        44
-      ],
-      "elbowB": [
-        -16,
-        36
-      ],
-      "handB": [
-        -26,
-        34
-      ],
-      "kneeF": [
-        14,
-        12
-      ],
-      "footF": [
-        24,
-        2
-      ],
-      "kneeB": [
-        -12,
-        10
-      ],
-      "footB": [
-        -20,
-        2
-      ]
+      "head": [10, 54],
+      "shoulder": [6, 42],
+      "hip": [-2, 24],
+      "elbowF": [-6, 38],
+      "handF": [0, 44],
+      "elbowB": [-16, 36],
+      "handB": [-26, 34],
+      "kneeF": [14, 12],
+      "footF": [24, 2],
+      "kneeB": [-12, 10],
+      "footB": [-20, 2]
     },
     "parasol": {
-      "head": [
-        0,
-        62
-      ],
-      "shoulder": [
-        0,
-        49
-      ],
-      "hip": [
-        0,
-        30
-      ],
-      "elbowF": [
-        10,
-        54
-      ],
-      "handF": [
-        6,
-        78
-      ],
-      "elbowB": [
-        -12,
-        42
-      ],
-      "handB": [
-        -20,
-        38
-      ],
-      "kneeF": [
-        4,
-        17
-      ],
-      "footF": [
-        6,
-        2
-      ],
-      "kneeB": [
-        -6,
-        16
-      ],
-      "footB": [
-        -10,
-        4
-      ]
+      "head": [0, 62],
+      "shoulder": [0, 49],
+      "hip": [0, 30],
+      "elbowF": [10, 54],
+      "handF": [6, 78],
+      "elbowB": [-12, 42],
+      "handB": [-20, 38],
+      "kneeF": [4, 17],
+      "footF": [6, 2],
+      "kneeB": [-6, 16],
+      "footB": [-10, 4]
     },
     "parasolFall": {
-      "head": [
-        0,
-        62
-      ],
-      "shoulder": [
-        0,
-        49
-      ],
-      "hip": [
-        0,
-        30
-      ],
-      "elbowF": [
-        10,
-        54
-      ],
-      "handF": [
-        6,
-        78
-      ],
-      "elbowB": [
-        -14,
-        40
-      ],
-      "handB": [
-        -22,
-        32
-      ],
-      "kneeF": [
-        2,
-        18
-      ],
-      "footF": [
-        2,
-        4
-      ],
-      "kneeB": [
-        -6,
-        16
-      ],
-      "footB": [
-        -10,
-        6
-      ]
+      "head": [0, 62],
+      "shoulder": [0, 49],
+      "hip": [0, 30],
+      "elbowF": [10, 54],
+      "handF": [6, 78],
+      "elbowB": [-14, 40],
+      "handB": [-22, 32],
+      "kneeF": [2, 18],
+      "footF": [2, 4],
+      "kneeB": [-6, 16],
+      "footB": [-10, 6]
     },
     "win": {
-      "head": [
-        0,
-        66
-      ],
-      "shoulder": [
-        0,
-        52
-      ],
-      "hip": [
-        0,
-        32
-      ],
-      "elbowF": [
-        16,
-        46
-      ],
-      "handF": [
-        24,
-        62
-      ],
-      "elbowB": [
-        -16,
-        50
-      ],
-      "handB": [
-        -28,
-        56
-      ],
-      "kneeF": [
-        5,
-        17
-      ],
-      "footF": [
-        9,
-        1
-      ],
-      "kneeB": [
-        -6,
-        17
-      ],
-      "footB": [
-        -10,
-        1
-      ]
+      "head": [0, 66],
+      "shoulder": [0, 52],
+      "hip": [0, 32],
+      "elbowF": [16, 46],
+      "handF": [24, 62],
+      "elbowB": [-16, 50],
+      "handB": [-28, 56],
+      "kneeF": [5, 17],
+      "footF": [9, 1],
+      "kneeB": [-6, 17],
+      "footB": [-10, 1]
     },
     "helpless": {
-      "head": [
-        -2,
-        58
-      ],
-      "shoulder": [
-        0,
-        47
-      ],
-      "hip": [
-        0,
-        29
-      ],
-      "elbowF": [
-        8,
-        40
-      ],
-      "handF": [
-        16,
-        28
-      ],
-      "elbowB": [
-        -12,
-        40
-      ],
-      "handB": [
-        -22,
-        30
-      ],
-      "kneeF": [
-        6,
-        16
-      ],
-      "footF": [
-        8,
-        4
-      ],
-      "kneeB": [
-        -8,
-        15
-      ],
-      "footB": [
-        -12,
-        4
-      ]
+      "head": [-2, 58],
+      "shoulder": [0, 47],
+      "hip": [0, 29],
+      "elbowF": [8, 40],
+      "handF": [16, 28],
+      "elbowB": [-12, 40],
+      "handB": [-22, 30],
+      "kneeF": [6, 16],
+      "footF": [8, 4],
+      "kneeB": [-8, 15],
+      "footB": [-12, 4]
     }
   },
   "anims": {
@@ -5760,23 +3707,10 @@
       "clock": "world",
       "loop": 44.0,
       "keys": [
-        {
-          "at": 0,
-          "pose": "stand"
-        },
+        { "at": 0, "pose": "stand" },
         {
           "at": 22,
-          "pose": {
-            "from": "stand",
-            "head": [
-              2,
-              66
-            ],
-            "handB": [
-              -17,
-              40
-            ]
-          },
+          "pose": { "from": "stand", "head": [2, 66], "handB": [-17, 40] },
           "lerp": true
         }
       ]
@@ -5789,60 +3723,24 @@
           "at": 0,
           "pose": {
             "from": "stand",
-            "kneeF": [
-              6,
-              16
-            ],
-            "footF": [
-              12,
-              1
-            ],
-            "kneeB": [
-              -6,
-              16
-            ],
-            "footB": [
-              -12,
-              1
-            ],
-            "handF": [
-              20,
-              42
-            ],
-            "handB": [
-              -19,
-              40
-            ]
+            "kneeF": [6, 16],
+            "footF": [12, 1],
+            "kneeB": [-6, 16],
+            "footB": [-12, 1],
+            "handF": [20, 42],
+            "handB": [-19, 40]
           }
         },
         {
           "at": 13,
           "pose": {
             "from": "stand",
-            "kneeF": [
-              -2,
-              16
-            ],
-            "footF": [
-              -6,
-              1
-            ],
-            "kneeB": [
-              4,
-              16
-            ],
-            "footB": [
-              8,
-              1
-            ],
-            "handF": [
-              16,
-              40
-            ],
-            "handB": [
-              -15,
-              36
-            ]
+            "kneeF": [-2, 16],
+            "footF": [-6, 1],
+            "kneeB": [4, 16],
+            "footB": [8, 1],
+            "handF": [16, 40],
+            "handB": [-15, 36]
           },
           "lerp": true
         }
@@ -5856,92 +3754,32 @@
           "at": 0,
           "pose": {
             "from": "stand",
-            "head": [
-              5,
-              61
-            ],
-            "hip": [
-              1,
-              30
-            ],
-            "kneeF": [
-              16,
-              17
-            ],
-            "footF": [
-              26,
-              6
-            ],
-            "kneeB": [
-              -14,
-              15
-            ],
-            "footB": [
-              -24,
-              2
-            ],
-            "elbowF": [
-              16,
-              48
-            ],
-            "handF": [
-              26,
-              52
-            ],
-            "elbowB": [
-              -16,
-              44
-            ],
-            "handB": [
-              -26,
-              40
-            ]
+            "head": [5, 61],
+            "hip": [1, 30],
+            "kneeF": [16, 17],
+            "footF": [26, 6],
+            "kneeB": [-14, 15],
+            "footB": [-24, 2],
+            "elbowF": [16, 48],
+            "handF": [26, 52],
+            "elbowB": [-16, 44],
+            "handB": [-26, 40]
           }
         },
         {
           "at": 180,
           "pose": {
             "from": "stand",
-            "head": [
-              5,
-              61
-            ],
-            "hip": [
-              1,
-              30
-            ],
-            "kneeF": [
-              -14,
-              15
-            ],
-            "footF": [
-              -24,
-              2
-            ],
-            "kneeB": [
-              16,
-              17
-            ],
-            "footB": [
-              26,
-              6
-            ],
-            "elbowF": [
-              16,
-              48
-            ],
-            "handF": [
-              26,
-              52
-            ],
-            "elbowB": [
-              -16,
-              44
-            ],
-            "handB": [
-              -26,
-              40
-            ]
+            "head": [5, 61],
+            "hip": [1, 30],
+            "kneeF": [-14, 15],
+            "footF": [-24, 2],
+            "kneeB": [16, 17],
+            "footB": [26, 6],
+            "elbowF": [16, 48],
+            "handF": [26, 52],
+            "elbowB": [-16, 44],
+            "handB": [-26, 40]
           },
           "lerp": true
         }
@@ -5952,25 +3790,7 @@
       "keys": [
         {
           "at": 0,
-          "pose": {
-            "from": "air",
-            "kneeF": [
-              12,
-              18
-            ],
-            "footF": [
-              18,
-              8
-            ],
-            "kneeB": [
-              -8,
-              16
-            ],
-            "footB": [
-              -12,
-              10
-            ]
-          }
+          "pose": { "from": "air", "kneeF": [12, 18], "footF": [18, 8], "kneeB": [-8, 16], "footB": [-12, 10] }
         }
       ]
     },
@@ -5979,35 +3799,14 @@
       "keys": [
         {
           "at": 0,
-          "pose": {
-            "from": "air",
-            "kneeF": [
-              8,
-              16
-            ],
-            "footF": [
-              10,
-              2
-            ],
-            "kneeB": [
-              -6,
-              15
-            ],
-            "footB": [
-              -8,
-              4
-            ]
-          }
+          "pose": { "from": "air", "kneeF": [8, 16], "footF": [10, 2], "kneeB": [-6, 15], "footB": [-8, 4] }
         }
       ]
     },
     "helpless": {
       "clock": "state",
       "keys": [
-        {
-          "at": 0,
-          "pose": "helpless"
-        }
+        { "at": 0, "pose": "helpless" }
       ]
     },
     "landing": {
@@ -6015,28 +3814,15 @@
       "keys": [
         {
           "at": 0,
-          "pose": {
-            "from": "crouch",
-            "head": [
-              4,
-              50
-            ]
-          }
+          "pose": { "from": "crouch", "head": [4, 50] }
         },
-        {
-          "at": 8,
-          "pose": "stand",
-          "lerp": true
-        }
+        { "at": 8, "pose": "stand", "lerp": true }
       ]
     },
     "crouch": {
       "clock": "state",
       "keys": [
-        {
-          "at": 0,
-          "pose": "crouch"
-        }
+        { "at": 0, "pose": "crouch" }
       ]
     },
     "jumpsquat": {
@@ -6044,13 +3830,7 @@
       "keys": [
         {
           "at": 0,
-          "pose": {
-            "from": "crouch",
-            "head": [
-              4,
-              52
-            ]
-          }
+          "pose": { "from": "crouch", "head": [4, 52] }
         }
       ]
     },
@@ -6059,25 +3839,7 @@
       "keys": [
         {
           "at": 0,
-          "pose": {
-            "from": "stand",
-            "elbowF": [
-              14,
-              44
-            ],
-            "handF": [
-              26,
-              44
-            ],
-            "elbowB": [
-              -14,
-              44
-            ],
-            "handB": [
-              -24,
-              44
-            ]
-          }
+          "pose": { "from": "stand", "elbowF": [14, 44], "handF": [26, 44], "elbowB": [-14, 44], "handB": [-24, 44] }
         }
       ]
     },
@@ -6086,21 +3848,7 @@
       "keys": [
         {
           "at": 0,
-          "pose": {
-            "from": "air",
-            "head": [
-              -8,
-              60
-            ],
-            "handF": [
-              10,
-              34
-            ],
-            "handB": [
-              -24,
-              30
-            ]
-          }
+          "pose": { "from": "air", "head": [-8, 60], "handF": [10, 34], "handB": [-24, 30] }
         }
       ]
     },
@@ -6109,32 +3857,17 @@
       "keys": [
         {
           "at": 0,
-          "pose": {
-            "from": "air",
-            "head": [
-              -6,
-              60
-            ]
-          }
+          "pose": { "from": "air", "head": [-6, 60] }
         }
       ]
     },
     "win": {
       "clock": "state",
       "keys": [
-        {
-          "at": 0,
-          "pose": "win"
-        },
+        { "at": 0, "pose": "win" },
         {
           "at": 20,
-          "pose": {
-            "from": "win",
-            "handF": [
-              28,
-              70
-            ]
-          },
+          "pose": { "from": "win", "handF": [28, 70] },
           "lerp": true
         }
       ]
@@ -6142,29 +3875,15 @@
     "respawn": {
       "clock": "state",
       "keys": [
-        {
-          "at": 0,
-          "pose": "air"
-        }
+        { "at": 0, "pose": "air" }
       ]
     },
     "toss": {
       "clock": "state",
       "keys": [
-        {
-          "at": 0,
-          "pose": "holdTurnip"
-        },
-        {
-          "at": 6,
-          "pose": "tossOver",
-          "lerp": true
-        },
-        {
-          "at": 14,
-          "pose": "stand",
-          "lerp": true
-        }
+        { "at": 0, "pose": "holdTurnip" },
+        { "at": 6, "pose": "tossOver", "lerp": true },
+        { "at": 14, "pose": "stand", "lerp": true }
       ]
     }
   },
@@ -6175,75 +3894,9 @@
       "angle": -90,
       "behind": true,
       "shapes": [
-        {
-          "shape": "poly",
-          "points": [
-            [
-              2,
-              -18
-            ],
-            [
-              2,
-              18
-            ],
-            [
-              34,
-              30
-            ],
-            [
-              34,
-              -30
-            ]
-          ],
-          "fill": "playerLight",
-          "alpha": 0.95
-        },
-        {
-          "shape": "poly",
-          "points": [
-            [
-              30,
-              -20
-            ],
-            [
-              30,
-              20
-            ],
-            [
-              36,
-              30
-            ],
-            [
-              36,
-              -30
-            ]
-          ],
-          "fill": "playerDark",
-          "alpha": 0.95
-        },
-        {
-          "shape": "poly",
-          "points": [
-            [
-              -2,
-              -14
-            ],
-            [
-              -2,
-              14
-            ],
-            [
-              10,
-              18
-            ],
-            [
-              10,
-              -18
-            ]
-          ],
-          "fill": "playerDark",
-          "alpha": 0.6
-        }
+        { "shape": "poly", "points": [[2, -18], [2, 18], [34, 30], [34, -30]], "fill": "playerLight", "alpha": 0.95 },
+        { "shape": "poly", "points": [[30, -20], [30, 20], [36, 30], [36, -30]], "fill": "playerDark", "alpha": 0.95 },
+        { "shape": "poly", "points": [[-2, -14], [-2, 14], [10, 18], [10, -18]], "fill": "playerDark", "alpha": 0.6 }
       ]
     },
     {
@@ -6253,53 +3906,12 @@
       "shapes": [
         {
           "shape": "poly",
-          "points": [
-            [
-              -8,
-              10
-            ],
-            [
-              -5,
-              17
-            ],
-            [
-              -1,
-              11
-            ],
-            [
-              3,
-              18
-            ],
-            [
-              7,
-              11
-            ],
-            [
-              10,
-              16
-            ],
-            [
-              9,
-              9
-            ],
-            [
-              -8,
-              9
-            ]
-          ],
+          "points": [[-8, 10], [-5, 17], [-1, 11], [3, 18], [7, 11], [10, 16], [9, 9], [-8, 9]],
           "fill": "#ffd76a",
           "stroke": "#c79a2e",
           "width": 1.2
         },
-        {
-          "shape": "circle",
-          "at": [
-            1,
-            13
-          ],
-          "r": 1.6,
-          "fill": "#ff5f8a"
-        }
+        { "shape": "circle", "at": [1, 13], "r": 1.6, "fill": "#ff5f8a" }
       ]
     },
     {
@@ -6310,40 +3922,7 @@
       "shapes": [
         {
           "shape": "poly",
-          "points": [
-            [
-              -9,
-              6
-            ],
-            [
-              -6,
-              13
-            ],
-            [
-              -2,
-              7
-            ],
-            [
-              2,
-              14
-            ],
-            [
-              6,
-              7
-            ],
-            [
-              9,
-              12
-            ],
-            [
-              8,
-              5
-            ],
-            [
-              -9,
-              5
-            ]
-          ],
+          "points": [[-9, 6], [-6, 13], [-2, 7], [2, 14], [6, 7], [9, 12], [8, 5], [-9, 5]],
           "fill": "#ffd76a",
           "stroke": "#c79a2e",
           "width": 1.2
@@ -6356,99 +3935,18 @@
       "angle": 0,
       "hidden": true,
       "shapes": [
-        {
-          "shape": "line",
-          "from": [
-            0,
-            0
-          ],
-          "to": [
-            0,
-            34
-          ],
-          "width": 3.2,
-          "color": "#d9c8a8"
-        },
+        { "shape": "line", "from": [0, 0], "to": [0, 34], "width": 3.2, "color": "#d9c8a8" },
         {
           "shape": "poly",
-          "points": [
-            [
-              -24,
-              34
-            ],
-            [
-              -18,
-              48
-            ],
-            [
-              0,
-              52
-            ],
-            [
-              18,
-              48
-            ],
-            [
-              24,
-              34
-            ],
-            [
-              0,
-              30
-            ]
-          ],
+          "points": [[-24, 34], [-18, 48], [0, 52], [18, 48], [24, 34], [0, 30]],
           "fill": "#ff9ecb",
           "stroke": "#c6558c",
           "width": 1.6
         },
-        {
-          "shape": "line",
-          "from": [
-            -24,
-            34
-          ],
-          "to": [
-            0,
-            30
-          ],
-          "width": 1.2,
-          "color": "#c6558c"
-        },
-        {
-          "shape": "line",
-          "from": [
-            24,
-            34
-          ],
-          "to": [
-            0,
-            30
-          ],
-          "width": 1.2,
-          "color": "#c6558c"
-        },
-        {
-          "shape": "circle",
-          "at": [
-            0,
-            53
-          ],
-          "r": 2.4,
-          "fill": "#ffd76a"
-        },
-        {
-          "shape": "line",
-          "from": [
-            24,
-            34
-          ],
-          "to": [
-            30,
-            26
-          ],
-          "width": 2,
-          "color": "#c6558c"
-        }
+        { "shape": "line", "from": [-24, 34], "to": [0, 30], "width": 1.2, "color": "#c6558c" },
+        { "shape": "line", "from": [24, 34], "to": [0, 30], "width": 1.2, "color": "#c6558c" },
+        { "shape": "circle", "at": [0, 53], "r": 2.4, "fill": "#ffd76a" },
+        { "shape": "line", "from": [24, 34], "to": [30, 26], "width": 2, "color": "#c6558c" }
       ]
     },
     {
@@ -6457,69 +3955,16 @@
       "angle": 0,
       "hidden": true,
       "shapes": [
-        {
-          "shape": "line",
-          "from": [
-            -6,
-            0
-          ],
-          "to": [
-            2,
-            0
-          ],
-          "width": 4,
-          "color": "#3a3a44"
-        },
+        { "shape": "line", "from": [-6, 0], "to": [2, 0], "width": 4, "color": "#3a3a44" },
         {
           "shape": "poly",
-          "points": [
-            [
-              2,
-              -7
-            ],
-            [
-              8,
-              -5
-            ],
-            [
-              8,
-              5
-            ],
-            [
-              2,
-              7
-            ]
-          ],
+          "points": [[2, -7], [8, -5], [8, 5], [2, 7]],
           "fill": "#c9ccd6",
           "stroke": "#7d8494",
           "width": 1.2
         },
-        {
-          "shape": "line",
-          "from": [
-            0,
-            0
-          ],
-          "to": [
-            58,
-            0
-          ],
-          "width": 3,
-          "color": "#b9becd"
-        },
-        {
-          "shape": "line",
-          "from": [
-            58,
-            0
-          ],
-          "to": [
-            68,
-            0
-          ],
-          "width": 4.5,
-          "color": "#9aa1b3"
-        }
+        { "shape": "line", "from": [0, 0], "to": [58, 0], "width": 3, "color": "#b9becd" },
+        { "shape": "line", "from": [58, 0], "to": [68, 0], "width": 4.5, "color": "#9aa1b3" }
       ]
     },
     {
@@ -6528,84 +3973,13 @@
       "angle": 0,
       "hidden": true,
       "shapes": [
-        {
-          "shape": "circle",
-          "at": [
-            0,
-            30
-          ],
-          "r": 12,
-          "fill": "#f3e6d0",
-          "stroke": "#b8a68a",
-          "width": 1.5
-        },
-        {
-          "shape": "poly",
-          "points": [
-            [
-              -11,
-              30
-            ],
-            [
-              12,
-              30
-            ],
-            [
-              8,
-              14
-            ],
-            [
-              -6,
-              14
-            ]
-          ],
-          "fill": "#c9543f"
-        },
-        {
-          "shape": "circle",
-          "at": [
-            -11,
-            30
-          ],
-          "r": 5.5,
-          "fill": "#e2d0b0"
-        },
-        {
-          "shape": "circle",
-          "at": [
-            12,
-            30
-          ],
-          "r": 5.5,
-          "fill": "#e2d0b0"
-        },
-        {
-          "shape": "circle",
-          "at": [
-            -2,
-            33
-          ],
-          "r": 2.2,
-          "fill": "#3a2c22"
-        },
-        {
-          "shape": "circle",
-          "at": [
-            6,
-            33
-          ],
-          "r": 2.2,
-          "fill": "#3a2c22"
-        },
-        {
-          "shape": "circle",
-          "at": [
-            2,
-            24
-          ],
-          "r": 2.6,
-          "fill": "#e07a54"
-        }
+        { "shape": "circle", "at": [0, 30], "r": 12, "fill": "#f3e6d0", "stroke": "#b8a68a", "width": 1.5 },
+        { "shape": "poly", "points": [[-11, 30], [12, 30], [8, 14], [-6, 14]], "fill": "#c9543f" },
+        { "shape": "circle", "at": [-11, 30], "r": 5.5, "fill": "#e2d0b0" },
+        { "shape": "circle", "at": [12, 30], "r": 5.5, "fill": "#e2d0b0" },
+        { "shape": "circle", "at": [-2, 33], "r": 2.2, "fill": "#3a2c22" },
+        { "shape": "circle", "at": [6, 33], "r": 2.2, "fill": "#3a2c22" },
+        { "shape": "circle", "at": [2, 24], "r": 2.6, "fill": "#e07a54" }
       ]
     }
   ]

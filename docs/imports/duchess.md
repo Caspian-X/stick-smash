@@ -2,8 +2,8 @@
 
 Playable SSBU **Peach** (patch 13.0.1) adaptation, packaged as **Duchess** (`duchess`). It inherits only the
 abstract `base` package and uses two shared data hooks: `stats.float` for the float and the `Counter` phase window
-for Toad. Vegetable is a pluck phase followed by a spawned projectile; its
-per-pluck random face is replaced by deterministic throw tiers (below).
+for Toad. Vegetable is a pluck phase that puts a turnip in her hand as a held item (the engine's shared item system,
+FORMAT.md "Items"); its per-pluck random face is replaced by deterministic throw tiers (below).
 
 ## Target and status
 
@@ -14,8 +14,7 @@ per-pluck random face is replaced by deterministic throw tiers (below).
   (Vegetable), a counter (Toad), a hip-first lunge (Peach Bomber) and a parachute recovery (Peach Parasol).
 - State: research, authoring, focused tests, CPU/stage coverage, balance diagnostics and window-capture visual
   inspection complete. No physical controller playtest was performed.
-- Remaining work: physical feel pass; the tool/face variants of the fsmash, held-item turnip play (catch,
-  regrab, Z-drop) (see "Known approximations").
+- Remaining work: physical feel pass; the tool/face variants of the fsmash (see "Known approximations").
 
 ## Sources
 
@@ -63,7 +62,7 @@ Peach Parasol 39, Peach Bomber hit 25. That is why the engine totals use those n
 | Toad counter window | UFD "Counter window 9-34 from 10-35" | SmashWiki 9-34 | 9-34 (source frames) → phase frames 8-33. |
 | Peach Bomber totals | UFD 62 grounded miss / 87 airborne miss; "hit is 25 total frames" | script `SpecialSJump` enables a 25-frame timeout, `SpecialSHitEnd` is a 4-frame script | Grounded whiff 62 (11 windup + 25 thrust + 26 recovery); on contact a 25-frame hit phase; the airborne whiff uses an open `fall` phase (ledge grab from the source's frame 16) instead of a fixed 87 so the engine can keep steering to a ledge. The windup is one tick shorter than the source's 12 so the search box is live on source frames 13-36 (phase entry does not run transition checks). |
 | Turnip damage | UFD "8.3—27.6" for the whole move | UFD/SmashWiki base faces 5/10/16/23 and the item-throw formula `d − 0.4 + speed×3` | UFD's low end 8.3 is the common smiley forward throw; a smash throw adds `(3.64 − 2.6) × 3 = 3.1` → 11.4. Special faces, Mr. Saturn and Bob-omb are omitted. |
-| Float | SmashWiki: 2.5 s, once per airtime, no vertical movement, drift at air speed, persists through aerials | param `uniq_float_float_frame` 150 | `stats.float { speed: 0, frames: 150 }` (2026-11-05; replaced the fitted 1.0 px/tick `floatSpeed` sink). See "Float". |
+| Float | SmashWiki: 2.5 s, once per airtime, no vertical movement, drift at air speed, persists through aerials | param `uniq_float_float_frame` 150 | `stats.float { speed: 0, frames: 150, groundHeight: 10 }` (2026-11-05; replaced the fitted 1.0 px/tick `floatSpeed` sink). See "Float". |
 | Pivot grab | UFD lists it (startup 10, total 39) | `Moves` has no pivot-grab slot | Omitted; standing/dash grabs and the four throws are imported. |
 
 ## Conversion rules
@@ -82,6 +81,7 @@ Peach Parasol 39, Peach Bomber hit 25. That is why the engine totals use those n
 | Weight | 89 | `100/89` reciprocal knockback multiplier | converted |
 | Pummel | 1.3 | `stats.pummelDamage` | converted |
 | Specials | script rows/windows | counter window, spore projectiles, search→burst lunge, rising hits + fall-capped open parasol, pluck→toss | converted with the documented engine adaptations |
+| Peach Bomber lunge | SmashWiki side-special params: initial speed 2.9 (tilt) / 3.3 (smash); script `SpecialSJump` switches to `FIGHTER_KINETIC_TYPE_PEACH_SPECIAL_S_BRAKE` on frame 4. No public source gives the brake rate or the travel distance (the UFD clips are a single still and the hit's rebound; no Peach `special_s` param dump found) | per-tick `setVel` schedule (`bomber_brake` in the importer): 14.5 px/tick for the first 3 thrust ticks, then 14.5 − 0.475·k (brake 0.095 units/frame² × 5). Grounded whiff 227 px ≈ 45 units (was 400 px = 80 units at a constant 14.5); test `peach_bomber_travel_detects_targets_and_whiffs_for_the_source_total` (225 ± 10 px) | **fitted, low confidence** (2026-11-05): brake chosen so a grounded whiff covers ~45 units, well short of a Battlefield ledge from centre (80) |
 
 ## Move ledger
 
@@ -113,7 +113,7 @@ the authored phases. The parsed rows are in `sources/duchess/ledger.json`.
 | Neutral special (Toad) | `SpecialN`/`SpecialNHit`, `peach_kinopiospore/Shot` | counter 9-34; 62 / 60 on hit | spores 3.5 each, 45°, KBG 210, BKB 40, shield +2 | `counter` phase 8-33; six spore births at 3,6,9,12,15,18. The source's 8-10 intangibility is not authored: an intangible victim is skipped before the counter check, so the window itself is the guard. |
 | Side special (Peach Bomber) | `SpecialSJump`/`SpecialSHitEnd` | searchbox 13-36; hit 2-3 after contact; 62 ground whiff | 12.0, 361 (Sakurai), KBG 73, BKB 60, ShieldDamage 6 | Windup 12, thrust 24 (ledge grab from source 16), 25-frame burst on contact, 26 recovery; air whiff falls with ledge grabs |
 | Up special (Peach Parasol) | `SpecialHiStart`/`Open`/`Fall` | hits 7-9, 11-15, 16-21, 22-27 (rehit 5), 31-32; attack 39 | 3.0 (FKB 160/130), 1.0 rehit 5 (93°, 87° and the frame-22 368 autolink replacements), 4.0 final (hitlag 3); open parasol 2.0 rehit 18 | Five rise phases (one per script window), then open (caps descent at a fitted 1.6667 px/tick, 2.0 at the old ×6 scale, closes on a fresh special press or after 480 frames) and a closed special-fall phase that runs until landing with 40 frames of lag (it still grabs ledges, as in the source); every rise phase lands into 26 frames of lag rather than staying in the move; open landing lag 26 |
-| Down special (Vegetable) | `SpecialLw`, `peachdaikon` | pluck 39; toss 22 | Turnip 8.3 (weak tier) or 11.4 (smash tier), angle 30, KBG 0.45, BKB 25, hitlag 0.8 | Pluck (39) → `ready` charge phase → `toss`/`tossStrong` spawns the projectile at frame 6 |
+| Down special (Vegetable) | `SpecialLw`, `peachdaikon` | pluck 39; toss 22 | Turnip 8.3 (tilt throw) or 11.4 (smash throw), angle 30, KBG 0.45, BKB 25, hitlag 0.8 | Pluck (39) gives `items.turnip` on phase frame 29 (source 30) and ends; the turnip is then thrown like any held item: the shared 22-frame `toss` (release on frame 6), tilt → `turnip`, smash → `turnip_strong`, `speedDamage` 0.6 for other speeds |
 
 ## Float
 
@@ -134,15 +134,28 @@ float aerial short-hop multiplier is not modelled (the engine has none). Tests: 
 and_ends_on_the_frame_limit` (height held through a nair, exactly 150 ticks, air jump kept) and
 `float_is_once_per_airtime_and_ends_on_release` (latch, release, landing restore, down + jump, a hit ends it).
 
+Ground float (2026-11-05, SIM_VERSION -sim-34): SmashWiki Floating says a float started from the ground sits "just
+above the ground"; no source gives the height, so `stats.float.groundHeight` is a fitted **10 px (2 units)**, low
+confidence. Leaving jumpsquat with down held (jump button with down, or a tap jump pulled down before jumpsquat
+ends) lifts her 10 px with no vertical speed and starts the float instead of a hop; no hop height is chosen and no
+jump is spent. From there it is the normal float: releasing jump drops her and landing restores it. With tap jump
+alone the stick cannot hold up and down at once, so the float ends the tick after it starts unless jump is held.
+Test: `down_and_jump_from_the_ground_floats_just_above_it` (both inputs, height held, release, normal landing).
+
 ## Vegetable determinism
 
 The source plucks one of eight faces (smiley ≈ 88.7%, winking 6.89%, dot-eye 1.7%, stitch-face 1.7%, Bob-omb 0.4%,
 Mr. Saturn 0.6%) and the damage also depends on the item-throw type. This engine has no random projectile
 selection hook and replays are checksummed, so **no RNG is consumed**: the pluck always ends in the common smiley
-turnip and the throw strength is chosen by how long the special button is held after the pluck (a tap throws the
-normal tier; ≥8 held ticks throws the smash tier, which adds the item-throw strength difference). Both tiers are
-fixed projectiles (`turnip`, `turnip_strong`), so a pluck/throw in a replay is identical every time. The rare faces,
-Mr. Saturn, Bob-omb, holding/regrabbing the turnip and throwing it in other directions are omitted.
+turnip, held in her hand (2026-11-05: was a `ready` charge phase that threw on releasing special, so a tap threw at
+once). It is thrown like any Smash item: attack (or grab on the ground) throws by stick direction, a tilt throw is
+the normal tier (`turnip`, 8.3) and a smash throw (flick, attack stick, attack + special, dash) the smash tier
+(`turnip_strong`, 11.4, the item-throw strength difference); Z in the air drops it. Other directions scale with
+throw speed through Ultimate's `speed × 3` (`speedDamage` 0.6 per px/tick, measured from each tier's forward
+speed); back/up/down reuse the forward speeds (adapted: per-direction item-throw speeds are not in the pinned
+sources), so they keep the tier damage and a drop does 1.2. A thrown turnip loses its hitbox on the floor and lies
+there for 600 ticks; a connecting one bounces back and up (`rebound` [2.5, 6], fitted). Anyone can pick it up or
+catch it in flight. The rare faces, Mr. Saturn and Bob-omb are omitted.
 
 ## Validation and handoff
 
@@ -152,8 +165,8 @@ Mr. Saturn, Bob-omb, holding/regrabbing the turnip and throwing it in other dire
   uair 9-12/14-18, dair 11-12…29-30, usmash 13-15/16-19, fsmash 14-16) and their damage tiers; smash charge
   frames 4/8/1; aerial landing-lag and autocancel boundaries through real phase progression (nair 7/AC 1-4,36+;
   fair 13/1-9,41+; bair 11/1-4,30+; uair 7/1-4,41+; dair 8/1-11,38+); float caps a held-jump descent at 1.0 and
-  releases immediately, and does not apply during an attack; Vegetable pluck length, no projectile during the
-  pluck, weak/strong tiers (including the strong tier's re-derived shield multiplier) and that neither tier
+  releases immediately, and does not apply during an attack; Vegetable pluck length, the turnip in hand from phase
+  frame 29, no projectile during the pluck, tilt/smash throw tiers (including the strong tier's re-derived shield multiplier) and that neither tier
   consumes the gameplay RNG; Toad's counter window boundaries, the attacker freeze, six spore births across three
   directions, the 62-frame whiff, and projectile stealing/reflection with `reflectLife` 24; Peach Bomber travel,
   the search→12% burst transition, the rebound, and the search box's source 13-36 window (a victim arriving on the
@@ -205,14 +218,18 @@ Mr. Saturn, Bob-omb, holding/regrabbing the turnip and throwing it in other dire
 - Forward smash: only the un-angled golf club is imported. The source picks the frying pan (up), golf club
   (neutral) or tennis racket (down) by the smash's stick angle; the engine's smash charge cannot branch on the
   stick, so the pan/racket rows stay in the ledger only.
-- Vegetable: the move is a single pluck-then-throw timeline (no held item, catch, regrab or Z-drop); faces are
-  deterministic tiers and the special faces/items are omitted. Damage tiers follow the UFD range, not the
-  per-face base table.
+- Vegetable: the turnip is a held item on the shared item system (throws, Z-drop, pickup and catches, see
+  "Vegetable determinism" and `crates/sim/tests/items.rs`); the shared throw animation and timing replace
+  per-direction item-throw animations. Faces are deterministic tiers and the special faces/items are omitted.
+  Damage tiers follow the UFD range, not the per-face base table. Down special while holding a turnip plucks
+  nothing.
 - Float: no cancel into fast fall and no hold-up variant (see "Float").
 - Toad: six spores are three fixed-direction projectiles fired twice rather than six randomly deviated sprays; the
   source's back-hit "switch places" is the engine's shared counter turn. The spores have `Rehit=0` in the source;
   the *turnip item* row's `Rehit=100` is dropped because a projectile contact consumes it here.
-- Peach Bomber: one lunge speed (the source's tilt/smash inputs differ); the airborne 87-frame miss is an open
+- Peach Bomber: one lunge speed (the source's tilt/smash inputs differ); the post-frame-4 brake is a fitted linear
+  `setVel` schedule (see the conversion table), and grounded traction / air friction still act after each set, so
+  the airborne lunge goes slightly farther than the grounded one; the airborne 87-frame miss is an open
   fall phase instead of a fixed total; the 0.95 backward/1.4 upward hit rebound is converted at the movement scale.
 - Parasol: reopening the parasol from helplessness is not modelled; the open canopy's 480-frame lifetime becomes a
   phase timeout; closing drops into a closed special-fall phase that runs until she lands (40-frame landing lag),

@@ -368,7 +368,8 @@ pub fn ai_input(w: &mut World, d: &GameData, i: usize, level: u8) -> Intent {
             if adx < items.cpu_range && dy.abs() < v.attack_height || ai.item_t >= items.cpu_hold {
                 ai.item_t = 0;
                 toward(&mut inp, tdir);
-                (inp.tap_r, inp.tap_l, inp.up, inp.down, inp.jump, inp.atk) = (tdir > 0., tdir < 0., false, false, false, true);
+                (inp.tap_r, inp.tap_l, inp.up, inp.down, inp.jump, inp.atk) =
+                    (tdir > 0., tdir < 0., false, false, false, true);
             }
             return inp;
         }

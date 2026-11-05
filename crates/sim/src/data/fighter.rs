@@ -148,7 +148,7 @@ pub struct Stats {
 }
 
 /// `stats.float`. Starts in the air (normal `Air` control) once per airtime when jump is held while not rising,
-/// or on a jump press with down held. While it lasts the fighter's vertical speed is `speed` (0 = hover; positive
+/// or on a jump press with down held (from the ground too, with `groundHeight`). While it lasts the fighter's vertical speed is `speed` (0 = hover; positive
 /// sinks) and drift, aerials and the air jump work as usual; an aerial started during the float keeps it.
 /// Releasing jump, the frame limit, an air jump, fast fall, being hit, a ledge, any non-aerial state and landing end
 /// it; landing (not a ledge) makes it available again.
@@ -159,6 +159,11 @@ pub struct Float {
     pub speed: f64,
     #[schemars(transform = unit::tick)]
     pub frames: u32,
+    /// Ground float: leaving jumpsquat with down held (float unused) starts the float at once, lifted this far
+    /// above the ground with no vertical speed, instead of a hop. 0 (default) disables it.
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[schemars(transform = unit::px_y)]
+    pub ground_height: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]

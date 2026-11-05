@@ -148,8 +148,8 @@ fn reference_durations_and_hit_windows_match_the_ledger() {
         ("dashgrab", 44),
         ("nspec", 62 + 60),
         ("sspec", 12 + 24 + 25 + 26),
-        ("uspec", 39 + 480),     // closed parasol is an open-ended special fall
-        ("dspec", 39), // the pluck; the turnip is then a held item (tests/items.rs)
+        ("uspec", 39 + 480), // closed parasol is an open-ended special fall
+        ("dspec", 39),       // the pluck; the turnip is then a held item (tests/items.rs)
     ] {
         assert_eq!(total(&d, slot), frames, "{slot} total");
     }
@@ -277,6 +277,50 @@ fn float_holds_height_through_a_nair_and_ends_on_the_frame_limit() {
     tick(&mut w, &d, JUMP);
     assert!(w.fighters[0].vy > 0. && w.fighters[0].floating == 0, "falls after the frame limit");
     assert_eq!(w.fighters[0].jumps, 1, "the air jump survives the float");
+}
+
+#[test]
+fn down_and_jump_from_the_ground_floats_just_above_it() {
+    let d = common::data();
+    let lift = d.fighter("duchess").unwrap().stats.float.as_ref().unwrap().ground_height;
+    assert_eq!(lift, 10., "about 2 units above the ground");
+    let down = |buttons| Input { stick: (0, -127), buttons, ..Default::default() };
+    // Jump button with down held, or a tap jump (stick up) pulled down before jumpsquat ends.
+    for tap in [false, true] {
+        let mut w = sandbox(&d, &["duchess", "brawler"]);
+        w.count = 0;
+        // Clear of Arena's platforms.
+        (w.fighters[0].x, w.fighters[1].x) = (290., 1500.);
+        let floor = w.fighters[0].y;
+        let first = if tap { Input { stick: (0, 127), ..Default::default() } } else { down(sim::input::JUMP) };
+        tick(&mut w, &d, first);
+        let mut n = 0;
+        while w.fighters[0].ground {
+            tick(&mut w, &d, down(sim::input::JUMP));
+            n += 1;
+            assert!(n < 20, "never left the ground (tap {tap})");
+        }
+        let f = &w.fighters[0];
+        assert_eq!(f.state, State::Air);
+        assert!(f.floating > 0 && f.float_used && f.vy == 0. && f.rise == 0, "ground float starts (tap {tap})");
+        assert!((f.y - (floor - lift)).abs() < 1e-9, "hovers {lift} px up: {} vs {floor}", f.y);
+        assert_eq!(f.jumps, 1, "no jump spent");
+        for _ in 0..30 {
+            tick(&mut w, &d, down(sim::input::JUMP));
+            assert!((w.fighters[0].y - (floor - lift)).abs() < 1e-9 && !w.fighters[0].ground, "height held");
+        }
+        // Releasing jump drops her; she lands normally with the float restored.
+        tick(&mut w, &d, Input::default());
+        assert_eq!(w.fighters[0].floating, 0);
+        for _ in 0..30 {
+            if w.fighters[0].ground {
+                break;
+            }
+            tick(&mut w, &d, Input::default());
+        }
+        let f = &w.fighters[0];
+        assert!(f.ground && !f.float_used && f.y == floor, "lands: {} {:?}", f.y, f.state);
+    }
 }
 
 #[test]
@@ -486,7 +530,10 @@ fn peach_bomber_travel_detects_targets_and_whiffs_for_the_source_total() {
         ticks += 1;
     }
     assert_eq!(ticks, 62, "grounded whiff runs the whole 62-frame animation");
-    assert!(w.fighters[0].x - start_x > 200., "the lunge covers ground: {}", w.fighters[0].x - start_x);
+    // A launch then a brake (the script's `SPECIAL_S_BRAKE` from frame 4): a grounded whiff covers the fitted
+    // ~45 units (225 px at 5 px/unit), well short of a Battlefield ledge from centre (80 units).
+    let travel = w.fighters[0].x - start_x;
+    assert!((travel - 225.).abs() < 10., "grounded whiff travel: {travel} px");
     assert_eq!(w.fighters[0].state, State::Idle);
     // On contact: the search box transitions to the 12% burst and Peach rebounds.
     let mut w = start(&d, "sspec");
