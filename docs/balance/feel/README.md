@@ -72,9 +72,10 @@ in the air. Each move reports two setups:
 
 For each setup a binary search finds the lowest dummy percent (before the move) for two outcomes, with `range`
 (attacker distance, px) and, for the back air, `delay` (ticks after the jump press):
-- `percent` is the **launch KO**: the dummy crosses a blast line while still in the launch, meaning in hitstun,
-  or airborne without having touched the ground or a ledge since the hit. A dummy that lands and then drops off
-  the block (it has no inputs) does not count. `null` with reason `no launch KO below 300%` means it never
+- `percent` is the **launch KO**: the dummy crosses the left, right or top blast line before touching the ground
+  or a ledge since the hit, or crosses the bottom line while still in hitstun (a spike that kills). Flying past
+  the edge and falling out the bottom after hitstun, or landing and then dropping off the block (the dummy has no
+  inputs), is a ring-out instead. `null` with reason `no launch KO below 300%` means it never
   happens below the cap.
 - `ringOut` is the lowest percent at which the dummy leaves the main block at all (hangs on a ledge, or dies),
   reported only when that first exit is not already a launch KO. It shows where a move pushes a helpless dummy
