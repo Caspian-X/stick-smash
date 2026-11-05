@@ -15,7 +15,8 @@ pub(super) const FORMAT_VERSION: u32 = 2;
 // -sim-33: Ultimate calibration: jump initial height, upward-launch gravity (`topLaunch`), Sakurai ramp, hitlag
 // multiplier before the cap, weight-based fixed knockback (`fkb`), Peach-style `stats.float`, per-fighter traction /
 // air friction; Fighter snapshot fields `rise`, `top_launch`, `floating`, `float_used`.
-pub(super) const SIM_VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), "-sim-33");
+// -sim-34: ground float (`stats.float.groundHeight`) and Duchess's braking Peach Bomber lunge.
+pub(super) const SIM_VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), "-sim-34");
 pub(super) fn interval(data: &GameData) -> u64 {
     data.global.replay.checkpoint_ticks.max(u64::from(sim::TICK_HZ))
 }

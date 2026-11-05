@@ -940,7 +940,11 @@ while not rising, or a jump press with down held (instead of the air jump), star
 started during the float keeps it (the float continues through the aerial and after it); fast fall is ignored while
 floating. Releasing jump, the frame limit, an air jump, a hit, a ledge, any non-aerial move or other state, and
 landing end it; only landing makes it available again (`Fighter::floating` / `float_used` in the snapshot). The air
-jump stays available. This replaced `stats.floatSpeed` (a descent cap while jump was held, with no duration or latch);
+jump stays available. Optional `groundHeight` (px, default 0 = off) adds a ground float: leaving jumpsquat with down
+held and the float unused lifts the fighter `groundHeight` above the ground with no vertical speed and starts the
+float at once, instead of a short or full hop (the jump button with down, or a tap jump pulled down before
+jumpsquat ends; the float then runs as above, so with tap jump alone it ends as soon as the stick leaves up and
+jump is not held). SIM_VERSION -sim-34. This replaced `stats.floatSpeed` (a descent cap while jump was held, with no duration or latch);
 SIM_VERSION -sim-33.
 
 `restore`, `detonate` and `explosion.manual` add no rollback snapshot state; content that omits them keeps its

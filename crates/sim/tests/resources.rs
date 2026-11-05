@@ -149,10 +149,10 @@ fn validation_reports_resource_paths() {
     for (speed, frames, path) in
         [(-1., 10, "stats.float.speed"), (f64::NAN, 10, "stats.float.speed"), (0., 0, "stats.float.frames")]
     {
-        d.fighters[di].stats.float = Some(sim::data::fighter::Float { speed, frames });
+        d.fighters[di].stats.float = Some(sim::data::fighter::Float { speed, frames, ground_height: 0. });
         assert!(sim::data::validate(&d).iter().any(|e| e.path == path), "{path}");
     }
-    d.fighters[di].stats.float = Some(sim::data::fighter::Float { speed: 0., frames: 10 });
+    d.fighters[di].stats.float = Some(sim::data::fighter::Float { speed: 0., frames: 10, ground_height: 0. });
     for (charge, uses, suffix) in [("missing", 1, "charge"), ("levin", 0, "uses")] {
         d.fighters[di].moves.jab.phases[0].events = vec![Event {
             at: Some(0),

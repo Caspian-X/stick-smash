@@ -595,6 +595,14 @@ moves['nspec'] = {'name': 'Toad', 'phases': [
 # Peach Bomber: a hip-first lunge that detonates on contact; a whiff leaves her open. The windup is one tick
 # shorter than the source's 12 so the search box is live for source frames 13-36: phase entry does not check
 # transitions, so the first check happens one tick into `thrust`.
+# The lunge launches at the tilt-input 2.9 (SmashWiki) and holds it until the script's frame-4
+# `FIGHTER_KINETIC_TYPE_PEACH_SPECIAL_S_BRAKE`, then brakes linearly. The brake rate is not in any public source:
+# it is fitted (low confidence) so a grounded whiff covers ~45 units, clearly short of a Battlefield ledge from centre.
+# A per-tick `setVel` schedule rather than `addVel` so the speed profile does not compound with traction (she lands
+# a couple of ticks into the lunge; grounded traction still applies after each set, airborne air friction).
+BOMBER_SPEED, BOMBER_BRAKE_FROM, BOMBER_BRAKE = 2.9, 3, 0.095
+bomber_brake = [{'at': t, 'setVel': {'x': round(max(BOMBER_SPEED - BOMBER_BRAKE * (t - BOMBER_BRAKE_FROM + 1), 0) * SCALE, 4)}}
+                for t in range(BOMBER_BRAKE_FROM, frame(37) - frame(13) + 1)]
 raw('sspec_jump', 'SpecialSJump')
 raw('sspec_hit', 'SpecialSHitEnd')
 moves['sspec'] = {'name': 'Peach Bomber', 'phases': [
@@ -602,8 +610,9 @@ moves['sspec'] = {'name': 'Peach Bomber', 'phases': [
           events=[{'at': 0, 'sfx': 'charge'}], transitions=[wait('thrust')]),
     phase('thrust', frame(37) - frame(13) + 1, detection={'x1': 6, 'x2': 62, 'y1': 6, 'y2': 70},
           anim=[{'at': 0, 'pose': 'bomber'}], ledgeGrab=frame(16) - frame(13),
-          events=[{'at': 0, 'setVel': {'x': 2.9 * SCALE, 'y': 0.4167}, 'leaveGround': True, 'sfx': 'swing'},
-                  {'from': 1, 'setVel': {'x': 2.9 * SCALE}},
+          events=[{'at': 0, 'setVel': {'x': BOMBER_SPEED * SCALE, 'y': 0.4167}, 'leaveGround': True, 'sfx': 'swing'},
+                  {'from': 1, 'to': BOMBER_BRAKE_FROM - 1, 'setVel': {'x': BOMBER_SPEED * SCALE}},
+                  *bomber_brake,
                   {'from': 3, 'every': 3, 'fx': [{'type': 'burst', 'x': -18, 'y': 30, 'color': '#ff9ecb',
                                                   'n': 2, 'speed': 1.6, 'life': 12, 'size': 3.4}]}],
           # The timeouts are listed first: on the phase's last tick (source 37) they win over the search box,
@@ -895,8 +904,8 @@ doc = {
         'fastFallSpeed': round(1.904 * SCALE, 4),
         'traction': round(0.111 * SCALE, 5), 'airFriction': round(0.01 * SCALE, 5),  # Ultimate ground_brake / air_brake_x (fighter_param dump; ssbwiki Traction, Air friction)
         # Peach's float: no vertical movement for up to 2.5 s (param uniq_float_float_frame 150), once per airtime
-        # (ssbwiki Floating).
-        'float': {'speed': 0, 'frames': 150},
+        # (ssbwiki Floating). Jump with down held floats "just above the ground" (ssbwiki Floating; fitted 2 units).
+        'float': {'speed': 0, 'frames': 150, 'groundHeight': 2 * SCALE},
     },
     'ai': {
         'reach': 74, 'counterChance': 0.25,

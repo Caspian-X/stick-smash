@@ -193,10 +193,17 @@
       "additionalProperties": false,
       "properties": {
         "speed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "y" },
-        "frames": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" }
+        "frames": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
+        "groundHeight": {
+          "type": "number",
+          "format": "double",
+          "description": "Ground float: leaving jumpsquat with down held (float unused) starts the float at once, lifted this far\nabove the ground with no vertical speed, instead of a hop. 0 (default) disables it.",
+          "x-unit": "px",
+          "x-axis": "y"
+        }
       },
       "required": ["speed", "frames"],
-      "description": "`stats.float`. Starts in the air (normal `Air` control) once per airtime when jump is held while not rising,\nor on a jump press with down held. While it lasts the fighter's vertical speed is `speed` (0 = hover; positive\nsinks) and drift, aerials and the air jump work as usual; an aerial started during the float keeps it.\nReleasing jump, the frame limit, an air jump, fast fall, being hit, a ledge, any non-aerial state and landing end\nit; landing (not a ledge) makes it available again."
+      "description": "`stats.float`. Starts in the air (normal `Air` control) once per airtime when jump is held while not rising,\nor on a jump press with down held (from the ground too, with `groundHeight`). While it lasts the fighter's vertical speed is `speed` (0 = hover; positive\nsinks) and drift, aerials and the air jump work as usual; an aerial started during the float keeps it.\nReleasing jump, the frame limit, an air jump, fast fall, being hit, a ledge, any non-aerial state and landing end\nit; landing (not a ledge) makes it available again."
     },
     "Body": {
       "type": "object",
@@ -2646,9 +2653,16 @@
       "additionalProperties": false,
       "properties": {
         "speed": { "type": "number", "format": "double", "x-unit": "px/tick", "x-axis": "y" },
-        "frames": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" }
+        "frames": { "type": "integer", "format": "uint32", "minimum": 0, "x-unit": "tick" },
+        "groundHeight": {
+          "type": "number",
+          "format": "double",
+          "description": "Ground float: leaving jumpsquat with down held (float unused) starts the float at once, lifted this far\nabove the ground with no vertical speed, instead of a hop. 0 (default) disables it.",
+          "x-unit": "px",
+          "x-axis": "y"
+        }
       },
-      "description": "`stats.float`. Starts in the air (normal `Air` control) once per airtime when jump is held while not rising,\nor on a jump press with down held. While it lasts the fighter's vertical speed is `speed` (0 = hover; positive\nsinks) and drift, aerials and the air jump work as usual; an aerial started during the float keeps it.\nReleasing jump, the frame limit, an air jump, fast fall, being hit, a ledge, any non-aerial state and landing end\nit; landing (not a ledge) makes it available again."
+      "description": "`stats.float`. Starts in the air (normal `Air` control) once per airtime when jump is held while not rising,\nor on a jump press with down held (from the ground too, with `groundHeight`). While it lasts the fighter's vertical speed is `speed` (0 = hover; positive\nsinks) and drift, aerials and the air jump work as usual; an aerial started during the float keeps it.\nReleasing jump, the frame limit, an air jump, fast fall, being hit, a ledge, any non-aerial state and landing end\nit; landing (not a ledge) makes it available again."
     },
     "BodyPartial": {
       "type": "object",

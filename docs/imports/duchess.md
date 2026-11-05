@@ -63,7 +63,7 @@ Peach Parasol 39, Peach Bomber hit 25. That is why the engine totals use those n
 | Toad counter window | UFD "Counter window 9-34 from 10-35" | SmashWiki 9-34 | 9-34 (source frames) → phase frames 8-33. |
 | Peach Bomber totals | UFD 62 grounded miss / 87 airborne miss; "hit is 25 total frames" | script `SpecialSJump` enables a 25-frame timeout, `SpecialSHitEnd` is a 4-frame script | Grounded whiff 62 (11 windup + 25 thrust + 26 recovery); on contact a 25-frame hit phase; the airborne whiff uses an open `fall` phase (ledge grab from the source's frame 16) instead of a fixed 87 so the engine can keep steering to a ledge. The windup is one tick shorter than the source's 12 so the search box is live on source frames 13-36 (phase entry does not run transition checks). |
 | Turnip damage | UFD "8.3—27.6" for the whole move | UFD/SmashWiki base faces 5/10/16/23 and the item-throw formula `d − 0.4 + speed×3` | UFD's low end 8.3 is the common smiley forward throw; a smash throw adds `(3.64 − 2.6) × 3 = 3.1` → 11.4. Special faces, Mr. Saturn and Bob-omb are omitted. |
-| Float | SmashWiki: 2.5 s, once per airtime, no vertical movement, drift at air speed, persists through aerials | param `uniq_float_float_frame` 150 | `stats.float { speed: 0, frames: 150 }` (2026-11-05; replaced the fitted 1.0 px/tick `floatSpeed` sink). See "Float". |
+| Float | SmashWiki: 2.5 s, once per airtime, no vertical movement, drift at air speed, persists through aerials | param `uniq_float_float_frame` 150 | `stats.float { speed: 0, frames: 150, groundHeight: 10 }` (2026-11-05; replaced the fitted 1.0 px/tick `floatSpeed` sink). See "Float". |
 | Pivot grab | UFD lists it (startup 10, total 39) | `Moves` has no pivot-grab slot | Omitted; standing/dash grabs and the four throws are imported. |
 
 ## Conversion rules
@@ -82,6 +82,7 @@ Peach Parasol 39, Peach Bomber hit 25. That is why the engine totals use those n
 | Weight | 89 | `100/89` reciprocal knockback multiplier | converted |
 | Pummel | 1.3 | `stats.pummelDamage` | converted |
 | Specials | script rows/windows | counter window, spore projectiles, search→burst lunge, rising hits + fall-capped open parasol, pluck→toss | converted with the documented engine adaptations |
+| Peach Bomber lunge | SmashWiki side-special params: initial speed 2.9 (tilt) / 3.3 (smash); script `SpecialSJump` switches to `FIGHTER_KINETIC_TYPE_PEACH_SPECIAL_S_BRAKE` on frame 4. No public source gives the brake rate or the travel distance (the UFD clips are a single still and the hit's rebound; no Peach `special_s` param dump found) | per-tick `setVel` schedule (`bomber_brake` in the importer): 14.5 px/tick for the first 3 thrust ticks, then 14.5 − 0.475·k (brake 0.095 units/frame² × 5). Grounded whiff 227 px ≈ 45 units (was 400 px = 80 units at a constant 14.5); test `peach_bomber_travel_detects_targets_and_whiffs_for_the_source_total` (225 ± 10 px) | **fitted, low confidence** (2026-11-05): brake chosen so a grounded whiff covers ~45 units, well short of a Battlefield ledge from centre (80) |
 
 ## Move ledger
 
@@ -133,6 +134,14 @@ fall does nothing while floating (release jump first), there is no "hold up and 
 float aerial short-hop multiplier is not modelled (the engine has none). Tests: `float_holds_height_through_a_nair_
 and_ends_on_the_frame_limit` (height held through a nair, exactly 150 ticks, air jump kept) and
 `float_is_once_per_airtime_and_ends_on_release` (latch, release, landing restore, down + jump, a hit ends it).
+
+Ground float (2026-11-05, SIM_VERSION -sim-34): SmashWiki Floating says a float started from the ground sits "just
+above the ground"; no source gives the height, so `stats.float.groundHeight` is a fitted **10 px (2 units)**, low
+confidence. Leaving jumpsquat with down held (jump button with down, or a tap jump pulled down before jumpsquat
+ends) lifts her 10 px with no vertical speed and starts the float instead of a hop; no hop height is chosen and no
+jump is spent. From there it is the normal float: releasing jump drops her and landing restores it. With tap jump
+alone the stick cannot hold up and down at once, so the float ends the tick after it starts unless jump is held.
+Test: `down_and_jump_from_the_ground_floats_just_above_it` (both inputs, height held, release, normal landing).
 
 ## Vegetable determinism
 
@@ -212,7 +221,9 @@ Mr. Saturn, Bob-omb, holding/regrabbing the turnip and throwing it in other dire
 - Toad: six spores are three fixed-direction projectiles fired twice rather than six randomly deviated sprays; the
   source's back-hit "switch places" is the engine's shared counter turn. The spores have `Rehit=0` in the source;
   the *turnip item* row's `Rehit=100` is dropped because a projectile contact consumes it here.
-- Peach Bomber: one lunge speed (the source's tilt/smash inputs differ); the airborne 87-frame miss is an open
+- Peach Bomber: one lunge speed (the source's tilt/smash inputs differ); the post-frame-4 brake is a fitted linear
+  `setVel` schedule (see the conversion table), and grounded traction / air friction still act after each set, so
+  the airborne lunge goes slightly farther than the grounded one; the airborne 87-frame miss is an open
   fall phase instead of a fixed total; the 0.95 backward/1.4 upward hit rebound is converted at the movement scale.
 - Parasol: reopening the parasol from helplessness is not modelled; the open canopy's 480-frame lifetime becomes a
   phase timeout; closing drops into a closed special-fall phase that runs until she lands (40-frame landing lag),

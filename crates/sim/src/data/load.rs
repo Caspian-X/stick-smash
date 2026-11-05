@@ -1715,6 +1715,7 @@ fn check_stats(file: &str, v: &super::Stats) -> Result<(), ContentError> {
     }
     if let Some(f) = &v.float {
         nonnegative(file, "stats.float.speed", f.speed)?;
+        nonnegative(file, "stats.float.groundHeight", f.ground_height)?;
         if f.frames == 0 {
             return Err(err(file, "stats.float.frames", "must be positive"));
         }

@@ -233,17 +233,27 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
                 if f.t >= g.movement.jumpsquat {
                     let aerial = f.sd.jump_aerial.take();
                     let full = inp.jump_held && aerial.is_none() && !f.sd.short;
+                    let lift = s.float.as_ref().map_or(0., |fl| fl.ground_height);
+                    let float = inp.down && lift > 0. && !f.float_used;
                     f.vy = if full { -s.jump_speed } else { -s.short_hop_speed };
-                    if full && let Some(h) = s.jump_initial_height.filter(|h| *h > 0.) {
+                    if float {
+                        // Ground float: hover just above the ground instead of hopping.
+                        f.vy = 0.;
+                        f.y -= lift;
+                    } else if full && let Some(h) = s.jump_initial_height.filter(|h| *h > 0.) {
                         // Ultimate's initial rise: the first four airborne ticks climb h/4 each (`physics::fall`).
                         f.vy = -h / 4.;
                         f.rise = 4;
                     }
-                    accept(w, i, if full { Action::FullHop } else { Action::ShortHop });
                     f.ground = false;
                     f.surf = None;
                     f.ff = false;
                     f.set_state(State::Air);
+                    if float && start_float(d, &mut f) {
+                        accept(w, i, Action::Float);
+                    } else {
+                        accept(w, i, if full { Action::FullHop } else { Action::ShortHop });
+                    }
                     w.dust(f.x, f.y, 4);
                     w.sfx("jump");
                     if let Some(slot) = aerial {
