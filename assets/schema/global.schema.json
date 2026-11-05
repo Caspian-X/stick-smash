@@ -17,6 +17,7 @@
         "runThreshold": 0.0,
         "walkThreshold": 0.0,
         "dashLock": false,
+        "dashRelease": false,
         "dashSpeed": 0.0,
         "dashFrames": 0,
         "dashTurnFrames": 0,
@@ -438,6 +439,11 @@
         "dashLock": {
           "type": "boolean",
           "description": "Initial dash restricts standing attacks and shield until it ends; jump, dash attack, up smash,\ngrab and specials can cancel it.",
+          "default": false
+        },
+        "dashRelease": {
+          "type": "boolean",
+          "description": "Releasing the stick during the initial dash skids by traction at once (Ultimate's dash: a tapped flick is a\nshort stutter step) instead of holding dash speed for dashFrames; holding again re-accelerates by runAccel.",
           "default": false
         },
         "dashSpeed": {

@@ -1,5 +1,6 @@
 //! Ground gait while idle: walk by stick tilt, flick to dash (flick back to dash the other way: facing and speed flip
-//! at once, the first `dashTurnFrames` show the turn), keep holding to run, hold the other way to turn around (facing
+//! at once, the first `dashTurnFrames` show the turn; with `gait.dashRelease` letting go mid-dash skids by traction
+//! and holding again re-accelerates), keep holding to run, hold the other way to turn around (facing
 //! flips at once, traction slides the old way for `turnFrames`, then the run accelerates the new way), let go to
 //! brake (`brakeFrames` of traction skid; a flick dashes out, holding back turns around). The frame counts are per
 //! fighter (`stats`), defaulting to `global.gait`. Every gait is the idle state, so attacks, jumps, shield and grabs
@@ -128,7 +129,15 @@ pub fn step(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent)
             if t >= dash_turn_frames(d, f) {
                 f.gait = Gait::Dash;
             }
-            f.vx = f.face * dash_speed(d, f).max(f.vx * f.face);
+            let (v, top) = (f.vx * f.face, dash_speed(d, f));
+            if !g.dash_release {
+                f.vx = f.face * top.max(v);
+            } else if inp.x * f.face > 0. && inp.x.abs() >= g.walk_threshold {
+                // Held again after a release: back up to dash speed by run accel.
+                f.vx = f.face * if v < top { (v + s.run_accel).min(top) } else { v };
+            } else {
+                skid(d, f, g.brake_friction, 1.);
+            }
         }
         Gait::Dash | Gait::DashTurn => set(f, if held == f.face { Gait::Run } else { Gait::Brake }),
         Gait::Run if dir == f.face && g.run_threshold > 0. && inp.x.abs() < g.walk_threshold => set(f, Gait::Walk),

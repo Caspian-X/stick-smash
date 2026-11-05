@@ -295,6 +295,7 @@ fn cpu_match_golden_world_hash() {
     // -sim-34 (ground float, Duchess's braking Bomber) leaves this scenario unchanged.
     // Per-fighter gait frames (-sim-35) leave it alone: neither original sets them, and the dash-back turn window
     // only renames the first dash ticks. Held items (-sim-36) add `item` / `item_t` to fighters, `item` to
-    // projectiles and `items` to the World (Debug text only; no item plays).
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x7d15b0a190f6c2ca);
+    // projectiles and `items` to the World (Debug text only; no item plays). `gait.dashRelease` (-sim-37) moves it:
+    // CPU dashes that let go of the stick now skid instead of holding dash speed.
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x935b3190824db1c0);
 }

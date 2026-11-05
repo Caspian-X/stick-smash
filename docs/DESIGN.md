@@ -97,7 +97,19 @@ the shared 4 / 5 so their feel is unchanged. The turnaround frame matters most: 
 takes over from traction, and for most fighters it decelerates harder, so a short `turnFrames` reverses faster.
 The brake length changes little physically (traction applies either way) but keeps the turn-back window open as
 long as the source's `TURN_RUN` flag. A dash-back keeps its instant reversal and gains a `dashturn` window (2
-frames, before `TurnDash` sets its turn flag) so the figure visibly turns instead of snapping.
+frames, before `TurnDash` sets its turn flag) so the figure visibly turns instead of snapping. Script markers are
+1-indexed (`frame(Frame=N)` runs on game frame N), so each length is the N − 1 frames before the marker: Peach's
+`Dash` enables `DASH_TO_RUN` on frame 16, a 15-frame initial dash, matching SmashWiki's Ultimate Dash table (King
+Dedede and Cloud 10).
+
+**A released initial dash brakes** (`gait.dashRelease`). Ultimate has no dash deceleration constant: the dash holds
+dash speed while the stick is held, and returning the stick to neutral during the initial dash lets the ground
+brake (`stats.traction`) slow it at once; SmashWiki's Dash page calls a dash that "begins … but stops almost
+immediately" a stutter step. So a tapped flick is a few frames at dash speed and a traction skid (Duchess 48 px,
+against 137 px for the held dash), not the whole dash. The dash gait and its frame count carry on regardless, so a
+dash-back flick still flips at once and the dash still ends in a run (held) or a brake (neutral); pushing forward
+again before it ends accelerates back toward dash speed by `runAccel` rather than snapping. Without the flag a dash
+holds its speed for all of `dashFrames` (the TS traces run with the gait off).
 
 **Defensive windows** (`dodge`, `tech`, `knockdown.getup` / `getupAttack`, ledge options; FORMAT.md): each dodge
 has authored `invulnStart..=invulnEnd` intangibility with vulnerable startup and recovery, and repeated dodges

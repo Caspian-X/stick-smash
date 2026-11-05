@@ -75,16 +75,22 @@ def flag_frame(script, flag):
 
 
 def gait(body):
-    """`stats` gait frames from the fighter body's Ultimate scripts (`{name: data}`): `turnFrames` and `brakeFrames`
-    are the frames `TurnRun` and `RunBrakeR` raise FIGHTER_STATUS_RUN_BRAKE_FLAG_STOP (where the slide stops and the
-    run, or idle, takes over); `dashTurnFrames` the frames of `TurnDash` before FIGHTER_STATUS_DASH_FLAG_TURN_DASH."""
+    """`stats` gait frames from the fighter body's Ultimate scripts (`{name: data}`): `dashFrames` from where `Dash`
+    enables the DASH_TO_RUN transition, `turnFrames` and `brakeFrames` from where `TurnRun` and `RunBrakeR` raise
+    FIGHTER_STATUS_RUN_BRAKE_FLAG_STOP (the slide stops and the run, or idle, takes over), `dashTurnFrames` from
+    where `TurnDash` raises FIGHTER_STATUS_DASH_FLAG_TURN_DASH.
+
+    `frame(Frame=N)` is 1-indexed: its code runs on game frame N, so N − 1 frames come before it. The sim counts a
+    gait's frames the same way (a `dashFrames` dash is that many ticks, the run starts on the next), so each value is
+    N − 1. Peach's `Dash` marker at 16 gives SmashWiki's 15 dash frames (King Dedede and Cloud: 11 → 10)."""
     out = {}
-    for key, script, flag, offset in [('dashTurnFrames', 'TurnDash', 'FIGHTER_STATUS_DASH_FLAG_TURN_DASH', -1),
-                                      ('turnFrames', 'TurnRun', 'FIGHTER_STATUS_RUN_BRAKE_FLAG_STOP', 0),
-                                      ('brakeFrames', 'RunBrakeR', 'FIGHTER_STATUS_RUN_BRAKE_FLAG_STOP', 0)]:
+    for key, script, flag in [('dashFrames', 'Dash', 'FIGHTER_STATUS_TRANSITION_TERM_ID_DASH_TO_RUN'),
+                              ('dashTurnFrames', 'TurnDash', 'FIGHTER_STATUS_DASH_FLAG_TURN_DASH'),
+                              ('turnFrames', 'TurnRun', 'FIGHTER_STATUS_RUN_BRAKE_FLAG_STOP'),
+                              ('brakeFrames', 'RunBrakeR', 'FIGHTER_STATUS_RUN_BRAKE_FLAG_STOP')]:
         at = flag_frame(body.get(script, ''), flag)
         if at is not None:
-            out[key] = at + offset
+            out[key] = at - 1
     return out
 
 

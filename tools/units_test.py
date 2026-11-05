@@ -35,11 +35,14 @@ class Jumps(unittest.TestCase):
 
 class Gait(unittest.TestCase):
     def test_frames_from_scripts(self):
-        body = {'TurnDash': 'frame(Frame=3)\r\nif(is_excute){\r\n\tWorkModule::on_flag(Flag=FIGHTER_STATUS_DASH_FLAG_TURN_DASH)'
+        body = {'Dash': 'frame(Frame=16)\r\nif(is_excute){\r\n\tWorkModule::enable_transition_term('
+                        'FIGHTER_STATUS_TRANSITION_TERM_ID_DASH_TO_RUN)\r\n}\r\n',
+                'TurnDash': 'frame(Frame=3)\r\nif(is_excute){\r\n\tWorkModule::on_flag(Flag=FIGHTER_STATUS_DASH_FLAG_TURN_DASH)'
                             '\r\n}\r\nframe(Frame=18)\r\n',
                 'TurnRun': 'frame(Frame=11)\r\nif(is_excute){\r\n\tWorkModule::on_flag(Flag=FIGHTER_STATUS_RUN_BRAKE_FLAG_STOP)',
                 'RunBrakeR': 'frame(Frame=15)\r\nWorkModule::on_flag(Flag=FIGHTER_STATUS_RUN_BRAKE_FLAG_STOP)'}
-        self.assertEqual(units.gait(body), {'dashTurnFrames': 2, 'turnFrames': 11, 'brakeFrames': 15})
+        # 1-indexed markers: the gait lasts the frames before the marker (Peach: Dash at 16 → SmashWiki's 15).
+        self.assertEqual(units.gait(body), {'dashFrames': 15, 'dashTurnFrames': 2, 'turnFrames': 10, 'brakeFrames': 14})
         self.assertEqual(units.gait({}), {})
 
 if __name__ == '__main__':

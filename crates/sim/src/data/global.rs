@@ -688,6 +688,9 @@ pub struct Gait {
     /// Initial dash restricts standing attacks and shield until it ends; jump, dash attack, up smash,
     /// grab and specials can cancel it.
     pub dash_lock: bool,
+    /// Releasing the stick during the initial dash skids by traction at once (Ultimate's dash: a tapped flick is a
+    /// short stutter step) instead of holding dash speed for dashFrames; holding again re-accelerates by runAccel.
+    pub dash_release: bool,
     /// A flick starts a dash at this speed, held for dashFrames; flick back to dash the other way.
     #[schemars(transform = unit::ratio)]
     pub dash_speed: f64,
@@ -731,6 +734,7 @@ impl Default for Gait {
             run_threshold: 0.,
             walk_threshold: 0.,
             dash_lock: false,
+            dash_release: false,
             dash_speed: 0.,
             dash_frames: 0,
             dash_turn_frames: 0,

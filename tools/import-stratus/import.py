@@ -927,8 +927,8 @@ GRAVITY = round(0.098 * SCALE, 5)
 stats = {
     'weight': 1.0, 'pummelDamage': 1.3,
     'walkSpeed': round(1.155 * SCALE, 5), 'runSpeed': round(2.167 * SCALE, 5), 'dashSpeed': round(2.145 * SCALE, 5),
-    'dashFrames': 15, 'runAccel': 1.4286,
-    **units.gait(scripts['cloud']),  # TurnDash / TurnRun / RunBrakeR flag frames
+    'runAccel': 1.4286,
+    **units.gait(scripts['cloud']),  # Dash / TurnDash / TurnRun / RunBrakeR flag frames
     'groundFriction': 0.8,
     **units.jumps(32.5, 17, 32.5, GRAVITY), 'airJumpDrift': round(1.155 * SCALE, 5), 'airJumps': 1,
     'airSpeed': round(1.155 * SCALE, 5), 'airAccel': round(0.07 * SCALE, 5), 'gravity': GRAVITY,

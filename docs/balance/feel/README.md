@@ -34,6 +34,10 @@ compare the JSON.
 **Ground** (`ground`).
 - `dash20`: distance covered in the first 20 ticks after a one-tick flick from standstill (stick then neutral),
   i.e. the initial dash plus its brake.
+- `dash.tap`: the same one-tick flick, then neutral until the fighter stands still (`vx` 0, gait `Stand`):
+  `distance` (px) and `frames` (ticks, counting the flick). With `gait.dashRelease` the release skids at once, so
+  this is a few ticks at dash speed plus a traction skid (Ultimate's stutter step).
+- `dash.hold`: distance (px) over the initial dash with the stick held: `dashFrames` ticks from the flick.
 - `run95`: ticks with the stick held from standstill until `vx` reaches 95% of `runSpeed`. A dash at or above run
   speed makes this 1.
 - `stop`: from a full run (stick held 40 ticks), stick released: ticks until `|vx| < 0.1` and distance covered

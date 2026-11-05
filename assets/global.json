@@ -204,6 +204,7 @@
     "runThreshold": 0.75,
     "walkThreshold": 0.6,
     "dashLock": false,
+    "dashRelease": true,
     "dashSpeed": 1.12,
     "dashFrames": 10,
     "dashTurnFrames": 2,

@@ -19,6 +19,7 @@ pub(super) const FORMAT_VERSION: u32 = 2;
 // -sim-35: per-fighter gait frames (`stats.turnFrames` / `brakeFrames` / `dashTurnFrames`) and the `dashturn` gait.
 // -sim-36: held items (`Fighter::item`, `Projectile::item`, `World::items`, `AiState::item_t`, the `toss` state);
 // Duchess's Vegetable plucks a held turnip.
+// -sim-37: `gait.dashRelease` (a released initial dash skids by traction) and source dash / turn / brake frames.
 // -sim-38: 9-tick press buffer and the hold buffer (`input.holdBuffer`); `BufferedPress::held`, `Intent::grab_held`.
 pub(super) const SIM_VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), "-sim-38");
 pub(super) fn interval(data: &GameData) -> u64 {
