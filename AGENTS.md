@@ -7,6 +7,7 @@ See `docs/DEVELOPMENT.md` for the long-form contributor guide; `README.md`, `doc
 Tasks live in the `justfile` (`just` lists them). Add new scripts as `just` recipes, not shell files.
 - `just run` (`just dev` for dynamic linking / faster rebuilds), `just test`, `just lint`, `just check`.
 - `just balance [seeds] [fighter]` runs optional detailed release CPU matchups (default 16 seeds, every fighter or the one named); prints JSON damage, tip contacts, whiffs/punishes, KO moves, recovery deaths and unfinished matches.
+- `just feel [fighter]` prints the release feel report (jumps, gait, air drift, landing lag, synthetic launches, KO percents) as `FEEL <fighter> {json}` lines plus markdown tables; `just feel-baseline` rewrites `docs/balance/feel/baseline.{md,jsonl}` (metrics in `docs/balance/feel/README.md`).
 - `just verify-replays <dir>` re-simulates all `.replay.json` files headlessly and fails on desync or unfinished matches.
 - `just bless` after changing content data types (regenerates schemas, reformats assets). `just shots [dir] [sections]` for screenshots (optional comma-separated section names; omit for the full tour).
 

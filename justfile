@@ -72,6 +72,14 @@ verify-replays dir:
 balance seeds="16" fighter="":
     BALANCE_SEEDS={{seeds}} BALANCE_FIGHTER="{{fighter}}" cargo test --release -p sim --test stages fighter_balance_diagnostics -- --ignored --nocapture
 
+# Feel report: jump, gait, air, landing, launch and KO numbers per fighter (FEEL json lines + markdown tables)
+feel fighter="":
+    FEEL_FIGHTER="{{fighter}}" cargo test --release -p sim --test feel_report feel_report -- --ignored --nocapture
+
+# Rewrite docs/balance/feel/baseline.{md,jsonl} from the current content
+feel-baseline:
+    FEEL_OUT=docs/balance/feel cargo test --release -p sim --test feel_report feel_report -- --ignored --nocapture
+
 # Regenerate the README screenshots in docs/images (needs ImageMagick 7 with WebP)
 readme-shots:
     #!/usr/bin/env bash
