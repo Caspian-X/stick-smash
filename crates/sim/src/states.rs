@@ -1,35 +1,67 @@
 use crate::actions::{Action, accept};
 use crate::{
     Fx, GameData, World,
-    data::Color,
+    data::{
+        Color,
+        global::{Window, span},
+    },
     input::Intent,
     world::{Fighter, State},
 };
 use crate::{combat, moves, physics::*};
-pub fn roll(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, dir: f64) {
+/// Intangible for `len` frames from state frame `start` of the state just entered. Start 0 replaces the current
+/// invulnerability (or keeps the longer with `keep`); a later start is applied when the state clock gets there.
+pub fn intangible(f: &mut Fighter, start: u32, len: u32, keep: bool) {
+    if start == 0 {
+        f.inv = if keep { f.inv.max(len) } else { len };
+    } else {
+        f.sd.inv_at = start;
+        f.sd.inv_len = len;
+    }
+}
+/// Starts a dodge's window: staled by recent dodges when `stales`, else fresh.
+fn dodge(w: &World, d: &GameData, f: &mut Fighter, win: &Window, stales: bool) {
+    let s = &d.global.dodge.staling;
+    let mut step = None;
+    if stales && !s.steps.is_empty() {
+        let recent = f.dodge_at > 0 && w.frame - f.dodge_at <= u64::from(s.window);
+        f.dodge_stale = if recent { (f.dodge_stale + 1).min(s.steps.len() as u8) } else { 0 };
+        f.dodge_at = w.frame;
+        step = f.dodge_stale.checked_sub(1).map(|n| s.steps[usize::from(n)]);
+    }
+    let scale = |n: u32, k: f64| libm::round(f64::from(n) * k) as u32;
+    f.sd.end = step.map_or(win.frames, |s| scale(win.frames, s.frames));
+    intangible(f, win.invuln_start, step.map_or(win.invuln_len(), |s| scale(win.invuln_len(), s.invuln)), false);
+}
+fn roll_from(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, dir: f64, stales: bool) {
     accept(w, i, Action::Roll);
     f.set_state(State::Roll);
     f.sd.dir = dir;
     f.face = dir;
-    f.inv = d.global.dodge.roll_invuln;
+    dodge(w, d, f, &d.global.dodge.roll, stales);
     w.sfx("roll");
+}
+/// Getup and tech rolls (no staling).
+pub fn roll(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, dir: f64) {
+    roll_from(w, d, i, f, dir, false);
 }
 fn airdodge(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent, dir: f64) {
     accept(w, i, Action::AirDodge);
     let g = &d.global.dodge;
     let dy = f64::from(inp.down as i8 - inp.up as i8);
+    let directional = dir != 0. || dy != 0.;
     f.ad_used = true;
-    f.inv = if dir != 0. || dy != 0. { g.dir_air_dodge_invuln } else { g.air_dodge_invuln };
     f.ff = false;
     w.sfx("roll");
     f.set_state(State::Airdodge);
-    if dir != 0. || dy != 0. {
+    dodge(w, d, f, if directional { &g.dir_air } else { &g.air }, true);
+    if directional {
         let l = libm::hypot(dir, dy);
         f.sd.dirl = true;
         f.sd.dx = dir / l;
         f.sd.dy = dy / l;
-        f.vx = f.sd.dx * g.dir_air_dodge_speed;
-        f.vy = f.sd.dy * g.dir_air_dodge_speed;
+        f.vx = f.sd.dx * g.dir_air.speed;
+        f.vy = f.sd.dy * g.dir_air.speed;
     }
 }
 fn air_jump(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, dir: f64) {
@@ -138,6 +170,9 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
         f.sh = g.shield.max.min(f.sh + g.shield.regen);
     }
     f.t += 1;
+    if f.sd.inv_len > 0 && f.t == f.sd.inv_at {
+        f.inv = f.inv.max(f.sd.inv_len);
+    }
     let dir = inp.dir();
     f.in_dir = dir;
     f.in_down = inp.down;
@@ -277,11 +312,11 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
             } else if inp.sp && inp.up && !f.up_b {
                 moves::up_special(w, d, i, &mut f, dir);
             } else if inp.tap_r || inp.tap_l {
-                roll(w, d, i, &mut f, if inp.tap_r { 1. } else { -1. });
+                roll_from(w, d, i, &mut f, if inp.tap_r { 1. } else { -1. }, true);
             } else if inp.tap_d {
                 accept(w, i, Action::SpotDodge);
                 f.set_state(State::Spot);
-                f.inv = g.dodge.spot_invuln;
+                dodge(w, d, &mut f, &g.dodge.spot, true);
                 w.sfx("roll");
             } else if !inp.shield {
                 accept(w, i, Action::ShieldDrop);
@@ -290,16 +325,12 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
             }
         }
         State::Roll => {
-            let dd = &g.dodge;
-            f.vx = if f.t >= dd.roll_move_start && f.t <= dd.roll_move_end {
-                sd.dir * dd.roll_speed
-            } else {
-                f.vx * r.dodge_friction
-            };
+            let dd = &g.dodge.roll;
+            f.vx = if f.t >= dd.move_start && f.t <= dd.move_end { sd.dir * dd.speed } else { f.vx * r.dodge_friction };
             fall(w, d, i, &mut f, true, None);
             if !f.ground {
                 f.set_state(State::Air);
-            } else if f.t >= dd.roll_frames {
+            } else if f.t >= end(&sd, dd) {
                 f.face = -sd.dir;
                 f.set_state(State::Idle);
             }
@@ -307,15 +338,15 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
         State::Spot => {
             f.vx *= r.dodge_friction;
             fall(w, d, i, &mut f, true, None);
-            if f.t >= g.dodge.spot_frames {
+            if f.t >= end(&sd, &g.dodge.spot) {
                 f.set_state(State::Idle);
             }
         }
         State::Airdodge => {
-            let dd = &g.dodge;
-            if sd.dirl && f.t < dd.dir_air_dodge_decay_frames {
-                f.vx *= dd.dir_air_dodge_decay;
-                f.vy *= dd.dir_air_dodge_decay;
+            let dd = if sd.dirl { &g.dodge.dir_air } else { &g.dodge.air };
+            if sd.dirl && f.t < dd.decay_frames {
+                f.vx *= dd.decay;
+                f.vy *= dd.decay;
                 integrate(w, d, i, &mut f, false);
             } else {
                 let acc = air_accel(d, &f, g.movement.helpless_accel, |u| u.helpless_accel_mult);
@@ -323,9 +354,7 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
             }
             if f.state == State::Airdodge {
                 try_ledge(w, d, i, &mut f, inp, false);
-                if f.state == State::Airdodge
-                    && f.t >= if sd.dirl { dd.dir_air_dodge_frames } else { dd.air_dodge_frames }
-                {
+                if f.state == State::Airdodge && f.t >= end(&sd, dd) {
                     f.set_state(State::Air);
                 }
             }
@@ -387,25 +416,24 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
             if !f.ground {
                 f.set_state(State::Air);
             } else {
+                let getup = |f: &mut Fighter, kind: &str, win: &Window| {
+                    f.set_state(State::Getup);
+                    f.sd.kind = kind.into();
+                    intangible(f, win.invuln_start, win.invuln_len(), false);
+                };
                 if f.t > k.min_frames {
                     if inp.atk {
                         accept(w, i, Action::GetupAttack);
-                        f.set_state(State::Getup);
-                        f.sd.kind = "atk".into();
-                        f.inv = k.attack_invuln;
+                        getup(&mut f, "atk", &k.getup_attack);
                     } else if dir != 0. {
                         roll(w, d, i, &mut f, dir);
                     } else if inp.jump || inp.up || inp.shield_p || inp.sp || inp.grab {
                         accept(w, i, Action::Getup);
-                        f.set_state(State::Getup);
-                        f.sd.kind = "stand".into();
-                        f.inv = k.getup_invuln;
+                        getup(&mut f, "stand", &k.getup);
                     }
                 }
                 if f.state == State::Knockdown && f.t >= k.auto_getup {
-                    f.set_state(State::Getup);
-                    f.sd.kind = "stand".into();
-                    f.inv = k.getup_invuln;
+                    getup(&mut f, "stand", &k.getup);
                 }
             }
         }
@@ -416,7 +444,7 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
             if sd.kind == "atk" && f.t == k.attack_active[0] {
                 w.sfx("swing");
             }
-            if f.t >= if sd.kind == "atk" { k.attack_frames } else { k.getup_frames } {
+            if f.t >= if sd.kind == "atk" { k.getup_attack.frames } else { k.getup.frames } {
                 f.set_state(State::Idle);
             }
         }
@@ -476,6 +504,10 @@ fn step(w: &mut World, d: &GameData, i: usize, inp: Intent) {
     }
     w.fighters[i] = f;
 }
+/// A dodge's last frame after staling.
+fn end(sd: &crate::world::StateData, win: &Window) -> u32 {
+    if sd.end > 0 { sd.end } else { win.frames }
+}
 fn ease(k: f64) -> f64 {
     1. - (1. - k) * (1. - k)
 }
@@ -494,24 +526,24 @@ fn st_ledge(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, inp: Intent,
         return;
     }
     let kind = if inp.jump {
-        Some(("jump", g.jump.inv))
+        Some(("jump", &g.jump))
     } else if inp.atk || inp.sp {
-        Some(("attack", g.attack.inv))
+        Some(("attack", &g.attack))
     } else if inp.shield_p {
-        Some(("roll", g.roll.inv))
+        Some(("roll", &g.roll))
     } else if dir == -side || inp.up {
-        Some(("climb", g.climb.inv))
+        Some(("climb", &g.climb))
     } else {
         None
     };
-    if let Some((kind, inv)) = kind {
+    if let Some((kind, c)) = kind {
         accept(w, i, Action::Ledge(kind.into()));
         let block = f.sd.ledge_block;
         f.set_state(State::Climb);
         f.sd.ledge_block = block;
         f.sd.side = side;
         f.sd.kind = kind.into();
-        f.inv = f.inv.max(inv);
+        intangible(f, c.invuln_start, span(c.invuln_start, c.invuln_end), true);
     } else if inp.down || dir == side || f.t > g.max_hang {
         if f.t <= g.max_hang {
             accept(w, i, Action::LedgeDrop);

@@ -326,9 +326,7 @@ pub fn on_land(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, vy: f64) 
             }
         }
         State::Helpless => landing(f, g.landing.helpless),
-        State::Airdodge => {
-            landing(f, if f.sd.dirl { g.dodge.dir_air_dodge_landing_lag } else { g.dodge.air_dodge_landing_lag })
-        }
+        State::Airdodge => landing(f, if f.sd.dirl { g.dodge.dir_air.landing_lag } else { g.dodge.air.landing_lag }),
         State::Attack => {
             crate::moves::trigger(w, d, i, f, Trigger::Land);
         }
@@ -342,7 +340,8 @@ pub fn on_land(w: &mut World, d: &GameData, i: usize, f: &mut Fighter, vy: f64) 
                 } else {
                     accept(w, i, Action::Tech);
                     f.set_state(State::Tech);
-                    f.inv = g.tech.invuln;
+                    let len = crate::data::global::span(g.tech.invuln_start, g.tech.invuln_end);
+                    crate::states::intangible(f, g.tech.invuln_start, len, false);
                 }
                 w.ring(f.x, f.y - 20., 10., 4., 12);
                 w.sfx("tech");

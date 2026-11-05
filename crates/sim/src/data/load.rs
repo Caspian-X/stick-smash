@@ -294,6 +294,9 @@ pub fn migrate_kind(kind: ContentKind, v: &mut Value) -> Result<(), String> {
     if ver == 0 || ver > u64::from(max) {
         return Err(format!("version {ver} isn't supported (this build reads 1 to {max})"));
     }
+    if kind == ContentKind::Global {
+        legacy_windows(v);
+    }
     if kind != ContentKind::Stage {
         v["schemaVersion"] = Value::from(1);
         return Ok(());
@@ -325,6 +328,86 @@ pub fn migrate_kind(kind: ContentKind, v: &mut Value) -> Result<(), String> {
         obj.insert("schemaVersion".into(), Value::from(2));
     }
     Ok(())
+}
+
+/// Pre-window dodge / tech / getup / ledge timings (`rollInvuln` …, `tech.invuln`, `getupInvuln`, ledge `inv`):
+/// invulnerable for N ticks from the entry tick, i.e. frames 0..=N−1. Rewritten in place; frame-exact.
+fn legacy_windows(v: &mut Value) {
+    fn take(o: &mut serde_json::Map<String, Value>, key: &str) -> Option<Value> {
+        o.shift_remove(key)
+    }
+    fn window(o: &mut serde_json::Map<String, Value>, inv: &str, fields: &[(&str, &str)]) -> Option<Value> {
+        let n = take(o, inv)?.as_u64()?;
+        let mut w = serde_json::Map::new();
+        for (from, to) in fields {
+            if let Some(x) = take(o, from) {
+                w.insert((*to).into(), x);
+            }
+        }
+        span(&mut w, n);
+        Some(Value::Object(w))
+    }
+    fn span(o: &mut serde_json::Map<String, Value>, n: u64) {
+        o.insert("invulnStart".into(), u64::from(n == 0).into());
+        o.insert("invulnEnd".into(), n.saturating_sub(1).into());
+    }
+    if let Some(o) = v.get_mut("dodge").and_then(Value::as_object_mut)
+        && o.contains_key("rollInvuln")
+    {
+        let parts = [
+            (
+                "roll",
+                "rollInvuln",
+                &[
+                    ("rollFrames", "frames"),
+                    ("rollSpeed", "speed"),
+                    ("rollMoveStart", "moveStart"),
+                    ("rollMoveEnd", "moveEnd"),
+                ][..],
+            ),
+            ("spot", "spotInvuln", &[("spotFrames", "frames")][..]),
+            ("air", "airDodgeInvuln", &[("airDodgeFrames", "frames"), ("airDodgeLandingLag", "landingLag")][..]),
+            (
+                "dirAir",
+                "dirAirDodgeInvuln",
+                &[
+                    ("dirAirDodgeFrames", "frames"),
+                    ("dirAirDodgeSpeed", "speed"),
+                    ("dirAirDodgeDecay", "decay"),
+                    ("dirAirDodgeDecayFrames", "decayFrames"),
+                    ("dirAirDodgeLandingLag", "landingLag"),
+                ][..],
+            ),
+        ];
+        for (key, inv, fields) in parts {
+            if let Some(w) = window(o, inv, fields) {
+                o.insert(key.into(), w);
+            }
+        }
+    }
+    if let Some(o) = v.get_mut("tech").and_then(Value::as_object_mut)
+        && let Some(n) = take(o, "invuln").and_then(|n| n.as_u64())
+    {
+        span(o, n);
+    }
+    if let Some(o) = v.get_mut("knockdown").and_then(Value::as_object_mut) {
+        for (key, inv, frames) in
+            [("getup", "getupInvuln", "getupFrames"), ("getupAttack", "attackInvuln", "attackFrames")]
+        {
+            if let Some(w) = window(o, inv, &[(frames, "frames")]) {
+                o.insert(key.into(), w);
+            }
+        }
+    }
+    if let Some(o) = v.get_mut("ledge").and_then(Value::as_object_mut) {
+        for key in ["climb", "attack", "roll", "jump"] {
+            if let Some(c) = o.get_mut(key).and_then(Value::as_object_mut)
+                && let Some(n) = take(c, "inv").and_then(|n| n.as_u64())
+            {
+                span(c, n);
+            }
+        }
+    }
 }
 
 fn typed<T: DeserializeOwned>(file: &str, v: &Value) -> Result<T, ContentError> {
@@ -1376,8 +1459,9 @@ pub fn check_global(file: &str, g: &Global) -> Result<(), ContentError> {
     if g.grab.pummel_hit_frame >= g.grab.pummel_frames {
         return Err(err(file, "grab.pummelHitFrame", "must be less than pummelFrames"));
     }
-    if g.dodge.roll_move_start > g.dodge.roll_move_end || g.dodge.roll_move_end > g.dodge.roll_frames {
-        return Err(err(file, "dodge.rollMoveEnd", "needs rollMoveStart <= rollMoveEnd <= rollFrames"));
+    let r = &g.dodge.roll;
+    if r.move_start > r.move_end || r.move_end > r.frames {
+        return Err(err(file, "dodge.roll.moveEnd", "needs moveStart <= moveEnd <= frames"));
     }
     Ok(())
 }
@@ -1752,12 +1836,14 @@ fn check_shield(file: &str, v: &super::global::Shield) -> Result<(), ContentErro
 }
 
 fn check_dodge(file: &str, v: &super::global::Dodge) -> Result<(), ContentError> {
-    for (name, n) in [
-        ("rollSpeed", v.roll_speed),
-        ("dirAirDodgeSpeed", v.dir_air_dodge_speed),
-        ("dirAirDodgeDecay", v.dir_air_dodge_decay),
-    ] {
+    for (name, n) in
+        [("roll.speed", v.roll.speed), ("dirAir.speed", v.dir_air.speed), ("dirAir.decay", v.dir_air.decay)]
+    {
         nonnegative(file, &format!("dodge.{name}"), n)?;
+    }
+    for (i, s) in v.staling.steps.iter().enumerate() {
+        positive(file, &format!("dodge.staling.steps[{i}].frames"), s.frames)?;
+        nonnegative(file, &format!("dodge.staling.steps[{i}].invuln"), s.invuln)?;
     }
     Ok(())
 }

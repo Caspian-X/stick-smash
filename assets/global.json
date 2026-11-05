@@ -81,7 +81,7 @@
     "pushPerDamage": 0.22,
     "pushBase": 1.2,
     "attackerPushback": 1.5,
-    "dropLag": 7,
+    "dropLag": 11,
     "upSmash": true,
     "breakLaunch": 15,
     "breakGravity": 0.55,
@@ -93,32 +93,34 @@
     "dizzyRecoverHP": 30
   },
   "dodge": {
-    "rollInvuln": 31,
-    "rollFrames": 30,
-    "rollSpeed": 7,
-    "rollMoveStart": 3,
-    "rollMoveEnd": 18,
-    "spotInvuln": 16,
-    "spotFrames": 26,
-    "airDodgeInvuln": 28,
-    "airDodgeFrames": 30,
-    "airDodgeLandingLag": 4,
-    "dirAirDodgeInvuln": 24,
-    "dirAirDodgeFrames": 34,
-    "dirAirDodgeSpeed": 10,
-    "dirAirDodgeDecay": 0.88,
-    "dirAirDodgeDecayFrames": 18,
-    "dirAirDodgeLandingLag": 10
+    "roll": { "frames": 30, "invulnStart": 3, "invulnEnd": 14, "moveStart": 3, "moveEnd": 18, "speed": 7 },
+    "spot": { "frames": 26, "invulnStart": 2, "invulnEnd": 16 },
+    "air": { "frames": 40, "invulnStart": 2, "invulnEnd": 28, "landingLag": 4 },
+    "dirAir": {
+      "frames": 44,
+      "invulnStart": 2,
+      "invulnEnd": 21,
+      "speed": 10,
+      "decay": 0.88,
+      "decayFrames": 18,
+      "landingLag": 10
+    },
+    "staling": {
+      "window": 90,
+      "steps": [
+        { "invuln": 0.93, "frames": 1.1 },
+        { "invuln": 0.87, "frames": 1.2 },
+        { "invuln": 0.8, "frames": 1.3 }
+      ]
+    }
   },
   "landing": { "hard": 3, "softLandSpeed": 4, "helpless": 14 },
-  "tech": { "window": 12, "invuln": 20, "frames": 24, "lockout": 40 },
+  "tech": { "window": 12, "invulnStart": 2, "invulnEnd": 19, "frames": 24, "lockout": 40 },
   "knockdown": {
     "minFrames": 12,
     "autoGetup": 70,
-    "getupFrames": 24,
-    "getupInvuln": 22,
-    "attackFrames": 32,
-    "attackInvuln": 14,
+    "getup": { "frames": 24, "invulnStart": 2, "invulnEnd": 21 },
+    "getupAttack": { "frames": 32, "invulnStart": 2, "invulnEnd": 13 },
     "attackActive": [14, 17],
     "attack": [
       { "x": 38, "y": 14, "r": 24, "damage": 6, "bkb": 35.7142857143, "kbg": 1.1904761905, "angle": 30, "dir": "away" },
@@ -140,10 +142,10 @@
     "maxHang": 300,
     "regrabCooldown": 30,
     "jumpSpeed": 15,
-    "climb": { "a": 14, "b": 28, "end": 30, "dist": 26, "inv": 30 },
-    "attack": { "a": 12, "b": 20, "end": 40, "dist": 26, "inv": 24 },
-    "roll": { "a": 10, "b": 36, "end": 40, "dist": 120, "inv": 34 },
-    "jump": { "a": 7, "b": 7, "end": 7, "dist": 0, "inv": 8 },
+    "climb": { "a": 14, "b": 28, "end": 30, "dist": 26, "invulnStart": 0, "invulnEnd": 29 },
+    "attack": { "a": 12, "b": 20, "end": 40, "dist": 26, "invulnStart": 0, "invulnEnd": 23 },
+    "roll": { "a": 10, "b": 36, "end": 40, "dist": 120, "invulnStart": 0, "invulnEnd": 33 },
+    "jump": { "a": 7, "b": 7, "end": 7, "dist": 0, "invulnStart": 0, "invulnEnd": 7 },
     "attackActive": [22, 26],
     "attackHit": [
       { "x": 38, "y": 30, "r": 26, "damage": 7, "bkb": 34.2857142857, "kbg": 1.2698412698, "angle": 35 }

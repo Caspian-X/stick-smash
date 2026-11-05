@@ -304,7 +304,7 @@ pub struct Shield {
     pub push_base: f64,
     /// Attacker's own pushback on a shielded grounded hit.
     pub attacker_pushback: f64,
-    /// Frames of lag after releasing shield.
+    /// Frames of lag after releasing shield (Ultimate 11).
     pub drop_lag: u32,
     /// Shield + up attack (or attack with up held) is an up smash rather than a grab. Off for TS fidelity.
     #[serde(default)]
@@ -323,25 +323,78 @@ pub struct Shield {
     pub dizzy_recover_hp: f64,
 }
 
+/// Dodge timelines. Frame numbers are the state clock: 0 is the tick the dodge starts (Ultimate's frame 1).
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Dodge {
-    pub roll_invuln: u32,
-    pub roll_frames: u32,
-    pub roll_speed: f64,
-    pub roll_move_start: u32,
-    pub roll_move_end: u32,
-    pub spot_invuln: u32,
-    pub spot_frames: u32,
-    pub air_dodge_invuln: u32,
-    pub air_dodge_frames: u32,
-    pub air_dodge_landing_lag: u32,
-    pub dir_air_dodge_invuln: u32,
-    pub dir_air_dodge_frames: u32,
-    pub dir_air_dodge_speed: f64,
-    pub dir_air_dodge_decay: f64,
-    pub dir_air_dodge_decay_frames: u32,
-    pub dir_air_dodge_landing_lag: u32,
+    pub roll: Window,
+    pub spot: Window,
+    /// Neutral air dodge.
+    pub air: Window,
+    /// Directional air dodge.
+    pub dir_air: Window,
+    /// Repeated rolls, spot dodges and air dodges get less intangibility and more frames. Absent = off.
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub staling: DodgeStaling,
+}
+
+/// One timed defensive state. Frames count from 0 on the entry tick; the state ends when its clock reaches `frames`.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Window {
+    pub frames: u32,
+    /// First and last intangible frame (inclusive). Start 0 replaces any current invulnerability on the entry
+    /// tick; a later start adds it on that frame (leaving the state first cancels it). End below start = none; an
+    /// end past `frames` carries over into the next state.
+    pub invuln_start: u32,
+    pub invuln_end: u32,
+    /// Roll: frames moving at `speed` (inclusive).
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub move_start: u32,
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub move_end: u32,
+    /// Roll ground speed / directional air dodge launch speed.
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub speed: f64,
+    /// Directional air dodge: velocity × decay each frame below `decayFrames`, then helpless drift.
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub decay: f64,
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub decay_frames: u32,
+    /// Air dodges: landing lag when touching down during the dodge.
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub landing_lag: u32,
+}
+
+impl Window {
+    /// Intangible frame count before staling.
+    pub fn invuln_len(&self) -> u32 {
+        span(self.invuln_start, self.invuln_end)
+    }
+}
+
+/// Frames in the inclusive window `start..=end` (0 when end < start).
+pub fn span(start: u32, end: u32) -> u32 {
+    end.saturating_add(1).saturating_sub(start)
+}
+
+/// Each roll, spot dodge or air dodge started within `window` ticks of the previous one goes one step further down
+/// `steps` (the first repeat uses `steps[0]`, capped at the last); a longer gap starts fresh. Getup and tech rolls
+/// neither stale nor count. Empty `steps` = off.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+pub struct DodgeStaling {
+    pub window: u32,
+    pub steps: Vec<StaleStep>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct StaleStep {
+    /// Intangible frames × this (rounded; the start frame stays).
+    pub invuln: f64,
+    /// Total frames × this (rounded).
+    pub frames: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -358,7 +411,9 @@ pub struct Landing {
 pub struct Tech {
     /// Press shield within this many frames before landing in tumble to tech.
     pub window: u32,
-    pub invuln: u32,
+    /// First and last intangible frame of a tech in place (state clock as in `dodge.roll`; 0 = the landing tick).
+    pub invuln_start: u32,
+    pub invuln_end: u32,
     pub frames: u32,
     /// A shield press in hitstun that doesn't tech blocks further tech presses for this many frames (Ultimate 40),
     /// so mashing cannot tech. 0 = off.
@@ -373,10 +428,9 @@ pub struct Knockdown {
     pub min_frames: u32,
     /// Automatically stand up at this frame.
     pub auto_getup: u32,
-    pub getup_frames: u32,
-    pub getup_invuln: u32,
-    pub attack_frames: u32,
-    pub attack_invuln: u32,
+    /// Neutral getup: `frames` and intangibility as in `dodge.roll`.
+    pub getup: Window,
+    pub getup_attack: Window,
     /// Getup attack active frames (inclusive).
     pub attack_active: [u32; 2],
     pub attack: Vec<Hitbox>,
@@ -511,8 +565,10 @@ pub struct LedgeOption {
     pub end: u32,
     /// Slide distance onto the stage.
     pub dist: f64,
-    /// Invulnerability frames.
-    pub inv: u32,
+    /// First and last intangible frame (state clock, 0 = the tick the option starts; start 0 keeps the longer of
+    /// this and any current invulnerability).
+    pub invuln_start: u32,
+    pub invuln_end: u32,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]

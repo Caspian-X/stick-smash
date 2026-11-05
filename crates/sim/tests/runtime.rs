@@ -286,7 +286,8 @@ fn cpu_match_golden_world_hash() {
         w.hits.clear();
         w.acts.clear();
     }
-    // Subtractive momentum (`movement.ultimate`: traction, air friction, fighter air control, instant fast fall,
-    // dash bursts) changes this scenario's movement; replay SIM_VERSION is now -sim-30.
-    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0x14e938aa47ef5102);
+    // The decaying launch model (`hitstun.ultimate`), Ultimate hitlag and tech lockout change this scenario's
+    // trajectories and add `launch` / `tech_lock` to the Debug snapshot. Authored dodge / tech / getup windows and
+    // dodge staling add `dodge_stale` / `dodge_at` and state `end` / `inv_at` / `inv_len`; subtractive momentum (`movement.ultimate`) changes movement too; replay SIM_VERSION -sim-31.
+    assert_eq!(fnv1a(format!("{w:?}").as_bytes()), 0xd4cbdc39625a4dc6);
 }

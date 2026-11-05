@@ -53,6 +53,28 @@ buffer retains unavailable standing attacks/shield until legal or expired, while
 remain available. Normal attack after a dash has started selects dash attack, not a late smash inferred
 from the dash's original flick.
 
+**Defensive windows** (`dodge`, `tech`, `knockdown.getup` / `getupAttack`, ledge options; FORMAT.md): each dodge
+has authored `invulnStart..=invulnEnd` intangibility with vulnerable startup and recovery, and repeated dodges
+stale (`dodge.staling`). Before this, every dodge was invulnerable from its first frame through almost all of it,
+which with the decaying launch model made defence too safe. TS traces pin the old timings.
+
+### Deliberate divergences from Ultimate
+Choices made on purpose; later tuning should not "fix" them back without a reason.
+- **3-frame jumpsquat for everyone** (`movement.jumpsquat`): one jump timing to learn; weight and speed differ elsewhere.
+- **5-frame input buffer** (`input.bufferFrames`, Ultimate 10): long enough for mashed inputs, short enough that stale presses don't fire.
+- **12-frame tech window** (`tech.window`, Ultimate 11), with the Ultimate 40-frame lockout: a slightly kinder single press.
+- **No SDI or LSI**: DI (`di`) is the only launch input; hitlag shakes are presentation.
+- **Release-timed parry** (`parry`) with fixed defender / attacker freezes and a short invulnerability, not Ultimate's per-move parry frame data: one readable reward.
+- **Flick-only platform drop**: holding down never drops through, so crouching and down tilts on platforms are safe.
+- **Ledge trump** (`ledge.trump`) with our own push, cooldown and a minimum hang before an occupant can be trumped, so simultaneous grabs don't trade.
+
+Calibration values set to Ultimate in the defensive-window pass (Ultimate frame = state clock + 1):
+- Dodge windows: roll 30 frames, intangible 3–14 (Ultimate 4–15); spot dodge 26, 2–16 (3–17); neutral air dodge
+  40, 2–28 (3–29); directional 44, 2–21 (20 frames from Ultimate frame 3). Tech and getups keep their lengths with
+  2 startup frames.
+- Dodge staling: a 90-tick window and three steps to 80% intangibility / 130% duration.
+- Shield drop lag 11.
+
 ### Content format
 - **Everything moddable is data:** fighters (stats, frame data, special-move behavior, visuals, hurtboxes) and stages. Core content uses the same format as user content, with no fighter- or stage-specific code.
 - **Strict JSON** (`.json`), one schema per content type, generated from the Rust types with `schemars` and saved to `assets/schema/`. Each file points to its schema via `"$schema"`, so VS Code etc. gives autocomplete, validation and hover docs (from the `///` comments on the Rust fields).

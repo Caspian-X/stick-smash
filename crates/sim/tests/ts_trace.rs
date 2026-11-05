@@ -73,6 +73,7 @@ fn matches_typescript_traces() {
     d.global.movement.ultimate = None;
     d.global.hitlag = sim::data::global::Hitlag { base: 3., per_damage: 0.45, per_knockback: 0.1, max: 16. };
     d.global.tech.lockout = 0;
+    common::reference_defence(&mut d);
     // The reference froze longer after the final KO; the results screen now follows it closely.
     d.global.match_.end_frames = 110;
     // Reference traces predate the larger side/bottom zones and lower ceiling.

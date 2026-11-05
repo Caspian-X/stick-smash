@@ -8,9 +8,10 @@ use std::{
 };
 
 pub(super) const FORMAT_VERSION: u32 = 2;
-// Bump when simulation behavior or the checksum representation changes. -sim-30: subtractive momentum
-// (`movement.ultimate`: traction, air friction, fighter-relative air control, instant fast fall, dash easing).
-pub(super) const SIM_VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), "-sim-30");
+// Bump when simulation behavior or the checksum representation changes. -sim-29: decaying launch vector and
+// reference-unit hitstun (`hitstun.ultimate`), Ultimate hitlag, tech lockout; new Fighter snapshot fields.
+// -sim-30: subtractive momentum (`movement.ultimate`). -sim-31: authored dodge / tech / getup intangibility windows, dodge staling, shield drop 11.
+pub(super) const SIM_VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), "-sim-31");
 pub(super) fn interval(data: &GameData) -> u64 {
     data.global.replay.checkpoint_ticks.max(u64::from(sim::TICK_HZ))
 }

@@ -183,6 +183,14 @@ pub struct StateData {
     pub short: bool,
     /// World frame the state was entered (ledge hang, for trump timing).
     pub entered: u64,
+    /// Dodge length after staling (0 = the global `frames`).
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub end: u32,
+    /// Invulnerability starting later in this state: `inv_len` frames from state frame `inv_at`.
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub inv_at: u32,
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub inv_len: u32,
 }
 impl StateData {
     pub(crate) fn can_hit(&self, victim: usize, group: u8, tick: u32, rehit: Option<u32>) -> bool {
@@ -304,6 +312,11 @@ pub struct Fighter {
     /// World frame until which shield presses in hitstun cannot tech (`tech.lockout`).
     #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
     pub tech_lock: u64,
+    /// Recent dodges in a row (`dodge.staling`) and the world frame the last one started.
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub dodge_stale: u8,
+    #[serde(default, skip_serializing_if = "crate::data::common::is_default")]
+    pub dodge_at: u64,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -563,6 +576,8 @@ impl World {
                     charge_wait: vec![0; data.fighters[di].charges.len()],
                     launch: (0., 0.),
                     tech_lock: 0,
+                    dodge_stale: 0,
+                    dodge_at: 0,
                 }
             })
             .collect();
