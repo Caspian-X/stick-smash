@@ -739,7 +739,8 @@ fn training() -> Vec<Step> {
     // Duchess float, turnip flight and parasol descent are state/timing captures, not move poses.
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("duchess"), Step::Wait(30)]);
     v.push(Step::Set(0, Jump, true));
-    v.push(Step::Fast(|m, _, _| m.world.fighters[0].state == FState::Air && m.world.fighters[0].vy > 0.9, 160));
+    // `stats.float.speed` is 0: shoot a few ticks into the hover rather than waiting for a sink.
+    v.push(Step::Fast(|m, _, _| m.world.fighters[0].state == FState::Air && m.world.fighters[0].floating == 140, 160));
     v.push(Step::Shot("35o-duchess-float", Screen::Match));
     v.push(Step::Set(0, Jump, false));
     v.extend([Step::Home, Step::Wait(4), Step::Reset, Step::Training("duchess"), Step::Wait(30)]);
