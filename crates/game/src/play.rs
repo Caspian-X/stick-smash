@@ -365,7 +365,13 @@ impl Match {
 }
 
 /// Steps the world at `sim::TICK_HZ` (scaled by slow motion / training speed).
-pub fn tick(mut m: ResMut<Match>, mut devs: ResMut<Devices>, mut scene: ResMut<Scene>, screen: Res<State<Screen>>) {
+pub fn tick(
+    mut m: ResMut<Match>,
+    mut devs: ResMut<Devices>,
+    mut scene: ResMut<Scene>,
+    screen: Res<State<Screen>>,
+    pace: Option<ResMut<Pace>>,
+) {
     if matches!(screen.get(), Screen::Replays) {
         return;
     }
@@ -383,14 +389,44 @@ pub fn tick(mut m: ResMut<Match>, mut devs: ResMut<Devices>, mut scene: ResMut<S
     if matches!(m.mode, Mode::Training | Mode::Replay) && m.frozen {
         if std::mem::take(&mut m.step) {
             m.tick(&mut devs, &mut scene, true);
+            if let Some(mut p) = pace {
+                p.ticks += 1;
+            }
         }
         return;
     }
     m.acc += m.tick_speed();
+    let mut n = 0;
     while m.acc >= 1. {
         m.acc -= 1.;
         m.tick(&mut devs, &mut scene, true);
+        n += 1;
     }
+    if let Some(mut p) = pace {
+        p.ticks += n;
+    }
+}
+
+/// Dev builds: with the debug overlay (F1) on, how many sim ticks recent frames ran, to check frame pacing.
+#[cfg(feature = "dev")]
+pub fn pace_overlay(mut ctx: bevy_egui::EguiContexts, m: Option<Res<Match>>, pace: Res<Pace>) -> Result {
+    use bevy_egui::egui;
+    if !m.is_some_and(|m| m.debug) {
+        return Ok(());
+    }
+    let ([zero, one, more], dt) = pace.summary();
+    let mode = if pace.locked { "locked to display" } else { "fixed step" };
+    let text = format!(
+        "ticks/frame (1 s): 0×{zero}  1×{one}  2+×{more}   mean frame {:.2} ms ({:.1} Hz)   {mode}",
+        dt * 1000.,
+        if dt > 0. { 1. / dt } else { 0. }
+    );
+    egui::Area::new(egui::Id::new("pace")).anchor(egui::Align2::LEFT_BOTTOM, [12., -12.]).show(ctx.ctx_mut()?, |ui| {
+        egui::Frame::new().fill(egui::Color32::from_black_alpha(180)).corner_radius(6).inner_margin(6).show(ui, |ui| {
+            ui.label(egui::RichText::new(text).monospace().size(12.).color(egui::Color32::WHITE));
+        });
+    });
+    Ok(())
 }
 
 /// Frame pacing. On a display refreshing at about `TICK_HZ`, the fixed-step accumulator aliases against vsync
@@ -398,8 +434,10 @@ pub fn tick(mut m: ResMut<Match>, mut devs: ResMut<Devices>, mut scene: ResMut<S
 /// steps once per rendered frame instead and draws the newest tick.
 #[derive(Resource)]
 pub struct Pace {
-    /// Recent real frame intervals in seconds, newest last.
-    frames: VecDeque<f32>,
+    /// Recent frames, newest last: real interval in seconds and sim ticks run.
+    frames: VecDeque<(f32, u32)>,
+    /// Sim ticks run so far this frame.
+    ticks: u32,
     /// The setting is on, pacing is allowed and the display runs at about `TICK_HZ`.
     pub locked: bool,
     /// Off in the screenshot tours, whose timing must not depend on the display.
@@ -408,7 +446,7 @@ pub struct Pace {
 
 impl Default for Pace {
     fn default() -> Self {
-        Pace { frames: VecDeque::new(), locked: false, allowed: true }
+        Pace { frames: VecDeque::new(), ticks: 0, locked: false, allowed: true }
     }
 }
 
@@ -418,8 +456,9 @@ const PACE_TOLERANCE_HZ: f32 = 2.;
 
 impl Pace {
     fn push(&mut self, dt: f32) {
+        let ticks = std::mem::take(&mut self.ticks);
         if dt > 0. {
-            self.frames.push_back(dt);
+            self.frames.push_back((dt, ticks));
         }
         while self.frames.len() > 360 {
             self.frames.pop_front();
@@ -430,9 +469,23 @@ impl Pace {
         if self.frames.len() < PACE_SAMPLES {
             return None;
         }
-        let mut dts: Vec<f32> = self.frames.iter().rev().take(PACE_SAMPLES).copied().collect();
+        let mut dts: Vec<f32> = self.frames.iter().rev().take(PACE_SAMPLES).map(|f| f.0).collect();
         dts.sort_by(f32::total_cmp);
         Some(1. / dts[PACE_SAMPLES / 2])
+    }
+    /// Over about the last second: frames that ran 0, 1 and 2+ sim ticks, and the mean frame interval in seconds.
+    #[cfg(feature = "dev")]
+    pub fn summary(&self) -> ([u32; 3], f32) {
+        let (mut counts, mut total, mut n) = ([0; 3], 0., 0);
+        for (dt, ticks) in self.frames.iter().rev() {
+            if total >= 1. {
+                break;
+            }
+            counts[(*ticks as usize).min(2)] += 1;
+            total += dt;
+            n += 1;
+        }
+        (counts, if n > 0 { total / n as f32 } else { 0. })
     }
     fn update(&mut self, dt: f32, enabled: bool) {
         self.push(dt);

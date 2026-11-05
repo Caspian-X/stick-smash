@@ -197,6 +197,8 @@ fn main() {
         (play::interpolate.before(RenderSystems).run_if(resource_exists::<play::Match>), settings::save),
     )
     .add_systems(EguiPrimaryContextPass, toast);
+    #[cfg(feature = "dev")]
+    app.add_systems(EguiPrimaryContextPass, play::pace_overlay);
     editing::setup(&mut app, assets_root, if shot_dir.is_some() { None } else { settings::user_content_dir() });
     if let Some(dir) = shot_dir {
         fs::create_dir_all(&dir).expect("create screenshot dir");
